@@ -1,0 +1,95 @@
+export const pokemonTypes = [
+  "normal",
+  "fire",
+  "water",
+  "electric",
+  "grass",
+  "ice",
+  "fighting",
+  "poison",
+  "ground",
+  "flying",
+  "psychic",
+  "bug",
+  "rock",
+  "ghost",
+  "dragon",
+  "dark",
+  "steel",
+  "fairy",
+] as const;
+
+export type PokemonType = (typeof pokemonTypes)[number];
+
+export type StatKey =
+  | "hp"
+  | "attack"
+  | "defense"
+  | "specialAttack"
+  | "specialDefense"
+  | "speed";
+
+export type StatBlock = Record<StatKey, number>;
+
+export type PokemonMove = {
+  id: string;
+  name: string;
+  type: PokemonType;
+  category?: string;
+  power: number | null;
+  accuracy: number | null;
+  pp: number;
+  description: string;
+  tags?: string[];
+};
+
+export type PokemonIndexEntry = {
+  id: number;
+  name: string;
+  displayName: string;
+  url: string;
+  speciesKey: string;
+  sortNumber: number;
+  formKind: "base" | "regional" | "form" | "gender" | "mega";
+  formLabel?: string;
+  isSelectorOption: boolean;
+  cacheVersion: number;
+};
+
+export type ItemIndexEntry = {
+  id: number;
+  name: string;
+  displayName: string;
+  url: string;
+  isMegaStone?: boolean;
+};
+
+export type PokemonItem = {
+  id: string;
+  name: string;
+  spriteUrl?: string;
+  category?: string;
+  effect?: string;
+};
+
+export type PokemonAbility = {
+  id: string;
+  name: string;
+  effect?: string;
+  shortEffect?: string;
+};
+
+export type TeamMember = {
+  id: string;
+  name: string;
+  types: PokemonType[];
+  roles: string[];
+  spriteUrl?: string;
+  iconSpriteUrl?: string;
+  baseStats?: StatBlock;
+  abilities?: string[];
+  moves?: PokemonMove[];
+  source?: "local" | "pokeapi";
+};
+
+export type TeamSlot = TeamMember | null;
