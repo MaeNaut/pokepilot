@@ -52,11 +52,15 @@ The MVP should prove the core loop:
 
 ## Phase 5 - Persistence and Polish
 
-- Save example teams locally or in a database.
-- Add shareable team links if reasonable.
-- Improve responsive design.
-- Add loading, error, and empty states.
-- Write a strong portfolio case study.
+- [x] Save and load teams through localStorage.
+- [x] Persist Pokemon slots plus item, ability, nature, EV, move, Mega, and form state.
+- [x] Add saved-team management: load, rename, duplicate, delete, and last-opened restore.
+- [x] Add Showdown text import/export for individual Pokemon sets and saved teams.
+- [ ] Keep the saved-team schema compatible with future Supabase/Postgres storage.
+- [ ] Add shareable team links if reasonable.
+- [ ] Improve responsive design.
+- [ ] Add loading, error, and empty states.
+- [ ] Write a strong portfolio case study.
 
 ## Phase 6 - Optional Enhancements
 

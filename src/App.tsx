@@ -6,6 +6,7 @@ import {
   faCopy,
   faFileExport,
   faFileImport,
+  faFileLines,
   faFloppyDisk,
   faList,
   faPen,
@@ -14,19 +15,29 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchItem, fetchItemIndex, fetchPokemon, fetchPokemonIndex } from "./api/pokeApi";
+import { loadPopularSmogonSet } from "./api/smogonUsage";
 import { isPokemonLegal, loadShowdownLegality } from "./api/showdownLegality";
 import { CopilotPanel } from "./components/CopilotPanel";
+import { PokemonIcon } from "./components/PokemonIcon";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { samplePool, startingTeam } from "./data/sampleTeam";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
+import { shouldKeepSelectedPokemonForUsageTarget } from "./utils/pokemonAliases";
+import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
 import {
   formatShowdownSlot,
   formatShowdownTeam,
   parseShowdownTeam,
   toPokemonId,
 } from "./utils/showdownText";
-import type { ItemIndexEntry, PokemonIndexEntry, TeamMember, TeamSlot } from "./types";
+import type {
+  ItemIndexEntry,
+  PokemonIndexEntry,
+  TeamMember,
+  TeamSlot,
+} from "./types";
 import type { TeamBuildState } from "./hooks/useTeamBuildState";
+import type { SmogonUsageSet } from "./api/smogonUsage";
 import type { ShowdownLegalitySnapshot } from "./api/showdownLegality";
 
 const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
@@ -187,6 +198,10 @@ function createFallbackMember(slot: Exclude<SavedTeamSlot, null>): TeamMember {
   };
 }
 
+function hasStaleShowdownIcon(member: TeamMember) {
+  return isFullShowdownSpriteUrl(member.iconSpriteUrl);
+}
+
 function normalizeShowdownLookup(value: string) {
   return toPokemonId(value);
 }
@@ -220,6 +235,16 @@ function normalizeImportedEvs(evs: Partial<TeamBuildState["evsBySlot"][number]>)
   );
 }
 
+function isMegaPokemonId(value: string) {
+  return toPokemonId(value).includes("-mega");
+}
+
+function withoutSlotValue<T>(record: Record<number, T>, slotIndex: number) {
+  const next = { ...record };
+  delete next[slotIndex];
+  return next;
+}
+
 function App() {
   const [team, setTeam] = useState<TeamSlot[]>(startingTeam);
   const teamBuildState = useTeamBuildState();
@@ -233,8 +258,8 @@ function App() {
   const [renamingTeamId, setRenamingTeamId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [pendingDeleteTeamId, setPendingDeleteTeamId] = useState<string | null>(null);
-  const [importingTeamId, setImportingTeamId] = useState<string | null>(null);
-  const [teamImportDraft, setTeamImportDraft] = useState("");
+  const [showdownTeamId, setShowdownTeamId] = useState<string | null>(null);
+  const [teamShowdownDraft, setTeamShowdownDraft] = useState("");
   const [isImportingSavedTeam, setIsImportingSavedTeam] = useState(false);
   const [pendingTeamAction, setPendingTeamAction] = useState<PendingTeamAction | null>(
     null,
@@ -258,8 +283,8 @@ function App() {
   const closeTeamManager = useCallback(() => {
     setIsTeamManagerOpen(false);
     setPendingDeleteTeamId(null);
-    setImportingTeamId(null);
-    setTeamImportDraft("");
+    setShowdownTeamId(null);
+    setTeamShowdownDraft("");
     setRenamingTeamId(null);
     setRenameDraft("");
   }, []);
@@ -409,7 +434,7 @@ function App() {
           setItemIndex(index);
         }
       } catch {
-        // Item legality and fallback handling will be tightened with the M-B dataset.
+        return;
       }
     }
 
@@ -552,29 +577,11 @@ function App() {
     }
   }
 
-  async function handleSearchSlot(slotIndex: number, query: string) {
-    setSearchError(null);
-    const lookup = resolveLookupForLegality(query);
-    const speciesKey = resolveSpeciesKeyForLegality(lookup);
-
-    if (hasLegalityFilter() && !isPokemonLegal(showdownLegality, lookup, speciesKey)) {
-      setSearchError(`${query} is not legal in Regulation M-B.`);
-      return;
-    }
-
-    try {
-      const pokemon = await fetchPokemon(lookup);
-
-      setCustomPool((currentPool) => mergePool([pokemon], currentPool));
-      setTeam((currentTeam) =>
-        currentTeam.map((member, index) => (index === slotIndex ? pokemon : member)),
-      );
-    } catch (error) {
-      setSearchError(error instanceof Error ? error.message : "Pokemon lookup failed.");
-    }
-  }
-
-  async function handleSelectPokemon(slotIndex: number, lookup: string) {
+  async function handleSelectPokemon(
+    slotIndex: number,
+    lookup: string,
+    options: { applyUsageStats?: boolean } = {},
+  ) {
     setSearchError(null);
 
     if (!lookup) {
@@ -589,16 +596,36 @@ function App() {
       return;
     }
 
-    const localMember = customPool.find((member) => member.id === lookup);
+    try {
+      const selectedMember = await resolvePokemonMember(lookup);
+      let targetMember = selectedMember;
+      let usageSet: SmogonUsageSet | null = null;
 
-    if (localMember?.baseStats && localMember.abilities) {
-      setTeam((currentTeam) =>
-        currentTeam.map((member, index) => (index === slotIndex ? localMember : member)),
+      if (options.applyUsageStats) {
+        usageSet = await loadPopularSmogonSet(lookup);
+
+        if (usageSet) {
+          targetMember = await resolveUsageTargetMember(usageSet, selectedMember);
+        }
+      }
+
+      if (options.applyUsageStats) {
+        clearBuildStateForSlot(slotIndex);
+      }
+
+      setCustomPool((currentPool) =>
+        mergePool([selectedMember, targetMember], currentPool),
       );
-      return;
-    }
+      setTeam((currentTeam) =>
+        currentTeam.map((member, index) => (index === slotIndex ? targetMember : member)),
+      );
 
-    await handleSearchSlot(slotIndex, lookup);
+      if (usageSet) {
+        await applyUsageSetToSlot(slotIndex, usageSet, selectedMember, targetMember);
+      }
+    } catch (error) {
+      setSearchError(error instanceof Error ? error.message : "Pokemon lookup failed.");
+    }
   }
 
   function resolveImportedPokemonId(name: string) {
@@ -614,6 +641,140 @@ function App() {
     });
 
     return matchedEntry?.name ?? normalized;
+  }
+
+  async function resolvePokemonMember(lookup: string) {
+    const localMember = customPool.find((member) => member.id === lookup);
+
+    if (localMember?.baseStats && localMember.abilities && !hasStaleShowdownIcon(localMember)) {
+      return localMember;
+    }
+
+    return fetchPokemon(lookup);
+  }
+
+  function resolveUsageAbility(member: TeamMember, usageSet: SmogonUsageSet) {
+    if (!usageSet.ability) {
+      return "";
+    }
+
+    return (
+      member.abilities?.find(
+        (ability) => normalizeShowdownLookup(ability) === normalizeShowdownLookup(usageSet.ability!),
+      ) ??
+      usageSet.ability
+    );
+  }
+
+  function resolveUsageMoveIds(member: TeamMember, usageSet: SmogonUsageSet) {
+    const legalMoveIds = new Set((member.moves ?? []).map((move) => move.id));
+
+    return usageSet.moveIds.filter((moveId) => legalMoveIds.has(moveId)).slice(0, 4);
+  }
+
+  function clearBuildStateForSlot(slotIndex: number) {
+    teamBuildState.setItemBySlot((current) => withoutSlotValue(current, slotIndex));
+    teamBuildState.setAbilityBySlot((current) => withoutSlotValue(current, slotIndex));
+    teamBuildState.setNatureBySlot((current) => withoutSlotValue(current, slotIndex));
+    teamBuildState.setEvsBySlot((current) => withoutSlotValue(current, slotIndex));
+    teamBuildState.setMoveIdsBySlot((current) => withoutSlotValue(current, slotIndex));
+    teamBuildState.setPreMegaPokemonBySlot((current) =>
+      withoutSlotValue(current, slotIndex),
+    );
+  }
+
+  async function resolveUsageTargetMember(
+    usageSet: SmogonUsageSet,
+    selectedMember: TeamMember,
+  ) {
+    const usagePokemonId = resolveImportedPokemonId(usageSet.pokemonName);
+
+    if (
+      normalizeShowdownLookup(usagePokemonId) === normalizeShowdownLookup(selectedMember.id) ||
+      shouldKeepSelectedPokemonForUsageTarget(selectedMember.id, usagePokemonId)
+    ) {
+      return selectedMember;
+    }
+
+    try {
+      return await fetchPokemon(usagePokemonId);
+    } catch {
+      return selectedMember;
+    }
+  }
+
+  async function applyUsageSetToSlot(
+    slotIndex: number,
+    usageSet: SmogonUsageSet,
+    selectedMember: TeamMember,
+    targetMember: TeamMember,
+  ) {
+    const ability = resolveUsageAbility(targetMember, usageSet);
+    const moveIds = resolveUsageMoveIds(targetMember, usageSet);
+
+    if (usageSet.itemName) {
+      try {
+        const item = await fetchItem(normalizeShowdownLookup(usageSet.itemName));
+
+        teamBuildState.setItemBySlot((current) => ({
+          ...current,
+          [slotIndex]: item,
+        }));
+      } catch {
+        teamBuildState.setItemBySlot((current) => ({
+          ...current,
+          [slotIndex]: null,
+        }));
+      }
+    } else {
+      teamBuildState.setItemBySlot((current) => ({
+        ...current,
+        [slotIndex]: null,
+      }));
+    }
+
+    if (ability) {
+      teamBuildState.setAbilityBySlot((current) => ({
+        ...current,
+        [slotIndex]: ability,
+      }));
+    }
+
+    if (usageSet.nature) {
+      teamBuildState.setNatureBySlot((current) => ({
+        ...current,
+        [slotIndex]: usageSet.nature!,
+      }));
+    }
+
+    const usageEvs = usageSet.evs;
+
+    if (usageEvs) {
+      teamBuildState.setEvsBySlot((current) => ({
+        ...current,
+        [slotIndex]: normalizeImportedEvs(usageEvs),
+      }));
+    }
+
+    if (moveIds.length > 0) {
+      teamBuildState.setMoveIdsBySlot((current) => ({
+        ...current,
+        [slotIndex]: moveIds,
+      }));
+    }
+
+    teamBuildState.setPreMegaPokemonBySlot((current) => {
+      if (isMegaPokemonId(targetMember.id) && !isMegaPokemonId(selectedMember.id)) {
+        return {
+          ...current,
+          [slotIndex]: selectedMember.id,
+        };
+      }
+
+      const next = { ...current };
+      delete next[slotIndex];
+      return next;
+    });
   }
 
   function getShowdownExportText(slotIndex: number) {
@@ -808,7 +969,7 @@ function App() {
 
         const poolMember = customPool.find((member) => member.id === slot.pokemonId);
 
-        if (poolMember) {
+        if (poolMember && !hasStaleShowdownIcon(poolMember)) {
           return poolMember;
         }
 
@@ -888,8 +1049,8 @@ function App() {
 
   function startRenameTeam(savedTeam: SavedTeamSummary) {
     setPendingDeleteTeamId(null);
-    setImportingTeamId(null);
-    setTeamImportDraft("");
+    setShowdownTeamId(null);
+    setTeamShowdownDraft("");
     setRenamingTeamId(savedTeam.id);
     setRenameDraft(savedTeam.name);
     setTeamStorageMessage(null);
@@ -960,41 +1121,47 @@ function App() {
     updateSavedTeams(nextTeams);
     setTeamStorageMessage(`Duplicated ${savedTeam.name}.`);
     setPendingDeleteTeamId(null);
-    setImportingTeamId(null);
-    setTeamImportDraft("");
+    setShowdownTeamId(null);
+    setTeamShowdownDraft("");
     setRenamingTeamId(null);
   }
 
-  async function handleExportSavedTeam(savedTeam: SavedTeamSummary) {
+  async function getSavedTeamShowdownText(savedTeam: SavedTeamSummary) {
     const hydratedTeam = await hydrateSavedTeamMembers(savedTeam);
-    const text = formatShowdownTeam(
+
+    return formatShowdownTeam(
       hydratedTeam,
       savedTeam.buildState ?? createEmptyBuildState(),
     );
+  }
 
+  async function toggleSavedTeamShowdown(savedTeam: SavedTeamSummary) {
+    setPendingDeleteTeamId(null);
+    setRenamingTeamId(null);
+    setTeamStorageMessage(null);
+
+    if (showdownTeamId === savedTeam.id) {
+      setShowdownTeamId(null);
+      setTeamShowdownDraft("");
+      return;
+    }
+
+    setShowdownTeamId(savedTeam.id);
+    setTeamShowdownDraft(await getSavedTeamShowdownText(savedTeam));
+  }
+
+  async function handleExportSavedTeam() {
     try {
-      await navigator.clipboard.writeText(text);
-      setTeamStorageMessage(`Exported ${savedTeam.name}.`);
+      await navigator.clipboard.writeText(teamShowdownDraft);
+      setTeamStorageMessage("Copied Showdown text.");
     } catch {
       setTeamStorageMessage("Export text could not be copied.");
     }
-
-    setPendingDeleteTeamId(null);
-    setRenamingTeamId(null);
-    setImportingTeamId(null);
   }
 
-  function startImportSavedTeam(savedTeam: SavedTeamSummary) {
-    setPendingDeleteTeamId(null);
-    setRenamingTeamId(null);
-    setImportingTeamId(savedTeam.id);
-    setTeamImportDraft("");
-    setTeamStorageMessage(null);
-  }
-
-  function cancelImportSavedTeam() {
-    setImportingTeamId(null);
-    setTeamImportDraft("");
+  function closeSavedTeamShowdown() {
+    setShowdownTeamId(null);
+    setTeamShowdownDraft("");
     setIsImportingSavedTeam(false);
   }
 
@@ -1002,7 +1169,7 @@ function App() {
     setIsImportingSavedTeam(true);
 
     try {
-      const importedSnapshot = await buildImportedShowdownSnapshot(teamImportDraft);
+      const importedSnapshot = await buildImportedShowdownSnapshot(teamShowdownDraft);
       const now = new Date().toISOString();
       const nextSavedTeam: SavedTeamSummary = {
         ...savedTeam,
@@ -1035,7 +1202,7 @@ function App() {
       }
 
       setTeamStorageMessage(`Imported into ${savedTeam.name}.`);
-      cancelImportSavedTeam();
+      closeSavedTeamShowdown();
     } catch (error) {
       setTeamStorageMessage(
         error instanceof Error ? error.message : "Showdown import failed.",
@@ -1212,20 +1379,11 @@ function App() {
                               <button
                                 className="saved-team-action-button"
                                 type="button"
-                                aria-label={`Import Showdown text into ${savedTeam.name}`}
-                                title="Import Showdown text"
-                                onClick={() => startImportSavedTeam(savedTeam)}
+                                aria-label={`Open Showdown text tools for ${savedTeam.name}`}
+                                title="Showdown Text"
+                                onClick={() => void toggleSavedTeamShowdown(savedTeam)}
                               >
-                                <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />
-                              </button>
-                              <button
-                                className="saved-team-action-button"
-                                type="button"
-                                aria-label={`Export ${savedTeam.name} as Showdown text`}
-                                title="Export Showdown text"
-                                onClick={() => void handleExportSavedTeam(savedTeam)}
-                              >
-                                <FontAwesomeIcon icon={faFileExport} aria-hidden="true" />
+                                <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
                               </button>
                               <button
                                 className="saved-team-action-button"
@@ -1252,8 +1410,8 @@ function App() {
                                 title="Delete"
                                 onClick={() => {
                                   setRenamingTeamId(null);
-                                  setImportingTeamId(null);
-                                  setTeamImportDraft("");
+                                  setShowdownTeamId(null);
+                                  setTeamShowdownDraft("");
                                   setPendingDeleteTeamId((currentId) =>
                                     currentId === savedTeam.id ? null : savedTeam.id,
                                   );
@@ -1276,9 +1434,7 @@ function App() {
                               className="saved-team-preview-slot"
                               key={`${savedTeam.id}-${index}`}
                             >
-                              {slot?.iconSpriteUrl ?? slot?.spriteUrl ? (
-                                <img src={slot.iconSpriteUrl ?? slot.spriteUrl} alt="" />
-                              ) : null}
+                              {slot ? <PokemonIcon pokemon={slot} /> : null}
                             </span>
                           ))}
                       </div>
@@ -1303,27 +1459,33 @@ function App() {
                         </div>
                       ) : null}
 
-                      {importingTeamId === savedTeam.id ? (
+                      {showdownTeamId === savedTeam.id ? (
                         <div
                           className="saved-team-import-panel"
                           onClick={(event) => event.stopPropagation()}
                           onKeyDown={(event) => event.stopPropagation()}
                         >
+                          <strong>Team Showdown Text</strong>
                           <textarea
-                            value={teamImportDraft}
+                            value={teamShowdownDraft}
                             placeholder="Paste Showdown team text here..."
-                            onChange={(event) => setTeamImportDraft(event.target.value)}
+                            onChange={(event) => setTeamShowdownDraft(event.target.value)}
                           />
                           <div className="saved-team-import-actions">
-                            <button type="button" onClick={cancelImportSavedTeam}>
-                              Cancel
-                            </button>
                             <button
                               type="button"
                               disabled={isImportingSavedTeam}
                               onClick={() => void commitImportSavedTeam(savedTeam)}
                             >
+                              <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />
                               {isImportingSavedTeam ? "Importing..." : "Import"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleExportSavedTeam()}
+                            >
+                              <FontAwesomeIcon icon={faFileExport} aria-hidden="true" />
+                              Export
                             </button>
                           </div>
                         </div>
@@ -1369,7 +1531,8 @@ function App() {
         ) : null}
         <p>
           PokePilot AI is unofficial and not affiliated with Nintendo, Game Freak,
-          Creatures, or The Pokemon Company. Pokemon data is loaded through PokeAPI.
+          Creatures, or The Pokemon Company. Data sources: PokeAPI and Pokemon
+          Showdown. Icons: Font Awesome and third-party type SVGs.
         </p>
       </footer>
     </main>

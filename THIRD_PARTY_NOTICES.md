@@ -1,5 +1,19 @@
 # Third-Party Notices
 
+## Font Awesome
+
+UI icons are rendered with Font Awesome packages:
+
+- `@fortawesome/free-solid-svg-icons`
+- `@fortawesome/react-fontawesome`
+
+Website: https://fontawesome.com
+
+Repository: https://github.com/FortAwesome/Font-Awesome
+
+The installed free solid icon package is licensed under CC BY 4.0 and MIT.
+The React component package is licensed under the MIT License.
+
 ## pokemon-type-icons
 
 Type icons in `src/assets/icons/types` are from
@@ -28,3 +42,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Pokemon Showdown
+
+Pokemon Champions Regulation M-B legality data is loaded from Pokemon Showdown
+runtime data and the Pokemon Showdown GitHub repository.
+
+Runtime data: https://play.pokemonshowdown.com/data/
+
+Repository: https://github.com/smogon/pokemon-showdown
+
+Usage stats: https://www.smogon.com/stats/
+
+Pokemon Showdown is licensed under the MIT License. PokePilot AI uses Showdown
+data as a practical legality reference and is not affiliated with Pokemon
+Showdown or Smogon.

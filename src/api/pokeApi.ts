@@ -10,11 +10,11 @@ import {
 
 const POKEAPI_BASE_URL = "https://pokeapi.co/api/v2";
 const SHOWDOWN_MOVES_URL = "https://play.pokemonshowdown.com/data/moves.json";
-const CACHE_PREFIX = "pokepilot:pokemon:v11:";
+const CACHE_PREFIX = "pokepilot:pokemon:v16:";
 const ITEM_CACHE_PREFIX = "pokepilot:item:v2:";
 const MOVE_CACHE_PREFIX = "pokepilot:move:v6:";
 const ABILITY_CACHE_PREFIX = "pokepilot:ability:v1:";
-const INDEX_CACHE_VERSION = 9;
+const INDEX_CACHE_VERSION = 14;
 const INDEX_CACHE_KEY = `pokepilot:pokemon-index:v${INDEX_CACHE_VERSION}`;
 const ITEM_INDEX_CACHE_VERSION = 3;
 const ITEM_INDEX_CACHE_KEY = `pokepilot:item-index:v${ITEM_INDEX_CACHE_VERSION}`;
@@ -114,6 +114,7 @@ const SHOWDOWN_SCREEN_SIDE_CONDITIONS = new Set([
   "reflect",
   "safeguard",
 ]);
+
 const FORM_SPECIES_DEFAULTS: Record<string, string> = {
   aegislash: "aegislash-shield",
   castform: "castform",
@@ -130,6 +131,20 @@ const FORM_SPECIES_DEFAULTS: Record<string, string> = {
   sinistcha: "sinistcha",
   vivillon: "vivillon",
 };
+const MAIN_PICKER_HIDDEN_FORMS = new Set([
+  "pyroar-female",
+]);
+const MAIN_PICKER_HIDDEN_PREFIXES = [
+  "castform-",
+  "pikachu-",
+];
+
+function isHiddenFromMainPokemonPicker(name: string) {
+  return (
+    MAIN_PICKER_HIDDEN_FORMS.has(name) ||
+    MAIN_PICKER_HIDDEN_PREFIXES.some((prefix) => name.startsWith(prefix))
+  );
+}
 
 type PokeApiPokemon = {
   id: number;
@@ -403,7 +418,7 @@ function getGenderMeta(name: string, id: number, canonicalIdByName: Map<string, 
   const config = GENDER_FORM_SPECIES[genderMeta.speciesKey];
 
   return {
-    displayName: `${formatLabel(genderMeta.speciesKey)} ${genderMeta.label}`,
+    displayName: getGenderDisplayName(genderMeta),
     speciesKey: genderMeta.speciesKey,
     sortNumber:
       canonicalIdByName.get(config.defaultName) ??
@@ -413,6 +428,18 @@ function getGenderMeta(name: string, id: number, canonicalIdByName: Map<string, 
     formLabel: genderMeta.label,
     isSelectorOption: true,
   };
+}
+
+function getGenderDisplayName(genderMeta: {
+  speciesKey: string;
+  gender: "male" | "female";
+  label: string;
+}) {
+  if (genderMeta.speciesKey === "pyroar" && genderMeta.gender === "male") {
+    return formatLabel(genderMeta.speciesKey);
+  }
+
+  return `${formatLabel(genderMeta.speciesKey)} ${genderMeta.label}`;
 }
 
 function getRegionalMeta(name: string, id: number, canonicalIdByName: Map<string, number>) {
@@ -511,6 +538,10 @@ function isMainPickerVariant(
   id: number,
   formKind: PokemonIndexEntry["formKind"],
 ) {
+  if (isHiddenFromMainPokemonPicker(name)) {
+    return false;
+  }
+
   if (formKind === "mega") {
     return false;
   }
@@ -524,7 +555,7 @@ function isMainPickerVariant(
   }
 
   if (formKind === "form") {
-    return id <= NATIONAL_DEX_LIMIT;
+    return true;
   }
 
   return id <= NATIONAL_DEX_LIMIT || !name.includes("-");
@@ -1027,13 +1058,64 @@ async function fetchMove(name: string) {
   return move;
 }
 
-function getPokemonSpriteUrl(data: PokeApiPokemon, spriteGender?: "female") {
+function getPokeApiCurrentIconSpriteUrl(
+  data: PokeApiPokemon,
+  spriteGender?: "female",
+) {
   if (spriteGender === "female") {
     return (
-      data.sprites.other?.home?.front_female ??
+      data.sprites.versions?.["generation-ix"]?.["scarlet-violet"]?.front_female ??
+      undefined
+    );
+  }
+
+  return (
+    data.sprites.versions?.["generation-ix"]?.["scarlet-violet"]?.front_default ??
+    undefined
+  );
+}
+
+function getPokeApiDefaultSpriteUrl(
+  data: PokeApiPokemon,
+  spriteGender?: "female",
+) {
+  if (spriteGender === "female") {
+    return data.sprites.front_female ?? data.sprites.front_default ?? undefined;
+  }
+
+  return data.sprites.front_default ?? undefined;
+}
+
+function getPokeApiLegacyIconSpriteUrl(
+  data: PokeApiPokemon,
+  spriteGender?: "female",
+) {
+  if (spriteGender === "female") {
+    return (
+      data.sprites.versions?.["generation-viii"]?.icons?.front_female ??
+      data.sprites.versions?.["generation-vii"]?.icons?.front_female ??
+      undefined
+    );
+  }
+
+  return (
+    data.sprites.versions?.["generation-viii"]?.icons?.front_default ??
+    data.sprites.versions?.["generation-vii"]?.icons?.front_default ??
+    undefined
+  );
+}
+
+function getPokemonSpriteUrl(
+  data: PokeApiPokemon,
+  spriteGender?: "female",
+) {
+  if (spriteGender === "female") {
+    return (
       data.sprites.other?.["official-artwork"]?.front_female ??
+      data.sprites.other?.home?.front_female ??
       data.sprites.front_female ??
       data.sprites.other?.["official-artwork"]?.front_default ??
+      data.sprites.other?.home?.front_default ??
       data.sprites.front_default ??
       undefined
     );
@@ -1046,23 +1128,16 @@ function getPokemonSpriteUrl(data: PokeApiPokemon, spriteGender?: "female") {
   );
 }
 
-function getPokemonIconSpriteUrl(data: PokeApiPokemon, spriteGender?: "female") {
-  if (spriteGender === "female") {
-    return (
-      data.sprites.versions?.["generation-ix"]?.["scarlet-violet"]?.front_female ??
-      data.sprites.versions?.["generation-viii"]?.icons?.front_female ??
-      data.sprites.versions?.["generation-vii"]?.icons?.front_female ??
-      data.sprites.front_female ??
-      undefined
-    );
-  }
+function getPokemonIconSpriteUrl(
+  data: PokeApiPokemon,
+  spriteGender?: "female",
+) {
+  const defaultSpriteUrl = getPokeApiDefaultSpriteUrl(data, spriteGender);
 
   return (
-    data.sprites.versions?.["generation-ix"]?.["scarlet-violet"]?.front_default ??
-    data.sprites.versions?.["generation-viii"]?.icons?.front_default ??
-    data.sprites.versions?.["generation-vii"]?.icons?.front_default ??
-    data.sprites.front_default ??
-    undefined
+    getPokeApiCurrentIconSpriteUrl(data, spriteGender) ??
+    defaultSpriteUrl ??
+    getPokeApiLegacyIconSpriteUrl(data, spriteGender)
   );
 }
 
@@ -1070,6 +1145,7 @@ async function normalizePokemon(
   data: PokeApiPokemon,
   options: { id?: string; name?: string; spriteGender?: "female" } = {},
 ): Promise<TeamMember> {
+  const pokemonId = options.id ?? data.name;
   const types = data.types
     .sort((a, b) => a.slot - b.slot)
     .map((entry) => entry.type.name)
@@ -1090,7 +1166,7 @@ async function normalizePokemon(
     .sort(compareMovesByTypeThenName);
 
   return {
-    id: options.id ?? data.name,
+    id: pokemonId,
     name: options.name ?? formatLabel(data.name),
     types,
     roles: inferRoles(data.stats),

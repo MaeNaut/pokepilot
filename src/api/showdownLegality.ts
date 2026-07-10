@@ -1,3 +1,5 @@
+import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+
 export type ShowdownLegalitySnapshot = {
   pokemonIds: Set<string>;
   knownPokemonIds: Set<string>;
@@ -69,23 +71,7 @@ export function getShowdownLookupKeys(value: string) {
     return [];
   }
 
-  const noSeparator = cleaned.replace(/[^a-z0-9]/g, "");
-  const dashed = cleaned.replace(/[^a-z0-9]+/g, "-");
-
-  const values = [cleaned, dashed, noSeparator];
-  const genderMatch = dashed.match(/^(.+)-(male|female)(-.+)?$/);
-
-  if (genderMatch) {
-    const [, baseName, gender, suffix = ""] = genderMatch;
-
-    if (gender === "female") {
-      values.push(`${baseName}f${suffix}`, `${baseName}-f${suffix}`);
-    } else {
-      values.push(`${baseName}${suffix}`, baseName);
-    }
-  }
-
-  return [...new Set(values)];
+  return [...new Set([cleaned, ...getPokemonLookupAliases(cleaned)])];
 }
 
 function getBaseSpeciesKey(value: string) {

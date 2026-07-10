@@ -60,17 +60,30 @@ Current direction:
 - Normalize the PokeAPI Pokemon index into UI metadata:
   - regional forms stay in the main Pokemon picker but sort under the original
     species dex number
-  - form-change variants are hidden from the main picker except for their default
-    form, then exposed through the selected Pokemon's form control
+  - form-change variants generally stay in the main Pokemon picker so usage stats,
+    legal moves, and form-specific data can load independently
+  - cosmetic or battle-only forms that should not be selected directly, such as
+    Pikachu caps and Castform weather forms, are hidden from the main picker
   - mega evolutions are hidden from the main picker and exposed through the
     selected Pokemon's mega control
 - Keep PokeAPI as the display/detail source for Pokemon, items, abilities, moves,
   sprites, and artwork.
+- Use PokeAPI generation-specific icon sprites first. If that path is missing,
+  fall back to PokeAPI `front_default` before older generation icon paths so
+  Pokemon without current icons can still use the more detailed 96x96 sprite in
+  team tabs and previews. Keep the large card artwork on PokeAPI artwork/front
+  sprite URLs.
 - Use Pokemon Showdown data as the current Regulation M-B legality source for:
   - legal Pokemon
   - legal items
   - legal abilities per Pokemon
   - legal moves per Pokemon
+- Use Smogon monthly moveset usage stats as the first popular-set source. The
+  app tries the latest month first, falls back through recent months, and prefers
+  the 1630 cutoff before lower cutoffs.
+- Fetch Smogon usage stats through the same-origin `/smogon-stats` path. In local
+  development this is handled by the Vite dev proxy because Smogon does not send
+  browser CORS headers.
 - Keep the legality layer separate from PokeAPI normalization so source mapping
   and future format support stay maintainable.
 
@@ -81,20 +94,21 @@ claim of affiliation.
 ## Builder UX Notes
 
 - The main builder is a single large Pokemon editor card, not a grid of six cards.
-- Team members are shown as tabs/bookmarks above the card.
+- Team members are shown as compact tabs/bookmarks on the left side of the card.
 - The displayed Pokemon is changed by clicking a team tab.
 - The Pokemon name itself is the selector. In closed state it is large text; when
   opened, it becomes a same-style editable search field with a filtered dropdown.
-- The name dropdown should stay empty until the user types at least one character.
+- With usage stats available, the empty-query name dropdown shows Pokemon in
+  Smogon usage order, 20 at a time, and appends more entries as the user scrolls.
 - Opening/closing the name picker must not shift the rest of the card layout.
 - Clicking outside the name picker closes it and clears the temporary search query.
-- If the selected Pokemon has form-change variants, show a compact form selector
-  beside the Pokemon name.
+- Form-change variants are selected from the main Pokemon dropdown, while Mega
+  evolutions remain adjacent controls next to the Pokemon name.
 - If the selected Pokemon has mega evolutions, show compact original mega controls
   beside the Pokemon name rather than listing mega Pokemon in the main search.
 - The large Pokemon name header should show only the base species name; regional,
-  form-change, and mega state should be represented by adjacent controls and the
-  loaded Pokemon data, not by lengthening the header text.
+  form-change, gender, and mega state should avoid lengthening the header text
+  unnecessarily.
 - The item control should render as an icon-only button inside the card. Opening
   it should show a searchable dropdown backed by the full PokeAPI item index.
 - Pokemon-specific mega stones should be filtered from the item dropdown unless
@@ -116,8 +130,8 @@ claim of affiliation.
 ## Current Builder Data Model
 
 - Team has six slots.
-- Each slot stores a selected Pokemon plus local UI choices for item, ability,
-  nature, and EVs.
+- Slots can be empty. Each filled slot stores a selected Pokemon plus local UI
+  choices for item, ability, nature, EVs, moves, and Mega/form state.
 - IV is fixed through the Pokemon Champions-style displayed stat assumption.
 - Stat calculation uses Pokemon Champions-style EV limits, fixed IV assumptions,
   and nature modifiers.
@@ -128,6 +142,17 @@ claim of affiliation.
   fetched type, power, accuracy, PP, description, and Showdown-derived tags.
 - Pokemon, item, ability, nature, and move pickers support keyboard navigation
   with hover-to-keyboard active selection continuity.
+- The move picker opens scrolled to the current move, uses natural nearest-scroll
+  behavior for keyboard navigation, and prevents mouse hover from triggering
+  scroll loops.
+- Pokemon picked from the main name dropdown can auto-apply a popular Smogon
+  moveset usage sample. Form changes, Mega toggles, saved-team loads, and
+  Showdown imports do not trigger usage auto-application.
+- Saved teams are currently persisted in localStorage with a schema version,
+  team name, timestamps, slots, and per-slot build details. The model is kept
+  plain-JSON so it can later move to Supabase/Postgres without changing UI state
+  shape too aggressively.
+- Showdown text import/export exists at both Pokemon-slot and saved-team level.
 
 ## Regulation Target
 
