@@ -89,11 +89,11 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Cover team diagnostic multipliers, ability immunities, roles, and alerts.
   - [x] Cover Showdown text formatting and parsing.
   - [x] Cover first-pass set validity, Mega Stone matching, EV limits, Species Clause, and Item Clause.
-  - [ ] Add representative Regulation M-B legality and form-alias fixtures.
+  - [x] Add representative Regulation M-B legality and form-alias fixtures.
 
 - [ ] Harden the Pokemon Champions Regulation M-B legality layer.
   - [x] Keep PokeAPI as the display/detail source and Pokemon Showdown data as the legality source.
-  - [ ] Add regression checks against representative raw Showdown Pokemon, item, ability, and move snapshots.
+  - [x] Add regression checks against representative raw Showdown Pokemon, item, ability, and move snapshots.
   - [ ] Document any known Showdown/PokeAPI name mapping exceptions.
 - [ ] Improve usage-stats default sets.
   - [x] Fetch and parse Smogon monthly moveset stats for Regulation M-B.

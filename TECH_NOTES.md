@@ -33,6 +33,10 @@ This project is also meant to fill practical skill gaps that have appeared repea
 - Deployment: Deploy the app publicly through Vercel or a similar platform and keep a live link for the portfolio.
 - GitHub Actions: Add a simple lint/build workflow later to demonstrate basic CI/CD experience.
 - Testing: Use Vitest for deterministic stat, parser, alias, legality, and team-diagnostic regression tests. Keep live PokeAPI, Showdown, and Smogon requests out of the unit-test suite.
+- Legality fixtures: Keep small raw Showdown and PokeAPI response fixtures under
+  `src/test/fixtures`. Use them to exercise the real source parsers and form
+  normalization without making network requests during tests. Add cases when a
+  newly fixed Pokemon, form, item, ability, or move could regress.
 - Data visualization: Use type coverage, weakness matrices, and team balance charts to show frontend and product depth.
 
 Avoid forcing these skills into the project too early:
@@ -220,8 +224,8 @@ implementation uses Pokemon Showdown data as the M-B legality source for:
 
 Still needed:
 
-- representative regression checks for legality-sensitive Pokemon, items,
-  abilities, and moves
+- extend the representative fixtures whenever a new legality-sensitive Pokemon,
+  item, ability, or move exception is discovered
 - documentation for any known Showdown/PokeAPI naming exceptions
 - any newly discovered Pokemon Champions-specific battle-rule differences
 

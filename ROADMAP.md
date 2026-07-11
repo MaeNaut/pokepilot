@@ -40,10 +40,10 @@ The MVP should prove the core loop:
 - [x] Restrict abilities to abilities available to the selected Pokemon.
 - [x] Restrict moves to legal M-B moves for the selected Pokemon.
 - [x] Add compact validity status and detailed warnings for configured set choices.
-- [ ] Add regression checks for representative legality cases.
+- [x] Add regression checks for representative legality cases.
 - [x] Introduce Vitest with deterministic stat, diagnostics, and Showdown text regression tests.
 - [x] Add first validity regression fixtures for legal sets, illegal choices, Mega Stones, EVs, and team clauses.
-- [ ] Expand Vitest coverage to representative raw Showdown legality and alias/form cases.
+- [x] Expand Vitest coverage to representative raw Showdown legality and alias/form cases.
 
 ## Phase 4 - AI Assistant
 
