@@ -32,7 +32,9 @@ This project is also meant to fill practical skill gaps that have appeared repea
 - AI API integration: Use an LLM API for structured team analysis and recommendations, then render the output as product UI.
 - Deployment: Deploy the app publicly through Vercel or a similar platform and keep a live link for the portfolio.
 - GitHub Actions: Add a simple lint/build workflow later to demonstrate basic CI/CD experience.
-- Testing: Use Vitest for deterministic stat, parser, alias, legality, and team-diagnostic regression tests. Keep live PokeAPI, Showdown, and Smogon requests out of the unit-test suite.
+- Testing: Use Vitest for deterministic stat, parser, alias, legality, team-diagnostic,
+  and local Copilot-contract regression tests. Keep live PokeAPI, Showdown, and
+  Smogon requests out of the unit-test suite.
 - Legality fixtures: Keep small raw Showdown and PokeAPI response fixtures under
   `src/test/fixtures`. Use them to exercise the real source parsers and form
   normalization without making network requests during tests. Add cases when a
@@ -243,6 +245,9 @@ Still needed:
   gray surfaces, and semantic accent colors only for matchup, role, and alert
   meaning. Matchup cells, role summaries, and alerts should read as related
   repeated items rather than unrelated widget styles.
+- Let active role summaries size to their Pokemon count and wrap naturally. Keep
+  zero-member roles visible only in a compact Missing line instead of reserving a
+  full empty card for each one.
 - Calculate defensive matchups from the shared type chart and the current form's
   displayed typing, then apply selected abilities that fully negate an attacking
   type: Levitate and Earth Eater for Ground; Lightning Rod, Volt Absorb, and Motor
@@ -261,6 +266,21 @@ Still needed:
   sufficient bulk, multiple defensive moves, and a nature or stat lean toward that
   defense. Supporter roles use a maintained list of doubles-oriented support moves
   and can also recognize a support ability paired with utility.
+- Treat Setter as a separate sixth role. A selected weather or terrain ability, or
+  a field, weather, screen, terrain, or entry-hazard move, is enough to assign it.
+  Setter and Supporter remain independent labels so offensive weather setters and
+  utility-heavy screen setters can be described accurately.
+- Analyze Trick Room, Tailwind, Gravity, rain, sun, sand, and snow as deterministic
+  team concepts. Record setup slots, compatible ace candidates, strongly dependent
+  aces, and independently classified attackers that can function outside the mode.
+  Field concepts require an actual setter before they are inferred; only explicit
+  weather-dependent abilities may produce a beneficiary-without-setter warning.
+- Keep setup-only concepts observational. Weather, field, or room setup may be used
+  for a setter's own value or as counterplay, so its presence alone must not demand
+  a dedicated ace. Warn only for explicit weather dependency without setup, or a
+  completed mode whose dependent aces have no independently classified attacker
+  behind them. Feed the same concept summaries into the local PokePilot playstyle,
+  strengths, and recommendation output.
 - Surface compact alerts for shared weaknesses, open team slots, repeated typing,
   and role-based attacker or wall imbalance. Only flag role imbalance when one
   physical/special side has at least two classified members and the opposite side
@@ -268,13 +288,31 @@ Still needed:
   danger and warning alerts over informational alerts before applying the display
   limit. Do not treat missing held items or fewer than four moves as automatically
   incomplete because both can be intentional set choices.
-- Keep the analysis function independent from React rendering so it can later be
-  regression-tested and reused as structured input for Copilot.
+- Keep role and concept analysis independent from React rendering so they can be
+  regression-tested and reused as structured input for PokePilot.
 
 ## AI Response Shape Idea
 
 The preferred AI shape is a team-aware Copilot, not a generic ChatGPT clone. Keep
 the Copilot constrained to the current team data and deterministic builder analysis.
+
+The current first slice is a provider-independent local preview:
+
+- `src/utils/copilotAnalysis.ts` creates a versioned, compact request containing
+  active sets, the selected slot, deterministic diagnostics, field/weather concept
+  summaries, and validity summaries.
+- The same module returns structured summary, strength, focus, playstyle, and
+  recommendation fields from local rules. The panel footer identifies this as a
+  `Rules-based preview` rather than claiming it is a hosted AI response.
+- Team and selected-Pokemon scopes keep separate results. A request fingerprint marks
+  an existing result stale after relevant edits without rerunning analysis on every
+  keystroke; changing only the displayed slot does not stale team-scope analysis.
+- `CopilotPanel.tsx` renders the structured response and owns idle, loading, local
+  error, refresh, and stale states. A future server route should replace only the
+  response provider, not the product UI contract.
+- On the desktop workspace, keep the Copilot panel fixed to the viewport space
+  between the app header and footer. Long analysis and future chat history scroll
+  inside `copilot-content` so they do not increase the document height.
 
 For the first AI route, ask the AI to return structured JSON such as:
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -34,6 +34,8 @@ import {
   shouldKeepSelectedPokemonForUsageTarget,
 } from "./utils/pokemonAliases";
 import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
+import { analyzeTeam } from "./utils/teamDiagnostics";
+import { validateTeam } from "./utils/teamValidity";
 import {
   formatShowdownSlot,
   formatShowdownTeam,
@@ -252,6 +254,7 @@ function reorderArrayItem<T>(items: T[], sourceIndex: number, targetIndex: numbe
 
 function App() {
   const [team, setTeam] = useState<TeamSlot[]>(startingTeam);
+  const [selectedTeamSlot, setSelectedTeamSlot] = useState(0);
   const teamBuildState = useTeamBuildState();
   const [teamName, setTeamName] = useState("Untitled Team");
   const [teamNameDraft, setTeamNameDraft] = useState("Untitled Team");
@@ -300,6 +303,56 @@ function App() {
   const pokemonSelectionRequestRef = useRef(0);
   const committedSnapshotRef = useRef<string | null>(null);
   const hasRestoredSavedTeamRef = useRef(false);
+  const teamDiagnostics = useMemo(
+    () =>
+      analyzeTeam(
+        team,
+        {
+          abilityBySlot: teamBuildState.abilityBySlot,
+          evsBySlot: teamBuildState.evsBySlot,
+          moveIdsBySlot: teamBuildState.moveIdsBySlot,
+          natureBySlot: teamBuildState.natureBySlot,
+        },
+        customPool,
+      ),
+    [
+      customPool,
+      team,
+      teamBuildState.abilityBySlot,
+      teamBuildState.evsBySlot,
+      teamBuildState.moveIdsBySlot,
+      teamBuildState.natureBySlot,
+    ],
+  );
+  const teamValidity = useMemo(
+    () =>
+      validateTeam(
+        team,
+        {
+          abilityBySlot: teamBuildState.abilityBySlot,
+          evsBySlot: teamBuildState.evsBySlot,
+          itemBySlot: teamBuildState.itemBySlot,
+          moveIdsBySlot: teamBuildState.moveIdsBySlot,
+          natureBySlot: teamBuildState.natureBySlot,
+          preMegaPokemonBySlot: teamBuildState.preMegaPokemonBySlot,
+        },
+        showdownLegality,
+        pokemonIndex,
+        itemIndex,
+      ),
+    [
+      itemIndex,
+      pokemonIndex,
+      showdownLegality,
+      team,
+      teamBuildState.abilityBySlot,
+      teamBuildState.evsBySlot,
+      teamBuildState.itemBySlot,
+      teamBuildState.moveIdsBySlot,
+      teamBuildState.natureBySlot,
+      teamBuildState.preMegaPokemonBySlot,
+    ],
+  );
   const savedTeamReorder = useLongPressReorder({
     containerRef: savedTeamListRef,
     disabled: Boolean(renamingTeamId || pendingDeleteTeamId || showdownTeamId),
@@ -1611,6 +1664,7 @@ function App() {
         <div className="builder-workspace">
           <TeamBuilder
             team={team}
+            selectedSlot={selectedTeamSlot}
             pool={customPool}
             pokemonIndex={pokemonIndex}
             itemIndex={itemIndex}
@@ -1624,6 +1678,8 @@ function App() {
             searchNotice={searchNotice}
             failedPokemonSelectionSlot={failedPokemonSelection?.slotIndex ?? null}
             buildState={teamBuildState}
+            validity={teamValidity}
+            onSelectedSlotChange={setSelectedTeamSlot}
             onRetryPokemonIndex={() => setPokemonIndexLoadAttempt((attempt) => attempt + 1)}
             onRetryItemIndex={() => setItemIndexLoadAttempt((attempt) => attempt + 1)}
             onRetryShowdownLegality={() => setShowdownLoadAttempt((attempt) => attempt + 1)}
@@ -1645,14 +1701,17 @@ function App() {
           />
           <TeamDiagnostics
             team={team}
-            moveSources={customPool}
-            buildState={teamBuildState}
+            diagnostics={teamDiagnostics}
           />
         </div>
         <CopilotPanel
+          teamName={teamNameDraft}
           team={team}
-          pokemonCount={pokemonIndex.length}
-          indexStatus={indexStatus}
+          pokemonIndex={pokemonIndex}
+          selectedSlot={selectedTeamSlot}
+          buildState={teamBuildState}
+          diagnostics={teamDiagnostics}
+          validity={teamValidity}
         />
       </div>
 

@@ -24,6 +24,19 @@ function createMove(id: string, category: "physical" | "special"): PokemonMove {
   };
 }
 
+function createStatusMove(id: string): PokemonMove {
+  return {
+    id,
+    name: id,
+    type: "psychic",
+    category: "status",
+    power: null,
+    accuracy: null,
+    pp: 5,
+    description: "",
+  };
+}
+
 function createMember(id: string, moves: PokemonMove[]): TeamMember {
   return {
     id,
@@ -88,5 +101,81 @@ describe("team diagnostics", () => {
     });
 
     expect(result.roles.find((role) => role.id === "physical-attacker")?.slotIndexes).toEqual([]);
+  });
+
+  it("classifies a single field or board setup move as Setter", () => {
+    const trickRoom = createStatusMove("trick-room");
+    const member = createMember("room-setter", [trickRoom]);
+    const result = analyzeTeam([member], {
+      moveIdsBySlot: { 0: ["trick-room"] },
+      evsBySlot: {},
+      natureBySlot: {},
+      abilityBySlot: {},
+    });
+
+    expect(result.roles.find((role) => role.id === "setter")?.slotIndexes).toEqual([0]);
+    expect(result.roles.find((role) => role.id === "supporter")?.slotIndexes).toEqual([]);
+    expect(result.concepts).toContainEqual(
+      expect.objectContaining({
+        id: "trick-room",
+        status: "setup-only",
+        setterSlots: [0],
+      }),
+    );
+    expect(
+      result.alerts.some(
+        (alert) => alert.id === "concept-trick-room-setup-only",
+      ),
+    ).toBe(false);
+  });
+
+  it("classifies Sleep Powder and Life Dew as support moves", () => {
+    const supportMoves = [
+      createStatusMove("sleep-powder"),
+      createStatusMove("life-dew"),
+    ];
+    const member = createMember("support-pokemon", supportMoves);
+    const result = analyzeTeam([member], {
+      moveIdsBySlot: { 0: ["sleep-powder", "life-dew"] },
+      evsBySlot: {},
+      natureBySlot: {},
+      abilityBySlot: {},
+    });
+
+    expect(result.roles.find((role) => role.id === "supporter")?.slotIndexes).toEqual([0]);
+  });
+
+  it("detects a complete weather core and warns when it has no off-mode attacker", () => {
+    const rainSetter = {
+      ...createMember("rain-setter", []),
+      abilities: ["Drizzle"],
+    };
+    const physicalMoves = [
+      createMove("waterfall", "physical"),
+      createMove("liquidation", "physical"),
+    ];
+    const rainAce = {
+      ...createMember("rain-ace", physicalMoves),
+      abilities: ["Swift Swim"],
+    };
+    const result = analyzeTeam([rainSetter, rainAce], {
+      moveIdsBySlot: { 0: [], 1: ["waterfall", "liquidation"] },
+      evsBySlot: { 1: { ...neutralEvs, attack: 32 } },
+      natureBySlot: { 1: "adamant" },
+      abilityBySlot: { 0: "Drizzle", 1: "Swift Swim" },
+    });
+    const rain = result.concepts.find((concept) => concept.id === "rain");
+
+    expect(result.roles.find((role) => role.id === "setter")?.slotIndexes).toEqual([0]);
+    expect(rain).toMatchObject({
+      status: "complete",
+      setterSlots: [0],
+      aceSlots: [1],
+      dependentAceSlots: [1],
+      hasIndependentAttacker: false,
+    });
+    expect(
+      result.alerts.some((alert) => alert.id === "concept-rain-no-fallback"),
+    ).toBe(true);
   });
 });

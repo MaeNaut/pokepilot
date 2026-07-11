@@ -24,9 +24,10 @@ Current slice:
 - localStorage saved-team management with load, rename, duplicate, delete, reorder, and last-opened restore
 - Showdown text import/export for Pokemon sets and saved teams
 - Pokemon Champions-style EV editing and nature-adjusted stat calculation with fixed IV 31 assumptions
-- live team diagnostics for defensive matchups, offensive coverage, set roles, and setup alerts
+- live team diagnostics for defensive matchups, offensive coverage, six multi-label set roles, and setup alerts
+- Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
-- right-side Copilot panel reserved for later team-aware AI features
+- right-side Copilot strategy briefs for the active team and selected Pokemon
 
 ## Getting Started
 
@@ -77,10 +78,12 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - right-cropped Pokemon artwork in the editor card
 - reorderable local saved-team list and management actions
 - Pokemon-level and team-level Showdown text tools
-- type-based team matchup matrix, move coverage, multi-label set roles, and compact team alerts
+- type-based team matchup matrix, move coverage, six multi-label set roles, and compact team alerts
+- deterministic Trick Room, Tailwind, Gravity, rain, sun, sand, and snow core analysis
 - compact validity popover with per-slot markers and structured legality issues
 - shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams
-- Copilot panel placeholder
+- explicit local Copilot analysis with structured summary, strengths, focus areas, and next steps
+- versioned Copilot request/response data contracts ready for a future server-side model provider
 
 ## Data Source
 

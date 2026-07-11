@@ -4,6 +4,7 @@ import {
   supportAbilityIds,
   supportMoveIds,
 } from "../data/teamRoleMoves";
+import { setterAbilityIds, setterMoveIds } from "../data/teamConcepts";
 import {
   calculateChampionsStats,
   defaultEvs,
@@ -17,6 +18,11 @@ import type {
   TeamSlot,
 } from "../types";
 import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import {
+  analyzeTeamConcepts,
+  type TeamConceptSetProfile,
+  type TeamConceptSummary,
+} from "./teamConcepts";
 
 export type DefensiveMatchup = {
   type: PokemonType;
@@ -37,7 +43,8 @@ export type TeamRoleId =
   | "special-attacker"
   | "physical-wall"
   | "special-wall"
-  | "supporter";
+  | "supporter"
+  | "setter";
 
 export type TeamRoleSummary = {
   id: TeamRoleId;
@@ -53,6 +60,7 @@ export type TeamDiagnosticsResult = {
   coveredDefendingTypes: PokemonType[];
   uncoveredDefendingTypes: PokemonType[];
   roles: TeamRoleSummary[];
+  concepts: TeamConceptSummary[];
   alerts: TeamDiagnosticAlert[];
 };
 
@@ -93,6 +101,11 @@ const roleDefinitions: Array<{
     id: "supporter",
     label: "Supporter",
     description: "Carries multiple support moves, or combines a support ability with utility.",
+  },
+  {
+    id: "setter",
+    label: "Setter",
+    description: "Establishes field, weather, screens, terrain, or entry hazards for the team.",
   },
 ];
 
@@ -236,11 +249,19 @@ function classifyTeamRoles(
     const selectedAbility =
       buildState.abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? "";
     const hasSupportAbility = supportAbilityIds.has(normalizeLookup(selectedAbility));
+    const hasSetterAbility = setterAbilityIds.has(normalizeLookup(selectedAbility));
+    const hasSetterMove = moves.some((move) =>
+      setterMoveIds.has(normalizeLookup(move.id)),
+    );
     const stats = member.baseStats
       ? calculateChampionsStats(member.baseStats, evs, nature)
       : null;
 
     if (!stats) {
+      if (hasSetterAbility || hasSetterMove) {
+        assignments.get("setter")!.push(slotIndex);
+      }
+
       if (
         supportMoves >= 2 ||
         (supportMoves >= 1 && statusMoves >= 2) ||
@@ -307,6 +328,10 @@ function classifyTeamRoles(
     ) {
       assignments.get("supporter")!.push(slotIndex);
     }
+
+    if (hasSetterAbility || hasSetterMove) {
+      assignments.get("setter")!.push(slotIndex);
+    }
   });
 
   return roleDefinitions.map(({ id, label, description }) => ({
@@ -315,6 +340,48 @@ function classifyTeamRoles(
     description,
     slotIndexes: assignments.get(id) ?? [],
   }));
+}
+
+function createTeamConceptProfiles(
+  team: TeamSlot[],
+  buildState: DiagnosticBuildState,
+  selectedMovesBySlot: PokemonMove[][],
+  roles: TeamRoleSummary[],
+) {
+  return team.flatMap((member, slotIndex): TeamConceptSetProfile[] => {
+    if (!member) {
+      return [];
+    }
+
+    const evs = buildState.evsBySlot[slotIndex] ?? defaultEvs;
+    const nature = getNatureById(buildState.natureBySlot[slotIndex] ?? "hardy");
+    const stats = member.baseStats
+      ? calculateChampionsStats(member.baseStats, evs, nature)
+      : null;
+    const speedNature =
+      nature.up === nature.down
+        ? "neutral"
+        : nature.up === "speed"
+          ? "up"
+          : nature.down === "speed"
+            ? "down"
+            : "neutral";
+
+    return [
+      {
+        slotIndex,
+        ability:
+          buildState.abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? "",
+        moves: selectedMovesBySlot[slotIndex],
+        roleIds: roles
+          .filter((role) => role.slotIndexes.includes(slotIndex))
+          .map((role) => role.id),
+        speed: stats?.speed ?? null,
+        speedEv: evs.speed,
+        speedNature,
+      },
+    ];
+  });
 }
 
 function createDefensiveMatchups(
@@ -353,6 +420,7 @@ function createAlerts(
   team: TeamSlot[],
   defensiveMatchups: DefensiveMatchup[],
   roles: TeamRoleSummary[],
+  concepts: TeamConceptSummary[],
 ) {
   const members = team.filter((slot): slot is TeamMember => Boolean(slot));
   const alerts: TeamDiagnosticAlert[] = [];
@@ -403,6 +471,25 @@ function createAlerts(
       tone: threat.weakCount >= 4 && switchIns === 0 ? "danger" : "warning",
       message: `${formatType(threat.type)} pressures ${threat.weakCount} members${fourTimesText}; ${switchInText}.`,
     });
+  }
+
+  for (const concept of concepts) {
+    if (concept.status === "beneficiary-only") {
+      alerts.push({
+        id: `concept-${concept.id}-beneficiary-only`,
+        tone: "warning",
+        message: `${concept.label} dependency is present without a team setter.`,
+      });
+    } else if (
+      concept.dependentAceSlots.length > 0 &&
+      !concept.hasIndependentAttacker
+    ) {
+      alerts.push({
+        id: `concept-${concept.id}-no-fallback`,
+        tone: "warning",
+        message: `${concept.label} has no independently classified attacker outside the mode.`,
+      });
+    }
   }
 
   const openSlots = team.length - members.length;
@@ -516,6 +603,9 @@ export function analyzeTeam(
     (type) => !coveredTypeSet.has(type),
   );
   const roles = classifyTeamRoles(team, buildState, selectedMovesBySlot);
+  const concepts = analyzeTeamConcepts(
+    createTeamConceptProfiles(team, buildState, selectedMovesBySlot, roles),
+  );
 
   return {
     filledSlots: members.length,
@@ -524,6 +614,7 @@ export function analyzeTeam(
     coveredDefendingTypes,
     uncoveredDefendingTypes,
     roles,
-    alerts: createAlerts(team, defensiveMatchups, roles),
+    concepts,
+    alerts: createAlerts(team, defensiveMatchups, roles, concepts),
   };
 }

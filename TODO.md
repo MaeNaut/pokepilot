@@ -20,15 +20,20 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Next
 
-- [ ] Improve the Copilot panel placeholder.
-  - [ ] Decide what should appear before AI features are implemented.
+- [x] Replace the Copilot panel placeholder with a working local analysis preview.
+  - [x] Add team and selected-Pokemon analysis scopes.
   - [x] Keep deterministic team diagnostics outside the future AI response area.
-  - [ ] Keep the panel compact enough to avoid vertical overflow.
+  - [x] Contain long analysis inside a panel-local scroller instead of growing the desktop page.
 - [x] Add team-level non-AI diagnostics.
   - [x] Type weakness/resistance summary.
   - [x] Apply fixed type-immunity abilities to defensive matchups and alerts.
   - [x] Offensive coverage summary.
-  - [x] Set-based physical attacker, special attacker, wall, and supporter summaries.
+  - [x] Set-based physical attacker, special attacker, wall, supporter, and setter summaries.
+  - [x] Classify field, weather, screen, terrain, and hazard setup as the sixth Setter role.
+  - [x] Detect Trick Room, Tailwind, Gravity, rain, sun, sand, and snow team concepts.
+  - [x] Distinguish concept setters, dependent aces, and independent off-mode attackers.
+  - [x] Treat setup-only detection as informational data, not a reason to demand a dedicated ace.
+  - [x] Warn about explicit weather dependency without a setter and complete modes without an off-mode attacker.
   - [x] Duplicate type warnings.
   - [x] Role-based physical/special attacker imbalance warnings.
   - [x] Role-based physical/special wall imbalance warnings.
@@ -86,7 +91,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 - [x] Add a Vitest regression-test foundation for pure application logic.
   - [x] Cover Champions stat and nature calculations.
-  - [x] Cover team diagnostic multipliers, ability immunities, roles, and alerts.
+  - [x] Cover team diagnostic multipliers, ability immunities, roles, concepts, and alerts.
   - [x] Cover Showdown text formatting and parsing.
   - [x] Cover first-pass set validity, Mega Stone matching, EV limits, Species Clause, and Item Clause.
   - [x] Add representative Regulation M-B legality and form-alias fixtures.
@@ -111,14 +116,24 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## AI / Copilot
 
-- [ ] Decide the first AI feature shape.
-  - [ ] Structured analysis cards.
-  - [ ] Limited follow-up chat.
-  - [ ] Recommendation generation from locked team slots.
-- [ ] Add an API route for AI analysis.
-- [ ] Send structured team data rather than raw UI text.
+- [x] Decide the first AI feature shape.
+  - [x] Start with structured analysis of the active team and selected Pokemon.
+  - [x] Keep deterministic diagnostics and legality as the factual source of truth.
+  - [ ] Add limited follow-up chat after the first analysis flow is stable.
+  - [ ] Add recommendation generation from locked team slots later.
+- [x] Define a provider-independent Copilot request and response contract.
+  - [x] Send structured team, selected Pokemon, diagnostics, and validity summaries rather than raw UI text.
+  - [x] Render summary, strengths, weaknesses, priorities, and recommendations as product UI rather than plain chat text.
+  - [x] Add regression tests for compact request snapshots and local team/Pokemon analysis.
+- [ ] Add a server-side API route for AI analysis when model integration begins.
+  - [ ] Keep API keys out of browser code.
+  - [ ] Call analysis explicitly rather than automatically on every team edit.
 - [ ] Validate AI output before rendering it.
-- [ ] Keep AI output clearly advisory, not authoritative legality data.
+  - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
+  - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
+- [x] Add local error, refresh, and stale-analysis states for Copilot.
+- [ ] Add a remote API-unavailable state when hosted model integration begins.
+- [ ] Add deployment-stage cost controls such as request limits, response caps, and team-analysis caching.
 
 ## Calculator
 

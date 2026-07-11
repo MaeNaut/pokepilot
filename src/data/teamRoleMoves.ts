@@ -42,6 +42,7 @@ const supportMoveNames = [
   "safeguard",
   "scary-face",
   "skill-swap",
+  "sleep-powder",
   "snarl",
   "spore",
   "strength-sap",

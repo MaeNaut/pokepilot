@@ -56,7 +56,7 @@ import {
   getMegaStoneItemName,
   isMegaPokemonName,
 } from "../utils/megaEvolution";
-import { validateTeam } from "../utils/teamValidity";
+import type { TeamValidityResult } from "../utils/teamValidity";
 import { getBattleFormGroup } from "../data/battleForms";
 import {
   battleStatKeys,
@@ -77,6 +77,7 @@ import { TypeBadge } from "./TypeBadge";
 
 type TeamBuilderProps = {
   team: TeamSlot[];
+  selectedSlot: number;
   pool: TeamMember[];
   pokemonIndex: PokemonIndexEntry[];
   itemIndex: ItemIndexEntry[];
@@ -90,6 +91,8 @@ type TeamBuilderProps = {
   searchNotice: { slotIndex: number; message: string } | null;
   failedPokemonSelectionSlot: number | null;
   buildState: TeamBuildStateController;
+  validity: TeamValidityResult;
+  onSelectedSlotChange: (slotIndex: number) => void;
   onChangeSlot: (slotIndex: number, memberId: string) => void;
   onSelectPokemon: (
     slotIndex: number,
@@ -353,6 +356,7 @@ function getNatureFromPosition(position: NatureGridPosition) {
 
 export function TeamBuilder({
   team,
+  selectedSlot,
   pool,
   pokemonIndex,
   itemIndex,
@@ -366,6 +370,8 @@ export function TeamBuilder({
   searchNotice,
   failedPokemonSelectionSlot,
   buildState,
+  validity,
+  onSelectedSlotChange,
   onChangeSlot,
   onSelectPokemon,
   onClearSlot,
@@ -392,7 +398,6 @@ export function TeamBuilder({
     setPreMegaPokemonBySlot,
     clearSlot,
   } = buildState;
-  const [selectedSlot, setSelectedSlot] = useState(0);
   const [isNamePickerOpen, setIsNamePickerOpen] = useState(false);
   const [nameQuery, setNameQuery] = useState("");
   const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(null);
@@ -616,35 +621,6 @@ export function TeamBuilder({
 
     return moves.find((move) => move.id === selectedMoveId) ?? moves[index] ?? null;
   });
-  const validity = useMemo(
-    () =>
-      validateTeam(
-        team,
-        {
-          itemBySlot,
-          abilityBySlot,
-          natureBySlot,
-          evsBySlot,
-          moveIdsBySlot,
-          preMegaPokemonBySlot,
-        },
-        showdownLegality ?? null,
-        pokemonIndex,
-        itemIndex,
-      ),
-    [
-      abilityBySlot,
-      evsBySlot,
-      itemBySlot,
-      itemIndex,
-      moveIdsBySlot,
-      natureBySlot,
-      pokemonIndex,
-      preMegaPokemonBySlot,
-      showdownLegality,
-      team,
-    ],
-  );
   const displayedValidityIssues = useMemo(() => {
     const issues = [
       ...validity.slotResults.flatMap((result) => result.issues),
@@ -1627,15 +1603,15 @@ export function TeamBuilder({
     }
 
     onReorderSlots(sourceIndex, targetIndex);
-    setSelectedSlot((current) =>
-      getIndexAfterReorder(current, sourceIndex, targetIndex),
+    onSelectedSlotChange(
+      getIndexAfterReorder(selectedSlot, sourceIndex, targetIndex),
     );
   }
 
   function selectTeamSlot(index: number) {
     const member = team[index];
 
-    setSelectedSlot(index);
+    onSelectedSlotChange(index);
     closeBuilderPopovers();
 
     if (!member) {

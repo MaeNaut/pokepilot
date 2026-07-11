@@ -31,6 +31,8 @@ The MVP should prove the core loop:
 - [x] Add keyboard navigation for Pokemon, item, ability, nature, and move selectors.
 - [x] Add item, ability, and move detail tooltips.
 - [x] Add team-level defensive matchup, offensive coverage, set-role, and setup-alert visualization.
+- [x] Add a sixth Setter role for field, weather, screens, terrain, and hazard setup.
+- [x] Detect major field and weather concepts, their setters and aces, and whether a complete core has an off-mode attacker.
 
 ## Phase 3 - Regulation Legality
 
@@ -47,12 +49,24 @@ The MVP should prove the core loop:
 
 ## Phase 4 - AI Assistant
 
-- Add an API route for AI analysis.
-- Send structured team data to the AI model.
-- Request JSON output with clear fields.
-- Parse and validate the response.
-- Display recommendations in the right-side Copilot panel.
-- Support constrained follow-up chat tied to the current team state.
+- [x] Start with structured analysis of the active team and selected Pokemon.
+- [x] Feed deterministic field/weather concept summaries into local team analysis and recommendations.
+- [x] Keep deterministic diagnostics, legality, stat calculations, and future damage
+  calculations as the factual source of truth.
+- [x] Define provider-independent request and response types so the Copilot UI can be
+  built and tested before committing to a hosted model provider.
+- [ ] Add a server-side API route and send structured team, diagnostic, and validity
+  data to the AI model.
+- [ ] Request JSON output with clear summary, strength, weakness, priority, and
+  recommendation fields, then validate it before rendering.
+- [x] Display local analysis as structured product UI in the right-side Copilot panel rather
+  than as an unrestricted chat transcript.
+- [ ] Recheck actionable AI suggestions with deterministic legality logic before they
+  can be applied to a set or team.
+- [ ] Add constrained follow-up chat tied to the current team state only after the
+  first analysis flow is stable.
+- [ ] Add request limits, response caps, caching, and graceful API-unavailable behavior
+  before public deployment.
 
 ## Phase 5 - Persistence and Polish
 
