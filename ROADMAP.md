@@ -39,8 +39,11 @@ The MVP should prove the core loop:
 - [x] Restrict items to legal M-B items.
 - [x] Restrict abilities to abilities available to the selected Pokemon.
 - [x] Restrict moves to legal M-B moves for the selected Pokemon.
-- [ ] Add clear validity warnings for illegal or incomplete sets.
+- [x] Add compact validity status and detailed warnings for configured set choices.
 - [ ] Add regression checks for representative legality cases.
+- [x] Introduce Vitest with deterministic stat, diagnostics, and Showdown text regression tests.
+- [x] Add first validity regression fixtures for legal sets, illegal choices, Mega Stones, EVs, and team clauses.
+- [ ] Expand Vitest coverage to representative raw Showdown legality and alias/form cases.
 
 ## Phase 4 - AI Assistant
 
@@ -63,7 +66,11 @@ The MVP should prove the core loop:
 - [ ] Add Korean UI localization.
 - [ ] Decide whether Japanese localization belongs in the initial public release.
 - [ ] Add dark mode and persist the user's theme preference.
-- [ ] Improve responsive design.
+- [ ] Begin the dedicated responsive-design phase only after Team Builder features and desktop UI/UX are stable.
+  - [ ] Treat the current responsive CSS as provisional rather than final tablet/mobile design.
+  - [ ] Complete a tablet layout and touch-interaction pass.
+  - [ ] Complete a mobile layout and touch-interaction pass.
+  - [ ] Verify popovers, pickers, reordering, diagnostics, and team management across target viewport sizes.
 - [ ] Add loading, error, and empty states.
 - [ ] Write a strong portfolio case study.
 

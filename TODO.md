@@ -38,10 +38,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Keep the current move visible when opening the move dropdown.
   - [x] Preserve natural keyboard scrolling and prevent hover-triggered scroll loops.
   - [x] Reorder selected moves with desktop drag, touch hold-and-drag, or keyboard shortcuts.
-  - [ ] Add a clearer empty-move state.
+  - [x] Add a clear action and a stable empty state for each of the four move slots.
   - [ ] Decide whether selected moves should show PP or only power.
 - [ ] Improve item editing.
   - [ ] Keep Mega Stone auto-lock behavior tested after future item changes.
+  - [x] Allow ordinary held items to be cleared while preserving locked Mega Stones.
+- [x] Improve EV editing with desktop value scrubbing, touch controls, and allocation gauges.
 - [x] Put compact team diagnostics between the Pokemon card and Copilot panel.
   - [x] Keep the Pokemon card focused on the selected set.
   - [x] Reserve Copilot for future AI interpretation and recommendations.
@@ -82,9 +84,16 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Data And Legality
 
+- [x] Add a Vitest regression-test foundation for pure application logic.
+  - [x] Cover Champions stat and nature calculations.
+  - [x] Cover team diagnostic multipliers, ability immunities, roles, and alerts.
+  - [x] Cover Showdown text formatting and parsing.
+  - [x] Cover first-pass set validity, Mega Stone matching, EV limits, Species Clause, and Item Clause.
+  - [ ] Add representative Regulation M-B legality and form-alias fixtures.
+
 - [ ] Harden the Pokemon Champions Regulation M-B legality layer.
   - [x] Keep PokeAPI as the display/detail source and Pokemon Showdown data as the legality source.
-  - [ ] Add regression checks for representative Pokemon, item, ability, and move legality.
+  - [ ] Add regression checks against representative raw Showdown Pokemon, item, ability, and move snapshots.
   - [ ] Document any known Showdown/PokeAPI name mapping exceptions.
 - [ ] Improve usage-stats default sets.
   - [x] Fetch and parse Smogon monthly moveset stats for Regulation M-B.
@@ -97,7 +106,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [ ] Let preselected ability filters narrow the Pokemon dropdown.
   - [ ] Let preselected move filters narrow the Pokemon dropdown after a legal move-to-Pokemon index exists.
   - [ ] Keep item, nature, and EV filters out of Pokemon search unless a clear strategy-recommendation UI is designed.
-- [ ] Add validity warnings only after the legality UI is designed.
+- [x] Add a compact validity trigger, issue popover, and per-slot problem markers.
+- [ ] Extend validity beyond the current editor surface if level, gender, or complex format rules are added.
 
 ## AI / Copilot
 
@@ -121,7 +131,11 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 ## Polish
 
 - [ ] Add a real app icon / logo mark.
-- [ ] Review mobile layout after desktop builder stabilizes.
+- [ ] Defer the dedicated tablet/mobile UI pass until Team Builder functionality and desktop UI/UX are complete.
+  - [ ] Audit the provisional responsive CSS before treating any current breakpoint behavior as final.
+  - [ ] Design the tablet workspace layout and verify touch-first editing interactions.
+  - [ ] Design the mobile workspace layout and verify touch-first editing interactions.
+  - [ ] Test text fit, overflow, popover placement, drag/hold reordering, and scroll behavior at representative widths.
 - [ ] Add loading states for Pokemon, item, and move fetches.
 - [ ] Add error states for failed PokeAPI requests.
 - [ ] Clean up generated assets and keep third-party notices current.

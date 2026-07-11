@@ -24,6 +24,7 @@ Current slice:
 - Showdown text import/export for Pokemon sets and saved teams
 - Pokemon Champions-style EV editing and nature-adjusted stat calculation with fixed IV 31 assumptions
 - live team diagnostics for defensive matchups, offensive coverage, set roles, and setup alerts
+- Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
 - right-side Copilot panel reserved for later team-aware AI features
 
 ## Getting Started
@@ -39,9 +40,16 @@ Build check:
 npm run build
 ```
 
+Run the automated regression tests once:
+
+```bash
+npm run test:run
+```
+
+Use `npm test` while developing to rerun affected Vitest tests on file changes.
+
 ## Planned Features
 
-- explicit validity warning UI for illegal or incomplete sets
 - representative legality regression checks
 - AI-assisted team analysis through a server-side API route
 - team-aware Copilot chat/follow-up panel
@@ -61,13 +69,15 @@ npm run build
 - large editable Pokemon name header with filtered and usage-ordered dropdown
 - type icons, ability picker, icon-only item picker, nature picker
 - searchable item, ability, nature, and move controls with keyboard navigation
+- explicit no-item and empty-move-slot options for intentional partial sets
 - move detail loading with type, category, power, accuracy, PP, description, and tags
 - EssentiarumVG Gen 8 physical, special, and status move category symbols
-- base stat / EV / calculated stat table
+- base stat / EV / calculated stat table with keyboard input, desktop scrubbing, and touch controls
 - right-cropped Pokemon artwork in the editor card
 - reorderable local saved-team list and management actions
 - Pokemon-level and team-level Showdown text tools
 - type-based team matchup matrix, move coverage, multi-label set roles, and compact team alerts
+- compact validity popover with per-slot markers and structured legality issues
 - shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams
 - Copilot panel placeholder
 

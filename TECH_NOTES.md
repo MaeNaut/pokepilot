@@ -32,6 +32,7 @@ This project is also meant to fill practical skill gaps that have appeared repea
 - AI API integration: Use an LLM API for structured team analysis and recommendations, then render the output as product UI.
 - Deployment: Deploy the app publicly through Vercel or a similar platform and keep a live link for the portfolio.
 - GitHub Actions: Add a simple lint/build workflow later to demonstrate basic CI/CD experience.
+- Testing: Use Vitest for deterministic stat, parser, alias, legality, and team-diagnostic regression tests. Keep live PokeAPI, Showdown, and Smogon requests out of the unit-test suite.
 - Data visualization: Use type coverage, weakness matrices, and team balance charts to show frontend and product depth.
 
 Avoid forcing these skills into the project too early:
@@ -95,6 +96,15 @@ Current direction:
   browser CORS headers.
 - Keep the legality layer separate from PokeAPI normalization so source mapping
   and future format support stay maintainable.
+- Keep set validation in a deterministic utility separate from picker filtering.
+  The first pass validates configured Pokemon, items, abilities, moves, natures,
+  Champions EV limits, active Mega Stone matching, Species Clause, and Item
+  Clause. Missing optional items and sets with fewer than four configured moves
+  are intentionally not treated as errors. A failed or incomplete legality
+  snapshot produces an unavailable state rather than a false invalid result.
+- Treat this validity layer as coverage for the current editor surface, not as a
+  complete replacement for Pokemon Showdown's full team validator. Add level,
+  gender, and complex rule checks only when those fields enter the app model.
 
 The user is comfortable using Pokemon names and sprites/artwork for this unofficial
 portfolio tool. Continue to avoid official logos, official UI branding, and any
@@ -152,6 +162,10 @@ claim of affiliation.
   and nature modifiers.
 - Nature definitions, EV limits, and displayed-stat calculation live in
   `src/data/natures.ts` so the editor and role diagnostics use the same rules.
+- EV cells keep direct keyboard entry. Fine-pointer desktop users can scrub the
+  number horizontally at one EV per five pixels. Touch layouts retain the
+  anchored slider and one-point buttons. Every path clamps against the per-stat
+  maximum and remaining 66-point budget.
 - Nature options use the full nature table with raised/lowered stat visualization.
 - Item options are filtered through the Regulation M-B legality layer, with
   Pokemon-specific Mega Stone hiding and Mega form auto-lock behavior on top.
@@ -187,6 +201,12 @@ claim of affiliation.
   immediately, while expanded rename, delete, or Showdown tools temporarily lock
   reordering to avoid accidental edits.
 - Showdown text import/export exists at both Pokemon-slot and saved-team level.
+- Empty move slots are stored as empty strings inside the fixed four-position
+  move array. This preserves slot order for saving and reordering while
+  Showdown export, validity, and diagnostics ignore the empty entries. Showdown
+  imports pad missing moves to the same four-position representation.
+- Held items may be explicitly cleared. Active Mega forms keep their required
+  Mega Stone locked and do not expose the no-item action.
 
 ## Regulation Target
 
@@ -200,7 +220,6 @@ implementation uses Pokemon Showdown data as the M-B legality source for:
 
 Still needed:
 
-- validity warnings in the UI
 - representative regression checks for legality-sensitive Pokemon, items,
   abilities, and moves
 - documentation for any known Showdown/PokeAPI naming exceptions

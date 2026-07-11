@@ -805,10 +805,10 @@ function App() {
         );
       }
 
-      if (parsedPokemon.moves.length > 0) {
-        const moveIds = parsedPokemon.moves.map(normalizeShowdownLookup);
-        importedBuildState.moveIdsBySlot[slotIndex] = moveIds;
-      }
+      const moveIds = parsedPokemon.moves.map(normalizeShowdownLookup);
+      importedBuildState.moveIdsBySlot[slotIndex] = [0, 1, 2, 3].map(
+        (moveIndex) => moveIds[moveIndex] ?? "",
+      );
     }
 
     while (importedMembers.length < blankTeamSize) {

@@ -2,6 +2,7 @@
 import type {
   CSSProperties,
   KeyboardEvent,
+  PointerEvent as ReactPointerEvent,
   UIEvent,
 } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,7 +11,13 @@ import {
   faFileImport,
   faFileLines,
   faChevronDown,
+  faCircleCheck,
+  faCircleQuestion,
+  faMinus,
+  faPlus,
   faTrash,
+  faTriangleExclamation,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   fetchAbility,
@@ -41,6 +48,12 @@ import type {
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
 import { useLongPressReorder } from "../hooks/useLongPressReorder";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+import {
+  getMegaSpeciesKey,
+  getMegaStoneItemName,
+  isMegaPokemonName,
+} from "../utils/megaEvolution";
+import { validateTeam } from "../utils/teamValidity";
 import { getBattleFormGroup } from "../data/battleForms";
 import {
   battleStatKeys,
@@ -83,6 +96,16 @@ type PokemonSelectOption = {
   id: string;
   name: string;
   number: number;
+};
+
+type EvScrubState = {
+  pointerId: number;
+  stat: StatKey;
+  startX: number;
+  startValue: number;
+  maxValue: number;
+  lastValue: number;
+  isDragging: boolean;
 };
 
 function ItemSprite({ item }: { item: PokemonItem }) {
@@ -209,17 +232,6 @@ function formatPokemonName(value: string) {
     .join(" ");
 }
 
-function getCommonPrefixLength(first: string, second: string) {
-  const maxLength = Math.min(first.length, second.length);
-  let index = 0;
-
-  while (index < maxLength && first[index] === second[index]) {
-    index += 1;
-  }
-
-  return index;
-}
-
 function normalizeMoveLookup(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -301,58 +313,6 @@ function getNatureFromPosition(position: NatureGridPosition) {
   return getNatureByAlignment(upStat, downStat);
 }
 
-function isMegaPokemonName(name: string) {
-  return name.includes("-mega");
-}
-
-function getMegaSpeciesKey(name: string) {
-  if (!isMegaPokemonName(name)) {
-    return name;
-  }
-
-  return name.includes("-mega-") ? name.split("-mega-")[0] : name.split("-mega")[0];
-}
-
-function getMegaStoneItemName(megaPokemonName: string, knownMegaStoneNames: Set<string>) {
-  const [speciesKey, suffix = ""] = megaPokemonName.includes("-mega-")
-    ? megaPokemonName.split("-mega-")
-    : megaPokemonName.split("-mega");
-
-  if (!speciesKey || megaPokemonName === speciesKey) {
-    return null;
-  }
-
-  const candidate = `${speciesKey}ite${suffix ? `-${suffix}` : ""}`;
-
-  if (knownMegaStoneNames.has(candidate)) {
-    return candidate;
-  }
-
-  const normalizedSpeciesKey = speciesKey.replace(/-/g, "");
-  const minimumPrefixLength = Math.min(5, normalizedSpeciesKey.length);
-  const matchingStones = [...knownMegaStoneNames]
-    .map((itemName) => {
-      const itemSuffix = itemName.match(/-(x|y|z)$/)?.[1] ?? "";
-
-      if (suffix && itemSuffix !== suffix) {
-        return null;
-      }
-
-      if (!suffix && itemSuffix) {
-        return null;
-      }
-
-      const normalizedItemName = itemName.replace(/-(x|y|z)$/, "").replace(/-/g, "");
-      const score = getCommonPrefixLength(normalizedSpeciesKey, normalizedItemName);
-
-      return score >= minimumPrefixLength ? { itemName, score } : null;
-    })
-    .filter((entry): entry is { itemName: string; score: number } => Boolean(entry))
-    .sort((first, second) => second.score - first.score);
-
-  return matchingStones[0]?.itemName ?? null;
-}
-
 export function TeamBuilder({
   team,
   pool,
@@ -394,9 +354,13 @@ export function TeamBuilder({
   const [showdownText, setShowdownText] = useState("");
   const [showdownPanelMessage, setShowdownPanelMessage] = useState<string | null>(null);
   const [isImportingShowdown, setIsImportingShowdown] = useState(false);
+  const [isValidityPanelOpen, setIsValidityPanelOpen] = useState(false);
+  const [activeEvStat, setActiveEvStat] = useState<StatKey | null>(null);
+  const [scrubbingEvStat, setScrubbingEvStat] = useState<StatKey | null>(null);
   const teamTabsRef = useRef<HTMLDivElement | null>(null);
   const showdownToolbarRef = useRef<HTMLDivElement | null>(null);
   const showdownPanelRef = useRef<HTMLDivElement | null>(null);
+  const validityPanelRef = useRef<HTMLDivElement | null>(null);
   const clearConfirmRef = useRef<HTMLDivElement | null>(null);
   const namePickerRef = useRef<HTMLDivElement | null>(null);
   const battleFormPickerRef = useRef<HTMLDivElement | null>(null);
@@ -409,6 +373,8 @@ export function TeamBuilder({
   const movePickerRef = useRef<HTMLDivElement | null>(null);
   const moveResultsRef = useRef<HTMLDivElement | null>(null);
   const moveOptionScrollModeRef = useRef<MoveOptionScrollMode | null>(null);
+  const evScrubStateRef = useRef<EvScrubState | null>(null);
+  const suppressEvClickRef = useRef(false);
   const [openTraitPicker, setOpenTraitPicker] = useState<"ability" | "nature" | null>(
     null,
   );
@@ -591,9 +557,56 @@ export function TeamBuilder({
     return legalMoves.length ? legalMoves : fallbackMoves(activeMember?.types ?? []);
   }, [activeMember?.types, baseMoves, legalMoveIds, preMegaMoveLookupSet]);
   const selectedMoveIds = moveIdsBySlot[selectedSlot] ?? [];
-  const selectedMoves = [0, 1, 2, 3]
-    .map((index) => moves.find((move) => move.id === selectedMoveIds[index]) ?? moves[index])
-    .filter((move): move is PokemonMove => Boolean(move));
+  const selectedMoves = [0, 1, 2, 3].map((index) => {
+    const selectedMoveId = selectedMoveIds[index];
+
+    if (selectedMoveId === "") {
+      return null;
+    }
+
+    return moves.find((move) => move.id === selectedMoveId) ?? moves[index] ?? null;
+  });
+  const validity = useMemo(
+    () =>
+      validateTeam(
+        team,
+        {
+          itemBySlot,
+          abilityBySlot,
+          natureBySlot,
+          evsBySlot,
+          moveIdsBySlot,
+          preMegaPokemonBySlot,
+        },
+        showdownLegality ?? null,
+        pokemonIndex,
+        itemIndex,
+      ),
+    [
+      abilityBySlot,
+      evsBySlot,
+      itemBySlot,
+      itemIndex,
+      moveIdsBySlot,
+      natureBySlot,
+      pokemonIndex,
+      preMegaPokemonBySlot,
+      showdownLegality,
+      team,
+    ],
+  );
+  const displayedValidityIssues = useMemo(() => {
+    const issues = [
+      ...validity.slotResults.flatMap((result) => result.issues),
+      ...validity.teamIssues,
+    ];
+    const unavailableIssue = issues.find((issue) => issue.severity === "unavailable");
+
+    return [
+      ...issues.filter((issue) => issue.severity === "error"),
+      ...(unavailableIssue ? [unavailableIssue] : []),
+    ];
+  }, [validity]);
   const moveReorder = useLongPressReorder({
     containerRef: movePickerRef,
     disabled: openMoveSlot !== null,
@@ -794,6 +807,10 @@ export function TeamBuilder({
         : [],
     [itemOptions, normalizedItemQuery],
   );
+  const displayedItemOptions = useMemo(
+    () => (activeItem ? [null, ...filteredItemOptions] : filteredItemOptions),
+    [activeItem, filteredItemOptions],
+  );
   const filteredMoveOptions = useMemo(
     () =>
       normalizedMoveQuery
@@ -856,12 +873,19 @@ export function TeamBuilder({
   }, [filteredOptions]);
 
   useEffect(() => {
-    setActiveItemOptionIndex(filteredItemOptions.length ? 0 : -1);
-  }, [filteredItemOptions]);
+    if (displayedItemOptions.length === 0) {
+      setActiveItemOptionIndex(-1);
+      return;
+    }
+
+    setActiveItemOptionIndex(
+      activeItem && normalizedItemQuery && filteredItemOptions.length > 0 ? 1 : 0,
+    );
+  }, [activeItem, displayedItemOptions.length, filteredItemOptions.length, normalizedItemQuery]);
 
   useEffect(() => {
     if (filteredMoveOptions.length === 0) {
-      setActiveMoveOptionIndex(-1);
+      setActiveMoveOptionIndex(0);
       setHoveredMoveOption(null);
       return;
     }
@@ -869,14 +893,17 @@ export function TeamBuilder({
     const selectedOptionIndex = openMovePickerMoveId
       ? filteredMoveOptions.findIndex((move) => move.id === openMovePickerMoveId)
       : -1;
-    const nextOptionIndex = selectedOptionIndex >= 0 ? selectedOptionIndex : 0;
+    const nextOptionIndex =
+      selectedOptionIndex >= 0 ? selectedOptionIndex + 1 : filteredMoveOptions.length ? 1 : 0;
 
     if (openMoveSlot !== null) {
       requestMoveOptionScroll("start", { preserveExisting: true });
     }
 
     setActiveMoveOptionIndex(nextOptionIndex);
-    setHoveredMoveOption(filteredMoveOptions[nextOptionIndex] ?? null);
+    setHoveredMoveOption(
+      nextOptionIndex > 0 ? (filteredMoveOptions[nextOptionIndex - 1] ?? null) : null,
+    );
   }, [
     activePokemonId,
     filteredMoveOptions,
@@ -937,12 +964,17 @@ export function TeamBuilder({
         return current;
       }
 
-      const nextMoveIds = defaultMoveIds.map(
-        (moveId, index) =>
-          currentMoveIds[index] && validMoveIds.has(currentMoveIds[index])
-            ? currentMoveIds[index]
-            : moveId,
-      );
+      const nextMoveIds = [0, 1, 2, 3].map((index) => {
+        const currentMoveId = currentMoveIds[index];
+
+        if (currentMoveId === "") {
+          return "";
+        }
+
+        return currentMoveId && validMoveIds.has(currentMoveId)
+          ? currentMoveId
+          : (defaultMoveIds[index] ?? "");
+      });
       const isUnchanged =
         currentMoveIds.length === nextMoveIds.length &&
         currentMoveIds.every((moveId, index) => moveId === nextMoveIds[index]);
@@ -1218,6 +1250,69 @@ export function TeamBuilder({
   }, [isShowdownPanelOpen]);
 
   useEffect(() => {
+    if (!isValidityPanelOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+
+      if (
+        validityPanelRef.current?.contains(target) ||
+        showdownToolbarRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setIsValidityPanelOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isValidityPanelOpen]);
+
+  useEffect(() => {
+    if (!activeEvStat) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+
+      if (target instanceof Element && target.closest(".ev-cell")) {
+        return;
+      }
+
+      setActiveEvStat(null);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [activeEvStat]);
+
+  useEffect(() => {
+    setActiveEvStat(null);
+  }, [selectedSlot]);
+
+  useEffect(() => {
+    if (!scrubbingEvStat) {
+      return;
+    }
+
+    document.body.classList.add("is-scrubbing-ev");
+
+    return () => {
+      document.body.classList.remove("is-scrubbing-ev");
+    };
+  }, [scrubbingEvStat]);
+
+  useEffect(() => {
     if (!activeMegaStoneName || !activeMegaStoneOption) {
       return;
     }
@@ -1411,6 +1506,8 @@ export function TeamBuilder({
     closeTraitPicker();
     closeMovePicker();
     setIsShowdownPanelOpen(false);
+    setIsValidityPanelOpen(false);
+    setActiveEvStat(null);
   }
 
   function requestMoveOptionScroll(
@@ -1427,12 +1524,12 @@ export function TeamBuilder({
   function getMoveOptionIndex(moveId: string) {
     const selectedOptionIndex = moves.findIndex((option) => option.id === moveId);
 
-    return selectedOptionIndex >= 0 ? selectedOptionIndex : 0;
+    return selectedOptionIndex >= 0 ? selectedOptionIndex + 1 : moves.length ? 1 : 0;
   }
 
   function setMoveOptionPreview(optionIndex: number) {
     setActiveMoveOptionIndex(optionIndex);
-    setHoveredMoveOption(moves[optionIndex] ?? null);
+    setHoveredMoveOption(optionIndex > 0 ? (moves[optionIndex - 1] ?? null) : null);
   }
 
   function toggleMovePicker(index: number, moveId: string) {
@@ -1455,7 +1552,7 @@ export function TeamBuilder({
     setMoveIdsBySlot((current) => {
       const currentMoveIds = current[selectedSlot] ?? [];
       const nextMoveIds = selectedMoves.map(
-        (move, index) => currentMoveIds[index] ?? move.id,
+        (move, index) => currentMoveIds[index] ?? move?.id ?? "",
       );
       const [movedMoveId] = nextMoveIds.splice(sourceIndex, 1);
 
@@ -1686,6 +1783,18 @@ export function TeamBuilder({
     }
   }
 
+  function clearItem() {
+    if (isItemLocked) {
+      return;
+    }
+
+    setItemBySlot((current) => ({
+      ...current,
+      [selectedSlot]: null,
+    }));
+    closeItemPicker();
+  }
+
   async function previewItem(itemId: string, fallbackItem: PokemonItem) {
     const cachedItem = itemDetailsByName[itemId];
 
@@ -1773,7 +1882,7 @@ export function TeamBuilder({
   }
 
   function previewItemOptionAt(index: number) {
-    const option = filteredItemOptions[index];
+    const option = displayedItemOptions[index];
 
     if (!option) {
       setHoveredItemOption(null);
@@ -1786,14 +1895,21 @@ export function TeamBuilder({
 
   function moveItemKeyboardOption(direction: 1 | -1) {
     setActiveItemOptionIndex((current) => {
-      const nextIndex = getNextOptionIndex(current, filteredItemOptions.length, direction);
+      const nextIndex = getNextOptionIndex(current, displayedItemOptions.length, direction);
       previewItemOptionAt(nextIndex);
       return nextIndex;
     });
   }
 
   function selectActiveItemOption() {
-    const option = getActiveOption(filteredItemOptions, activeItemOptionIndex);
+    const option = displayedItemOptions[
+      activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0
+    ];
+
+    if (option === null) {
+      clearItem();
+      return;
+    }
 
     if (option) {
       void handleSelectItem(option.name);
@@ -1873,15 +1989,26 @@ export function TeamBuilder({
 
   function moveMoveKeyboardOption(direction: 1 | -1) {
     setActiveMoveOptionIndex((current) => {
-      const nextIndex = getNextOptionIndex(current, filteredMoveOptions.length, direction);
+      const nextIndex = getNextOptionIndex(
+        current,
+        filteredMoveOptions.length + 1,
+        direction,
+      );
       moveOptionScrollModeRef.current = "nearest";
-      setHoveredMoveOption(filteredMoveOptions[nextIndex] ?? null);
+      setHoveredMoveOption(
+        nextIndex > 0 ? (filteredMoveOptions[nextIndex - 1] ?? null) : null,
+      );
       return nextIndex;
     });
   }
 
   function selectActiveMoveOption(slotIndex: number) {
-    const move = getActiveOption(filteredMoveOptions, activeMoveOptionIndex);
+    if (activeMoveOptionIndex === 0) {
+      clearMove(slotIndex);
+      return;
+    }
+
+    const move = filteredMoveOptions[activeMoveOptionIndex - 1];
 
     if (move) {
       selectMove(slotIndex, move.id);
@@ -1915,10 +2042,108 @@ export function TeamBuilder({
     }));
   }
 
+  function getMaxAllowedEv(stat: StatKey) {
+    return Math.min(
+      CHAMPIONS_MAX_EV_PER_STAT,
+      Math.max(0, CHAMPIONS_MAX_EV_TOTAL - (evTotal - evs[stat])),
+    );
+  }
+
+  function adjustEv(stat: StatKey, amount: number) {
+    updateEv(stat, String(evs[stat] + amount));
+  }
+
+  function startEvScrub(event: ReactPointerEvent<HTMLInputElement>, stat: StatKey) {
+    if (event.pointerType !== "mouse" || event.button !== 0) {
+      return;
+    }
+
+    evScrubStateRef.current = {
+      pointerId: event.pointerId,
+      stat,
+      startX: event.clientX,
+      startValue: evs[stat],
+      maxValue: getMaxAllowedEv(stat),
+      lastValue: evs[stat],
+      isDragging: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveEvScrub(event: ReactPointerEvent<HTMLInputElement>) {
+    const scrubState = evScrubStateRef.current;
+
+    if (!scrubState || scrubState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const distance = event.clientX - scrubState.startX;
+
+    if (!scrubState.isDragging && Math.abs(distance) < 4) {
+      return;
+    }
+
+    if (!scrubState.isDragging) {
+      scrubState.isDragging = true;
+      setScrubbingEvStat(scrubState.stat);
+      setActiveEvStat(null);
+      event.currentTarget.setSelectionRange(0, 0);
+      window.getSelection()?.removeAllRanges();
+    }
+
+    event.preventDefault();
+    const nextValue = Math.max(
+      0,
+      Math.min(scrubState.maxValue, scrubState.startValue + Math.trunc(distance / 5)),
+    );
+
+    if (nextValue !== scrubState.lastValue) {
+      scrubState.lastValue = nextValue;
+      updateEv(scrubState.stat, String(nextValue));
+    }
+  }
+
+  function finishEvScrub(event: ReactPointerEvent<HTMLInputElement>) {
+    const scrubState = evScrubStateRef.current;
+
+    if (!scrubState || scrubState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (scrubState.isDragging) {
+      suppressEvClickRef.current = true;
+      window.setTimeout(() => {
+        suppressEvClickRef.current = false;
+      }, 0);
+    }
+
+    evScrubStateRef.current = null;
+    setScrubbingEvStat(null);
+  }
+
   function selectMove(slotIndex: number, moveId: string) {
     setMoveIdsBySlot((current) => {
       const nextMoves = [...(current[selectedSlot] ?? [])];
       nextMoves[slotIndex] = moveId;
+
+      return {
+        ...current,
+        [selectedSlot]: nextMoves,
+      };
+    });
+    closeMovePicker();
+  }
+
+  function clearMove(slotIndex: number) {
+    setMoveIdsBySlot((current) => {
+      const nextMoves = [0, 1, 2, 3].map(
+        (index) => current[selectedSlot]?.[index] ?? selectedMoves[index]?.id ?? "",
+      );
+      nextMoves[slotIndex] = "";
 
       return {
         ...current,
@@ -1935,6 +2160,7 @@ export function TeamBuilder({
       return;
     }
 
+    setIsValidityPanelOpen(false);
     setShowdownText(onExportShowdown(selectedSlot));
     setIsShowdownPanelOpen(true);
     setShowdownPanelMessage(null);
@@ -1973,6 +2199,36 @@ export function TeamBuilder({
         aria-label="Showdown team tools"
         ref={showdownToolbarRef}
       >
+        {team.some(Boolean) ? (
+          <button
+            className={`builder-card-tool-button validity-trigger is-${validity.status}`}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={isValidityPanelOpen}
+            title="Regulation M-B validity"
+            onClick={() => {
+              setPendingClearSlot(null);
+              setIsShowdownPanelOpen(false);
+              setIsValidityPanelOpen((isOpen) => !isOpen);
+            }}
+          >
+            <FontAwesomeIcon
+              icon={
+                validity.status === "invalid"
+                  ? faTriangleExclamation
+                  : validity.status === "unavailable"
+                    ? faCircleQuestion
+                    : faCircleCheck
+              }
+              aria-hidden="true"
+            />
+            {validity.status === "invalid"
+              ? `${validity.errorCount} ${validity.errorCount === 1 ? "Issue" : "Issues"}`
+              : validity.status === "unavailable"
+                ? "Unavailable"
+                : "Valid"}
+          </button>
+        ) : null}
         <button className="builder-card-tool-button" type="button" onClick={toggleShowdownPanel}>
           <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
           Showdown Text
@@ -1983,6 +2239,7 @@ export function TeamBuilder({
             type="button"
             onClick={() => {
               setIsShowdownPanelOpen(false);
+              setIsValidityPanelOpen(false);
               setPendingClearSlot((currentSlot) =>
                 currentSlot === selectedSlot ? null : selectedSlot,
               );
@@ -1993,6 +2250,55 @@ export function TeamBuilder({
           </button>
         ) : null}
       </div>
+
+      {isValidityPanelOpen ? (
+        <div
+          className={`validity-panel is-${validity.status}`}
+          role="dialog"
+          aria-label="Regulation M-B validity"
+          ref={validityPanelRef}
+        >
+          <div className="validity-panel-header">
+            <span className="validity-panel-icon" aria-hidden="true">
+              <FontAwesomeIcon
+                icon={
+                  validity.status === "invalid"
+                    ? faTriangleExclamation
+                    : validity.status === "unavailable"
+                      ? faCircleQuestion
+                      : faCircleCheck
+                }
+              />
+            </span>
+            <div>
+              <strong>
+                {validity.status === "invalid"
+                  ? "Team has validity issues"
+                  : validity.status === "unavailable"
+                    ? "Validity data unavailable"
+                    : "Team is valid"}
+              </strong>
+              <span>Regulation M-B</span>
+            </div>
+          </div>
+          {displayedValidityIssues.length > 0 ? (
+            <ul className="validity-issue-list">
+              {displayedValidityIssues.map((issue) => (
+                <li className={`is-${issue.severity}`} key={issue.id}>
+                  {issue.slotIndex !== undefined ? (
+                    <span className="validity-slot-label">Slot {issue.slotIndex + 1}</span>
+                  ) : null}
+                  <span>{issue.message}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="validity-success-message">
+              All configured choices pass the current legality checks.
+            </p>
+          )}
+        </div>
+      ) : null}
 
       {activeMember && pendingClearSlot === selectedSlot ? (
         <div
@@ -2087,6 +2393,12 @@ export function TeamBuilder({
               teamReorder.dragState.sourceIndex !== index
                 ? "is-drop-target"
                 : ""
+            } ${
+              validity.slotResults[index]?.status === "invalid"
+                ? "has-validity-error"
+                : validity.slotResults[index]?.status === "unavailable"
+                  ? "has-validity-unavailable"
+                  : ""
             }`}
             data-team-slot-index={index}
             key={`${member?.id ?? "empty"}-${index}`}
@@ -2376,7 +2688,7 @@ export function TeamBuilder({
                           moveItemKeyboardOption(event.key === "ArrowDown" ? 1 : -1);
                         }
 
-                        if (event.key === "Enter" && filteredItemOptions.length > 0) {
+                        if (event.key === "Enter" && displayedItemOptions.length > 0) {
                           event.preventDefault();
                           selectActiveItemOption();
                         }
@@ -2384,24 +2696,48 @@ export function TeamBuilder({
                     />
 
                     <div className="item-results" role="listbox">
+                      {activeItem ? (
+                        <button
+                          className="item-option item-clear-option"
+                          type="button"
+                          role="option"
+                          aria-selected={activeItemOptionIndex === 0}
+                          onFocus={() => {
+                            setActiveItemOptionIndex(0);
+                            setHoveredItemOption(null);
+                          }}
+                          onMouseEnter={() => {
+                            setActiveItemOptionIndex(0);
+                            setHoveredItemOption(null);
+                          }}
+                          onClick={clearItem}
+                        >
+                          <span className="item-option-icon" aria-hidden="true">
+                            <FontAwesomeIcon icon={faXmark} />
+                          </span>
+                          <span className="item-option-name">Remove Item</span>
+                        </button>
+                      ) : null}
                       {filteredItemOptions.map((option, optionIndex) => {
                         const previewItemOption =
                           itemDetailsByName[option.name] ?? itemFromIndexEntry(option);
+                        const displayedOptionIndex = optionIndex + (activeItem ? 1 : 0);
 
                         return (
                           <button
                             className="item-option"
                             type="button"
                             role="option"
-                            aria-selected={activeItemOptionIndex === optionIndex}
+                            aria-selected={activeItemOptionIndex === displayedOptionIndex}
                             key={option.name}
                             aria-describedby="item-option-tooltip"
                             onBlur={() => setHoveredItemOption(null)}
-                            onFocus={() =>
-                              void previewItem(option.name, previewItemOption)
-                            }
+                            onFocus={() => {
+                              setActiveItemOptionIndex(displayedOptionIndex);
+                              void previewItem(option.name, previewItemOption);
+                            }}
                             onMouseEnter={() => {
-                              setActiveItemOptionIndex(optionIndex);
+                              setActiveItemOptionIndex(displayedOptionIndex);
                               void previewItem(option.name, previewItemOption);
                             }}
                             onMouseLeave={() => setHoveredItemOption(null)}
@@ -2698,7 +3034,7 @@ export function TeamBuilder({
                         : ""
                     }`}
                     data-move-slot-index={index}
-                    key={`${index}-${move.id}`}
+                    key={`${index}-${move?.id ?? "empty"}`}
                     style={
                       moveReorder.dragState?.sourceIndex === index
                         ? ({
@@ -2709,25 +3045,40 @@ export function TeamBuilder({
                     }
                   >
                     <button
-                      className={`move-pill type-${move.type}`}
+                      className={`move-pill ${move ? `type-${move.type}` : "is-empty"}`}
                       type="button"
                       aria-expanded={openMoveSlot === index}
-                      aria-label={`${move.name}, move ${index + 1}. Drag to reorder or press Alt and an arrow key.`}
+                      aria-label={
+                        move
+                          ? `${move.name}, move ${index + 1}. Drag to reorder or press Alt and an arrow key.`
+                          : `Choose move ${index + 1}`
+                      }
                       onClick={() => {
                         if (!moveReorder.shouldSuppressClick()) {
-                          toggleMovePicker(index, move.id);
+                          toggleMovePicker(index, move?.id ?? "");
                         }
                       }}
                       onKeyDown={(event) => handleMovePillKeyDown(event, index)}
-                      onPointerDown={(event) => moveReorder.handlePointerDown(event, index)}
+                      onPointerDown={(event) => {
+                        if (move) {
+                          moveReorder.handlePointerDown(event, index);
+                        }
+                      }}
                       onPointerMove={moveReorder.handlePointerMove}
                       onPointerUp={moveReorder.handlePointerUp}
                       onPointerCancel={moveReorder.handlePointerCancel}
                     >
-                      <MoveSummary move={move} />
+                      {move ? (
+                        <MoveSummary move={move} />
+                      ) : (
+                        <span className="empty-move-label">
+                          <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
+                          Add Move
+                        </span>
+                      )}
                     </button>
 
-                    {openMoveSlot !== index ? (
+                    {move && openMoveSlot !== index ? (
                       <MoveTooltip move={move} />
                     ) : null}
 
@@ -2750,7 +3101,7 @@ export function TeamBuilder({
                               moveMoveKeyboardOption(event.key === "ArrowDown" ? 1 : -1);
                             }
 
-                            if (event.key === "Enter" && filteredMoveOptions.length > 0) {
+                            if (event.key === "Enter") {
                               event.preventDefault();
                               selectActiveMoveOption(index);
                             }
@@ -2758,26 +3109,48 @@ export function TeamBuilder({
                         />
 
                         <div className="move-results" role="listbox" ref={moveResultsRef}>
+                          <button
+                            className={`move-option move-clear-option ${
+                              activeMoveOptionIndex === 0 ? "is-keyboard-active" : ""
+                            }`}
+                            type="button"
+                            role="option"
+                            aria-selected={activeMoveOptionIndex === 0}
+                            onFocus={() => {
+                              setActiveMoveOptionIndex(0);
+                              setHoveredMoveOption(null);
+                            }}
+                            onMouseEnter={() => {
+                              setActiveMoveOptionIndex(0);
+                              setHoveredMoveOption(null);
+                            }}
+                            onClick={() => clearMove(index)}
+                          >
+                            <span className="move-clear-icon" aria-hidden="true">
+                              <FontAwesomeIcon icon={faXmark} />
+                            </span>
+                            <span>Empty Move Slot</span>
+                          </button>
                           {filteredMoveOptions.length ? (
                             filteredMoveOptions.map((option, optionIndex) => (
                               <button
                                 className={`move-option type-${option.type} ${
-                                  activeMoveOptionIndex === optionIndex
+                                  activeMoveOptionIndex === optionIndex + 1
                                     ? "is-keyboard-active"
                                     : ""
                                 }`}
                                 type="button"
                                 role="option"
                                 key={option.id}
-                                aria-selected={activeMoveOptionIndex === optionIndex}
+                                aria-selected={activeMoveOptionIndex === optionIndex + 1}
                                 aria-describedby={`move-option-tooltip-${index}`}
                                 onBlur={() => setHoveredMoveOption(null)}
                                 onFocus={() => {
-                                  setActiveMoveOptionIndex(optionIndex);
+                                  setActiveMoveOptionIndex(optionIndex + 1);
                                   setHoveredMoveOption(option);
                                 }}
                                 onMouseEnter={() => {
-                                  setActiveMoveOptionIndex(optionIndex);
+                                  setActiveMoveOptionIndex(optionIndex + 1);
                                   setHoveredMoveOption(option);
                                 }}
                                 onMouseLeave={() => setHoveredMoveOption(null)}
@@ -2806,7 +3179,15 @@ export function TeamBuilder({
             </div>
 
             {activeMember ? (
-              <table className="stats-table" aria-label="Pokemon stats">
+              <table
+                className="stats-table"
+                aria-label="Pokemon stats"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setActiveEvStat(null);
+                  }
+                }}
+              >
               <thead>
                 <tr>
                   <th />
@@ -2827,21 +3208,97 @@ export function TeamBuilder({
                     EVs
                     <span className="ev-total">{evTotal}/{CHAMPIONS_MAX_EV_TOTAL}</span>
                   </th>
-                  {statKeys.map((stat) => (
-                    <td key={stat}>
-                      <input
-                        aria-label={`${statLabels[stat]} EV`}
-                        inputMode="numeric"
-                        min={0}
-                        max={Math.min(
-                          CHAMPIONS_MAX_EV_PER_STAT,
-                          Math.max(0, CHAMPIONS_MAX_EV_TOTAL - (evTotal - evs[stat])),
-                        )}
-                        value={evs[stat]}
-                        onChange={(event) => updateEv(stat, event.target.value)}
-                      />
-                    </td>
-                  ))}
+                  {statKeys.map((stat, statIndex) => {
+                    const maxAllowed = getMaxAllowedEv(stat);
+                    const popoverAlignment =
+                      statIndex <= 1 ? "is-start" : statIndex >= 4 ? "is-end" : "";
+
+                    return (
+                      <td
+                        className="ev-cell"
+                        key={stat}
+                        style={
+                          {
+                            "--ev-fill": `${(evs[stat] / CHAMPIONS_MAX_EV_PER_STAT) * 100}%`,
+                          } as CSSProperties
+                        }
+                      >
+                        <span className="ev-cell-fill" aria-hidden="true" />
+                        <div className="ev-input-shell">
+                          <input
+                            className={scrubbingEvStat === stat ? "is-scrubbing" : ""}
+                            aria-label={`${statLabels[stat]} EV`}
+                            aria-expanded={activeEvStat === stat}
+                            inputMode="numeric"
+                            min={0}
+                            max={maxAllowed}
+                            value={evs[stat]}
+                            onFocus={() => setActiveEvStat(stat)}
+                            onClick={(event) => {
+                              if (suppressEvClickRef.current) {
+                                suppressEvClickRef.current = false;
+                                event.preventDefault();
+                                return;
+                              }
+
+                              setActiveEvStat(stat);
+                            }}
+                            onChange={(event) => updateEv(stat, event.target.value)}
+                            onPointerDown={(event) => startEvScrub(event, stat)}
+                            onPointerMove={moveEvScrub}
+                            onPointerUp={finishEvScrub}
+                            onPointerCancel={finishEvScrub}
+                          />
+
+                        </div>
+
+                        {activeEvStat === stat ? (
+                          <div
+                            className={`ev-editor-popover ${popoverAlignment}`}
+                            role="dialog"
+                            aria-label={`${statLabels[stat]} EV controls`}
+                          >
+                            <div className="ev-editor-header">
+                              <span>{statLabels[stat]} EV</span>
+                              <strong>{evs[stat]}/{CHAMPIONS_MAX_EV_PER_STAT}</strong>
+                            </div>
+                            <input
+                              className="ev-range"
+                              type="range"
+                              aria-label={`${statLabels[stat]} EV slider`}
+                              min={0}
+                              max={maxAllowed}
+                              step={1}
+                              value={evs[stat]}
+                              onChange={(event) => updateEv(stat, event.target.value)}
+                            />
+                            <div className="ev-stepper">
+                              <button
+                                type="button"
+                                aria-label={`Decrease ${statLabels[stat]} EV`}
+                                disabled={evs[stat] <= 0}
+                                onClick={() => adjustEv(stat, -1)}
+                              >
+                                <FontAwesomeIcon icon={faMinus} aria-hidden="true" />
+                              </button>
+                              <output>{evs[stat]}</output>
+                              <button
+                                type="button"
+                                aria-label={`Increase ${statLabels[stat]} EV`}
+                                disabled={evs[stat] >= maxAllowed}
+                                onClick={() => adjustEv(stat, 1)}
+                              >
+                                <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
+                              </button>
+                            </div>
+                            <span className="ev-remaining">
+                              {CHAMPIONS_MAX_EV_TOTAL - evTotal} remaining
+                            </span>
+                          </div>
+                        ) : null}
+                      </td>
+                    );
+                  })}
                 </tr>
                 <tr>
                   <th>Stats</th>
