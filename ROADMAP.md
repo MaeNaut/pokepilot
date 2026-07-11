@@ -15,8 +15,8 @@ The MVP should prove the core loop:
 
 - Create the app shell.
 - Build the mockup-driven builder screen.
-- Add 6 team tabs above a single Pokemon editor card.
-- Keep the header minimal: logo/name only.
+- Add 6 compact team tabs beside a single Pokemon editor card.
+- Keep the header compact and focused on team-management actions.
 - Reserve a full-height Copilot panel on the right.
 - Keep the first screen focused on actual builder controls, not marketing copy.
 
@@ -30,6 +30,7 @@ The MVP should prove the core loop:
 - [x] Add searchable item and move selectors.
 - [x] Add keyboard navigation for Pokemon, item, ability, nature, and move selectors.
 - [x] Add item, ability, and move detail tooltips.
+- [x] Add team-level defensive matchup, offensive coverage, set-role, and setup-alert visualization.
 
 ## Phase 3 - Regulation Legality
 
@@ -56,8 +57,12 @@ The MVP should prove the core loop:
 - [x] Persist Pokemon slots plus item, ability, nature, EV, move, Mega, and form state.
 - [x] Add saved-team management: load, rename, duplicate, delete, and last-opened restore.
 - [x] Add Showdown text import/export for individual Pokemon sets and saved teams.
+- [x] Add shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams.
 - [ ] Keep the saved-team schema compatible with future Supabase/Postgres storage.
 - [ ] Add shareable team links if reasonable.
+- [ ] Add Korean UI localization.
+- [ ] Decide whether Japanese localization belongs in the initial public release.
+- [ ] Add dark mode and persist the user's theme preference.
 - [ ] Improve responsive design.
 - [ ] Add loading, error, and empty states.
 - [ ] Write a strong portfolio case study.

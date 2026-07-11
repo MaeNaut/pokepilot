@@ -1,10 +1,15 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
-import type { UIEvent } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent,
+  UIEvent,
+} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFileExport,
   faFileImport,
   faFileLines,
+  faChevronDown,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -34,8 +39,24 @@ import type {
   TeamSlot,
 } from "../types";
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
+import { useLongPressReorder } from "../hooks/useLongPressReorder";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+import { getBattleFormGroup } from "../data/battleForms";
+import {
+  battleStatKeys,
+  calculateChampionsStats,
+  CHAMPIONS_MAX_EV_PER_STAT,
+  CHAMPIONS_MAX_EV_TOTAL,
+  defaultEvs,
+  getNatureByAlignment,
+  getNatureById,
+  natureStatLabels,
+  statKeys,
+  statLabels,
+  type Nature,
+} from "../data/natures";
 import { PokemonIcon } from "./PokemonIcon";
+import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
 
 type TeamBuilderProps = {
@@ -50,9 +71,10 @@ type TeamBuilderProps = {
   onSelectPokemon: (
     slotIndex: number,
     lookup: string,
-    options?: { applyUsageStats?: boolean },
+    options?: { applyUsageStats?: boolean; allowBattleForm?: boolean },
   ) => Promise<void>;
   onClearSlot: (slotIndex: number) => void;
+  onReorderSlots: (sourceIndex: number, targetIndex: number) => void;
   onExportShowdown: (slotIndex: number) => string;
   onImportShowdown: (slotIndex: number, text: string) => Promise<void>;
 };
@@ -62,6 +84,24 @@ type PokemonSelectOption = {
   name: string;
   number: number;
 };
+
+function ItemSprite({ item }: { item: PokemonItem }) {
+  const [hasImageError, setHasImageError] = useState(false);
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [item.spriteUrl]);
+
+  if (item.spriteUrl && !hasImageError) {
+    return <img src={item.spriteUrl} alt="" onError={() => setHasImageError(true)} />;
+  }
+
+  return (
+    <span className="item-fallback-label">
+      {item.category === "Mega Stones" ? "M" : item.name.charAt(0)}
+    </span>
+  );
+}
 
 const popularPokemonPageSize = 20;
 
@@ -80,15 +120,6 @@ function getBaseUsageLookup(value: string) {
   return withoutMega.split("-")[0];
 }
 
-type Nature = {
-  id: string;
-  label: string;
-  up: BattleStatKey;
-  down: BattleStatKey;
-};
-
-type BattleStatKey = Exclude<StatKey, "hp">;
-
 type NatureGridPosition = {
   upIndex: number;
   downIndex: number;
@@ -96,77 +127,21 @@ type NatureGridPosition = {
 
 type MoveOptionScrollMode = "start" | "nearest";
 
-function withoutSlot<T>(record: Record<number, T>, slotIndex: number) {
-  const nextRecord = { ...record };
-  delete nextRecord[slotIndex];
-  return nextRecord;
+function getIndexAfterReorder(index: number, sourceIndex: number, targetIndex: number) {
+  if (index === sourceIndex) {
+    return targetIndex;
+  }
+
+  if (sourceIndex < targetIndex && index > sourceIndex && index <= targetIndex) {
+    return index - 1;
+  }
+
+  if (sourceIndex > targetIndex && index >= targetIndex && index < sourceIndex) {
+    return index + 1;
+  }
+
+  return index;
 }
-
-const statKeys: StatKey[] = [
-  "hp",
-  "attack",
-  "defense",
-  "specialAttack",
-  "specialDefense",
-  "speed",
-];
-
-const statLabels: Record<StatKey, string> = {
-  hp: "HP",
-  attack: "Atk",
-  defense: "Def",
-  specialAttack: "Sp.A",
-  specialDefense: "Sp.D",
-  speed: "Spe",
-};
-
-const battleStatKeys: BattleStatKey[] = [
-  "attack",
-  "defense",
-  "specialAttack",
-  "specialDefense",
-  "speed",
-];
-
-const natureStatLabels: Record<BattleStatKey, string> = {
-  attack: "Attack",
-  defense: "Defense",
-  specialAttack: "Sp. Atk",
-  specialDefense: "Sp. Def",
-  speed: "Speed",
-};
-
-const natures: Nature[] = [
-  { id: "hardy", label: "Hardy", up: "attack", down: "attack" },
-  { id: "lonely", label: "Lonely", up: "attack", down: "defense" },
-  { id: "adamant", label: "Adamant", up: "attack", down: "specialAttack" },
-  { id: "naughty", label: "Naughty", up: "attack", down: "specialDefense" },
-  { id: "brave", label: "Brave", up: "attack", down: "speed" },
-  { id: "modest", label: "Modest", up: "specialAttack", down: "attack" },
-  { id: "mild", label: "Mild", up: "specialAttack", down: "defense" },
-  { id: "bashful", label: "Bashful", up: "specialAttack", down: "specialAttack" },
-  { id: "rash", label: "Rash", up: "specialAttack", down: "specialDefense" },
-  { id: "quiet", label: "Quiet", up: "specialAttack", down: "speed" },
-  { id: "timid", label: "Timid", up: "speed", down: "attack" },
-  { id: "hasty", label: "Hasty", up: "speed", down: "defense" },
-  { id: "jolly", label: "Jolly", up: "speed", down: "specialAttack" },
-  { id: "naive", label: "Naive", up: "speed", down: "specialDefense" },
-  { id: "serious", label: "Serious", up: "speed", down: "speed" },
-  { id: "bold", label: "Bold", up: "defense", down: "attack" },
-  { id: "docile", label: "Docile", up: "defense", down: "defense" },
-  { id: "impish", label: "Impish", up: "defense", down: "specialAttack" },
-  { id: "lax", label: "Lax", up: "defense", down: "specialDefense" },
-  { id: "relaxed", label: "Relaxed", up: "defense", down: "speed" },
-  { id: "calm", label: "Calm", up: "specialDefense", down: "attack" },
-  { id: "gentle", label: "Gentle", up: "specialDefense", down: "defense" },
-  { id: "careful", label: "Careful", up: "specialDefense", down: "specialAttack" },
-  { id: "quirky", label: "Quirky", up: "specialDefense", down: "specialDefense" },
-  { id: "sassy", label: "Sassy", up: "specialDefense", down: "speed" },
-];
-
-const natureByAlignment = new Map(
-  natures.map((nature) => [`${nature.up}:${nature.down}`, nature]),
-);
 
 const defaultStats: StatBlock = {
   hp: 80,
@@ -177,18 +152,6 @@ const defaultStats: StatBlock = {
   speed: 80,
 };
 
-const defaultEvs: StatBlock = {
-  hp: 0,
-  attack: 0,
-  defense: 0,
-  specialAttack: 0,
-  specialDefense: 0,
-  speed: 0,
-};
-
-const CHAMPIONS_IV_STAT_BONUS = 20;
-const CHAMPIONS_MAX_EV_PER_STAT = 32;
-const CHAMPIONS_MAX_EV_TOTAL = 66;
 const defaultAbilityOptions = ["Ability pending"];
 
 function fallbackMoves(types: PokemonType[]): PokemonMove[] {
@@ -237,37 +200,6 @@ function fallbackMoves(types: PokemonType[]): PokemonMove[] {
       description: "Utility move placeholder until legal moves are connected.",
     },
   ];
-}
-
-function getNatureMultiplier(nature: Nature, stat: StatKey) {
-  if (stat === "hp") {
-    return 1;
-  }
-
-  if (nature.up === nature.down) {
-    return 1;
-  }
-
-  if (nature.up === stat) {
-    return 1.1;
-  }
-
-  if (nature.down === stat) {
-    return 0.9;
-  }
-
-  return 1;
-}
-
-function calculateStats(baseStats: StatBlock, evs: StatBlock, nature: Nature): StatBlock {
-  return statKeys.reduce((result, stat) => {
-    const base = baseStats[stat];
-    const ev = Math.max(0, Math.min(CHAMPIONS_MAX_EV_PER_STAT, evs[stat]));
-    const raw = base + CHAMPIONS_IV_STAT_BONUS + ev;
-
-    result[stat] = Math.floor(raw * getNatureMultiplier(nature, stat));
-    return result;
-  }, {} as StatBlock);
 }
 
 function formatPokemonName(value: string) {
@@ -326,16 +258,6 @@ function getAbilityEffectText(ability: PokemonAbility) {
   );
 }
 
-function getMoveCategoryClass(category?: string) {
-  const normalized = category?.toLowerCase();
-
-  if (normalized === "physical" || normalized === "special" || normalized === "status") {
-    return normalized;
-  }
-
-  return "status";
-}
-
 function isExactPokemonFormLegal(
   showdownLegality: ShowdownLegalitySnapshot | null | undefined,
   pokemonId: string,
@@ -376,7 +298,7 @@ function getNatureFromPosition(position: NatureGridPosition) {
   const upStat = battleStatKeys[position.upIndex];
   const downStat = battleStatKeys[position.downIndex];
 
-  return natureByAlignment.get(`${upStat}:${downStat}`) ?? natures[0];
+  return getNatureByAlignment(upStat, downStat);
 }
 
 function isMegaPokemonName(name: string) {
@@ -442,6 +364,7 @@ export function TeamBuilder({
   onChangeSlot,
   onSelectPokemon,
   onClearSlot,
+  onReorderSlots,
   onExportShowdown,
   onImportShowdown,
 }: TeamBuilderProps) {
@@ -458,6 +381,7 @@ export function TeamBuilder({
     setEvsBySlot,
     setMoveIdsBySlot,
     setPreMegaPokemonBySlot,
+    clearSlot,
   } = buildState;
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [isNamePickerOpen, setIsNamePickerOpen] = useState(false);
@@ -475,6 +399,9 @@ export function TeamBuilder({
   const showdownPanelRef = useRef<HTMLDivElement | null>(null);
   const clearConfirmRef = useRef<HTMLDivElement | null>(null);
   const namePickerRef = useRef<HTMLDivElement | null>(null);
+  const battleFormPickerRef = useRef<HTMLDivElement | null>(null);
+  const [isBattleFormPickerOpen, setIsBattleFormPickerOpen] = useState(false);
+  const [activeBattleFormOptionIndex, setActiveBattleFormOptionIndex] = useState(0);
   const [isItemPickerOpen, setIsItemPickerOpen] = useState(false);
   const [itemQuery, setItemQuery] = useState("");
   const itemPickerRef = useRef<HTMLDivElement | null>(null);
@@ -544,9 +471,7 @@ export function TeamBuilder({
     () => displayedAbilityOptions.findIndex((ability) => ability === selectedAbility),
     [displayedAbilityOptions, selectedAbility],
   );
-  const selectedNature =
-    natures.find((nature) => nature.id === (natureBySlot[selectedSlot] ?? "hardy")) ??
-    natures[0];
+  const selectedNature = getNatureById(natureBySlot[selectedSlot] ?? "hardy");
   const baseStats = activeMember?.baseStats ?? defaultStats;
   const evs = evsBySlot[selectedSlot] ?? defaultEvs;
   const evTotal = statKeys.reduce((total, stat) => total + evs[stat], 0);
@@ -669,10 +594,23 @@ export function TeamBuilder({
   const selectedMoves = [0, 1, 2, 3]
     .map((index) => moves.find((move) => move.id === selectedMoveIds[index]) ?? moves[index])
     .filter((move): move is PokemonMove => Boolean(move));
+  const moveReorder = useLongPressReorder({
+    containerRef: movePickerRef,
+    disabled: openMoveSlot !== null,
+    itemSelector: "[data-move-slot-index]",
+    onDragStart: closeMovePicker,
+    onReorder: reorderMoves,
+  });
+  const teamReorder = useLongPressReorder({
+    containerRef: teamTabsRef,
+    itemSelector: "[data-team-slot-index]",
+    onDragStart: closeBuilderPopovers,
+    onReorder: handleReorderTeamSlots,
+  });
   const openMovePickerMoveId =
     openMoveSlot !== null ? (selectedMoves[openMoveSlot]?.id ?? "") : "";
   const calculatedStats = useMemo(
-    () => calculateStats(baseStats, evs, selectedNature),
+    () => calculateChampionsStats(baseStats, evs, selectedNature),
     [baseStats, evs, selectedNature],
   );
   const knownMegaStoneNames = useMemo(
@@ -710,6 +648,12 @@ export function TeamBuilder({
       return true;
     });
   }, [megaOptions]);
+  const battleFormGroup = getBattleFormGroup(activeSpeciesKey || activePokemonId);
+  const activeBattleFormOptionIndexFromPokemon = Math.max(
+    0,
+    battleFormGroup?.options.findIndex((option) => option.pokemonId === activePokemonId) ?? 0,
+  );
+  const activeBattleFormOption = battleFormGroup?.options[activeBattleFormOptionIndexFromPokemon];
   const relevantMegaStoneNames = useMemo(
     () => {
       const names = new Set(
@@ -1095,6 +1039,29 @@ export function TeamBuilder({
   }, [isNamePickerOpen]);
 
   useEffect(() => {
+    if (!isBattleFormPickerOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!battleFormPickerRef.current?.contains(event.target as Node)) {
+        setIsBattleFormPickerOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isBattleFormPickerOpen]);
+
+  useEffect(() => {
+    setIsBattleFormPickerOpen(false);
+    setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
+  }, [activeBattleFormOptionIndexFromPokemon, selectedSlot]);
+
+  useEffect(() => {
     if (pendingClearSlot === null) {
       return;
     }
@@ -1436,6 +1403,16 @@ export function TeamBuilder({
     moveOptionScrollModeRef.current = null;
   }
 
+  function closeBuilderPopovers() {
+    setPendingClearSlot(null);
+    closeNamePicker();
+    setIsBattleFormPickerOpen(false);
+    closeItemPicker();
+    closeTraitPicker();
+    closeMovePicker();
+    setIsShowdownPanelOpen(false);
+  }
+
   function requestMoveOptionScroll(
     mode: MoveOptionScrollMode,
     options: { preserveExisting?: boolean } = {},
@@ -1470,18 +1447,129 @@ export function TeamBuilder({
     setOpenMoveSlot(index);
   }
 
-  function resetSlotEditorState(slotIndex: number) {
-    setItemBySlot((current) => withoutSlot(current, slotIndex));
-    setAbilityBySlot((current) => withoutSlot(current, slotIndex));
-    setNatureBySlot((current) => withoutSlot(current, slotIndex));
-    setEvsBySlot((current) => withoutSlot(current, slotIndex));
-    setMoveIdsBySlot((current) => withoutSlot(current, slotIndex));
-    setPreMegaPokemonBySlot((current) => withoutSlot(current, slotIndex));
+  function reorderMoves(sourceIndex: number, targetIndex: number) {
+    if (sourceIndex === targetIndex) {
+      return;
+    }
+
+    setMoveIdsBySlot((current) => {
+      const currentMoveIds = current[selectedSlot] ?? [];
+      const nextMoveIds = selectedMoves.map(
+        (move, index) => currentMoveIds[index] ?? move.id,
+      );
+      const [movedMoveId] = nextMoveIds.splice(sourceIndex, 1);
+
+      if (!movedMoveId) {
+        return current;
+      }
+
+      nextMoveIds.splice(targetIndex, 0, movedMoveId);
+
+      return {
+        ...current,
+        [selectedSlot]: nextMoveIds,
+      };
+    });
+  }
+
+  function handleReorderTeamSlots(sourceIndex: number, targetIndex: number) {
+    if (sourceIndex === targetIndex || !team[sourceIndex]) {
+      return;
+    }
+
+    onReorderSlots(sourceIndex, targetIndex);
+    setSelectedSlot((current) =>
+      getIndexAfterReorder(current, sourceIndex, targetIndex),
+    );
+  }
+
+  function selectTeamSlot(index: number) {
+    const member = team[index];
+
+    setSelectedSlot(index);
+    closeBuilderPopovers();
+
+    if (!member) {
+      setIsNamePickerOpen(true);
+      setNameQuery("");
+    }
+  }
+
+  function handleTeamTabClick(index: number) {
+    if (teamReorder.shouldSuppressClick()) {
+      return;
+    }
+
+    selectTeamSlot(index);
+  }
+
+  function handleTeamTabKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    sourceIndex: number,
+  ) {
+    const isPrevious = event.key === "ArrowUp" || event.key === "ArrowLeft";
+    const isNext = event.key === "ArrowDown" || event.key === "ArrowRight";
+
+    if (!event.altKey || (!isPrevious && !isNext) || !team[sourceIndex]) {
+      return;
+    }
+
+    event.preventDefault();
+    closeBuilderPopovers();
+
+    const targetIndex = Math.max(
+      0,
+      Math.min(team.length - 1, sourceIndex + (isPrevious ? -1 : 1)),
+    );
+
+    if (targetIndex === sourceIndex) {
+      return;
+    }
+
+    handleReorderTeamSlots(sourceIndex, targetIndex);
+    window.requestAnimationFrame(() => {
+      teamTabsRef.current
+        ?.querySelector<HTMLButtonElement>(
+          `[data-team-slot-index="${targetIndex}"] .team-tab`,
+        )
+        ?.focus();
+    });
+  }
+
+  function handleMovePillKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    sourceIndex: number,
+  ) {
+    if (!event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) {
+      return;
+    }
+
+    event.preventDefault();
+    closeMovePicker();
+
+    const direction = event.key === "ArrowUp" ? -1 : 1;
+    const targetIndex = Math.max(
+      0,
+      Math.min(selectedMoves.length - 1, sourceIndex + direction),
+    );
+
+    if (targetIndex === sourceIndex) {
+      return;
+    }
+
+    reorderMoves(sourceIndex, targetIndex);
+    window.requestAnimationFrame(() => {
+      movePickerRef.current
+        ?.querySelector<HTMLButtonElement>(
+          `[data-move-slot-index="${targetIndex}"] .move-pill`,
+        )
+        ?.focus();
+    });
   }
 
   function handleClearSlot(slotIndex: number) {
     onClearSlot(slotIndex);
-    resetSlotEditorState(slotIndex);
+    clearSlot(slotIndex);
     setPendingClearSlot(null);
     if (slotIndex === selectedSlot) {
       setIsNamePickerOpen(true);
@@ -1522,6 +1610,48 @@ export function TeamBuilder({
     }
 
     handleSelectOption(optionName);
+  }
+
+  function handleSelectBattleForm(optionName: string) {
+    setIsBattleFormPickerOpen(false);
+    void onSelectPokemon(selectedSlot, optionName, { allowBattleForm: true });
+  }
+
+  function handleBattleFormKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (!battleFormGroup) {
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setIsBattleFormPickerOpen(false);
+      return;
+    }
+
+    if (event.key === "Enter" && isBattleFormPickerOpen) {
+      event.preventDefault();
+      handleSelectBattleForm(
+        battleFormGroup.options[activeBattleFormOptionIndex].pokemonId,
+      );
+      return;
+    }
+
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+      return;
+    }
+
+    event.preventDefault();
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+
+    if (!isBattleFormPickerOpen) {
+      setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
+      setIsBattleFormPickerOpen(true);
+      return;
+    }
+
+    setActiveBattleFormOptionIndex((current) =>
+      (current + direction + battleFormGroup.options.length) %
+      battleFormGroup.options.length,
+    );
   }
 
   async function handleSelectItem(value: string) {
@@ -1938,30 +2068,57 @@ export function TeamBuilder({
       ) : null}
 
       <div className="builder-card-layout">
-        <div className="team-tabs" aria-label="Current team" ref={teamTabsRef}>
+        <div
+          className={`team-tabs ${teamReorder.isDragging ? "is-reordering" : ""}`}
+          aria-label="Current team"
+          ref={teamTabsRef}
+        >
         {team.map((member, index) => (
           <div
-            className={`team-tab-shell ${selectedSlot === index ? "is-active" : ""}`}
+            className={`team-tab-shell ${selectedSlot === index ? "is-active" : ""} ${
+              teamReorder.dragState?.sourceIndex === index ? "is-dragging" : ""
+            } ${
+              teamReorder.dragState?.sourceIndex === index &&
+              teamReorder.dragState.isDropping
+                ? "is-dropping"
+                : ""
+            } ${
+              teamReorder.dragState?.targetIndex === index &&
+              teamReorder.dragState.sourceIndex !== index
+                ? "is-drop-target"
+                : ""
+            }`}
+            data-team-slot-index={index}
             key={`${member?.id ?? "empty"}-${index}`}
+            style={
+              teamReorder.dragState?.sourceIndex === index
+                ? ({
+                    "--tab-drag-x": `${teamReorder.dragState.offsetX}px`,
+                    "--tab-drag-y": `${teamReorder.dragState.offsetY}px`,
+                  } as CSSProperties)
+                : undefined
+            }
           >
             <button
               className={`team-tab ${selectedSlot === index ? "is-active" : ""} ${
                 member ? "" : "is-empty"
               }`}
               type="button"
-              onClick={() => {
-                setSelectedSlot(index);
-                setPendingClearSlot(null);
-                closeNamePicker();
-                closeItemPicker();
-                closeTraitPicker();
-                closeMovePicker();
-                if (!member) {
-                  setIsNamePickerOpen(true);
-                  setNameQuery("");
+              onClick={() => handleTeamTabClick(index)}
+              onKeyDown={(event) => handleTeamTabKeyDown(event, index)}
+              onPointerDown={(event) => {
+                if (member) {
+                  teamReorder.handlePointerDown(event, index);
                 }
               }}
-              aria-label={member ? `Show slot ${index + 1}` : `Add Pokemon to slot ${index + 1}`}
+              onPointerMove={teamReorder.handlePointerMove}
+              onPointerUp={teamReorder.handlePointerUp}
+              onPointerCancel={teamReorder.handlePointerCancel}
+              aria-label={
+                member
+                  ? `Show slot ${index + 1}. Drag to reorder or press Alt and an arrow key.`
+                  : `Add Pokemon to slot ${index + 1}`
+              }
             >
               {member ? (
                 <PokemonIcon pokemon={member} />
@@ -2097,6 +2254,49 @@ export function TeamBuilder({
                 </div>
               ) : null}
 
+              {!isNamePickerOpen && battleFormGroup && activeBattleFormOption ? (
+                <div className="form-picker" ref={battleFormPickerRef}>
+                  <button
+                    className="form-picker-trigger"
+                    type="button"
+                    aria-label={`Form: ${activeBattleFormOption.label}`}
+                    aria-expanded={isBattleFormPickerOpen}
+                    aria-haspopup="listbox"
+                    onClick={() => {
+                      setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
+                      setIsBattleFormPickerOpen((isOpen) => !isOpen);
+                    }}
+                    onKeyDown={handleBattleFormKeyDown}
+                  >
+                    <span>{activeBattleFormOption.label}</span>
+                    <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
+                  </button>
+
+                  {isBattleFormPickerOpen ? (
+                    <div className="form-picker-menu" role="listbox" aria-label="Battle form">
+                      {battleFormGroup.options.map((option, optionIndex) => {
+                        const isSelected = activePokemonId === option.pokemonId;
+                        const isActive = activeBattleFormOptionIndex === optionIndex;
+
+                        return (
+                          <button
+                            className={`form-picker-option ${isActive ? "is-active" : ""}`}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            key={option.pokemonId}
+                            onMouseEnter={() => setActiveBattleFormOptionIndex(optionIndex)}
+                            onClick={() => handleSelectBattleForm(option.pokemonId)}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
             </div>
 
             {searchError ? (
@@ -2150,12 +2350,8 @@ export function TeamBuilder({
                   }}
                   onMouseLeave={() => setHoveredItemOption(null)}
                 >
-                  {activeItem?.spriteUrl ? (
-                    <img src={activeItem.spriteUrl} alt="" />
-                  ) : activeItem ? (
-                    <span className="item-fallback-label">
-                      {activeItem.category === "Mega Stones" ? "M" : activeItem.name.charAt(0)}
-                    </span>
+                  {activeItem ? (
+                    <ItemSprite item={activeItem} />
                   ) : (
                     <span>+</span>
                   )}
@@ -2212,15 +2408,7 @@ export function TeamBuilder({
                             onClick={() => void handleSelectItem(option.name)}
                           >
                             <span className="item-option-icon" aria-hidden="true">
-                              {previewItemOption.spriteUrl ? (
-                                <img src={previewItemOption.spriteUrl} alt="" />
-                              ) : (
-                                <span className="item-fallback-label">
-                                  {previewItemOption.category === "Mega Stones"
-                                    ? "M"
-                                    : previewItemOption.name.charAt(0)}
-                                </span>
-                              )}
+                              <ItemSprite item={previewItemOption} />
                             </span>
                             <span className="item-option-name">{option.displayName}</span>
                           </button>
@@ -2245,15 +2433,7 @@ export function TeamBuilder({
                     role="tooltip"
                   >
                     <div className="item-tooltip-header">
-                      {hoveredItemOption.spriteUrl ? (
-                        <img src={hoveredItemOption.spriteUrl} alt="" />
-                      ) : (
-                        <span className="item-fallback-label">
-                          {hoveredItemOption.category === "Mega Stones"
-                            ? "M"
-                            : hoveredItemOption.name.charAt(0)}
-                        </span>
-                      )}
+                      <ItemSprite item={hoveredItemOption} />
                       <div>
                         <strong>{hoveredItemOption.name}</strong>
                         {hoveredItemOption.category ? (
@@ -2451,7 +2631,7 @@ export function TeamBuilder({
                               {natureStatLabels[upStat]}
                             </div>
                             {battleStatKeys.map((downStat, downIndex) => {
-                              const nature = natureByAlignment.get(`${upStat}:${downStat}`)!;
+                              const nature = getNatureByAlignment(upStat, downStat);
                               const isNeutral = upStat === downStat;
                               const isKeyboardActive =
                                 activeNaturePosition.upIndex ===
@@ -2496,68 +2676,59 @@ export function TeamBuilder({
             </div>
             ) : null}
 
-            <div className="move-list" aria-label="Selected moves" ref={movePickerRef}>
+            <div
+              className={`move-list ${moveReorder.isDragging ? "is-reordering" : ""}`}
+              aria-label="Selected moves"
+              ref={movePickerRef}
+            >
               {activeMember ? (
                 selectedMoves.map((move, index) => (
-                  <div className="move-picker" key={`${index}-${move.id}`}>
+                  <div
+                    className={`move-picker ${
+                      moveReorder.dragState?.sourceIndex === index ? "is-dragging" : ""
+                    } ${
+                      moveReorder.dragState?.sourceIndex === index &&
+                      moveReorder.dragState.isDropping
+                        ? "is-dropping"
+                        : ""
+                    } ${
+                      moveReorder.dragState?.targetIndex === index &&
+                      moveReorder.dragState.sourceIndex !== index
+                        ? "is-drop-target"
+                        : ""
+                    }`}
+                    data-move-slot-index={index}
+                    key={`${index}-${move.id}`}
+                    style={
+                      moveReorder.dragState?.sourceIndex === index
+                        ? ({
+                            "--move-drag-x": `${moveReorder.dragState.offsetX}px`,
+                            "--move-drag-y": `${moveReorder.dragState.offsetY}px`,
+                          } as CSSProperties)
+                        : undefined
+                    }
+                  >
                     <button
                       className={`move-pill type-${move.type}`}
                       type="button"
                       aria-expanded={openMoveSlot === index}
-                      onClick={() => toggleMovePicker(index, move.id)}
+                      aria-label={`${move.name}, move ${index + 1}. Drag to reorder or press Alt and an arrow key.`}
+                      onClick={() => {
+                        if (!moveReorder.shouldSuppressClick()) {
+                          toggleMovePicker(index, move.id);
+                        }
+                      }}
+                      onKeyDown={(event) => handleMovePillKeyDown(event, index)}
+                      onPointerDown={(event) => moveReorder.handlePointerDown(event, index)}
+                      onPointerMove={moveReorder.handlePointerMove}
+                      onPointerUp={moveReorder.handlePointerUp}
+                      onPointerCancel={moveReorder.handlePointerCancel}
                     >
-                      <span className="move-type-mark">
-                        <TypeBadge type={move.type} />
-                      </span>
-                      <span className="move-name">{move.name}</span>
-                      <span className="move-power-panel">{move.power ?? "-"}</span>
+                      <MoveSummary move={move} />
                     </button>
 
                     {openMoveSlot !== index ? (
-                      <aside className={`move-tooltip type-${move.type}`} role="tooltip">
-                        <div className="move-tooltip-shell">
-                          <div className="move-tooltip-header">
-                            <span className="move-tooltip-type">
-                              <TypeBadge type={move.type} />
-                            </span>
-                            <strong>{move.name}</strong>
-                            <span
-                              className={`move-category-icon is-${getMoveCategoryClass(
-                                move.category,
-                              )}`}
-                              aria-label={move.category ?? "Move category"}
-                              title={move.category ?? "Move category"}
-                            />
-                          </div>
-
-                          <div className="move-tooltip-body">
-                            <dl className="move-tooltip-stats">
-                              <div>
-                                <dt>Power</dt>
-                                <dd>{move.power ?? "-"}</dd>
-                              </div>
-                              <div>
-                                <dt>Accuracy</dt>
-                                <dd>{move.accuracy ?? "-"}</dd>
-                              </div>
-                              <div>
-                                <dt>PP</dt>
-                                <dd>{move.pp}</dd>
-                              </div>
-                            </dl>
-
-                            <p>{move.description}</p>
-
-                            {move.tags?.length ? (
-                              <div className="move-tooltip-tags" aria-label="Move tags">
-                                {move.tags.map((tag) => (
-                                  <span key={tag}>#{tag}</span>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      </aside>
+                      <MoveTooltip move={move} />
                     ) : null}
 
                     {openMoveSlot === index ? (
@@ -2612,11 +2783,7 @@ export function TeamBuilder({
                                 onMouseLeave={() => setHoveredMoveOption(null)}
                                 onClick={() => selectMove(index, option.id)}
                               >
-                                <span className="move-type-mark">
-                                  <TypeBadge type={option.type} />
-                                </span>
-                                <span className="move-name">{option.name}</span>
-                                <span className="move-power-panel">{option.power ?? "-"}</span>
+                                <MoveSummary move={option} />
                               </button>
                             ))
                           ) : (
@@ -2627,54 +2794,11 @@ export function TeamBuilder({
                     ) : null}
 
                     {openMoveSlot === index && hoveredMoveOption ? (
-                      <aside
-                        className={`move-tooltip move-option-tooltip type-${hoveredMoveOption.type}`}
+                      <MoveTooltip
                         id={`move-option-tooltip-${index}`}
-                        role="tooltip"
-                      >
-                        <div className="move-tooltip-shell">
-                          <div className="move-tooltip-header">
-                            <span className="move-tooltip-type">
-                              <TypeBadge type={hoveredMoveOption.type} />
-                            </span>
-                            <strong>{hoveredMoveOption.name}</strong>
-                            <span
-                              className={`move-category-icon is-${getMoveCategoryClass(
-                                hoveredMoveOption.category,
-                              )}`}
-                              aria-label={hoveredMoveOption.category ?? "Move category"}
-                              title={hoveredMoveOption.category ?? "Move category"}
-                            />
-                          </div>
-
-                          <div className="move-tooltip-body">
-                            <dl className="move-tooltip-stats">
-                              <div>
-                                <dt>Power</dt>
-                                <dd>{hoveredMoveOption.power ?? "-"}</dd>
-                              </div>
-                              <div>
-                                <dt>Accuracy</dt>
-                                <dd>{hoveredMoveOption.accuracy ?? "-"}</dd>
-                              </div>
-                              <div>
-                                <dt>PP</dt>
-                                <dd>{hoveredMoveOption.pp}</dd>
-                              </div>
-                            </dl>
-
-                            <p>{hoveredMoveOption.description}</p>
-
-                            {hoveredMoveOption.tags?.length ? (
-                              <div className="move-tooltip-tags" aria-label="Move tags">
-                                {hoveredMoveOption.tags.map((tag) => (
-                                  <span key={tag}>#{tag}</span>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      </aside>
+                        move={hoveredMoveOption}
+                        placement="option"
+                      />
                     ) : null}
                   </div>
                 ))

@@ -63,11 +63,20 @@ Current direction:
   - form-change variants generally stay in the main Pokemon picker so usage stats,
     legal moves, and form-specific data can load independently
   - cosmetic or battle-only forms that should not be selected directly, such as
-    Pikachu caps and Castform weather forms, are hidden from the main picker
+    Pikachu caps, Castform weather forms, Mimikyu Busted, Mimikyu Totem forms,
+    Aegislash Blade, and Palafin Hero are hidden from the main picker
+  - battle-triggered Aegislash, Morpeko, and Palafin forms use compact controls
+    beside the Pokemon name while Shield, Full Belly, and Zero remain their
+    main-picker defaults
+  - default battle-state suffixes are hidden from picker display names for
+    Aegislash Shield, Mimikyu Disguised, Morpeko Full Belly, and Palafin Zero;
+    their internal form IDs remain unchanged, and regional/gender suffixes stay visible
   - mega evolutions are hidden from the main picker and exposed through the
     selected Pokemon's mega control
 - Keep PokeAPI as the display/detail source for Pokemon, items, abilities, moves,
   sprites, and artwork.
+- When an item response has no default sprite, fall back to the matching
+  `PokeAPI/sprites` `sprites/items/gen9/{item-id}.png` asset.
 - Use PokeAPI generation-specific icon sprites first. If that path is missing,
   fall back to PokeAPI `front_default` before older generation icon paths so
   Pokemon without current icons can still use the more detailed 96x96 sprite in
@@ -96,6 +105,9 @@ claim of affiliation.
 - The main builder is a single large Pokemon editor card, not a grid of six cards.
 - Team members are shown as compact tabs/bookmarks on the left side of the card.
 - The displayed Pokemon is changed by clicking a team tab.
+- Filled team tabs can be reordered with desktop drag, touch hold-and-drag, or
+  `Alt+Arrow` keyboard controls. The Pokemon and its item, ability, nature, EVs,
+  moves, and Mega/form state move together, including when moved through empty slots.
 - The Pokemon name itself is the selector. In closed state it is large text; when
   opened, it becomes a same-style editable search field with a filtered dropdown.
 - With usage stats available, the empty-query name dropdown shows Pokemon in
@@ -132,19 +144,37 @@ claim of affiliation.
 - Team has six slots.
 - Slots can be empty. Each filled slot stores a selected Pokemon plus local UI
   choices for item, ability, nature, EVs, moves, and Mega/form state.
+- `useTeamBuildState` owns slot-level patch, clear, reorder, replacement, and
+  snapshot operations. Callers should not repeat the same mutation across all six
+  per-slot records.
 - IV is fixed through the Pokemon Champions-style displayed stat assumption.
 - Stat calculation uses Pokemon Champions-style EV limits, fixed IV assumptions,
   and nature modifiers.
+- Nature definitions, EV limits, and displayed-stat calculation live in
+  `src/data/natures.ts` so the editor and role diagnostics use the same rules.
 - Nature options use the full nature table with raised/lowered stat visualization.
 - Item options are filtered through the Regulation M-B legality layer, with
   Pokemon-specific Mega Stone hiding and Mega form auto-lock behavior on top.
 - Move options are filtered through the Regulation M-B legality layer and display
   fetched type, power, accuracy, PP, description, and Showdown-derived tags.
+- Shared move-pill content and tooltip markup live in `MoveDetails.tsx`; the
+  selected move and dropdown preview should not maintain separate copies.
+- Move category icons use the EssentiarumVG Gen 8 glyph mapping: `J` for physical,
+  `T` for special, and `U` for status. The font is restricted to personal,
+  non-commercial use unless the creator grants additional permission.
 - Pokemon, item, ability, nature, and move pickers support keyboard navigation
   with hover-to-keyboard active selection continuity.
 - The move picker opens scrolled to the current move, uses natural nearest-scroll
   behavior for keyboard navigation, and prevents mouse hover from triggering
   scroll loops.
+- Selected moves can be reordered from the card. Mouse pointers activate after a
+  short movement threshold, touch pointers activate after a brief hold, and
+  `Alt+ArrowUp` / `Alt+ArrowDown` provides the keyboard equivalent. Reordering
+  updates the stored move array, so saved teams and Showdown export preserve it.
+- Move, active-team-slot, and saved-team reordering share
+  `useLongPressReorder`. The hook owns mouse thresholds, touch hold activation,
+  click suppression, keyboard-independent pointer state, and the short drop
+  settling animation so all three surfaces keep the same interaction feel.
 - Pokemon picked from the main name dropdown can auto-apply a popular Smogon
   moveset usage sample. Form changes, Mega toggles, saved-team loads, and
   Showdown imports do not trigger usage auto-application.
@@ -152,6 +182,10 @@ claim of affiliation.
   team name, timestamps, slots, and per-slot build details. The model is kept
   plain-JSON so it can later move to Supabase/Postgres without changing UI state
   shape too aggressively.
+- Saved-team cards can be reordered with desktop drag, touch hold-and-drag, or
+  `Alt+Arrow` keyboard controls. The new array order is written to localStorage
+  immediately, while expanded rename, delete, or Showdown tools temporarily lock
+  reordering to avoid accidental edits.
 - Showdown text import/export exists at both Pokemon-slot and saved-team level.
 
 ## Regulation Target
@@ -171,6 +205,43 @@ Still needed:
   abilities, and moves
 - documentation for any known Showdown/PokeAPI naming exceptions
 - any newly discovered Pokemon Champions-specific battle-rule differences
+
+## Team Diagnostics
+
+- Keep deterministic team diagnostics in the middle workspace between the
+  selected Pokemon editor and the future Copilot panel.
+- Keep the diagnostics panel visually consistent with the builder: use one-line
+  panel and section headers, shared 6-8px radii, thin neutral borders, restrained
+  gray surfaces, and semantic accent colors only for matchup, role, and alert
+  meaning. Matchup cells, role summaries, and alerts should read as related
+  repeated items rather than unrelated widget styles.
+- Calculate defensive matchups from the shared type chart and the current form's
+  displayed typing, then apply selected abilities that fully negate an attacking
+  type: Levitate and Earth Eater for Ground; Lightning Rod, Volt Absorb, and Motor
+  Drive for Electric; Water Absorb, Storm Drain, and Dry Skin for Water; Flash Fire
+  and Well-Baked Body for Fire; and Sap Sipper for Grass. Use the same adjusted
+  matchup counts for the defensive table and Team Alerts. Conditional move-family
+  immunities and non-immunity damage modifiers remain outside this calculation.
+- Calculate offensive coverage from the currently selected damaging move types.
+  The displayed score measures how many of the 18 single types can be hit super
+  effectively; it is not a full dual-type matchup or damage simulation.
+- Classify set roles from the current calculated stats, EVs, nature, and selected
+  moves. Roles are multi-label: one Pokemon can be both an attacker and supporter.
+  Keep role assignment conservative: attacker roles require offensive EV or nature
+  commitment plus matching attacks and a clear physical/special lean. Wall roles
+  require at least 24 direct defensive EVs, 48 combined HP-plus-defense EVs,
+  sufficient bulk, multiple defensive moves, and a nature or stat lean toward that
+  defense. Supporter roles use a maintained list of doubles-oriented support moves
+  and can also recognize a support ability paired with utility.
+- Surface compact alerts for shared weaknesses, open team slots, repeated typing,
+  and role-based attacker or wall imbalance. Only flag role imbalance when one
+  physical/special side has at least two classified members and the opposite side
+  has none; teams with neither side represented should not be warned. Prioritize
+  danger and warning alerts over informational alerts before applying the display
+  limit. Do not treat missing held items or fewer than four moves as automatically
+  incomplete because both can be intentional set choices.
+- Keep the analysis function independent from React rendering so it can later be
+  regression-tested and reused as structured input for Copilot.
 
 ## AI Response Shape Idea
 

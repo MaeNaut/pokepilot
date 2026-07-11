@@ -1,6 +1,22 @@
+import { areEquivalentBattleForms } from "../data/battleForms";
+
 const SPECIAL_POKEMON_LOOKUP_ALIASES: Record<string, string[]> = {
+  "aegislash-blade": ["aegislash"],
+  "aegislash-shield": ["aegislash"],
+  "mimikyu-disguised": ["mimikyu"],
+  "morpeko-full-belly": ["morpeko"],
+  "morpeko-hangry": ["morpeko"],
+  "palafin-hero": ["palafin"],
+  "palafin-zero": ["palafin", "palafin-hero"],
   pyroar: ["pyroarmega", "pyroar-mega"],
   "pyroar-male": ["pyroarmega", "pyroar-mega"],
+};
+
+const PREFERRED_POKEAPI_IDS: Record<string, string> = {
+  aegislash: "aegislash-shield",
+  mimikyu: "mimikyu-disguised",
+  morpeko: "morpeko-full-belly",
+  palafin: "palafin-zero",
 };
 
 export function toPokemonLookupId(value: string) {
@@ -58,12 +74,20 @@ export function getPokemonLookupAliases(value: string) {
   return Array.from(aliases);
 }
 
+export function getPreferredPokeApiId(value: string) {
+  return PREFERRED_POKEAPI_IDS[toPokemonLookupId(value)];
+}
+
 export function shouldKeepSelectedPokemonForUsageTarget(
   selectedPokemonId: string,
   usagePokemonId: string,
 ) {
   return (
-    selectedPokemonId === "pyroar-male" &&
-    toPokemonLookupId(usagePokemonId).includes("-mega")
+    areEquivalentBattleForms(
+      toPokemonLookupId(selectedPokemonId),
+      toPokemonLookupId(usagePokemonId),
+    ) ||
+    (selectedPokemonId === "pyroar-male" &&
+      toPokemonLookupId(usagePokemonId).includes("-mega"))
   );
 }

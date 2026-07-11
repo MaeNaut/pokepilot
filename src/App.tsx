@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -20,9 +20,19 @@ import { isPokemonLegal, loadShowdownLegality } from "./api/showdownLegality";
 import { CopilotPanel } from "./components/CopilotPanel";
 import { PokemonIcon } from "./components/PokemonIcon";
 import { TeamBuilder } from "./components/TeamBuilder";
+import { TeamDiagnostics } from "./components/TeamDiagnostics";
 import { samplePool, startingTeam } from "./data/sampleTeam";
+import {
+  CHAMPIONS_MAX_EV_PER_STAT,
+  CHAMPIONS_MAX_EV_TOTAL,
+  defaultEvs,
+} from "./data/natures";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
-import { shouldKeepSelectedPokemonForUsageTarget } from "./utils/pokemonAliases";
+import { useLongPressReorder } from "./hooks/useLongPressReorder";
+import {
+  getPreferredPokeApiId,
+  shouldKeepSelectedPokemonForUsageTarget,
+} from "./utils/pokemonAliases";
 import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
 import {
   formatShowdownSlot,
@@ -33,6 +43,7 @@ import {
 import type {
   ItemIndexEntry,
   PokemonIndexEntry,
+  PokemonItem,
   TeamMember,
   TeamSlot,
 } from "./types";
@@ -44,8 +55,6 @@ const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
 const lastActiveTeamStorageKey = "pokepilot.lastActiveTeam.v1";
 const savedTeamSchemaVersion = 1;
 const blankTeamSize = 6;
-const championsMaxEvPerStat = 32;
-const championsMaxEvTotal = 66;
 
 type SavedTeamSlot = {
   pokemonId: string;
@@ -208,13 +217,13 @@ function normalizeShowdownLookup(value: string) {
 
 function normalizeImportedEvs(evs: Partial<TeamBuildState["evsBySlot"][number]>) {
   const stats = ["hp", "attack", "defense", "specialAttack", "specialDefense", "speed"] as const;
-  let remaining = championsMaxEvTotal;
+  let remaining = CHAMPIONS_MAX_EV_TOTAL;
 
   return stats.reduce(
     (normalized, stat) => {
       const value = Math.max(
         0,
-        Math.min(championsMaxEvPerStat, evs[stat] ?? 0, remaining),
+        Math.min(CHAMPIONS_MAX_EV_PER_STAT, evs[stat] ?? 0, remaining),
       );
 
       remaining -= value;
@@ -224,14 +233,7 @@ function normalizeImportedEvs(evs: Partial<TeamBuildState["evsBySlot"][number]>)
         [stat]: value,
       };
     },
-    {
-      hp: 0,
-      attack: 0,
-      defense: 0,
-      specialAttack: 0,
-      specialDefense: 0,
-      speed: 0,
-    },
+    defaultEvs,
   );
 }
 
@@ -239,10 +241,12 @@ function isMegaPokemonId(value: string) {
   return toPokemonId(value).includes("-mega");
 }
 
-function withoutSlotValue<T>(record: Record<number, T>, slotIndex: number) {
-  const next = { ...record };
-  delete next[slotIndex];
-  return next;
+function reorderArrayItem<T>(items: T[], sourceIndex: number, targetIndex: number) {
+  const nextItems = [...items];
+  const [movedItem] = nextItems.splice(sourceIndex, 1);
+
+  nextItems.splice(targetIndex, 0, movedItem);
+  return nextItems;
 }
 
 function App() {
@@ -276,9 +280,17 @@ function App() {
   );
   const [searchError, setSearchError] = useState<string | null>(null);
   const teamActionsRef = useRef<HTMLElement | null>(null);
+  const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
   const committedSnapshotRef = useRef<string | null>(null);
   const hasRestoredSavedTeamRef = useRef(false);
+  const savedTeamReorder = useLongPressReorder({
+    containerRef: savedTeamListRef,
+    disabled: Boolean(renamingTeamId || pendingDeleteTeamId || showdownTeamId),
+    itemSelector: "[data-saved-team-index]",
+    onDragStart: () => setTeamStorageMessage(null),
+    onReorder: handleReorderSavedTeams,
+  });
 
   const closeTeamManager = useCallback(() => {
     setIsTeamManagerOpen(false);
@@ -531,6 +543,17 @@ function App() {
     );
   }
 
+  function handleReorderSlots(sourceIndex: number, targetIndex: number) {
+    if (sourceIndex === targetIndex) {
+      return;
+    }
+
+    setTeam((currentTeam) =>
+      reorderArrayItem(currentTeam, sourceIndex, targetIndex),
+    );
+    teamBuildState.reorderSlots(sourceIndex, targetIndex, team.length);
+  }
+
   function commitTeamName() {
     const nextName = teamNameDraft.trim() || "Untitled Team";
 
@@ -580,7 +603,7 @@ function App() {
   async function handleSelectPokemon(
     slotIndex: number,
     lookup: string,
-    options: { applyUsageStats?: boolean } = {},
+    options: { applyUsageStats?: boolean; allowBattleForm?: boolean } = {},
   ) {
     setSearchError(null);
 
@@ -591,7 +614,11 @@ function App() {
 
     const speciesKey = resolveSpeciesKeyForLegality(lookup);
 
-    if (hasLegalityFilter() && !isPokemonLegal(showdownLegality, lookup, speciesKey)) {
+    if (
+      !options.allowBattleForm &&
+      hasLegalityFilter() &&
+      !isPokemonLegal(showdownLegality, lookup, speciesKey)
+    ) {
       setSearchError(`${lookup} is not legal in Regulation M-B.`);
       return;
     }
@@ -610,7 +637,7 @@ function App() {
       }
 
       if (options.applyUsageStats) {
-        clearBuildStateForSlot(slotIndex);
+        teamBuildState.clearSlot(slotIndex);
       }
 
       setCustomPool((currentPool) =>
@@ -629,6 +656,12 @@ function App() {
   }
 
   function resolveImportedPokemonId(name: string) {
+    const preferredPokeApiId = getPreferredPokeApiId(name);
+
+    if (preferredPokeApiId) {
+      return preferredPokeApiId;
+    }
+
     const normalized = normalizeShowdownLookup(name);
     const matchedEntry = pokemonIndex.find((entry) => {
       const entryNames = [
@@ -672,17 +705,6 @@ function App() {
     return usageSet.moveIds.filter((moveId) => legalMoveIds.has(moveId)).slice(0, 4);
   }
 
-  function clearBuildStateForSlot(slotIndex: number) {
-    teamBuildState.setItemBySlot((current) => withoutSlotValue(current, slotIndex));
-    teamBuildState.setAbilityBySlot((current) => withoutSlotValue(current, slotIndex));
-    teamBuildState.setNatureBySlot((current) => withoutSlotValue(current, slotIndex));
-    teamBuildState.setEvsBySlot((current) => withoutSlotValue(current, slotIndex));
-    teamBuildState.setMoveIdsBySlot((current) => withoutSlotValue(current, slotIndex));
-    teamBuildState.setPreMegaPokemonBySlot((current) =>
-      withoutSlotValue(current, slotIndex),
-    );
-  }
-
   async function resolveUsageTargetMember(
     usageSet: SmogonUsageSet,
     selectedMember: TeamMember,
@@ -711,69 +733,26 @@ function App() {
   ) {
     const ability = resolveUsageAbility(targetMember, usageSet);
     const moveIds = resolveUsageMoveIds(targetMember, usageSet);
+    let item: PokemonItem | null = null;
 
     if (usageSet.itemName) {
       try {
-        const item = await fetchItem(normalizeShowdownLookup(usageSet.itemName));
-
-        teamBuildState.setItemBySlot((current) => ({
-          ...current,
-          [slotIndex]: item,
-        }));
+        item = await fetchItem(normalizeShowdownLookup(usageSet.itemName));
       } catch {
-        teamBuildState.setItemBySlot((current) => ({
-          ...current,
-          [slotIndex]: null,
-        }));
+        item = null;
       }
-    } else {
-      teamBuildState.setItemBySlot((current) => ({
-        ...current,
-        [slotIndex]: null,
-      }));
     }
 
-    if (ability) {
-      teamBuildState.setAbilityBySlot((current) => ({
-        ...current,
-        [slotIndex]: ability,
-      }));
-    }
-
-    if (usageSet.nature) {
-      teamBuildState.setNatureBySlot((current) => ({
-        ...current,
-        [slotIndex]: usageSet.nature!,
-      }));
-    }
-
-    const usageEvs = usageSet.evs;
-
-    if (usageEvs) {
-      teamBuildState.setEvsBySlot((current) => ({
-        ...current,
-        [slotIndex]: normalizeImportedEvs(usageEvs),
-      }));
-    }
-
-    if (moveIds.length > 0) {
-      teamBuildState.setMoveIdsBySlot((current) => ({
-        ...current,
-        [slotIndex]: moveIds,
-      }));
-    }
-
-    teamBuildState.setPreMegaPokemonBySlot((current) => {
-      if (isMegaPokemonId(targetMember.id) && !isMegaPokemonId(selectedMember.id)) {
-        return {
-          ...current,
-          [slotIndex]: selectedMember.id,
-        };
-      }
-
-      const next = { ...current };
-      delete next[slotIndex];
-      return next;
+    teamBuildState.patchSlot(slotIndex, {
+      item,
+      ...(ability ? { ability } : {}),
+      ...(usageSet.nature ? { nature: usageSet.nature } : {}),
+      ...(usageSet.evs ? { evs: normalizeImportedEvs(usageSet.evs) } : {}),
+      ...(moveIds.length > 0 ? { moveIds } : {}),
+      preMegaPokemon:
+        isMegaPokemonId(targetMember.id) && !isMegaPokemonId(selectedMember.id)
+          ? selectedMember.id
+          : null,
     });
   }
 
@@ -854,33 +833,15 @@ function App() {
         index === slotIndex ? importedMember : member,
       ),
     );
-    teamBuildState.setItemBySlot((current) => ({
-      ...current,
-      [slotIndex]: importedSnapshot.buildState.itemBySlot[0] ?? null,
-    }));
-    teamBuildState.setAbilityBySlot((current) => ({
-      ...current,
-      [slotIndex]: importedSnapshot.buildState.abilityBySlot[0] ?? "",
-    }));
-    teamBuildState.setNatureBySlot((current) => ({
-      ...current,
-      [slotIndex]: importedSnapshot.buildState.natureBySlot[0] ?? "hardy",
-    }));
-    teamBuildState.setEvsBySlot((current) => ({
-      ...current,
-      [slotIndex]: importedSnapshot.buildState.evsBySlot[0] ?? {
-        hp: 0,
-        attack: 0,
-        defense: 0,
-        specialAttack: 0,
-        specialDefense: 0,
-        speed: 0,
-      },
-    }));
-    teamBuildState.setMoveIdsBySlot((current) => ({
-      ...current,
-      [slotIndex]: importedSnapshot.buildState.moveIdsBySlot[0] ?? [],
-    }));
+    teamBuildState.patchSlot(slotIndex, {
+      item: importedSnapshot.buildState.itemBySlot[0] ?? null,
+      ability: importedSnapshot.buildState.abilityBySlot[0] ?? null,
+      nature: importedSnapshot.buildState.natureBySlot[0] ?? "hardy",
+      evs: importedSnapshot.buildState.evsBySlot[0] ?? normalizeImportedEvs({}),
+      moveIds: importedSnapshot.buildState.moveIdsBySlot[0] ?? [],
+      preMegaPokemon:
+        importedSnapshot.buildState.preMegaPokemonBySlot[0] ?? null,
+    });
     setTeamStorageMessage("Imported Pokemon set.");
   }
 
@@ -1024,6 +985,60 @@ function App() {
   function updateSavedTeams(nextTeams: SavedTeamSummary[]) {
     storeTeams(nextTeams);
     setSavedTeams(nextTeams);
+  }
+
+  function handleReorderSavedTeams(sourceIndex: number, targetIndex: number) {
+    if (sourceIndex === targetIndex) {
+      return;
+    }
+
+    updateSavedTeams(reorderArrayItem(savedTeams, sourceIndex, targetIndex));
+    setTeamStorageMessage("Reordered saved teams.");
+  }
+
+  function handleSavedTeamRowClick(savedTeam: SavedTeamSummary) {
+    if (savedTeamReorder.shouldSuppressClick()) {
+      return;
+    }
+
+    requestLoadSavedTeam(savedTeam);
+  }
+
+  function handleSavedTeamRowKeyDown(
+    event: KeyboardEvent<HTMLDivElement>,
+    index: number,
+    savedTeam: SavedTeamSummary,
+  ) {
+    const isPrevious = event.key === "ArrowUp" || event.key === "ArrowLeft";
+    const isNext = event.key === "ArrowDown" || event.key === "ArrowRight";
+
+    if (event.altKey && (isPrevious || isNext)) {
+      event.preventDefault();
+
+      const targetIndex = Math.max(
+        0,
+        Math.min(savedTeams.length - 1, index + (isPrevious ? -1 : 1)),
+      );
+
+      if (targetIndex === index) {
+        return;
+      }
+
+      handleReorderSavedTeams(index, targetIndex);
+      window.requestAnimationFrame(() => {
+        savedTeamListRef.current
+          ?.querySelector<HTMLElement>(
+            `[data-saved-team-index="${targetIndex}"]`,
+          )
+          ?.focus();
+      });
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      requestLoadSavedTeam(savedTeam);
+    }
   }
 
   function renameActiveSavedTeam(nextName: string) {
@@ -1309,22 +1324,62 @@ function App() {
                 </span>
               </div>
               {savedTeams.length > 0 ? (
-                <div className="team-manager-list">
-                  {savedTeams.map((savedTeam) => (
+                <div
+                  className={`team-manager-list ${
+                    savedTeamReorder.isDragging ? "is-reordering" : ""
+                  }`}
+                  ref={savedTeamListRef}
+                >
+                  {savedTeams.map((savedTeam, index) => (
                     <div
                       className={`saved-team-row ${
                         savedTeam.id === activeSavedTeamId ? "is-active" : ""
+                      } ${
+                        savedTeamReorder.dragState?.sourceIndex === index
+                          ? "is-dragging"
+                          : ""
+                      } ${
+                        savedTeamReorder.dragState?.sourceIndex === index &&
+                        savedTeamReorder.dragState.isDropping
+                          ? "is-dropping"
+                          : ""
+                      } ${
+                        savedTeamReorder.dragState?.targetIndex === index &&
+                        savedTeamReorder.dragState.sourceIndex !== index
+                          ? "is-drop-target"
+                          : ""
                       }`}
+                      data-saved-team-index={index}
                       key={savedTeam.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => requestLoadSavedTeam(savedTeam)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          requestLoadSavedTeam(savedTeam);
+                      aria-label={`${savedTeam.name}. Drag to reorder or press Alt and an arrow key.`}
+                      style={
+                        savedTeamReorder.dragState?.sourceIndex === index
+                          ? ({
+                              "--saved-team-drag-x": `${savedTeamReorder.dragState.offsetX}px`,
+                              "--saved-team-drag-y": `${savedTeamReorder.dragState.offsetY}px`,
+                            } as CSSProperties)
+                          : undefined
+                      }
+                      onClick={() => handleSavedTeamRowClick(savedTeam)}
+                      onKeyDown={(event) =>
+                        handleSavedTeamRowKeyDown(event, index, savedTeam)
+                      }
+                      onPointerDown={(event) => {
+                        if (
+                          (event.target as Element).closest(
+                            "button, input, textarea, [contenteditable='true']",
+                          )
+                        ) {
+                          return;
                         }
+
+                        savedTeamReorder.handlePointerDown(event, index);
                       }}
+                      onPointerMove={savedTeamReorder.handlePointerMove}
+                      onPointerUp={savedTeamReorder.handlePointerUp}
+                      onPointerCancel={savedTeamReorder.handlePointerCancel}
                     >
                       <div className="saved-team-header-row">
                         <div className="saved-team-info">
@@ -1502,20 +1557,28 @@ function App() {
       </header>
 
       <div className="workspace">
-        <TeamBuilder
-          team={team}
-          pool={customPool}
-          pokemonIndex={pokemonIndex}
-          itemIndex={itemIndex}
-          showdownLegality={showdownLegality}
-          searchError={searchError}
-          buildState={teamBuildState}
-          onChangeSlot={handleChangeSlot}
-          onSelectPokemon={handleSelectPokemon}
-          onClearSlot={handleClearSlot}
-          onExportShowdown={getShowdownExportText}
-          onImportShowdown={handleImportShowdownSlot}
-        />
+        <div className="builder-workspace">
+          <TeamBuilder
+            team={team}
+            pool={customPool}
+            pokemonIndex={pokemonIndex}
+            itemIndex={itemIndex}
+            showdownLegality={showdownLegality}
+            searchError={searchError}
+            buildState={teamBuildState}
+            onChangeSlot={handleChangeSlot}
+            onSelectPokemon={handleSelectPokemon}
+            onClearSlot={handleClearSlot}
+            onReorderSlots={handleReorderSlots}
+            onExportShowdown={getShowdownExportText}
+            onImportShowdown={handleImportShowdownSlot}
+          />
+          <TeamDiagnostics
+            team={team}
+            moveSources={customPool}
+            buildState={teamBuildState}
+          />
+        </div>
         <CopilotPanel
           team={team}
           pokemonCount={pokemonIndex.length}

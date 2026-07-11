@@ -19,6 +19,7 @@ export function PokemonIcon({ pokemon }: PokemonIconProps) {
     <img
       src={iconSpriteUrl ?? fallbackUrl}
       alt=""
+      draggable={false}
       onError={(event) => {
         const image = event.currentTarget;
 

@@ -14,6 +14,17 @@ Repository: https://github.com/FortAwesome/Font-Awesome
 The installed free solid icon package is licensed under CC BY 4.0 and MIT.
 The React component package is licensed under the MIT License.
 
+## EssentiarumVG
+
+Move category symbols use the EssentiarumVG icon font by Philippe Van Lieu
+(Nick15) of Pokemon Aaah!.
+
+Source: https://www.pokemonaaah.net/art/fonts/
+
+The font is provided for personal, non-commercial use. It may not be sold,
+redistributed, or used in commercial projects without the creator's permission.
+No specific Creative Commons variant was included with the downloaded files.
+
 ## pokemon-type-icons
 
 Type icons in `src/assets/icons/types` are from

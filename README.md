@@ -12,7 +12,7 @@ Current slice:
 
 - Vite + React + TypeScript app shell
 - mockup-driven single Pokemon editor card
-- side-mounted team tabs with empty-slot add and clear controls
+- side-mounted team tabs with add, clear, and drag/touch/keyboard reordering
 - PokeAPI full Pokemon index loading with local browser caching
 - Pokemon name header that becomes a same-style searchable dropdown when clicked
 - searchable icon-only item picker backed by the PokeAPI item index
@@ -20,9 +20,10 @@ Current slice:
 - PokeAPI detail loading for selected Pokemon
 - Pokemon Showdown-backed Regulation M-B legality filtering
 - Smogon monthly usage stats for popular default sets and Pokemon suggestions
-- localStorage saved-team management with load, rename, duplicate, delete, and last-opened restore
+- localStorage saved-team management with load, rename, duplicate, delete, reorder, and last-opened restore
 - Showdown text import/export for Pokemon sets and saved teams
-- base stat, EV, fixed IV 31, nature-adjusted stat calculation scaffold
+- Pokemon Champions-style EV editing and nature-adjusted stat calculation with fixed IV 31 assumptions
+- live team diagnostics for defensive matchups, offensive coverage, set roles, and setup alerts
 - right-side Copilot panel reserved for later team-aware AI features
 
 ## Getting Started
@@ -42,28 +43,32 @@ npm run build
 
 - explicit validity warning UI for illegal or incomplete sets
 - representative legality regression checks
-- team diagnostics between the Pokemon editor and Copilot panel
 - AI-assisted team analysis through a server-side API route
 - team-aware Copilot chat/follow-up panel
-- custom SVG move category icons
 - bench Pokemon support
 - calculator mode
+- Korean UI localization
+- Japanese localization under consideration
+- dark mode with a persisted theme preference
 - shareable team links if reasonable
 - deployment-ready responsive polish
 
 ## Implemented Prototype Features
 
-- 6-slot team tabs with empty slots, add flow, and clear confirmation
+- 6-slot team tabs with empty slots, add flow, clear confirmation, and full-build reordering
 - PokeAPI-backed full Pokemon index
 - selected Pokemon detail loading
 - large editable Pokemon name header with filtered and usage-ordered dropdown
 - type icons, ability picker, icon-only item picker, nature picker
 - searchable item, ability, nature, and move controls with keyboard navigation
 - move detail loading with type, category, power, accuracy, PP, description, and tags
+- EssentiarumVG Gen 8 physical, special, and status move category symbols
 - base stat / EV / calculated stat table
 - right-cropped Pokemon artwork in the editor card
-- local saved-team list and management actions
+- reorderable local saved-team list and management actions
 - Pokemon-level and team-level Showdown text tools
+- type-based team matchup matrix, move coverage, multi-label set roles, and compact team alerts
+- shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams
 - Copilot panel placeholder
 
 ## Data Source
@@ -89,8 +94,10 @@ previews.
 
 Type icons are from
 [partywhale/pokemon-type-icons](https://github.com/partywhale/pokemon-type-icons),
-licensed under the MIT License. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)
-for type icon, Font Awesome, and Pokemon Showdown notices.
+licensed under the MIT License. Move category symbols use the non-commercial
+EssentiarumVG font from [Pokemon Aaah!](https://www.pokemonaaah.net/art/fonts/).
+See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for full notices and usage
+restrictions.
 
 ## Portfolio Goals
 

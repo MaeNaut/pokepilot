@@ -7,14 +7,18 @@ import {
   type PokemonType,
   type TeamMember,
 } from "../types";
+import { battleOnlyAlternateFormIds } from "../data/battleForms";
+import { getPreferredPokeApiId } from "../utils/pokemonAliases";
 
 const POKEAPI_BASE_URL = "https://pokeapi.co/api/v2";
+const POKEAPI_GEN9_ITEM_SPRITES_URL =
+  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gen9";
 const SHOWDOWN_MOVES_URL = "https://play.pokemonshowdown.com/data/moves.json";
 const CACHE_PREFIX = "pokepilot:pokemon:v16:";
-const ITEM_CACHE_PREFIX = "pokepilot:item:v2:";
+const ITEM_CACHE_PREFIX = "pokepilot:item:v3:";
 const MOVE_CACHE_PREFIX = "pokepilot:move:v6:";
 const ABILITY_CACHE_PREFIX = "pokepilot:ability:v1:";
-const INDEX_CACHE_VERSION = 14;
+const INDEX_CACHE_VERSION = 19;
 const INDEX_CACHE_KEY = `pokepilot:pokemon-index:v${INDEX_CACHE_VERSION}`;
 const ITEM_INDEX_CACHE_VERSION = 3;
 const ITEM_INDEX_CACHE_KEY = `pokepilot:item-index:v${ITEM_INDEX_CACHE_VERSION}`;
@@ -131,11 +135,20 @@ const FORM_SPECIES_DEFAULTS: Record<string, string> = {
   sinistcha: "sinistcha",
   vivillon: "vivillon",
 };
+const BASE_DISPLAY_NAME_FOR_DEFAULT_FORMS = new Set([
+  "aegislash-shield",
+  "mimikyu-disguised",
+  "morpeko-full-belly",
+  "palafin-zero",
+]);
 const MAIN_PICKER_HIDDEN_FORMS = new Set([
+  "mimikyu-busted",
   "pyroar-female",
+  ...battleOnlyAlternateFormIds,
 ]);
 const MAIN_PICKER_HIDDEN_PREFIXES = [
   "castform-",
+  "mimikyu-totem-",
   "pikachu-",
 ];
 
@@ -442,7 +455,7 @@ function getGenderDisplayName(genderMeta: {
   return `${formatLabel(genderMeta.speciesKey)} ${genderMeta.label}`;
 }
 
-function getRegionalMeta(name: string, id: number, canonicalIdByName: Map<string, number>) {
+function getRegionalMeta(name: string, canonicalIdByName: Map<string, number>) {
   const parts = name.split("-");
   const regionIndex = parts.findIndex((part) => REGIONAL_FORM_MARKERS.includes(part));
 
@@ -483,6 +496,9 @@ function getFormMeta(
   const defaultName = FORM_SPECIES_DEFAULTS[speciesKey];
 
   return {
+    displayName: BASE_DISPLAY_NAME_FOR_DEFAULT_FORMS.has(name)
+      ? formatLabel(speciesKey)
+      : formatLabel(name),
     speciesKey,
     sortNumber:
       defaultIdBySpecies.get(speciesKey) ??
@@ -636,7 +652,7 @@ export async function fetchPokemonIndex(): Promise<PokemonIndexEntry[]> {
       const variantMeta =
         getMegaMeta(entry.name, entry.id, canonicalIdByName) ??
         getGenderMeta(entry.name, entry.id, canonicalIdByName) ??
-        getRegionalMeta(entry.name, entry.id, canonicalIdByName) ??
+        getRegionalMeta(entry.name, canonicalIdByName) ??
         getFormMeta(entry.name, entry.id, canonicalIdByName, defaultIdBySpecies) ??
         getFallbackVariantMeta(entry.name, entry.id, canonicalIdByName);
 
@@ -1187,7 +1203,8 @@ async function normalizePokemon(
 }
 
 export async function fetchPokemon(nameOrId: string): Promise<TeamMember> {
-  const lookup = nameOrId.trim().toLowerCase().replace(/\s+/g, "-");
+  const requestedLookup = nameOrId.trim().toLowerCase().replace(/\s+/g, "-");
+  const lookup = getPreferredPokeApiId(requestedLookup) ?? requestedLookup;
   const syntheticGenderForm = SYNTHETIC_GENDER_FORM_SOURCES[lookup];
   const apiLookup = syntheticGenderForm?.sourceName ?? lookup;
 
@@ -1239,7 +1256,8 @@ function normalizeItem(data: PokeApiItem): PokemonItem {
   return {
     id: data.name,
     name: formatLabel(data.name),
-    spriteUrl: data.sprites.default ?? undefined,
+    spriteUrl:
+      data.sprites.default ?? `${POKEAPI_GEN9_ITEM_SPRITES_URL}/${data.name}.png`,
     category:
       data.category?.name === "mega-stones" || looksLikeMegaStoneName(data.name)
         ? "Mega Stones"

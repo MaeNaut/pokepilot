@@ -7,14 +7,11 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [ ] Keep keyboard and mouse picker behavior consistent as new controls are added.
   - [ ] Preserve the current hover-to-keyboard active-selection flow for future dropdowns.
   - [ ] Re-test Pokemon, item, ability, nature, and move pickers after major TeamBuilder refactors.
-- [ ] Replace temporary move category icons with custom SVG assets.
-  - [ ] Create `physical.svg`.
-  - [ ] Create `special.svg`.
-  - [ ] Create `status.svg`.
-  - [ ] Wire them into the move tooltip and move pills.
+- [x] Replace temporary CSS move category icons with EssentiarumVG Gen 8 glyphs.
 - [x] Add explicit team slot controls.
   - [x] Add a clear Pokemon delete/remove action.
   - [x] Add a Pokemon add action for empty slots.
+  - [x] Reorder Pokemon slots while keeping each complete build attached.
 - [x] Add short third-party source credit in the footer and notices document.
 - [x] Finish the current builder-card desktop layout pass.
   - [x] Fit header, body, and footer without accidental page scroll on the target desktop layout.
@@ -25,24 +22,29 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 - [ ] Improve the Copilot panel placeholder.
   - [ ] Decide what should appear before AI features are implemented.
-  - [ ] Add team-summary cards if they help fill the space.
+  - [x] Keep deterministic team diagnostics outside the future AI response area.
   - [ ] Keep the panel compact enough to avoid vertical overflow.
-- [ ] Add team-level non-AI diagnostics.
-  - [ ] Type weakness/resistance summary.
-  - [ ] Offensive coverage summary.
-  - [ ] Duplicate type or role warnings.
-  - [ ] Missing move/category coverage warnings.
+- [x] Add team-level non-AI diagnostics.
+  - [x] Type weakness/resistance summary.
+  - [x] Apply fixed type-immunity abilities to defensive matchups and alerts.
+  - [x] Offensive coverage summary.
+  - [x] Set-based physical attacker, special attacker, wall, and supporter summaries.
+  - [x] Duplicate type warnings.
+  - [x] Role-based physical/special attacker imbalance warnings.
+  - [x] Role-based physical/special wall imbalance warnings.
+  - [x] Avoid false completion warnings for intentional no-item or sub-four-move sets.
+  - [x] Unify matchup, coverage, role, and alert surfaces with the builder UI.
 - [ ] Improve move editing.
   - [x] Keep the current move visible when opening the move dropdown.
   - [x] Preserve natural keyboard scrolling and prevent hover-triggered scroll loops.
+  - [x] Reorder selected moves with desktop drag, touch hold-and-drag, or keyboard shortcuts.
   - [ ] Add a clearer empty-move state.
   - [ ] Decide whether selected moves should show PP or only power.
 - [ ] Improve item editing.
   - [ ] Keep Mega Stone auto-lock behavior tested after future item changes.
-- [ ] Decide what belongs between the Pokemon card and the Copilot panel.
-  - [ ] Consider compact team diagnostics.
-  - [ ] Consider selected Pokemon summary chips.
-  - [ ] Consider compact validity or format status outside the Pokemon card.
+- [x] Put compact team diagnostics between the Pokemon card and Copilot panel.
+  - [x] Keep the Pokemon card focused on the selected set.
+  - [x] Reserve Copilot for future AI interpretation and recommendations.
 
 ## Team Management
 
@@ -66,6 +68,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Open from the header list icon.
   - [x] Show saved team names and compact Pokemon previews.
   - [x] Support load, rename, duplicate, delete, and Showdown text actions.
+  - [x] Reorder saved teams with pointer, touch, or keyboard controls.
 - [x] Wire the header team action buttons.
   - [x] Add the left-side header layout: team list, team name, save.
   - [x] Add a header team name field for draft names and future rename flow.
@@ -80,7 +83,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 ## Data And Legality
 
 - [ ] Harden the Pokemon Champions Regulation M-B legality layer.
-  - [ ] Keep PokeAPI as the display/detail source and Pokemon Showdown data as the legality source.
+  - [x] Keep PokeAPI as the display/detail source and Pokemon Showdown data as the legality source.
   - [ ] Add regression checks for representative Pokemon, item, ability, and move legality.
   - [ ] Document any known Showdown/PokeAPI name mapping exceptions.
 - [ ] Improve usage-stats default sets.
@@ -127,6 +130,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Done Recently
 
+- [x] Centralize slot mutations, nature/stat rules, and repeated move-detail UI.
 - [x] Load real Pokemon data from PokeAPI.
 - [x] Add Pokemon name search with type-to-filter behavior.
 - [x] Add regional form, form-change, and Mega selection handling.
@@ -150,5 +154,5 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Replace the header brand with Font Awesome team action icon buttons.
 - [x] Add Showdown text import/export and move Pokemon slot tabs to the card side.
 - [x] Add Smogon monthly usage stats fetching for popular Pokemon default sets.
-- [x] Add localStorage saved-team management with load, rename, duplicate, delete, and last-opened team restore.
+- [x] Add localStorage saved-team management with load, rename, duplicate, delete, reorder, and last-opened team restore.
 - [x] Add Pokemon-level and team-level Showdown text import/export.
