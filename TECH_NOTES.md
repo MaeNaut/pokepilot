@@ -98,6 +98,11 @@ Current direction:
 - Fetch Smogon usage stats through the same-origin `/smogon-stats` path. In local
   development this is handled by the Vite dev proxy because Smogon does not send
   browser CORS headers.
+- Keep external-data feedback local to the control that needs it. Pokemon and
+  item pickers show loading or Retry rows, Smogon usage-order failures leave
+  normal Pokemon search available, and Showdown failures are retried from the
+  validity popover instead of occupying the global footer. Preserve already
+  loaded data while a retry is in progress so the builder does not blank itself.
 - Keep the legality layer separate from PokeAPI normalization so source mapping
   and future format support stay maintainable.
 - Keep set validation in a deterministic utility separate from picker filtering.

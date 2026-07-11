@@ -71,7 +71,7 @@ The MVP should prove the core loop:
   - [ ] Complete a tablet layout and touch-interaction pass.
   - [ ] Complete a mobile layout and touch-interaction pass.
   - [ ] Verify popovers, pickers, reordering, diagnostics, and team management across target viewport sizes.
-- [ ] Add loading, error, and empty states.
+- [x] Add loading, error, and empty states for the builder's external data sources and pickers.
 - [ ] Write a strong portfolio case study.
 
 ## Phase 6 - Optional Enhancements

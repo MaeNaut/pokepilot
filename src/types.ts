@@ -21,6 +21,8 @@ export const pokemonTypes = [
 
 export type PokemonType = (typeof pokemonTypes)[number];
 
+export type DataLoadStatus = "idle" | "loading" | "ready" | "error";
+
 export type StatKey =
   | "hp"
   | "attack"

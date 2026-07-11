@@ -15,6 +15,8 @@ import {
   faCircleQuestion,
   faMinus,
   faPlus,
+  faRotateRight,
+  faSpinner,
   faTrash,
   faTriangleExclamation,
   faXmark,
@@ -34,6 +36,7 @@ import {
 } from "../api/showdownLegality";
 import { loadSmogonUsagePokemonIds } from "../api/smogonUsage";
 import type {
+  DataLoadStatus,
   ItemIndexEntry,
   PokemonAbility,
   PokemonItem,
@@ -78,7 +81,14 @@ type TeamBuilderProps = {
   pokemonIndex: PokemonIndexEntry[];
   itemIndex: ItemIndexEntry[];
   showdownLegality?: ShowdownLegalitySnapshot | null;
+  pokemonIndexStatus: DataLoadStatus;
+  itemIndexStatus: DataLoadStatus;
+  showdownLegalityStatus: DataLoadStatus;
+  showdownLegalityError: string | null;
+  selectingPokemonSlot: number | null;
   searchError: string | null;
+  searchNotice: { slotIndex: number; message: string } | null;
+  failedPokemonSelectionSlot: number | null;
   buildState: TeamBuildStateController;
   onChangeSlot: (slotIndex: number, memberId: string) => void;
   onSelectPokemon: (
@@ -90,6 +100,10 @@ type TeamBuilderProps = {
   onReorderSlots: (sourceIndex: number, targetIndex: number) => void;
   onExportShowdown: (slotIndex: number) => string;
   onImportShowdown: (slotIndex: number, text: string) => Promise<void>;
+  onRetryPokemonIndex: () => void;
+  onRetryItemIndex: () => void;
+  onRetryShowdownLegality: () => void;
+  onRetryPokemonSelection: () => void;
 };
 
 type PokemonSelectOption = {
@@ -123,6 +137,30 @@ function ItemSprite({ item }: { item: PokemonItem }) {
     <span className="item-fallback-label">
       {item.category === "Mega Stones" ? "M" : item.name.charAt(0)}
     </span>
+  );
+}
+
+function DataStatusRow({
+  message,
+  isLoading = false,
+  onRetry,
+}: {
+  message: string;
+  isLoading?: boolean;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="data-status-row" role={onRetry ? "alert" : "status"}>
+      {isLoading ? (
+        <FontAwesomeIcon className="is-spinning" icon={faSpinner} aria-hidden="true" />
+      ) : null}
+      <span>{message}</span>
+      {onRetry ? (
+        <button type="button" aria-label="Retry loading data" title="Retry" onClick={onRetry}>
+          <FontAwesomeIcon icon={faRotateRight} aria-hidden="true" />
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -319,7 +357,14 @@ export function TeamBuilder({
   pokemonIndex,
   itemIndex,
   showdownLegality,
+  pokemonIndexStatus,
+  itemIndexStatus,
+  showdownLegalityStatus,
+  showdownLegalityError,
+  selectingPokemonSlot,
   searchError,
+  searchNotice,
+  failedPokemonSelectionSlot,
   buildState,
   onChangeSlot,
   onSelectPokemon,
@@ -327,6 +372,10 @@ export function TeamBuilder({
   onReorderSlots,
   onExportShowdown,
   onImportShowdown,
+  onRetryPokemonIndex,
+  onRetryItemIndex,
+  onRetryShowdownLegality,
+  onRetryPokemonSelection,
 }: TeamBuilderProps) {
   const {
     itemBySlot,
@@ -349,6 +398,7 @@ export function TeamBuilder({
   const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(null);
   const [popularPokemonLimit, setPopularPokemonLimit] = useState(popularPokemonPageSize);
   const [isUsageOrderLoading, setIsUsageOrderLoading] = useState(false);
+  const [usageOrderError, setUsageOrderError] = useState<string | null>(null);
   const [pendingClearSlot, setPendingClearSlot] = useState<number | null>(null);
   const [isShowdownPanelOpen, setIsShowdownPanelOpen] = useState(false);
   const [showdownText, setShowdownText] = useState("");
@@ -829,12 +879,13 @@ export function TeamBuilder({
   }, [isNamePickerOpen, normalizedNameQuery]);
 
   useEffect(() => {
-    if (!isNamePickerOpen || usagePokemonIds !== null || isUsageOrderLoading) {
+    if (!isNamePickerOpen || usagePokemonIds !== null) {
       return undefined;
     }
 
     let isCurrent = true;
     setIsUsageOrderLoading(true);
+    setUsageOrderError(null);
 
     void loadSmogonUsagePokemonIds()
       .then((pokemonIds) => {
@@ -850,6 +901,7 @@ export function TeamBuilder({
         }
 
         setUsagePokemonIds([]);
+        setUsageOrderError("Popular usage data is unavailable.");
       })
       .finally(() => {
         if (isCurrent) {
@@ -860,7 +912,7 @@ export function TeamBuilder({
     return () => {
       isCurrent = false;
     };
-  }, [isNamePickerOpen, isUsageOrderLoading, usagePokemonIds]);
+  }, [isNamePickerOpen, usagePokemonIds]);
 
   useEffect(() => {
     setActivePokemonOptionIndex((current) => {
@@ -2201,7 +2253,13 @@ export function TeamBuilder({
       >
         {team.some(Boolean) ? (
           <button
-            className={`builder-card-tool-button validity-trigger is-${validity.status}`}
+            className={`builder-card-tool-button validity-trigger is-${
+              showdownLegalityStatus === "loading"
+                ? "loading"
+                : showdownLegalityStatus === "error"
+                  ? "unavailable"
+                  : validity.status
+            }`}
             type="button"
             aria-haspopup="dialog"
             aria-expanded={isValidityPanelOpen}
@@ -2214,15 +2272,24 @@ export function TeamBuilder({
           >
             <FontAwesomeIcon
               icon={
-                validity.status === "invalid"
+                showdownLegalityStatus === "loading"
+                  ? faSpinner
+                  : showdownLegalityStatus === "error"
+                    ? faCircleQuestion
+                  : validity.status === "invalid"
                   ? faTriangleExclamation
                   : validity.status === "unavailable"
                     ? faCircleQuestion
                     : faCircleCheck
               }
+              className={showdownLegalityStatus === "loading" ? "is-spinning" : undefined}
               aria-hidden="true"
             />
-            {validity.status === "invalid"
+            {showdownLegalityStatus === "loading"
+              ? "Loading"
+              : showdownLegalityStatus === "error"
+                ? "Unavailable"
+              : validity.status === "invalid"
               ? `${validity.errorCount} ${validity.errorCount === 1 ? "Issue" : "Issues"}`
               : validity.status === "unavailable"
                 ? "Unavailable"
@@ -2253,7 +2320,13 @@ export function TeamBuilder({
 
       {isValidityPanelOpen ? (
         <div
-          className={`validity-panel is-${validity.status}`}
+          className={`validity-panel is-${
+            showdownLegalityStatus === "loading"
+              ? "loading"
+              : showdownLegalityStatus === "error"
+                ? "unavailable"
+                : validity.status
+          }`}
           role="dialog"
           aria-label="Regulation M-B validity"
           ref={validityPanelRef}
@@ -2262,17 +2335,26 @@ export function TeamBuilder({
             <span className="validity-panel-icon" aria-hidden="true">
               <FontAwesomeIcon
                 icon={
-                  validity.status === "invalid"
+                  showdownLegalityStatus === "loading"
+                    ? faSpinner
+                    : showdownLegalityStatus === "error"
+                      ? faCircleQuestion
+                    : validity.status === "invalid"
                     ? faTriangleExclamation
                     : validity.status === "unavailable"
                       ? faCircleQuestion
                       : faCircleCheck
                 }
+                className={showdownLegalityStatus === "loading" ? "is-spinning" : undefined}
               />
             </span>
             <div>
               <strong>
-                {validity.status === "invalid"
+                {showdownLegalityStatus === "loading"
+                  ? "Loading validity data"
+                  : showdownLegalityStatus === "error"
+                    ? "Validity data unavailable"
+                  : validity.status === "invalid"
                   ? "Team has validity issues"
                   : validity.status === "unavailable"
                     ? "Validity data unavailable"
@@ -2281,7 +2363,14 @@ export function TeamBuilder({
               <span>Regulation M-B</span>
             </div>
           </div>
-          {displayedValidityIssues.length > 0 ? (
+          {showdownLegalityStatus === "loading" ? (
+            <DataStatusRow message="Refreshing Regulation M-B data" isLoading />
+          ) : showdownLegalityStatus === "error" ? (
+            <DataStatusRow
+              message={showdownLegalityError ?? "Regulation M-B data is unavailable."}
+              onRetry={onRetryShowdownLegality}
+            />
+          ) : displayedValidityIssues.length > 0 ? (
             <ul className="validity-issue-list">
               {displayedValidityIssues.map((issue) => (
                 <li className={`is-${issue.severity}`} key={issue.id}>
@@ -2520,8 +2609,28 @@ export function TeamBuilder({
                         {option.number ? <small>#{option.number}</small> : null}
                       </button>
                     ))}
-                    {!normalizedNameQuery && isUsageOrderLoading ? (
-                      <div className="pokemon-name-empty">Loading popular Pokemon</div>
+                    {pokemonIndexStatus === "loading" && pokemonIndex.length === 0 ? (
+                      <DataStatusRow message="Loading Pokemon data" isLoading />
+                    ) : null}
+                    {pokemonIndexStatus === "error" ? (
+                      <DataStatusRow
+                        message="Full Pokemon data is unavailable."
+                        onRetry={onRetryPokemonIndex}
+                      />
+                    ) : null}
+                    {!normalizedNameQuery &&
+                    pokemonIndexStatus === "ready" &&
+                    isUsageOrderLoading ? (
+                      <DataStatusRow message="Loading popular Pokemon" isLoading />
+                    ) : null}
+                    {!normalizedNameQuery && usageOrderError ? (
+                      <DataStatusRow
+                        message={`${usageOrderError} Search is still available.`}
+                        onRetry={() => {
+                          setUsageOrderError(null);
+                          setUsagePokemonIds(null);
+                        }}
+                      />
                     ) : null}
                     {!normalizedNameQuery &&
                     !isUsageOrderLoading &&
@@ -2612,9 +2721,27 @@ export function TeamBuilder({
             </div>
 
             {searchError ? (
-              <p className="search-error" role="alert">
-                {searchError}
-              </p>
+              <div className="search-error" role="alert">
+                <span>{searchError}</span>
+                {failedPokemonSelectionSlot === selectedSlot ? (
+                  <button
+                    type="button"
+                    aria-label="Retry Pokemon loading"
+                    title="Retry"
+                    onClick={onRetryPokemonSelection}
+                  >
+                    <FontAwesomeIcon icon={faRotateRight} aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            {selectingPokemonSlot === selectedSlot ? (
+              <div className="search-notice" role="status">
+                <FontAwesomeIcon className="is-spinning" icon={faSpinner} aria-hidden="true" />
+                Loading Pokemon set
+              </div>
+            ) : searchNotice?.slotIndex === selectedSlot ? (
+              <p className="search-notice">{searchNotice.message}</p>
             ) : null}
 
             {activeMember ? (
@@ -2750,10 +2877,21 @@ export function TeamBuilder({
                           </button>
                         );
                       })}
-                      {!normalizedItemQuery ? (
+                      {itemIndexStatus === "loading" && itemIndex.length === 0 ? (
+                        <DataStatusRow message="Loading item data" isLoading />
+                      ) : null}
+                      {itemIndexStatus === "error" ? (
+                        <DataStatusRow
+                          message="Item data is unavailable."
+                          onRetry={onRetryItemIndex}
+                        />
+                      ) : null}
+                      {!normalizedItemQuery && itemIndexStatus === "ready" ? (
                         <div className="item-empty">Type to search items</div>
                       ) : null}
-                      {normalizedItemQuery && filteredItemOptions.length === 0 ? (
+                      {normalizedItemQuery &&
+                      filteredItemOptions.length === 0 &&
+                      itemIndexStatus === "ready" ? (
                         <div className="item-empty">No items found</div>
                       ) : null}
                     </div>

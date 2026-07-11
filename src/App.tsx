@@ -41,6 +41,7 @@ import {
   toPokemonId,
 } from "./utils/showdownText";
 import type {
+  DataLoadStatus,
   ItemIndexEntry,
   PokemonIndexEntry,
   PokemonItem,
@@ -275,13 +276,28 @@ function App() {
     null,
   );
   const [showdownLegalityError, setShowdownLegalityError] = useState<string | null>(null);
-  const [indexStatus, setIndexStatus] = useState<"idle" | "loading" | "ready" | "error">(
-    "idle",
-  );
+  const [showdownLegalityStatus, setShowdownLegalityStatus] =
+    useState<DataLoadStatus>("idle");
+  const [indexStatus, setIndexStatus] = useState<DataLoadStatus>("idle");
+  const [itemIndexStatus, setItemIndexStatus] = useState<DataLoadStatus>("idle");
+  const [showdownLoadAttempt, setShowdownLoadAttempt] = useState(0);
+  const [pokemonIndexLoadAttempt, setPokemonIndexLoadAttempt] = useState(0);
+  const [itemIndexLoadAttempt, setItemIndexLoadAttempt] = useState(0);
+  const [selectingPokemonSlot, setSelectingPokemonSlot] = useState<number | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchNotice, setSearchNotice] = useState<{
+    slotIndex: number;
+    message: string;
+  } | null>(null);
+  const [failedPokemonSelection, setFailedPokemonSelection] = useState<{
+    slotIndex: number;
+    lookup: string;
+    options: { applyUsageStats?: boolean; allowBattleForm?: boolean };
+  } | null>(null);
   const teamActionsRef = useRef<HTMLElement | null>(null);
   const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
+  const pokemonSelectionRequestRef = useRef(0);
   const committedSnapshotRef = useRef<string | null>(null);
   const hasRestoredSavedTeamRef = useRef(false);
   const savedTeamReorder = useLongPressReorder({
@@ -385,15 +401,22 @@ function App() {
     let isMounted = true;
 
     async function loadShowdownData() {
+      setShowdownLegalityStatus("loading");
+      setShowdownLegalityError(null);
+
       try {
         const legality = await loadShowdownLegality("gen9-regulation-mb");
 
         if (isMounted) {
-          setShowdownLegality(legality);
+          setShowdownLegality((current) =>
+            legality.error && current && !current.error ? current : legality,
+          );
           setShowdownLegalityError(legality.error ?? null);
+          setShowdownLegalityStatus(legality.error ? "error" : "ready");
         }
       } catch (error) {
         if (isMounted) {
+          setShowdownLegalityStatus("error");
           setShowdownLegalityError(
             error instanceof Error ? error.message : "Showdown legality load failed.",
           );
@@ -406,7 +429,7 @@ function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [showdownLoadAttempt]);
 
   useEffect(() => {
     let isMounted = true;
@@ -433,20 +456,25 @@ function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [pokemonIndexLoadAttempt]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadItemIndex() {
+      setItemIndexStatus("loading");
+
       try {
         const index = await fetchItemIndex();
 
         if (isMounted) {
           setItemIndex(index);
+          setItemIndexStatus("ready");
         }
       } catch {
-        return;
+        if (isMounted) {
+          setItemIndexStatus("error");
+        }
       }
     }
 
@@ -455,7 +483,7 @@ function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [itemIndexLoadAttempt]);
 
   useEffect(() => {
     let isMounted = true;
@@ -605,10 +633,16 @@ function App() {
     lookup: string,
     options: { applyUsageStats?: boolean; allowBattleForm?: boolean } = {},
   ) {
+    const requestId = pokemonSelectionRequestRef.current + 1;
+    pokemonSelectionRequestRef.current = requestId;
+    setSelectingPokemonSlot(slotIndex);
     setSearchError(null);
+    setSearchNotice(null);
+    setFailedPokemonSelection(null);
 
     if (!lookup) {
       handleClearSlot(slotIndex);
+      setSelectingPokemonSlot(null);
       return;
     }
 
@@ -620,6 +654,7 @@ function App() {
       !isPokemonLegal(showdownLegality, lookup, speciesKey)
     ) {
       setSearchError(`${lookup} is not legal in Regulation M-B.`);
+      setSelectingPokemonSlot(null);
       return;
     }
 
@@ -633,7 +668,16 @@ function App() {
 
         if (usageSet) {
           targetMember = await resolveUsageTargetMember(usageSet, selectedMember);
+        } else if (pokemonSelectionRequestRef.current === requestId) {
+          setSearchNotice({
+            slotIndex,
+            message: "No popular set found. Basic defaults were applied.",
+          });
         }
+      }
+
+      if (pokemonSelectionRequestRef.current !== requestId) {
+        return;
       }
 
       if (options.applyUsageStats) {
@@ -651,7 +695,14 @@ function App() {
         await applyUsageSetToSlot(slotIndex, usageSet, selectedMember, targetMember);
       }
     } catch (error) {
-      setSearchError(error instanceof Error ? error.message : "Pokemon lookup failed.");
+      if (pokemonSelectionRequestRef.current === requestId) {
+        setSearchError(error instanceof Error ? error.message : "Pokemon lookup failed.");
+        setFailedPokemonSelection({ slotIndex, lookup, options });
+      }
+    } finally {
+      if (pokemonSelectionRequestRef.current === requestId) {
+        setSelectingPokemonSlot(null);
+      }
     }
   }
 
@@ -1564,8 +1615,27 @@ function App() {
             pokemonIndex={pokemonIndex}
             itemIndex={itemIndex}
             showdownLegality={showdownLegality}
+            pokemonIndexStatus={indexStatus}
+            itemIndexStatus={itemIndexStatus}
+            showdownLegalityStatus={showdownLegalityStatus}
+            showdownLegalityError={showdownLegalityError}
+            selectingPokemonSlot={selectingPokemonSlot}
             searchError={searchError}
+            searchNotice={searchNotice}
+            failedPokemonSelectionSlot={failedPokemonSelection?.slotIndex ?? null}
             buildState={teamBuildState}
+            onRetryPokemonIndex={() => setPokemonIndexLoadAttempt((attempt) => attempt + 1)}
+            onRetryItemIndex={() => setItemIndexLoadAttempt((attempt) => attempt + 1)}
+            onRetryShowdownLegality={() => setShowdownLoadAttempt((attempt) => attempt + 1)}
+            onRetryPokemonSelection={() => {
+              if (failedPokemonSelection) {
+                void handleSelectPokemon(
+                  failedPokemonSelection.slotIndex,
+                  failedPokemonSelection.lookup,
+                  failedPokemonSelection.options,
+                );
+              }
+            }}
             onChangeSlot={handleChangeSlot}
             onSelectPokemon={handleSelectPokemon}
             onClearSlot={handleClearSlot}
@@ -1587,11 +1657,6 @@ function App() {
       </div>
 
       <footer className="footer">
-        {showdownLegalityError ? (
-          <p className="legality-error">
-            Regulation M-B legality filter is not fully available ({showdownLegalityError})
-          </p>
-        ) : null}
         <p>
           PokePilot AI is unofficial and not affiliated with Nintendo, Game Freak,
           Creatures, or The Pokemon Company. Data sources: PokeAPI and Pokemon

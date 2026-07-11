@@ -136,8 +136,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [ ] Design the tablet workspace layout and verify touch-first editing interactions.
   - [ ] Design the mobile workspace layout and verify touch-first editing interactions.
   - [ ] Test text fit, overflow, popover placement, drag/hold reordering, and scroll behavior at representative widths.
-- [ ] Add loading states for Pokemon, item, and move fetches.
-- [ ] Add error states for failed PokeAPI requests.
+- [x] Add loading states for Pokemon, item, and move fetches.
+- [x] Add local error and Retry states for failed PokeAPI, Showdown legality, and Smogon usage requests.
 - [ ] Clean up generated assets and keep third-party notices current.
 - [ ] Run `npm run lint` before wrapping UI work.
 - [ ] Run `npm run build` before public deployment.

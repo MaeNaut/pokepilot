@@ -289,5 +289,9 @@ export async function loadPopularSmogonSet(pokemonId: string) {
 export async function loadSmogonUsagePokemonIds() {
   const snapshot = await loadSmogonUsageSnapshot();
 
-  return snapshot?.sets.map((set) => set.pokemonId) ?? [];
+  if (!snapshot) {
+    throw new Error("Smogon usage data is unavailable.");
+  }
+
+  return snapshot.sets.map((set) => set.pokemonId);
 }

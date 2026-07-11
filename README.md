@@ -18,6 +18,7 @@ Current slice:
 - searchable icon-only item picker backed by the PokeAPI item index
 - Pokemon artwork/sprite display from PokeAPI sprite URLs
 - PokeAPI detail loading for selected Pokemon
+- Local loading, fallback, and Retry states for PokeAPI, Showdown, and Smogon data
 - Pokemon Showdown-backed Regulation M-B legality filtering
 - Smogon monthly usage stats for popular default sets and Pokemon suggestions
 - localStorage saved-team management with load, rename, duplicate, delete, reorder, and last-opened restore
