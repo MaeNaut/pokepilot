@@ -13,15 +13,20 @@ import {
   faTrash,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { fetchItem, fetchItemIndex, fetchPokemon, fetchPokemonIndex } from "./api/pokeApi";
-import { loadPopularSmogonSet } from "./api/smogonUsage";
+import { fetchPokemon } from "./api/pokeApi";
+import { fetchPokemonIndex } from "./api/pokemonIndex";
+import { fetchItem, fetchItemIndex } from "./api/showdownCatalog";
+import { normalizeShowdownId } from "./api/showdownIds";
+import {
+  loadPopularSmogonSet,
+  resolveSmogonUsageMoveIds,
+} from "./api/smogonUsage";
 import { isPokemonLegal, loadShowdownLegality } from "./api/showdownLegality";
 import { CopilotPanel } from "./components/CopilotPanel";
 import { NewTeamControl } from "./components/NewTeamControl";
 import { PokemonIcon } from "./components/PokemonIcon";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
-import { samplePool, startingTeam } from "./data/sampleTeam";
 import {
   CHAMPIONS_MAX_EV_PER_STAT,
   CHAMPIONS_MAX_EV_TOTAL,
@@ -106,10 +111,6 @@ function hasStaleShowdownIcon(member: TeamMember) {
   return isFullShowdownSpriteUrl(member.iconSpriteUrl);
 }
 
-function normalizeShowdownLookup(value: string) {
-  return toPokemonId(value);
-}
-
 function normalizeImportedEvs(evs: Partial<TeamBuildState["evsBySlot"][number]>) {
   const stats = ["hp", "attack", "defense", "specialAttack", "specialDefense", "speed"] as const;
   let remaining = CHAMPIONS_MAX_EV_TOTAL;
@@ -145,7 +146,9 @@ function reorderArrayItem<T>(items: T[], sourceIndex: number, targetIndex: numbe
 }
 
 function App() {
-  const [team, setTeam] = useState<TeamSlot[]>(startingTeam);
+  const [team, setTeam] = useState<TeamSlot[]>(() =>
+    Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null),
+  );
   const [bench, setBench] = useState<BenchPokemon[]>([]);
   const [selectedTeamSlot, setSelectedTeamSlot] = useState(0);
   const teamBuildState = useTeamBuildState();
@@ -170,7 +173,7 @@ function App() {
   const [pendingTeamAction, setPendingTeamAction] = useState<PendingTeamAction | null>(
     null,
   );
-  const [customPool, setCustomPool] = useState(samplePool);
+  const [customPool, setCustomPool] = useState<TeamMember[]>([]);
   const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([]);
   const [itemIndex, setItemIndex] = useState<ItemIndexEntry[]>([]);
   const [showdownLegality, setShowdownLegality] = useState<ShowdownLegalitySnapshot | null>(
@@ -200,7 +203,6 @@ function App() {
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
   const committedSnapshotRef = useRef<string | null>(null);
-  const hasRestoredSavedTeamRef = useRef(false);
   const teamDiagnostics = useMemo(
     () =>
       analyzeTeam(
@@ -320,7 +322,6 @@ function App() {
     setSavedTeams(storedTeams);
 
     if (lastActiveTeam) {
-      hasRestoredSavedTeamRef.current = true;
       void loadSavedTeam(lastActiveTeam);
     }
     // Startup restore must run once from localStorage instead of following team edits.
@@ -455,37 +456,6 @@ function App() {
       isMounted = false;
     };
   }, [itemIndexLoadAttempt]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function hydrateStartingTeam() {
-      if (hasRestoredSavedTeamRef.current) {
-        return;
-      }
-
-      try {
-        const hydratedTeam = await Promise.all(
-          startingTeam.map((member) => fetchPokemon(member.id)),
-        );
-
-        if (!isMounted || hasRestoredSavedTeamRef.current) {
-          return;
-        }
-
-        setTeam(hydratedTeam);
-        setCustomPool((currentPool) => mergePool(hydratedTeam, currentPool));
-      } catch {
-        // Keep local sample data if the network is unavailable.
-      }
-    }
-
-    void hydrateStartingTeam();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   function hasLegalityFilter() {
     return (
@@ -782,13 +752,13 @@ function App() {
       return preferredPokeApiId;
     }
 
-    const normalized = normalizeShowdownLookup(name);
+    const normalized = normalizeShowdownId(name);
     const matchedEntry = pokemonIndex.find((entry) => {
       const entryNames = [
         entry.name,
         entry.displayName,
         entry.displayName.replace(/\s+/g, "-"),
-      ].map(normalizeShowdownLookup);
+      ].map(normalizeShowdownId);
 
       return entryNames.includes(normalized);
     });
@@ -813,16 +783,11 @@ function App() {
 
     return (
       member.abilities?.find(
-        (ability) => normalizeShowdownLookup(ability) === normalizeShowdownLookup(usageSet.ability!),
+        (ability) =>
+          normalizeShowdownId(ability) === normalizeShowdownId(usageSet.ability!),
       ) ??
       usageSet.ability
     );
-  }
-
-  function resolveUsageMoveIds(member: TeamMember, usageSet: SmogonUsageSet) {
-    const legalMoveIds = new Set((member.moves ?? []).map((move) => move.id));
-
-    return usageSet.moveIds.filter((moveId) => legalMoveIds.has(moveId)).slice(0, 4);
   }
 
   async function resolveUsageTargetMember(
@@ -832,7 +797,7 @@ function App() {
     const usagePokemonId = resolveImportedPokemonId(usageSet.pokemonName);
 
     if (
-      normalizeShowdownLookup(usagePokemonId) === normalizeShowdownLookup(selectedMember.id) ||
+      normalizeShowdownId(usagePokemonId) === normalizeShowdownId(selectedMember.id) ||
       shouldKeepSelectedPokemonForUsageTarget(selectedMember.id, usagePokemonId)
     ) {
       return selectedMember;
@@ -852,12 +817,18 @@ function App() {
     targetMember: TeamMember,
   ) {
     const ability = resolveUsageAbility(targetMember, usageSet);
-    const moveIds = resolveUsageMoveIds(targetMember, usageSet);
+    const resolvedMoveIds = resolveSmogonUsageMoveIds(
+      targetMember.moves,
+      usageSet.moveIds,
+    );
+    const moveIds = usageSet.moveIds.length
+      ? [...resolvedMoveIds, "", "", "", ""].slice(0, 4)
+      : undefined;
     let item: PokemonItem | null = null;
 
     if (usageSet.itemName) {
       try {
-        item = await fetchItem(normalizeShowdownLookup(usageSet.itemName));
+        item = await fetchItem(normalizeShowdownId(usageSet.itemName));
       } catch {
         item = null;
       }
@@ -868,7 +839,7 @@ function App() {
       ...(ability ? { ability } : {}),
       ...(usageSet.nature ? { nature: usageSet.nature } : {}),
       ...(usageSet.evs ? { evs: normalizeImportedEvs(usageSet.evs) } : {}),
-      ...(moveIds.length > 0 ? { moveIds } : {}),
+      ...(moveIds ? { moveIds } : {}),
       preMegaPokemon:
         isMegaPokemonId(targetMember.id) && !isMegaPokemonId(selectedMember.id)
           ? selectedMember.id
@@ -904,7 +875,7 @@ function App() {
       if (parsedPokemon.itemName) {
         try {
           importedBuildState.itemBySlot[slotIndex] = await fetchItem(
-            normalizeShowdownLookup(parsedPokemon.itemName),
+            normalizeShowdownId(parsedPokemon.itemName),
           );
         } catch {
           importedBuildState.itemBySlot[slotIndex] = null;
@@ -925,7 +896,7 @@ function App() {
         );
       }
 
-      const moveIds = parsedPokemon.moves.map(normalizeShowdownLookup);
+      const moveIds = parsedPokemon.moves.map(normalizeShowdownId);
       importedBuildState.moveIdsBySlot[slotIndex] = [0, 1, 2, 3].map(
         (moveIndex) => moveIds[moveIndex] ?? "",
       );

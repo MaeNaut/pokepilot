@@ -1,74 +1,118 @@
 export const showdownPokedexFixture = {
   rotom: {
+    name: "Rotom",
+    num: 479,
+    types: ["Electric", "Ghost"],
+    baseStats: { hp: 50, atk: 50, def: 77, spa: 95, spd: 77, spe: 91 },
     abilities: { 0: "Levitate" },
   },
   rotomwash: {
+    name: "Rotom-Wash",
+    num: 479,
+    types: ["Electric", "Water"],
+    baseStats: { hp: 50, atk: 65, def: 107, spa: 105, spd: 107, spe: 86 },
     abilities: { 0: "Levitate" },
+    baseSpecies: "Rotom",
+    forme: "Wash",
   },
   floetteeternal: {
+    name: "Floette-Eternal",
+    num: 670,
+    types: ["Fairy"],
+    baseStats: { hp: 74, atk: 65, def: 67, spa: 125, spd: 128, spe: 92 },
     abilities: { 0: "Flower Veil", H: "Symbiosis" },
   },
   garchompmegaz: {
+    name: "Garchomp-Mega-Z",
+    num: 445,
+    types: ["Dragon", "Ground"],
+    baseStats: { hp: 108, atk: 130, def: 95, spa: 80, spd: 85, spe: 102 },
     abilities: { 0: "Sand Force" },
   },
 };
 
-export const showdownBaseLearnsetsFixture = {
-  rotom: {
-    learnset: {
-      protect: ["9M"],
-      shadowball: ["9M"],
-    },
+export const showdownMovesFixture = {
+  protect: {
+    name: "Protect",
+    type: "Normal",
+    category: "Status",
+    basePower: 0,
+    accuracy: true,
+    pp: 10,
+    shortDesc: "Protects the user from attacks.",
+    stallingMove: true,
+    volatileStatus: "protect",
+    flags: {},
   },
-  floetteeternal: {
-    learnset: {
-      protect: ["9M"],
-    },
+  shadowball: {
+    name: "Shadow Ball",
+    type: "Ghost",
+    category: "Special",
+    basePower: 80,
+    accuracy: 100,
+    pp: 15,
+    shortDesc: "May lower the target's Special Defense.",
+    flags: { bullet: 1, protect: 1 },
+  },
+  hydropump: {
+    name: "Hydro Pump",
+    type: "Water",
+    category: "Special",
+    basePower: 110,
+    accuracy: 80,
+    pp: 5,
+    shortDesc: "No additional effect.",
+    flags: { protect: 1 },
+  },
+  thunderbolt: {
+    name: "Thunderbolt",
+    type: "Electric",
+    category: "Special",
+    basePower: 90,
+    accuracy: 100,
+    pp: 15,
+    shortDesc: "May paralyze the target.",
+    flags: { protect: 1 },
+  },
+  lightofruin: {
+    name: "Light of Ruin",
+    type: "Fairy",
+    category: "Special",
+    basePower: 140,
+    accuracy: 90,
+    pp: 5,
+    shortDesc: "Has recoil.",
+    recoil: [1, 2],
+    flags: { protect: 1 },
+  },
+  moonblast: {
+    name: "Moonblast",
+    type: "Fairy",
+    category: "Special",
+    basePower: 95,
+    accuracy: 100,
+    pp: 15,
+    shortDesc: "May lower the target's Special Attack.",
+    flags: { protect: 1 },
   },
 };
 
-export const championsFormatsDataFixture = `
-export const FormatsData = {
-  rotomwash: {
-    tier: "M-B",
-  },
-  floetteeternal: {
-    tier: "M-B",
-  },
-  garchompmegaz: {
-    tier: "Illegal",
-  },
+export const regulationMbSnapshotFixture = {
+  schemaVersion: 1,
+  formatId: "gen9-regulation-mb",
+  dataMod: "champions",
+  generatedAt: 1_788_835_200_000,
+  pokemonIds: ["floetteeternal", "rotomwash"],
+  knownPokemonIds: ["floetteeternal", "garchompmegaz", "rotomwash"],
+  itemIds: ["focussash", "leftovers"],
+  abilityByPokemon: [
+    ["rotom", ["levitate"]],
+    ["rotomwash", ["levitate"]],
+  ] as Array<[string, string[]]>,
+  moveByPokemon: [
+    ["floettemega", ["lightofruin", "moonblast"]],
+    ["floetteeternal", ["lightofruin", "moonblast"]],
+    ["rotom", ["protect", "shadowball"]],
+    ["rotomwash", ["hydropump", "thunderbolt"]],
+  ] as Array<[string, string[]]>,
 };
-`;
-
-export const championsLearnsetsFixture = `
-export const Learnsets = {
-  rotomwash: {
-    learnset: {
-      hydropump: ["9M"],
-      thunderbolt: ["9M"],
-    },
-  },
-  floetteeternal: {
-    learnset: {
-      lightofruin: ["9M"],
-      moonblast: ["9M"],
-    },
-  },
-};
-`;
-
-export const championsItemsFixture = `
-export const Items = {
-  leftovers: {
-    name: "Leftovers",
-  },
-  focussash: {
-    name: "Focus Sash",
-  },
-  choiceband: {
-    name: "Choice Band",
-    isNonstandard: "Past",
-  },
-};
-`;

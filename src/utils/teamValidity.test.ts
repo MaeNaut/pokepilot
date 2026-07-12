@@ -57,27 +57,23 @@ function createBuildState(overrides: Partial<TeamBuildState> = {}): TeamBuildSta
 
 const pokemonIndex: PokemonIndexEntry[] = [
   {
-    id: 6,
     name: "charizard",
+    showdownId: "charizard",
     displayName: "Charizard",
-    url: "",
     speciesKey: "charizard",
     sortNumber: 6,
     formKind: "base",
     isSelectorOption: true,
-    cacheVersion: 1,
   },
   {
-    id: 10006,
     name: "charizard-mega-y",
+    showdownId: "charizardmegay",
     displayName: "Charizard Mega Y",
-    url: "",
     speciesKey: "charizard",
     sortNumber: 6,
     formKind: "mega",
     formLabel: "Mega Y",
     isSelectorOption: false,
-    cacheVersion: 1,
   },
 ];
 
@@ -85,8 +81,8 @@ const itemIndex: ItemIndexEntry[] = [
   {
     id: 1,
     name: "charizardite-y",
+    showdownId: "charizarditey",
     displayName: "Charizardite Y",
-    url: "",
     isMegaStone: true,
   },
 ];

@@ -1,14 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  championsFormatsDataFixture,
-  championsItemsFixture,
-  championsLearnsetsFixture,
-  showdownBaseLearnsetsFixture,
-  showdownPokedexFixture,
-} from "../test/fixtures/showdownLegalityFixtures";
+import { regulationMbSnapshotFixture } from "../test/fixtures/showdownLegalityFixtures";
 import {
   getLegalAbilities,
   getLegalMoves,
+  hydrateShowdownLegalitySnapshot,
   isItemLegal,
   isPokemonLegal,
   loadShowdownLegality,
@@ -34,11 +29,10 @@ function createFetchResponse(payload: unknown) {
     ok: true,
     status: 200,
     json: async () => payload,
-    text: async () => String(payload),
   } as Response;
 }
 
-describe("Showdown Regulation M-B snapshot parsing", () => {
+describe("Showdown Regulation M-B compact snapshot", () => {
   beforeEach(() => {
     vi.stubGlobal("localStorage", createMemoryStorage());
     vi.stubGlobal(
@@ -46,28 +40,8 @@ describe("Showdown Regulation M-B snapshot parsing", () => {
       vi.fn(async (input: string | URL | Request) => {
         const url = String(input);
 
-        if (url.endsWith("/pokedex.json")) {
-          return createFetchResponse(showdownPokedexFixture);
-        }
-
-        if (url.endsWith("/learnsets.json")) {
-          return createFetchResponse(showdownBaseLearnsetsFixture);
-        }
-
-        if (url.endsWith("/formats-data.ts")) {
-          return createFetchResponse(championsFormatsDataFixture);
-        }
-
-        if (url.endsWith("/learnsets.ts")) {
-          return createFetchResponse(championsLearnsetsFixture);
-        }
-
-        if (url.endsWith("/items.ts")) {
-          return createFetchResponse(championsItemsFixture);
-        }
-
-        if (url.endsWith("/teambuilder-tables.js")) {
-          return createFetchResponse("no fixture table");
+        if (url.endsWith("/data/showdown-regulation-mb.json")) {
+          return createFetchResponse(regulationMbSnapshotFixture);
         }
 
         throw new Error(`Unexpected fixture URL: ${url}`);
@@ -79,11 +53,18 @@ describe("Showdown Regulation M-B snapshot parsing", () => {
     vi.unstubAllGlobals();
   });
 
-  it("builds a deterministic Champions legality snapshot from raw source fixtures", async () => {
-    const snapshot = await loadShowdownLegality("gen9championsvgc2026regmb");
+  it("loads the compact snapshot once and reuses it for the session", async () => {
+    const [snapshot, duplicateSnapshot] = await Promise.all([
+      loadShowdownLegality("gen9championsvgc2026regmb"),
+      loadShowdownLegality("gen9championsvgc2026regmb"),
+    ]);
+    const reusedSnapshot = await loadShowdownLegality("gen9-regulation-mb");
 
     expect(snapshot.error).toBeUndefined();
     expect(snapshot.dataMod).toBe("champions");
+    expect(duplicateSnapshot.pokemonIds).toBe(snapshot.pokemonIds);
+    expect(reusedSnapshot.pokemonIds).toBe(snapshot.pokemonIds);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
     expect(isPokemonLegal(snapshot, "rotom-wash", "rotom")).toBe(true);
     expect(isPokemonLegal(snapshot, "floette-eternal", "floette")).toBe(true);
     expect(isPokemonLegal(snapshot, "garchomp-mega-z", "garchomp")).toBe(false);
@@ -92,8 +73,10 @@ describe("Showdown Regulation M-B snapshot parsing", () => {
     expect(isItemLegal(snapshot, "choice-band")).toBe(false);
   });
 
-  it("combines form-specific Champions moves with the base species learnset", async () => {
-    const snapshot = await loadShowdownLegality("gen9championsvgc2026regmb");
+  it("combines form-specific moves with the base species map", () => {
+    const snapshot = hydrateShowdownLegalitySnapshot(
+      regulationMbSnapshotFixture,
+    );
     const moves = getLegalMoves(snapshot, "rotom-wash", "rotom");
 
     expect(moves).toEqual(
@@ -104,12 +87,31 @@ describe("Showdown Regulation M-B snapshot parsing", () => {
     );
   });
 
-  it("preserves Champions-only signature moves for exceptional forms", async () => {
-    const snapshot = await loadShowdownLegality("gen9championsvgc2026regmb");
+  it("preserves Champions-only signature moves for exceptional forms", () => {
+    const snapshot = hydrateShowdownLegalitySnapshot(
+      regulationMbSnapshotFixture,
+    );
     const moves = getLegalMoves(snapshot, "floette-eternal", "floette");
 
     expect(moves).toEqual(new Set(["lightofruin", "moonblast"]));
-    expect(moves?.has("lightofruin")).toBe(true);
-    expect(moves?.has("moonblast")).toBe(true);
+    expect(getLegalMoves(snapshot, "floette-mega", "floette")).toEqual(
+      new Set(["lightofruin", "moonblast"]),
+    );
   });
+
+  it("does not truncate hyphenated base species into a false lookup key", () => {
+    const snapshot = hydrateShowdownLegalitySnapshot({
+      ...regulationMbSnapshotFixture,
+      moveByPokemon: [
+        ...regulationMbSnapshotFixture.moveByPokemon,
+        ["mrmime", ["protect"]],
+        ["mr", ["shadowball"]],
+      ],
+    });
+
+    expect(getLegalMoves(snapshot, "mr-mime", "mr-mime")).toEqual(
+      new Set(["protect"]),
+    );
+  });
+
 });

@@ -22,11 +22,15 @@ The MVP should prove the core loop:
 
 ## Phase 2 - Data and Visualization
 
-- [x] Load the full PokeAPI Pokemon index and cache it locally.
+- [x] Load the full Pokemon index from the shared cached Showdown Pokedex snapshot.
 - [x] Fetch selected Pokemon details on demand.
 - [x] Display Pokemon types, sprite/artwork, abilities, base stats, and move names.
 - [x] Implement Pokemon Champions-style EV editing with fixed IV assumptions and nature modifiers.
 - [x] Add reliable move details: type, power, accuracy, PP, description, and tags.
+- [x] Make Showdown the primary selected-Pokemon battle-data source for types,
+  base stats, abilities, legal move IDs, and complete move details.
+- [x] Reduce PokeAPI selected-Pokemon usage to artwork/icon lookup and fallback,
+  eliminating per-move PokeAPI requests.
 - [x] Add searchable item and move selectors.
 - [x] Add keyboard navigation for Pokemon, item, ability, nature, and move selectors.
 - [x] Add item, ability, and move detail tooltips.
@@ -46,6 +50,15 @@ The MVP should prove the core loop:
 - [x] Introduce Vitest with deterministic stat, diagnostics, and Showdown text regression tests.
 - [x] Add first validity regression fixtures for legal sets, illegal choices, Mega Stones, EVs, and team clauses.
 - [x] Expand Vitest coverage to representative raw Showdown legality and alias/form cases.
+- [x] Move the main Pokemon index and form metadata to a Showdown-backed model
+  carrying canonical Showdown IDs and PokeAPI-compatible asset lookup IDs.
+- [x] Replace PokeAPI item and ability detail requests with compact generated
+  Showdown catalogs while retaining PokeAPI item sprite assets.
+- [x] Replace the large runtime legality-table download with a compact Regulation
+  M-B snapshot.
+- [x] Complete the post-migration cleanup: share canonical Showdown ID helpers,
+  consolidate legacy browser-cache cleanup, memoize the hydrated legality snapshot,
+  and remove redundant base-form move requests from the editor.
 
 ## Phase 4 - AI Assistant
 

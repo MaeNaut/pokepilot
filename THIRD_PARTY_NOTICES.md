@@ -56,8 +56,9 @@ SOFTWARE.
 
 ## Pokemon Showdown
 
-Pokemon Champions Regulation M-B legality data is loaded from Pokemon Showdown
-runtime data and the Pokemon Showdown GitHub repository.
+Pokemon battle metadata, generated item and ability catalogs, and the generated
+Pokemon Champions Regulation M-B legality snapshot are derived from Pokemon
+Showdown runtime data and the Pokemon Showdown GitHub repository.
 
 Runtime data: https://play.pokemonshowdown.com/data/
 

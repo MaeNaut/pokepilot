@@ -21,40 +21,114 @@ export const pokemonAliasFixtures = [
   },
 ] as const;
 
-type PokemonListFixtureEntry = {
-  name: string;
-  id: number;
-};
-
-const pokemonIndexEntries: PokemonListFixtureEntry[] = [
-  { name: "pikachu", id: 25 },
-  { name: "tauros", id: 128 },
-  { name: "castform", id: 351 },
-  { name: "pyroar-male", id: 668 },
-  { name: "meowstic-male", id: 678 },
-  { name: "aegislash-shield", id: 681 },
-  { name: "mimikyu-disguised", id: 778 },
-  { name: "morpeko-full-belly", id: 877 },
-  { name: "basculegion-male", id: 902 },
-  { name: "palafin-zero", id: 964 },
-  { name: "castform-sunny", id: 10013 },
-  { name: "aegislash-blade", id: 10026 },
-  { name: "pikachu-rock-star", id: 10080 },
-  { name: "meowstic-female", id: 10083 },
-  { name: "mimikyu-busted", id: 10143 },
-  { name: "mimikyu-totem-disguised", id: 10144 },
-  { name: "morpeko-hangry", id: 10187 },
-  { name: "tauros-paldea-aqua-breed", id: 10252 },
-  { name: "basculegion-female", id: 10248 },
-  { name: "palafin-hero", id: 10256 },
-];
-
-export const pokemonIndexResponseFixture = {
-  count: pokemonIndexEntries.length,
-  results: pokemonIndexEntries.map(({ name, id }) => ({
-    name,
-    url: `https://pokeapi.co/api/v2/pokemon/${id}/`,
-  })),
+export const showdownPokemonIndexFixture: Record<string, ShowdownSpeciesData> = {
+  farfetchd: { id: "farfetchd", name: "Farfetch’d", num: 83, abilities: [] },
+  flabebe: { id: "flabebe", name: "Flabébé", num: 669, abilities: [] },
+  mrmime: { id: "mrmime", name: "Mr. Mime", num: 122, abilities: [] },
+  pikachu: { id: "pikachu", name: "Pikachu", num: 25, abilities: [] },
+  pikachurockstar: {
+    id: "pikachurockstar",
+    name: "Pikachu-Rock-Star",
+    num: 25,
+    abilities: [],
+    baseSpecies: "Pikachu",
+    forme: "Rock-Star",
+  },
+  charizard: { id: "charizard", name: "Charizard", num: 6, abilities: [] },
+  charizardmegax: {
+    id: "charizardmegax",
+    name: "Charizard-Mega-X",
+    num: 6,
+    abilities: [],
+    baseSpecies: "Charizard",
+    forme: "Mega-X",
+  },
+  tauros: { id: "tauros", name: "Tauros", num: 128, abilities: [] },
+  taurospaldeaaqua: {
+    id: "taurospaldeaaqua",
+    name: "Tauros-Paldea-Aqua",
+    num: 128,
+    abilities: [],
+    baseSpecies: "Tauros",
+    forme: "Paldea-Aqua",
+  },
+  castform: { id: "castform", name: "Castform", num: 351, abilities: [] },
+  castformsunny: {
+    id: "castformsunny",
+    name: "Castform-Sunny",
+    num: 351,
+    abilities: [],
+    baseSpecies: "Castform",
+    forme: "Sunny",
+  },
+  pyroar: { id: "pyroar", name: "Pyroar", num: 668, abilities: [] },
+  meowstic: { id: "meowstic", name: "Meowstic", num: 678, abilities: [] },
+  meowsticf: {
+    id: "meowsticf",
+    name: "Meowstic-F",
+    num: 678,
+    abilities: [],
+    baseSpecies: "Meowstic",
+    forme: "F",
+  },
+  aegislash: { id: "aegislash", name: "Aegislash", num: 681, abilities: [] },
+  aegislashblade: {
+    id: "aegislashblade",
+    name: "Aegislash-Blade",
+    num: 681,
+    abilities: [],
+    baseSpecies: "Aegislash",
+    forme: "Blade",
+  },
+  mimikyu: { id: "mimikyu", name: "Mimikyu", num: 778, abilities: [] },
+  mimikyubusted: {
+    id: "mimikyubusted",
+    name: "Mimikyu-Busted",
+    num: 778,
+    abilities: [],
+    baseSpecies: "Mimikyu",
+    forme: "Busted",
+  },
+  mimikyutotem: {
+    id: "mimikyutotem",
+    name: "Mimikyu-Totem",
+    num: 778,
+    abilities: [],
+    baseSpecies: "Mimikyu",
+    forme: "Totem",
+  },
+  morpeko: { id: "morpeko", name: "Morpeko", num: 877, abilities: [] },
+  morpekohangry: {
+    id: "morpekohangry",
+    name: "Morpeko-Hangry",
+    num: 877,
+    abilities: [],
+    baseSpecies: "Morpeko",
+    forme: "Hangry",
+  },
+  basculegion: {
+    id: "basculegion",
+    name: "Basculegion",
+    num: 902,
+    abilities: [],
+  },
+  basculegionf: {
+    id: "basculegionf",
+    name: "Basculegion-F",
+    num: 902,
+    abilities: [],
+    baseSpecies: "Basculegion",
+    forme: "F",
+  },
+  palafin: { id: "palafin", name: "Palafin", num: 964, abilities: [] },
+  palafinhero: {
+    id: "palafinhero",
+    name: "Palafin-Hero",
+    num: 964,
+    abilities: [],
+    baseSpecies: "Palafin",
+    forme: "Hero",
+  },
 };
 
 export const expectedVisiblePickerForms = [
@@ -75,9 +149,10 @@ export const expectedHiddenPickerForms = [
   "aegislash-blade",
   "castform-sunny",
   "mimikyu-busted",
-  "mimikyu-totem-disguised",
+  "mimikyu-totem",
   "morpeko-hangry",
   "palafin-hero",
   "pikachu-rock-star",
   "pyroar-female",
 ] as const;
+import type { ShowdownSpeciesData } from "../../api/showdownData";

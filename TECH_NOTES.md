@@ -35,10 +35,10 @@ This project is also meant to fill practical skill gaps that have appeared repea
 - Testing: Use Vitest for deterministic stat, parser, alias, legality, team-diagnostic,
   and local Copilot-contract regression tests. Keep live PokeAPI, Showdown, and
   Smogon requests out of the unit-test suite.
-- Legality fixtures: Keep small raw Showdown and PokeAPI response fixtures under
-  `src/test/fixtures`. Use them to exercise the real source parsers and form
-  normalization without making network requests during tests. Add cases when a
-  newly fixed Pokemon, form, item, ability, or move could regress.
+- Legality fixtures: Keep small Showdown, PokeAPI, and compact M-B snapshot
+  fixtures under `src/test/fixtures`. Use them to exercise snapshot hydration,
+  source normalization, and form aliases without making network requests during
+  tests. Add cases when a newly fixed Pokemon, form, item, ability, or move could regress.
 - Data visualization: Use type coverage, weakness matrices, and team balance charts to show frontend and product depth.
 
 Avoid forcing these skills into the project too early:
@@ -51,20 +51,48 @@ Avoid forcing these skills into the project too early:
 
 Current direction:
 
-- Load the full Pokemon index from PokeAPI with `GET /pokemon?limit=5000`.
-- Cache that index in `localStorage`.
-- Fetch detailed Pokemon data only when the user selects a Pokemon.
-- Cache looked-up Pokemon in `localStorage`.
-- Use PokeAPI detail data for types, abilities, base stats, move names, and artwork URLs.
-- Load the full item index from PokeAPI with `GET /item?limit=2500`.
-- Load PokeAPI's `item-category/mega-stones` list and mark those entries in the
-  item index before caching it in `localStorage`. Also apply a conservative
-  mega-stone name heuristic for new PokeAPI items that have Mega Stone-style
-  names before their category metadata is reliable.
-- Fetch item details only when the user selects an item so the card can display
-  the item's sprite. Item detail cache is versioned because category fixes can
-  affect whether a selected item is treated as a Mega Stone.
-- Normalize the PokeAPI Pokemon index into UI metadata:
+- Start a first-time session with six empty team slots. Restore the last active
+  saved team when one exists, but do not hydrate a bundled demo team on cold start.
+- Build the full Pokemon picker index from the locally cached Showdown Pokedex
+  snapshot instead of issuing a separate PokeAPI `/pokemon?limit=5000` request.
+- Keep canonical Showdown IDs on index entries while preserving the current dashed
+  Pokemon IDs required by saved teams, imports, UI form logic, and PokeAPI assets.
+- Load and normalize Showdown `pokedex.json` and `moves.json` through one shared,
+  in-flight-deduplicated loader with a 12-hour local cache.
+- Use Showdown as the selected Pokemon's primary source for types, abilities,
+  base stats, legal move IDs, move metadata, descriptions, and tags.
+- Fetch PokeAPI Pokemon details only when the user selects a Pokemon, using the
+  response for artwork and icon sprite URLs and as a fallback when Showdown data
+  is unavailable. Cache fully hydrated Showdown-backed Pokemon in `localStorage`.
+- Remove legacy per-move PokeAPI caches during the battle-data cache migration;
+  move details now come from the single Showdown move snapshot instead of one
+  PokeAPI request per move.
+- Generate compact item and ability catalogs plus the Regulation M-B legality
+  snapshot with `npm run data:showdown`, then serve the checked-in JSON from
+  `public/data`. The generator may consume Showdown's large teambuilder table,
+  base learnsets, and Champions mod files, but end-user browsers do not. The
+  browser loads each compact artifact once through an
+  in-flight-deduplicated promise and normal HTTP caching rather than issuing one
+  PokeAPI request per item or ability.
+- Keep only canonical legal and known Pokemon IDs, legal item IDs, and the
+  ability/move maps needed by legal Pokemon and their base species in the M-B
+  snapshot. Hydrate these arrays into Set/Map structures at runtime. Do not keep
+  a second localStorage legality cache for the checked-in file; normal HTTP cache
+  and the in-memory request promise are sufficient.
+- Keep canonical compact Showdown IDs beside dashed PokeAPI-compatible item asset
+  IDs. Detect Mega Stones from Showdown's actual `megaStone` metadata instead of
+  category requests or item-name heuristics.
+- Keep canonical ID normalization and fallback display-label formatting in
+  `src/api/showdownIds.ts`. Data, legality, catalog, usage, and editor code should
+  not maintain separate punctuation-stripping implementations.
+- Run the one-time browser-cache migration through `legacyDataCache.ts` instead of
+  making each data adapter rescan localStorage independently. Current Pokemon
+  cache entries remain intact while obsolete Pokemon, move, item, ability, index,
+  and legality keys are removed.
+- Construct item image URLs from the `PokeAPI/sprites` generation-9 item directory
+  and fall back to the general item directory when an image is missing. PokeAPI
+  remains an asset source here, not the item metadata source.
+- Normalize the Showdown Pokemon index into UI metadata:
   - regional forms stay in the main Pokemon picker but sort under the original
     species dex number
   - form-change variants generally stay in the main Pokemon picker so usage stats,
@@ -80,16 +108,18 @@ Current direction:
     their internal form IDs remain unchanged, and regional/gender suffixes stay visible
   - mega evolutions are hidden from the main picker and exposed through the
     selected Pokemon's mega control
-- Keep PokeAPI as the display/detail source for Pokemon, items, abilities, moves,
-  sprites, and artwork.
-- When an item response has no default sprite, fall back to the matching
-  `PokeAPI/sprites` `sprites/items/gen9/{item-id}.png` asset.
+- Keep PokeAPI as the current selected-Pokemon sprite/artwork source and as the
+  item-image repository. Item metadata and ability descriptions now come from
+  the generated Showdown catalogs.
 - Use PokeAPI generation-specific icon sprites first. If that path is missing,
   fall back to PokeAPI `front_default` before older generation icon paths so
   Pokemon without current icons can still use the more detailed 96x96 sprite in
   team tabs and previews. Keep the large card artwork on PokeAPI artwork/front
   sprite URLs.
-- Use Pokemon Showdown data as the current Regulation M-B legality source for:
+- Use Pokemon Showdown as the current battle-data and Regulation M-B legality
+  source for:
+  - Pokemon types, base stats, and abilities
+  - move type, category, power, accuracy, PP, description, and tags
   - legal Pokemon
   - legal items
   - legal abilities per Pokemon
@@ -105,8 +135,16 @@ Current direction:
   normal Pokemon search available, and Showdown failures are retried from the
   validity popover instead of occupying the global footer. Preserve already
   loaded data while a retry is in progress so the builder does not blank itself.
-- Keep the legality layer separate from PokeAPI normalization so source mapping
-  and future format support stay maintainable.
+- Keep Showdown battle-data normalization, compact legality hydration, and
+  PokeAPI asset lookup as separate adapters so source mapping stays maintainable.
+- Generate Mega Floette's move map from Eternal Floette's learnset. The current
+  Champions source exposes the Mega form without that parent relationship, so
+  this explicit generation-time override keeps Light of Ruin legal and selected
+  across Mega toggles without adding a UI-only exception.
+- Retain a successfully hydrated Regulation M-B snapshot for the browser session.
+  Failed loads are not memoized, so the existing Retry flow can request the file
+  again. Form Pokemon already receive their legal base-species move union from the
+  Pokemon data adapter; the editor should not issue a second base-form request.
 - Keep set validation in a deterministic utility separate from picker filtering.
   The first pass validates configured Pokemon, items, abilities, moves, natures,
   Champions EV limits, active Mega Stone matching, Species Clause, and Item
@@ -143,17 +181,16 @@ claim of affiliation.
   form-change, gender, and mega state should avoid lengthening the header text
   unnecessarily.
 - The item control should render as an icon-only button inside the card. Opening
-  it should show a searchable dropdown backed by the full PokeAPI item index.
-- Pokemon-specific mega stones should be filtered from the item dropdown unless
-  they belong to the currently selected Pokemon. Use the PokeAPI mega-stones
-  category plus the Mega Stone name heuristic, so newly added mega stones stay
-  hidden by default. If a Mega form is selected, the held item should
+  it should show a searchable dropdown backed by the compact Showdown item catalog.
+- Pokemon-specific Mega Stones should be filtered from the item dropdown unless
+  they belong to the currently selected Pokemon. Use Showdown's explicit Mega
+  Stone metadata so newly added stones stay hidden by default. If a Mega form is selected, the held item should
   automatically lock to that Mega Stone when it can be matched. New Mega forms
   whose stone names are not exact species-name matches use a best-prefix match
   against known Mega Stone names.
-- Z-A Mega forms currently have high PokeAPI IDs around the 10200 range, so the
-  Pokemon index limit must stay high enough to include them. The builder also
-  falls back to name-based `-mega` detection when index metadata is missing.
+- Z-A and Champions Mega forms now enter the picker metadata through Showdown
+  rather than depending on high-numbered PokeAPI index entries. PokeAPI remains
+  responsible for their selected artwork and icon lookup where assets exist.
 - The Pokemon sprite/artwork should sit on the right side of the card and be
   intentionally cropped off the card edge.
 - The card should contain only Pokemon editing information. Avoid putting app
@@ -181,7 +218,7 @@ claim of affiliation.
 - Item options are filtered through the Regulation M-B legality layer, with
   Pokemon-specific Mega Stone hiding and Mega form auto-lock behavior on top.
 - Move options are filtered through the Regulation M-B legality layer and display
-  fetched type, power, accuracy, PP, description, and Showdown-derived tags.
+  Showdown-backed type, power, accuracy, PP, description, and tags.
 - Shared move-pill content and tooltip markup live in `MoveDetails.tsx`; the
   selected move and dropdown preview should not maintain separate copies.
 - Move category icons use the EssentiarumVG Gen 8 glyph mapping: `J` for physical,
@@ -249,8 +286,8 @@ claim of affiliation.
   item objects for convenient offline fallback. Server rows should normally store
   canonical IDs and editable values only, then hydrate shared display metadata
   from the current data layer.
-- Do not copy per-browser PokeAPI Pokemon/move/item/ability caches, Showdown
-  legality snapshots, or Smogon usage snapshots into each user's database data.
+- Do not copy per-browser PokeAPI Pokemon caches, generated Showdown catalogs,
+  the shared M-B legality snapshot, or Smogon usage snapshots into each user's database data.
   Keep them in client caches or a shared TTL cache if a server proxy later owns
   those requests.
 - Showdown text, calculated stats, validity results, team diagnostics, role and

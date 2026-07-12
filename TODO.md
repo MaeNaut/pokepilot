@@ -106,8 +106,15 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Add representative Regulation M-B legality and form-alias fixtures.
 
 - [ ] Harden the Pokemon Champions Regulation M-B legality layer.
-  - [x] Keep PokeAPI as the display/detail source and Pokemon Showdown data as the legality source.
+  - [x] Share and locally cache normalized Showdown Pokedex and move snapshots.
+  - [x] Use Showdown as the primary selected-Pokemon source for types, base stats, abilities, legal move IDs, and move details.
+  - [x] Keep PokeAPI selected-Pokemon requests only for artwork/icon URLs and fallback data.
+  - [x] Remove per-move PokeAPI requests and deduplicate concurrent Pokemon and legality loads.
   - [x] Add regression checks against representative raw Showdown Pokemon, item, ability, and move snapshots.
+  - [x] Move the main Pokemon index and form metadata to a Showdown-backed model carrying canonical source IDs and PokeAPI-compatible asset IDs.
+  - [x] Replace PokeAPI item and ability detail requests with compact Showdown-derived data.
+  - [x] Replace the large runtime teambuilder-table download with a compact Regulation M-B snapshot.
+  - [x] Finish the post-migration refactor and remove duplicate ID, cache, and form-move loading paths.
   - [ ] Document any known Showdown/PokeAPI name mapping exceptions.
 - [ ] Improve usage-stats default sets.
   - [x] Fetch and parse Smogon monthly moveset stats for Regulation M-B.
@@ -171,13 +178,13 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 ## Done Recently
 
 - [x] Centralize slot mutations, nature/stat rules, and repeated move-detail UI.
-- [x] Load real Pokemon data from PokeAPI.
+- [x] Load Pokemon battle data from Showdown with PokeAPI artwork/icon fallback.
 - [x] Add Pokemon name search with type-to-filter behavior.
 - [x] Add regional form, form-change, and Mega selection handling.
 - [x] Add item search and Mega Stone auto-lock behavior.
 - [x] Add all natures with a stat alignment table.
 - [x] Switch EV/stat calculation to Pokemon Champions-style EV assumptions.
-- [x] Load real move details and legal-by-PokeAPI move lists.
+- [x] Load complete move details and legal move lists from Showdown without per-move PokeAPI requests.
 - [x] Sort moves by type, then alphabetically.
 - [x] Add move detail tooltips.
 - [x] Add item and ability detail tooltips.

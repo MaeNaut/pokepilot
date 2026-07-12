@@ -13,13 +13,14 @@ Current slice:
 - Vite + React + TypeScript app shell
 - mockup-driven single Pokemon editor card
 - six active team tabs plus a seventh bench drawer with full-build transfers
-- PokeAPI full Pokemon index loading with local browser caching
+- Showdown-backed Pokemon index and form metadata with local browser caching
 - Pokemon name header that becomes a same-style searchable dropdown when clicked
-- searchable icon-only item picker backed by the PokeAPI item index
+- searchable icon-only item picker backed by a compact Showdown item catalog
 - Pokemon artwork/sprite display from PokeAPI sprite URLs
-- PokeAPI detail loading for selected Pokemon
+- Showdown-primary types, base stats, abilities, legal move lists, and move details
+- PokeAPI artwork/icon lookup for selected Pokemon and item sprite assets
 - Local loading, fallback, and Retry states for PokeAPI, Showdown, and Smogon data
-- Pokemon Showdown-backed Regulation M-B legality filtering
+- Pokemon Showdown-backed Regulation M-B filtering from a compact local snapshot
 - Smogon monthly usage stats for popular default sets and Pokemon suggestions
 - localStorage saved-team management with load, rename, duplicate, delete, reorder, last-opened restore, and a 30-team limit
 - Showdown text import/export for Pokemon sets and saved teams, including direct new-team import from the header
@@ -42,6 +43,12 @@ Build check:
 npm run build
 ```
 
+Refresh the checked-in Showdown catalogs and Regulation M-B snapshot:
+
+```bash
+npm run data:showdown
+```
+
 Run the automated regression tests once:
 
 ```bash
@@ -52,7 +59,6 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 
 ## Planned Features
 
-- representative legality regression checks
 - AI-assisted team analysis through a server-side API route
 - team-aware Copilot chat/follow-up panel
 - account-backed Supabase/Postgres persistence after the local MVP is stable
@@ -67,8 +73,8 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 
 - 6-slot active team tabs with empty slots, add flow, clear confirmation, and full-build reordering
 - up to six persisted bench Pokemon per team that can be moved or swapped with active slots without entering team previews, diagnostics, validity, or Showdown export
-- PokeAPI-backed full Pokemon index
-- selected Pokemon detail loading
+- Showdown-backed full Pokemon index with canonical source IDs
+- selected Pokemon battle-detail loading from a cached Showdown snapshot
 - large editable Pokemon name header with filtered and usage-ordered dropdown
 - type icons, ability picker, icon-only item picker, nature picker
 - searchable item, ability, nature, and move controls with keyboard navigation
@@ -89,15 +95,24 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 
 ## Data Source
 
-Pokemon names, typing, stats-derived role hints, abilities, base stats, move names,
-and primary sprite URLs are loaded through [PokeAPI](https://pokeapi.co/). PokePilot AI
-caches the Pokemon index and looked-up Pokemon in `localStorage` to keep repeat
-requests light.
+The searchable Pokemon index, canonical species IDs, and form relationships are
+loaded from [Pokemon Showdown](https://pokemonshowdown.com/). Selected artwork and
+icon URLs still come from [PokeAPI](https://pokeapi.co/), and fully hydrated selected
+Pokemon are cached in `localStorage` to keep repeat asset lookups light.
 
-Pokemon Champions Regulation M-B legality filtering for Pokemon, items,
-abilities, and moves is loaded from
+Selected-Pokemon typing, base stats, abilities, complete move details, and Pokemon
+Champions Regulation M-B source data come from
 [Pokemon Showdown](https://pokemonshowdown.com/) runtime data and the
-[Pokemon Showdown repository](https://github.com/smogon/pokemon-showdown).
+[Pokemon Showdown repository](https://github.com/smogon/pokemon-showdown). The
+shared Pokedex and move snapshot is cached locally, and move details no longer
+require one PokeAPI request per move.
+Item names, descriptions, Mega Stone metadata, and ability descriptions come from
+compact checked-in catalogs generated from Showdown data. Item images still use
+the [PokeAPI sprites repository](https://github.com/PokeAPI/sprites), with current
+generation assets preferred before the general item-sprite fallback.
+Regulation filtering is hydrated once per browser session from a roughly 200KB
+checked-in M-B snapshot, so browsers no longer download or parse Showdown's
+multi-megabyte teambuilder table and raw learnset/mod files at runtime.
 Popular default sets are loaded from the latest available monthly
 [Smogon usage stats](https://www.smogon.com/stats/) moveset file for the same
 Champions Regulation M-B format.

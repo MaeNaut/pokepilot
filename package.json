@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "data:showdown": "node scripts/generate-showdown-catalogs.mjs",
     "test": "vitest",
     "test:run": "vitest run",
     "build": "tsc -b && vite build",

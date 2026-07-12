@@ -22,11 +22,9 @@ import {
   faTriangleExclamation,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  fetchAbility,
-  fetchItem,
-  fetchPokemon,
-} from "../api/pokeApi";
+import { fetchPokemon } from "../api/pokeApi";
+import { fetchAbility, itemFromIndexEntry } from "../api/showdownCatalog";
+import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
   getShowdownLookupKeys,
   type ShowdownLegalitySnapshot,
@@ -137,14 +135,24 @@ type EvScrubState = {
 };
 
 function ItemSprite({ item }: { item: PokemonItem }) {
-  const [hasImageError, setHasImageError] = useState(false);
+  const [spriteUrl, setSpriteUrl] = useState(item.spriteUrl);
 
   useEffect(() => {
-    setHasImageError(false);
+    setSpriteUrl(item.spriteUrl);
   }, [item.spriteUrl]);
 
-  if (item.spriteUrl && !hasImageError) {
-    return <img src={item.spriteUrl} alt="" onError={() => setHasImageError(true)} />;
+  if (spriteUrl) {
+    return (
+      <img
+        src={spriteUrl}
+        alt=""
+        onError={() =>
+          setSpriteUrl((current) =>
+            current === item.spriteUrl ? item.fallbackSpriteUrl : undefined,
+          )
+        }
+      />
+    );
   }
 
   return (
@@ -179,10 +187,6 @@ function DataStatusRow({
 }
 
 const popularPokemonPageSize = 20;
-
-function normalizeSelectLookup(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-}
 
 function getBaseUsageLookup(value: string) {
   const withoutMega = value.replace(/-mega(?:-.+)?$/, "");
@@ -277,27 +281,14 @@ function fallbackMoves(types: PokemonType[]): PokemonMove[] {
   ];
 }
 
-function formatPokemonName(value: string) {
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
+function findMoveByLookup(moves: PokemonMove[], value: string) {
+  const lookup = normalizeShowdownId(value);
 
-function normalizeMoveLookup(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function normalizeAbilityLookup(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function itemFromIndexEntry(option: ItemIndexEntry): PokemonItem {
-  return {
-    id: option.name,
-    name: option.displayName,
-    category: option.isMegaStone ? "Mega Stones" : undefined,
-  };
+  return moves.find(
+    (move) =>
+      normalizeShowdownId(move.id) === lookup ||
+      normalizeShowdownId(move.name) === lookup,
+  );
 }
 
 function getItemEffectText(item: PokemonItem) {
@@ -305,12 +296,8 @@ function getItemEffectText(item: PokemonItem) {
     item.effect
       ?.replace(/\$effect_chance/g, "effect chance")
       .replace(/\s+/g, " ")
-      .trim() || "Item details are not available from PokeAPI."
+      .trim() || "Item details are not available from Showdown."
   );
-}
-
-function getAbilityApiLookup(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function getAbilityEffectText(ability: PokemonAbility) {
@@ -318,7 +305,7 @@ function getAbilityEffectText(ability: PokemonAbility) {
     (ability.shortEffect ?? ability.effect)
       ?.replace(/\$effect_chance/g, "effect chance")
       .replace(/\s+/g, " ")
-      .trim() || "Ability details are not available from PokeAPI."
+      .trim() || "Ability details are not available from Showdown."
   );
 }
 
@@ -331,7 +318,7 @@ function isExactPokemonFormLegal(
   }
 
   return getShowdownLookupKeys(pokemonId).some((lookup) =>
-    showdownLegality.pokemonIds.has(normalizeSelectLookup(lookup)),
+    showdownLegality.pokemonIds.has(lookup),
   );
 }
 
@@ -464,16 +451,13 @@ export function TeamBuilder({
     downIndex: 0,
   });
   const [activeMoveOptionIndex, setActiveMoveOptionIndex] = useState(-1);
-  const [itemDetailsByName, setItemDetailsByName] = useState<Record<string, PokemonItem>>(
-    {},
-  );
   const [hoveredAbilityOption, setHoveredAbilityOption] =
     useState<PokemonAbility | null>(null);
   const [abilityDetailsByName, setAbilityDetailsByName] = useState<
     Record<string, PokemonAbility>
   >({});
   const [hoveredMoveOption, setHoveredMoveOption] = useState<PokemonMove | null>(null);
-  const [supplementalMovesByKey, setSupplementalMovesByKey] = useState<
+  const [preMegaMovesByPokemonId, setPreMegaMovesByPokemonId] = useState<
     Record<string, PokemonMove[]>
   >({});
 
@@ -495,7 +479,7 @@ export function TeamBuilder({
   const displayedAbilityOptions = useMemo(() => {
     const legalAbilityOptions = legalAbilitySet
       ? abilityOptions.filter((ability) =>
-          legalAbilitySet.has(normalizeAbilityLookup(ability)),
+          legalAbilitySet.has(normalizeShowdownId(ability)),
         )
       : abilityOptions;
 
@@ -516,10 +500,6 @@ export function TeamBuilder({
   const baseStats = activeMember?.baseStats ?? defaultStats;
   const evs = evsBySlot[selectedSlot] ?? defaultEvs;
   const evTotal = statKeys.reduce((total, stat) => total + evs[stat], 0);
-  const baseSpeciesMoves = useMemo(
-    () => (activeSpeciesKey ? (supplementalMovesByKey[activeSpeciesKey] ?? []) : []),
-    [activeSpeciesKey, supplementalMovesByKey],
-  );
   const preMegaPokemonId = activeFormKind === "mega" ? preMegaPokemonBySlot[selectedSlot] : "";
   const legalMoveIds = useMemo(() => {
     const activeLegalMoveIds = getLegalMoves(
@@ -542,22 +522,10 @@ export function TeamBuilder({
     return new Set([...activeLegalMoveIds, ...preMegaLegalMoveIds]);
   }, [activePokemonId, activeSpeciesKey, preMegaPokemonId, showdownLegality]);
   const preMegaMoves = useMemo(
-    () => (preMegaPokemonId ? (supplementalMovesByKey[preMegaPokemonId] ?? []) : []),
-    [preMegaPokemonId, supplementalMovesByKey],
+    () => (preMegaPokemonId ? (preMegaMovesByPokemonId[preMegaPokemonId] ?? []) : []),
+    [preMegaMovesByPokemonId, preMegaPokemonId],
   );
-  const preMegaMoveLookupSet = useMemo(() => {
-    if (activeFormKind !== "mega" || preMegaMoves.length === 0) {
-      return null;
-    }
-
-    return new Set(
-      preMegaMoves.flatMap((move) => [
-        normalizeMoveLookup(move.id),
-        normalizeMoveLookup(move.name),
-      ]),
-    );
-  }, [activeFormKind, preMegaMoves]);
-  const baseMoves = useMemo(() => {
+  const availableMoves = useMemo(() => {
     if (!activeMember) {
       return [];
     }
@@ -566,11 +534,11 @@ export function TeamBuilder({
       const merged = new Map<string, PokemonMove>();
 
       for (const move of activeMember.moves ?? []) {
-        merged.set(normalizeMoveLookup(move.id), move);
+        merged.set(normalizeShowdownId(move.id), move);
       }
 
       for (const move of preMegaMoves) {
-        const key = normalizeMoveLookup(move.id);
+        const key = normalizeShowdownId(move.id);
 
         if (!merged.has(key)) {
           merged.set(key, move);
@@ -580,57 +548,21 @@ export function TeamBuilder({
       return Array.from(merged.values());
     }
 
-    if (
-      activeFormKind !== "form" ||
-      !activeSpeciesKey ||
-      activeSpeciesKey === activePokemonId ||
-      !baseSpeciesMoves?.length
-    ) {
-      return activeMember.moves ?? [];
-    }
-
-    const merged = new Map<string, PokemonMove>();
-
-    for (const move of activeMember.moves ?? []) {
-      const key = normalizeMoveLookup(move.id);
-      merged.set(key, move);
-    }
-
-    for (const move of baseSpeciesMoves) {
-      const key = normalizeMoveLookup(move.id);
-
-      if (!merged.has(key)) {
-        merged.set(key, move);
-      }
-    }
-
-    return Array.from(merged.values());
-  }, [
-    activeFormKind,
-    activeMember,
-    activePokemonId,
-    activeSpeciesKey,
-    baseSpeciesMoves,
-    preMegaMoves,
-  ]);
+    return activeMember.moves ?? [];
+  }, [activeFormKind, activeMember, preMegaMoves]);
   const moves = useMemo(() => {
     const legalMoves =
-      legalMoveIds && baseMoves.length > 0
-        ? baseMoves.filter((move) => {
-            const moveId = normalizeMoveLookup(move.id);
-            const moveName = normalizeMoveLookup(move.name);
+      legalMoveIds && availableMoves.length > 0
+        ? availableMoves.filter((move) => {
+            const moveId = normalizeShowdownId(move.id);
+            const moveName = normalizeShowdownId(move.name);
 
-            return (
-              legalMoveIds.has(moveId) ||
-              legalMoveIds.has(moveName) ||
-              preMegaMoveLookupSet?.has(moveId) ||
-              preMegaMoveLookupSet?.has(moveName)
-            );
+            return legalMoveIds.has(moveId) || legalMoveIds.has(moveName);
           })
-        : baseMoves;
+        : availableMoves;
 
     return legalMoves.length ? legalMoves : fallbackMoves(activeMember?.types ?? []);
-  }, [activeMember?.types, baseMoves, legalMoveIds, preMegaMoveLookupSet]);
+  }, [activeMember?.types, availableMoves, legalMoveIds]);
   const selectedMoveIds = moveIdsBySlot[selectedSlot] ?? [];
   const selectedMoves = [0, 1, 2, 3].map((index) => {
     const selectedMoveId = selectedMoveIds[index];
@@ -639,7 +571,11 @@ export function TeamBuilder({
       return null;
     }
 
-    return moves.find((move) => move.id === selectedMoveId) ?? moves[index] ?? null;
+    if (selectedMoveId) {
+      return findMoveByLookup(moves, selectedMoveId) ?? null;
+    }
+
+    return moves[index] ?? null;
   });
   const displayedValidityIssues = useMemo(() => {
     const issues = [
@@ -678,7 +614,7 @@ export function TeamBuilder({
     [itemIndex],
   );
   const activeHeaderName = activeIndexEntry
-    ? formatPokemonName(activeIndexEntry.speciesKey)
+    ? formatIdLabel(activeIndexEntry.speciesKey)
     : activeMember?.name;
   const megaOptions = useMemo(
     () =>
@@ -687,7 +623,10 @@ export function TeamBuilder({
             (entry) =>
               entry.speciesKey === activeSpeciesKey &&
               entry.formKind === "mega" &&
-              isExactPokemonFormLegal(showdownLegality, entry.name),
+              isExactPokemonFormLegal(
+                showdownLegality,
+                entry.showdownId,
+              ),
           )
         : [],
     [activeFormKind, activeSpeciesKey, pokemonIndex, showdownLegality],
@@ -770,12 +709,16 @@ export function TeamBuilder({
         ? pokemonIndex
             .filter((entry) => entry.isSelectorOption)
             .filter((entry) =>
-              isPokemonLegal(showdownLegality ?? null, entry.name, entry.speciesKey),
+              isPokemonLegal(
+                showdownLegality ?? null,
+                entry.showdownId,
+                entry.speciesKey,
+              ),
             )
             .map((entry) => ({
               id: entry.name,
               name: entry.displayName,
-              number: entry.sortNumber ?? entry.id,
+              number: entry.sortNumber,
             }))
         : pool.map((member) => ({
             id: member.id,
@@ -789,7 +732,7 @@ export function TeamBuilder({
 
     for (const option of selectOptions) {
       for (const lookup of getPokemonLookupAliases(option.id)) {
-        optionsByLookup.set(normalizeSelectLookup(lookup), option);
+        optionsByLookup.set(normalizeShowdownId(lookup), option);
       }
     }
 
@@ -798,9 +741,11 @@ export function TeamBuilder({
 
     for (const usageId of usagePokemonIds ?? []) {
       const exactOption = getPokemonLookupAliases(usageId)
-        .map((lookup) => optionsByLookup.get(normalizeSelectLookup(lookup)))
+        .map((lookup) => optionsByLookup.get(normalizeShowdownId(lookup)))
         .find((option): option is PokemonSelectOption => Boolean(option));
-      const baseOption = optionsByLookup.get(normalizeSelectLookup(getBaseUsageLookup(usageId)));
+      const baseOption = optionsByLookup.get(
+        normalizeShowdownId(getBaseUsageLookup(usageId)),
+      );
       const option = exactOption ?? baseOption;
 
       if (!option || seenOptionIds.has(option.id)) {
@@ -1012,7 +957,6 @@ export function TeamBuilder({
     setMoveIdsBySlot((current) => {
       const currentMoveIds = current[selectedSlot] ?? [];
       const defaultMoveIds = moves.slice(0, 4).map((move) => move.id);
-      const validMoveIds = new Set(moves.map((move) => move.id));
 
       if (defaultMoveIds.length === 0) {
         return current;
@@ -1025,9 +969,11 @@ export function TeamBuilder({
           return "";
         }
 
-        return currentMoveId && validMoveIds.has(currentMoveId)
-          ? currentMoveId
-          : (defaultMoveIds[index] ?? "");
+        const matchedMove = currentMoveId
+          ? findMoveByLookup(moves, currentMoveId)
+          : null;
+
+        return matchedMove?.id ?? defaultMoveIds[index] ?? "";
       });
       const isUnchanged =
         currentMoveIds.length === nextMoveIds.length &&
@@ -1193,54 +1139,6 @@ export function TeamBuilder({
   }, [isItemPickerOpen]);
 
   useEffect(() => {
-    if (!isItemPickerOpen || filteredItemOptions.length === 0) {
-      return;
-    }
-
-    const missingItemOptions = filteredItemOptions.filter(
-      (option) => !itemDetailsByName[option.name],
-    );
-
-    if (missingItemOptions.length === 0) {
-      return;
-    }
-
-    let isCurrent = true;
-
-    void (async () => {
-      const items = await Promise.all(
-        missingItemOptions.map(async (option) => {
-          try {
-            return await fetchItem(option.name);
-          } catch {
-            return null;
-          }
-        }),
-      );
-
-      if (!isCurrent) {
-        return;
-      }
-
-      setItemDetailsByName((current) => {
-        const next = { ...current };
-
-        for (const item of items) {
-          if (item) {
-            next[item.id] = item;
-          }
-        }
-
-        return next;
-      });
-    })();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [filteredItemOptions, isItemPickerOpen, itemDetailsByName]);
-
-  useEffect(() => {
     if (!openTraitPicker) {
       return;
     }
@@ -1390,7 +1288,6 @@ export function TeamBuilder({
       return;
     }
 
-    let isCurrent = true;
     const item = itemFromIndexEntry(activeMegaStoneOption);
 
     setItemBySlot((current) =>
@@ -1404,33 +1301,6 @@ export function TeamBuilder({
     setIsItemPickerOpen(false);
     setItemQuery("");
     setHoveredItemOption(null);
-
-    async function lockMegaStone() {
-      try {
-        const item = await fetchItem(activeMegaStoneName!);
-
-        if (!isCurrent) {
-          return;
-        }
-
-        setItemDetailsByName((current) => ({
-          ...current,
-          [activeMegaStoneName!]: item,
-        }));
-        setItemBySlot((current) => ({
-          ...current,
-          [selectedSlot]: item,
-        }));
-      } catch {
-        // The index fallback above keeps new or incomplete Mega Stones selectable.
-      }
-    }
-
-    void lockMegaStone();
-
-    return () => {
-      isCurrent = false;
-    };
   }, [activeMegaStoneName, activeMegaStoneOption, selectedSlot, setItemBySlot]);
 
   useEffect(() => {
@@ -1460,59 +1330,9 @@ export function TeamBuilder({
 
   useEffect(() => {
     if (
-      !activeMember ||
-      activePokemonId.length === 0 ||
-      activeFormKind !== "form" ||
-      !activeSpeciesKey ||
-      activeSpeciesKey === activePokemonId ||
-      supplementalMovesByKey[activeSpeciesKey] !== undefined
-    ) {
-      return;
-    }
-
-    let isCurrent = true;
-
-    void (async () => {
-      try {
-        const speciesMember = await fetchPokemon(activeSpeciesKey);
-
-        if (!isCurrent) {
-          return;
-        }
-
-        setSupplementalMovesByKey((current) => ({
-          ...current,
-          [activeSpeciesKey]: speciesMember.moves ?? [],
-        }));
-      } catch {
-        if (!isCurrent) {
-          return;
-        }
-
-        setSupplementalMovesByKey((current) => ({
-          ...current,
-          [activeSpeciesKey]: [],
-        }));
-      }
-    })();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [
-    activeFormKind,
-    activeMember,
-    activePokemonId,
-    activeSpeciesKey,
-    supplementalMovesByKey,
-    selectedSlot,
-  ]);
-
-  useEffect(() => {
-    if (
       !preMegaPokemonId ||
       preMegaPokemonId === activePokemonId ||
-      supplementalMovesByKey[preMegaPokemonId] !== undefined
+      preMegaMovesByPokemonId[preMegaPokemonId] !== undefined
     ) {
       return;
     }
@@ -1527,7 +1347,7 @@ export function TeamBuilder({
           return;
         }
 
-        setSupplementalMovesByKey((current) => ({
+        setPreMegaMovesByPokemonId((current) => ({
           ...current,
           [preMegaPokemonId]: preMegaMember.moves ?? [],
         }));
@@ -1536,7 +1356,7 @@ export function TeamBuilder({
           return;
         }
 
-        setSupplementalMovesByKey((current) => ({
+        setPreMegaMovesByPokemonId((current) => ({
           ...current,
           [preMegaPokemonId]: [],
         }));
@@ -1546,7 +1366,7 @@ export function TeamBuilder({
     return () => {
       isCurrent = false;
     };
-  }, [activePokemonId, preMegaPokemonId, supplementalMovesByKey]);
+  }, [activePokemonId, preMegaMovesByPokemonId, preMegaPokemonId]);
 
   function closeNamePicker() {
     setIsNamePickerOpen(false);
@@ -1920,7 +1740,7 @@ export function TeamBuilder({
     );
   }
 
-  async function handleSelectItem(value: string) {
+  function handleSelectItem(value: string) {
     closeItemPicker();
 
     if (isItemLocked) {
@@ -1934,21 +1754,6 @@ export function TeamBuilder({
         ...current,
         [selectedSlot]: itemFromIndexEntry(option),
       }));
-    }
-
-    try {
-      const item = await fetchItem(value);
-
-      setItemDetailsByName((current) => ({
-        ...current,
-        [value]: item,
-      }));
-      setItemBySlot((current) => ({
-        ...current,
-        [selectedSlot]: item,
-      }));
-    } catch {
-      // Keep the index-backed item when detailed PokeAPI data is missing.
     }
   }
 
@@ -1964,30 +1769,19 @@ export function TeamBuilder({
     closeItemPicker();
   }
 
-  async function previewItem(itemId: string, fallbackItem: PokemonItem) {
-    const cachedItem = itemDetailsByName[itemId];
+  function previewItem(itemId: string, fallbackItem: PokemonItem) {
+    const lookup = normalizeShowdownId(itemId);
+    const option = itemIndex.find(
+      (entry) =>
+        normalizeShowdownId(entry.name) === lookup ||
+        normalizeShowdownId(entry.showdownId) === lookup,
+    );
 
-    setHoveredItemOption(cachedItem ?? fallbackItem);
-
-    if (cachedItem?.effect) {
-      return;
-    }
-
-    try {
-      const item = await fetchItem(itemId);
-
-      setItemDetailsByName((current) => ({
-        ...current,
-        [itemId]: item,
-      }));
-      setHoveredItemOption((current) => (current?.id === itemId ? item : current));
-    } catch {
-      // Keep the index-backed preview when detailed PokeAPI data is missing.
-    }
+    setHoveredItemOption(option ? itemFromIndexEntry(option) : fallbackItem);
   }
 
   async function previewAbility(abilityName: string) {
-    const abilityId = getAbilityApiLookup(abilityName);
+    const abilityId = normalizeShowdownId(abilityName);
 
     if (!abilityId || !activeMember) {
       return;
@@ -2016,7 +1810,7 @@ export function TeamBuilder({
         current?.id === abilityId ? ability : current,
       );
     } catch {
-      // Keep the name-only preview when detailed PokeAPI data is missing.
+      // Keep the name-only preview when the local Showdown catalog is unavailable.
     }
   }
 
@@ -2058,8 +1852,7 @@ export function TeamBuilder({
       return;
     }
 
-    const previewItemOption = itemDetailsByName[option.name] ?? itemFromIndexEntry(option);
-    void previewItem(option.name, previewItemOption);
+    previewItem(option.name, itemFromIndexEntry(option));
   }
 
   function moveItemKeyboardOption(direction: 1 | -1) {
@@ -2081,7 +1874,7 @@ export function TeamBuilder({
     }
 
     if (option) {
-      void handleSelectItem(option.name);
+      handleSelectItem(option.name);
     }
   }
 
@@ -3017,7 +2810,7 @@ export function TeamBuilder({
                 ref={itemPickerRef}
                 onMouseEnter={() => {
                   if (!isItemPickerOpen && activeItem) {
-                    void previewItem(activeItem.id, activeItem);
+                    previewItem(activeItem.id, activeItem);
                   }
                 }}
                 onMouseLeave={() => setHoveredItemOption(null)}
@@ -3045,12 +2838,12 @@ export function TeamBuilder({
                   }}
                   onFocus={() => {
                     if (activeItem) {
-                      void previewItem(activeItem.id, activeItem);
+                      previewItem(activeItem.id, activeItem);
                     }
                   }}
                   onMouseEnter={() => {
                     if (activeItem) {
-                      void previewItem(activeItem.id, activeItem);
+                      previewItem(activeItem.id, activeItem);
                     }
                   }}
                   onMouseLeave={() => setHoveredItemOption(null)}
@@ -3112,8 +2905,7 @@ export function TeamBuilder({
                         </button>
                       ) : null}
                       {filteredItemOptions.map((option, optionIndex) => {
-                        const previewItemOption =
-                          itemDetailsByName[option.name] ?? itemFromIndexEntry(option);
+                        const previewItemOption = itemFromIndexEntry(option);
                         const displayedOptionIndex = optionIndex + (activeItem ? 1 : 0);
 
                         return (
@@ -3127,14 +2919,14 @@ export function TeamBuilder({
                             onBlur={() => setHoveredItemOption(null)}
                             onFocus={() => {
                               setActiveItemOptionIndex(displayedOptionIndex);
-                              void previewItem(option.name, previewItemOption);
+                              previewItem(option.name, previewItemOption);
                             }}
                             onMouseEnter={() => {
                               setActiveItemOptionIndex(displayedOptionIndex);
-                              void previewItem(option.name, previewItemOption);
+                              previewItem(option.name, previewItemOption);
                             }}
                             onMouseLeave={() => setHoveredItemOption(null)}
-                            onClick={() => void handleSelectItem(option.name)}
+                            onClick={() => handleSelectItem(option.name)}
                           >
                             <span className="item-option-icon" aria-hidden="true">
                               <ItemSprite item={previewItemOption} />

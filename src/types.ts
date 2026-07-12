@@ -46,30 +46,33 @@ export type PokemonMove = {
 };
 
 export type PokemonIndexEntry = {
-  id: number;
   name: string;
+  showdownId: string;
   displayName: string;
-  url: string;
   speciesKey: string;
   sortNumber: number;
   formKind: "base" | "regional" | "form" | "gender" | "mega";
   formLabel?: string;
   isSelectorOption: boolean;
-  cacheVersion: number;
 };
 
 export type ItemIndexEntry = {
   id: number;
   name: string;
+  showdownId: string;
   displayName: string;
-  url: string;
-  isMegaStone?: boolean;
+  isMegaStone: boolean;
+  effect?: string;
+  spriteUrl?: string;
+  fallbackSpriteUrl?: string;
 };
 
 export type PokemonItem = {
   id: string;
+  showdownId?: string;
   name: string;
   spriteUrl?: string;
+  fallbackSpriteUrl?: string;
   category?: string;
   effect?: string;
 };
@@ -91,7 +94,7 @@ export type TeamMember = {
   baseStats?: StatBlock;
   abilities?: string[];
   moves?: PokemonMove[];
-  source?: "local" | "pokeapi";
+  source?: "local" | "pokeapi" | "showdown";
 };
 
 export type TeamSlot = TeamMember | null;
