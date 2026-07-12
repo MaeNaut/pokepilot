@@ -20,6 +20,10 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Next
 
+- [ ] Add a Pokemon sample card / team view switch.
+  - [ ] Keep the current single-Pokemon editor as the sample card view.
+  - [ ] Design a compact whole-team view without duplicating team-management controls.
+  - [ ] Preserve the selected slot and unsaved edits when switching views.
 - [x] Replace the Copilot panel placeholder with a working local analysis preview.
   - [x] Add team and selected-Pokemon analysis scopes.
   - [x] Keep deterministic team diagnostics outside the future AI response area.
@@ -98,6 +102,10 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Data And Legality
 
+- [ ] Fix Showdown text species-name compatibility for Pokemon forms and Mega Evolutions.
+  - [ ] Export canonical Showdown species names instead of PokePilot-only form labels or IDs.
+  - [ ] Cover Mega, regional, gender, and selectable form names without changing their saved canonical identity.
+  - [ ] Add import-export round-trip fixtures whose output can be pasted into Pokemon Showdown without species-name errors.
 - [x] Add a Vitest regression-test foundation for pure application logic.
   - [x] Cover Champions stat and nature calculations.
   - [x] Cover team diagnostic multipliers, ability immunities, roles, concepts, and alerts.
