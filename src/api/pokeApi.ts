@@ -302,6 +302,17 @@ function normalizePokemon(
   return {
     id: pokemonId,
     name: options.name ?? formatIdLabel(data.name),
+    ...(showdownSpecies
+      ? {
+          showdownId: showdownSpecies.id,
+          showdownName: showdownSpecies.name,
+        }
+      : {}),
+    ...(pokemonId === "pyroar-male"
+      ? { showdownGender: "M" as const }
+      : pokemonId === "pyroar-female"
+        ? { showdownGender: "F" as const }
+        : {}),
     types,
     roles: inferRoles(baseStats),
     baseStats,

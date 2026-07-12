@@ -422,6 +422,7 @@ export function TeamBuilder({
   const benchShellRef = useRef<HTMLDivElement | null>(null);
   const showdownToolbarRef = useRef<HTMLDivElement | null>(null);
   const showdownPanelRef = useRef<HTMLDivElement | null>(null);
+  const showdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const validityPanelRef = useRef<HTMLDivElement | null>(null);
   const clearConfirmRef = useRef<HTMLDivElement | null>(null);
   const namePickerRef = useRef<HTMLDivElement | null>(null);
@@ -1199,6 +1200,15 @@ export function TeamBuilder({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
+  }, [isShowdownPanelOpen]);
+
+  useEffect(() => {
+    if (!isShowdownPanelOpen) {
+      return;
+    }
+
+    showdownTextareaRef.current?.focus();
+    showdownTextareaRef.current?.select();
   }, [isShowdownPanelOpen]);
 
   useEffect(() => {
@@ -2339,6 +2349,7 @@ export function TeamBuilder({
           </div>
           <textarea
             className="showdown-textarea"
+            ref={showdownTextareaRef}
             value={showdownText}
             placeholder="Paste Showdown text here..."
             onChange={(event) => setShowdownText(event.target.value)}

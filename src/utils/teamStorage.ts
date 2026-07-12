@@ -10,6 +10,9 @@ export const SAVED_TEAM_SCHEMA_VERSION = 1;
 export type SavedPokemon = {
   pokemonId: string;
   name: string;
+  showdownId?: string;
+  showdownName?: string;
+  showdownGender?: "M" | "F";
   spriteUrl?: string;
   iconSpriteUrl?: string;
 };
@@ -119,6 +122,9 @@ export function createSavedPokemon(member: TeamMember): SavedPokemon {
   return {
     pokemonId: member.id,
     name: member.name,
+    showdownId: member.showdownId,
+    showdownName: member.showdownName,
+    showdownGender: member.showdownGender,
     spriteUrl: member.spriteUrl,
     iconSpriteUrl: member.iconSpriteUrl,
   };
@@ -155,6 +161,9 @@ export function createFallbackMember(slot: SavedPokemon): TeamMember {
   return {
     id: slot.pokemonId,
     name: slot.name,
+    showdownId: slot.showdownId,
+    showdownName: slot.showdownName,
+    showdownGender: slot.showdownGender,
     types: [],
     roles: [],
     spriteUrl: slot.spriteUrl,

@@ -57,6 +57,10 @@ Current direction:
   snapshot instead of issuing a separate PokeAPI `/pokemon?limit=5000` request.
 - Keep canonical Showdown IDs on index entries while preserving the current dashed
   Pokemon IDs required by saved teams, imports, UI form logic, and PokeAPI assets.
+- Preserve each hydrated Pokemon's canonical Showdown species ID and display name
+  separately from PokePilot's UI ID and label. Showdown text export must use the
+  canonical name, while gender markers such as Pyroar `(M)` or `(F)` remain explicit
+  header metadata and survive import/export round trips.
 - Load and normalize Showdown `pokedex.json` and `moves.json` through one shared,
   in-flight-deduplicated loader with a 12-hour local cache.
 - Use Showdown as the selected Pokemon's primary source for types, abilities,

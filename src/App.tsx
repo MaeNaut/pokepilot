@@ -745,7 +745,7 @@ function App() {
     }
   }
 
-  function resolveImportedPokemonId(name: string) {
+  function resolveImportedPokemonId(name: string, gender?: "M" | "F") {
     const preferredPokeApiId = getPreferredPokeApiId(name);
 
     if (preferredPokeApiId) {
@@ -753,6 +753,20 @@ function App() {
     }
 
     const normalized = normalizeShowdownId(name);
+    const genderLabel = gender === "F" ? "female" : gender === "M" ? "male" : null;
+    const genderMatchedEntry = genderLabel
+      ? pokemonIndex.find(
+          (entry) =>
+            normalizeShowdownId(entry.speciesKey) === normalized &&
+            entry.formKind === "gender" &&
+            entry.formLabel?.toLowerCase() === genderLabel,
+        )
+      : undefined;
+
+    if (genderMatchedEntry) {
+      return genderMatchedEntry.name;
+    }
+
     const matchedEntry = pokemonIndex.find((entry) => {
       const entryNames = [
         entry.name,
@@ -867,7 +881,10 @@ function App() {
         continue;
       }
 
-      const pokemonId = resolveImportedPokemonId(parsedPokemon.pokemonName);
+      const pokemonId = resolveImportedPokemonId(
+        parsedPokemon.pokemonName,
+        parsedPokemon.gender,
+      );
       const member = await fetchPokemon(pokemonId);
 
       importedMembers.push(member);

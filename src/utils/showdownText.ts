@@ -3,6 +3,7 @@ import type { TeamBuildState } from "../hooks/useTeamBuildState";
 
 export type ParsedShowdownPokemon = {
   pokemonName: string;
+  gender?: "M" | "F";
   itemName?: string;
   ability?: string;
   nature?: string;
@@ -47,8 +48,9 @@ export function toPokemonId(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function formatShowdownName(name: string) {
-  return name.trim() || "Pokemon";
+function formatShowdownName(member: NonNullable<TeamSlot>) {
+  const name = member.showdownName?.trim() || member.name.trim() || "Pokemon";
+  return `${name}${member.showdownGender ? ` (${member.showdownGender})` : ""}`;
 }
 
 function formatEvs(evs?: StatBlock) {
@@ -83,7 +85,7 @@ export function formatShowdownTeam(team: TeamSlot[], buildState: TeamBuildState)
         .map((moveId) => member.moves?.find((move) => move.id === moveId)?.name ?? moveId)
         .filter(Boolean);
       const lines = [
-        `${formatShowdownName(member.name)}${item ? ` @ ${item.name}` : ""}`,
+        `${formatShowdownName(member)}${item ? ` @ ${item.name}` : ""}`,
         ability ? `Ability: ${ability}` : "",
         formatEvs(evs),
         nature ? `${nature[0].toUpperCase()}${nature.slice(1)} Nature` : "",
@@ -112,12 +114,16 @@ export function formatShowdownSlot(
 }
 
 function parsePokemonHeader(line: string) {
-  const withoutGender = line.replace(/\s+\((M|F)\)\s*/i, " ");
+  const genderMatch = line.match(/\s+\((M|F)\)(?=\s+@\s+|\s*$)/i);
+  const gender = genderMatch?.[1].toUpperCase() as "M" | "F" | undefined;
+  const withoutGender = line.replace(/\s+\((M|F)\)(?=\s+@\s+|\s*$)/i, "");
   const [namePart, itemPart] = withoutGender.split(/\s+@\s+/, 2);
-  const pokemonName = namePart.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  const nicknameSpeciesMatch = namePart.match(/\(([^()]*)\)\s*$/);
+  const pokemonName = (nicknameSpeciesMatch?.[1] ?? namePart).trim();
 
   return {
     pokemonName,
+    ...(gender ? { gender } : {}),
     itemName: itemPart?.trim(),
   };
 }

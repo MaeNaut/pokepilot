@@ -10,6 +10,8 @@ import {
 const charizard: TeamMember = {
   id: "charizard-mega-y",
   name: "Charizard Mega Y",
+  showdownId: "charizardmegay",
+  showdownName: "Charizard-Mega-Y",
   types: ["fire", "flying"],
   roles: [],
   moves: [
@@ -33,7 +35,7 @@ describe("Showdown text", () => {
   it("formats a complete Pokemon set", () => {
     expect(formatShowdownTeam([charizard], buildState)).toBe(
       [
-        "Charizard Mega Y @ Charizardite Y",
+        "Charizard-Mega-Y @ Charizardite Y",
         "Ability: Drought",
         "EVs: 2 HP / 32 SpA / 32 Spe",
         "Modest Nature",
@@ -47,7 +49,7 @@ describe("Showdown text", () => {
     const [parsed] = parseShowdownTeam(formatShowdownTeam([charizard], buildState));
 
     expect(parsed).toEqual({
-      pokemonName: "Charizard Mega Y",
+      pokemonName: "Charizard-Mega-Y",
       itemName: "Charizardite Y",
       ability: "Drought",
       evs: { hp: 2, specialAttack: 32, speed: 32 },
@@ -58,6 +60,56 @@ describe("Showdown text", () => {
 
   it("normalizes Pokemon names for lookup", () => {
     expect(toPokemonId("  Charizard Mega Y ")).toBe("charizard-mega-y");
+  });
+
+  it.each([
+    ["tauros-paldea-aqua-breed", "Tauros Paldea Aqua Breed", "Tauros-Paldea-Aqua"],
+    ["indeedee-female", "Indeedee Female", "Indeedee-F"],
+    ["aegislash-shield", "Aegislash", "Aegislash"],
+  ])("exports canonical Showdown form names for %s", (id, name, showdownName) => {
+    const member: TeamMember = {
+      id,
+      name,
+      showdownName,
+      types: [],
+      roles: [],
+    };
+
+    expect(formatShowdownTeam([member], buildState).split("\n")[0]).toBe(
+      `${showdownName} @ Charizardite Y`,
+    );
+  });
+
+  it("preserves a Showdown gender marker during parsing and formatting", () => {
+    const pyroar: TeamMember = {
+      id: "pyroar-female",
+      name: "Pyroar Female",
+      showdownId: "pyroar",
+      showdownName: "Pyroar",
+      showdownGender: "F",
+      types: ["fire", "normal"],
+      roles: [],
+    };
+    const text = formatShowdownTeam([pyroar], {
+      ...buildState,
+      itemBySlot: {},
+    });
+
+    expect(text.split("\n")[0]).toBe("Pyroar (F)");
+    expect(parseShowdownTeam(text)[0]).toMatchObject({
+      pokemonName: "Pyroar",
+      gender: "F",
+    });
+  });
+
+  it("imports the canonical species from a nicknamed Showdown header", () => {
+    expect(
+      parseShowdownTeam("Sunwing (Charizard-Mega-Y) (F) @ Charizardite Y")[0],
+    ).toMatchObject({
+      pokemonName: "Charizard-Mega-Y",
+      gender: "F",
+      itemName: "Charizardite Y",
+    });
   });
 
   it("omits explicitly empty move slots without shifting stored positions", () => {

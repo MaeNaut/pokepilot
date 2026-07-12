@@ -87,6 +87,9 @@ export type PokemonAbility = {
 export type TeamMember = {
   id: string;
   name: string;
+  showdownId?: string;
+  showdownName?: string;
+  showdownGender?: "M" | "F";
   types: PokemonType[];
   roles: string[];
   spriteUrl?: string;
