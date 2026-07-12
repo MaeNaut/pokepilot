@@ -60,6 +60,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Include item, ability, nature, EVs, moves, and Mega/form state.
   - [x] Add a saved-team schema version for future migrations.
   - [ ] Keep the format compatible with future Supabase/Postgres storage.
+    - [x] Separate user-owned team data conceptually from PokeAPI, Showdown, and Smogon caches.
+    - [ ] Draft normalized `teams` and `pokemon_sets` tables with active/bench location and ordering.
+    - [ ] Reduce persisted Pokemon sets to canonical IDs plus editable build values when the server migration begins.
+    - [ ] Add a regulation/format identifier so saved teams can be revalidated against later rule data.
+    - [x] Enforce current limits of 30 saved teams and six bench Pokemon per team without deleting legacy over-limit data.
+    - [ ] Revisit the limits from real usage before treating them as permanent public-product rules.
 - [x] Lift or expose TeamBuilder slot edit state so it can be saved.
   - [x] Avoid saving only the visible Pokemon slots while losing item/ability/nature/EV/move choices.
   - [x] Keep existing picker behavior stable during the state refactor.
@@ -80,12 +86,15 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Add the left-side header layout: team list, team name, save.
   - [x] Add a header team name field for draft names and future rename flow.
   - [x] Save icon saves the current team with the header name.
-  - [x] New team icon starts a blank team with unsaved-change protection.
+  - [x] New team icon opens blank-team and direct Showdown-import actions.
+  - [x] Treat a direct Showdown import as a new unsaved team and preserve pasted text when its discard warning is cancelled.
   - [x] List icon opens team management.
-- [ ] Add bench Pokemon support.
-  - [ ] Decide whether bench Pokemon live outside the six active team slots.
-  - [ ] Support moving Pokemon between bench and active team slots.
-  - [ ] Keep Copilot/team analysis focused on active slots unless bench analysis is explicitly requested.
+- [x] Add bench Pokemon support.
+  - [x] Keep bench Pokemon outside the six active team slots.
+  - [x] Preserve the complete item, ability, nature, EV, move, Mega, and form build while benched.
+  - [x] Move or swap Pokemon between bench and active slots with pointer drag, touch hold-and-drag, or direct selection.
+  - [x] Persist bench entries with saved teams while excluding them from team previews and Showdown text.
+  - [x] Keep validity, diagnostics, and PokePilot analysis focused on the active six.
 
 ## Data And Legality
 
@@ -134,6 +143,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Add local error, refresh, and stale-analysis states for Copilot.
 - [ ] Add a remote API-unavailable state when hosted model integration begins.
 - [ ] Add deployment-stage cost controls such as request limits, response caps, and team-analysis caching.
+  - [ ] Avoid unbounded AI analysis or chat history in the primary team database.
+  - [ ] Keep calculator history local or capped unless users explicitly need cloud history.
 
 ## Calculator
 

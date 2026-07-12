@@ -10,7 +10,6 @@ import {
   faFloppyDisk,
   faList,
   faPen,
-  faPlus,
   faTrash,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
@@ -18,6 +17,7 @@ import { fetchItem, fetchItemIndex, fetchPokemon, fetchPokemonIndex } from "./ap
 import { loadPopularSmogonSet } from "./api/smogonUsage";
 import { isPokemonLegal, loadShowdownLegality } from "./api/showdownLegality";
 import { CopilotPanel } from "./components/CopilotPanel";
+import { NewTeamControl } from "./components/NewTeamControl";
 import { PokemonIcon } from "./components/PokemonIcon";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
@@ -27,6 +27,11 @@ import {
   CHAMPIONS_MAX_EV_TOTAL,
   defaultEvs,
 } from "./data/natures";
+import {
+  ACTIVE_TEAM_SIZE,
+  MAX_SAVED_TEAMS,
+  canAddSavedTeam,
+} from "./data/teamLimits";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
 import { useLongPressReorder } from "./hooks/useLongPressReorder";
 import {
@@ -34,6 +39,11 @@ import {
   shouldKeepSelectedPokemonForUsageTarget,
 } from "./utils/pokemonAliases";
 import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
+import {
+  moveBenchPokemonToTeam,
+  moveTeamPokemonToBench,
+  type BenchPokemon,
+} from "./utils/benchPokemon";
 import { analyzeTeam } from "./utils/teamDiagnostics";
 import { validateTeam } from "./utils/teamValidity";
 import {
@@ -42,6 +52,24 @@ import {
   parseShowdownTeam,
   toPokemonId,
 } from "./utils/showdownText";
+import {
+  SAVED_TEAM_SCHEMA_VERSION,
+  clearLastActiveTeamId,
+  createEmptyBuildState,
+  createFallbackMember,
+  createSavedBenchPokemon,
+  createSavedSlot,
+  createSavedTeamId,
+  getCopiedTeamName,
+  getLastActiveTeamId,
+  getStoredTeams,
+  serializeTeamSnapshot,
+  storeLastActiveTeamId,
+  storeTeams,
+  type SavedTeamSlot,
+  type SavedTeamSummary,
+  type TeamSnapshot,
+} from "./utils/teamStorage";
 import type {
   DataLoadStatus,
   ItemIndexEntry,
@@ -54,34 +82,6 @@ import type { TeamBuildState } from "./hooks/useTeamBuildState";
 import type { SmogonUsageSet } from "./api/smogonUsage";
 import type { ShowdownLegalitySnapshot } from "./api/showdownLegality";
 
-const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
-const lastActiveTeamStorageKey = "pokepilot.lastActiveTeam.v1";
-const savedTeamSchemaVersion = 1;
-const blankTeamSize = 6;
-
-type SavedTeamSlot = {
-  pokemonId: string;
-  name: string;
-  spriteUrl?: string;
-  iconSpriteUrl?: string;
-} | null;
-
-type SavedTeamSummary = {
-  version: typeof savedTeamSchemaVersion;
-  id: string;
-  name: string;
-  slots: SavedTeamSlot[];
-  buildState?: TeamBuildState;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type TeamSnapshot = {
-  name: string;
-  slots: SavedTeamSlot[];
-  buildState: TeamBuildState;
-};
-
 type PendingTeamAction =
   | {
       kind: "load";
@@ -89,6 +89,10 @@ type PendingTeamAction =
     }
   | {
       kind: "new";
+    }
+  | {
+      kind: "import";
+      showdownText: string;
     };
 
 function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
@@ -96,118 +100,6 @@ function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
   return merged.filter(
     (member, index, list) => list.findIndex((item) => item.id === member.id) === index,
   );
-}
-
-function createSavedTeamId() {
-  return globalThis.crypto?.randomUUID?.() ?? `team-${Date.now()}`;
-}
-
-function normalizeSavedTeam(team: Partial<SavedTeamSummary>): SavedTeamSummary | null {
-  if (!team.id || !team.name || !Array.isArray(team.slots)) {
-    return null;
-  }
-
-  const now = new Date().toISOString();
-
-  return {
-    version: savedTeamSchemaVersion,
-    id: team.id,
-    name: team.name,
-    slots: team.slots,
-    buildState: team.buildState,
-    createdAt: team.createdAt ?? now,
-    updatedAt: team.updatedAt ?? team.createdAt ?? now,
-  };
-}
-
-function getStoredTeams(): SavedTeamSummary[] {
-  try {
-    const rawTeams = localStorage.getItem(savedTeamsStorageKey);
-    const parsedTeams = rawTeams ? JSON.parse(rawTeams) : [];
-
-    if (!Array.isArray(parsedTeams)) {
-      return [];
-    }
-
-    return parsedTeams
-      .map((team) => normalizeSavedTeam(team as Partial<SavedTeamSummary>))
-      .filter((team): team is SavedTeamSummary => Boolean(team));
-  } catch {
-    return [];
-  }
-}
-
-function storeTeams(teams: SavedTeamSummary[]) {
-  localStorage.setItem(savedTeamsStorageKey, JSON.stringify(teams));
-}
-
-function getLastActiveTeamId() {
-  return localStorage.getItem(lastActiveTeamStorageKey);
-}
-
-function storeLastActiveTeamId(teamId: string) {
-  localStorage.setItem(lastActiveTeamStorageKey, teamId);
-}
-
-function clearLastActiveTeamId() {
-  localStorage.removeItem(lastActiveTeamStorageKey);
-}
-
-function getCopiedTeamName(name: string, teams: SavedTeamSummary[]) {
-  const baseName = `${name} Copy`;
-  const usedNames = new Set(teams.map((team) => team.name.toLowerCase()));
-
-  if (!usedNames.has(baseName.toLowerCase())) {
-    return baseName;
-  }
-
-  let copyNumber = 2;
-
-  while (usedNames.has(`${baseName} ${copyNumber}`.toLowerCase())) {
-    copyNumber += 1;
-  }
-
-  return `${baseName} ${copyNumber}`;
-}
-
-function createSavedSlot(member: TeamSlot): SavedTeamSlot {
-  if (!member) {
-    return null;
-  }
-
-  return {
-    pokemonId: member.id,
-    name: member.name,
-    spriteUrl: member.spriteUrl,
-    iconSpriteUrl: member.iconSpriteUrl,
-  };
-}
-
-function serializeTeamSnapshot(snapshot: TeamSnapshot) {
-  return JSON.stringify(snapshot);
-}
-
-function createEmptyBuildState(): TeamBuildState {
-  return {
-    itemBySlot: {},
-    abilityBySlot: {},
-    natureBySlot: {},
-    evsBySlot: {},
-    moveIdsBySlot: {},
-    preMegaPokemonBySlot: {},
-  };
-}
-
-function createFallbackMember(slot: Exclude<SavedTeamSlot, null>): TeamMember {
-  return {
-    id: slot.pokemonId,
-    name: slot.name,
-    types: [],
-    roles: [],
-    spriteUrl: slot.spriteUrl,
-    iconSpriteUrl: slot.iconSpriteUrl,
-    source: "local",
-  };
 }
 
 function hasStaleShowdownIcon(member: TeamMember) {
@@ -254,6 +146,7 @@ function reorderArrayItem<T>(items: T[], sourceIndex: number, targetIndex: numbe
 
 function App() {
   const [team, setTeam] = useState<TeamSlot[]>(startingTeam);
+  const [bench, setBench] = useState<BenchPokemon[]>([]);
   const [selectedTeamSlot, setSelectedTeamSlot] = useState(0);
   const teamBuildState = useTeamBuildState();
   const [teamName, setTeamName] = useState("Untitled Team");
@@ -261,6 +154,11 @@ function App() {
   const [savedTeams, setSavedTeams] = useState<SavedTeamSummary[]>([]);
   const [activeSavedTeamId, setActiveSavedTeamId] = useState<string | null>(null);
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
+  const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
+  const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
+  const [newTeamShowdownDraft, setNewTeamShowdownDraft] = useState("");
+  const [newTeamImportError, setNewTeamImportError] = useState<string | null>(null);
+  const [isImportingNewTeam, setIsImportingNewTeam] = useState(false);
   const [teamStorageMessage, setTeamStorageMessage] = useState<string | null>(null);
   const [isSaveConfirmed, setIsSaveConfirmed] = useState(false);
   const [renamingTeamId, setRenamingTeamId] = useState<string | null>(null);
@@ -370,10 +268,17 @@ function App() {
     setRenameDraft("");
   }, []);
 
+  const closeNewTeamTools = useCallback(() => {
+    setIsNewTeamMenuOpen(false);
+    setIsNewTeamImportOpen(false);
+    setNewTeamImportError(null);
+  }, []);
+
   function getCurrentTeamSnapshot(name = teamNameDraft): TeamSnapshot {
     return {
       name: name.trim() || "Untitled Team",
       slots: team.map(createSavedSlot),
+      bench: bench.map(createSavedBenchPokemon),
       buildState: teamBuildState.getBuildStateSnapshot(),
     };
   }
@@ -432,13 +337,19 @@ function App() {
   );
 
   useEffect(() => {
-    if (!isTeamManagerOpen && !pendingTeamAction) {
+    if (
+      !isTeamManagerOpen &&
+      !isNewTeamMenuOpen &&
+      !isNewTeamImportOpen &&
+      !pendingTeamAction
+    ) {
       return undefined;
     }
 
     function handlePointerDown(event: PointerEvent) {
       if (!teamActionsRef.current?.contains(event.target as Node)) {
         closeTeamManager();
+        closeNewTeamTools();
         setPendingTeamAction(null);
       }
     }
@@ -448,7 +359,14 @@ function App() {
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [closeTeamManager, isTeamManagerOpen, pendingTeamAction]);
+  }, [
+    closeNewTeamTools,
+    closeTeamManager,
+    isNewTeamImportOpen,
+    isNewTeamMenuOpen,
+    isTeamManagerOpen,
+    pendingTeamAction,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -635,6 +553,52 @@ function App() {
     teamBuildState.reorderSlots(sourceIndex, targetIndex, team.length);
   }
 
+  function handleMoveTeamPokemonToBench(slotIndex: number) {
+    const nextState = moveTeamPokemonToBench(
+      {
+        team,
+        bench,
+        buildState: teamBuildState.getBuildStateSnapshot(),
+      },
+      slotIndex,
+      createSavedTeamId(),
+    );
+
+    setTeam(nextState.team);
+    setBench(nextState.bench);
+    teamBuildState.replaceBuildState(nextState.buildState);
+  }
+
+  function handleMoveBenchPokemonToTeam(benchIndex: number, slotIndex: number) {
+    const nextState = moveBenchPokemonToTeam(
+      {
+        team,
+        bench,
+        buildState: teamBuildState.getBuildStateSnapshot(),
+      },
+      benchIndex,
+      slotIndex,
+      createSavedTeamId(),
+    );
+
+    setTeam(nextState.team);
+    setBench(nextState.bench);
+    setSelectedTeamSlot(slotIndex);
+    teamBuildState.replaceBuildState(nextState.buildState);
+  }
+
+  function handleReorderBenchPokemon(sourceIndex: number, targetIndex: number) {
+    if (sourceIndex === targetIndex) {
+      return;
+    }
+
+    setBench((current) => reorderArrayItem(current, sourceIndex, targetIndex));
+  }
+
+  function handleRemoveBenchPokemon(benchId: string) {
+    setBench((current) => current.filter((entry) => entry.id !== benchId));
+  }
+
   function commitTeamName() {
     const nextName = teamNameDraft.trim() || "Untitled Team";
 
@@ -645,6 +609,9 @@ function App() {
   }
 
   function toggleTeamManager() {
+    closeNewTeamTools();
+    setPendingTeamAction(null);
+
     if (isTeamManagerOpen) {
       closeTeamManager();
     } else {
@@ -652,7 +619,27 @@ function App() {
     }
   }
 
+  function toggleNewTeamMenu() {
+    closeTeamManager();
+    setPendingTeamAction(null);
+    setNewTeamImportError(null);
+
+    if (isNewTeamMenuOpen || isNewTeamImportOpen) {
+      closeNewTeamTools();
+      return;
+    }
+
+    setIsNewTeamMenuOpen(true);
+  }
+
+  function openNewTeamImport() {
+    setIsNewTeamMenuOpen(false);
+    setIsNewTeamImportOpen(true);
+    setNewTeamImportError(null);
+  }
+
   function openUnsavedWarning(action: PendingTeamAction) {
+    closeNewTeamTools();
     setPendingTeamAction(action);
     setPendingDeleteTeamId(null);
     setRenamingTeamId(null);
@@ -660,12 +647,41 @@ function App() {
   }
 
   function requestNewTeam() {
+    closeNewTeamTools();
+
     if (hasUnsavedTeamChanges()) {
       openUnsavedWarning({ kind: "new" });
       return;
     }
 
     createNewTeam();
+  }
+
+  function requestImportNewTeam() {
+    const showdownText = newTeamShowdownDraft.trim();
+
+    if (!showdownText) {
+      setNewTeamImportError("Paste at least one Showdown Pokemon set.");
+      return;
+    }
+
+    if (hasUnsavedTeamChanges()) {
+      openUnsavedWarning({ kind: "import", showdownText });
+      return;
+    }
+
+    void importShowdownAsNewTeam(showdownText);
+  }
+
+  function cancelPendingTeamAction() {
+    const action = pendingTeamAction;
+
+    setPendingTeamAction(null);
+
+    if (action?.kind === "import") {
+      setNewTeamShowdownDraft(action.showdownText);
+      setIsNewTeamImportOpen(true);
+    }
   }
 
   function handleTeamNameKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -915,14 +931,64 @@ function App() {
       );
     }
 
-    while (importedMembers.length < blankTeamSize) {
+    while (importedMembers.length < ACTIVE_TEAM_SIZE) {
       importedMembers.push(null);
     }
 
     return {
-      members: importedMembers.slice(0, blankTeamSize),
+      members: importedMembers.slice(0, ACTIVE_TEAM_SIZE),
       buildState: importedBuildState,
     };
+  }
+
+  async function importShowdownAsNewTeam(text: string) {
+    setIsImportingNewTeam(true);
+    setNewTeamImportError(null);
+
+    try {
+      const importedSnapshot = await buildImportedShowdownSnapshot(text);
+      const importedMembers = importedSnapshot.members.filter(
+        (member): member is TeamMember => Boolean(member),
+      );
+      const importedTeamName = "Imported Team";
+      const emptyTeam = Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null);
+
+      setCustomPool((currentPool) => mergePool(importedMembers, currentPool));
+      setTeam(importedSnapshot.members);
+      setBench([]);
+      setSelectedTeamSlot(
+        Math.max(0, importedSnapshot.members.findIndex((member) => Boolean(member))),
+      );
+      teamBuildState.replaceBuildState(importedSnapshot.buildState);
+      setTeamName(importedTeamName);
+      setTeamNameDraft(importedTeamName);
+      setActiveSavedTeamId(null);
+      clearLastActiveTeamId();
+      setTeamStorageMessage("Imported new team. Save when ready.");
+      setPendingTeamAction(null);
+      setPendingDeleteTeamId(null);
+      setRenamingTeamId(null);
+      setRenameDraft("");
+      setSearchError(null);
+      setSearchNotice(null);
+      setFailedPokemonSelection(null);
+      closeTeamManager();
+      closeNewTeamTools();
+      setNewTeamShowdownDraft("");
+      committedSnapshotRef.current = serializeTeamSnapshot({
+        name: importedTeamName,
+        slots: emptyTeam.map(createSavedSlot),
+        bench: [],
+        buildState: createEmptyBuildState(),
+      });
+    } catch (error) {
+      setIsNewTeamImportOpen(true);
+      setNewTeamImportError(
+        error instanceof Error ? error.message : "Showdown import failed.",
+      );
+    } finally {
+      setIsImportingNewTeam(false);
+    }
   }
 
   async function handleImportShowdownSlot(slotIndex: number, text: string) {
@@ -955,11 +1021,20 @@ function App() {
     const nextSnapshot = getCurrentTeamSnapshot(nextName);
     const nextTeamId = activeSavedTeamId ?? createSavedTeamId();
     const existingTeam = savedTeams.find((savedTeam) => savedTeam.id === nextTeamId);
+
+    if (!existingTeam && !canAddSavedTeam(savedTeams.length)) {
+      setTeamStorageMessage("Team limit reached. Delete one first.");
+      setIsTeamManagerOpen(true);
+      setIsSaveConfirmed(false);
+      return;
+    }
+
     const nextSavedTeam: SavedTeamSummary = {
-      version: savedTeamSchemaVersion,
+      version: SAVED_TEAM_SCHEMA_VERSION,
       id: nextTeamId,
       name: nextName,
       slots: nextSnapshot.slots,
+      bench: nextSnapshot.bench,
       buildState: nextSnapshot.buildState,
       createdAt: existingTeam?.createdAt ?? now,
       updatedAt: now,
@@ -1003,15 +1078,22 @@ function App() {
   async function loadSavedTeam(savedTeam: SavedTeamSummary) {
     setTeamStorageMessage(null);
 
-    const hydratedTeam = await hydrateSavedTeamMembers(savedTeam);
+    const [hydratedTeam, hydratedBench] = await Promise.all([
+      hydrateSavedTeamMembers(savedTeam),
+      hydrateSavedBenchPokemon(savedTeam),
+    ]);
 
     setCustomPool((currentPool) =>
       mergePool(
-        hydratedTeam.filter((member): member is TeamMember => Boolean(member)),
+        [
+          ...hydratedTeam.filter((member): member is TeamMember => Boolean(member)),
+          ...hydratedBench.map((entry) => entry.member),
+        ],
         currentPool,
       ),
     );
     setTeam(hydratedTeam);
+    setBench(hydratedBench);
     setTeamName(savedTeam.name);
     setTeamNameDraft(savedTeam.name);
     teamBuildState.replaceBuildState(savedTeam.buildState);
@@ -1020,6 +1102,7 @@ function App() {
     committedSnapshotRef.current = serializeTeamSnapshot({
       name: savedTeam.name,
       slots: savedTeam.slots,
+      bench: savedTeam.bench,
       buildState: savedTeam.buildState ?? createEmptyBuildState(),
     });
     closeTeamManager();
@@ -1027,30 +1110,39 @@ function App() {
 
   async function hydrateSavedTeamMembers(savedTeam: SavedTeamSummary) {
     return Promise.all(
-      savedTeam.slots.map(async (slot) => {
-        if (!slot) {
-          return null;
-        }
-
-        const poolMember = customPool.find((member) => member.id === slot.pokemonId);
-
-        if (poolMember && !hasStaleShowdownIcon(poolMember)) {
-          return poolMember;
-        }
-
-        try {
-          return await fetchPokemon(slot.pokemonId);
-        } catch {
-          return createFallbackMember(slot);
-        }
-      }),
+      savedTeam.slots.map((slot) => (slot ? hydrateSavedPokemon(slot) : null)),
     );
   }
 
+  async function hydrateSavedBenchPokemon(savedTeam: SavedTeamSummary) {
+    return Promise.all(
+      savedTeam.bench.map(async (entry) => ({
+        id: entry.id,
+        member: await hydrateSavedPokemon(entry.pokemon),
+        build: entry.build,
+      })),
+    );
+  }
+
+  async function hydrateSavedPokemon(slot: Exclude<SavedTeamSlot, null>) {
+    const poolMember = customPool.find((member) => member.id === slot.pokemonId);
+
+    if (poolMember && !hasStaleShowdownIcon(poolMember)) {
+      return poolMember;
+    }
+
+    try {
+      return await fetchPokemon(slot.pokemonId);
+    } catch {
+      return createFallbackMember(slot);
+    }
+  }
+
   function createNewTeam() {
-    const emptyTeam = Array<TeamSlot>(blankTeamSize).fill(null);
+    const emptyTeam = Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null);
 
     setTeam(emptyTeam);
+    setBench([]);
     teamBuildState.replaceBuildState();
     setTeamName("Untitled Team");
     setTeamNameDraft("Untitled Team");
@@ -1062,9 +1154,12 @@ function App() {
     setRenamingTeamId(null);
     setRenameDraft("");
     setIsTeamManagerOpen(false);
+    closeNewTeamTools();
+    setNewTeamShowdownDraft("");
     committedSnapshotRef.current = serializeTeamSnapshot({
       name: "Untitled Team",
       slots: emptyTeam.map(createSavedSlot),
+      bench: [],
       buildState: createEmptyBuildState(),
     });
   }
@@ -1083,7 +1178,24 @@ function App() {
       return;
     }
 
+    if (action.kind === "import") {
+      void importShowdownAsNewTeam(action.showdownText);
+      return;
+    }
+
     void loadSavedTeam(action.team);
+  }
+
+  function getPendingTeamActionMessage(action: PendingTeamAction) {
+    if (action.kind === "new") {
+      return "Start a new team without saving this one.";
+    }
+
+    if (action.kind === "import") {
+      return "Import a new team without saving this one.";
+    }
+
+    return `Load ${action.team.name} without saving this one.`;
   }
 
   function updateSavedTeams(nextTeams: SavedTeamSummary[]) {
@@ -1226,10 +1338,15 @@ function App() {
   }
 
   function handleDuplicateTeam(savedTeam: SavedTeamSummary) {
+    if (!canAddSavedTeam(savedTeams.length)) {
+      setTeamStorageMessage("Team limit reached. Delete one first.");
+      return;
+    }
+
     const now = new Date().toISOString();
     const copiedTeam: SavedTeamSummary = {
       ...savedTeam,
-      version: savedTeamSchemaVersion,
+      version: SAVED_TEAM_SCHEMA_VERSION,
       id: createSavedTeamId(),
       name: getCopiedTeamName(savedTeam.name, savedTeams),
       createdAt: now,
@@ -1316,6 +1433,7 @@ function App() {
         committedSnapshotRef.current = serializeTeamSnapshot({
           name: savedTeam.name,
           slots: nextSavedTeam.slots,
+          bench: nextSavedTeam.bench,
           buildState: importedSnapshot.buildState,
         });
       }
@@ -1361,15 +1479,22 @@ function App() {
           >
             <FontAwesomeIcon icon={faList} aria-hidden="true" />
           </button>
-          <button
-            className="team-action-button"
-            type="button"
-            aria-label="New team"
-            title="New team"
-            onClick={requestNewTeam}
-          >
-            <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
-          </button>
+          <NewTeamControl
+            isMenuOpen={isNewTeamMenuOpen}
+            isImportOpen={isNewTeamImportOpen}
+            showdownDraft={newTeamShowdownDraft}
+            importError={newTeamImportError}
+            isImporting={isImportingNewTeam}
+            onToggle={toggleNewTeamMenu}
+            onCreateTeam={requestNewTeam}
+            onOpenImport={openNewTeamImport}
+            onShowdownDraftChange={(value) => {
+              setNewTeamShowdownDraft(value);
+              setNewTeamImportError(null);
+            }}
+            onImport={requestImportNewTeam}
+            onClose={closeNewTeamTools}
+          />
           <label className="team-name-field">
             <span className="sr-only">Team name</span>
             <input
@@ -1397,15 +1522,11 @@ function App() {
           {pendingTeamAction ? (
             <div className="team-unsaved-warning" role="dialog" aria-label="Unsaved changes">
               <strong>Discard unsaved changes?</strong>
-              <span>
-                {pendingTeamAction.kind === "new"
-                  ? "Start a new team without saving this one."
-                  : `Load ${pendingTeamAction.team.name} without saving this one.`}
-              </span>
+              <span>{getPendingTeamActionMessage(pendingTeamAction)}</span>
               <div className="team-unsaved-warning-actions">
                 <button
                   type="button"
-                  onClick={() => setPendingTeamAction(null)}
+                  onClick={cancelPendingTeamAction}
                 >
                   Cancel
                 </button>
@@ -1422,8 +1543,14 @@ function App() {
           {isTeamManagerOpen ? (
             <div className="team-manager-panel" role="dialog" aria-label="Saved teams">
               <div className="team-manager-header">
-                <strong>Saved Teams</strong>
-                <span className={teamStorageMessage ? "has-message" : ""}>
+                <strong>
+                  Saved Teams <small>{savedTeams.length} / {MAX_SAVED_TEAMS}</small>
+                </strong>
+                <span
+                  className={`${teamStorageMessage ? "has-message" : ""} ${
+                    teamStorageMessage?.startsWith("Team limit") ? "is-limit" : ""
+                  }`}
+                >
                   {teamStorageMessage ?? "Manage teams"}
                 </span>
               </div>
@@ -1538,15 +1665,6 @@ function App() {
                               <button
                                 className="saved-team-action-button"
                                 type="button"
-                                aria-label={`Open Showdown text tools for ${savedTeam.name}`}
-                                title="Showdown Text"
-                                onClick={() => void toggleSavedTeamShowdown(savedTeam)}
-                              >
-                                <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
-                              </button>
-                              <button
-                                className="saved-team-action-button"
-                                type="button"
                                 aria-label={`Rename ${savedTeam.name}`}
                                 title="Rename"
                                 onClick={() => startRenameTeam(savedTeam)}
@@ -1561,6 +1679,15 @@ function App() {
                                 onClick={() => handleDuplicateTeam(savedTeam)}
                               >
                                 <FontAwesomeIcon icon={faCopy} aria-hidden="true" />
+                              </button>
+                              <button
+                                className="saved-team-action-button"
+                                type="button"
+                                aria-label={`Open Showdown text tools for ${savedTeam.name}`}
+                                title="Showdown Text"
+                                onClick={() => void toggleSavedTeamShowdown(savedTeam)}
+                              >
+                                <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
                               </button>
                               <button
                                 className="saved-team-action-button is-danger"
@@ -1664,6 +1791,7 @@ function App() {
         <div className="builder-workspace">
           <TeamBuilder
             team={team}
+            bench={bench}
             selectedSlot={selectedTeamSlot}
             pool={customPool}
             pokemonIndex={pokemonIndex}
@@ -1696,6 +1824,10 @@ function App() {
             onSelectPokemon={handleSelectPokemon}
             onClearSlot={handleClearSlot}
             onReorderSlots={handleReorderSlots}
+            onMoveTeamPokemonToBench={handleMoveTeamPokemonToBench}
+            onMoveBenchPokemonToTeam={handleMoveBenchPokemonToTeam}
+            onReorderBenchPokemon={handleReorderBenchPokemon}
+            onRemoveBenchPokemon={handleRemoveBenchPokemon}
             onExportShowdown={getShowdownExportText}
             onImportShowdown={handleImportShowdownSlot}
           />

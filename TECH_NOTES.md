@@ -6,7 +6,7 @@
 - Styling: Tailwind CSS or a small custom CSS system
 - Framework option: Next.js if API routes and deployment simplicity are useful
 - AI: OpenAI API or another LLM provider through a server-side API route
-- Data: static JSON first, then PostgreSQL / Supabase if persistence is needed
+- Data: localStorage first; Supabase-managed PostgreSQL is the leading server-persistence candidate, with Neon as the primary alternative
 - Deployment: Vercel or another simple web deployment platform
 
 ## Skills This Project Can Demonstrate
@@ -28,7 +28,7 @@ This project is also meant to fill practical skill gaps that have appeared repea
 
 - TypeScript: Build the app in TypeScript from the start so the project can support TypeScript claims honestly.
 - API routes: Keep AI calls server-side through API routes instead of calling model APIs directly from browser code.
-- PostgreSQL / SQL: Add persistence later through Supabase or PostgreSQL for saved teams, favorite builds, or analysis history.
+- PostgreSQL / SQL: Add persistence later through Supabase or PostgreSQL for saved teams, shared builds, user preferences, and bounded analysis caches.
 - AI API integration: Use an LLM API for structured team analysis and recommendations, then render the output as product UI.
 - Deployment: Deploy the app publicly through Vercel or a similar platform and keep a live link for the portfolio.
 - GitHub Actions: Add a simple lint/build workflow later to demonstrate basic CI/CD experience.
@@ -196,28 +196,83 @@ claim of affiliation.
   short movement threshold, touch pointers activate after a brief hold, and
   `Alt+ArrowUp` / `Alt+ArrowDown` provides the keyboard equivalent. Reordering
   updates the stored move array, so saved teams and Showdown export preserve it.
-- Move, active-team-slot, and saved-team reordering share
+- Move, active-team-slot, bench, and saved-team reordering share
   `useLongPressReorder`. The hook owns mouse thresholds, touch hold activation,
   click suppression, keyboard-independent pointer state, and the short drop
-  settling animation so all three surfaces keep the same interaction feel.
+  settling animation so all four surfaces keep the same interaction feel.
 - Pokemon picked from the main name dropdown can auto-apply a popular Smogon
   moveset usage sample. Form changes, Mega toggles, saved-team loads, and
   Showdown imports do not trigger usage auto-application.
 - Saved teams are currently persisted in localStorage with a schema version,
-  team name, timestamps, slots, and per-slot build details. The model is kept
-  plain-JSON so it can later move to Supabase/Postgres without changing UI state
-  shape too aggressively.
+  team name, timestamps, six active slots, bench entries, and per-Pokemon build
+  details. Saved-team types, normalization, serialization helpers, fallback
+  hydration data, and localStorage keys live in `src/utils/teamStorage.ts` rather
+  than the app shell. The model is kept plain-JSON so it can later move to
+  Supabase/Postgres without changing UI state shape too aggressively.
+- Bench entries store a Pokemon identity and a complete build snapshot. Moving an
+  active Pokemon to the seventh Bench tab clears its active slot; moving a bench
+  entry onto an occupied slot swaps the two complete sets. Bench entries remain
+  outside active-team previews, Showdown export, validity, diagnostics, and
+  PokePilot input unless a future feature explicitly opts into bench analysis.
 - Saved-team cards can be reordered with desktop drag, touch hold-and-drag, or
   `Alt+Arrow` keyboard controls. The new array order is written to localStorage
   immediately, while expanded rename, delete, or Showdown tools temporarily lock
   reordering to avoid accidental edits.
 - Showdown text import/export exists at both Pokemon-slot and saved-team level.
+  The compact header new-team menu also accepts a full Showdown team without an
+  intermediate save. A successful direct import becomes an unsaved
+  `Imported Team`, clears the bench, and still uses the normal discard warning
+  before replacing another unsaved draft. Saved-team-card imports continue to
+  overwrite that saved team's active six instead. `NewTeamControl.tsx` owns only
+  the menu and import-form presentation; `App.tsx` remains responsible for
+  parsing, unsaved-change protection, and team-state replacement.
 - Empty move slots are stored as empty strings inside the fixed four-position
   move array. This preserves slot order for saving and reordering while
   Showdown export, validity, and diagnostics ignore the empty entries. Showdown
   imports pad missing moves to the same four-position representation.
 - Held items may be explicitly cleared. Active Mega forms keep their required
   Mega Stone locked and do not expose the no-item action.
+
+## Server Persistence Direction
+
+- The database engine should remain PostgreSQL. Supabase is the leading managed
+  provider because it combines Postgres, authentication, generated APIs, and
+  row-level security in one portfolio-friendly stack. Neon remains the main
+  alternative if the app later prefers a database-focused serverless service and
+  assembles authentication and API routes separately.
+- Keep the current localStorage schema as the working client model, not as the
+  final relational schema. The server model should start with `teams` and
+  `pokemon_sets`; each set should carry a team owner, active or bench location,
+  ordering, canonical Pokemon/form ID, item, ability, nature, EVs, moves, and
+  pre-Mega identity where needed.
+- Current local saves include display names, sprite URLs, icon URLs, and complete
+  item objects for convenient offline fallback. Server rows should normally store
+  canonical IDs and editable values only, then hydrate shared display metadata
+  from the current data layer.
+- Do not copy per-browser PokeAPI Pokemon/move/item/ability caches, Showdown
+  legality snapshots, or Smogon usage snapshots into each user's database data.
+  Keep them in client caches or a shared TTL cache if a server proxy later owns
+  those requests.
+- Showdown text, calculated stats, validity results, team diagnostics, role and
+  concept classifications, and PokePilot request input are derived from the saved
+  team. Recompute them so rule and data updates do not leave persisted results
+  stale. Store AI output only when a product feature explicitly needs history;
+  otherwise keep the latest result as a bounded cache.
+- Likely future user-owned records include team folders/tags, a separate Pokemon
+  sample library, share visibility and links, limited calculator presets, and
+  user preferences. Avoid storing unlimited calculator history, chat transcripts,
+  or generated analysis by default.
+- Current local guardrails are 30 saved teams per user and six bench Pokemon per
+  team. New saves and duplicates stop at the team limit, while active Pokemon
+  cannot be added to a full bench. Existing over-limit local data is preserved
+  instead of being truncated. These limits are primarily for list UX and abuse
+  prevention, not because team records are expected to exhaust a free Postgres
+  tier. A larger collection should become a dedicated Sample Library rather than
+  an oversized bench.
+- A free managed-Postgres plan should cover portfolio deployment and early public
+  use when records are normalized and generated assets remain external. Recheck
+  official provider storage, egress, inactivity, backup, and authentication limits
+  immediately before deployment because plan details are time-sensitive.
 
 ## Regulation Target
 

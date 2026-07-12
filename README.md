@@ -12,7 +12,7 @@ Current slice:
 
 - Vite + React + TypeScript app shell
 - mockup-driven single Pokemon editor card
-- side-mounted team tabs with add, clear, and drag/touch/keyboard reordering
+- six active team tabs plus a seventh bench drawer with full-build transfers
 - PokeAPI full Pokemon index loading with local browser caching
 - Pokemon name header that becomes a same-style searchable dropdown when clicked
 - searchable icon-only item picker backed by the PokeAPI item index
@@ -21,8 +21,8 @@ Current slice:
 - Local loading, fallback, and Retry states for PokeAPI, Showdown, and Smogon data
 - Pokemon Showdown-backed Regulation M-B legality filtering
 - Smogon monthly usage stats for popular default sets and Pokemon suggestions
-- localStorage saved-team management with load, rename, duplicate, delete, reorder, and last-opened restore
-- Showdown text import/export for Pokemon sets and saved teams
+- localStorage saved-team management with load, rename, duplicate, delete, reorder, last-opened restore, and a 30-team limit
+- Showdown text import/export for Pokemon sets and saved teams, including direct new-team import from the header
 - Pokemon Champions-style EV editing and nature-adjusted stat calculation with fixed IV 31 assumptions
 - live team diagnostics for defensive matchups, offensive coverage, six multi-label set roles, and setup alerts
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
@@ -55,7 +55,7 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - representative legality regression checks
 - AI-assisted team analysis through a server-side API route
 - team-aware Copilot chat/follow-up panel
-- bench Pokemon support
+- account-backed Supabase/Postgres persistence after the local MVP is stable
 - calculator mode
 - Korean UI localization
 - Japanese localization under consideration
@@ -65,7 +65,8 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 
 ## Implemented Prototype Features
 
-- 6-slot team tabs with empty slots, add flow, clear confirmation, and full-build reordering
+- 6-slot active team tabs with empty slots, add flow, clear confirmation, and full-build reordering
+- up to six persisted bench Pokemon per team that can be moved or swapped with active slots without entering team previews, diagnostics, validity, or Showdown export
 - PokeAPI-backed full Pokemon index
 - selected Pokemon detail loading
 - large editable Pokemon name header with filtered and usage-ordered dropdown
@@ -77,11 +78,12 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - base stat / EV / calculated stat table with keyboard input, desktop scrubbing, and touch controls
 - right-cropped Pokemon artwork in the editor card
 - reorderable local saved-team list and management actions
+- compact header menu for starting a blank team or importing a new Showdown team directly
 - Pokemon-level and team-level Showdown text tools
 - type-based team matchup matrix, move coverage, six multi-label set roles, and compact team alerts
 - deterministic Trick Room, Tailwind, Gravity, rain, sun, sand, and snow core analysis
 - compact validity popover with per-slot markers and structured legality issues
-- shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams
+- shared pointer, touch-hold, and keyboard reordering for moves, team slots, bench Pokemon, and saved teams
 - explicit local Copilot analysis with structured summary, strengths, focus areas, and next steps
 - versioned Copilot request/response data contracts ready for a future server-side model provider
 

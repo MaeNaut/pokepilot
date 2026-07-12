@@ -74,8 +74,18 @@ The MVP should prove the core loop:
 - [x] Persist Pokemon slots plus item, ability, nature, EV, move, Mega, and form state.
 - [x] Add saved-team management: load, rename, duplicate, delete, and last-opened restore.
 - [x] Add Showdown text import/export for individual Pokemon sets and saved teams.
+- [x] Split the compact new-team action into blank-team creation and direct Showdown team import.
 - [x] Add shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams.
-- [ ] Keep the saved-team schema compatible with future Supabase/Postgres storage.
+- [x] Add a persisted bench outside the active six, with full-build move/swap interactions and no effect on active-team previews, diagnostics, validity, or Showdown export.
+- [ ] Prepare account-backed server persistence after the local MVP is stable.
+  - [x] Keep Supabase-managed PostgreSQL as the leading candidate, with Neon as the main database-focused alternative.
+  - [ ] Normalize teams and Pokemon sets into server-owned records with active/bench location and ordering.
+  - [ ] Store canonical Pokemon, item, ability, nature, and move IDs instead of duplicating display text and asset URLs.
+  - [ ] Keep PokeAPI, Showdown, and Smogon responses in client or shared caches rather than user-owned database rows.
+  - [ ] Recompute validity, diagnostics, Showdown text, and PokePilot inputs from source team data instead of persisting stale derived output.
+  - [ ] Recheck provider free-plan storage, egress, inactivity, and backup limits immediately before deployment.
+  - [x] Enforce initial guardrails of 30 saved teams per user and six bench Pokemon per team.
+  - [ ] Revisit persistence limits from real usage before public deployment.
 - [ ] Add shareable team links if reasonable.
 - [ ] Add Korean UI localization.
 - [ ] Decide whether Japanese localization belongs in the initial public release.
@@ -94,7 +104,7 @@ The MVP should prove the core loop:
 - Lock selected team members and ask AI to fill the rest.
 - Add playstyle selection such as casual, balanced, offensive, defensive, or competitive.
 - Add format selection if the project later supports specific rule sets.
-- Add user accounts only if persistence becomes important.
+- Add collaborative or social account features only after basic account-backed persistence proves useful.
 
 ## Definition of Done for Portfolio
 

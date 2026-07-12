@@ -7,6 +7,7 @@ import type {
 } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faChair,
   faFileExport,
   faFileImport,
   faFileLines,
@@ -51,6 +52,7 @@ import type {
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
 import { useLongPressReorder } from "../hooks/useLongPressReorder";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+import type { BenchPokemon } from "../utils/benchPokemon";
 import {
   getMegaSpeciesKey,
   getMegaStoneItemName,
@@ -58,6 +60,10 @@ import {
 } from "../utils/megaEvolution";
 import type { TeamValidityResult } from "../utils/teamValidity";
 import { getBattleFormGroup } from "../data/battleForms";
+import {
+  MAX_BENCH_POKEMON,
+  canAddBenchPokemon,
+} from "../data/teamLimits";
 import {
   battleStatKeys,
   calculateChampionsStats,
@@ -77,6 +83,7 @@ import { TypeBadge } from "./TypeBadge";
 
 type TeamBuilderProps = {
   team: TeamSlot[];
+  bench: BenchPokemon[];
   selectedSlot: number;
   pool: TeamMember[];
   pokemonIndex: PokemonIndexEntry[];
@@ -101,6 +108,10 @@ type TeamBuilderProps = {
   ) => Promise<void>;
   onClearSlot: (slotIndex: number) => void;
   onReorderSlots: (sourceIndex: number, targetIndex: number) => void;
+  onMoveTeamPokemonToBench: (slotIndex: number) => void;
+  onMoveBenchPokemonToTeam: (benchIndex: number, slotIndex: number) => void;
+  onReorderBenchPokemon: (sourceIndex: number, targetIndex: number) => void;
+  onRemoveBenchPokemon: (benchId: string) => void;
   onExportShowdown: (slotIndex: number) => string;
   onImportShowdown: (slotIndex: number, text: string) => Promise<void>;
   onRetryPokemonIndex: () => void;
@@ -356,6 +367,7 @@ function getNatureFromPosition(position: NatureGridPosition) {
 
 export function TeamBuilder({
   team,
+  bench,
   selectedSlot,
   pool,
   pokemonIndex,
@@ -376,6 +388,10 @@ export function TeamBuilder({
   onSelectPokemon,
   onClearSlot,
   onReorderSlots,
+  onMoveTeamPokemonToBench,
+  onMoveBenchPokemonToTeam,
+  onReorderBenchPokemon,
+  onRemoveBenchPokemon,
   onExportShowdown,
   onImportShowdown,
   onRetryPokemonIndex,
@@ -410,9 +426,13 @@ export function TeamBuilder({
   const [showdownPanelMessage, setShowdownPanelMessage] = useState<string | null>(null);
   const [isImportingShowdown, setIsImportingShowdown] = useState(false);
   const [isValidityPanelOpen, setIsValidityPanelOpen] = useState(false);
+  const [isBenchOpen, setIsBenchOpen] = useState(false);
+  const [benchLimitMessage, setBenchLimitMessage] = useState<string | null>(null);
+  const [pendingBenchRemovalId, setPendingBenchRemovalId] = useState<string | null>(null);
   const [activeEvStat, setActiveEvStat] = useState<StatKey | null>(null);
   const [scrubbingEvStat, setScrubbingEvStat] = useState<StatKey | null>(null);
   const teamTabsRef = useRef<HTMLDivElement | null>(null);
+  const benchShellRef = useRef<HTMLDivElement | null>(null);
   const showdownToolbarRef = useRef<HTMLDivElement | null>(null);
   const showdownPanelRef = useRef<HTMLDivElement | null>(null);
   const validityPanelRef = useRef<HTMLDivElement | null>(null);
@@ -642,9 +662,9 @@ export function TeamBuilder({
   });
   const teamReorder = useLongPressReorder({
     containerRef: teamTabsRef,
-    itemSelector: "[data-team-slot-index]",
+    itemSelector: "[data-team-drag-index]",
     onDragStart: closeBuilderPopovers,
-    onReorder: handleReorderTeamSlots,
+    onReorder: handleTeamAndBenchDrop,
   });
   const openMovePickerMoveId =
     openMoveSlot !== null ? (selectedMoves[openMoveSlot]?.id ?? "") : "";
@@ -849,6 +869,12 @@ export function TeamBuilder({
         : moves,
     [moves, normalizedMoveQuery],
   );
+
+  useEffect(() => {
+    if (canAddBenchPokemon(bench.length)) {
+      setBenchLimitMessage(null);
+    }
+  }, [bench.length]);
 
   useEffect(() => {
     setPopularPokemonLimit(popularPokemonPageSize);
@@ -1303,6 +1329,25 @@ export function TeamBuilder({
   }, [isValidityPanelOpen]);
 
   useEffect(() => {
+    if (!isBenchOpen) {
+      return;
+    }
+
+    function handleClick(event: MouseEvent) {
+      if (!benchShellRef.current?.contains(event.target as Node)) {
+        setIsBenchOpen(false);
+        setPendingBenchRemovalId(null);
+      }
+    }
+
+    document.addEventListener("click", handleClick);
+
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
+  }, [isBenchOpen]);
+
+  useEffect(() => {
     if (!activeEvStat) {
       return;
     }
@@ -1608,6 +1653,56 @@ export function TeamBuilder({
     );
   }
 
+  function tryMoveTeamPokemonToBench(sourceIndex: number) {
+    setIsBenchOpen(true);
+
+    if (!canAddBenchPokemon(bench.length)) {
+      setBenchLimitMessage(
+        `Bench limit reached (${bench.length}/${MAX_BENCH_POKEMON}). Delete one first.`,
+      );
+      return false;
+    }
+
+    setBenchLimitMessage(null);
+    onMoveTeamPokemonToBench(sourceIndex);
+    return true;
+  }
+
+  function handleTeamAndBenchDrop(sourceIndex: number, targetIndex: number) {
+    const benchTabIndex = team.length;
+    const firstBenchPokemonIndex = benchTabIndex + 1;
+
+    if (sourceIndex < benchTabIndex) {
+      if (targetIndex < benchTabIndex) {
+        handleReorderTeamSlots(sourceIndex, targetIndex);
+        return;
+      }
+
+      tryMoveTeamPokemonToBench(sourceIndex);
+      onSelectedSlotChange(sourceIndex);
+      return;
+    }
+
+    if (sourceIndex < firstBenchPokemonIndex) {
+      return;
+    }
+
+    const benchIndex = sourceIndex - firstBenchPokemonIndex;
+
+    if (targetIndex < benchTabIndex) {
+      closeBuilderPopovers();
+      onMoveBenchPokemonToTeam(benchIndex, targetIndex);
+      return;
+    }
+
+    if (targetIndex >= firstBenchPokemonIndex) {
+      onReorderBenchPokemon(
+        benchIndex,
+        targetIndex - firstBenchPokemonIndex,
+      );
+    }
+  }
+
   function selectTeamSlot(index: number) {
     const member = team[index];
 
@@ -1625,6 +1720,8 @@ export function TeamBuilder({
       return;
     }
 
+    setIsBenchOpen(false);
+    setPendingBenchRemovalId(null);
     selectTeamSlot(index);
   }
 
@@ -1632,6 +1729,13 @@ export function TeamBuilder({
     event: KeyboardEvent<HTMLButtonElement>,
     sourceIndex: number,
   ) {
+    if (event.altKey && event.key === "End" && team[sourceIndex]) {
+      event.preventDefault();
+      closeBuilderPopovers();
+      tryMoveTeamPokemonToBench(sourceIndex);
+      return;
+    }
+
     const isPrevious = event.key === "ArrowUp" || event.key === "ArrowLeft";
     const isNext = event.key === "ArrowDown" || event.key === "ArrowRight";
 
@@ -1656,6 +1760,43 @@ export function TeamBuilder({
       teamTabsRef.current
         ?.querySelector<HTMLButtonElement>(
           `[data-team-slot-index="${targetIndex}"] .team-tab`,
+        )
+        ?.focus();
+    });
+  }
+
+  function handleBenchPokemonClick(benchIndex: number) {
+    if (teamReorder.shouldSuppressClick()) {
+      return;
+    }
+
+    closeBuilderPopovers();
+    onMoveBenchPokemonToTeam(benchIndex, selectedSlot);
+  }
+
+  function handleBenchPokemonKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    benchIndex: number,
+  ) {
+    if (!event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) {
+      return;
+    }
+
+    event.preventDefault();
+    const targetIndex = Math.max(
+      0,
+      Math.min(bench.length - 1, benchIndex + (event.key === "ArrowUp" ? -1 : 1)),
+    );
+
+    if (targetIndex === benchIndex) {
+      return;
+    }
+
+    onReorderBenchPokemon(benchIndex, targetIndex);
+    window.requestAnimationFrame(() => {
+      benchShellRef.current
+        ?.querySelector<HTMLButtonElement>(
+          `[data-bench-index="${targetIndex}"] .bench-pokemon-main`,
         )
         ?.focus();
     });
@@ -2289,7 +2430,7 @@ export function TeamBuilder({
             }}
           >
             <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
-            Clear
+            Delete
           </button>
         ) : null}
       </div>
@@ -2369,10 +2510,10 @@ export function TeamBuilder({
         <div
           className="clear-pokemon-confirm"
           role="dialog"
-          aria-label="Confirm Pokemon clear"
+          aria-label="Confirm Pokemon deletion"
           ref={clearConfirmRef}
         >
-          <strong>Remove this Pokemon?</strong>
+          <strong>Delete this Pokemon?</strong>
           <span>This cannot be undone.</span>
           <div className="clear-pokemon-confirm-actions">
             <button
@@ -2465,6 +2606,7 @@ export function TeamBuilder({
                   ? "has-validity-unavailable"
                   : ""
             }`}
+            data-team-drag-index={index}
             data-team-slot-index={index}
             key={`${member?.id ?? "empty"}-${index}`}
             style={
@@ -2493,7 +2635,7 @@ export function TeamBuilder({
               onPointerCancel={teamReorder.handlePointerCancel}
               aria-label={
                 member
-                  ? `Show slot ${index + 1}. Drag to reorder or press Alt and an arrow key.`
+                  ? `Show slot ${index + 1}. Drag to reorder, press Alt and an arrow key, or press Alt and End to bench.`
                   : `Add Pokemon to slot ${index + 1}`
               }
             >
@@ -2505,6 +2647,154 @@ export function TeamBuilder({
             </button>
           </div>
         ))}
+        <div
+          className={`team-tab-shell bench-tab-shell ${isBenchOpen ? "is-active" : ""} ${
+            teamReorder.dragState?.targetIndex === team.length ? "is-drop-target" : ""
+          }`}
+          data-team-drag-index={team.length}
+          ref={benchShellRef}
+        >
+          <button
+            className={`team-tab bench-tab ${isBenchOpen ? "is-active" : ""}`}
+            type="button"
+            aria-label={`Bench. ${bench.length} of ${MAX_BENCH_POKEMON} Pokemon stored.`}
+            aria-expanded={isBenchOpen}
+            title="Bench"
+            onClick={() => {
+              if (teamReorder.shouldSuppressClick()) {
+                return;
+              }
+
+              closeBuilderPopovers();
+              setPendingBenchRemovalId(null);
+              setIsBenchOpen((current) => !current);
+            }}
+          >
+            <FontAwesomeIcon icon={faChair} aria-hidden="true" />
+            {bench.length > 0 ? <span className="bench-count">{bench.length}</span> : null}
+          </button>
+
+          {isBenchOpen ? (
+            <div className="bench-panel" role="dialog" aria-label="Bench Pokemon">
+              <div className="bench-panel-header">
+                <strong>Bench</strong>
+                <span className={bench.length >= MAX_BENCH_POKEMON ? "is-limit" : ""}>
+                  {bench.length} / {MAX_BENCH_POKEMON}
+                </span>
+              </div>
+              {benchLimitMessage ? (
+                <p className="bench-limit-message" role="status">
+                  {benchLimitMessage}
+                </p>
+              ) : null}
+              {bench.length > 0 ? (
+                <div className="bench-pokemon-list">
+                  {bench.map((entry, index) => {
+                    const dragIndex = team.length + 1 + index;
+                    const isDragging = teamReorder.dragState?.sourceIndex === dragIndex;
+                    const isDropTarget =
+                      teamReorder.dragState?.targetIndex === dragIndex &&
+                      teamReorder.dragState.sourceIndex !== dragIndex;
+
+                    return (
+                      <div
+                        className={`bench-pokemon-row ${isDragging ? "is-dragging" : ""} ${
+                          isDragging && teamReorder.dragState?.isDropping
+                            ? "is-dropping"
+                            : ""
+                        } ${isDropTarget ? "is-drop-target" : ""}`}
+                        data-bench-index={index}
+                        data-team-drag-index={dragIndex}
+                        key={entry.id}
+                        style={
+                          isDragging
+                            ? ({
+                                "--tab-drag-x": `${teamReorder.dragState?.offsetX ?? 0}px`,
+                                "--tab-drag-y": `${teamReorder.dragState?.offsetY ?? 0}px`,
+                                "--bench-drag-left": `${teamReorder.dragState?.originX ?? 0}px`,
+                                "--bench-drag-top": `${teamReorder.dragState?.originY ?? 0}px`,
+                                "--bench-drag-width": `${teamReorder.dragState?.originWidth ?? 0}px`,
+                                "--bench-drag-height": `${teamReorder.dragState?.originHeight ?? 0}px`,
+                              } as CSSProperties)
+                            : undefined
+                        }
+                      >
+                        {pendingBenchRemovalId === entry.id ? (
+                          <div className="bench-remove-confirm" role="alertdialog">
+                            <span>Delete {entry.member.name}?</span>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setPendingBenchRemovalId(null);
+                              }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              className="is-danger"
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onRemoveBenchPokemon(entry.id);
+                                setPendingBenchRemovalId(null);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              className="bench-pokemon-main"
+                              type="button"
+                              aria-label={`Move ${entry.member.name} to selected slot ${selectedSlot + 1}. Drag to another slot or press Alt and an arrow key to reorder the bench.`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleBenchPokemonClick(index);
+                              }}
+                              onKeyDown={(event) => handleBenchPokemonKeyDown(event, index)}
+                              onPointerDown={(event) =>
+                                teamReorder.handlePointerDown(
+                                  event,
+                                  dragIndex,
+                                  event.currentTarget.closest<HTMLElement>(
+                                    ".bench-pokemon-row",
+                                  ) ?? undefined,
+                                )
+                              }
+                              onPointerMove={teamReorder.handlePointerMove}
+                              onPointerUp={teamReorder.handlePointerUp}
+                              onPointerCancel={teamReorder.handlePointerCancel}
+                            >
+                              <PokemonIcon pokemon={entry.member} />
+                              <span>{entry.member.name}</span>
+                            </button>
+                            <button
+                              className="bench-pokemon-remove"
+                              type="button"
+                              aria-label={`Delete ${entry.member.name} from bench`}
+                              title="Delete from bench"
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setPendingBenchRemovalId(entry.id);
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="bench-empty">Bench is empty.</p>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <article

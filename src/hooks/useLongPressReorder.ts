@@ -8,6 +8,10 @@ type ReorderGesture = {
   targetIndex: number;
   startX: number;
   startY: number;
+  originX: number;
+  originY: number;
+  originWidth: number;
+  originHeight: number;
   itemCenters: Array<{ x: number; y: number }>;
   isDragging: boolean;
   holdTimer: number | null;
@@ -18,6 +22,10 @@ export type ReorderDragState = {
   targetIndex: number;
   offsetX: number;
   offsetY: number;
+  originX: number;
+  originY: number;
+  originWidth: number;
+  originHeight: number;
   isDropping: boolean;
 };
 
@@ -93,6 +101,10 @@ export function useLongPressReorder({
       targetIndex: gesture.sourceIndex,
       offsetX: 0,
       offsetY: 0,
+      originX: gesture.originX,
+      originY: gesture.originY,
+      originWidth: gesture.originWidth,
+      originHeight: gesture.originHeight,
       isDropping: false,
     });
   }
@@ -119,11 +131,13 @@ export function useLongPressReorder({
   function handlePointerDown(
     event: ReactPointerEvent<HTMLElement>,
     sourceIndex: number,
+    originElement?: HTMLElement,
   ) {
     if (disabled || isDragging || event.button !== 0 || !event.isPrimary) {
       return;
     }
 
+    const sourceRect = (originElement ?? event.currentTarget).getBoundingClientRect();
     const gesture: ReorderGesture = {
       pointerId: event.pointerId,
       pointerType: event.pointerType,
@@ -131,6 +145,10 @@ export function useLongPressReorder({
       targetIndex: sourceIndex,
       startX: event.clientX,
       startY: event.clientY,
+      originX: sourceRect.left,
+      originY: sourceRect.top,
+      originWidth: sourceRect.width,
+      originHeight: sourceRect.height,
       itemCenters: Array.from(
         containerRef.current?.querySelectorAll<HTMLElement>(itemSelector) ?? [],
         (element) => {
@@ -204,6 +222,10 @@ export function useLongPressReorder({
       targetIndex: nextTargetIndex,
       offsetX,
       offsetY,
+      originX: gesture.originX,
+      originY: gesture.originY,
+      originWidth: gesture.originWidth,
+      originHeight: gesture.originHeight,
       isDropping: false,
     });
   }
@@ -229,6 +251,10 @@ export function useLongPressReorder({
       targetIndex: gesture.targetIndex,
       offsetX: targetCenter.x - sourceCenter.x,
       offsetY: targetCenter.y - sourceCenter.y,
+      originX: gesture.originX,
+      originY: gesture.originY,
+      originWidth: gesture.originWidth,
+      originHeight: gesture.originHeight,
       isDropping: true,
     });
 
