@@ -165,7 +165,12 @@ claim of affiliation.
 
 ## Builder UX Notes
 
-- The main builder is a single large Pokemon editor card, not a grid of six cards.
+- The main builder switches between the existing single-Pokemon editor and a
+  compact two-column overview of the active six. Both views read the same live
+  team and `useTeamBuildState` records, so switching does not copy, reset, or
+  persist a second version of unsaved edits.
+- Clicking an overview slot returns to the single-Pokemon editor with that slot
+  selected. Empty overview slots use the same Pokemon-search entry flow.
 - Team members are shown as compact tabs/bookmarks on the left side of the card.
 - The displayed Pokemon is changed by clicking a team tab.
 - Filled team tabs can be reordered with desktop drag, touch hold-and-drag, or

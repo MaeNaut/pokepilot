@@ -20,6 +20,8 @@ import {
   faSpinner,
   faTrash,
   faTriangleExclamation,
+  faUser,
+  faUsers,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "../api/pokeApi";
@@ -76,6 +78,7 @@ import {
   type Nature,
 } from "../data/natures";
 import { PokemonIcon } from "./PokemonIcon";
+import { TeamOverview } from "./TeamOverview";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
 
@@ -205,6 +208,7 @@ type NatureGridPosition = {
 };
 
 type MoveOptionScrollMode = "start" | "nearest";
+type BuilderView = "pokemon" | "team";
 
 function getIndexAfterReorder(index: number, sourceIndex: number, targetIndex: number) {
   if (index === sourceIndex) {
@@ -402,6 +406,7 @@ export function TeamBuilder({
     clearSlot,
   } = buildState;
   const [isNamePickerOpen, setIsNamePickerOpen] = useState(false);
+  const [builderView, setBuilderView] = useState<BuilderView>("pokemon");
   const [nameQuery, setNameQuery] = useState("");
   const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(null);
   const [popularPokemonLimit, setPopularPokemonLimit] = useState(popularPokemonPageSize);
@@ -1413,6 +1418,17 @@ export function TeamBuilder({
     setActiveEvStat(null);
   }
 
+  function changeBuilderView(nextView: BuilderView) {
+    if (nextView === builderView) {
+      return;
+    }
+
+    closeBuilderPopovers();
+    setIsBenchOpen(false);
+    setPendingBenchRemovalId(null);
+    setBuilderView(nextView);
+  }
+
   function requestMoveOptionScroll(
     mode: MoveOptionScrollMode,
     options: { preserveExisting?: boolean } = {},
@@ -1552,6 +1568,12 @@ export function TeamBuilder({
 
     setIsBenchOpen(false);
     setPendingBenchRemovalId(null);
+    setBuilderView("pokemon");
+    selectTeamSlot(index);
+  }
+
+  function handleTeamOverviewSlotClick(index: number) {
+    setBuilderView("pokemon");
     selectTeamSlot(index);
   }
 
@@ -2168,9 +2190,25 @@ export function TeamBuilder({
     <section className="builder-stage" aria-label="Team builder">
       <div
         className="builder-card-toolbar"
-        aria-label="Showdown team tools"
+        aria-label="Builder tools"
         ref={showdownToolbarRef}
       >
+        <button
+          className={`builder-view-switch is-${builderView}`}
+          type="button"
+          aria-label={`Current view: ${
+            builderView === "pokemon" ? "Pokemon" : "Team"
+          }. Switch to ${builderView === "pokemon" ? "Team" : "Pokemon"} view`}
+          title={`Switch to ${builderView === "pokemon" ? "Team" : "Pokemon"} view`}
+          onClick={() => changeBuilderView(builderView === "pokemon" ? "team" : "pokemon")}
+        >
+          <span className="builder-view-switch-pokemon" aria-hidden="true">
+            <FontAwesomeIcon icon={faUser} aria-hidden="true" />
+          </span>
+          <span className="builder-view-switch-team" aria-hidden="true">
+            <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
+          </span>
+        </button>
         {team.some(Boolean) ? (
           <button
             className={`builder-card-tool-button validity-trigger is-${
@@ -2601,6 +2639,16 @@ export function TeamBuilder({
         </div>
       </div>
 
+      {builderView === "team" ? (
+        <TeamOverview
+          team={team}
+          selectedSlot={selectedSlot}
+          pokemonIndex={pokemonIndex}
+          buildState={buildState}
+          validity={validity}
+          onOpenSlot={handleTeamOverviewSlotClick}
+        />
+      ) : (
       <article
         className="pokemon-card"
         onClick={(event) => {
@@ -3560,6 +3608,7 @@ export function TeamBuilder({
           </div>
         </div>
       </article>
+      )}
       </div>
     </section>
   );

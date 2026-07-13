@@ -20,10 +20,10 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Next
 
-- [ ] Add a Pokemon sample card / team view switch.
-  - [ ] Keep the current single-Pokemon editor as the sample card view.
-  - [ ] Design a compact whole-team view without duplicating team-management controls.
-  - [ ] Preserve the selected slot and unsaved edits when switching views.
+- [x] Add a Pokemon sample card / team view switch.
+  - [x] Keep the current single-Pokemon editor as the sample card view.
+  - [x] Design a compact whole-team view without duplicating team-management controls.
+  - [x] Preserve the selected slot and unsaved edits when switching views.
 - [x] Replace the Copilot panel placeholder with a working local analysis preview.
   - [x] Add team and selected-Pokemon analysis scopes.
   - [x] Keep deterministic team diagnostics outside the future AI response area.

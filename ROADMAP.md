@@ -87,6 +87,8 @@ The MVP should prove the core loop:
 - [x] Persist Pokemon slots plus item, ability, nature, EV, move, Mega, and form state.
 - [x] Add saved-team management: load, rename, duplicate, delete, and last-opened restore.
 - [x] Add Showdown text import/export for individual Pokemon sets and saved teams.
+- [x] Add a Pokemon/team view switch with a compact active-six overview that
+  preserves the selected slot and live unsaved build state.
 - [x] Split the compact new-team action into blank-team creation and direct Showdown team import.
 - [x] Add shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams.
 - [x] Add a persisted bench outside the active six, with full-build move/swap interactions and no effect on active-team previews, diagnostics, validity, or Showdown export.
