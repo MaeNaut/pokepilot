@@ -165,6 +165,21 @@ claim of affiliation.
 
 ## Builder UX Notes
 
+Pending desktop UX decisions after the wide-builder layout change:
+
+- Evaluate replacing fine-pointer horizontal EV scrubbing with six vertical sliders
+  placed above their corresponding stats. The goal is to use the open right side of
+  the card without making EV allocation slower or less precise.
+- Keep the compact header team-management group aligned with the Pokemon card's
+  left edge. Shorten the team-name field as needed and restore a PokePilot wordmark
+  in the header space no longer occupied by those controls.
+- Revisit the relationship between Team View and Pokemon View before adding a
+  one-off back button. The final navigation should make editing and returning
+  obvious, preserve access to the Bench tab, and avoid undersized edit targets on
+  pointer or touch devices.
+- Increase Team View EV typography and contrast; its current compact styling makes
+  the allocation line harder to scan than the rest of each set.
+
 - The main builder switches between the existing single-Pokemon editor and a
   compact two-column overview of the active six. Both views read the same live
   team and `useTeamBuildState` records, so switching does not copy, reset, or
@@ -341,6 +356,10 @@ Still needed:
 
 - Keep deterministic team diagnostics as a compact factual surface directly
   below the selected Pokemon editor in the left desktop workspace.
+- Render the visible surface as a headerless type report: a 6-by-3 defensive
+  matchup matrix on the left and a circular offensive-coverage score on the right.
+  Label uncovered-type icons so their meaning is clear without restoring a larger
+  explanatory panel.
 - Keep the diagnostics panel visually consistent with the builder: use one-line
   panel and section headers, shared 6-8px radii, thin neutral borders, restrained
   gray surfaces, and semantic accent colors only for matchup meaning. Matchup

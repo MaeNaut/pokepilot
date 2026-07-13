@@ -106,6 +106,8 @@ The MVP should prove the core loop:
 - [ ] Add Korean UI localization.
 - [ ] Decide whether Japanese localization belongs in the initial public release.
 - [ ] Add dark mode and persist the user's theme preference.
+- [ ] Complete the post-layout desktop detail pass for EV editing density, header
+  alignment and branding, Team View navigation, and compact Team View readability.
 - [ ] Begin the dedicated responsive-design phase only after Team Builder features and desktop UI/UX are stable.
   - [ ] Treat the current responsive CSS as provisional rather than final tablet/mobile design.
   - [ ] Complete a tablet layout and touch-interaction pass.

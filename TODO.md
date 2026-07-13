@@ -4,6 +4,15 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Now
 
+- [ ] Refine post-layout desktop UI details.
+  - [ ] Prototype vertical EV sliders above each stat to use the Pokemon card's open right-side space more efficiently than horizontal value scrubbing.
+  - [ ] Shorten the header team-name field and align the team-management controls with the Pokemon card's left edge.
+  - [ ] Restore the PokePilot wordmark in the header space freed by moving the team controls.
+  - [ ] Revisit the Team View navigation model before adding another back or edit button.
+    - [ ] Decide whether Pokemon View and Team View remain equal peer views or Team View becomes the parent navigation surface.
+    - [ ] Make the return path from Pokemon editing to Team View obvious without isolating the Bench tab.
+    - [ ] Preserve comfortable pointer and touch targets if Team View gains explicit edit actions.
+  - [ ] Increase Team View EV text size and contrast so it remains readable inside compact set cards.
 - [ ] Keep keyboard and mouse picker behavior consistent as new controls are added.
   - [ ] Preserve the current hover-to-keyboard active-selection flow for future dropdowns.
   - [ ] Re-test Pokemon, item, ability, nature, and move pickers after major TeamBuilder refactors.
@@ -34,6 +43,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Offensive coverage summary.
   - [x] Set-based physical attacker, special attacker, wall, supporter, and setter summaries.
   - [x] Keep the visible panel focused on defensive matchups and coverage gaps.
+  - [x] Present the visible type report without a redundant Team Diagnostics header or active-slot count.
+  - [x] Use a 6-by-3 defensive matrix beside a circular coverage score with clearly labeled uncovered types.
   - [x] Keep role and alert calculations as PokePilot inputs instead of duplicating them in the panel.
   - [x] Classify field, weather, screen, terrain, and hazard setup as the sixth Setter role.
   - [x] Detect Trick Room, Tailwind, Gravity, rain, sun, sand, and snow team concepts.
