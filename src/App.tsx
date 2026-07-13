@@ -1819,10 +1819,7 @@ function App() {
             onExportShowdown={getShowdownExportText}
             onImportShowdown={handleImportShowdownSlot}
           />
-          <TeamDiagnostics
-            team={team}
-            diagnostics={teamDiagnostics}
-          />
+          <TeamDiagnostics diagnostics={teamDiagnostics} />
         </div>
         <CopilotPanel
           teamName={teamNameDraft}

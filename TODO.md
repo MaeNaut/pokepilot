@@ -33,6 +33,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Apply fixed type-immunity abilities to defensive matchups and alerts.
   - [x] Offensive coverage summary.
   - [x] Set-based physical attacker, special attacker, wall, supporter, and setter summaries.
+  - [x] Keep the visible panel focused on defensive matchups and coverage gaps.
+  - [x] Keep role and alert calculations as PokePilot inputs instead of duplicating them in the panel.
   - [x] Classify field, weather, screen, terrain, and hazard setup as the sixth Setter role.
   - [x] Detect Trick Room, Tailwind, Gravity, rain, sun, sand, and snow team concepts.
   - [x] Distinguish concept setters, dependent aces, and independent off-mode attackers.
@@ -42,7 +44,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Role-based physical/special attacker imbalance warnings.
   - [x] Role-based physical/special wall imbalance warnings.
   - [x] Avoid false completion warnings for intentional no-item or sub-four-move sets.
-  - [x] Unify matchup, coverage, role, and alert surfaces with the builder UI.
+  - [x] Unify matchup and coverage surfaces with the builder UI.
 - [ ] Improve move editing.
   - [x] Keep the current move visible when opening the move dropdown.
   - [x] Preserve natural keyboard scrolling and prevent hover-triggered scroll loops.
@@ -53,9 +55,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [ ] Keep Mega Stone auto-lock behavior tested after future item changes.
   - [x] Allow ordinary held items to be cleared while preserving locked Mega Stones.
 - [x] Improve EV editing with desktop value scrubbing, touch controls, and allocation gauges.
-- [x] Put compact team diagnostics between the Pokemon card and Copilot panel.
+- [x] Rebalance the desktop workspace around the builder and PokePilot.
   - [x] Keep the Pokemon card focused on the selected set.
-  - [x] Reserve Copilot for future AI interpretation and recommendations.
+  - [x] Reserve PokePilot for future AI interpretation and recommendations.
+  - [x] Keep a full-height PokePilot panel on the right and stack the builder and diagnostics on the left.
+  - [x] Use a wider, shorter Pokemon card with moves and stats side by side and a 3-by-2 Team View.
+  - [x] Cap the desktop workspace at 1920px so QHD and wider displays do not over-stretch the UI.
 
 ## Team Management
 

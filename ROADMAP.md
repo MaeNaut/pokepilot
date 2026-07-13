@@ -17,7 +17,8 @@ The MVP should prove the core loop:
 - Build the mockup-driven builder screen.
 - Add 6 compact team tabs beside a single Pokemon editor card.
 - Keep the header compact and focused on team-management actions.
-- Reserve a full-height Copilot panel on the right.
+- Stack a wide, low builder and compact matchup diagnostics beside a persistent full-height PokePilot panel.
+- Cap the desktop workspace at 1920px so ultrawide layouts retain readable line lengths and scanning distance.
 - Keep the first screen focused on actual builder controls, not marketing copy.
 
 ## Phase 2 - Data and Visualization
@@ -34,7 +35,7 @@ The MVP should prove the core loop:
 - [x] Add searchable item and move selectors.
 - [x] Add keyboard navigation for Pokemon, item, ability, nature, and move selectors.
 - [x] Add item, ability, and move detail tooltips.
-- [x] Add team-level defensive matchup, offensive coverage, set-role, and setup-alert visualization.
+- [x] Add compact defensive matchup and coverage-gap visualization while retaining roles and alerts as structured PokePilot input.
 - [x] Add a sixth Setter role for field, weather, screens, terrain, and hazard setup.
 - [x] Detect major field and weather concepts, their setters and aces, and whether a complete core has an off-mode attacker.
 

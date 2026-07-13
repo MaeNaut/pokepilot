@@ -3267,11 +3267,12 @@ export function TeamBuilder({
             </div>
             ) : null}
 
-            <div
-              className={`move-list ${moveReorder.isDragging ? "is-reordering" : ""}`}
-              aria-label="Selected moves"
-              ref={movePickerRef}
-            >
+            <div className="editor-detail-grid">
+              <div
+                className={`move-list ${moveReorder.isDragging ? "is-reordering" : ""}`}
+                aria-label="Selected moves"
+                ref={movePickerRef}
+              >
               {activeMember ? (
                 selectedMoves.map((move, index) => (
                   <div
@@ -3431,18 +3432,18 @@ export function TeamBuilder({
                   </div>
                 ))
               ) : null}
-            </div>
+              </div>
 
-            {activeMember ? (
-              <table
-                className="stats-table"
-                aria-label="Pokemon stats"
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    setActiveEvStat(null);
-                  }
-                }}
-              >
+              {activeMember ? (
+                <table
+                  className="stats-table"
+                  aria-label="Pokemon stats"
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setActiveEvStat(null);
+                    }
+                  }}
+                >
               <thead>
                 <tr>
                   <th />
@@ -3586,8 +3587,9 @@ export function TeamBuilder({
                   })}
                 </tr>
               </tbody>
-              </table>
-            ) : null}
+                </table>
+              ) : null}
+            </div>
           </div>
 
           <div className="sprite-crop">

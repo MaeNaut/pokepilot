@@ -339,23 +339,25 @@ Still needed:
 
 ## Team Diagnostics
 
-- Keep deterministic team diagnostics in the middle workspace between the
-  selected Pokemon editor and the future Copilot panel.
+- Keep deterministic team diagnostics as a compact factual surface directly
+  below the selected Pokemon editor in the left desktop workspace.
 - Keep the diagnostics panel visually consistent with the builder: use one-line
   panel and section headers, shared 6-8px radii, thin neutral borders, restrained
-  gray surfaces, and semantic accent colors only for matchup, role, and alert
-  meaning. Matchup cells, role summaries, and alerts should read as related
-  repeated items rather than unrelated widget styles.
-- Let active role summaries size to their Pokemon count and wrap naturally. Keep
-  zero-member roles visible only in a compact Missing line instead of reserving a
-  full empty card for each one.
+  gray surfaces, and semantic accent colors only for matchup meaning. Matchup
+  cells and coverage gaps should read as parts of one compact reference surface.
+- Limit the visible panel to defensive matchups and uncovered defending types.
+  Do not show the attacking-type inventory, role summaries, role placeholders,
+  or a duplicate alert list.
+- Continue calculating roles and alerts as structured PokePilot inputs even
+  though they are no longer rendered inside Team Diagnostics.
 - Calculate defensive matchups from the shared type chart and the current form's
   displayed typing, then apply selected abilities that fully negate an attacking
   type: Levitate and Earth Eater for Ground; Lightning Rod, Volt Absorb, and Motor
   Drive for Electric; Water Absorb, Storm Drain, and Dry Skin for Water; Flash Fire
   and Well-Baked Body for Fire; and Sap Sipper for Grass. Use the same adjusted
-  matchup counts for the defensive table and Team Alerts. Conditional move-family
-  immunities and non-immunity damage modifiers remain outside this calculation.
+  matchup counts for the defensive table and alert generation. Conditional
+  move-family immunities and non-immunity damage modifiers remain outside this
+  calculation.
 - Calculate offensive coverage from the currently selected damaging move types.
   The displayed score measures how many of the 18 single types can be hit super
   effectively; it is not a full dual-type matchup or damage simulation.
@@ -382,8 +384,10 @@ Still needed:
   completed mode whose dependent aces have no independently classified attacker
   behind them. Feed the same concept summaries into the local PokePilot playstyle,
   strengths, and recommendation output.
-- Surface compact alerts for shared weaknesses, open team slots, repeated typing,
-  and role-based attacker or wall imbalance. Only flag role imbalance when one
+- Continue calculating alerts for shared weaknesses, open team slots, repeated
+  typing, and role-based attacker or wall imbalance, but pass them to PokePilot
+  instead of repeating them in the visible diagnostics panel. Only flag role
+  imbalance when one
   physical/special side has at least two classified members and the opposite side
   has none; teams with neither side represented should not be warned. Prioritize
   danger and warning alerts over informational alerts before applying the display
@@ -411,9 +415,12 @@ The current first slice is a provider-independent local preview:
 - `CopilotPanel.tsx` renders the structured response and owns idle, loading, local
   error, refresh, and stale states. A future server route should replace only the
   response provider, not the product UI contract.
-- On the desktop workspace, keep the Copilot panel fixed to the viewport space
-  between the app header and footer. Long analysis and future chat history scroll
-  inside `copilot-content` so they do not increase the document height.
+- On the desktop workspace, cap the content shell at 1920px. Stack a wider,
+  shorter builder and compact diagnostics in the left column, and keep the
+  full-height PokePilot panel visible in the right column. The Pokemon editor
+  places moves and stats side by side, while Team View uses a 3-by-2 grid.
+  Long analysis and future chat history scroll inside `copilot-content` so they
+  do not increase the document height.
 
 For the first AI route, ask the AI to return structured JSON such as:
 
