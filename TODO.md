@@ -5,7 +5,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 ## Now
 
 - [ ] Refine post-layout desktop UI details.
-  - [ ] Prototype vertical EV sliders above each stat to use the Pokemon card's open right-side space more efficiently than horizontal value scrubbing.
+  - [x] Replace horizontal EV value scrubbing with always-visible vertical sliders and direct numeric entry above each displayed stat.
   - [x] Shorten the header team-name field and align the team-management controls with the Pokemon card's left edge.
   - [x] Restore the PokePilot wordmark in the header space freed by moving the team controls.
   - [ ] Revisit the Team View navigation model before adding another back or edit button.
@@ -65,7 +65,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [ ] Improve item editing.
   - [ ] Keep Mega Stone auto-lock behavior tested after future item changes.
   - [x] Allow ordinary held items to be cleared while preserving locked Mega Stones.
-- [x] Improve EV editing with desktop value scrubbing, touch controls, and allocation gauges.
+- [x] Improve EV editing with vertical sliders, direct numeric entry, and a shared allocation total.
 - [x] Rebalance the desktop workspace around the builder and PokePilot.
   - [x] Keep the Pokemon card focused on the selected set.
   - [x] Reserve PokePilot for future AI interpretation and recommendations.

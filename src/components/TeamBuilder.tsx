@@ -1,10 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
-import type {
-  CSSProperties,
-  KeyboardEvent,
-  PointerEvent as ReactPointerEvent,
-  UIEvent,
-} from "react";
+import type { CSSProperties, KeyboardEvent, UIEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChair,
@@ -14,7 +9,6 @@ import {
   faChevronDown,
   faCircleCheck,
   faCircleQuestion,
-  faMinus,
   faPlus,
   faRotateRight,
   faSpinner,
@@ -125,16 +119,6 @@ type PokemonSelectOption = {
   id: string;
   name: string;
   number: number;
-};
-
-type EvScrubState = {
-  pointerId: number;
-  stat: StatKey;
-  startX: number;
-  startValue: number;
-  maxValue: number;
-  lastValue: number;
-  isDragging: boolean;
 };
 
 function ItemSprite({ item }: { item: PokemonItem }) {
@@ -421,8 +405,6 @@ export function TeamBuilder({
   const [isBenchOpen, setIsBenchOpen] = useState(false);
   const [benchLimitMessage, setBenchLimitMessage] = useState<string | null>(null);
   const [pendingBenchRemovalId, setPendingBenchRemovalId] = useState<string | null>(null);
-  const [activeEvStat, setActiveEvStat] = useState<StatKey | null>(null);
-  const [scrubbingEvStat, setScrubbingEvStat] = useState<StatKey | null>(null);
   const teamTabsRef = useRef<HTMLDivElement | null>(null);
   const benchShellRef = useRef<HTMLDivElement | null>(null);
   const showdownToolbarRef = useRef<HTMLDivElement | null>(null);
@@ -441,8 +423,6 @@ export function TeamBuilder({
   const movePickerRef = useRef<HTMLDivElement | null>(null);
   const moveResultsRef = useRef<HTMLDivElement | null>(null);
   const moveOptionScrollModeRef = useRef<MoveOptionScrollMode | null>(null);
-  const evScrubStateRef = useRef<EvScrubState | null>(null);
-  const suppressEvClickRef = useRef(false);
   const [openTraitPicker, setOpenTraitPicker] = useState<"ability" | "nature" | null>(
     null,
   );
@@ -1261,44 +1241,6 @@ export function TeamBuilder({
   }, [isBenchOpen]);
 
   useEffect(() => {
-    if (!activeEvStat) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target;
-
-      if (target instanceof Element && target.closest(".ev-cell")) {
-        return;
-      }
-
-      setActiveEvStat(null);
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [activeEvStat]);
-
-  useEffect(() => {
-    setActiveEvStat(null);
-  }, [selectedSlot]);
-
-  useEffect(() => {
-    if (!scrubbingEvStat) {
-      return;
-    }
-
-    document.body.classList.add("is-scrubbing-ev");
-
-    return () => {
-      document.body.classList.remove("is-scrubbing-ev");
-    };
-  }, [scrubbingEvStat]);
-
-  useEffect(() => {
     if (!activeMegaStoneName || !activeMegaStoneOption) {
       return;
     }
@@ -1415,7 +1357,6 @@ export function TeamBuilder({
     closeMovePicker();
     setIsShowdownPanelOpen(false);
     setIsValidityPanelOpen(false);
-    setActiveEvStat(null);
   }
 
   function changeBuilderView(nextView: BuilderView) {
@@ -2041,82 +1982,6 @@ export function TeamBuilder({
       CHAMPIONS_MAX_EV_PER_STAT,
       Math.max(0, CHAMPIONS_MAX_EV_TOTAL - (evTotal - evs[stat])),
     );
-  }
-
-  function adjustEv(stat: StatKey, amount: number) {
-    updateEv(stat, String(evs[stat] + amount));
-  }
-
-  function startEvScrub(event: ReactPointerEvent<HTMLInputElement>, stat: StatKey) {
-    if (event.pointerType !== "mouse" || event.button !== 0) {
-      return;
-    }
-
-    evScrubStateRef.current = {
-      pointerId: event.pointerId,
-      stat,
-      startX: event.clientX,
-      startValue: evs[stat],
-      maxValue: getMaxAllowedEv(stat),
-      lastValue: evs[stat],
-      isDragging: false,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function moveEvScrub(event: ReactPointerEvent<HTMLInputElement>) {
-    const scrubState = evScrubStateRef.current;
-
-    if (!scrubState || scrubState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const distance = event.clientX - scrubState.startX;
-
-    if (!scrubState.isDragging && Math.abs(distance) < 4) {
-      return;
-    }
-
-    if (!scrubState.isDragging) {
-      scrubState.isDragging = true;
-      setScrubbingEvStat(scrubState.stat);
-      setActiveEvStat(null);
-      event.currentTarget.setSelectionRange(0, 0);
-      window.getSelection()?.removeAllRanges();
-    }
-
-    event.preventDefault();
-    const nextValue = Math.max(
-      0,
-      Math.min(scrubState.maxValue, scrubState.startValue + Math.trunc(distance / 5)),
-    );
-
-    if (nextValue !== scrubState.lastValue) {
-      scrubState.lastValue = nextValue;
-      updateEv(scrubState.stat, String(nextValue));
-    }
-  }
-
-  function finishEvScrub(event: ReactPointerEvent<HTMLInputElement>) {
-    const scrubState = evScrubStateRef.current;
-
-    if (!scrubState || scrubState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
-    if (scrubState.isDragging) {
-      suppressEvClickRef.current = true;
-      window.setTimeout(() => {
-        suppressEvClickRef.current = false;
-      }, 0);
-    }
-
-    evScrubStateRef.current = null;
-    setScrubbingEvStat(null);
   }
 
   function selectMove(slotIndex: number, moveId: string) {
@@ -2864,6 +2729,7 @@ export function TeamBuilder({
 
             {activeMember ? (
             <div className="meta-row">
+              <div className="set-meta-controls">
               <div
                 className="item-picker"
                 ref={itemPickerRef}
@@ -3264,6 +3130,14 @@ export function TeamBuilder({
                   ) : null}
                 </div>
               </div>
+              </div>
+
+              <div className="stats-editor-header stats-meta-heading">
+                <h2>Stats</h2>
+                <span className="ev-total">
+                  EV {evTotal}/{CHAMPIONS_MAX_EV_TOTAL}
+                </span>
+              </div>
             </div>
             ) : null}
 
@@ -3435,159 +3309,88 @@ export function TeamBuilder({
               </div>
 
               {activeMember ? (
-                <table
-                  className="stats-table"
-                  aria-label="Pokemon stats"
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") {
-                      setActiveEvStat(null);
-                    }
-                  }}
-                >
-              <thead>
-                <tr>
-                  <th />
-                  {statKeys.map((stat) => (
-                    <th key={stat}>{statLabels[stat]}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th>Base</th>
-                  {statKeys.map((stat) => (
-                    <td key={stat}>{baseStats[stat]}</td>
-                  ))}
-                </tr>
-                <tr>
-                  <th>
-                    EVs
-                    <span className="ev-total">{evTotal}/{CHAMPIONS_MAX_EV_TOTAL}</span>
-                  </th>
-                  {statKeys.map((stat, statIndex) => {
-                    const maxAllowed = getMaxAllowedEv(stat);
-                    const popoverAlignment =
-                      statIndex <= 1 ? "is-start" : statIndex >= 4 ? "is-end" : "";
+                <section className="stats-editor" aria-label="Pokemon stats">
+                  <div className="stats-editor-header stats-editor-header-mobile">
+                    <h2>Stats</h2>
+                    <span className="ev-total">
+                      EV {evTotal}/{CHAMPIONS_MAX_EV_TOTAL}
+                    </span>
+                  </div>
 
-                    return (
-                      <td
-                        className="ev-cell"
-                        key={stat}
-                        style={
-                          {
-                            "--ev-fill": `${(evs[stat] / CHAMPIONS_MAX_EV_PER_STAT) * 100}%`,
-                          } as CSSProperties
-                        }
-                      >
-                        <span className="ev-cell-fill" aria-hidden="true" />
-                        <div className="ev-input-shell">
-                          <input
-                            className={scrubbingEvStat === stat ? "is-scrubbing" : ""}
-                            aria-label={`${statLabels[stat]} EV`}
-                            aria-expanded={activeEvStat === stat}
-                            inputMode="numeric"
-                            min={0}
-                            max={maxAllowed}
-                            value={evs[stat]}
-                            onFocus={() => setActiveEvStat(stat)}
-                            onClick={(event) => {
-                              if (suppressEvClickRef.current) {
-                                suppressEvClickRef.current = false;
-                                event.preventDefault();
-                                return;
-                              }
+                  <div className="stats-editor-body">
+                    <div className="stat-axis-labels" aria-hidden="true">
+                      <span className="is-base">Base</span>
+                      <span className="is-ev">EV</span>
+                      <span className="is-stat">Stat</span>
+                    </div>
 
-                              setActiveEvStat(stat);
-                            }}
-                            onChange={(event) => updateEv(stat, event.target.value)}
-                            onPointerDown={(event) => startEvScrub(event, stat)}
-                            onPointerMove={moveEvScrub}
-                            onPointerUp={finishEvScrub}
-                            onPointerCancel={finishEvScrub}
-                          />
+                    <div className="stats-editor-grid">
+                      {statKeys.map((stat) => {
+                        const maxAllowed = getMaxAllowedEv(stat);
+                        const natureShift =
+                          selectedNature.up !== selectedNature.down && stat === selectedNature.up
+                            ? "up"
+                            : selectedNature.up !== selectedNature.down &&
+                                stat === selectedNature.down
+                              ? "down"
+                              : null;
 
-                        </div>
+                        return (
+                          <div className="stat-editor-column" key={stat}>
+                            <strong className="stat-editor-label">{statLabels[stat]}</strong>
+                            <span className="stat-base-value">{baseStats[stat]}</span>
 
-                        {activeEvStat === stat ? (
-                          <div
-                            className={`ev-editor-popover ${popoverAlignment}`}
-                            role="dialog"
-                            aria-label={`${statLabels[stat]} EV controls`}
-                          >
-                            <div className="ev-editor-header">
-                              <span>{statLabels[stat]} EV</span>
-                              <strong>{evs[stat]}/{CHAMPIONS_MAX_EV_PER_STAT}</strong>
+                            <div className="ev-vertical-track">
+                              <input
+                                className="ev-vertical-range"
+                                type="range"
+                                aria-label={`${statLabels[stat]} EV slider`}
+                                min={0}
+                                max={CHAMPIONS_MAX_EV_PER_STAT}
+                                step={1}
+                                value={evs[stat]}
+                                style={
+                                  {
+                                    "--ev-fill": `${(evs[stat] / CHAMPIONS_MAX_EV_PER_STAT) * 100}%`,
+                                  } as CSSProperties
+                                }
+                                onChange={(event) => updateEv(stat, event.target.value)}
+                              />
                             </div>
-                            <input
-                              className="ev-range"
-                              type="range"
-                              aria-label={`${statLabels[stat]} EV slider`}
-                              min={0}
-                              max={maxAllowed}
-                              step={1}
-                              value={evs[stat]}
-                              onChange={(event) => updateEv(stat, event.target.value)}
-                            />
-                            <div className="ev-stepper">
-                              <button
-                                type="button"
-                                aria-label={`Decrease ${statLabels[stat]} EV`}
-                                disabled={evs[stat] <= 0}
-                                onClick={() => adjustEv(stat, -1)}
-                              >
-                                <FontAwesomeIcon icon={faMinus} aria-hidden="true" />
-                              </button>
-                              <output>{evs[stat]}</output>
-                              <button
-                                type="button"
-                                aria-label={`Increase ${statLabels[stat]} EV`}
-                                disabled={evs[stat] >= maxAllowed}
-                                onClick={() => adjustEv(stat, 1)}
-                              >
-                                <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
-                              </button>
-                            </div>
-                            <span className="ev-remaining">
-                              {CHAMPIONS_MAX_EV_TOTAL - evTotal} remaining
+
+                            <label className="ev-number-field">
+                              <span className="sr-only">{statLabels[stat]} EV</span>
+                              <input
+                                className="ev-number-input"
+                                inputMode="numeric"
+                                min={0}
+                                max={maxAllowed}
+                                value={evs[stat]}
+                                onChange={(event) => updateEv(stat, event.target.value)}
+                              />
+                            </label>
+
+                            <span className="stat-result-value">
+                              <span className="stat-value">
+                                {calculatedStats[stat]}
+                                {natureShift ? (
+                                  <span
+                                    className={`stat-nature-arrow is-${natureShift}`}
+                                    aria-label={
+                                      natureShift === "up"
+                                        ? "Nature increases this stat"
+                                        : "Nature decreases this stat"
+                                    }
+                                  />
+                                ) : null}
+                              </span>
                             </span>
                           </div>
-                        ) : null}
-                      </td>
-                    );
-                  })}
-                </tr>
-                <tr>
-                  <th>Stats</th>
-                  {statKeys.map((stat) => {
-                    const natureShift =
-                      selectedNature.up !== selectedNature.down && stat === selectedNature.up
-                        ? "up"
-                        : selectedNature.up !== selectedNature.down &&
-                            stat === selectedNature.down
-                          ? "down"
-                          : null;
-
-                    return (
-                      <td key={stat}>
-                        <span className="stat-value">
-                          {calculatedStats[stat]}
-                          {natureShift ? (
-                            <span
-                              className={`stat-nature-arrow is-${natureShift}`}
-                              aria-label={
-                                natureShift === "up"
-                                  ? "Nature increases this stat"
-                                  : "Nature decreases this stat"
-                              }
-                            />
-                          ) : null}
-                        </span>
-                      </td>
-                    );
-                  })}
-                </tr>
-              </tbody>
-                </table>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </section>
               ) : null}
             </div>
           </div>

@@ -167,9 +167,9 @@ claim of affiliation.
 
 Desktop UX decisions after the wide-builder layout change:
 
-- Evaluate replacing fine-pointer horizontal EV scrubbing with six vertical sliders
-  placed above their corresponding stats. The goal is to use the open right side of
-  the card without making EV allocation slower or less precise.
+- Use six always-visible vertical EV sliders in the card's right-side stat editor.
+  Each stat column reads from base stat to EV allocation to final displayed stat,
+  while retaining direct numeric entry and keyboard slider controls.
 - The compact header team-management group shares the Pokemon card's left edge,
   the team-name field is capped at 240px, and the PokePilot wordmark occupies the
   original left-side header position.
@@ -237,10 +237,9 @@ Desktop UX decisions after the wide-builder layout change:
   and nature modifiers.
 - Nature definitions, EV limits, and displayed-stat calculation live in
   `src/data/natures.ts` so the editor and role diagnostics use the same rules.
-- EV cells keep direct keyboard entry. Fine-pointer desktop users can scrub the
-  number horizontally at one EV per five pixels. Touch layouts retain the
-  anchored slider and one-point buttons. Every path clamps against the per-stat
-  maximum and remaining 66-point budget.
+- EV columns pair a native vertical range with direct numeric entry. Pointer,
+  touch, and keyboard changes share the same update path, which clamps every edit
+  against the 32-point per-stat maximum and remaining 66-point budget.
 - Nature options use the full nature table with raised/lowered stat visualization.
 - Item options are filtered through the Regulation M-B legality layer, with
   Pokemon-specific Mega Stone hiding and Mega form auto-lock behavior on top.
