@@ -173,10 +173,10 @@ Desktop UX decisions after the wide-builder layout change:
 - The compact header team-management group shares the Pokemon card's left edge,
   the team-name field is capped at 240px, and the PokePilot wordmark occupies the
   original left-side header position.
-- Revisit the relationship between Team View and Pokemon View before adding a
-  one-off back button. The final navigation should make editing and returning
-  obvious, preserve access to the Bench tab, and avoid undersized edit targets on
-  pointer or touch devices.
+- Keep Team View and Pokemon View as peer surfaces connected by the persistent
+  view switch. Team View hides the redundant six-slot side tabs, uses its six
+  full cards for edit entry and reordering, and retains Bench as the only side
+  tab. Pokemon View restores the six compact edit tabs alongside Bench.
 - Keep Team View EV allocations separated into compact stat-value pairs with a
   stronger label, darker values, and a subtle divider from the move grid.
 - In Team View, keep the item beneath the Pokemon name and pin type icons to the
@@ -262,7 +262,9 @@ Desktop UX decisions after the wide-builder layout change:
 - Move, active-team-slot, bench, and saved-team reordering share
   `useLongPressReorder`. The hook owns mouse thresholds, touch hold activation,
   click suppression, keyboard-independent pointer state, and the short drop
-  settling animation so all four surfaces keep the same interaction feel.
+  settling animation so all four surfaces keep the same interaction feel. A
+  drop swaps only the source and target entries; intervening entries stay in
+  place while both swap targets animate to their new positions.
 - Pokemon picked from the main name dropdown can auto-apply a popular Smogon
   moveset usage sample. Form changes, Mega toggles, saved-team loads, and
   Showdown imports do not trigger usage auto-application.

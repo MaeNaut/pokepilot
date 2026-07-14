@@ -38,7 +38,10 @@ import {
   canAddSavedTeam,
 } from "./data/teamLimits";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
-import { useLongPressReorder } from "./hooks/useLongPressReorder";
+import {
+  getReorderDisplacement,
+  useLongPressReorder,
+} from "./hooks/useLongPressReorder";
 import {
   getPreferredPokeApiId,
   shouldKeepSelectedPokemonForUsageTarget,
@@ -137,11 +140,13 @@ function isMegaPokemonId(value: string) {
   return toPokemonId(value).includes("-mega");
 }
 
-function reorderArrayItem<T>(items: T[], sourceIndex: number, targetIndex: number) {
+function swapArrayItems<T>(items: T[], sourceIndex: number, targetIndex: number) {
   const nextItems = [...items];
-  const [movedItem] = nextItems.splice(sourceIndex, 1);
 
-  nextItems.splice(targetIndex, 0, movedItem);
+  [nextItems[sourceIndex], nextItems[targetIndex]] = [
+    nextItems[targetIndex],
+    nextItems[sourceIndex],
+  ];
   return nextItems;
 }
 
@@ -518,9 +523,9 @@ function App() {
     }
 
     setTeam((currentTeam) =>
-      reorderArrayItem(currentTeam, sourceIndex, targetIndex),
+      swapArrayItems(currentTeam, sourceIndex, targetIndex),
     );
-    teamBuildState.reorderSlots(sourceIndex, targetIndex, team.length);
+    teamBuildState.reorderSlots(sourceIndex, targetIndex);
   }
 
   function handleMoveTeamPokemonToBench(slotIndex: number) {
@@ -562,7 +567,7 @@ function App() {
       return;
     }
 
-    setBench((current) => reorderArrayItem(current, sourceIndex, targetIndex));
+    setBench((current) => swapArrayItems(current, sourceIndex, targetIndex));
   }
 
   function handleRemoveBenchPokemon(benchId: string) {
@@ -1196,7 +1201,7 @@ function App() {
       return;
     }
 
-    updateSavedTeams(reorderArrayItem(savedTeams, sourceIndex, targetIndex));
+    updateSavedTeams(swapArrayItems(savedTeams, sourceIndex, targetIndex));
     setTeamStorageMessage("Reordered saved teams.");
   }
 
@@ -1552,8 +1557,14 @@ function App() {
                   }`}
                   ref={savedTeamListRef}
                 >
-                  {savedTeams.map((savedTeam, index) => (
-                    <div
+                  {savedTeams.map((savedTeam, index) => {
+                    const displacement = getReorderDisplacement(
+                      savedTeamReorder.dragState,
+                      index,
+                    );
+
+                    return (
+                      <div
                       className={`saved-team-row ${
                         savedTeam.id === activeSavedTeamId ? "is-active" : ""
                       } ${
@@ -1570,6 +1581,8 @@ function App() {
                         savedTeamReorder.dragState.sourceIndex !== index
                           ? "is-drop-target"
                           : ""
+                      } ${
+                        displacement ? "is-reorder-displaced" : ""
                       }`}
                       data-saved-team-index={index}
                       key={savedTeam.id}
@@ -1582,7 +1595,11 @@ function App() {
                               "--saved-team-drag-x": `${savedTeamReorder.dragState.offsetX}px`,
                               "--saved-team-drag-y": `${savedTeamReorder.dragState.offsetY}px`,
                             } as CSSProperties)
-                          : undefined
+                          : displacement
+                            ? {
+                                transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
+                              }
+                            : undefined
                       }
                       onClick={() => handleSavedTeamRowClick(savedTeam)}
                       onKeyDown={(event) =>
@@ -1767,8 +1784,9 @@ function App() {
                           </div>
                         </div>
                       ) : null}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="team-manager-empty">No saved teams yet.</p>

@@ -1360,6 +1360,10 @@ button {
   box-shadow: var(--shadow-popover);
 }
 
+.team-tabs.is-team-view .bench-panel {
+  top: 0;
+}
+
 .bench-panel-header {
   display: flex;
   min-height: 40px;
@@ -1561,6 +1565,10 @@ button {
   overflow: hidden;
 }
 
+.team-overview-card.is-reordering {
+  overflow: visible;
+}
+
 .team-overview-grid {
   display: grid;
   height: 488px;
@@ -1585,7 +1593,30 @@ button {
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition:
+    background 120ms ease,
+    transform 140ms ease;
+}
+
+.team-overview-card.is-reordering .team-overview-slot {
+  cursor: grabbing;
+}
+
+.team-overview-slot.is-dragging {
+  z-index: 28;
+  pointer-events: none;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  transform: translate3d(var(--overview-drag-x), var(--overview-drag-y), 0) scale(1.015);
+  transition: none;
+}
+
+.team-overview-slot.is-dragging.is-dropping {
+  transition: transform 150ms ease-out;
+}
+
+.team-overview-slot.is-drop-target {
+  z-index: 3;
+  box-shadow: inset 0 0 0 3px rgba(21, 21, 21, 0.42);
 }
 
 .team-overview-slot:nth-child(3n) {
@@ -1600,14 +1631,6 @@ button {
 .team-overview-slot:focus-visible {
   background: #f6f6f6;
   outline: none;
-}
-
-.team-overview-slot.is-selected::before {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: #151515;
-  content: "";
 }
 
 .team-overview-slot.is-invalid::after,
@@ -2807,6 +2830,14 @@ select {
 }
 
 .move-picker.is-dragging.is-dropping {
+  transition: transform 150ms ease-out;
+}
+
+.saved-team-row.is-reorder-displaced,
+.team-tab-shell.is-reorder-displaced,
+.bench-pokemon-row.is-reorder-displaced,
+.team-overview-slot.is-reorder-displaced,
+.move-picker.is-reorder-displaced {
   transition: transform 150ms ease-out;
 }
 

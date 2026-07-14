@@ -29,7 +29,7 @@ export type TeamBuildStateController = TeamBuildState & {
   setPreMegaPokemonBySlot: Dispatch<SetStateAction<Record<number, string>>>;
   clearSlot: (slotIndex: number) => void;
   patchSlot: (slotIndex: number, patch: TeamSlotBuildPatch) => void;
-  reorderSlots: (sourceIndex: number, targetIndex: number, slotCount: number) => void;
+  reorderSlots: (sourceIndex: number, targetIndex: number) => void;
   replaceBuildState: (state?: Partial<TeamBuildState>) => void;
   getBuildStateSnapshot: () => TeamBuildState;
 };
@@ -64,25 +64,26 @@ function withSlotValue<T>(
   };
 }
 
-function reorderSlotRecord<T>(
+function swapSlotRecord<T>(
   record: Record<number, T>,
   sourceIndex: number,
   targetIndex: number,
-  slotCount: number,
 ) {
-  const slotEntries = Array.from({ length: slotCount }, (_, index) => ({
-    hasValue: Object.prototype.hasOwnProperty.call(record, index),
-    value: record[index],
-  }));
-  const [movedEntry] = slotEntries.splice(sourceIndex, 1);
-  const nextRecord: Record<number, T> = {};
+  const nextRecord = { ...record };
+  const hasSource = Object.prototype.hasOwnProperty.call(record, sourceIndex);
+  const hasTarget = Object.prototype.hasOwnProperty.call(record, targetIndex);
 
-  slotEntries.splice(targetIndex, 0, movedEntry);
-  slotEntries.forEach((entry, index) => {
-    if (entry.hasValue) {
-      nextRecord[index] = entry.value;
-    }
-  });
+  if (hasTarget) {
+    nextRecord[sourceIndex] = record[targetIndex];
+  } else {
+    delete nextRecord[sourceIndex];
+  }
+
+  if (hasSource) {
+    nextRecord[targetIndex] = record[sourceIndex];
+  } else {
+    delete nextRecord[targetIndex];
+  }
 
   return nextRecord;
 }
@@ -143,20 +144,20 @@ export function useTeamBuildState(): TeamBuildStateController {
     }
   }
 
-  function reorderSlots(sourceIndex: number, targetIndex: number, slotCount: number) {
+  function reorderSlots(sourceIndex: number, targetIndex: number) {
     if (sourceIndex === targetIndex) {
       return;
     }
 
-    const reorderRecord = <T,>(record: Record<number, T>) =>
-      reorderSlotRecord(record, sourceIndex, targetIndex, slotCount);
+    const swapRecord = <T,>(record: Record<number, T>) =>
+      swapSlotRecord(record, sourceIndex, targetIndex);
 
-    setItemBySlot(reorderRecord);
-    setAbilityBySlot(reorderRecord);
-    setNatureBySlot(reorderRecord);
-    setEvsBySlot(reorderRecord);
-    setMoveIdsBySlot(reorderRecord);
-    setPreMegaPokemonBySlot(reorderRecord);
+    setItemBySlot(swapRecord);
+    setAbilityBySlot(swapRecord);
+    setNatureBySlot(swapRecord);
+    setEvsBySlot(swapRecord);
+    setMoveIdsBySlot(swapRecord);
+    setPreMegaPokemonBySlot(swapRecord);
   }
 
   function replaceBuildState(state?: Partial<TeamBuildState>) {

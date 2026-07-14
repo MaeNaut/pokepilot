@@ -44,7 +44,10 @@ import type {
   TeamSlot,
 } from "../types";
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
-import { useLongPressReorder } from "../hooks/useLongPressReorder";
+import {
+  getReorderDisplacement,
+  useLongPressReorder,
+} from "../hooks/useLongPressReorder";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
 import type { BenchPokemon } from "../utils/benchPokemon";
 import {
@@ -194,17 +197,13 @@ type NatureGridPosition = {
 type MoveOptionScrollMode = "start" | "nearest";
 type BuilderView = "pokemon" | "team";
 
-function getIndexAfterReorder(index: number, sourceIndex: number, targetIndex: number) {
+function getIndexAfterSwap(index: number, sourceIndex: number, targetIndex: number) {
   if (index === sourceIndex) {
     return targetIndex;
   }
 
-  if (sourceIndex < targetIndex && index > sourceIndex && index <= targetIndex) {
-    return index - 1;
-  }
-
-  if (sourceIndex > targetIndex && index >= targetIndex && index < sourceIndex) {
-    return index + 1;
+  if (index === targetIndex) {
+    return sourceIndex;
   }
 
   return index;
@@ -405,6 +404,7 @@ export function TeamBuilder({
   const [isBenchOpen, setIsBenchOpen] = useState(false);
   const [benchLimitMessage, setBenchLimitMessage] = useState<string | null>(null);
   const [pendingBenchRemovalId, setPendingBenchRemovalId] = useState<string | null>(null);
+  const builderCardLayoutRef = useRef<HTMLDivElement | null>(null);
   const teamTabsRef = useRef<HTMLDivElement | null>(null);
   const benchShellRef = useRef<HTMLDivElement | null>(null);
   const showdownToolbarRef = useRef<HTMLDivElement | null>(null);
@@ -583,10 +583,19 @@ export function TeamBuilder({
     onReorder: reorderMoves,
   });
   const teamReorder = useLongPressReorder({
-    containerRef: teamTabsRef,
+    containerRef: builderCardLayoutRef,
+    itemIndexAttribute: "data-team-drag-index",
     itemSelector: "[data-team-drag-index]",
     onDragStart: closeBuilderPopovers,
     onReorder: handleTeamAndBenchDrop,
+    shouldAnimateSwapTarget: (sourceIndex, targetIndex) => {
+      const firstBenchPokemonIndex = team.length + 1;
+      const reordersTeam = sourceIndex < team.length && targetIndex < team.length;
+      const reordersBench =
+        sourceIndex >= firstBenchPokemonIndex && targetIndex >= firstBenchPokemonIndex;
+
+      return reordersTeam || reordersBench;
+    },
   });
   const openMovePickerMoveId =
     openMoveSlot !== null ? (selectedMoves[openMoveSlot]?.id ?? "") : "";
@@ -1414,13 +1423,16 @@ export function TeamBuilder({
       const nextMoveIds = selectedMoves.map(
         (move, index) => currentMoveIds[index] ?? move?.id ?? "",
       );
-      const [movedMoveId] = nextMoveIds.splice(sourceIndex, 1);
+      const sourceMoveId = nextMoveIds[sourceIndex];
 
-      if (!movedMoveId) {
+      if (!sourceMoveId) {
         return current;
       }
 
-      nextMoveIds.splice(targetIndex, 0, movedMoveId);
+      [nextMoveIds[sourceIndex], nextMoveIds[targetIndex]] = [
+        nextMoveIds[targetIndex],
+        sourceMoveId,
+      ];
 
       return {
         ...current,
@@ -1436,7 +1448,7 @@ export function TeamBuilder({
 
     onReorderSlots(sourceIndex, targetIndex);
     onSelectedSlotChange(
-      getIndexAfterReorder(selectedSlot, sourceIndex, targetIndex),
+      getIndexAfterSwap(selectedSlot, sourceIndex, targetIndex),
     );
   }
 
@@ -1550,9 +1562,9 @@ export function TeamBuilder({
 
     handleReorderTeamSlots(sourceIndex, targetIndex);
     window.requestAnimationFrame(() => {
-      teamTabsRef.current
+      builderCardLayoutRef.current
         ?.querySelector<HTMLButtonElement>(
-          `[data-team-slot-index="${targetIndex}"] .team-tab`,
+          `button[data-team-slot-index="${targetIndex}"], [data-team-slot-index="${targetIndex}"] .team-tab`,
         )
         ?.focus();
     });
@@ -2286,14 +2298,19 @@ export function TeamBuilder({
         </div>
       ) : null}
 
-      <div className="builder-card-layout">
+      <div className="builder-card-layout" ref={builderCardLayoutRef}>
         <div
-          className={`team-tabs ${teamReorder.isDragging ? "is-reordering" : ""}`}
-          aria-label="Current team"
+          className={`team-tabs is-${builderView}-view ${
+            teamReorder.isDragging ? "is-reordering" : ""
+          }`}
+          aria-label={builderView === "team" ? "Team bench" : "Current team"}
           ref={teamTabsRef}
         >
-        {team.map((member, index) => (
-          <div
+        {builderView === "pokemon" ? team.map((member, index) => {
+          const displacement = getReorderDisplacement(teamReorder.dragState, index);
+
+          return (
+            <div
             className={`team-tab-shell ${selectedSlot === index ? "is-active" : ""} ${
               teamReorder.dragState?.sourceIndex === index ? "is-dragging" : ""
             } ${
@@ -2312,6 +2329,8 @@ export function TeamBuilder({
                 : validity.slotResults[index]?.status === "unavailable"
                   ? "has-validity-unavailable"
                   : ""
+            } ${
+              displacement ? "is-reorder-displaced" : ""
             }`}
             data-team-drag-index={index}
             data-team-slot-index={index}
@@ -2322,7 +2341,11 @@ export function TeamBuilder({
                     "--tab-drag-x": `${teamReorder.dragState.offsetX}px`,
                     "--tab-drag-y": `${teamReorder.dragState.offsetY}px`,
                   } as CSSProperties)
-                : undefined
+                : displacement
+                  ? {
+                      transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
+                    }
+                  : undefined
             }
           >
             <button
@@ -2352,8 +2375,9 @@ export function TeamBuilder({
                 <span>+</span>
               )}
             </button>
-          </div>
-        ))}
+            </div>
+          );
+        }) : null}
         <div
           className={`team-tab-shell bench-tab-shell ${isBenchOpen ? "is-active" : ""} ${
             teamReorder.dragState?.targetIndex === team.length ? "is-drop-target" : ""
@@ -2399,6 +2423,10 @@ export function TeamBuilder({
                   {bench.map((entry, index) => {
                     const dragIndex = team.length + 1 + index;
                     const isDragging = teamReorder.dragState?.sourceIndex === dragIndex;
+                    const displacement = getReorderDisplacement(
+                      teamReorder.dragState,
+                      dragIndex,
+                    );
                     const isDropTarget =
                       teamReorder.dragState?.targetIndex === dragIndex &&
                       teamReorder.dragState.sourceIndex !== dragIndex;
@@ -2409,7 +2437,9 @@ export function TeamBuilder({
                           isDragging && teamReorder.dragState?.isDropping
                             ? "is-dropping"
                             : ""
-                        } ${isDropTarget ? "is-drop-target" : ""}`}
+                        } ${isDropTarget ? "is-drop-target" : ""} ${
+                          displacement ? "is-reorder-displaced" : ""
+                        }`}
                         data-bench-index={index}
                         data-team-drag-index={dragIndex}
                         key={entry.id}
@@ -2423,7 +2453,11 @@ export function TeamBuilder({
                                 "--bench-drag-width": `${teamReorder.dragState?.originWidth ?? 0}px`,
                                 "--bench-drag-height": `${teamReorder.dragState?.originHeight ?? 0}px`,
                               } as CSSProperties)
-                            : undefined
+                            : displacement
+                              ? {
+                                  transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
+                                }
+                              : undefined
                         }
                       >
                         {pendingBenchRemovalId === entry.id ? (
@@ -2507,11 +2541,18 @@ export function TeamBuilder({
       {builderView === "team" ? (
         <TeamOverview
           team={team}
-          selectedSlot={selectedSlot}
           pokemonIndex={pokemonIndex}
           buildState={buildState}
+          dragState={teamReorder.dragState}
+          isReordering={teamReorder.isDragging}
           validity={validity}
           onOpenSlot={handleTeamOverviewSlotClick}
+          onSlotKeyDown={handleTeamTabKeyDown}
+          onSlotPointerCancel={teamReorder.handlePointerCancel}
+          onSlotPointerDown={teamReorder.handlePointerDown}
+          onSlotPointerMove={teamReorder.handlePointerMove}
+          onSlotPointerUp={teamReorder.handlePointerUp}
+          shouldSuppressClick={teamReorder.shouldSuppressClick}
         />
       ) : (
       <article
@@ -3148,8 +3189,14 @@ export function TeamBuilder({
                 ref={movePickerRef}
               >
               {activeMember ? (
-                selectedMoves.map((move, index) => (
-                  <div
+                selectedMoves.map((move, index) => {
+                  const displacement = getReorderDisplacement(
+                    moveReorder.dragState,
+                    index,
+                  );
+
+                  return (
+                    <div
                     className={`move-picker ${
                       moveReorder.dragState?.sourceIndex === index ? "is-dragging" : ""
                     } ${
@@ -3162,6 +3209,8 @@ export function TeamBuilder({
                       moveReorder.dragState.sourceIndex !== index
                         ? "is-drop-target"
                         : ""
+                    } ${
+                      displacement ? "is-reorder-displaced" : ""
                     }`}
                     data-move-slot-index={index}
                     key={`${index}-${move?.id ?? "empty"}`}
@@ -3171,7 +3220,11 @@ export function TeamBuilder({
                             "--move-drag-x": `${moveReorder.dragState.offsetX}px`,
                             "--move-drag-y": `${moveReorder.dragState.offsetY}px`,
                           } as CSSProperties)
-                        : undefined
+                        : displacement
+                          ? {
+                              transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
+                            }
+                          : undefined
                     }
                   >
                     <button
@@ -3303,8 +3356,9 @@ export function TeamBuilder({
                         placement="option"
                       />
                     ) : null}
-                  </div>
-                ))
+                    </div>
+                  );
+                })
               ) : null}
               </div>
 

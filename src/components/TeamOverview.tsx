@@ -1,5 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import type {
+  CSSProperties,
+  KeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
   defaultEvs,
@@ -8,6 +13,10 @@ import {
   statLabels,
 } from "../data/natures";
 import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import {
+  getReorderDisplacement,
+  type ReorderDragState,
+} from "../hooks/useLongPressReorder";
 import type { PokemonIndexEntry, PokemonMove, TeamSlot } from "../types";
 import type { TeamValidityResult } from "../utils/teamValidity";
 import { PokemonIcon } from "./PokemonIcon";
@@ -15,11 +24,18 @@ import { TypeBadge } from "./TypeBadge";
 
 type TeamOverviewProps = {
   team: TeamSlot[];
-  selectedSlot: number;
   pokemonIndex: PokemonIndexEntry[];
   buildState: TeamBuildState;
+  dragState: ReorderDragState | null;
+  isReordering: boolean;
   validity: TeamValidityResult;
   onOpenSlot: (slotIndex: number) => void;
+  onSlotKeyDown: (event: KeyboardEvent<HTMLButtonElement>, slotIndex: number) => void;
+  onSlotPointerCancel: (event: ReactPointerEvent<HTMLElement>) => void;
+  onSlotPointerDown: (event: ReactPointerEvent<HTMLElement>, slotIndex: number) => void;
+  onSlotPointerMove: (event: ReactPointerEvent<HTMLElement>) => void;
+  onSlotPointerUp: (event: ReactPointerEvent<HTMLElement>) => void;
+  shouldSuppressClick: () => boolean;
 };
 
 function findMemberMove(moves: PokemonMove[], value: string) {
@@ -79,25 +95,52 @@ function ItemMark({ spriteUrl, name }: { spriteUrl?: string; name: string }) {
 
 export function TeamOverview({
   team,
-  selectedSlot,
   pokemonIndex,
   buildState,
+  dragState,
+  isReordering,
   validity,
   onOpenSlot,
+  onSlotKeyDown,
+  onSlotPointerCancel,
+  onSlotPointerDown,
+  onSlotPointerMove,
+  onSlotPointerUp,
+  shouldSuppressClick,
 }: TeamOverviewProps) {
   return (
-    <article className="pokemon-card team-overview-card" aria-label="Team view">
+    <article
+      className={`pokemon-card team-overview-card ${isReordering ? "is-reordering" : ""}`}
+      aria-label="Team view"
+    >
       <div className="team-overview-grid">
         {team.map((member, slotIndex) => {
           const slotValidity = validity.slotResults[slotIndex];
+          const displacement = getReorderDisplacement(dragState, slotIndex);
 
           if (!member) {
             return (
               <button
-                className="team-overview-slot is-empty"
+                className={`team-overview-slot is-empty ${
+                  dragState?.targetIndex === slotIndex &&
+                  dragState.sourceIndex !== slotIndex
+                    ? "is-drop-target"
+                    : ""
+                } ${
+                  displacement ? "is-reorder-displaced" : ""
+                }`}
                 type="button"
                 onClick={() => onOpenSlot(slotIndex)}
+                data-team-drag-index={slotIndex}
+                data-team-slot-index={slotIndex}
                 key={`empty-${slotIndex}`}
+                style={
+                  displacement
+                    ? {
+                        transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
+                      }
+                    : undefined
+                }
               >
                 <span className="team-overview-slot-number">{slotIndex + 1}</span>
                 <span className="team-overview-empty-icon" aria-hidden="true">
@@ -123,12 +166,47 @@ export function TeamOverview({
           return (
             <button
               className={`team-overview-slot ${
-                selectedSlot === slotIndex ? "is-selected" : ""
-              } ${slotValidity?.status ? `is-${slotValidity.status}` : ""}`}
+                slotValidity?.status ? `is-${slotValidity.status}` : ""
+              } ${
+                dragState?.sourceIndex === slotIndex ? "is-dragging" : ""
+              } ${
+                dragState?.sourceIndex === slotIndex && dragState.isDropping
+                  ? "is-dropping"
+                  : ""
+              } ${
+                dragState?.targetIndex === slotIndex && dragState.sourceIndex !== slotIndex
+                  ? "is-drop-target"
+                  : ""
+              } ${
+                displacement ? "is-reorder-displaced" : ""
+              }`}
               type="button"
               aria-label={`Edit ${displayName} in slot ${slotIndex + 1}`}
-              onClick={() => onOpenSlot(slotIndex)}
+              onClick={() => {
+                if (!shouldSuppressClick()) {
+                  onOpenSlot(slotIndex);
+                }
+              }}
+              onKeyDown={(event) => onSlotKeyDown(event, slotIndex)}
+              onPointerDown={(event) => onSlotPointerDown(event, slotIndex)}
+              onPointerMove={onSlotPointerMove}
+              onPointerUp={onSlotPointerUp}
+              onPointerCancel={onSlotPointerCancel}
+              data-team-drag-index={slotIndex}
+              data-team-slot-index={slotIndex}
               key={`${member.id}-${slotIndex}`}
+              style={
+                dragState?.sourceIndex === slotIndex
+                  ? ({
+                      "--overview-drag-x": `${dragState.offsetX}px`,
+                      "--overview-drag-y": `${dragState.offsetY}px`,
+                    } as CSSProperties)
+                  : displacement
+                    ? {
+                        transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
+                      }
+                    : undefined
+              }
             >
               <span className="team-overview-slot-number">{slotIndex + 1}</span>
               <div className="team-overview-identity">

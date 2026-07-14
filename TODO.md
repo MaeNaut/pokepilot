@@ -8,10 +8,10 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Replace horizontal EV value scrubbing with always-visible vertical sliders and direct numeric entry above each displayed stat.
   - [x] Shorten the header team-name field and align the team-management controls with the Pokemon card's left edge.
   - [x] Restore the PokePilot wordmark in the header space freed by moving the team controls.
-  - [ ] Revisit the Team View navigation model before adding another back or edit button.
-    - [ ] Decide whether Pokemon View and Team View remain equal peer views or Team View becomes the parent navigation surface.
-    - [ ] Make the return path from Pokemon editing to Team View obvious without isolating the Bench tab.
-    - [ ] Preserve comfortable pointer and touch targets if Team View gains explicit edit actions.
+  - [x] Revisit the Team View navigation model before adding another back or edit button.
+    - [x] Keep Pokemon View and Team View as peer views connected by the persistent view switch.
+    - [x] Use Team View cards as the active-six edit and reorder surface while keeping Bench as the sole side tab.
+    - [x] Preserve full-card pointer, touch-hold, and keyboard targets for editing, reordering, and bench moves.
   - [x] Increase Team View EV text size and contrast so it remains readable inside compact set cards.
 - [ ] Keep keyboard and mouse picker behavior consistent as new controls are added.
   - [ ] Preserve the current hover-to-keyboard active-selection flow for future dropdowns.

@@ -12,9 +12,21 @@ type ReorderGesture = {
   originY: number;
   originWidth: number;
   originHeight: number;
-  itemCenters: Array<{ x: number; y: number }>;
+  itemCenters: ReorderItemCenter[];
   isDragging: boolean;
   holdTimer: number | null;
+};
+
+type ReorderItemCenter = {
+  index: number;
+  x: number;
+  y: number;
+};
+
+export type ReorderDisplacement = {
+  index: number;
+  offsetX: number;
+  offsetY: number;
 };
 
 export type ReorderDragState = {
@@ -26,15 +38,18 @@ export type ReorderDragState = {
   originY: number;
   originWidth: number;
   originHeight: number;
+  displacement: ReorderDisplacement | null;
   isDropping: boolean;
 };
 
 type UseLongPressReorderOptions = {
   containerRef: RefObject<HTMLElement | null>;
   disabled?: boolean;
+  itemIndexAttribute?: string;
   itemSelector: string;
   onDragStart?: () => void;
   onReorder: (sourceIndex: number, targetIndex: number) => void;
+  shouldAnimateSwapTarget?: (sourceIndex: number, targetIndex: number) => boolean;
 };
 
 const mouseDragDistance = 7;
@@ -42,12 +57,45 @@ const touchHoldDelay = 300;
 const touchMoveTolerance = 10;
 const dropSettleDuration = 150;
 
+export function calculateSwapDisplacement(
+  itemCenters: ReorderItemCenter[],
+  sourceIndex: number,
+  targetIndex: number,
+) {
+  if (sourceIndex === targetIndex) {
+    return null;
+  }
+
+  const centersByIndex = new Map(itemCenters.map((center) => [center.index, center]));
+  const source = centersByIndex.get(sourceIndex);
+  const target = centersByIndex.get(targetIndex);
+
+  if (!source || !target) {
+    return null;
+  }
+
+  return {
+    index: targetIndex,
+    offsetX: source.x - target.x,
+    offsetY: source.y - target.y,
+  };
+}
+
+export function getReorderDisplacement(
+  dragState: ReorderDragState | null,
+  index: number,
+) {
+  return dragState?.displacement?.index === index ? dragState.displacement : null;
+}
+
 export function useLongPressReorder({
   containerRef,
   disabled = false,
+  itemIndexAttribute,
   itemSelector,
   onDragStart,
   onReorder,
+  shouldAnimateSwapTarget,
 }: UseLongPressReorderOptions) {
   const gestureRef = useRef<ReorderGesture | null>(null);
   const dropTimerRef = useRef<number | null>(null);
@@ -105,6 +153,7 @@ export function useLongPressReorder({
       originY: gesture.originY,
       originWidth: gesture.originWidth,
       originHeight: gesture.originHeight,
+      displacement: null,
       isDropping: false,
     });
   }
@@ -151,9 +200,14 @@ export function useLongPressReorder({
       originHeight: sourceRect.height,
       itemCenters: Array.from(
         containerRef.current?.querySelectorAll<HTMLElement>(itemSelector) ?? [],
-        (element) => {
+        (element, orderIndex) => {
           const rect = element.getBoundingClientRect();
+          const explicitIndex = itemIndexAttribute
+            ? Number.parseInt(element.getAttribute(itemIndexAttribute) ?? "", 10)
+            : Number.NaN;
+
           return {
+            index: Number.isNaN(explicitIndex) ? orderIndex : explicitIndex,
             x: rect.left + rect.width / 2,
             y: rect.top + rect.height / 2,
           };
@@ -208,13 +262,13 @@ export function useLongPressReorder({
 
     const distanceToPointer = (center: { x: number; y: number }) =>
       Math.hypot(event.clientX - center.x, event.clientY - center.y);
-    const nextTargetIndex = gesture.itemCenters.reduce(
-      (closestIndex, center, index) =>
-        distanceToPointer(center) < distanceToPointer(gesture.itemCenters[closestIndex])
-          ? index
-          : closestIndex,
-      gesture.sourceIndex,
-    );
+    const nextTargetIndex = gesture.itemCenters.length
+      ? gesture.itemCenters.reduce((closestCenter, center) =>
+          distanceToPointer(center) < distanceToPointer(closestCenter)
+            ? center
+            : closestCenter,
+        ).index
+      : gesture.sourceIndex;
 
     gesture.targetIndex = nextTargetIndex;
     setDragState({
@@ -226,6 +280,7 @@ export function useLongPressReorder({
       originY: gesture.originY,
       originWidth: gesture.originWidth,
       originHeight: gesture.originHeight,
+      displacement: null,
       isDropping: false,
     });
   }
@@ -239,13 +294,28 @@ export function useLongPressReorder({
       element.releasePointerCapture(gesture.pointerId);
     }
 
-    const sourceCenter = gesture.itemCenters[gesture.sourceIndex] ?? {
+    const sourceCenter = gesture.itemCenters.find(
+      (center) => center.index === gesture.sourceIndex,
+    ) ?? {
+      index: gesture.sourceIndex,
       x: gesture.startX,
       y: gesture.startY,
     };
-    const targetCenter = gesture.itemCenters[gesture.targetIndex] ?? sourceCenter;
+    const targetCenter =
+      gesture.itemCenters.find((center) => center.index === gesture.targetIndex) ??
+      sourceCenter;
 
     gestureRef.current = null;
+    const animateSwapTarget =
+      shouldAnimateSwapTarget?.(gesture.sourceIndex, gesture.targetIndex) ?? true;
+    const displacement = animateSwapTarget
+      ? calculateSwapDisplacement(
+          gesture.itemCenters,
+          gesture.sourceIndex,
+          gesture.targetIndex,
+        )
+      : null;
+
     setDragState({
       sourceIndex: gesture.sourceIndex,
       targetIndex: gesture.targetIndex,
@@ -255,6 +325,7 @@ export function useLongPressReorder({
       originY: gesture.originY,
       originWidth: gesture.originWidth,
       originHeight: gesture.originHeight,
+      displacement,
       isDropping: true,
     });
 
