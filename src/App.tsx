@@ -1456,7 +1456,10 @@ function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <nav className="team-actions" aria-label="Team actions" ref={teamActionsRef}>
+        <span className="app-wordmark">PokePilot</span>
+        <div className="app-header-layout">
+          <div className="header-builder-workspace">
+            <nav className="team-actions" aria-label="Team actions" ref={teamActionsRef}>
           <button
             className="team-action-button"
             type="button"
@@ -1772,7 +1775,9 @@ function App() {
               )}
             </div>
           ) : null}
-        </nav>
+            </nav>
+          </div>
+        </div>
       </header>
 
       <div className="workspace">

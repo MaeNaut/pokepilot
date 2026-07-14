@@ -76,12 +76,41 @@ button {
 }
 
 .app-header {
+  position: relative;
   display: flex;
   align-items: center;
   height: var(--app-header-height);
   border-bottom: 1px solid #c9c9c9;
-  padding: 0 5vw;
+  padding: 0;
   background: #ffffff;
+}
+
+.app-wordmark {
+  position: absolute;
+  left: 5vw;
+  z-index: 2;
+  color: var(--color-text);
+  font-size: 1.12rem;
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.app-header-layout {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  max-width: 1920px;
+  grid-template-columns: minmax(0, 1fr) clamp(420px, 25vw, 480px);
+  margin: 0 auto;
+}
+
+.header-builder-workspace {
+  display: flex;
+  width: min(1040px, calc(100% - 72px));
+  min-width: 0;
+  align-items: center;
+  justify-self: end;
+  margin-right: 36px;
 }
 
 .team-actions {
@@ -90,15 +119,16 @@ button {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  margin-left: 68px;
 }
 
 .team-name-field {
   display: block;
-  min-width: 180px;
+  min-width: 160px;
 }
 
 .team-name-field input {
-  width: clamp(180px, 22vw, 320px);
+  width: clamp(160px, 16vw, 240px);
   height: 36px;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -1544,7 +1574,7 @@ button {
   min-width: 0;
   min-height: 0;
   align-content: start;
-  gap: 6px;
+  gap: 9px;
   overflow: hidden;
   border: 0;
   border-right: 1px solid #d7d7d7;
@@ -1602,7 +1632,7 @@ button {
   top: 9px;
   left: 10px;
   color: #9a9a9a;
-  font-size: 0.62rem;
+  font-size: 0.66rem;
   font-weight: var(--font-semibold);
   line-height: 1;
 }
@@ -1610,21 +1640,21 @@ button {
 .team-overview-identity {
   display: grid;
   min-width: 0;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 68px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
 }
 
 .team-overview-sprite {
   display: grid;
-  width: 64px;
-  height: 58px;
+  width: 68px;
+  height: 62px;
   place-items: center;
 }
 
 .team-overview-sprite img {
-  width: 62px;
-  height: 62px;
+  width: 68px;
+  height: 68px;
   object-fit: contain;
   pointer-events: none;
   -webkit-user-drag: none;
@@ -1637,7 +1667,7 @@ button {
 }
 
 .team-overview-name-block > strong {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: var(--font-semibold);
   line-height: 1.08;
   overflow-wrap: normal;
@@ -1645,7 +1675,11 @@ button {
 
 .team-overview-types {
   display: flex;
+  align-self: start;
+  justify-self: end;
   gap: 5px;
+  margin-top: 3px;
+  padding-right: 9px;
 }
 
 .team-overview-types .type-badge,
@@ -1673,31 +1707,29 @@ button {
   gap: 2px;
 }
 
-.team-overview-details small,
-.team-overview-evs small {
-  color: #777777;
-  font-size: 0.62rem;
+.team-overview-details small {
+  color: #6b6b6b;
+  font-size: 0.68rem;
   font-weight: var(--font-regular);
   line-height: 1;
 }
 
 .team-overview-details strong {
   overflow: hidden;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: var(--font-medium);
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.team-overview-details .team-overview-item {
+.team-overview-item {
   display: flex;
-  grid-column: 1 / -1;
   min-width: 0;
   align-items: center;
   gap: 7px;
   color: #333333;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: var(--font-medium);
 }
 
@@ -1710,9 +1742,9 @@ button {
 .team-overview-item-mark {
   position: relative;
   display: grid;
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
   place-items: center;
   border: 1px solid #d1d1d1;
   border-radius: 4px;
@@ -1724,8 +1756,8 @@ button {
 .team-overview-item-mark img {
   position: absolute;
   inset: 1px;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
 }
 
@@ -1740,7 +1772,7 @@ button {
   position: relative;
   display: grid;
   min-width: 0;
-  min-height: 27px;
+  min-height: 31px;
   grid-template-columns: 21px minmax(0, 1fr);
   align-items: center;
   gap: 5px;
@@ -1750,7 +1782,7 @@ button {
   padding: 0 9px 0 4px;
   background: #f7f7f7;
   color: #151515;
-  font-size: 0.67rem;
+  font-size: 0.78rem;
   font-weight: var(--font-semibold);
   box-shadow:
     inset 0 -1px 0 rgba(0, 0, 0, 0.05),
@@ -1776,7 +1808,7 @@ button {
 }
 
 .team-overview-move-name.is-compact {
-  font-size: 0.59rem;
+  font-size: 0.7rem;
 }
 
 .team-overview-move .type-badge,
@@ -1808,19 +1840,54 @@ button {
 .team-overview-evs {
   display: flex;
   min-width: 0;
-  align-items: baseline;
-  gap: 7px;
-  overflow: hidden;
-  color: #555555;
-  font-size: 0.66rem;
+  min-height: 27px;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid #d8d8d8;
+  padding-top: 6px;
+  color: #242424;
+  font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
 
-.team-overview-evs > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.team-overview-evs > small {
+  flex: 0 0 auto;
+  color: #5c5c5c;
+  font-size: 0.7rem;
+  font-weight: var(--font-semibold);
+  line-height: 1;
+}
+
+.team-overview-ev-values {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 9px;
+}
+
+.team-overview-ev-entry {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
   white-space: nowrap;
+}
+
+.team-overview-ev-entry > span {
+  color: #555555;
+  font-weight: var(--font-medium);
+}
+
+.team-overview-ev-entry > strong {
+  color: #151515;
+  font-size: 0.82rem;
+  font-weight: var(--font-semibold);
+}
+
+.team-overview-no-evs {
+  color: #666666;
+  font-weight: var(--font-medium);
 }
 
 .team-overview-slot.is-empty {
@@ -4165,6 +4232,16 @@ select {
 .type-fairy { background: #f5acd3; }
 
 @media (max-width: 1420px) {
+  .app-header-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .header-builder-workspace {
+    width: min(1040px, calc(100% - 32px));
+    justify-self: center;
+    margin-right: 0;
+  }
+
   .workspace {
     height: auto;
     max-height: none;
@@ -4192,6 +4269,10 @@ select {
 }
 
 @media (max-width: 980px) {
+  .header-builder-workspace {
+    width: min(608px, calc(100% - 32px));
+  }
+
   .builder-workspace {
     width: min(608px, calc(100% - 32px));
   }
@@ -4242,11 +4323,21 @@ select {
 
   .app-header {
     height: var(--app-header-height);
-    padding: 0 16px;
+    padding: 0;
+  }
+
+  .app-wordmark {
+    left: 16px;
+    font-size: 1rem;
+  }
+
+  .header-builder-workspace {
+    width: min(608px, calc(100% - 16px));
   }
 
   .team-actions {
     gap: 4px;
+    margin-left: 54px;
   }
 
   .team-name-field {

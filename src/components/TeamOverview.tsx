@@ -137,19 +137,19 @@ export function TeamOverview({
                 </span>
                 <div className="team-overview-name-block">
                   <strong>{displayName}</strong>
-                  <span className="team-overview-types" aria-label={`${displayName} types`}>
-                    {member.types.map((type) => (
-                      <TypeBadge type={type} key={type} />
-                    ))}
+                  <span className="team-overview-item">
+                    <ItemMark spriteUrl={item?.spriteUrl} name={item?.name ?? "No item"} />
+                    <span>{item?.name ?? "No item"}</span>
                   </span>
                 </div>
+                <span className="team-overview-types" aria-label={`${displayName} types`}>
+                  {member.types.map((type) => (
+                    <TypeBadge type={type} key={type} />
+                  ))}
+                </span>
               </div>
 
               <div className="team-overview-details">
-                <span className="team-overview-item">
-                  <ItemMark spriteUrl={item?.spriteUrl} name={item?.name ?? "No item"} />
-                  <span>{item?.name ?? "No item"}</span>
-                </span>
                 <span>
                   <small>Ability</small>
                   <strong>{ability}</strong>
@@ -181,11 +181,18 @@ export function TeamOverview({
               </div>
 
               <div className="team-overview-evs">
-                <small>EV</small>
-                <span>
-                  {evEntries.length > 0
-                    ? evEntries.map((stat) => `${statLabels[stat]} ${evs[stat]}`).join(" / ")
-                    : "No investment"}
+                <small>EVs</small>
+                <span className="team-overview-ev-values">
+                  {evEntries.length > 0 ? (
+                    evEntries.map((stat) => (
+                      <span className="team-overview-ev-entry" key={stat}>
+                        <span>{statLabels[stat]}</span>
+                        <strong>{evs[stat]}</strong>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="team-overview-no-evs">No investment</span>
+                  )}
                 </span>
               </div>
             </button>

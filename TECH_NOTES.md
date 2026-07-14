@@ -165,20 +165,23 @@ claim of affiliation.
 
 ## Builder UX Notes
 
-Pending desktop UX decisions after the wide-builder layout change:
+Desktop UX decisions after the wide-builder layout change:
 
 - Evaluate replacing fine-pointer horizontal EV scrubbing with six vertical sliders
   placed above their corresponding stats. The goal is to use the open right side of
   the card without making EV allocation slower or less precise.
-- Keep the compact header team-management group aligned with the Pokemon card's
-  left edge. Shorten the team-name field as needed and restore a PokePilot wordmark
-  in the header space no longer occupied by those controls.
+- The compact header team-management group shares the Pokemon card's left edge,
+  the team-name field is capped at 240px, and the PokePilot wordmark occupies the
+  original left-side header position.
 - Revisit the relationship between Team View and Pokemon View before adding a
   one-off back button. The final navigation should make editing and returning
   obvious, preserve access to the Bench tab, and avoid undersized edit targets on
   pointer or touch devices.
-- Increase Team View EV typography and contrast; its current compact styling makes
-  the allocation line harder to scan than the rest of each set.
+- Keep Team View EV allocations separated into compact stat-value pairs with a
+  stronger label, darker values, and a subtle divider from the move grid.
+- In Team View, keep the item beneath the Pokemon name and pin type icons to the
+  upper-right corner. Reinvest the removed item row in larger metadata and move
+  typography while preserving the shared card height used by Pokemon View.
 
 - The main builder switches between the existing single-Pokemon editor and a
   compact two-column overview of the active six. Both views read the same live
