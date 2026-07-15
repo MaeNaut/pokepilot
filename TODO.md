@@ -4,7 +4,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Now
 
-- [ ] Refine post-layout desktop UI details.
+- [x] Refine post-layout desktop UI details.
   - [x] Replace horizontal EV value scrubbing with always-visible vertical sliders and direct numeric entry above each displayed stat.
   - [x] Shorten the header team-name field and align the team-management controls with the Pokemon card's left edge.
   - [x] Restore the PokePilot wordmark in the header space freed by moving the team controls.
@@ -13,9 +13,9 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
     - [x] Use Team View cards as the active-six edit and reorder surface while keeping Bench as the sole side tab.
     - [x] Preserve full-card pointer, touch-hold, and keyboard targets for editing, reordering, and bench moves.
   - [x] Increase Team View EV text size and contrast so it remains readable inside compact set cards.
-- [ ] Keep keyboard and mouse picker behavior consistent as new controls are added.
-  - [ ] Preserve the current hover-to-keyboard active-selection flow for future dropdowns.
-  - [ ] Re-test Pokemon, item, ability, nature, and move pickers after major TeamBuilder refactors.
+- [x] Keep keyboard and mouse picker behavior consistent across current controls.
+  - [x] Preserve the current hover-to-keyboard active-selection flow across dropdowns.
+  - [x] Re-test Pokemon, item, ability, nature, and move pickers after major TeamBuilder refactors.
 - [x] Replace temporary CSS move category icons with EssentiarumVG Gen 8 glyphs.
 - [x] Add explicit team slot controls.
   - [x] Add a clear Pokemon delete/remove action.
@@ -62,8 +62,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Reorder selected moves with desktop drag, touch hold-and-drag, or keyboard shortcuts.
   - [x] Add a clear action and a stable empty state for each of the four move slots.
   - [ ] Decide whether selected moves should show PP or only power.
-- [ ] Improve item editing.
-  - [ ] Keep Mega Stone auto-lock behavior tested after future item changes.
+- [x] Improve item editing.
+  - [x] Verify Mega Stone auto-set, lock, and unlock behavior after item changes.
   - [x] Allow ordinary held items to be cleared while preserving locked Mega Stones.
 - [x] Improve EV editing with vertical sliders, direct numeric entry, and a shared allocation total.
 - [x] Rebalance the desktop workspace around the builder and PokePilot.

@@ -356,6 +356,26 @@ Still needed:
 - documentation for any known Showdown/PokeAPI naming exceptions
 - any newly discovered Pokemon Champions-specific battle-rule differences
 
+## Desktop QA Baseline
+
+- Run `npm run lint`, `npm run test:run`, and `npm run build` before closing a
+  major Team Builder refactor.
+- Manually recheck Pokemon, item, ability, nature, and move pickers for mouse-to-
+  keyboard continuity. Move selection must open at the current move without a
+  hover scroll loop, and keyboard navigation must keep its natural nearest-scroll
+  behavior.
+- Recheck Mega form changes for matching-stone auto-selection, locking while Mega,
+  and editable stone state after returning to the base form.
+- Recheck Pokemon Showdown text as a round trip: opening the popover focuses and
+  selects the full text, canonical form names import again, and the complete build
+  survives the import.
+- Recheck saved-team order, bench persistence, last-opened restore, and the rule
+  that bench Pokemon remain outside team Showdown export.
+- Keep horizontal overflow clipped at the app shell. The right-side background
+  extension intentionally reaches beyond the capped 1920px workspace on ultrawide
+  displays, but must never create a document-level horizontal scrollbar at the
+  1920px boundary.
+
 ## Team Diagnostics
 
 - Keep deterministic team diagnostics as a compact factual surface directly
