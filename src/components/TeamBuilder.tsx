@@ -447,11 +447,15 @@ export function TeamBuilder({
     Record<string, PokemonMove[]>
   >({});
 
+  const pokemonIndexByName = useMemo(
+    () => new Map(pokemonIndex.map((entry) => [entry.name, entry])),
+    [pokemonIndex],
+  );
   const activeMember = team[selectedSlot];
   const activePokemonId = activeMember?.id ?? "";
   const activeItem = itemBySlot[selectedSlot] ?? null;
   const abilityOptions = activeMember?.abilities ?? defaultAbilityOptions;
-  const activeIndexEntry = pokemonIndex.find((entry) => entry.name === activePokemonId);
+  const activeIndexEntry = pokemonIndexByName.get(activePokemonId);
   const activeFormKind =
     activeIndexEntry?.formKind ?? (isMegaPokemonName(activePokemonId) ? "mega" : "base");
   const activeSpeciesKey =
@@ -611,6 +615,13 @@ export function TeamBuilder({
   const activeHeaderName = activeIndexEntry
     ? formatIdLabel(activeIndexEntry.speciesKey)
     : activeMember?.name;
+
+  function getMemberDisplayName(member: TeamMember) {
+    const indexEntry = pokemonIndexByName.get(member.id);
+
+    return indexEntry ? formatIdLabel(indexEntry.speciesKey) : member.name;
+  }
+
   const megaOptions = useMemo(
     () =>
       activeSpeciesKey && activeFormKind !== "regional"
@@ -2306,12 +2317,15 @@ export function TeamBuilder({
           aria-label={builderView === "team" ? "Team bench" : "Current team"}
           ref={teamTabsRef}
         >
-        {builderView === "pokemon" ? team.map((member, index) => {
+        {team.map((member, index) => {
           const displacement = getReorderDisplacement(teamReorder.dragState, index);
+          const railItem = itemBySlot[index] ?? null;
+          const railDisplayName = member ? getMemberDisplayName(member) : "";
+          const isActiveRailSlot = builderView === "pokemon" && selectedSlot === index;
 
           return (
             <div
-            className={`team-tab-shell ${selectedSlot === index ? "is-active" : ""} ${
+            className={`team-tab-shell ${isActiveRailSlot ? "is-active" : ""} ${
               teamReorder.dragState?.sourceIndex === index ? "is-dragging" : ""
             } ${
               teamReorder.dragState?.sourceIndex === index &&
@@ -2349,7 +2363,7 @@ export function TeamBuilder({
             }
           >
             <button
-              className={`team-tab ${selectedSlot === index ? "is-active" : ""} ${
+              className={`team-tab ${isActiveRailSlot ? "is-active" : ""} ${
                 member ? "" : "is-empty"
               }`}
               type="button"
@@ -2370,14 +2384,38 @@ export function TeamBuilder({
               }
             >
               {member ? (
-                <PokemonIcon pokemon={member} />
+                <>
+                  <span className="team-tab-sprite" aria-hidden="true">
+                    <PokemonIcon pokemon={member} />
+                  </span>
+                  <span className="team-tab-copy" aria-hidden="true">
+                    <strong>{railDisplayName}</strong>
+                    <span className="team-tab-types">
+                      {member.types.map((type) => (
+                        <TypeBadge type={type} key={type} />
+                      ))}
+                    </span>
+                  </span>
+                  <span
+                    className={`team-tab-item ${railItem ? "" : "is-empty"}`}
+                    aria-hidden="true"
+                    title={railItem?.name}
+                  >
+                    {railItem ? <ItemSprite item={railItem} /> : null}
+                  </span>
+                </>
               ) : (
-                <span>+</span>
+                <>
+                  <span className="team-tab-empty-mark" aria-hidden="true">+</span>
+                  <span className="team-tab-empty-label" aria-hidden="true">
+                    <strong>Add Pokemon</strong>
+                  </span>
+                </>
               )}
             </button>
             </div>
           );
-        }) : null}
+        })}
         <div
           className={`team-tab-shell bench-tab-shell ${isBenchOpen ? "is-active" : ""} ${
             teamReorder.dragState?.targetIndex === team.length ? "is-drop-target" : ""
@@ -2402,6 +2440,7 @@ export function TeamBuilder({
             }}
           >
             <FontAwesomeIcon icon={faChair} aria-hidden="true" />
+            <span className="bench-label" aria-hidden="true">Bench</span>
             {bench.length > 0 ? <span className="bench-count">{bench.length}</span> : null}
           </button>
 
@@ -2422,6 +2461,7 @@ export function TeamBuilder({
                 <div className="bench-pokemon-list">
                   {bench.map((entry, index) => {
                     const dragIndex = team.length + 1 + index;
+                    const benchDisplayName = getMemberDisplayName(entry.member);
                     const isDragging = teamReorder.dragState?.sourceIndex === dragIndex;
                     const displacement = getReorderDisplacement(
                       teamReorder.dragState,
@@ -2462,7 +2502,7 @@ export function TeamBuilder({
                       >
                         {pendingBenchRemovalId === entry.id ? (
                           <div className="bench-remove-confirm" role="alertdialog">
-                            <span>Delete {entry.member.name}?</span>
+                            <span>Delete {benchDisplayName}?</span>
                             <button
                               type="button"
                               onClick={(event) => {
@@ -2489,7 +2529,7 @@ export function TeamBuilder({
                             <button
                               className="bench-pokemon-main"
                               type="button"
-                              aria-label={`Move ${entry.member.name} to selected slot ${selectedSlot + 1}. Drag to another slot or press Alt and an arrow key to reorder the bench.`}
+                              aria-label={`Move ${benchDisplayName} to selected slot ${selectedSlot + 1}. Drag to another slot or press Alt and an arrow key to reorder the bench.`}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 handleBenchPokemonClick(index);
@@ -2509,12 +2549,12 @@ export function TeamBuilder({
                               onPointerCancel={teamReorder.handlePointerCancel}
                             >
                               <PokemonIcon pokemon={entry.member} />
-                              <span>{entry.member.name}</span>
+                              <span>{benchDisplayName}</span>
                             </button>
                             <button
                               className="bench-pokemon-remove"
                               type="button"
-                              aria-label={`Delete ${entry.member.name} from bench`}
+                              aria-label={`Delete ${benchDisplayName} from bench`}
                               title="Delete from bench"
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={(event) => {
