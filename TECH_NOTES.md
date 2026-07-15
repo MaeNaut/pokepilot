@@ -464,6 +464,11 @@ The current first slice is a provider-independent local preview:
   places moves and stats side by side, while Team View uses a 3-by-2 grid.
   Long analysis and future chat history scroll inside `copilot-content` so they
   do not increase the document height.
+- Keep the edge-filled PokePilot treatment through 1920px-wide desktop
+  viewports. Above 1920px, preserve the same 480px panel width but render it as
+  a self-contained dark card with 16px vertical margins, rounded corners, and a
+  height that stretches to the footer. This keeps QHD and UHD layouts centered
+  without turning the panel into an oversized wall.
 
 For the first AI route, ask the AI to return structured JSON such as:
 
