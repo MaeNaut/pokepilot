@@ -45,6 +45,11 @@ describe("Showdown Pokemon index normalization", () => {
     });
   });
 
+  it("keeps Showdown typing in the lightweight picker index", () => {
+    expect(byName.get("charizard")?.types).toEqual(["fire", "flying"]);
+    expect(byName.get("charizard-mega-x")?.types).toEqual(["fire", "dragon"]);
+  });
+
   it("creates Pyroar's visual female form but keeps one usage-backed picker entry", () => {
     expect(byName.get("pyroar-male")?.displayName).toBe("Pyroar");
     expect(byName.get("pyroar-male")?.isSelectorOption).toBe(true);

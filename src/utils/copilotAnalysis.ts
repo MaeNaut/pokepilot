@@ -2,6 +2,7 @@ import { CHAMPIONS_MAX_EV_TOTAL, defaultEvs, getNatureById, statKeys } from "../
 import type { TeamConceptId } from "../data/teamConcepts";
 import type { TeamBuildState } from "../hooks/useTeamBuildState";
 import type {
+  PokemonCandidateFilterValue,
   PokemonIndexEntry,
   PokemonMove,
   PokemonType,
@@ -15,6 +16,7 @@ import type {
 } from "./teamDiagnostics";
 import type { TeamConceptSummary } from "./teamConcepts";
 import type { TeamValidityResult, ValidityStatus } from "./teamValidity";
+import { hasPokemonCandidateFilters } from "./pokemonCandidateFilters";
 
 export type CopilotAnalysisScope = "team" | "pokemon";
 export type CopilotPriority = "high" | "medium" | "low";
@@ -55,12 +57,20 @@ export type CopilotDiagnosticsSnapshot = {
   >;
 };
 
+export type CopilotCandidateFilterSnapshot = {
+  slotIndex: number;
+  types: PokemonType[];
+  ability: PokemonCandidateFilterValue | null;
+  moves: PokemonCandidateFilterValue[];
+};
+
 export type CopilotAnalysisRequest = {
   version: 1;
   scope: CopilotAnalysisScope;
   teamName: string;
   selectedSlot: number;
   sets: CopilotSetSnapshot[];
+  candidateFilters: CopilotCandidateFilterSnapshot[];
   diagnostics: CopilotDiagnosticsSnapshot;
 };
 
@@ -120,6 +130,14 @@ function formatList(values: string[]) {
   }
 
   return `${values.slice(0, -1).join(", ")} and ${values[values.length - 1]}`;
+}
+
+function describeCandidateFilter(filter: CopilotCandidateFilterSnapshot) {
+  return formatList([
+    ...filter.types.map((type) => `${formatLookup(type)} type`),
+    ...(filter.ability ? [`${filter.ability.name} ability`] : []),
+    ...filter.moves.map((move) => `${move.name} access`),
+  ]);
 }
 
 function getSelectedMoves(
@@ -227,6 +245,24 @@ export function createCopilotAnalysisRequest({
       },
     ];
   });
+  const candidateFilters = Object.entries(buildState.candidateFiltersBySlot).flatMap(
+    ([slotIndexValue, filters]) => {
+      const slotIndex = Number(slotIndexValue);
+
+      if (team[slotIndex] || !hasPokemonCandidateFilters(filters)) {
+        return [];
+      }
+
+      return [
+        {
+          slotIndex,
+          types: [...filters.types],
+          ability: filters.ability ? { ...filters.ability } : null,
+          moves: filters.moves.map((move) => ({ ...move })),
+        },
+      ];
+    },
+  );
 
   return {
     version: 1,
@@ -234,6 +270,7 @@ export function createCopilotAnalysisRequest({
     teamName: teamName.trim() || "Untitled Team",
     selectedSlot,
     sets,
+    candidateFilters,
     diagnostics: {
       filledSlots: diagnostics.filledSlots,
       coverageCount: diagnostics.coveredDefendingTypes.length,
@@ -260,6 +297,9 @@ export function getCopilotRequestFingerprint(request: CopilotAnalysisRequest) {
     scope: request.scope,
     selectedSlot: request.selectedSlot,
     selectedSet: request.sets.find((set) => set.slotIndex === request.selectedSlot),
+    selectedCandidateFilters: request.candidateFilters.find(
+      (filters) => filters.slotIndex === request.selectedSlot,
+    ),
   });
 }
 
@@ -311,6 +351,17 @@ function createTeamRecommendations(request: CopilotAnalysisRequest) {
         diagnostics.validity.errorCount === 1 ? "" : "s"
       } currently fail Regulation M-B checks.`,
       priority: "high",
+    });
+  }
+
+  if (request.candidateFilters.length > 0) {
+    recommendations.push({
+      id: "candidate-filters",
+      title: "Fill the constrained slots",
+      reason: `Slots ${formatList(
+        request.candidateFilters.map((filter) => String(filter.slotIndex + 1)),
+      )} have saved Pokemon requirements to satisfy.`,
+      priority: "medium",
     });
   }
 
@@ -415,12 +466,18 @@ function analyzeTeamRequest(
   const playstyle = inferPlaystyle(diagnostics.roleCounts, diagnostics.concepts);
 
   if (diagnostics.filledSlots === 0) {
+    const filterCount = request.candidateFilters.length;
+
     return {
       version: 1,
       source: "local",
       scope: "team",
       title: request.teamName,
-      summary: "The active team is empty, so there is not enough set data to assess yet.",
+      summary: filterCount
+        ? `The active team is empty, but ${filterCount} slot${
+            filterCount === 1 ? " has" : "s have"
+          } saved Pokemon requirements.`
+        : "The active team is empty, so there is not enough set data to assess yet.",
       playstyle: "Unclassified",
       strengths: [],
       weaknesses: ["No active Pokemon are configured."],
@@ -428,7 +485,9 @@ function analyzeTeamRequest(
         {
           id: "add-first-pokemon",
           title: "Build the first core",
-          reason: "Add a Pokemon to begin type, role, and set analysis.",
+          reason: filterCount
+            ? "Choose Pokemon that satisfy the saved slot requirements to establish the first core."
+            : "Add a Pokemon to begin type, role, and set analysis.",
           priority: "high",
         },
       ],
@@ -494,22 +553,37 @@ function analyzePokemonRequest(
   const selectedSet = request.sets.find(
     (set) => set.slotIndex === request.selectedSlot,
   );
+  const selectedCandidateFilter = request.candidateFilters.find(
+    (filters) => filters.slotIndex === request.selectedSlot,
+  );
 
   if (!selectedSet) {
+    const filterDescription = selectedCandidateFilter
+      ? describeCandidateFilter(selectedCandidateFilter)
+      : "";
+
     return {
       version: 1,
       source: "local",
       scope: "pokemon",
       title: `Slot ${request.selectedSlot + 1}`,
-      summary: "This slot is empty, so there is no set to assess yet.",
+      summary: selectedCandidateFilter
+        ? `This slot is reserved for a Pokemon with ${filterDescription}.`
+        : "This slot is empty, so there is no set to assess yet.",
       playstyle: "Unclassified",
       strengths: [],
-      weaknesses: ["No Pokemon is configured in the selected slot."],
+      weaknesses: [
+        selectedCandidateFilter
+          ? "No Pokemon has been chosen for the saved candidate requirements yet."
+          : "No Pokemon is configured in the selected slot.",
+      ],
       recommendations: [
         {
           id: "choose-pokemon",
-          title: "Choose a Pokemon",
-          reason: "Set analysis begins after a Pokemon is added to this slot.",
+          title: selectedCandidateFilter ? "Choose a matching Pokemon" : "Choose a Pokemon",
+          reason: selectedCandidateFilter
+            ? `Use the saved ${filterDescription} requirements when comparing candidates.`
+            : "Set analysis begins after a Pokemon is added to this slot.",
           priority: "high",
         },
       ],

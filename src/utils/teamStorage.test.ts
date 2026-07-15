@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { TeamMember } from "../types";
 import {
   SAVED_TEAM_SCHEMA_VERSION,
+  createEmptyBuildState,
   createFallbackMember,
   createSavedSlot,
   getCopiedTeamName,
   normalizeSavedTeam,
+  serializeTeamSnapshot,
   type SavedTeamSummary,
 } from "./teamStorage";
 
@@ -74,6 +76,28 @@ describe("saved-team helpers", () => {
       spriteUrl: "art.png",
       iconSpriteUrl: "icon.png",
       source: "local",
+    });
+  });
+
+  it("serializes empty-slot Pokemon requirements with the team snapshot", () => {
+    const buildState = createEmptyBuildState();
+    buildState.candidateFiltersBySlot[2] = {
+      types: ["fire", "dark"],
+      ability: { id: "intimidate", name: "Intimidate" },
+      moves: [{ id: "fakeout", name: "Fake Out" }],
+    };
+
+    const serialized = serializeTeamSnapshot({
+      name: "Candidate Team",
+      slots: [null, null, null, null, null, null],
+      bench: [],
+      buildState,
+    });
+
+    expect(JSON.parse(serialized).buildState.candidateFiltersBySlot[2]).toEqual({
+      types: ["fire", "dark"],
+      ability: { id: "intimidate", name: "Intimidate" },
+      moves: [{ id: "fakeout", name: "Fake Out" }],
     });
   });
 });

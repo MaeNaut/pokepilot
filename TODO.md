@@ -8,11 +8,9 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Replace horizontal EV value scrubbing with always-visible vertical sliders and direct numeric entry above each displayed stat.
   - [x] Shorten the header team-name field and align the team-management controls with the Pokemon card's left edge.
   - [x] Restore the PokePilot wordmark in the header space freed by moving the team controls.
-  - [x] Revisit the Team View navigation model before adding another back or edit button.
-    - [x] Keep Pokemon View and Team View as peer views connected by the persistent view switch.
-    - [x] Use Team View cards as the active-six edit and reorder surface while keeping Bench as the sole side tab.
-    - [x] Preserve full-card pointer, touch-hold, and keyboard targets for editing, reordering, and bench moves.
-  - [x] Increase Team View EV text size and contrast so it remains readable inside compact set cards.
+  - [x] Simplify set navigation around the persistent Team Rail.
+    - [x] Remove the redundant Team View and Pokemon/Team view switch.
+    - [x] Keep the Team Rail as the active-six selector, reorder surface, and Bench entry point.
 - [x] Keep keyboard and mouse picker behavior consistent across current controls.
   - [x] Preserve the current hover-to-keyboard active-selection flow across dropdowns.
   - [x] Re-test Pokemon, item, ability, nature, and move pickers after major TeamBuilder refactors.
@@ -29,10 +27,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Next
 
-- [x] Add a Pokemon sample card / team view switch.
-  - [x] Keep the current single-Pokemon editor as the sample card view.
-  - [x] Design a compact whole-team view without duplicating team-management controls.
-  - [x] Preserve the selected slot and unsaved edits when switching views.
+- [x] Keep the single-Pokemon editor as the sole active build surface.
 - [x] Replace the Copilot panel placeholder with a working local analysis preview.
   - [x] Add team and selected-Pokemon analysis scopes.
   - [x] Keep deterministic team diagnostics outside the future AI response area.
@@ -70,7 +65,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Keep the Pokemon card focused on the selected set.
   - [x] Reserve PokePilot for future AI interpretation and recommendations.
   - [x] Keep a full-height PokePilot panel on the right and stack the builder and diagnostics on the left.
-  - [x] Use a wider, shorter Pokemon card with moves and stats side by side and a 3-by-2 Team View.
+  - [x] Use a wider, shorter Pokemon card with moves and stats side by side.
   - [x] Cap the desktop workspace at 1920px so QHD and wider displays do not over-stretch the UI.
 - [ ] Add shareable PNG build images.
   - [x] Add a Team Rail action that opens a dimmed preview for the selected Pokemon build.
@@ -151,11 +146,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Show empty-query Pokemon dropdown suggestions in Smogon usage order with 20-at-a-time scroll loading.
   - [ ] Add a small non-card status or debug surface for the selected usage source if needed.
   - [ ] Decide how aggressively base Pokemon should auto-upgrade into their most-used form or Mega.
-- [ ] Add reverse candidate filters to Pokemon search.
-  - [ ] Let preselected type filters narrow the Pokemon dropdown.
-  - [ ] Let preselected ability filters narrow the Pokemon dropdown.
-  - [ ] Let preselected move filters narrow the Pokemon dropdown after a legal move-to-Pokemon index exists.
-  - [ ] Keep item, nature, and EV filters out of Pokemon search unless a clear strategy-recommendation UI is designed.
+- [x] Add persistent reverse candidate filters to empty Pokemon slots.
+  - [x] Keep type, ability, and move controls in the empty card instead of crowding the Pokemon dropdown.
+  - [x] Let preselected type, ability, and move requirements narrow legal Pokemon candidates.
+  - [x] Save empty-slot requirements with the team and preserve them across slot reordering.
+  - [x] Include saved requirements in PokePilot team and selected-slot analysis requests.
+  - [x] Keep item, nature, and EV filters out until a clear strategy-recommendation UI is designed.
 - [x] Add a compact validity trigger, issue popover, and per-slot problem markers.
 - [ ] Extend validity beyond the current editor surface if level, gender, or complex format rules are added.
 

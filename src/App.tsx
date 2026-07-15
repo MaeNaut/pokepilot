@@ -240,6 +240,7 @@ function App() {
           moveIdsBySlot: teamBuildState.moveIdsBySlot,
           natureBySlot: teamBuildState.natureBySlot,
           preMegaPokemonBySlot: teamBuildState.preMegaPokemonBySlot,
+          candidateFiltersBySlot: teamBuildState.candidateFiltersBySlot,
         },
         showdownLegality,
         pokemonIndex,
@@ -256,6 +257,7 @@ function App() {
       teamBuildState.moveIdsBySlot,
       teamBuildState.natureBySlot,
       teamBuildState.preMegaPokemonBySlot,
+      teamBuildState.candidateFiltersBySlot,
     ],
   );
   const savedTeamReorder = useLongPressReorder({

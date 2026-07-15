@@ -154,6 +154,7 @@ export function createEmptyBuildState(): TeamBuildState {
     evsBySlot: {},
     moveIdsBySlot: {},
     preMegaPokemonBySlot: {},
+    candidateFiltersBySlot: {},
   };
 }
 

@@ -15,11 +15,11 @@ import {
   faSpinner,
   faTrash,
   faTriangleExclamation,
-  faUser,
   faUsers,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "../api/pokeApi";
+import { loadShowdownData } from "../api/showdownData";
 import { fetchAbility, itemFromIndexEntry } from "../api/showdownCatalog";
 import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
@@ -35,6 +35,7 @@ import type {
   DataLoadStatus,
   ItemIndexEntry,
   PokemonAbility,
+  PokemonCandidateFilterValue,
   PokemonItem,
   PokemonMove,
   PokemonIndexEntry,
@@ -50,6 +51,12 @@ import {
   useLongPressReorder,
 } from "../hooks/useLongPressReorder";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+import {
+  emptyPokemonCandidateFilters,
+  hasPokemonCandidateFilters,
+  matchesPokemonCandidateFilters,
+  togglePokemonTypeFilter,
+} from "../utils/pokemonCandidateFilters";
 import type { BenchPokemon } from "../utils/benchPokemon";
 import {
   getMegaSpeciesKey,
@@ -83,9 +90,13 @@ import {
 } from "./PokemonShareCard";
 import { ShareImageDialog } from "./ShareImageDialog";
 import { TeamShareCard } from "./TeamShareCard";
-import { TeamOverview } from "./TeamOverview";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
+import {
+  CandidateFilterPanel,
+  type CandidateFilterOption,
+  type CandidateFilterPicker,
+} from "./CandidateFilterPanel";
 
 type TeamBuilderProps = {
   teamName: string;
@@ -131,7 +142,11 @@ type PokemonSelectOption = {
   id: string;
   name: string;
   number: number;
+  types: PokemonType[];
+  abilityOptions: PokemonCandidateFilterValue[];
+  moveIds: string[];
 };
+
 
 function DataStatusRow({
   message,
@@ -157,7 +172,16 @@ function DataStatusRow({
   );
 }
 
-const popularPokemonPageSize = 20;
+const optionPageSize = 20;
+const optionScrollThreshold = 32;
+
+function getExpandedOptionLimit(current: number, total: number) {
+  return Math.min(total, current + optionPageSize);
+}
+
+function isNearOptionListEnd(target: HTMLDivElement) {
+  return target.scrollHeight - target.scrollTop - target.clientHeight <= optionScrollThreshold;
+}
 
 function getBaseUsageLookup(value: string) {
   const withoutMega = value.replace(/-mega(?:-.+)?$/, "");
@@ -176,7 +200,6 @@ type NatureGridPosition = {
 };
 
 type MoveOptionScrollMode = "start" | "nearest";
-type BuilderView = "pokemon" | "team";
 type ShareImageTarget = "team" | number | null;
 
 function getIndexAfterSwap(index: number, sourceIndex: number, targetIndex: number) {
@@ -428,19 +451,34 @@ export function TeamBuilder({
     evsBySlot,
     moveIdsBySlot,
     preMegaPokemonBySlot,
+    candidateFiltersBySlot,
     setItemBySlot,
     setAbilityBySlot,
     setNatureBySlot,
     setEvsBySlot,
     setMoveIdsBySlot,
     setPreMegaPokemonBySlot,
+    patchSlot,
     clearSlot,
   } = buildState;
   const [isNamePickerOpen, setIsNamePickerOpen] = useState(false);
-  const [builderView, setBuilderView] = useState<BuilderView>("pokemon");
   const [nameQuery, setNameQuery] = useState("");
+  const [candidateMoveIndex, setCandidateMoveIndex] = useState<PokemonMove[]>([]);
+  const [openCandidateFilterPicker, setOpenCandidateFilterPicker] =
+    useState<CandidateFilterPicker | null>(null);
+  const [candidateMoveFilterSlot, setCandidateMoveFilterSlot] = useState<
+    number | null
+  >(null);
+  const [candidateFilterQuery, setCandidateFilterQuery] = useState("");
+  const [activeCandidateFilterOptionIndex, setActiveCandidateFilterOptionIndex] =
+    useState(0);
   const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(null);
-  const [popularPokemonLimit, setPopularPokemonLimit] = useState(popularPokemonPageSize);
+  const [pokemonOptionLimit, setPokemonOptionLimit] = useState(optionPageSize);
+  const [itemOptionLimit, setItemOptionLimit] = useState(optionPageSize);
+  const [abilityOptionLimit, setAbilityOptionLimit] = useState(optionPageSize);
+  const [moveOptionLimit, setMoveOptionLimit] = useState(optionPageSize);
+  const [candidateFilterOptionLimit, setCandidateFilterOptionLimit] =
+    useState(optionPageSize);
   const [isUsageOrderLoading, setIsUsageOrderLoading] = useState(false);
   const [usageOrderError, setUsageOrderError] = useState<string | null>(null);
   const [pendingClearSlot, setPendingClearSlot] = useState<number | null>(null);
@@ -462,6 +500,7 @@ export function TeamBuilder({
   const validityPanelRef = useRef<HTMLDivElement | null>(null);
   const clearConfirmRef = useRef<HTMLDivElement | null>(null);
   const namePickerRef = useRef<HTMLDivElement | null>(null);
+  const candidateFilterPickerRef = useRef<HTMLDivElement | null>(null);
   const battleFormPickerRef = useRef<HTMLDivElement | null>(null);
   const [isBattleFormPickerOpen, setIsBattleFormPickerOpen] = useState(false);
   const [activeBattleFormOptionIndex, setActiveBattleFormOptionIndex] = useState(0);
@@ -476,6 +515,9 @@ export function TeamBuilder({
     null,
   );
   const [openMoveSlot, setOpenMoveSlot] = useState<number | null>(null);
+  const [suppressedMoveTooltipSlot, setSuppressedMoveTooltipSlot] = useState<
+    number | null
+  >(null);
   const [moveQuery, setMoveQuery] = useState("");
   const [hoveredItemOption, setHoveredItemOption] = useState<PokemonItem | null>(null);
   const [activePokemonOptionIndex, setActivePokemonOptionIndex] = useState(-1);
@@ -502,6 +544,9 @@ export function TeamBuilder({
   );
   const activeMember = team[selectedSlot];
   const activePokemonId = activeMember?.id ?? "";
+  const isNamePickerVisible = isNamePickerOpen || !activeMember;
+  const activeCandidateFilters =
+    candidateFiltersBySlot[selectedSlot] ?? emptyPokemonCandidateFilters;
   const activeItem = itemBySlot[selectedSlot] ?? null;
   const abilityOptions = activeMember?.abilities ?? defaultAbilityOptions;
   const activeIndexEntry = pokemonIndexByName.get(activePokemonId);
@@ -524,6 +569,10 @@ export function TeamBuilder({
 
     return legalAbilityOptions.length > 0 ? legalAbilityOptions : abilityOptions;
   }, [abilityOptions, legalAbilitySet]);
+  const visibleAbilityOptions = useMemo(
+    () => displayedAbilityOptions.slice(0, abilityOptionLimit),
+    [abilityOptionLimit, displayedAbilityOptions],
+  );
   const selectedAbility =
     abilityBySlot[selectedSlot] ??
     displayedAbilityOptions[0] ??
@@ -836,22 +885,65 @@ export function TeamBuilder({
                 entry.speciesKey,
               ),
             )
-            .map((entry) => ({
-              id: entry.name,
-              name: entry.displayName,
-              number: entry.sortNumber,
-            }))
+            .map((entry) => {
+              const abilityNamesById = new Map(
+                entry.abilities.map((ability) => [normalizeShowdownId(ability), ability]),
+              );
+              const legalAbilityIds = getLegalAbilities(
+                showdownLegality ?? null,
+                entry.showdownId,
+                entry.speciesKey,
+              );
+              const abilityIds = legalAbilityIds ?? new Set(abilityNamesById.keys());
+              const moveIds = getLegalMoves(
+                showdownLegality ?? null,
+                entry.showdownId,
+                entry.speciesKey,
+              );
+
+              return {
+                id: entry.name,
+                name: entry.displayName,
+                number: entry.sortNumber,
+                types: entry.types,
+                abilityOptions: [...abilityIds].map((abilityId) => ({
+                  id: abilityId,
+                  name: abilityNamesById.get(abilityId) ?? formatIdLabel(abilityId),
+                })),
+                moveIds: [...(moveIds ?? [])],
+              };
+            })
         : pool.map((member) => ({
             id: member.id,
             name: member.name,
             number: 0,
+            types: member.types,
+            abilityOptions: (member.abilities ?? []).map((ability) => ({
+              id: normalizeShowdownId(ability),
+              name: ability,
+            })),
+            moveIds: (member.moves ?? []).map((move) => normalizeShowdownId(move.id)),
           })),
     [pokemonIndex, pool, showdownLegality],
+  );
+  const candidateFilteredSelectOptions = useMemo(
+    () =>
+      selectOptions.filter((option) =>
+        matchesPokemonCandidateFilters(
+          {
+            types: option.types,
+            abilityIds: option.abilityOptions.map((ability) => ability.id),
+            moveIds: option.moveIds,
+          },
+          activeCandidateFilters,
+        ),
+      ),
+    [activeCandidateFilters, selectOptions],
   );
   const popularSelectOptions = useMemo(() => {
     const optionsByLookup = new Map<string, PokemonSelectOption>();
 
-    for (const option of selectOptions) {
+    for (const option of candidateFilteredSelectOptions) {
       for (const lookup of getPokemonLookupAliases(option.id)) {
         optionsByLookup.set(normalizeShowdownId(lookup), option);
       }
@@ -877,8 +969,40 @@ export function TeamBuilder({
       orderedOptions.push(option);
     }
 
+    for (const option of candidateFilteredSelectOptions) {
+      if (!seenOptionIds.has(option.id)) {
+        orderedOptions.push(option);
+      }
+    }
+
     return orderedOptions;
-  }, [selectOptions, usagePokemonIds]);
+  }, [candidateFilteredSelectOptions, usagePokemonIds]);
+  const usageRankByOptionId = useMemo(() => {
+    const optionsByLookup = new Map<string, PokemonSelectOption>();
+
+    for (const option of candidateFilteredSelectOptions) {
+      for (const lookup of getPokemonLookupAliases(option.id)) {
+        optionsByLookup.set(normalizeShowdownId(lookup), option);
+      }
+    }
+
+    const ranks = new Map<string, number>();
+
+    for (const [usageIndex, usageId] of (usagePokemonIds ?? []).entries()) {
+      const exactOption = getPokemonLookupAliases(usageId)
+        .map((lookup) => optionsByLookup.get(normalizeShowdownId(lookup)))
+        .find((option): option is PokemonSelectOption => Boolean(option));
+      const option =
+        exactOption ??
+        optionsByLookup.get(normalizeShowdownId(getBaseUsageLookup(usageId)));
+
+      if (option && !ranks.has(option.id)) {
+        ranks.set(option.id, usageIndex + 1);
+      }
+    }
+
+    return ranks;
+  }, [candidateFilteredSelectOptions, usagePokemonIds]);
   const itemOptions = useMemo(
     () =>
       itemIndex.filter(
@@ -891,19 +1015,145 @@ export function TeamBuilder({
   const normalizedNameQuery = nameQuery.trim().toLowerCase();
   const normalizedItemQuery = itemQuery.trim().toLowerCase();
   const normalizedMoveQuery = moveQuery.trim().toLowerCase();
-  const filteredOptions = useMemo(
+  const normalizedCandidateFilterQuery = candidateFilterQuery.trim().toLowerCase();
+  const matchingPokemonOptions = useMemo(
     () =>
       normalizedNameQuery
-        ? selectOptions
+        ? candidateFilteredSelectOptions
             .filter(
               (option) =>
                 option.name.toLowerCase().includes(normalizedNameQuery) ||
                 option.id.toLowerCase().includes(normalizedNameQuery) ||
                 String(option.number).includes(normalizedNameQuery),
             )
-            .slice(0, 40)
-        : popularSelectOptions.slice(0, popularPokemonLimit),
-    [normalizedNameQuery, popularPokemonLimit, popularSelectOptions, selectOptions],
+        : popularSelectOptions,
+    [candidateFilteredSelectOptions, normalizedNameQuery, popularSelectOptions],
+  );
+  const filteredOptions = useMemo(
+    () => matchingPokemonOptions.slice(0, pokemonOptionLimit),
+    [matchingPokemonOptions, pokemonOptionLimit],
+  );
+  const candidateAbilityOptions = useMemo(() => {
+    const optionsById = new Map<string, PokemonCandidateFilterValue>();
+    const filtersWithoutAbility = { ...activeCandidateFilters, ability: null };
+
+    for (const option of selectOptions) {
+      if (
+        !matchesPokemonCandidateFilters(
+          {
+            types: option.types,
+            abilityIds: option.abilityOptions.map((ability) => ability.id),
+            moveIds: option.moveIds,
+          },
+          filtersWithoutAbility,
+        )
+      ) {
+        continue;
+      }
+
+      for (const ability of option.abilityOptions) {
+        optionsById.set(ability.id, ability);
+      }
+    }
+
+    return [...optionsById.values()].sort((first, second) =>
+      first.name.localeCompare(second.name),
+    );
+  }, [activeCandidateFilters, selectOptions]);
+  const candidateMoveById = useMemo(
+    () =>
+      new Map(
+        candidateMoveIndex.map((move) => [normalizeShowdownId(move.id), move]),
+      ),
+    [candidateMoveIndex],
+  );
+  const selectedCandidateMoveOptions = useMemo(
+    () =>
+      activeCandidateFilters.moves.map((filter): CandidateFilterOption => {
+        const move = candidateMoveById.get(filter.id);
+
+        return {
+          ...filter,
+          type: move?.type,
+          power: move?.power,
+        };
+      }),
+    [activeCandidateFilters.moves, candidateMoveById],
+  );
+  const candidateMoveOptions = useMemo(() => {
+    const editedMoveIndex = Math.min(
+      candidateMoveFilterSlot ?? activeCandidateFilters.moves.length,
+      activeCandidateFilters.moves.length,
+    );
+    const retainedMoves = activeCandidateFilters.moves.filter(
+      (_, moveIndex) => moveIndex !== editedMoveIndex,
+    );
+    const filtersWithoutEditedMove = {
+      ...activeCandidateFilters,
+      moves: retainedMoves,
+    };
+    const selectedMoveIds = new Set(retainedMoves.map((move) => move.id));
+    const moveIds = new Set<string>();
+
+    for (const option of selectOptions) {
+      if (
+        !matchesPokemonCandidateFilters(
+          {
+            types: option.types,
+            abilityIds: option.abilityOptions.map((ability) => ability.id),
+            moveIds: option.moveIds,
+          },
+          filtersWithoutEditedMove,
+        )
+      ) {
+        continue;
+      }
+
+      for (const moveId of option.moveIds) {
+        if (!selectedMoveIds.has(moveId)) {
+          moveIds.add(moveId);
+        }
+      }
+    }
+
+    return [...moveIds]
+      .map((moveId): CandidateFilterOption => {
+        const move = candidateMoveById.get(moveId);
+        return {
+          id: moveId,
+          name: move?.name ?? formatIdLabel(moveId),
+          type: move?.type,
+          power: move?.power,
+        };
+      })
+      .sort((first, second) => first.name.localeCompare(second.name));
+  }, [
+    activeCandidateFilters,
+    candidateMoveById,
+    candidateMoveFilterSlot,
+    selectOptions,
+  ]);
+  const matchingCandidateFilterOptions = useMemo(() => {
+    const options: CandidateFilterOption[] =
+      openCandidateFilterPicker === "ability"
+        ? candidateAbilityOptions
+        : candidateMoveOptions;
+
+    return options.filter(
+        (option) =>
+          !normalizedCandidateFilterQuery ||
+          option.name.toLowerCase().includes(normalizedCandidateFilterQuery) ||
+          option.id.includes(normalizedCandidateFilterQuery),
+      );
+  }, [
+    candidateAbilityOptions,
+    candidateMoveOptions,
+    normalizedCandidateFilterQuery,
+    openCandidateFilterPicker,
+  ]);
+  const filteredCandidateFilterOptions = useMemo(
+    () => matchingCandidateFilterOptions.slice(0, candidateFilterOptionLimit),
+    [candidateFilterOptionLimit, matchingCandidateFilterOptions],
   );
   const filteredItemOptions = useMemo(
     () =>
@@ -915,13 +1165,16 @@ export function TeamBuilder({
                 option.name.toLowerCase().includes(normalizedItemQuery) ||
                 String(option.id).includes(normalizedItemQuery),
             )
-            .slice(0, 40)
-        : [],
+        : itemOptions,
     [itemOptions, normalizedItemQuery],
   );
+  const visibleItemOptions = useMemo(
+    () => filteredItemOptions.slice(0, itemOptionLimit),
+    [filteredItemOptions, itemOptionLimit],
+  );
   const displayedItemOptions = useMemo(
-    () => (activeItem ? [null, ...filteredItemOptions] : filteredItemOptions),
-    [activeItem, filteredItemOptions],
+    () => (activeItem ? [null, ...visibleItemOptions] : visibleItemOptions),
+    [activeItem, visibleItemOptions],
   );
   const filteredMoveOptions = useMemo(
     () =>
@@ -935,6 +1188,30 @@ export function TeamBuilder({
         : moves,
     [moves, normalizedMoveQuery],
   );
+  const visibleMoveOptions = useMemo(
+    () => filteredMoveOptions.slice(0, moveOptionLimit),
+    [filteredMoveOptions, moveOptionLimit],
+  );
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    void loadShowdownData()
+      .then((snapshot) => {
+        if (isCurrent) {
+          setCandidateMoveIndex(Object.values(snapshot.movesById));
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setCandidateMoveIndex([]);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (canAddBenchPokemon(bench.length)) {
@@ -943,11 +1220,31 @@ export function TeamBuilder({
   }, [bench.length]);
 
   useEffect(() => {
-    setPopularPokemonLimit(popularPokemonPageSize);
-  }, [isNamePickerOpen, normalizedNameQuery]);
+    setPokemonOptionLimit(optionPageSize);
+  }, [activeCandidateFilters, isNamePickerVisible, normalizedNameQuery]);
 
   useEffect(() => {
-    if (!isNamePickerOpen || usagePokemonIds !== null) {
+    setCandidateFilterOptionLimit(optionPageSize);
+    setActiveCandidateFilterOptionIndex(
+      matchingCandidateFilterOptions.length > 0 ? 0 : -1,
+    );
+  }, [
+    candidateMoveFilterSlot,
+    matchingCandidateFilterOptions.length,
+    normalizedCandidateFilterQuery,
+    openCandidateFilterPicker,
+  ]);
+
+  useEffect(() => {
+    setItemOptionLimit(optionPageSize);
+  }, [isItemPickerOpen, normalizedItemQuery]);
+
+  useEffect(() => {
+    setAbilityOptionLimit(optionPageSize);
+  }, [activePokemonId, openTraitPicker]);
+
+  useEffect(() => {
+    if (!isNamePickerVisible || usagePokemonIds !== null) {
       return undefined;
     }
 
@@ -980,7 +1277,7 @@ export function TeamBuilder({
     return () => {
       isCurrent = false;
     };
-  }, [isNamePickerOpen, usagePokemonIds]);
+  }, [isNamePickerVisible, usagePokemonIds]);
 
   useEffect(() => {
     setActivePokemonOptionIndex((current) => {
@@ -998,8 +1295,12 @@ export function TeamBuilder({
       return;
     }
 
-    setActiveItemOptionIndex(
-      activeItem && normalizedItemQuery && filteredItemOptions.length > 0 ? 1 : 0,
+    setActiveItemOptionIndex((current) =>
+      current >= 0 && current < displayedItemOptions.length
+        ? current
+        : activeItem && filteredItemOptions.length > 0
+          ? 1
+          : 0,
     );
   }, [activeItem, displayedItemOptions.length, filteredItemOptions.length, normalizedItemQuery]);
 
@@ -1015,6 +1316,10 @@ export function TeamBuilder({
       : -1;
     const nextOptionIndex =
       selectedOptionIndex >= 0 ? selectedOptionIndex + 1 : filteredMoveOptions.length ? 1 : 0;
+
+    setMoveOptionLimit(
+      Math.max(optionPageSize, Math.ceil(nextOptionIndex / optionPageSize) * optionPageSize),
+    );
 
     if (openMoveSlot !== null) {
       requestMoveOptionScroll("start", { preserveExisting: true });
@@ -1170,10 +1475,10 @@ export function TeamBuilder({
     });
 
     return () => window.cancelAnimationFrame(animationFrameId);
-  }, [activeMoveOptionIndex, filteredMoveOptions, openMoveSlot]);
+  }, [activeMoveOptionIndex, openMoveSlot, visibleMoveOptions]);
 
   useEffect(() => {
-    if (!isNamePickerOpen) {
+    if (!isNamePickerVisible || !activeMember) {
       return;
     }
 
@@ -1189,7 +1494,32 @@ export function TeamBuilder({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isNamePickerOpen]);
+  }, [activeMember, isNamePickerVisible]);
+
+  useEffect(() => {
+    if (!openCandidateFilterPicker) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!candidateFilterPickerRef.current?.contains(event.target as Node)) {
+        setOpenCandidateFilterPicker(null);
+        setCandidateFilterQuery("");
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [openCandidateFilterPicker]);
+
+  useEffect(() => {
+    setOpenCandidateFilterPicker(null);
+    setCandidateMoveFilterSlot(null);
+    setCandidateFilterQuery("");
+  }, [selectedSlot]);
 
   useEffect(() => {
     if (!isBattleFormPickerOpen) {
@@ -1465,6 +1795,105 @@ export function TeamBuilder({
     setNameQuery("");
   }
 
+  function togglePokemonType(type: PokemonType) {
+    patchSlot(selectedSlot, {
+      candidateFilters: {
+        ...activeCandidateFilters,
+        types: togglePokemonTypeFilter(activeCandidateFilters.types, type),
+      },
+    });
+    setActivePokemonOptionIndex(0);
+  }
+
+  function closeCandidateFilterPicker() {
+    setOpenCandidateFilterPicker(null);
+    setCandidateMoveFilterSlot(null);
+    setCandidateFilterQuery("");
+  }
+
+  function openCandidatePicker(picker: CandidateFilterPicker) {
+    setCandidateMoveFilterSlot(null);
+    setOpenCandidateFilterPicker((current) => (current === picker ? null : picker));
+    setCandidateFilterQuery("");
+    setCandidateFilterOptionLimit(optionPageSize);
+    setActiveCandidateFilterOptionIndex(0);
+  }
+
+  function openCandidateMovePicker(slotIndex: number) {
+    const isSameOpenSlot =
+      openCandidateFilterPicker === "move" &&
+      candidateMoveFilterSlot === slotIndex;
+
+    setOpenCandidateFilterPicker(isSameOpenSlot ? null : "move");
+    setCandidateMoveFilterSlot(isSameOpenSlot ? null : slotIndex);
+    setCandidateFilterQuery("");
+    setCandidateFilterOptionLimit(optionPageSize);
+    setActiveCandidateFilterOptionIndex(0);
+  }
+
+  function selectCandidateFilterOption(option: CandidateFilterOption) {
+    if (openCandidateFilterPicker === "ability") {
+      patchSlot(selectedSlot, {
+        candidateFilters: { ...activeCandidateFilters, ability: option },
+      });
+      closeCandidateFilterPicker();
+      return;
+    }
+
+    if (openCandidateFilterPicker === "move") {
+      const targetIndex = Math.min(
+        candidateMoveFilterSlot ?? activeCandidateFilters.moves.length,
+        activeCandidateFilters.moves.length,
+      );
+      const nextMoves = [...activeCandidateFilters.moves];
+      nextMoves[targetIndex] = { id: option.id, name: option.name };
+
+      patchSlot(selectedSlot, {
+        candidateFilters: {
+          ...activeCandidateFilters,
+          moves: nextMoves,
+        },
+      });
+      closeCandidateFilterPicker();
+    }
+  }
+
+  function moveCandidateFilterKeyboardOption(direction: 1 | -1) {
+    const hasClearMoveOption =
+      openCandidateFilterPicker === "move" &&
+      candidateMoveFilterSlot !== null &&
+      Boolean(activeCandidateFilters.moves[candidateMoveFilterSlot]);
+    setActiveCandidateFilterOptionIndex((current) => {
+      const nextIndex = getNextOptionIndex(
+        current,
+        matchingCandidateFilterOptions.length + (hasClearMoveOption ? 1 : 0),
+        direction,
+      );
+      const optionIndex = nextIndex - (hasClearMoveOption ? 1 : 0);
+
+      if (optionIndex >= candidateFilterOptionLimit) {
+        setCandidateFilterOptionLimit((limit) =>
+          getExpandedOptionLimit(limit, matchingCandidateFilterOptions.length),
+        );
+      }
+
+      return nextIndex;
+    });
+  }
+
+  function handleCandidateFilterMenuScroll(event: UIEvent<HTMLDivElement>) {
+    if (
+      filteredCandidateFilterOptions.length >= matchingCandidateFilterOptions.length ||
+      !isNearOptionListEnd(event.currentTarget)
+    ) {
+      return;
+    }
+
+    setCandidateFilterOptionLimit((current) =>
+      getExpandedOptionLimit(current, matchingCandidateFilterOptions.length),
+    );
+  }
+
   function closeItemPicker() {
     setIsItemPickerOpen(false);
     setItemQuery("");
@@ -1494,17 +1923,6 @@ export function TeamBuilder({
     setIsValidityPanelOpen(false);
   }
 
-  function changeBuilderView(nextView: BuilderView) {
-    if (nextView === builderView) {
-      return;
-    }
-
-    closeBuilderPopovers();
-    setIsBenchOpen(false);
-    setPendingBenchRemovalId(null);
-    setBuilderView(nextView);
-  }
-
   function requestMoveOptionScroll(
     mode: MoveOptionScrollMode,
     options: { preserveExisting?: boolean } = {},
@@ -1529,12 +1947,22 @@ export function TeamBuilder({
 
   function toggleMovePicker(index: number, moveId: string) {
     if (openMoveSlot === index) {
+      setSuppressedMoveTooltipSlot(index);
       closeMovePicker();
       return;
     }
 
+    setSuppressedMoveTooltipSlot(null);
     requestMoveOptionScroll("start");
-    setMoveOptionPreview(getMoveOptionIndex(moveId));
+    const selectedOptionIndex = getMoveOptionIndex(moveId);
+
+    setMoveOptionLimit(
+      Math.max(
+        optionPageSize,
+        Math.ceil(selectedOptionIndex / optionPageSize) * optionPageSize,
+      ),
+    );
+    setMoveOptionPreview(selectedOptionIndex);
     setMoveQuery("");
     setOpenMoveSlot(index);
   }
@@ -1647,12 +2075,6 @@ export function TeamBuilder({
 
     setIsBenchOpen(false);
     setPendingBenchRemovalId(null);
-    setBuilderView("pokemon");
-    selectTeamSlot(index);
-  }
-
-  function handleTeamOverviewSlotClick(index: number) {
-    setBuilderView("pokemon");
     selectTeamSlot(index);
   }
 
@@ -1784,6 +2206,7 @@ export function TeamBuilder({
 
     if (pokemonIndex.length === 0) {
       onChangeSlot(selectedSlot, value);
+      patchSlot(selectedSlot, { candidateFilters: null });
       return;
     }
 
@@ -1940,23 +2363,28 @@ export function TeamBuilder({
   }
 
   function handlePokemonMenuScroll(event: UIEvent<HTMLDivElement>) {
-    if (normalizedNameQuery || filteredOptions.length >= popularSelectOptions.length) {
+    if (
+      filteredOptions.length >= matchingPokemonOptions.length ||
+      !isNearOptionListEnd(event.currentTarget)
+    ) {
       return;
     }
 
-    const target = event.currentTarget;
-    const remainingScroll =
-      target.scrollHeight - target.scrollTop - target.clientHeight;
+    setPokemonOptionLimit((current) =>
+      getExpandedOptionLimit(current, matchingPokemonOptions.length),
+    );
+  }
 
-    if (remainingScroll > 32) {
-      return;
+  function getItemOptionAt(index: number) {
+    if (activeItem) {
+      return index === 0 ? null : filteredItemOptions[index - 1];
     }
 
-    setPopularPokemonLimit((current) => current + popularPokemonPageSize);
+    return filteredItemOptions[index];
   }
 
   function previewItemOptionAt(index: number) {
-    const option = displayedItemOptions[index];
+    const option = getItemOptionAt(index);
 
     if (!option) {
       setHoveredItemOption(null);
@@ -1968,16 +2396,24 @@ export function TeamBuilder({
 
   function moveItemKeyboardOption(direction: 1 | -1) {
     setActiveItemOptionIndex((current) => {
-      const nextIndex = getNextOptionIndex(current, displayedItemOptions.length, direction);
+      const totalOptionCount = filteredItemOptions.length + (activeItem ? 1 : 0);
+      const nextIndex = getNextOptionIndex(current, totalOptionCount, direction);
+
+      if (nextIndex - (activeItem ? 1 : 0) >= itemOptionLimit) {
+        setItemOptionLimit((limit) =>
+          getExpandedOptionLimit(limit, filteredItemOptions.length),
+        );
+      }
+
       previewItemOptionAt(nextIndex);
       return nextIndex;
     });
   }
 
   function selectActiveItemOption() {
-    const option = displayedItemOptions[
-      activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0
-    ];
+    const option = getItemOptionAt(
+      activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0,
+    );
 
     if (option === null) {
       clearItem();
@@ -1987,6 +2423,19 @@ export function TeamBuilder({
     if (option) {
       handleSelectItem(option.name);
     }
+  }
+
+  function handleItemMenuScroll(event: UIEvent<HTMLDivElement>) {
+    if (
+      visibleItemOptions.length >= filteredItemOptions.length ||
+      !isNearOptionListEnd(event.currentTarget)
+    ) {
+      return;
+    }
+
+    setItemOptionLimit((current) =>
+      getExpandedOptionLimit(current, filteredItemOptions.length),
+    );
   }
 
   function previewAbilityOptionAt(index: number) {
@@ -2024,9 +2473,29 @@ export function TeamBuilder({
         displayedAbilityOptions.length,
         direction,
       );
+
+      if (nextIndex >= abilityOptionLimit) {
+        setAbilityOptionLimit((limit) =>
+          getExpandedOptionLimit(limit, displayedAbilityOptions.length),
+        );
+      }
+
       previewAbilityOptionAt(nextIndex);
       return nextIndex;
     });
+  }
+
+  function handleAbilityMenuScroll(event: UIEvent<HTMLDivElement>) {
+    if (
+      visibleAbilityOptions.length >= displayedAbilityOptions.length ||
+      !isNearOptionListEnd(event.currentTarget)
+    ) {
+      return;
+    }
+
+    setAbilityOptionLimit((current) =>
+      getExpandedOptionLimit(current, displayedAbilityOptions.length),
+    );
   }
 
   function selectActiveAbilityOption() {
@@ -2067,12 +2536,32 @@ export function TeamBuilder({
         filteredMoveOptions.length + 1,
         direction,
       );
+
+      if (nextIndex > moveOptionLimit) {
+        setMoveOptionLimit((limit) =>
+          getExpandedOptionLimit(limit, filteredMoveOptions.length),
+        );
+      }
+
       moveOptionScrollModeRef.current = "nearest";
       setHoveredMoveOption(
         nextIndex > 0 ? (filteredMoveOptions[nextIndex - 1] ?? null) : null,
       );
       return nextIndex;
     });
+  }
+
+  function handleMoveMenuScroll(event: UIEvent<HTMLDivElement>) {
+    if (
+      visibleMoveOptions.length >= filteredMoveOptions.length ||
+      !isNearOptionListEnd(event.currentTarget)
+    ) {
+      return;
+    }
+
+    setMoveOptionLimit((current) =>
+      getExpandedOptionLimit(current, filteredMoveOptions.length),
+    );
   }
 
   function selectActiveMoveOption(slotIndex: number) {
@@ -2196,22 +2685,6 @@ export function TeamBuilder({
         aria-label="Builder tools"
         ref={showdownToolbarRef}
       >
-        <button
-          className={`builder-view-switch is-${builderView}`}
-          type="button"
-          aria-label={`Current view: ${
-            builderView === "pokemon" ? "Pokemon" : "Team"
-          }. Switch to ${builderView === "pokemon" ? "Team" : "Pokemon"} view`}
-          title={`Switch to ${builderView === "pokemon" ? "Team" : "Pokemon"} view`}
-          onClick={() => changeBuilderView(builderView === "pokemon" ? "team" : "pokemon")}
-        >
-          <span className="builder-view-switch-pokemon" aria-hidden="true">
-            <FontAwesomeIcon icon={faUser} aria-hidden="true" />
-          </span>
-          <span className="builder-view-switch-team" aria-hidden="true">
-            <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
-          </span>
-        </button>
         {team.some(Boolean) ? (
           <button
             className={`builder-card-tool-button validity-trigger is-${
@@ -2442,17 +2915,15 @@ export function TeamBuilder({
 
       <div className="builder-card-layout" ref={builderCardLayoutRef}>
         <div
-          className={`team-tabs is-${builderView}-view ${
-            teamReorder.isDragging ? "is-reordering" : ""
-          }`}
-          aria-label={builderView === "team" ? "Team bench" : "Current team"}
+          className={`team-tabs ${teamReorder.isDragging ? "is-reordering" : ""}`}
+          aria-label="Current team"
           ref={teamTabsRef}
         >
         {team.map((member, index) => {
           const displacement = getReorderDisplacement(teamReorder.dragState, index);
           const railItem = itemBySlot[index] ?? null;
           const railDisplayName = member ? getMemberDisplayName(member) : "";
-          const isActiveRailSlot = builderView === "pokemon" && selectedSlot === index;
+          const isActiveRailSlot = selectedSlot === index;
 
           return (
             <div
@@ -2709,33 +3180,19 @@ export function TeamBuilder({
         </div>
       </div>
 
-      {builderView === "team" ? (
-        <TeamOverview
-          team={team}
-          pokemonIndex={pokemonIndex}
-          buildState={buildState}
-          dragState={teamReorder.dragState}
-          isReordering={teamReorder.isDragging}
-          validity={validity}
-          onOpenSlot={handleTeamOverviewSlotClick}
-          onSlotKeyDown={handleTeamTabKeyDown}
-          onSlotPointerCancel={teamReorder.handlePointerCancel}
-          onSlotPointerDown={teamReorder.handlePointerDown}
-          onSlotPointerMove={teamReorder.handlePointerMove}
-          onSlotPointerUp={teamReorder.handlePointerUp}
-          shouldSuppressClick={teamReorder.shouldSuppressClick}
-        />
-      ) : (
       <article
         className="pokemon-card"
         onClick={(event) => {
-          if (activeMember || isNamePickerOpen) {
+          if (activeMember || isNamePickerVisible) {
             return;
           }
 
           const target = event.target as HTMLElement;
 
-          if (target.closest(".pokemon-name-picker")) {
+          if (
+            target.closest(".pokemon-name-picker") ||
+            target.closest(".candidate-filter-panel")
+          ) {
             return;
           }
 
@@ -2747,7 +3204,7 @@ export function TeamBuilder({
           <div className="editor-column">
             <div className="name-row">
               <div className="pokemon-name-picker" ref={namePickerRef}>
-                {isNamePickerOpen ? (
+                {isNamePickerVisible ? (
                   <input
                     className="pokemon-name-input"
                     aria-label="Search Pokemon"
@@ -2776,71 +3233,81 @@ export function TeamBuilder({
                     className="pokemon-name-button"
                     type="button"
                     aria-haspopup="listbox"
-                    aria-expanded={isNamePickerOpen}
+                    aria-expanded={isNamePickerVisible}
                     onClick={() => setIsNamePickerOpen(true)}
                   >
                     {activeHeaderName ?? "Pokemon"}
                   </button>
                 )}
 
-                {isNamePickerOpen ? (
-                  <div
-                    className="pokemon-name-menu"
-                    role="listbox"
-                    onScroll={handlePokemonMenuScroll}
-                  >
-                    {filteredOptions.map((option, optionIndex) => (
-                      <button
-                        className="pokemon-name-option"
-                        type="button"
-                        role="option"
-                        aria-selected={activePokemonOptionIndex === optionIndex}
-                        value={option.id}
-                        key={option.id}
-                        onMouseEnter={() => setActivePokemonOptionIndex(optionIndex)}
-                        onClick={() => handleSelectOption(option.id, true)}
-                      >
-                        <span>{option.name}</span>
-                        {option.number ? <small>#{option.number}</small> : null}
-                      </button>
-                    ))}
-                    {pokemonIndexStatus === "loading" && pokemonIndex.length === 0 ? (
-                      <DataStatusRow message="Loading Pokemon data" isLoading />
-                    ) : null}
-                    {pokemonIndexStatus === "error" ? (
-                      <DataStatusRow
-                        message="Full Pokemon data is unavailable."
-                        onRetry={onRetryPokemonIndex}
-                      />
-                    ) : null}
-                    {!normalizedNameQuery &&
-                    pokemonIndexStatus === "ready" &&
-                    isUsageOrderLoading ? (
-                      <DataStatusRow message="Loading popular Pokemon" isLoading />
-                    ) : null}
-                    {!normalizedNameQuery && usageOrderError ? (
-                      <DataStatusRow
-                        message={`${usageOrderError} Search is still available.`}
-                        onRetry={() => {
-                          setUsageOrderError(null);
-                          setUsagePokemonIds(null);
-                        }}
-                      />
-                    ) : null}
-                    {!normalizedNameQuery &&
-                    !isUsageOrderLoading &&
-                    usagePokemonIds !== null &&
-                    filteredOptions.length === 0 ? (
-                      <div className="pokemon-name-empty">Type to search Pokemon</div>
-                    ) : null}
-                    {normalizedNameQuery && filteredOptions.length === 0 ? (
-                      <div className="pokemon-name-empty">No Pokemon found</div>
-                    ) : null}
+                {isNamePickerVisible ? (
+                  <div className="pokemon-name-menu">
+                    <div
+                      className="pokemon-name-results"
+                      role="listbox"
+                      onScroll={handlePokemonMenuScroll}
+                    >
+                      {filteredOptions.map((option, optionIndex) => (
+                        <button
+                          className="pokemon-name-option"
+                          type="button"
+                          role="option"
+                          aria-selected={activePokemonOptionIndex === optionIndex}
+                          value={option.id}
+                          key={option.id}
+                          onMouseEnter={() => setActivePokemonOptionIndex(optionIndex)}
+                          onClick={() => handleSelectOption(option.id, true)}
+                        >
+                          <span>{option.name}</span>
+                          {usageRankByOptionId.has(option.id) ? (
+                            <small title="Usage rank">
+                              #{usageRankByOptionId.get(option.id)}
+                            </small>
+                          ) : null}
+                        </button>
+                      ))}
+                      {pokemonIndexStatus === "loading" && pokemonIndex.length === 0 ? (
+                        <DataStatusRow message="Loading Pokemon data" isLoading />
+                      ) : null}
+                      {pokemonIndexStatus === "error" ? (
+                        <DataStatusRow
+                          message="Full Pokemon data is unavailable."
+                          onRetry={onRetryPokemonIndex}
+                        />
+                      ) : null}
+                      {!normalizedNameQuery &&
+                      pokemonIndexStatus === "ready" &&
+                      isUsageOrderLoading ? (
+                        <DataStatusRow message="Loading popular Pokemon" isLoading />
+                      ) : null}
+                      {!normalizedNameQuery && usageOrderError ? (
+                        <DataStatusRow
+                          message={`${usageOrderError} Search is still available.`}
+                          onRetry={() => {
+                            setUsageOrderError(null);
+                            setUsagePokemonIds(null);
+                          }}
+                        />
+                      ) : null}
+                      {!normalizedNameQuery &&
+                      !isUsageOrderLoading &&
+                      usagePokemonIds !== null &&
+                      filteredOptions.length === 0 ? (
+                        <div className="pokemon-name-empty">
+                          {hasPokemonCandidateFilters(activeCandidateFilters)
+                            ? "No Pokemon match these filters"
+                            : "No popular Pokemon found"}
+                        </div>
+                      ) : null}
+                      {normalizedNameQuery && filteredOptions.length === 0 ? (
+                        <div className="pokemon-name-empty">No Pokemon found</div>
+                      ) : null}
+                    </div>
                   </div>
                 ) : null}
               </div>
 
-              {!isNamePickerOpen && visibleMegaOptions.length > 0 ? (
+              {!isNamePickerVisible && visibleMegaOptions.length > 0 ? (
                 <div className="mega-controls" aria-label="Mega evolution options">
                   {visibleMegaOptions.map((option) => {
                     const isActiveMega =
@@ -2870,7 +3337,7 @@ export function TeamBuilder({
                 </div>
               ) : null}
 
-              {!isNamePickerOpen && battleFormGroup && activeBattleFormOption ? (
+              {!isNamePickerVisible && battleFormGroup && activeBattleFormOption ? (
                 <div className="form-picker" ref={battleFormPickerRef}>
                   <button
                     className="form-picker-trigger"
@@ -3018,7 +3485,11 @@ export function TeamBuilder({
                       }}
                     />
 
-                    <div className="item-results" role="listbox">
+                    <div
+                      className="item-results"
+                      role="listbox"
+                      onScroll={handleItemMenuScroll}
+                    >
                       {activeItem ? (
                         <button
                           className="item-option item-clear-option"
@@ -3041,7 +3512,7 @@ export function TeamBuilder({
                           <span className="item-option-name">Remove Item</span>
                         </button>
                       ) : null}
-                      {filteredItemOptions.map((option, optionIndex) => {
+                      {visibleItemOptions.map((option, optionIndex) => {
                         const previewItemOption = itemFromIndexEntry(option);
                         const displayedOptionIndex = optionIndex + (activeItem ? 1 : 0);
 
@@ -3081,11 +3552,7 @@ export function TeamBuilder({
                           onRetry={onRetryItemIndex}
                         />
                       ) : null}
-                      {!normalizedItemQuery && itemIndexStatus === "ready" ? (
-                        <div className="item-empty">Type to search items</div>
-                      ) : null}
-                      {normalizedItemQuery &&
-                      filteredItemOptions.length === 0 &&
+                      {filteredItemOptions.length === 0 &&
                       itemIndexStatus === "ready" ? (
                         <div className="item-empty">No items found</div>
                       ) : null}
@@ -3172,8 +3639,12 @@ export function TeamBuilder({
                   </button>
 
                   {openTraitPicker === "ability" ? (
-                    <div className="trait-menu" role="listbox">
-                      {displayedAbilityOptions.map((ability, optionIndex) => (
+                    <div
+                      className="trait-menu"
+                      role="listbox"
+                      onScroll={handleAbilityMenuScroll}
+                    >
+                      {visibleAbilityOptions.map((ability, optionIndex) => (
                         <button
                           className="trait-option"
                           type="button"
@@ -3385,6 +3856,11 @@ export function TeamBuilder({
                     }`}
                     data-move-slot-index={index}
                     key={`${index}-${move?.id ?? "empty"}`}
+                    onMouseLeave={() => {
+                      if (suppressedMoveTooltipSlot === index) {
+                        setSuppressedMoveTooltipSlot(null);
+                      }
+                    }}
                     style={
                       moveReorder.dragState?.sourceIndex === index
                         ? ({
@@ -3432,7 +3908,9 @@ export function TeamBuilder({
                       )}
                     </button>
 
-                    {move && openMoveSlot !== index ? (
+                    {move &&
+                    openMoveSlot !== index &&
+                    suppressedMoveTooltipSlot !== index ? (
                       <MoveTooltip move={move} />
                     ) : null}
 
@@ -3444,7 +3922,10 @@ export function TeamBuilder({
                           autoFocus
                           value={moveQuery}
                           placeholder="Search moves"
-                          onChange={(event) => setMoveQuery(event.target.value)}
+                          onChange={(event) => {
+                            setMoveQuery(event.target.value);
+                            setMoveOptionLimit(optionPageSize);
+                          }}
                           onKeyDown={(event) => {
                             if (event.key === "Escape") {
                               closeMovePicker();
@@ -3462,7 +3943,12 @@ export function TeamBuilder({
                           }}
                         />
 
-                        <div className="move-results" role="listbox" ref={moveResultsRef}>
+                        <div
+                          className="move-results"
+                          role="listbox"
+                          ref={moveResultsRef}
+                          onScroll={handleMoveMenuScroll}
+                        >
                           <button
                             className={`move-option move-clear-option ${
                               activeMoveOptionIndex === 0 ? "is-keyboard-active" : ""
@@ -3486,7 +3972,7 @@ export function TeamBuilder({
                             <span>Empty Move Slot</span>
                           </button>
                           {filteredMoveOptions.length ? (
-                            filteredMoveOptions.map((option, optionIndex) => (
+                            visibleMoveOptions.map((option, optionIndex) => (
                               <button
                                 className={`move-option type-${option.type} ${
                                   activeMoveOptionIndex === optionIndex + 1
@@ -3532,6 +4018,55 @@ export function TeamBuilder({
                 })
               ) : null}
               </div>
+
+              {!activeMember ? (
+                <CandidateFilterPanel
+                  filters={activeCandidateFilters}
+                  matchingCount={candidateFilteredSelectOptions.length}
+                  totalCount={selectOptions.length}
+                  openPicker={openCandidateFilterPicker}
+                  query={candidateFilterQuery}
+                  options={filteredCandidateFilterOptions}
+                  selectedMoves={selectedCandidateMoveOptions}
+                  activeMoveSlot={candidateMoveFilterSlot}
+                  activeOptionIndex={activeCandidateFilterOptionIndex}
+                  panelRef={candidateFilterPickerRef}
+                  onToggleType={togglePokemonType}
+                  onClearFilters={() =>
+                    patchSlot(selectedSlot, { candidateFilters: null })
+                  }
+                  onOpenPicker={openCandidatePicker}
+                  onOpenMovePicker={openCandidateMovePicker}
+                  onClosePicker={closeCandidateFilterPicker}
+                  onQueryChange={(query) => {
+                    setCandidateFilterQuery(query);
+                    setCandidateFilterOptionLimit(optionPageSize);
+                  }}
+                  onResultsScroll={handleCandidateFilterMenuScroll}
+                  onMoveActiveOption={moveCandidateFilterKeyboardOption}
+                  onActiveOptionChange={setActiveCandidateFilterOptionIndex}
+                  onSelectOption={selectCandidateFilterOption}
+                  onRemoveAbility={() =>
+                    patchSlot(selectedSlot, {
+                      candidateFilters: {
+                        ...activeCandidateFilters,
+                        ability: null,
+                      },
+                    })
+                  }
+                  onRemoveMove={(moveIndex) => {
+                    patchSlot(selectedSlot, {
+                      candidateFilters: {
+                        ...activeCandidateFilters,
+                        moves: activeCandidateFilters.moves.filter(
+                          (_, index) => index !== moveIndex,
+                        ),
+                      },
+                    });
+                    closeCandidateFilterPicker();
+                  }}
+                />
+              ) : null}
 
               {activeMember ? (
                 <section className="stats-editor" aria-label="Pokemon stats">
@@ -3638,7 +4173,6 @@ export function TeamBuilder({
           </div>
         </div>
       </article>
-      )}
       </div>
       {shareImageTarget !== null &&
       (shareImageTarget === "team" || selectedShareBuild) ? (

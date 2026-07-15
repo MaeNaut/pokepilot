@@ -110,6 +110,7 @@ export function formatShowdownSlot(
     evsBySlot: { 0: buildState.evsBySlot[slotIndex] },
     moveIdsBySlot: { 0: buildState.moveIdsBySlot[slotIndex] ?? [] },
     preMegaPokemonBySlot: {},
+    candidateFiltersBySlot: {},
   });
 }
 

@@ -15,6 +15,7 @@ const emptyBuildState: TeamBuildState = {
   evsBySlot: {},
   moveIdsBySlot: {},
   preMegaPokemonBySlot: {},
+  candidateFiltersBySlot: {},
 };
 
 function member(id: string): TeamMember {
@@ -127,7 +128,16 @@ describe("bench Pokemon transfers", () => {
       },
     ];
     const state = moveBenchPokemonToTeam(
-      { team: [null], bench, buildState: emptyBuildState },
+      {
+        team: [null],
+        bench,
+        buildState: {
+          ...emptyBuildState,
+          candidateFiltersBySlot: {
+            0: { types: ["fire"], ability: null, moves: [] },
+          },
+        },
+      },
       0,
       0,
       "unused",
@@ -136,6 +146,7 @@ describe("bench Pokemon transfers", () => {
     expect(state.team[0]).toBe(charizard);
     expect(state.bench).toEqual([]);
     expect(state.buildState.abilityBySlot[0]).toBe("Blaze");
+    expect(state.buildState.candidateFiltersBySlot).toEqual({});
   });
 
   it("does not move another active Pokemon into a full bench", () => {

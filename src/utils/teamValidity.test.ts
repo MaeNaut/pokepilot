@@ -44,14 +44,20 @@ function createSnapshot(
 }
 
 function createBuildState(overrides: Partial<TeamBuildState> = {}): TeamBuildState {
-  return {
+  const state = {
     itemBySlot: {},
     abilityBySlot: { 0: "Blaze" },
     natureBySlot: { 0: "modest" },
     evsBySlot: {},
     moveIdsBySlot: { 0: ["flamethrower"] },
     preMegaPokemonBySlot: {},
+    candidateFiltersBySlot: {},
     ...overrides,
+  };
+
+  return {
+    ...state,
+    candidateFiltersBySlot: overrides.candidateFiltersBySlot ?? {},
   };
 }
 
@@ -62,6 +68,8 @@ const pokemonIndex: PokemonIndexEntry[] = [
     displayName: "Charizard",
     speciesKey: "charizard",
     sortNumber: 6,
+    types: ["fire", "flying"],
+    abilities: ["Blaze", "Solar Power"],
     formKind: "base",
     isSelectorOption: true,
   },
@@ -71,6 +79,8 @@ const pokemonIndex: PokemonIndexEntry[] = [
     displayName: "Charizard Mega Y",
     speciesKey: "charizard",
     sortNumber: 6,
+    types: ["fire", "flying"],
+    abilities: ["Drought"],
     formKind: "mega",
     formLabel: "Mega Y",
     isSelectorOption: false,

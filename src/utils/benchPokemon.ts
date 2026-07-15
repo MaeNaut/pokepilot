@@ -60,6 +60,10 @@ export function clearBuildStateSlot(
     evsBySlot: withoutSlot(buildState.evsBySlot, slotIndex),
     moveIdsBySlot: withoutSlot(buildState.moveIdsBySlot, slotIndex),
     preMegaPokemonBySlot: withoutSlot(buildState.preMegaPokemonBySlot, slotIndex),
+    candidateFiltersBySlot: withoutSlot(
+      buildState.candidateFiltersBySlot,
+      slotIndex,
+    ),
   };
 }
 
@@ -78,6 +82,10 @@ export function setBuildStateSlot(
       ...buildState.preMegaPokemonBySlot,
       [slotIndex]: build.preMegaPokemon,
     },
+    candidateFiltersBySlot: withoutSlot(
+      buildState.candidateFiltersBySlot,
+      slotIndex,
+    ),
   };
 }
 

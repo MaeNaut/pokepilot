@@ -174,24 +174,12 @@ Desktop UX decisions after the wide-builder layout change:
 - The compact header team-management group shares the Pokemon card's left edge,
   the team-name field is capped at 240px, and the PokePilot wordmark occupies the
   original left-side header position.
-- Keep Team View and Pokemon View as peer surfaces connected by the persistent
-  view switch. The desktop Team Rail remains visible in both views for team
-  context, reordering, Bench access, and utility actions; Team View removes the
-  selected-slot emphasis because its six full cards are the primary edit surface.
-- Keep Team View EV allocations separated into compact stat-value pairs with a
-  stronger label, darker values, and a subtle divider from the move grid.
-- In Team View, keep the item beneath the Pokemon name and pin type icons to the
-  upper-right corner. Reinvest the removed item row in larger metadata and move
-  typography while preserving the shared card height used by Pokemon View.
-
-- The main builder switches between the existing single-Pokemon editor and a
-  compact two-column overview of the active six. Both views read the same live
-  team and `useTeamBuildState` records, so switching does not copy, reset, or
-  persist a second version of unsaved edits.
-- Clicking an overview slot returns to the single-Pokemon editor with that slot
-  selected. Empty overview slots use the same Pokemon-search entry flow.
-- Team members are shown as compact tabs/bookmarks on the left side of the card.
-- The displayed Pokemon is changed by clicking a team tab.
+- Keep the single-Pokemon editor as the sole active build surface. The former
+  compact Team View and view switch were removed because the persistent Team Rail
+  already provides whole-team context without duplicating the editing UI.
+- Team members are shown in the vertical Team Rail to the left of the card. The
+  rail changes the displayed Pokemon, reorders active sets, opens empty-slot search,
+  and remains the entry point for Bench interactions.
 - Filled team tabs can be reordered with desktop drag, touch hold-and-drag, or
   `Alt+Arrow` keyboard controls. The Pokemon and its item, ability, nature, EVs,
   moves, and Mega/form state move together, including when moved through empty slots.
@@ -467,7 +455,7 @@ The current first slice is a provider-independent local preview:
 - On the desktop workspace, cap the content shell at 1920px. Stack a wider,
   shorter builder and compact diagnostics in the left column, and keep the
   full-height PokePilot panel visible in the right column. The Pokemon editor
-  places moves and stats side by side, while Team View uses a 3-by-2 grid.
+  places moves and stats side by side.
   Long analysis and future chat history scroll inside `copilot-content` so they
   do not increase the document height.
 - Keep the edge-filled PokePilot treatment through 1920px-wide desktop

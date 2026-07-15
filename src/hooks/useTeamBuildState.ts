@@ -1,6 +1,14 @@
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { PokemonItem, StatBlock } from "../types";
+import type {
+  PokemonCandidateFilters,
+  PokemonItem,
+  StatBlock,
+} from "../types";
+import {
+  hasPokemonCandidateFilters,
+  normalizePokemonCandidateFilters,
+} from "../utils/pokemonCandidateFilters";
 
 export type TeamBuildState = {
   itemBySlot: Record<number, PokemonItem | null>;
@@ -9,6 +17,7 @@ export type TeamBuildState = {
   evsBySlot: Record<number, StatBlock>;
   moveIdsBySlot: Record<number, string[]>;
   preMegaPokemonBySlot: Record<number, string>;
+  candidateFiltersBySlot: Record<number, PokemonCandidateFilters>;
 };
 
 export type TeamSlotBuildPatch = {
@@ -18,6 +27,7 @@ export type TeamSlotBuildPatch = {
   evs?: StatBlock | null;
   moveIds?: string[] | null;
   preMegaPokemon?: string | null;
+  candidateFilters?: PokemonCandidateFilters | null;
 };
 
 export type TeamBuildStateController = TeamBuildState & {
@@ -27,6 +37,9 @@ export type TeamBuildStateController = TeamBuildState & {
   setEvsBySlot: Dispatch<SetStateAction<Record<number, StatBlock>>>;
   setMoveIdsBySlot: Dispatch<SetStateAction<Record<number, string[]>>>;
   setPreMegaPokemonBySlot: Dispatch<SetStateAction<Record<number, string>>>;
+  setCandidateFiltersBySlot: Dispatch<
+    SetStateAction<Record<number, PokemonCandidateFilters>>
+  >;
   clearSlot: (slotIndex: number) => void;
   patchSlot: (slotIndex: number, patch: TeamSlotBuildPatch) => void;
   reorderSlots: (sourceIndex: number, targetIndex: number) => void;
@@ -41,6 +54,7 @@ const emptyBuildState: TeamBuildState = {
   evsBySlot: {},
   moveIdsBySlot: {},
   preMegaPokemonBySlot: {},
+  candidateFiltersBySlot: {},
 };
 
 function withoutSlot<T>(record: Record<number, T>, slotIndex: number) {
@@ -96,6 +110,16 @@ function normalizeBuildState(state?: Partial<TeamBuildState>): TeamBuildState {
     evsBySlot: state?.evsBySlot ?? {},
     moveIdsBySlot: state?.moveIdsBySlot ?? {},
     preMegaPokemonBySlot: state?.preMegaPokemonBySlot ?? {},
+    candidateFiltersBySlot: Object.fromEntries(
+      Object.entries(state?.candidateFiltersBySlot ?? {}).flatMap(
+        ([slotIndex, filters]) => {
+          const normalized = normalizePokemonCandidateFilters(filters);
+          return hasPokemonCandidateFilters(normalized)
+            ? [[Number(slotIndex), normalized]]
+            : [];
+        },
+      ),
+    ),
   };
 }
 
@@ -106,6 +130,9 @@ export function useTeamBuildState(): TeamBuildStateController {
   const [evsBySlot, setEvsBySlot] = useState<Record<number, StatBlock>>({});
   const [moveIdsBySlot, setMoveIdsBySlot] = useState<Record<number, string[]>>({});
   const [preMegaPokemonBySlot, setPreMegaPokemonBySlot] = useState<Record<number, string>>({});
+  const [candidateFiltersBySlot, setCandidateFiltersBySlot] = useState<
+    Record<number, PokemonCandidateFilters>
+  >({});
 
   function clearSlot(slotIndex: number) {
     setItemBySlot((current) => withoutSlot(current, slotIndex));
@@ -114,6 +141,7 @@ export function useTeamBuildState(): TeamBuildStateController {
     setEvsBySlot((current) => withoutSlot(current, slotIndex));
     setMoveIdsBySlot((current) => withoutSlot(current, slotIndex));
     setPreMegaPokemonBySlot((current) => withoutSlot(current, slotIndex));
+    setCandidateFiltersBySlot((current) => withoutSlot(current, slotIndex));
   }
 
   function patchSlot(slotIndex: number, patch: TeamSlotBuildPatch) {
@@ -142,6 +170,15 @@ export function useTeamBuildState(): TeamBuildStateController {
         withSlotValue(current, slotIndex, patch.preMegaPokemon),
       );
     }
+
+    if (Object.prototype.hasOwnProperty.call(patch, "candidateFilters")) {
+      const normalized = normalizePokemonCandidateFilters(patch.candidateFilters);
+      setCandidateFiltersBySlot((current) =>
+        hasPokemonCandidateFilters(normalized)
+          ? { ...current, [slotIndex]: normalized }
+          : withoutSlot(current, slotIndex),
+      );
+    }
   }
 
   function reorderSlots(sourceIndex: number, targetIndex: number) {
@@ -158,6 +195,7 @@ export function useTeamBuildState(): TeamBuildStateController {
     setEvsBySlot(swapRecord);
     setMoveIdsBySlot(swapRecord);
     setPreMegaPokemonBySlot(swapRecord);
+    setCandidateFiltersBySlot(swapRecord);
   }
 
   function replaceBuildState(state?: Partial<TeamBuildState>) {
@@ -169,6 +207,7 @@ export function useTeamBuildState(): TeamBuildStateController {
     setEvsBySlot(nextState.evsBySlot);
     setMoveIdsBySlot(nextState.moveIdsBySlot);
     setPreMegaPokemonBySlot(nextState.preMegaPokemonBySlot);
+    setCandidateFiltersBySlot(nextState.candidateFiltersBySlot);
   }
 
   function getBuildStateSnapshot(): TeamBuildState {
@@ -179,6 +218,7 @@ export function useTeamBuildState(): TeamBuildStateController {
       evsBySlot,
       moveIdsBySlot,
       preMegaPokemonBySlot,
+      candidateFiltersBySlot,
     };
   }
 
@@ -189,12 +229,14 @@ export function useTeamBuildState(): TeamBuildStateController {
     evsBySlot,
     moveIdsBySlot,
     preMegaPokemonBySlot,
+    candidateFiltersBySlot,
     setItemBySlot,
     setAbilityBySlot,
     setNatureBySlot,
     setEvsBySlot,
     setMoveIdsBySlot,
     setPreMegaPokemonBySlot,
+    setCandidateFiltersBySlot,
     clearSlot,
     patchSlot,
     reorderSlots,

@@ -45,6 +45,7 @@ const buildState: TeamBuildState = {
   },
   moveIdsBySlot: { 0: ["close-combat", "", "", ""] },
   preMegaPokemonBySlot: {},
+  candidateFiltersBySlot: {},
 };
 
 const diagnostics: TeamDiagnosticsResult = {
@@ -262,5 +263,37 @@ describe("Copilot analysis", () => {
     expect(response.summary).toContain("1 selected move");
     expect(response.strengths).toContain("All 66 EV points are allocated.");
     expect(response.weaknesses).not.toContain("No moves are currently configured for set analysis.");
+  });
+
+  it("includes saved empty-slot requirements in the request and Pokemon recommendation", () => {
+    const filteredBuildState: TeamBuildState = {
+      ...buildState,
+      candidateFiltersBySlot: {
+        1: {
+          types: ["fire", "flying"],
+          ability: { id: "drought", name: "Drought" },
+          moves: [{ id: "tailwind", name: "Tailwind" }],
+        },
+      },
+    };
+    const request = createCopilotAnalysisRequest({
+      scope: "pokemon",
+      teamName: "Test Team",
+      team: [member, null, null, null, null, null],
+      selectedSlot: 1,
+      buildState: filteredBuildState,
+      diagnostics,
+      validity,
+    });
+    const response = createLocalCopilotAnalysis(request);
+
+    expect(request.candidateFilters[0]).toMatchObject({
+      slotIndex: 1,
+      types: ["fire", "flying"],
+      ability: { id: "drought", name: "Drought" },
+      moves: [{ id: "tailwind", name: "Tailwind" }],
+    });
+    expect(response.summary).toContain("Fire type, Flying type, Drought ability");
+    expect(response.recommendations[0]?.title).toBe("Choose a matching Pokemon");
   });
 });

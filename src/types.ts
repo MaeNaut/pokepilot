@@ -45,12 +45,25 @@ export type PokemonMove = {
   tags?: string[];
 };
 
+export type PokemonCandidateFilterValue = {
+  id: string;
+  name: string;
+};
+
+export type PokemonCandidateFilters = {
+  types: PokemonType[];
+  ability: PokemonCandidateFilterValue | null;
+  moves: PokemonCandidateFilterValue[];
+};
+
 export type PokemonIndexEntry = {
   name: string;
   showdownId: string;
   displayName: string;
   speciesKey: string;
   sortNumber: number;
+  types: PokemonType[];
+  abilities: string[];
   formKind: "base" | "regional" | "form" | "gender" | "mega";
   formLabel?: string;
   isSelectorOption: boolean;

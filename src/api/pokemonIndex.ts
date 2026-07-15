@@ -232,6 +232,8 @@ function createIndexEntry(species: ShowdownSpeciesData): PokemonIndexEntry | nul
     ),
     speciesKey,
     sortNumber: species.num,
+    types: species.types ?? [],
+    abilities: species.abilities,
     formKind,
     ...(formLabel ? { formLabel } : {}),
     isSelectorOption: isSelectorOption(pokemonId, formKind),
