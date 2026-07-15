@@ -51,36 +51,38 @@ export function TeamDiagnostics({
           <div className="diagnostics-section-heading">
             <h3>Coverage Gaps</h3>
           </div>
-          <div
-            className="coverage-ring"
-            role="progressbar"
-            aria-label="Single-type offensive coverage"
-            aria-valuemin={0}
-            aria-valuemax={18}
-            aria-valuenow={diagnostics.coveredDefendingTypes.length}
-            style={{
-              background: `conic-gradient(${coverageColor} ${coveragePercent}%, #dedede ${coveragePercent}% 100%)`,
-            }}
-          >
-            <span>
-              <strong>{diagnostics.coveredDefendingTypes.length}</strong>
-              <small>/18</small>
-            </span>
-          </div>
+          <div className="coverage-content">
+            <div
+              className="coverage-ring"
+              role="progressbar"
+              aria-label="Single-type offensive coverage"
+              aria-valuemin={0}
+              aria-valuemax={18}
+              aria-valuenow={diagnostics.coveredDefendingTypes.length}
+              style={{
+                background: `conic-gradient(${coverageColor} ${coveragePercent}%, #dedede ${coveragePercent}% 100%)`,
+              }}
+            >
+              <span>
+                <strong>{diagnostics.coveredDefendingTypes.length}</strong>
+                <small>/18</small>
+              </span>
+            </div>
 
-          <div className="coverage-gap-summary">
-            {diagnostics.uncoveredDefendingTypes.length > 0 ? (
-              <>
-                <span>Not covered</span>
-                <div className="coverage-gap-types" aria-label="Types not covered">
-                  {diagnostics.uncoveredDefendingTypes.map((type) => (
-                    <TypeBadge type={type} key={type} />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <span className="is-complete">Full coverage</span>
-            )}
+            <div className="coverage-gap-summary">
+              {diagnostics.uncoveredDefendingTypes.length > 0 ? (
+                <>
+                  <span>Not covered</span>
+                  <div className="coverage-gap-types" aria-label="Types not covered">
+                    {diagnostics.uncoveredDefendingTypes.map((type) => (
+                      <TypeBadge type={type} key={type} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <span className="is-complete">Full coverage</span>
+              )}
+            </div>
           </div>
         </section>
       </div>
