@@ -14,6 +14,14 @@ Repository: https://github.com/FortAwesome/Font-Awesome
 The installed free solid icon package is licensed under CC BY 4.0 and MIT.
 The React component package is licensed under the MIT License.
 
+## html-to-image
+
+Pokemon and team share-card DOM is rendered to PNG with `html-to-image`.
+
+Repository: https://github.com/bubkoo/html-to-image
+
+The installed package is licensed under the MIT License.
+
 ## EssentiarumVG
 
 Move category symbols use the EssentiarumVG icon font by Philippe Van Lieu

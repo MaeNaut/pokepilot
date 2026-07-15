@@ -9,6 +9,7 @@ import {
   faChevronDown,
   faCircleCheck,
   faCircleQuestion,
+  faImage,
   faPlus,
   faRotateRight,
   faSpinner,
@@ -75,6 +76,9 @@ import {
   type Nature,
 } from "../data/natures";
 import { PokemonIcon } from "./PokemonIcon";
+import { ItemSprite } from "./ItemSprite";
+import { PokemonShareCard } from "./PokemonShareCard";
+import { ShareImageDialog } from "./ShareImageDialog";
 import { TeamOverview } from "./TeamOverview";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
@@ -123,34 +127,6 @@ type PokemonSelectOption = {
   name: string;
   number: number;
 };
-
-function ItemSprite({ item }: { item: PokemonItem }) {
-  const [spriteUrl, setSpriteUrl] = useState(item.spriteUrl);
-
-  useEffect(() => {
-    setSpriteUrl(item.spriteUrl);
-  }, [item.spriteUrl]);
-
-  if (spriteUrl) {
-    return (
-      <img
-        src={spriteUrl}
-        alt=""
-        onError={() =>
-          setSpriteUrl((current) =>
-            current === item.spriteUrl ? item.fallbackSpriteUrl : undefined,
-          )
-        }
-      />
-    );
-  }
-
-  return (
-    <span className="item-fallback-label">
-      {item.category === "Mega Stones" ? "M" : item.name.charAt(0)}
-    </span>
-  );
-}
 
 function DataStatusRow({
   message,
@@ -404,6 +380,7 @@ export function TeamBuilder({
   const [isBenchOpen, setIsBenchOpen] = useState(false);
   const [benchLimitMessage, setBenchLimitMessage] = useState<string | null>(null);
   const [pendingBenchRemovalId, setPendingBenchRemovalId] = useState<string | null>(null);
+  const [isPokemonImageOpen, setIsPokemonImageOpen] = useState(false);
   const builderCardLayoutRef = useRef<HTMLDivElement | null>(null);
   const teamTabsRef = useRef<HTMLDivElement | null>(null);
   const benchShellRef = useRef<HTMLDivElement | null>(null);
@@ -658,6 +635,11 @@ export function TeamBuilder({
     battleFormGroup?.options.findIndex((option) => option.pokemonId === activePokemonId) ?? 0,
   );
   const activeBattleFormOption = battleFormGroup?.options[activeBattleFormOptionIndexFromPokemon];
+  const shareFormLabel =
+    activeFormKind === "mega"
+      ? (activeIndexEntry?.formLabel ?? "Mega")
+      : activeBattleFormOption?.label ??
+        (activeFormKind === "form" ? activeIndexEntry?.formLabel : undefined);
   const relevantMegaStoneNames = useMemo(
     () => {
       const names = new Set(
@@ -2148,6 +2130,22 @@ export function TeamBuilder({
         </button>
         {activeMember ? (
           <button
+            className="builder-card-tool-button"
+            type="button"
+            title={`Create an image of ${activeHeaderName}`}
+            onClick={() => {
+              closeBuilderPopovers();
+              setIsBenchOpen(false);
+              setPendingBenchRemovalId(null);
+              setIsPokemonImageOpen(true);
+            }}
+          >
+            <FontAwesomeIcon icon={faImage} aria-hidden="true" />
+            Image
+          </button>
+        ) : null}
+        {activeMember ? (
+          <button
             className="builder-card-tool-button is-danger"
             type="button"
             onClick={() => {
@@ -3509,6 +3507,24 @@ export function TeamBuilder({
       </article>
       )}
       </div>
+      {isPokemonImageOpen && activeMember ? (
+        <ShareImageDialog
+          title="Pokemon Image"
+          fileName={`pokepilot-${activeHeaderName ?? activeMember.name}-${shareFormLabel ?? "build"}`}
+          onClose={() => setIsPokemonImageOpen(false)}
+        >
+          <PokemonShareCard
+            member={activeMember}
+            displayName={activeHeaderName ?? activeMember.name}
+            formLabel={shareFormLabel}
+            item={activeItem}
+            ability={selectedAbility}
+            nature={selectedNature}
+            evs={evs}
+            moves={selectedMoves}
+          />
+        </ShareImageDialog>
+      ) : null}
     </section>
   );
 }

@@ -24,6 +24,7 @@ Current slice:
 - Smogon monthly usage stats for popular default sets and Pokemon suggestions
 - localStorage saved-team management with load, rename, duplicate, delete, reorder, last-opened restore, and a 30-team limit
 - Showdown text import/export for Pokemon sets and saved teams, including direct new-team import from the header
+- dedicated 1080-by-1080 Pokemon build images with preview, clipboard copy, and PNG download
 - Pokemon Champions-style EV editing and nature-adjusted stat calculation with fixed IV 31 assumptions
 - live team diagnostics for defensive matchups, offensive coverage, six multi-label set roles, and setup alerts
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
@@ -67,6 +68,7 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - Japanese localization under consideration
 - dark mode with a persisted theme preference
 - shareable team links if reasonable
+- whole-team PNG share images
 - deployment-ready responsive polish
 
 ## Implemented Prototype Features
@@ -86,6 +88,7 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - reorderable local saved-team list and management actions
 - compact header menu for starting a blank team or importing a new Showdown team directly
 - Pokemon-level and team-level Showdown text tools
+- Team Rail Pokemon image export with a dedicated share-card layout
 - type-based team matchup matrix, move coverage, six multi-label set roles, and compact team alerts
 - deterministic Trick Room, Tailwind, Gravity, rain, sun, sand, and snow core analysis
 - compact validity popover with per-slot markers and structured legality issues

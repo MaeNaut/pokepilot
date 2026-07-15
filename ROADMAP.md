@@ -93,6 +93,9 @@ The MVP should prove the core loop:
 - [x] Split the compact new-team action into blank-team creation and direct Showdown team import.
 - [x] Add shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams.
 - [x] Add a persisted bench outside the active six, with full-build move/swap interactions and no effect on active-team previews, diagnostics, validity, or Showdown export.
+- [ ] Add shareable PNG build images for individual Pokemon sets and complete active teams.
+  - [x] Ship the individual Pokemon preview, clipboard-copy, and PNG-download flow.
+  - [ ] Add the complete active-team image template on the shared export pipeline.
 - [ ] Prepare account-backed server persistence after the local MVP is stable.
   - [x] Keep Supabase-managed PostgreSQL as the leading candidate, with Neon as the main database-focused alternative.
   - [ ] Normalize teams and Pokemon sets into server-owned records with active/bench location and ordering.

@@ -7,6 +7,7 @@
 - Framework option: Next.js if API routes and deployment simplicity are useful
 - AI: OpenAI API or another LLM provider through a server-side API route
 - Data: localStorage first; Supabase-managed PostgreSQL is the leading server-persistence candidate, with Neon as the primary alternative
+- Image export: `html-to-image` for rendering dedicated share-card DOM into PNG blobs
 - Deployment: Vercel or another simple web deployment platform
 
 ## Skills This Project Can Demonstrate
@@ -174,9 +175,9 @@ Desktop UX decisions after the wide-builder layout change:
   the team-name field is capped at 240px, and the PokePilot wordmark occupies the
   original left-side header position.
 - Keep Team View and Pokemon View as peer surfaces connected by the persistent
-  view switch. Team View hides the redundant six-slot side tabs, uses its six
-  full cards for edit entry and reordering, and retains Bench as the only side
-  tab. Pokemon View restores the six compact edit tabs alongside Bench.
+  view switch. The desktop Team Rail remains visible in both views for team
+  context, reordering, Bench access, and utility actions; Team View removes the
+  selected-slot emphasis because its six full cards are the primary edit surface.
 - Keep Team View EV allocations separated into compact stat-value pairs with a
   stronger label, darker values, and a subtle divider from the move grid.
 - In Team View, keep the item beneath the Pokemon name and pin type icons to the
@@ -223,6 +224,11 @@ Desktop UX decisions after the wide-builder layout change:
 - The card should contain only Pokemon editing information. Avoid putting app
   metadata such as "Team Builder", "Build your six", sample buttons, validity
   status, or data-source notices inside the Pokemon card.
+- Keep image sharing outside the editor card as a Team Rail utility. Render a
+  dedicated 540-by-540 Pokemon share component in a portal-backed preview rather
+  than screenshotting the live editor, then use `html-to-image` at pixel ratio 2
+  for a stable 1080-by-1080 PNG. Clipboard copy and file download must share the
+  same blob-generation path so their output cannot drift.
 
 ## Current Builder Data Model
 

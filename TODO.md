@@ -72,6 +72,11 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Keep a full-height PokePilot panel on the right and stack the builder and diagnostics on the left.
   - [x] Use a wider, shorter Pokemon card with moves and stats side by side and a 3-by-2 Team View.
   - [x] Cap the desktop workspace at 1920px so QHD and wider displays do not over-stretch the UI.
+- [ ] Add shareable PNG build images.
+  - [x] Add a Team Rail action that opens a dimmed preview for the selected Pokemon build.
+  - [x] Export the dedicated Pokemon share card as a 1080-by-1080 PNG through clipboard copy or file save.
+  - [x] Preserve Pokemon artwork, form labels, item, ability, nature, moves, EVs, and calculated stats in the image.
+  - [ ] Add a whole-team image template and Team Rail action on the same export pipeline.
 
 ## Team Management
 
