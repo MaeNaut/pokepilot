@@ -1,16 +1,16 @@
 import type { CSSProperties } from "react";
 import { statKeys, statLabels, type Nature } from "../data/natures";
+import { shareTypeAccentColors } from "../data/shareImage";
 import type {
   PokemonItem,
   PokemonMove,
-  PokemonType,
   StatBlock,
   TeamMember,
 } from "../types";
 import { ItemSprite } from "./ItemSprite";
 import { TypeBadge } from "./TypeBadge";
 
-type PokemonShareCardProps = {
+export type PokemonShareBuild = {
   member: TeamMember;
   displayName: string;
   formLabel?: string;
@@ -19,27 +19,6 @@ type PokemonShareCardProps = {
   nature: Nature;
   evs: StatBlock;
   moves: Array<PokemonMove | null>;
-};
-
-const typeAccentColors: Record<PokemonType, string> = {
-  normal: "#8f9598",
-  fire: "#e4693f",
-  water: "#4f8fd6",
-  electric: "#d6a918",
-  grass: "#5c9c4a",
-  ice: "#55aebb",
-  fighting: "#b95445",
-  poison: "#9255a6",
-  ground: "#ad7440",
-  flying: "#6e8fc5",
-  psychic: "#d96189",
-  bug: "#789635",
-  rock: "#9a8350",
-  ghost: "#6763a3",
-  dragon: "#6573c7",
-  dark: "#5b5f69",
-  steel: "#668b99",
-  fairy: "#d66da4",
 };
 
 export function PokemonShareCard({
@@ -51,7 +30,7 @@ export function PokemonShareCard({
   nature,
   evs,
   moves,
-}: PokemonShareCardProps) {
+}: PokemonShareBuild) {
   const primaryType = member.types[0] ?? "normal";
   const artworkUrl = member.spriteUrl ?? member.iconSpriteUrl;
   const identityLength = displayName.length + (formLabel?.length ?? 0);
@@ -67,7 +46,7 @@ export function PokemonShareCard({
   return (
     <article
       className={`pokemon-share-card is-type-${primaryType}`}
-      style={{ "--share-accent": typeAccentColors[primaryType] } as CSSProperties}
+      style={{ "--share-accent": shareTypeAccentColors[primaryType] } as CSSProperties}
       aria-label={`${displayName} share image`}
     >
       <header className="pokemon-share-header">

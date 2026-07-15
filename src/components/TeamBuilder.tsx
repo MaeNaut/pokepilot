@@ -77,13 +77,18 @@ import {
 } from "../data/natures";
 import { PokemonIcon } from "./PokemonIcon";
 import { ItemSprite } from "./ItemSprite";
-import { PokemonShareCard } from "./PokemonShareCard";
+import {
+  PokemonShareCard,
+  type PokemonShareBuild,
+} from "./PokemonShareCard";
 import { ShareImageDialog } from "./ShareImageDialog";
+import { TeamShareCard } from "./TeamShareCard";
 import { TeamOverview } from "./TeamOverview";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
 
 type TeamBuilderProps = {
+  teamName: string;
   team: TeamSlot[];
   bench: BenchPokemon[];
   selectedSlot: number;
@@ -172,6 +177,7 @@ type NatureGridPosition = {
 
 type MoveOptionScrollMode = "start" | "nearest";
 type BuilderView = "pokemon" | "team";
+type ShareImageTarget = "team" | number | null;
 
 function getIndexAfterSwap(index: number, sourceIndex: number, targetIndex: number) {
   if (index === sourceIndex) {
@@ -254,6 +260,71 @@ function findMoveByLookup(moves: PokemonMove[], value: string) {
   );
 }
 
+function resolveShareMoves(
+  member: TeamMember,
+  selectedMoveIds: string[] | undefined,
+  moveCatalog: Map<string, PokemonMove>,
+) {
+  const availableMoves = member.moves ?? [];
+
+  return [0, 1, 2, 3].map((index) => {
+    const selectedMoveId = selectedMoveIds?.[index];
+
+    if (selectedMoveId === "") {
+      return null;
+    }
+
+    if (selectedMoveId) {
+      return (
+        findMoveByLookup(availableMoves, selectedMoveId) ??
+        moveCatalog.get(normalizeShowdownId(selectedMoveId)) ?? {
+          id: selectedMoveId,
+          name: formatIdLabel(selectedMoveId),
+          type: "normal" as const,
+          power: null,
+          accuracy: null,
+          pp: 0,
+          description: "Move details are unavailable.",
+        }
+      );
+    }
+
+    return availableMoves[index] ?? null;
+  });
+}
+
+function handleShareImageNavigationKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+    return;
+  }
+
+  const navigation = event.currentTarget.closest(".share-image-navigation");
+  const tabs = navigation
+    ? Array.from(
+        navigation.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
+      )
+    : [];
+  const currentIndex = tabs.indexOf(event.currentTarget);
+
+  if (currentIndex < 0 || tabs.length === 0) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const nextIndex =
+    event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? tabs.length - 1
+        : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
+          tabs.length;
+  const nextTab = tabs[nextIndex];
+
+  nextTab.focus();
+  nextTab.click();
+}
+
 function getItemEffectText(item: PokemonItem) {
   return (
     item.effect
@@ -316,6 +387,7 @@ function getNatureFromPosition(position: NatureGridPosition) {
 }
 
 export function TeamBuilder({
+  teamName,
   team,
   bench,
   selectedSlot,
@@ -380,7 +452,7 @@ export function TeamBuilder({
   const [isBenchOpen, setIsBenchOpen] = useState(false);
   const [benchLimitMessage, setBenchLimitMessage] = useState<string | null>(null);
   const [pendingBenchRemovalId, setPendingBenchRemovalId] = useState<string | null>(null);
-  const [isPokemonImageOpen, setIsPokemonImageOpen] = useState(false);
+  const [shareImageTarget, setShareImageTarget] = useState<ShareImageTarget>(null);
   const builderCardLayoutRef = useRef<HTMLDivElement | null>(null);
   const teamTabsRef = useRef<HTMLDivElement | null>(null);
   const benchShellRef = useRef<HTMLDivElement | null>(null);
@@ -635,11 +707,72 @@ export function TeamBuilder({
     battleFormGroup?.options.findIndex((option) => option.pokemonId === activePokemonId) ?? 0,
   );
   const activeBattleFormOption = battleFormGroup?.options[activeBattleFormOptionIndexFromPokemon];
-  const shareFormLabel =
-    activeFormKind === "mega"
-      ? (activeIndexEntry?.formLabel ?? "Mega")
-      : activeBattleFormOption?.label ??
-        (activeFormKind === "form" ? activeIndexEntry?.formLabel : undefined);
+  const shareMoveCatalog = useMemo(() => {
+    const catalog = new Map<string, PokemonMove>();
+    const teamMembers = team.filter((slot): slot is TeamMember => Boolean(slot));
+
+    for (const member of [...pool, ...teamMembers]) {
+      for (const move of member.moves ?? []) {
+        catalog.set(normalizeShowdownId(move.id), move);
+        catalog.set(normalizeShowdownId(move.name), move);
+      }
+    }
+
+    for (const cachedMoves of Object.values(preMegaMovesByPokemonId)) {
+      for (const move of cachedMoves) {
+        catalog.set(normalizeShowdownId(move.id), move);
+        catalog.set(normalizeShowdownId(move.name), move);
+      }
+    }
+
+    return catalog;
+  }, [pool, preMegaMovesByPokemonId, team]);
+
+  const sharePokemonBuilds: Array<PokemonShareBuild | null> = team.map(
+    (member, slotIndex) => {
+      if (!member) {
+        return null;
+      }
+
+      const indexEntry = pokemonIndexByName.get(member.id);
+      const formKind =
+        indexEntry?.formKind ?? (isMegaPokemonName(member.id) ? "mega" : "base");
+      const speciesKey =
+        indexEntry?.speciesKey ?? (member.id ? getMegaSpeciesKey(member.id) : "");
+      const memberBattleFormGroup = getBattleFormGroup(speciesKey || member.id);
+      const battleFormOption = memberBattleFormGroup?.options.find(
+        (option) => option.pokemonId === member.id,
+      );
+      const formLabel =
+        formKind === "mega"
+          ? (indexEntry?.formLabel ?? "Mega")
+          : battleFormOption?.label ??
+            (formKind === "form" ? indexEntry?.formLabel : undefined);
+
+      return {
+        member,
+        displayName: getMemberDisplayName(member),
+        formLabel,
+        item: itemBySlot[slotIndex] ?? null,
+        ability:
+          abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? "No ability",
+        nature: getNatureById(natureBySlot[slotIndex] ?? "hardy"),
+        evs: evsBySlot[slotIndex] ?? defaultEvs,
+        moves:
+          slotIndex === selectedSlot
+            ? selectedMoves
+            : resolveShareMoves(
+                member,
+                moveIdsBySlot[slotIndex],
+                shareMoveCatalog,
+              ),
+      };
+    },
+  );
+  const selectedShareBuild =
+    typeof shareImageTarget === "number"
+      ? (sharePokemonBuilds[shareImageTarget] ?? null)
+      : null;
   const relevantMegaStoneNames = useMemo(
     () => {
       const names = new Set(
@@ -2137,7 +2270,7 @@ export function TeamBuilder({
               closeBuilderPopovers();
               setIsBenchOpen(false);
               setPendingBenchRemovalId(null);
-              setIsPokemonImageOpen(true);
+              setShareImageTarget(selectedSlot);
             }}
           >
             <FontAwesomeIcon icon={faImage} aria-hidden="true" />
@@ -3507,22 +3640,76 @@ export function TeamBuilder({
       </article>
       )}
       </div>
-      {isPokemonImageOpen && activeMember ? (
+      {shareImageTarget !== null &&
+      (shareImageTarget === "team" || selectedShareBuild) ? (
         <ShareImageDialog
-          title="Pokemon Image"
-          fileName={`pokepilot-${activeHeaderName ?? activeMember.name}-${shareFormLabel ?? "build"}`}
-          onClose={() => setIsPokemonImageOpen(false)}
+          title={shareImageTarget === "team" ? "Team Image" : "Pokemon Image"}
+          fileName={
+            shareImageTarget === "team"
+              ? `pokepilot-${teamName || "untitled-team"}-team`
+              : `pokepilot-${selectedShareBuild?.displayName ?? "pokemon"}-${
+                  selectedShareBuild?.formLabel ?? "build"
+                }`
+          }
+          captureWidth={shareImageTarget === "team" ? 960 : 540}
+          captureHeight={540}
+          navigation={
+            <nav
+              className="share-image-navigation"
+              role="tablist"
+              aria-label="Image preview"
+            >
+              <button
+                className={shareImageTarget === "team" ? "is-active" : ""}
+                type="button"
+                role="tab"
+                aria-selected={shareImageTarget === "team"}
+                onClick={() => setShareImageTarget("team")}
+                onKeyDown={handleShareImageNavigationKeyDown}
+              >
+                <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
+                <span>Team</span>
+              </button>
+              {Array.from({ length: 6 }, (_, slotIndex) => {
+                const build = sharePokemonBuilds[slotIndex] ?? null;
+
+                return (
+                  <button
+                    className={shareImageTarget === slotIndex ? "is-active" : ""}
+                    type="button"
+                    role="tab"
+                    aria-selected={shareImageTarget === slotIndex}
+                    aria-label={
+                      build
+                        ? `${build.displayName} image`
+                        : `Empty party slot ${slotIndex + 1}`
+                    }
+                    title={build?.displayName ?? `Empty slot ${slotIndex + 1}`}
+                    disabled={!build}
+                    onClick={() => setShareImageTarget(slotIndex)}
+                    onKeyDown={handleShareImageNavigationKeyDown}
+                    key={slotIndex}
+                  >
+                    <span className="share-image-navigation-icon">
+                      {build ? (
+                        <PokemonIcon pokemon={build.member} />
+                      ) : (
+                        slotIndex + 1
+                      )}
+                    </span>
+                    <span>{build?.displayName ?? "Empty"}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          }
+          onClose={() => setShareImageTarget(null)}
         >
-          <PokemonShareCard
-            member={activeMember}
-            displayName={activeHeaderName ?? activeMember.name}
-            formLabel={shareFormLabel}
-            item={activeItem}
-            ability={selectedAbility}
-            nature={selectedNature}
-            evs={evs}
-            moves={selectedMoves}
-          />
+          {shareImageTarget === "team" ? (
+            <TeamShareCard teamName={teamName} builds={sharePokemonBuilds} />
+          ) : selectedShareBuild ? (
+            <PokemonShareCard {...selectedShareBuild} />
+          ) : null}
         </ShareImageDialog>
       ) : null}
     </section>

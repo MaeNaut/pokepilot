@@ -1801,6 +1801,7 @@ function App() {
       <div className="workspace">
         <div className="builder-workspace">
           <TeamBuilder
+            teamName={teamNameDraft}
             team={team}
             bench={bench}
             selectedSlot={selectedTeamSlot}

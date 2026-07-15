@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -12,6 +18,9 @@ import { toBlob } from "html-to-image";
 type ShareImageDialogProps = {
   title: string;
   fileName: string;
+  captureWidth: number;
+  captureHeight: number;
+  navigation: ReactNode;
   children: ReactNode;
   onClose: () => void;
 };
@@ -51,6 +60,9 @@ function waitForImage(image: HTMLImageElement) {
 export function ShareImageDialog({
   title,
   fileName,
+  captureWidth,
+  captureHeight,
+  navigation,
   children,
   onClose,
 }: ShareImageDialogProps) {
@@ -58,6 +70,11 @@ export function ShareImageDialog({
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [activeAction, setActiveAction] = useState<ShareAction>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const outputScale = 2;
+
+  useEffect(() => {
+    setMessage(null);
+  }, [fileName]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -155,11 +172,19 @@ export function ShareImageDialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        style={
+          {
+            "--share-capture-width": `${captureWidth}px`,
+            "--share-capture-height": `${captureHeight}px`,
+          } as CSSProperties
+        }
       >
         <header className="share-image-dialog-header">
           <div>
             <strong>{title}</strong>
-            <span>1080 x 1080 PNG</span>
+            <span>
+              {captureWidth * outputScale} x {captureHeight * outputScale} PNG
+            </span>
           </div>
           <button
             ref={closeButtonRef}
@@ -171,6 +196,8 @@ export function ShareImageDialog({
             <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
           </button>
         </header>
+
+        <div className="share-image-navigation-shell">{navigation}</div>
 
         <div className="share-image-preview">
           <div className="share-image-capture" ref={captureRef}>
