@@ -1,6 +1,6 @@
 import { defaultEvs } from "../data/natures";
 import { canAddBenchPokemon } from "../data/teamLimits";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "./teamBuildState";
 import type { PokemonItem, StatBlock, TeamMember, TeamSlot } from "../types";
 
 export type PokemonBuildSnapshot = {

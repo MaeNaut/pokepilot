@@ -11,7 +11,7 @@ import {
   natures,
   statKeys,
 } from "../data/natures";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "./teamBuildState";
 import type {
   ItemIndexEntry,
   PokemonIndexEntry,

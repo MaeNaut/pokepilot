@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "./teamBuildState";
 import type { PokemonMove, TeamMember } from "../types";
 import type { TeamDiagnosticsResult } from "./teamDiagnostics";
 import type { TeamValidityResult } from "./teamValidity";

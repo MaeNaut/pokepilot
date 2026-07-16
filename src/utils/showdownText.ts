@@ -1,5 +1,5 @@
 import type { StatBlock, TeamSlot } from "../types";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "./teamBuildState";
 
 export type ParsedShowdownPokemon = {
   pokemonName: string;

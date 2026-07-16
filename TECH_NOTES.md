@@ -2,9 +2,9 @@
 
 ## Recommended Stack
 
-- Frontend: React + TypeScript
-- Styling: Tailwind CSS or a small custom CSS system
-- Framework option: Next.js if API routes and deployment simplicity are useful
+- Frontend: Vite + React + TypeScript
+- Styling: the current custom CSS design system
+- Server option: add a small server-side API route or deployment function when hosted AI begins
 - AI: OpenAI API or another LLM provider through a server-side API route
 - Data: localStorage first; Supabase-managed PostgreSQL is the leading server-persistence candidate, with Neon as the primary alternative
 - Image export: `html-to-image` for rendering dedicated share-card DOM into PNG blobs
@@ -119,7 +119,7 @@ Current direction:
 - Use PokeAPI generation-specific icon sprites first. If that path is missing,
   fall back to PokeAPI `front_default` before older generation icon paths so
   Pokemon without current icons can still use the more detailed 96x96 sprite in
-  team tabs and previews. Keep the large card artwork on PokeAPI artwork/front
+  the Team Rail and previews. Keep the large card artwork on PokeAPI artwork/front
   sprite URLs.
 - Use Pokemon Showdown as the current battle-data and Regulation M-B legality
   source for:
@@ -180,15 +180,18 @@ Desktop UX decisions after the wide-builder layout change:
 - Team members are shown in the vertical Team Rail to the left of the card. The
   rail changes the displayed Pokemon, reorders active sets, opens empty-slot search,
   and remains the entry point for Bench interactions.
-- Filled team tabs can be reordered with desktop drag, touch hold-and-drag, or
+- Filled Team Rail entries can be reordered with desktop drag, touch hold-and-drag, or
   `Alt+Arrow` keyboard controls. The Pokemon and its item, ability, nature, EVs,
   moves, and Mega/form state move together, including when moved through empty slots.
-- The Pokemon name itself is the selector. In closed state it is large text; when
-  opened, it becomes a same-style editable search field with a filtered dropdown.
+- The Pokemon name itself is the selector. Filled slots show large text until the
+  picker is opened; empty slots keep the editable field and candidate list visible.
 - With usage stats available, the empty-query name dropdown shows Pokemon in
-  Smogon usage order, 20 at a time, and appends more entries as the user scrolls.
+  Smogon usage order and labels each result with its usage rank rather than its
+  Pokedex number. It loads 20 entries at a time and appends more on scroll.
 - Opening/closing the name picker must not shift the rest of the card layout.
-- Clicking outside the name picker closes it and clears the temporary search query.
+- Clicking outside or pressing Escape closes a filled-slot picker and clears its
+  temporary query. For an empty slot, those actions clear the query but keep the
+  picker visible so Pokemon selection remains the primary task.
 - Form-change variants are selected from the main Pokemon dropdown, while Mega
   evolutions remain adjacent controls next to the Pokemon name.
 - If the selected Pokemon has mega evolutions, show compact original mega controls
@@ -212,11 +215,13 @@ Desktop UX decisions after the wide-builder layout change:
 - The card should contain only Pokemon editing information. Avoid putting app
   metadata such as "Team Builder", "Build your six", sample buttons, validity
   status, or data-source notices inside the Pokemon card.
-- Keep image sharing outside the editor card as a Team Rail utility. Render a
+- Keep image sharing outside the editor card as a card-toolbar utility. Render a
   dedicated 540-by-540 Pokemon share component in a portal-backed preview rather
   than screenshotting the live editor, then use `html-to-image` at pixel ratio 2
   for a stable 1080-by-1080 PNG. Clipboard copy and file download must share the
-  same blob-generation path so their output cannot drift.
+  same blob-generation path so their output cannot drift. The same dialog also
+  renders a 960-by-540 active-team card and navigates between the team and all six
+  available Pokemon previews without resizing the dialog shell.
 
 ## Current Builder Data Model
 
@@ -246,6 +251,10 @@ Desktop UX decisions after the wide-builder layout change:
   non-commercial use unless the creator grants additional permission.
 - Pokemon, item, ability, nature, and move pickers support keyboard navigation
   with hover-to-keyboard active selection continuity.
+- Pokemon, item, ability, and move result surfaces hide their visual scrollbars
+  while retaining wheel, touch, and keyboard scrolling. Render at most 20 options
+  initially and append 20 more near the scroll boundary; apply the same rule to
+  ability and move candidate-filter menus in empty slots.
 - The move picker opens scrolled to the current move, uses natural nearest-scroll
   behavior for keyboard navigation, and prevents mouse hover from triggering
   scroll loops.

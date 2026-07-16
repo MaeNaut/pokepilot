@@ -67,11 +67,11 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Keep a full-height PokePilot panel on the right and stack the builder and diagnostics on the left.
   - [x] Use a wider, shorter Pokemon card with moves and stats side by side.
   - [x] Cap the desktop workspace at 1920px so QHD and wider displays do not over-stretch the UI.
-- [ ] Add shareable PNG build images.
-  - [x] Add a Team Rail action that opens a dimmed preview for the selected Pokemon build.
+- [x] Add shareable PNG build images.
+  - [x] Add a card-toolbar action that opens a dimmed preview for the selected Pokemon build.
   - [x] Export the dedicated Pokemon share card as a 1080-by-1080 PNG through clipboard copy or file save.
-  - [x] Preserve Pokemon artwork, form labels, item, ability, nature, moves, EVs, and calculated stats in the image.
-  - [ ] Add a whole-team image template and Team Rail action on the same export pipeline.
+  - [x] Preserve Pokemon identity, artwork, item, ability, nature, moves, and EVs in the image.
+  - [x] Add a whole-team image template and navigate between team/Pokemon previews in the same dialog.
 
 ## Team Management
 
@@ -143,10 +143,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [ ] Improve usage-stats default sets.
   - [x] Fetch and parse Smogon monthly moveset stats for Regulation M-B.
   - [x] Auto-apply popular usage sets only from the main Pokemon picker.
-  - [x] Show empty-query Pokemon dropdown suggestions in Smogon usage order with 20-at-a-time scroll loading.
+  - [x] Show empty-query Pokemon dropdown suggestions in Smogon usage order with usage ranks and 20-at-a-time scroll loading.
+  - [x] Apply hidden-scrollbar infinite loading to Pokemon, item, ability, move, and reverse-filter option lists.
   - [ ] Add a small non-card status or debug surface for the selected usage source if needed.
   - [ ] Decide how aggressively base Pokemon should auto-upgrade into their most-used form or Mega.
 - [x] Add persistent reverse candidate filters to empty Pokemon slots.
+  - [x] Keep Pokemon search and its candidate list permanently visible while the selected slot is empty.
   - [x] Keep type, ability, and move controls in the empty card instead of crowding the Pokemon dropdown.
   - [x] Let preselected type, ability, and move requirements narrow legal Pokemon candidates.
   - [x] Save empty-slot requirements with the team and preserve them across slot reordering.
@@ -216,7 +218,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Add custom type icons from third-party SVG assets.
 - [x] Add `THIRD_PARTY_NOTICES.md` for MIT-licensed type icons.
 - [x] Add Font Awesome and Pokemon Showdown third-party notices.
-- [x] Compact team tabs and use small icon sprites.
+- [x] Replace compact tabs with a persistent Team Rail using icon sprites, names, types, and items.
 - [x] Rework Pokemon artwork as a translucent card background layer.
 - [x] Add Pokemon Showdown-backed Regulation M-B legality filtering for Pokemon, items, abilities, and per-Pokemon moves.
 - [x] Verify M-B move legality against a real Pokemon Champions Charizard learnset check.

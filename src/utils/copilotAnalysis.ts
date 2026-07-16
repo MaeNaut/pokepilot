@@ -1,6 +1,6 @@
 import { CHAMPIONS_MAX_EV_TOTAL, defaultEvs, getNatureById, statKeys } from "../data/natures";
 import type { TeamConceptId } from "../data/teamConcepts";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "./teamBuildState";
 import type {
   PokemonCandidateFilterValue,
   PokemonIndexEntry,

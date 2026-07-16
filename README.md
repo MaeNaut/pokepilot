@@ -12,9 +12,9 @@ Current slice:
 
 - Vite + React + TypeScript app shell
 - mockup-driven single Pokemon editor card
-- six active team tabs plus a seventh bench drawer with full-build transfers
+- persistent six-member Team Rail plus a bench drawer with full-build transfers
 - Showdown-backed Pokemon index and form metadata with local browser caching
-- Pokemon name header that becomes a same-style searchable dropdown when clicked
+- Pokemon name header with a searchable, usage-ranked dropdown that stays open for empty slots
 - searchable icon-only item picker backed by a compact Showdown item catalog
 - Pokemon artwork/sprite display from PokeAPI sprite URLs
 - Showdown-primary types, base stats, abilities, legal move lists, and move details
@@ -24,12 +24,12 @@ Current slice:
 - Smogon monthly usage stats for popular default sets and Pokemon suggestions
 - localStorage saved-team management with load, rename, duplicate, delete, reorder, last-opened restore, and a 30-team limit
 - Showdown text import/export for Pokemon sets and saved teams, including direct new-team import from the header
-- dedicated 1080-by-1080 Pokemon build images with preview, clipboard copy, and PNG download
+- dedicated Pokemon and whole-team build images with in-dialog navigation, clipboard copy, and PNG download
 - Pokemon Champions-style EV editing and nature-adjusted stat calculation with fixed IV 31 assumptions
 - live team diagnostics for defensive matchups, offensive coverage, six multi-label set roles, and setup alerts
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
-- right-side Copilot strategy briefs for the active team and selected Pokemon
+- right-side PokePilot strategy briefs for the active team and selected Pokemon
 
 ## Getting Started
 
@@ -61,25 +61,24 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 ## Planned Features
 
 - AI-assisted team analysis through a server-side API route
-- team-aware Copilot chat/follow-up panel
+- team-aware PokePilot chat/follow-up panel
 - account-backed Supabase/Postgres persistence after the local MVP is stable
 - calculator mode
 - Korean UI localization
 - Japanese localization under consideration
 - dark mode with a persisted theme preference
 - shareable team links if reasonable
-- whole-team PNG share images
 - deployment-ready responsive polish
 
 ## Implemented Prototype Features
 
-- 6-slot active team tabs with empty slots, add flow, clear confirmation, and full-build reordering
+- six-slot Team Rail with empty slots, add flow, delete confirmation, and full-build reordering
 - up to six persisted bench Pokemon per team that can be moved or swapped with active slots without entering team previews, diagnostics, validity, or Showdown export
 - Showdown-backed full Pokemon index with canonical source IDs
 - selected Pokemon battle-detail loading from a cached Showdown snapshot
-- large editable Pokemon name header with filtered and usage-ordered dropdown
+- large editable Pokemon name header with persistent empty-slot search, reverse filters, usage ranks, and 20-at-a-time loading
 - type icons, ability picker, icon-only item picker, nature picker
-- searchable item, ability, nature, and move controls with keyboard navigation
+- searchable item and move controls, Pokemon-specific ability choices, and a nature matrix with keyboard navigation
 - explicit no-item and empty-move-slot options for intentional partial sets
 - move detail loading with type, category, power, accuracy, PP, description, and tags
 - EssentiarumVG Gen 8 physical, special, and status move category symbols
@@ -88,12 +87,12 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - reorderable local saved-team list and management actions
 - compact header menu for starting a blank team or importing a new Showdown team directly
 - Pokemon-level and team-level Showdown text tools
-- Team Rail Pokemon image export with a dedicated share-card layout
+- Pokemon and whole-team share cards with one preview dialog, cross-preview navigation, clipboard copy, and PNG download
 - type-based team matchup matrix, move coverage, six multi-label set roles, and compact team alerts
 - deterministic Trick Room, Tailwind, Gravity, rain, sun, sand, and snow core analysis
 - compact validity popover with per-slot markers and structured legality issues
 - shared pointer, touch-hold, and keyboard reordering for moves, team slots, bench Pokemon, and saved teams
-- explicit local Copilot analysis with structured summary, strengths, focus areas, and next steps
+- explicit local PokePilot analysis with structured summary, strengths, focus areas, and next steps
 - versioned Copilot request/response data contracts ready for a future server-side model provider
 
 ## Data Source
@@ -121,7 +120,7 @@ Popular default sets are loaded from the latest available monthly
 Champions Regulation M-B format.
 When PokeAPI's generation-specific icon path is missing, the app falls back to
 PokeAPI's `front_default` sprite before older icon paths so Pokemon without
-current icons can still show the more detailed 96x96 sprite in team tabs and
+current icons can still show the more detailed 96x96 sprite in the Team Rail and
 previews.
 
 ## Third-Party Assets

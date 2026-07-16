@@ -1,6 +1,7 @@
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
 import type { TeamMember, TeamSlot } from "../types";
 import type { BenchPokemon, PokemonBuildSnapshot } from "./benchPokemon";
+import type { TeamBuildState } from "./teamBuildState";
+export { createEmptyBuildState } from "./teamBuildState";
 
 const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
 const lastActiveTeamStorageKey = "pokepilot.lastActiveTeam.v1";
@@ -144,18 +145,6 @@ export function createSavedBenchPokemon(entry: BenchPokemon): SavedBenchPokemon 
 
 export function serializeTeamSnapshot(snapshot: TeamSnapshot) {
   return JSON.stringify(snapshot);
-}
-
-export function createEmptyBuildState(): TeamBuildState {
-  return {
-    itemBySlot: {},
-    abilityBySlot: {},
-    natureBySlot: {},
-    evsBySlot: {},
-    moveIdsBySlot: {},
-    preMegaPokemonBySlot: {},
-    candidateFiltersBySlot: {},
-  };
 }
 
 export function createFallbackMember(slot: SavedPokemon): TeamMember {

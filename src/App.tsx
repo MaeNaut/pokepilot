@@ -1,30 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
-  faCopy,
-  faFileExport,
-  faFileImport,
-  faFileLines,
   faFloppyDisk,
   faList,
-  faPen,
-  faTrash,
-  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "./api/pokeApi";
-import { fetchPokemonIndex } from "./api/pokemonIndex";
-import { fetchItem, fetchItemIndex } from "./api/showdownCatalog";
+import { fetchItem } from "./api/showdownCatalog";
 import { normalizeShowdownId } from "./api/showdownIds";
 import {
   loadPopularSmogonSet,
   resolveSmogonUsageMoveIds,
 } from "./api/smogonUsage";
-import { isPokemonLegal, loadShowdownLegality } from "./api/showdownLegality";
+import { isPokemonLegal } from "./api/showdownLegality";
 import { CopilotPanel } from "./components/CopilotPanel";
 import { NewTeamControl } from "./components/NewTeamControl";
-import { PokemonIcon } from "./components/PokemonIcon";
+import { SavedTeamRow } from "./components/SavedTeamRow";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
 import {
@@ -38,8 +30,8 @@ import {
   canAddSavedTeam,
 } from "./data/teamLimits";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
+import { useBuilderData } from "./hooks/useBuilderData";
 import {
-  getReorderDisplacement,
   useLongPressReorder,
 } from "./hooks/useLongPressReorder";
 import {
@@ -47,6 +39,7 @@ import {
   shouldKeepSelectedPokemonForUsageTarget,
 } from "./utils/pokemonAliases";
 import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
+import { swapArrayItems } from "./utils/reorder";
 import {
   moveBenchPokemonToTeam,
   moveTeamPokemonToBench,
@@ -79,16 +72,12 @@ import {
   type TeamSnapshot,
 } from "./utils/teamStorage";
 import type {
-  DataLoadStatus,
-  ItemIndexEntry,
-  PokemonIndexEntry,
   PokemonItem,
   TeamMember,
   TeamSlot,
 } from "./types";
-import type { TeamBuildState } from "./hooks/useTeamBuildState";
+import type { TeamBuildState } from "./utils/teamBuildState";
 import type { SmogonUsageSet } from "./api/smogonUsage";
-import type { ShowdownLegalitySnapshot } from "./api/showdownLegality";
 
 type PendingTeamAction =
   | {
@@ -140,16 +129,6 @@ function isMegaPokemonId(value: string) {
   return toPokemonId(value).includes("-mega");
 }
 
-function swapArrayItems<T>(items: T[], sourceIndex: number, targetIndex: number) {
-  const nextItems = [...items];
-
-  [nextItems[sourceIndex], nextItems[targetIndex]] = [
-    nextItems[targetIndex],
-    nextItems[sourceIndex],
-  ];
-  return nextItems;
-}
-
 function App() {
   const [team, setTeam] = useState<TeamSlot[]>(() =>
     Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null),
@@ -157,6 +136,18 @@ function App() {
   const [bench, setBench] = useState<BenchPokemon[]>([]);
   const [selectedTeamSlot, setSelectedTeamSlot] = useState(0);
   const teamBuildState = useTeamBuildState();
+  const {
+    pokemonIndex,
+    itemIndex,
+    showdownLegality,
+    pokemonIndexStatus: indexStatus,
+    itemIndexStatus,
+    showdownLegalityStatus,
+    showdownLegalityError,
+    retryPokemonIndex,
+    retryItemIndex,
+    retryShowdownLegality,
+  } = useBuilderData();
   const [teamName, setTeamName] = useState("Untitled Team");
   const [teamNameDraft, setTeamNameDraft] = useState("Untitled Team");
   const [savedTeams, setSavedTeams] = useState<SavedTeamSummary[]>([]);
@@ -179,19 +170,6 @@ function App() {
     null,
   );
   const [customPool, setCustomPool] = useState<TeamMember[]>([]);
-  const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([]);
-  const [itemIndex, setItemIndex] = useState<ItemIndexEntry[]>([]);
-  const [showdownLegality, setShowdownLegality] = useState<ShowdownLegalitySnapshot | null>(
-    null,
-  );
-  const [showdownLegalityError, setShowdownLegalityError] = useState<string | null>(null);
-  const [showdownLegalityStatus, setShowdownLegalityStatus] =
-    useState<DataLoadStatus>("idle");
-  const [indexStatus, setIndexStatus] = useState<DataLoadStatus>("idle");
-  const [itemIndexStatus, setItemIndexStatus] = useState<DataLoadStatus>("idle");
-  const [showdownLoadAttempt, setShowdownLoadAttempt] = useState(0);
-  const [pokemonIndexLoadAttempt, setPokemonIndexLoadAttempt] = useState(0);
-  const [itemIndexLoadAttempt, setItemIndexLoadAttempt] = useState(0);
   const [selectingPokemonSlot, setSelectingPokemonSlot] = useState<number | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchNotice, setSearchNotice] = useState<{
@@ -375,94 +353,6 @@ function App() {
     isTeamManagerOpen,
     pendingTeamAction,
   ]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadShowdownData() {
-      setShowdownLegalityStatus("loading");
-      setShowdownLegalityError(null);
-
-      try {
-        const legality = await loadShowdownLegality("gen9-regulation-mb");
-
-        if (isMounted) {
-          setShowdownLegality((current) =>
-            legality.error && current && !current.error ? current : legality,
-          );
-          setShowdownLegalityError(legality.error ?? null);
-          setShowdownLegalityStatus(legality.error ? "error" : "ready");
-        }
-      } catch (error) {
-        if (isMounted) {
-          setShowdownLegalityStatus("error");
-          setShowdownLegalityError(
-            error instanceof Error ? error.message : "Showdown legality load failed.",
-          );
-        }
-      }
-    }
-
-    void loadShowdownData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [showdownLoadAttempt]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadPokemonIndex() {
-      setIndexStatus("loading");
-
-      try {
-        const index = await fetchPokemonIndex();
-
-        if (isMounted) {
-          setPokemonIndex(index);
-          setIndexStatus("ready");
-        }
-      } catch {
-        if (isMounted) {
-          setIndexStatus("error");
-        }
-      }
-    }
-
-    void loadPokemonIndex();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [pokemonIndexLoadAttempt]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadItemIndex() {
-      setItemIndexStatus("loading");
-
-      try {
-        const index = await fetchItemIndex();
-
-        if (isMounted) {
-          setItemIndex(index);
-          setItemIndexStatus("ready");
-        }
-      } catch {
-        if (isMounted) {
-          setItemIndexStatus("error");
-        }
-      }
-    }
-
-    void loadItemIndex();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [itemIndexLoadAttempt]);
 
   function hasLegalityFilter() {
     return (
@@ -1443,6 +1333,16 @@ function App() {
     }
   }
 
+  function toggleDeleteTeam(teamId: string) {
+    setRenamingTeamId(null);
+    setShowdownTeamId(null);
+    setTeamShowdownDraft("");
+    setPendingDeleteTeamId((currentId) =>
+      currentId === teamId ? null : teamId,
+    );
+    setTeamStorageMessage(null);
+  }
+
   function handleDeleteTeam(teamId: string) {
     const deletedTeam = savedTeams.find((savedTeam) => savedTeam.id === teamId);
     const nextTeams = savedTeams.filter((savedTeam) => savedTeam.id !== teamId);
@@ -1559,236 +1459,40 @@ function App() {
                   }`}
                   ref={savedTeamListRef}
                 >
-                  {savedTeams.map((savedTeam, index) => {
-                    const displacement = getReorderDisplacement(
-                      savedTeamReorder.dragState,
-                      index,
-                    );
-
-                    return (
-                      <div
-                      className={`saved-team-row ${
-                        savedTeam.id === activeSavedTeamId ? "is-active" : ""
-                      } ${
-                        savedTeamReorder.dragState?.sourceIndex === index
-                          ? "is-dragging"
-                          : ""
-                      } ${
-                        savedTeamReorder.dragState?.sourceIndex === index &&
-                        savedTeamReorder.dragState.isDropping
-                          ? "is-dropping"
-                          : ""
-                      } ${
-                        savedTeamReorder.dragState?.targetIndex === index &&
-                        savedTeamReorder.dragState.sourceIndex !== index
-                          ? "is-drop-target"
-                          : ""
-                      } ${
-                        displacement ? "is-reorder-displaced" : ""
-                      }`}
-                      data-saved-team-index={index}
+                  {savedTeams.map((savedTeam, index) => (
+                    <SavedTeamRow
                       key={savedTeam.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`${savedTeam.name}. Drag to reorder or press Alt and an arrow key.`}
-                      style={
-                        savedTeamReorder.dragState?.sourceIndex === index
-                          ? ({
-                              "--saved-team-drag-x": `${savedTeamReorder.dragState.offsetX}px`,
-                              "--saved-team-drag-y": `${savedTeamReorder.dragState.offsetY}px`,
-                            } as CSSProperties)
-                          : displacement
-                            ? {
-                                transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
-                              }
-                            : undefined
+                      team={savedTeam}
+                      index={index}
+                      isActive={savedTeam.id === activeSavedTeamId}
+                      isRenaming={renamingTeamId === savedTeam.id}
+                      renameDraft={renameDraft}
+                      isDeletePending={pendingDeleteTeamId === savedTeam.id}
+                      isShowdownOpen={showdownTeamId === savedTeam.id}
+                      showdownDraft={teamShowdownDraft}
+                      isImportingShowdown={isImportingSavedTeam}
+                      reorder={savedTeamReorder}
+                      onSelect={handleSavedTeamRowClick}
+                      onKeyDown={handleSavedTeamRowKeyDown}
+                      onRenameDraftChange={setRenameDraft}
+                      onRenameKeyDown={handleRenameKeyDown}
+                      onConfirmRename={commitRenameTeam}
+                      onCancelRename={cancelRenameTeam}
+                      onStartRename={startRenameTeam}
+                      onDuplicate={handleDuplicateTeam}
+                      onToggleShowdown={(teamSummary) =>
+                        void toggleSavedTeamShowdown(teamSummary)
                       }
-                      onClick={() => handleSavedTeamRowClick(savedTeam)}
-                      onKeyDown={(event) =>
-                        handleSavedTeamRowKeyDown(event, index, savedTeam)
+                      onToggleDelete={toggleDeleteTeam}
+                      onCancelDelete={() => setPendingDeleteTeamId(null)}
+                      onDelete={handleDeleteTeam}
+                      onShowdownDraftChange={setTeamShowdownDraft}
+                      onImportShowdown={(teamSummary) =>
+                        void commitImportSavedTeam(teamSummary)
                       }
-                      onPointerDown={(event) => {
-                        if (
-                          (event.target as Element).closest(
-                            "button, input, textarea, [contenteditable='true']",
-                          )
-                        ) {
-                          return;
-                        }
-
-                        savedTeamReorder.handlePointerDown(event, index);
-                      }}
-                      onPointerMove={savedTeamReorder.handlePointerMove}
-                      onPointerUp={savedTeamReorder.handlePointerUp}
-                      onPointerCancel={savedTeamReorder.handlePointerCancel}
-                    >
-                      <div className="saved-team-header-row">
-                        <div className="saved-team-info">
-                          {renamingTeamId === savedTeam.id ? (
-                            <input
-                              className="saved-team-rename-input"
-                              aria-label={`Rename ${savedTeam.name}`}
-                              autoFocus
-                              value={renameDraft}
-                              onChange={(event) => setRenameDraft(event.target.value)}
-                              onClick={(event) => event.stopPropagation()}
-                              onKeyDown={(event) => handleRenameKeyDown(event, savedTeam.id)}
-                            />
-                          ) : (
-                            <span
-                              className="saved-team-name-button"
-                            >
-                              {savedTeam.name}
-                            </span>
-                          )}
-                        </div>
-
-                        <div
-                          className="saved-team-actions"
-                          aria-label={`${savedTeam.name} actions`}
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                        >
-                          {renamingTeamId === savedTeam.id ? (
-                            <>
-                              <button
-                                className="saved-team-action-button"
-                                type="button"
-                                aria-label="Confirm rename"
-                                title="Confirm rename"
-                                onClick={() => commitRenameTeam(savedTeam.id)}
-                              >
-                                <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
-                              </button>
-                              <button
-                                className="saved-team-action-button"
-                                type="button"
-                                aria-label="Cancel rename"
-                                title="Cancel rename"
-                                onClick={cancelRenameTeam}
-                              >
-                                <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                className="saved-team-action-button"
-                                type="button"
-                                aria-label={`Rename ${savedTeam.name}`}
-                                title="Rename"
-                                onClick={() => startRenameTeam(savedTeam)}
-                              >
-                                <FontAwesomeIcon icon={faPen} aria-hidden="true" />
-                              </button>
-                              <button
-                                className="saved-team-action-button"
-                                type="button"
-                                aria-label={`Duplicate ${savedTeam.name}`}
-                                title="Duplicate"
-                                onClick={() => handleDuplicateTeam(savedTeam)}
-                              >
-                                <FontAwesomeIcon icon={faCopy} aria-hidden="true" />
-                              </button>
-                              <button
-                                className="saved-team-action-button"
-                                type="button"
-                                aria-label={`Open Showdown text tools for ${savedTeam.name}`}
-                                title="Showdown Text"
-                                onClick={() => void toggleSavedTeamShowdown(savedTeam)}
-                              >
-                                <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
-                              </button>
-                              <button
-                                className="saved-team-action-button is-danger"
-                                type="button"
-                                aria-label={`Delete ${savedTeam.name}`}
-                                title="Delete"
-                                onClick={() => {
-                                  setRenamingTeamId(null);
-                                  setShowdownTeamId(null);
-                                  setTeamShowdownDraft("");
-                                  setPendingDeleteTeamId((currentId) =>
-                                    currentId === savedTeam.id ? null : savedTeam.id,
-                                  );
-                                  setTeamStorageMessage(null);
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div
-                        className="saved-team-preview"
-                        aria-label={`Load ${savedTeam.name}`}
-                      >
-                          {savedTeam.slots.map((slot, index) => (
-                            <span
-                              className="saved-team-preview-slot"
-                              key={`${savedTeam.id}-${index}`}
-                            >
-                              {slot ? <PokemonIcon pokemon={slot} /> : null}
-                            </span>
-                          ))}
-                      </div>
-
-                      {pendingDeleteTeamId === savedTeam.id ? (
-                        <div
-                          className="saved-team-delete-confirm"
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                        >
-                          <span>Delete permanently?</span>
-                          <button type="button" onClick={() => setPendingDeleteTeamId(null)}>
-                            Cancel
-                          </button>
-                          <button
-                            className="is-danger"
-                            type="button"
-                            onClick={() => handleDeleteTeam(savedTeam.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      ) : null}
-
-                      {showdownTeamId === savedTeam.id ? (
-                        <div
-                          className="saved-team-import-panel"
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                        >
-                          <strong>Team Showdown Text</strong>
-                          <textarea
-                            value={teamShowdownDraft}
-                            placeholder="Paste Showdown team text here..."
-                            onChange={(event) => setTeamShowdownDraft(event.target.value)}
-                          />
-                          <div className="saved-team-import-actions">
-                            <button
-                              type="button"
-                              disabled={isImportingSavedTeam}
-                              onClick={() => void commitImportSavedTeam(savedTeam)}
-                            >
-                              <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />
-                              {isImportingSavedTeam ? "Importing..." : "Import"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void handleExportSavedTeam()}
-                            >
-                              <FontAwesomeIcon icon={faFileExport} aria-hidden="true" />
-                              Export
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-                      </div>
-                    );
-                  })}
+                      onExportShowdown={() => void handleExportSavedTeam()}
+                    />
+                  ))}
                 </div>
               ) : (
                 <p className="team-manager-empty">No saved teams yet.</p>
@@ -1822,9 +1526,9 @@ function App() {
             buildState={teamBuildState}
             validity={teamValidity}
             onSelectedSlotChange={setSelectedTeamSlot}
-            onRetryPokemonIndex={() => setPokemonIndexLoadAttempt((attempt) => attempt + 1)}
-            onRetryItemIndex={() => setItemIndexLoadAttempt((attempt) => attempt + 1)}
-            onRetryShowdownLegality={() => setShowdownLoadAttempt((attempt) => attempt + 1)}
+            onRetryPokemonIndex={retryPokemonIndex}
+            onRetryItemIndex={retryItemIndex}
+            onRetryShowdownLegality={retryShowdownLegality}
             onRetryPokemonSelection={() => {
               if (failedPokemonSelection) {
                 void handleSelectPokemon(

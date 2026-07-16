@@ -10,7 +10,7 @@ import {
   faUsers,
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "../utils/teamBuildState";
 import type { PokemonIndexEntry, TeamSlot } from "../types";
 import {
   createCopilotAnalysisRequest,

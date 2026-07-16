@@ -17,7 +17,7 @@ import type {
   TeamMember,
   TeamSlot,
 } from "../types";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "./teamBuildState";
 import {
   analyzeTeamConcepts,
   type TeamConceptSetProfile,

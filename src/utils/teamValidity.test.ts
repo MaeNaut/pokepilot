@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
-import type { TeamBuildState } from "../hooks/useTeamBuildState";
+import type { TeamBuildState } from "./teamBuildState";
 import type { ItemIndexEntry, PokemonIndexEntry, TeamMember } from "../types";
 import { validateTeam } from "./teamValidity";
 

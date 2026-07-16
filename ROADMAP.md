@@ -8,14 +8,14 @@ The MVP should prove the core loop:
 2. Edit one displayed Pokemon at a time through a polished builder card.
 3. Validate Pokemon, item, ability, move, and stat choices against the target format.
 4. Surface team-level diagnostics.
-5. Ask Copilot to analyze the team and answer follow-up questions.
+5. Ask PokePilot to analyze the team and eventually answer follow-up questions.
 6. Deploy the app publicly.
 
 ## Phase 1 - Static Prototype
 
 - Create the app shell.
 - Build the mockup-driven builder screen.
-- Add 6 compact team tabs beside a single Pokemon editor card.
+- Add a persistent six-member Team Rail beside a single Pokemon editor card.
 - Keep the header compact and focused on team-management actions.
 - Stack a wide, low builder and compact matchup diagnostics beside a persistent full-height PokePilot panel.
 - Cap the desktop workspace at 1920px so ultrawide layouts retain readable line lengths and scanning distance.
@@ -34,6 +34,9 @@ The MVP should prove the core loop:
   eliminating per-move PokeAPI requests.
 - [x] Add searchable item and move selectors.
 - [x] Add keyboard navigation for Pokemon, item, ability, nature, and move selectors.
+- [x] Use 20-at-a-time infinite loading with hidden scrollbars across Pokemon,
+  item, ability, and move option lists, including empty-slot candidate filters.
+- [x] Show Smogon usage rank instead of Pokedex number in Pokemon picker results.
 - [x] Add item, ability, and move detail tooltips.
 - [x] Add compact defensive matchup and coverage-gap visualization while retaining roles and alerts as structured PokePilot input.
 - [x] Add a sixth Setter role for field, weather, screens, terrain, and hazard setup.
@@ -93,9 +96,9 @@ The MVP should prove the core loop:
 - [x] Split the compact new-team action into blank-team creation and direct Showdown team import.
 - [x] Add shared pointer, touch-hold, and keyboard reordering for moves, team slots, and saved teams.
 - [x] Add a persisted bench outside the active six, with full-build move/swap interactions and no effect on active-team previews, diagnostics, validity, or Showdown export.
-- [ ] Add shareable PNG build images for individual Pokemon sets and complete active teams.
+- [x] Add shareable PNG build images for individual Pokemon sets and complete active teams.
   - [x] Ship the individual Pokemon preview, clipboard-copy, and PNG-download flow.
-  - [ ] Add the complete active-team image template on the shared export pipeline.
+  - [x] Add the complete active-team image template and shared preview navigation.
 - [ ] Prepare account-backed server persistence after the local MVP is stable.
   - [x] Keep Supabase-managed PostgreSQL as the leading candidate, with Neon as the main database-focused alternative.
   - [ ] Normalize teams and Pokemon sets into server-owned records with active/bench location and ordering.
