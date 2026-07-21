@@ -1,4 +1,5 @@
 import type { PokemonMove } from "../types";
+import { useLocalization } from "../i18n/useLocalization";
 import { TypeBadge } from "./TypeBadge";
 
 type MoveSummaryProps = {
@@ -21,19 +22,30 @@ function getMoveCategoryClass(category?: string) {
 }
 
 export function MoveSummary({ move }: MoveSummaryProps) {
+  const { gameName } = useLocalization();
+
   return (
     <>
       <span className="move-type-mark">
         <TypeBadge type={move.type} />
       </span>
-      <span className="move-name">{move.name}</span>
+      <span className="move-name">{gameName("moves", move.id, move.name)}</span>
       <span className="move-power-panel">{move.power ?? "-"}</span>
     </>
   );
 }
 
 export function MoveTooltip({ move, id, placement = "pill" }: MoveTooltipProps) {
-  const category = move.category ?? "Move category";
+  const { gameDescription, gameName, moveTag, t } = useLocalization();
+  const category =
+    move.category === "Physical"
+      ? t("move.categoryPhysical")
+      : move.category === "Special"
+        ? t("move.categorySpecial")
+        : move.category === "Status"
+          ? t("move.categoryStatus")
+          : t("move.categoryUnknown");
+  const moveName = gameName("moves", move.id, move.name);
 
   return (
     <aside
@@ -48,7 +60,7 @@ export function MoveTooltip({ move, id, placement = "pill" }: MoveTooltipProps) 
           <span className="move-tooltip-type">
             <TypeBadge type={move.type} />
           </span>
-          <strong>{move.name}</strong>
+          <strong>{moveName}</strong>
           <span
             className={`move-category-icon is-${getMoveCategoryClass(move.category)}`}
             aria-label={category}
@@ -59,25 +71,25 @@ export function MoveTooltip({ move, id, placement = "pill" }: MoveTooltipProps) 
         <div className="move-tooltip-body">
           <dl className="move-tooltip-stats">
             <div>
-              <dt>Power</dt>
+              <dt>{t("move.power")}</dt>
               <dd>{move.power ?? "-"}</dd>
             </div>
             <div>
-              <dt>Accuracy</dt>
+              <dt>{t("move.accuracy")}</dt>
               <dd>{move.accuracy ?? "-"}</dd>
             </div>
             <div>
-              <dt>PP</dt>
+              <dt>{t("move.pp")}</dt>
               <dd>{move.pp}</dd>
             </div>
           </dl>
 
-          <p>{move.description}</p>
+          <p>{gameDescription("moves", move.id, move.description)}</p>
 
           {move.tags?.length ? (
-            <div className="move-tooltip-tags" aria-label="Move tags">
+            <div className="move-tooltip-tags" aria-label={t("move.tags")}>
               {move.tags.map((tag) => (
-                <span key={tag}>#{tag}</span>
+                <span key={tag}>#{moveTag(tag)}</span>
               ))}
             </div>
           ) : null}

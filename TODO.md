@@ -51,12 +51,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Role-based physical/special wall imbalance warnings.
   - [x] Avoid false completion warnings for intentional no-item or sub-four-move sets.
   - [x] Unify matchup and coverage surfaces with the builder UI.
-- [ ] Improve move editing.
+- [x] Improve move editing.
   - [x] Keep the current move visible when opening the move dropdown.
   - [x] Preserve natural keyboard scrolling and prevent hover-triggered scroll loops.
   - [x] Reorder selected moves with desktop drag, touch hold-and-drag, or keyboard shortcuts.
   - [x] Add a clear action and a stable empty state for each of the four move slots.
-  - [ ] Decide whether selected moves should show PP or only power.
+  - [x] Keep selected move pills focused on power; show PP, accuracy, and descriptions in the detail tooltip.
 - [x] Improve item editing.
   - [x] Verify Mega Stone auto-set, lock, and unlock behavior after item changes.
   - [x] Allow ordinary held items to be cleared while preserving locked Mega Stones.
@@ -129,7 +129,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Cover first-pass set validity, Mega Stone matching, EV limits, Species Clause, and Item Clause.
   - [x] Add representative Regulation M-B legality and form-alias fixtures.
 
-- [ ] Harden the Pokemon Champions Regulation M-B legality layer.
+- [x] Harden the Pokemon Champions Regulation M-B legality layer.
   - [x] Share and locally cache normalized Showdown Pokedex and move snapshots.
   - [x] Use Showdown as the primary selected-Pokemon source for types, base stats, abilities, legal move IDs, and move details.
   - [x] Keep PokeAPI selected-Pokemon requests only for artwork/icon URLs and fallback data.
@@ -139,7 +139,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Replace PokeAPI item and ability detail requests with compact Showdown-derived data.
   - [x] Replace the large runtime teambuilder-table download with a compact Regulation M-B snapshot.
   - [x] Finish the post-migration refactor and remove duplicate ID, cache, and form-move loading paths.
-  - [ ] Document any known Showdown/PokeAPI name mapping exceptions.
+  - [x] Document known Showdown/PokeAPI name mapping exceptions.
 - [ ] Improve usage-stats default sets.
   - [x] Fetch and parse Smogon monthly moveset stats for Regulation M-B.
   - [x] Auto-apply popular usage sets only from the main Pokemon picker.
@@ -190,6 +190,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Polish
 
+- [ ] Finish Korean localization.
+  - [x] Add a typed English/Korean UI dictionary and persist the language preference.
+  - [x] Generate editable Korean game-name and description snapshots from PokeAPI.
+  - [x] Localize builder controls, pickers, diagnostics, tooltips, and share previews.
+  - [ ] Localize deterministic PokePilot analysis and remaining validity prose.
+  - [ ] Audit Korean terminology, long-label fit, and every empty/loading/error state.
 - [ ] Add a real app icon / logo mark.
 - [ ] Defer the dedicated tablet/mobile UI pass until Team Builder functionality and desktop UI/UX are complete.
   - [ ] Audit the provisional responsive CSS before treating any current breakpoint behavior as final.

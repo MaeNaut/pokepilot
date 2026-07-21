@@ -132,6 +132,64 @@ button {
   margin-right: 36px;
 }
 
+.language-control {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  align-self: center;
+  justify-self: start;
+  margin-left: 28px;
+}
+
+.language-trigger.is-open {
+  background: #eeeeee;
+}
+
+.language-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 54;
+  display: grid;
+  width: 148px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 36px rgb(0 0 0 / 14%);
+}
+
+.language-option {
+  display: grid;
+  min-height: 38px;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 0 9px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: var(--font-medium);
+  text-align: left;
+}
+
+.language-option:hover,
+.language-option:focus-visible,
+.language-option.is-active {
+  background: #eeeeee;
+  outline: none;
+}
+
+.language-option svg {
+  width: 12px;
+  justify-self: center;
+  color: #555555;
+}
+
 .team-actions {
   position: relative;
   display: flex;
@@ -5394,6 +5452,19 @@ select {
     margin-right: 0;
   }
 
+  .language-control {
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    margin-left: 0;
+    transform: translateY(-50%);
+  }
+
+  .language-menu {
+    right: 0;
+    left: auto;
+  }
+
   .workspace {
     height: auto;
     max-height: none;
@@ -5473,6 +5544,10 @@ select {
   .app-wordmark {
     left: 16px;
     font-size: 1rem;
+  }
+
+  .language-control {
+    right: 10px;
   }
 
   .header-builder-workspace {

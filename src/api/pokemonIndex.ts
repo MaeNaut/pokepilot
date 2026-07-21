@@ -79,15 +79,13 @@ export const syntheticGenderFormSources: Record<
   "pyroar-female": { sourceName: "pyroar-male", spriteGender: "female" },
 };
 
-const BASE_DISPLAY_NAME_FOR_DEFAULT_FORMS = new Set([
-  "aegislash-shield",
-  "mimikyu-disguised",
-  "morpeko-full-belly",
-  "palafin-zero",
-]);
+const BASE_DISPLAY_NAME_FOR_DEFAULT_FORMS = new Set(
+  Object.values(DEFAULT_FORM_IDS_BY_SHOWDOWN_ID),
+);
 const MAIN_PICKER_HIDDEN_FORMS = new Set([
   "mimikyu-busted",
   "pyroar-female",
+  "sinistcha-masterpiece",
   ...battleOnlyAlternateFormIds,
 ]);
 const MAIN_PICKER_HIDDEN_PREFIXES = [
@@ -96,7 +94,7 @@ const MAIN_PICKER_HIDDEN_PREFIXES = [
   "pikachu-",
 ];
 const REGIONAL_FORM_PATTERN = /^(?:alola|galar|hisui|paldea)(?:-|$)/i;
-const MEGA_FORM_PATTERN = /^mega(?:-|$)/i;
+const MEGA_FORM_PATTERN = /(?:^|-)mega(?:-|$)/i;
 
 function toDisplayId(value: string) {
   return toPokemonLookupId(

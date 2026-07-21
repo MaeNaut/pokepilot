@@ -104,13 +104,17 @@ Current direction:
     legal moves, and form-specific data can load independently
   - cosmetic or battle-only forms that should not be selected directly, such as
     Pikachu caps, Castform weather forms, Mimikyu Busted, Mimikyu Totem forms,
-    Aegislash Blade, and Palafin Hero are hidden from the main picker
+    Aegislash Blade, Palafin Hero, and Sinistcha Masterpiece are hidden from the
+    main picker
   - battle-triggered Aegislash, Morpeko, and Palafin forms use compact controls
     beside the Pokemon name while Shield, Full Belly, and Zero remain their
     main-picker defaults
-  - default battle-state suffixes are hidden from picker display names for
-    Aegislash Shield, Mimikyu Disguised, Morpeko Full Belly, and Palafin Zero;
-    their internal form IDs remain unchanged, and regional/gender suffixes stay visible
+  - default-form suffixes are hidden from picker display names for Aegislash
+    Shield, Mimikyu Disguised, Morpeko Full Belly, Palafin Zero, Furfrou Natural,
+    Gourgeist Average, Lycanroc Midday, and Maushold Family of Four; their
+    internal form IDs remain unchanged, and regional/gender qualifiers stay visible
+  - Korean picker labels place regional and gender qualifiers before the species
+    name, such as `히스이 윈디` and `암컷 냐오닉스`, without changing canonical IDs
   - mega evolutions are hidden from the main picker and exposed through the
     selected Pokemon's mega control
 - Keep PokeAPI as the current selected-Pokemon sprite/artwork source and as the
@@ -160,6 +164,35 @@ Current direction:
   complete replacement for Pokemon Showdown's full team validator. Add level,
   gender, and complex rule checks only when those fields enter the app model.
 
+### Known Showdown / PokeAPI Mapping Exceptions
+
+- PokePilot keeps dashed UI and asset IDs while Showdown uses compact canonical
+  IDs. Shared lookup helpers normalize pairs such as `rotom-wash` / `rotomwash`
+  instead of letting individual adapters invent their own punctuation rules.
+- Showdown represents several gender forms with a base male ID and an `f`
+  suffix for the female form. PokePilot exposes explicit `-male` / `-female`
+  IDs for Basculegion, Indeedee, Meowstic, and Oinkologne. Pyroar Female is a
+  synthetic display and sprite variant based on the shared Pyroar battle-data
+  entry; gender remains separate Showdown header metadata during text export.
+- Showdown base entries map to explicit PokeAPI-compatible default-form IDs for
+  Aegislash Shield, Mimikyu Disguised, Morpeko Full Belly, Palafin Zero,
+  Furfrou Natural, Gourgeist Average, Lycanroc Midday, and Maushold Family of
+  Four. Their default-state suffixes may be hidden in picker labels without
+  changing the stored ID.
+- Aegislash Blade, Morpeko Hangry, and Palafin Hero are battle-only alternates.
+  They share usage lookup identity with their default forms and are selected
+  through compact form controls rather than separate main-picker entries.
+- Paldean Tauros IDs add the PokeAPI-style `-breed` suffix in PokePilot while
+  lookup aliases also accept the corresponding Showdown name without it.
+- Mega forms retain their canonical Showdown species name separately from the
+  PokePilot UI ID so exported Showdown text does not reconstruct a name from a
+  display label. Mega Floette is also a learnset-source exception: the generated
+  M-B snapshot explicitly inherits Eternal Floette's learnset so Light of Ruin
+  survives Mega toggles.
+- Asset lookup prefers the explicit default-form PokeAPI IDs for Aegislash,
+  Mimikyu, Morpeko, and Palafin when the canonical Showdown base ID does not
+  identify the intended sprite directly.
+
 The user is comfortable using Pokemon names and sprites/artwork for this unofficial
 portfolio tool. Continue to avoid official logos, official UI branding, and any
 claim of affiliation.
@@ -194,6 +227,9 @@ Desktop UX decisions after the wide-builder layout change:
   picker visible so Pokemon selection remains the primary task.
 - Form-change variants are selected from the main Pokemon dropdown, while Mega
   evolutions remain adjacent controls next to the Pokemon name.
+- Keep selected move pills optimized for quick scanning: show the type icon,
+  move name, and power in the pill, while PP, accuracy, category, description,
+  and tags remain available in the hover and keyboard-selection detail tooltip.
 - If the selected Pokemon has mega evolutions, show compact original mega controls
   beside the Pokemon name rather than listing mega Pokemon in the main search.
 - The large Pokemon name header should show only the base species name; regional,
@@ -342,6 +378,25 @@ Desktop UX decisions after the wide-builder layout change:
   official provider storage, egress, inactivity, backup, and authentication limits
   immediately before deployment because plan details are time-sensitive.
 
+## Localization Strategy
+
+- Keep UI copy in the typed flat dictionaries under `src/i18n/translations.ts`.
+  The Korean dictionary must satisfy the complete English key set at build time,
+  so missing keys and misspelled identifiers fail TypeScript verification.
+- Persist only the selected locale under `pokepilot:locale`; never duplicate team
+  or Pokemon data per language. Saved builds and Showdown import/export continue
+  to use canonical English IDs.
+- Generate `src/i18n/data/ko-game-data.json` with `npm run data:locales` from the
+  official PokeAPI CSV dataset. The checked-in snapshot covers Pokemon species and
+  forms, moves, items, abilities, types, natures, and available Korean flavor text,
+  so ordinary app use does not request localization records from PokeAPI.
+- Put deliberate terminology corrections in `src/i18n/data/koOverrides.ts` rather
+  than editing generated data. Missing or newly introduced game records fall back
+  to their English display text.
+- The first localization slice covers the builder, management controls,
+  diagnostics, tooltips, and share-image UI. Deterministic PokePilot analysis prose
+  and remaining validity detail messages still need a dedicated Korean pass.
+
 ## Regulation Target
 
 The intended competitive target is Pokemon Champions Regulation M-B. The current
@@ -356,7 +411,6 @@ Still needed:
 
 - extend the representative fixtures whenever a new legality-sensitive Pokemon,
   item, ability, or move exception is discovered
-- documentation for any known Showdown/PokeAPI naming exceptions
 - any newly discovered Pokemon Champions-specific battle-rule differences
 
 ## Desktop QA Baseline

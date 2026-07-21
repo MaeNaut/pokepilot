@@ -13,6 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import type { DataLoadStatus } from "../types";
 import type { TeamValidityResult } from "../utils/teamValidity";
+import { useLocalization } from "../i18n/useLocalization";
 import { DataStatusRow } from "./DataStatusRow";
 
 type BuilderToolbarProps = {
@@ -75,6 +76,7 @@ export function BuilderToolbar({
   onOpenImage,
   onDeletePokemon,
 }: BuilderToolbarProps) {
+  const { t } = useLocalization();
   const [isValidityPanelOpen, setIsValidityPanelOpen] = useState(false);
   const [isShowdownPanelOpen, setIsShowdownPanelOpen] = useState(false);
   const [pendingDeleteSlot, setPendingDeleteSlot] = useState<number | null>(null);
@@ -129,9 +131,9 @@ export function BuilderToolbar({
   async function copyShowdownText() {
     try {
       await navigator.clipboard.writeText(showdownText);
-      setShowdownPanelMessage("Copied to clipboard.");
+      setShowdownPanelMessage(t("toolbar.copied"));
     } catch {
-      setShowdownPanelMessage("Copy failed. Select the text manually.");
+      setShowdownPanelMessage(t("toolbar.copyFailed"));
     }
   }
 
@@ -145,7 +147,7 @@ export function BuilderToolbar({
       setShowdownText("");
     } catch (error) {
       setShowdownPanelMessage(
-        error instanceof Error ? error.message : "Showdown import failed.",
+        error instanceof Error ? error.message : t("toolbar.importFailed"),
       );
     } finally {
       setIsImportingShowdown(false);
@@ -192,7 +194,7 @@ export function BuilderToolbar({
     <>
       <div
         className="builder-card-toolbar"
-        aria-label="Builder tools"
+        aria-label={t("toolbar.tools")}
         ref={toolbarRef}
       >
         {hasTeamMembers ? (
@@ -201,7 +203,7 @@ export function BuilderToolbar({
             type="button"
             aria-haspopup="dialog"
             aria-expanded={isValidityPanelOpen}
-            title="Regulation M-B validity"
+            title={t("toolbar.validityTitle")}
             onClick={() => {
               setIsShowdownPanelOpen(false);
               setPendingDeleteSlot(null);
@@ -214,14 +216,14 @@ export function BuilderToolbar({
               aria-hidden="true"
             />
             {toolbarStatus === "loading"
-              ? "Loading"
+              ? t("toolbar.loading")
               : toolbarStatus === "invalid"
-                ? `${validity.errorCount} ${
-                    validity.errorCount === 1 ? "Issue" : "Issues"
-                  }`
+                ? t(validity.errorCount === 1 ? "toolbar.issue" : "toolbar.issues", {
+                    count: validity.errorCount,
+                  })
                 : toolbarStatus === "unavailable"
-                  ? "Unavailable"
-                  : "Valid"}
+                  ? t("toolbar.unavailable")
+                  : t("toolbar.valid")}
           </button>
         ) : null}
 
@@ -231,21 +233,21 @@ export function BuilderToolbar({
           onClick={toggleShowdownPanel}
         >
           <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
-          Showdown Text
+          {t("toolbar.showdownText")}
         </button>
 
         {activePokemonName ? (
           <button
             className="builder-card-tool-button"
             type="button"
-            title={`Create an image of ${activePokemonName}`}
+            title={t("toolbar.imageTitle", { name: activePokemonName })}
             onClick={() => {
               closePanels();
               onOpenImage();
             }}
           >
             <FontAwesomeIcon icon={faImage} aria-hidden="true" />
-            Image
+            {t("toolbar.image")}
           </button>
         ) : null}
 
@@ -262,7 +264,7 @@ export function BuilderToolbar({
             }}
           >
             <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
-            Delete
+            {t("toolbar.delete")}
           </button>
         ) : null}
       </div>
@@ -271,7 +273,7 @@ export function BuilderToolbar({
         <div
           className={`validity-panel is-${toolbarStatus}`}
           role="dialog"
-          aria-label="Regulation M-B validity"
+          aria-label={t("toolbar.validityTitle")}
           ref={validityPanelRef}
         >
           <div className="validity-panel-header">
@@ -284,23 +286,23 @@ export function BuilderToolbar({
             <div>
               <strong>
                 {toolbarStatus === "loading"
-                  ? "Loading validity data"
+                  ? t("toolbar.loadingValidity")
                   : toolbarStatus === "invalid"
-                    ? "Team has validity issues"
+                    ? t("toolbar.teamInvalid")
                     : toolbarStatus === "unavailable"
-                      ? "Validity data unavailable"
-                      : "Team is valid"}
+                      ? t("toolbar.validityUnavailable")
+                      : t("toolbar.teamValid")}
               </strong>
-              <span>Regulation M-B</span>
+              <span>{t("toolbar.regulation")}</span>
             </div>
           </div>
 
           {showdownLegalityStatus === "loading" ? (
-            <DataStatusRow message="Refreshing Regulation M-B data" isLoading />
+            <DataStatusRow message={t("toolbar.refreshingValidity")} isLoading />
           ) : showdownLegalityStatus === "error" ? (
             <DataStatusRow
               message={
-                showdownLegalityError ?? "Regulation M-B data is unavailable."
+                showdownLegalityError ?? t("toolbar.regulationUnavailable")
               }
               onRetry={onRetryShowdownLegality}
             />
@@ -310,7 +312,7 @@ export function BuilderToolbar({
                 <li className={`is-${issue.severity}`} key={issue.id}>
                   {issue.slotIndex !== undefined ? (
                     <span className="validity-slot-label">
-                      Slot {issue.slotIndex + 1}
+                      {t("toolbar.slot", { slot: issue.slotIndex + 1 })}
                     </span>
                   ) : null}
                   <span>{issue.message}</span>
@@ -319,7 +321,7 @@ export function BuilderToolbar({
             </ul>
           ) : (
             <p className="validity-success-message">
-              All configured choices pass the current legality checks.
+              {t("toolbar.allPass")}
             </p>
           )}
         </div>
@@ -329,18 +331,18 @@ export function BuilderToolbar({
         <div
           className="clear-pokemon-confirm"
           role="dialog"
-          aria-label="Confirm Pokemon deletion"
+          aria-label={t("toolbar.confirmDelete")}
           ref={deleteConfirmRef}
         >
-          <strong>Delete this Pokemon?</strong>
-          <span>This cannot be undone.</span>
+          <strong>{t("toolbar.deletePokemon")}</strong>
+          <span>{t("toolbar.deleteWarning")}</span>
           <div className="clear-pokemon-confirm-actions">
             <button
               className="clear-pokemon-confirm-button"
               type="button"
               onClick={() => setPendingDeleteSlot(null)}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               className="clear-pokemon-confirm-button is-danger"
@@ -350,7 +352,7 @@ export function BuilderToolbar({
                 onDeletePokemon();
               }}
             >
-              Delete
+              {t("common.delete")}
             </button>
           </div>
         </div>
@@ -360,17 +362,17 @@ export function BuilderToolbar({
         <div
           className="showdown-panel"
           role="dialog"
-          aria-label="Showdown text"
+          aria-label={t("toolbar.showdownAria")}
           ref={showdownPanelRef}
         >
           <div className="showdown-panel-header">
-            <strong>Pokemon Showdown Text</strong>
+            <strong>{t("toolbar.pokemonShowdownText")}</strong>
           </div>
           <textarea
             className="showdown-textarea"
             ref={showdownTextareaRef}
             value={showdownText}
-            placeholder="Paste Showdown text here..."
+            placeholder={t("toolbar.pasteShowdown")}
             onChange={(event) => setShowdownText(event.target.value)}
           />
           <div className="showdown-panel-actions">
@@ -387,7 +389,7 @@ export function BuilderToolbar({
                 onClick={importShowdownText}
               >
                 <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />
-                {isImportingShowdown ? "Importing..." : "Import"}
+                {isImportingShowdown ? t("team.importing") : t("common.import")}
               </button>
               <button
                 className="showdown-panel-button"
@@ -395,7 +397,7 @@ export function BuilderToolbar({
                 onClick={copyShowdownText}
               >
                 <FontAwesomeIcon icon={faFileExport} aria-hidden="true" />
-                Export
+                {t("common.export")}
               </button>
             </div>
           </div>

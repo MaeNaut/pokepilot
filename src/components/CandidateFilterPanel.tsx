@@ -13,6 +13,7 @@ import type {
   PokemonType,
 } from "../types";
 import { hasPokemonCandidateFilters } from "../utils/pokemonCandidateFilters";
+import { useLocalization } from "../i18n/useLocalization";
 import { TypeBadge } from "./TypeBadge";
 
 export type CandidateFilterPicker = "ability" | "move";
@@ -71,6 +72,7 @@ export function CandidateFilterPanel({
   onRemoveAbility,
   onRemoveMove,
 }: CandidateFilterPanelProps) {
+  const { gameName, t } = useLocalization();
   const hasFilters = hasPokemonCandidateFilters(filters);
 
   function handlePickerKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -129,10 +131,10 @@ export function CandidateFilterPanel({
       >
         <input
           className={picker === "move" ? "move-search-input" : "candidate-filter-search"}
-          aria-label={`Search ${picker === "ability" ? "abilities" : "moves"}`}
+          aria-label={t(picker === "ability" ? "filter.searchAbilities" : "filter.searchMoves")}
           autoFocus
           value={query}
-          placeholder={picker === "ability" ? "Search abilities" : "Search moves"}
+          placeholder={t(picker === "ability" ? "filter.searchAbilities" : "filter.searchMoves")}
           onChange={(event) => onQueryChange(event.target.value)}
           onKeyDown={handlePickerKeyDown}
         />
@@ -155,7 +157,7 @@ export function CandidateFilterPanel({
               <span className="move-clear-icon" aria-hidden="true">
                 <FontAwesomeIcon icon={faXmark} />
               </span>
-              <span>Remove Move Filter</span>
+              <span>{t("filter.removeMove")}</span>
             </button>
           ) : null}
           {options.map((option, optionIndex) =>
@@ -176,7 +178,7 @@ export function CandidateFilterPanel({
                 <span className="move-type-mark">
                   {option.type ? <TypeBadge type={option.type} /> : null}
                 </span>
-                <span className="move-name">{option.name}</span>
+                <span className="move-name">{gameName("moves", option.id, option.name)}</span>
                 <span className="move-power-panel">{option.power ?? "-"}</span>
               </button>
             ) : (
@@ -189,12 +191,12 @@ export function CandidateFilterPanel({
                 onMouseEnter={() => onActiveOptionChange(optionIndex)}
                 onClick={() => onSelectOption(option)}
               >
-                <span>{option.name}</span>
+                <span>{gameName("abilities", option.id, option.name)}</span>
               </button>
             ),
           )}
           {query && options.length === 0 ? (
-            <div className="candidate-filter-empty">No matches</div>
+            <div className="candidate-filter-empty">{t("filter.noMatches")}</div>
           ) : null}
         </div>
       </div>
@@ -202,18 +204,18 @@ export function CandidateFilterPanel({
   }
 
   return (
-    <section className="candidate-filter-panel" aria-label="Pokemon filters" ref={panelRef}>
+    <section className="candidate-filter-panel" aria-label={t("filter.aria")} ref={panelRef}>
       <header className="candidate-filter-heading">
         <div>
-          <h2>Filter</h2>
-          <span>{matchingCount} of {totalCount}</span>
+          <h2>{t("filter.title")}</h2>
+          <span>{t("filter.count", { matching: matchingCount, total: totalCount })}</span>
         </div>
         {hasFilters ? (
           <button
             className="candidate-filter-clear"
             type="button"
-            aria-label="Clear candidate filters"
-            title="Clear filters"
+            aria-label={t("filter.clear")}
+            title={t("filter.clearTitle")}
             onClick={onClearFilters}
           >
             <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
@@ -222,8 +224,8 @@ export function CandidateFilterPanel({
       </header>
 
       <div className="candidate-filter-group">
-        <span className="candidate-filter-label">Type</span>
-        <div className="candidate-type-grid" role="group" aria-label="Pokemon types">
+        <span className="candidate-filter-label">{t("filter.type")}</span>
+        <div className="candidate-type-grid" role="group" aria-label={t("filter.typesAria")}>
           {pokemonTypes.map((type) => {
             const isSelected = filters.types.includes(type);
             const isUnavailable = filters.types.length >= 2 && !isSelected;
@@ -232,10 +234,14 @@ export function CandidateFilterPanel({
               <button
                 className="candidate-type-button"
                 type="button"
-                aria-label={`${isSelected ? "Remove" : "Add"} ${formatIdLabel(type)} type filter`}
+                aria-label={t(isSelected ? "filter.removeType" : "filter.addType", {
+                  type: gameName("types", type, formatIdLabel(type)),
+                })}
                 aria-pressed={isSelected}
                 disabled={isUnavailable}
-                title={isUnavailable ? "Remove a selected type first" : formatIdLabel(type)}
+                title={isUnavailable
+                  ? t("filter.removeTypeFirst")
+                  : gameName("types", type, formatIdLabel(type))}
                 key={type}
                 onClick={() => onToggleType(type)}
               >
@@ -247,7 +253,7 @@ export function CandidateFilterPanel({
       </div>
 
       <div className="candidate-filter-row">
-        <span className="candidate-filter-label">Ability</span>
+        <span className="candidate-filter-label">{t("filter.ability")}</span>
         <div className="candidate-filter-picker-shell">
           <button
             className={`candidate-filter-trigger ${filters.ability ? "has-value" : ""}`}
@@ -256,15 +262,21 @@ export function CandidateFilterPanel({
             aria-haspopup="listbox"
             onClick={() => onOpenPicker("ability")}
           >
-            <span>{filters.ability?.name ?? "Any ability"}</span>
+            <span>
+              {filters.ability
+                ? gameName("abilities", filters.ability.id, filters.ability.name)
+                : t("filter.anyAbility")}
+            </span>
             <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
           </button>
           {filters.ability ? (
             <button
               className="candidate-filter-remove"
               type="button"
-              aria-label={`Remove ${filters.ability.name} ability filter`}
-              title="Remove ability"
+              aria-label={t("filter.removeAbilityNamed", {
+                ability: gameName("abilities", filters.ability.id, filters.ability.name),
+              })}
+              title={t("filter.removeAbility")}
               onClick={onRemoveAbility}
             >
               <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
@@ -275,7 +287,7 @@ export function CandidateFilterPanel({
       </div>
 
       <div className="candidate-filter-group candidate-move-group">
-        <span className="candidate-filter-label">Moves</span>
+        <span className="candidate-filter-label">{t("filter.moves")}</span>
         <div className="candidate-filter-move-grid">
           {Array.from({ length: 4 }, (_, slotIndex) => {
             const move = selectedMoves[slotIndex];
@@ -293,8 +305,10 @@ export function CandidateFilterPanel({
                   aria-haspopup="listbox"
                   aria-label={
                     move
-                      ? `Change ${move.name} move filter`
-                      : `Add move filter ${slotIndex + 1}`
+                      ? t("filter.changeMove", {
+                          move: gameName("moves", move.id, move.name),
+                        })
+                      : t("filter.addMoveSlot", { slot: slotIndex + 1 })
                   }
                   onClick={() => onOpenMovePicker(slotIndex)}
                 >
@@ -303,13 +317,13 @@ export function CandidateFilterPanel({
                       <span className="move-type-mark">
                         {move.type ? <TypeBadge type={move.type} /> : null}
                       </span>
-                      <span className="move-name">{move.name}</span>
+                      <span className="move-name">{gameName("moves", move.id, move.name)}</span>
                       <span className="move-power-panel">{move.power ?? "-"}</span>
                     </>
                   ) : (
                     <span className="empty-move-label">
                       <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
-                      Add Move
+                      {t("filter.addMove")}
                     </span>
                   )}
                 </button>

@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
   faFloppyDisk,
+  faLanguage,
   faList,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "./api/pokeApi";
@@ -78,6 +79,8 @@ import type {
 } from "./types";
 import type { TeamBuildState } from "./utils/teamBuildState";
 import type { SmogonUsageSet } from "./api/smogonUsage";
+import { useLocalization } from "./i18n/useLocalization";
+import type { Locale } from "./i18n/gameTranslations";
 
 type PendingTeamAction =
   | {
@@ -91,6 +94,8 @@ type PendingTeamAction =
       kind: "import";
       showdownText: string;
     };
+
+const localizedUntitledTeamNames = new Set(["Untitled Team", "이름 없는 팀"]);
 
 function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
   const merged = [...nextMembers, ...currentPool];
@@ -130,6 +135,7 @@ function isMegaPokemonId(value: string) {
 }
 
 function App() {
+  const { locale, setLocale, t } = useLocalization();
   const [team, setTeam] = useState<TeamSlot[]>(() =>
     Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null),
   );
@@ -148,12 +154,13 @@ function App() {
     retryItemIndex,
     retryShowdownLegality,
   } = useBuilderData();
-  const [teamName, setTeamName] = useState("Untitled Team");
-  const [teamNameDraft, setTeamNameDraft] = useState("Untitled Team");
+  const [teamName, setTeamName] = useState(() => t("team.untitled"));
+  const [teamNameDraft, setTeamNameDraft] = useState(() => t("team.untitled"));
   const [savedTeams, setSavedTeams] = useState<SavedTeamSummary[]>([]);
   const [activeSavedTeamId, setActiveSavedTeamId] = useState<string | null>(null);
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
   const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
   const [newTeamShowdownDraft, setNewTeamShowdownDraft] = useState("");
   const [newTeamImportError, setNewTeamImportError] = useState<string | null>(null);
@@ -182,6 +189,8 @@ function App() {
     options: { applyUsageStats?: boolean; allowBattleForm?: boolean };
   } | null>(null);
   const teamActionsRef = useRef<HTMLElement | null>(null);
+  const languageControlRef = useRef<HTMLDivElement | null>(null);
+  const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
@@ -263,7 +272,7 @@ function App() {
 
   function getCurrentTeamSnapshot(name = teamNameDraft): TeamSnapshot {
     return {
-      name: name.trim() || "Untitled Team",
+      name: name.trim() || t("team.untitled"),
       slots: team.map(createSavedSlot),
       bench: bench.map(createSavedBenchPokemon),
       buildState: teamBuildState.getBuildStateSnapshot(),
@@ -313,6 +322,24 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (
+      activeSavedTeamId ||
+      !localizedUntitledTeamNames.has(teamName) ||
+      !localizedUntitledTeamNames.has(teamNameDraft)
+    ) {
+      return;
+    }
+
+    const localizedName = t("team.untitled");
+
+    if (localizedName !== teamName) {
+      setTeamName(localizedName);
+      setTeamNameDraft(localizedName);
+      renameCommittedSnapshot(localizedName);
+    }
+  }, [activeSavedTeamId, locale, t, teamName, teamNameDraft]);
+
   useEffect(
     () => () => {
       if (saveFeedbackTimeoutRef.current !== null) {
@@ -353,6 +380,35 @@ function App() {
     isTeamManagerOpen,
     pendingTeamAction,
   ]);
+
+  useEffect(() => {
+    if (!isLanguageMenuOpen) {
+      return undefined;
+    }
+
+    function closeLanguageMenu(event: PointerEvent) {
+      if (!languageControlRef.current?.contains(event.target as Node)) {
+        setIsLanguageMenuOpen(false);
+      }
+    }
+
+    function handleLanguageMenuKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      setIsLanguageMenuOpen(false);
+      languageTriggerRef.current?.focus();
+    }
+
+    document.addEventListener("pointerdown", closeLanguageMenu);
+    document.addEventListener("keydown", handleLanguageMenuKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeLanguageMenu);
+      document.removeEventListener("keydown", handleLanguageMenuKeyDown);
+    };
+  }, [isLanguageMenuOpen]);
 
   function hasLegalityFilter() {
     return (
@@ -467,7 +523,7 @@ function App() {
   }
 
   function commitTeamName() {
-    const nextName = teamNameDraft.trim() || "Untitled Team";
+    const nextName = teamNameDraft.trim() || t("team.untitled");
 
     setTeamName(nextName);
     setTeamNameDraft(nextName);
@@ -477,6 +533,7 @@ function App() {
 
   function toggleTeamManager() {
     closeNewTeamTools();
+    setIsLanguageMenuOpen(false);
     setPendingTeamAction(null);
 
     if (isTeamManagerOpen) {
@@ -488,6 +545,7 @@ function App() {
 
   function toggleNewTeamMenu() {
     closeTeamManager();
+    setIsLanguageMenuOpen(false);
     setPendingTeamAction(null);
     setNewTeamImportError(null);
 
@@ -497,6 +555,19 @@ function App() {
     }
 
     setIsNewTeamMenuOpen(true);
+  }
+
+  function toggleLanguageMenu() {
+    closeTeamManager();
+    closeNewTeamTools();
+    setPendingTeamAction(null);
+    setIsLanguageMenuOpen((isOpen) => !isOpen);
+  }
+
+  function selectLocale(nextLocale: Locale) {
+    setLocale(nextLocale);
+    setIsLanguageMenuOpen(false);
+    languageTriggerRef.current?.focus();
   }
 
   function openNewTeamImport() {
@@ -528,7 +599,7 @@ function App() {
     const showdownText = newTeamShowdownDraft.trim();
 
     if (!showdownText) {
-      setNewTeamImportError("Paste at least one Showdown Pokemon set.");
+      setNewTeamImportError(t("team.pasteAtLeastOne"));
       return;
     }
 
@@ -589,7 +660,7 @@ function App() {
       hasLegalityFilter() &&
       !isPokemonLegal(showdownLegality, lookup, speciesKey)
     ) {
-      setSearchError(`${lookup} is not legal in Regulation M-B.`);
+      setSearchError(t("builder.illegalPokemon", { name: lookup }));
       setSelectingPokemonSlot(null);
       return;
     }
@@ -607,7 +678,7 @@ function App() {
         } else if (pokemonSelectionRequestRef.current === requestId) {
           setSearchNotice({
             slotIndex,
-            message: "No popular set found. Basic defaults were applied.",
+            message: t("builder.noPopularSet"),
           });
         }
       }
@@ -632,7 +703,7 @@ function App() {
       }
     } catch (error) {
       if (pokemonSelectionRequestRef.current === requestId) {
-        setSearchError(error instanceof Error ? error.message : "Pokemon lookup failed.");
+        setSearchError(error instanceof Error ? error.message : t("builder.lookupFailed"));
         setFailedPokemonSelection({ slotIndex, lookup, options });
       }
     } finally {
@@ -766,7 +837,7 @@ function App() {
     const parsedTeam = parseShowdownTeam(text);
 
     if (parsedTeam.length === 0) {
-      throw new Error("Paste at least one Showdown Pokemon set.");
+      throw new Error(t("team.pasteAtLeastOne"));
     }
 
     const importedMembers: TeamSlot[] = [];
@@ -835,7 +906,7 @@ function App() {
       const importedMembers = importedSnapshot.members.filter(
         (member): member is TeamMember => Boolean(member),
       );
-      const importedTeamName = "Imported Team";
+      const importedTeamName = t("team.importedName");
       const emptyTeam = Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null);
 
       setCustomPool((currentPool) => mergePool(importedMembers, currentPool));
@@ -849,7 +920,7 @@ function App() {
       setTeamNameDraft(importedTeamName);
       setActiveSavedTeamId(null);
       clearLastActiveTeamId();
-      setTeamStorageMessage("Imported new team. Save when ready.");
+      setTeamStorageMessage(t("team.importedNew"));
       setPendingTeamAction(null);
       setPendingDeleteTeamId(null);
       setRenamingTeamId(null);
@@ -869,7 +940,7 @@ function App() {
     } catch (error) {
       setIsNewTeamImportOpen(true);
       setNewTeamImportError(
-        error instanceof Error ? error.message : "Showdown import failed.",
+        error instanceof Error ? error.message : t("toolbar.importFailed"),
       );
     } finally {
       setIsImportingNewTeam(false);
@@ -897,7 +968,7 @@ function App() {
       preMegaPokemon:
         importedSnapshot.buildState.preMegaPokemonBySlot[0] ?? null,
     });
-    setTeamStorageMessage("Imported Pokemon set.");
+    setTeamStorageMessage(t("team.importedPokemon"));
   }
 
   function handleSaveTeam() {
@@ -908,7 +979,7 @@ function App() {
     const existingTeam = savedTeams.find((savedTeam) => savedTeam.id === nextTeamId);
 
     if (!existingTeam && !canAddSavedTeam(savedTeams.length)) {
-      setTeamStorageMessage("Team limit reached. Delete one first.");
+      setTeamStorageMessage(t("team.limitReached"));
       setIsTeamManagerOpen(true);
       setIsSaveConfirmed(false);
       return;
@@ -934,7 +1005,7 @@ function App() {
     setSavedTeams(nextTeams);
     setActiveSavedTeamId(nextTeamId);
     storeLastActiveTeamId(nextTeamId);
-    setTeamStorageMessage(`Saved ${nextSavedTeam.name}.`);
+    setTeamStorageMessage(t("team.savedNamed", { name: nextSavedTeam.name }));
     setPendingDeleteTeamId(null);
     setRenamingTeamId(null);
     setPendingTeamAction(null);
@@ -1029,11 +1100,13 @@ function App() {
     setTeam(emptyTeam);
     setBench([]);
     teamBuildState.replaceBuildState();
-    setTeamName("Untitled Team");
-    setTeamNameDraft("Untitled Team");
+    const untitledTeamName = t("team.untitled");
+
+    setTeamName(untitledTeamName);
+    setTeamNameDraft(untitledTeamName);
     setActiveSavedTeamId(null);
     clearLastActiveTeamId();
-    setTeamStorageMessage("New team ready.");
+    setTeamStorageMessage(t("team.newReady"));
     setPendingTeamAction(null);
     setPendingDeleteTeamId(null);
     setRenamingTeamId(null);
@@ -1042,7 +1115,7 @@ function App() {
     closeNewTeamTools();
     setNewTeamShowdownDraft("");
     committedSnapshotRef.current = serializeTeamSnapshot({
-      name: "Untitled Team",
+      name: untitledTeamName,
       slots: emptyTeam.map(createSavedSlot),
       bench: [],
       buildState: createEmptyBuildState(),
@@ -1073,14 +1146,14 @@ function App() {
 
   function getPendingTeamActionMessage(action: PendingTeamAction) {
     if (action.kind === "new") {
-      return "Start a new team without saving this one.";
+      return t("team.discardNew");
     }
 
     if (action.kind === "import") {
-      return "Import a new team without saving this one.";
+      return t("team.discardImport");
     }
 
-    return `Load ${action.team.name} without saving this one.`;
+    return t("team.discardLoad", { name: action.team.name });
   }
 
   function updateSavedTeams(nextTeams: SavedTeamSummary[]) {
@@ -1094,7 +1167,7 @@ function App() {
     }
 
     updateSavedTeams(swapArrayItems(savedTeams, sourceIndex, targetIndex));
-    setTeamStorageMessage("Reordered saved teams.");
+    setTeamStorageMessage(t("team.reorderedSaved"));
   }
 
   function handleSavedTeamRowClick(savedTeam: SavedTeamSummary) {
@@ -1160,7 +1233,7 @@ function App() {
 
     updateSavedTeams(nextTeams);
     renameCommittedSnapshot(nextName);
-    setTeamStorageMessage(`Renamed to ${nextName}.`);
+    setTeamStorageMessage(t("team.renamedTo", { name: nextName }));
   }
 
   function startRenameTeam(savedTeam: SavedTeamSummary) {
@@ -1204,7 +1277,7 @@ function App() {
       renameCommittedSnapshot(nextName);
     }
 
-    setTeamStorageMessage(`Renamed to ${nextName}.`);
+    setTeamStorageMessage(t("team.renamedTo", { name: nextName }));
     cancelRenameTeam();
   }
 
@@ -1224,7 +1297,7 @@ function App() {
 
   function handleDuplicateTeam(savedTeam: SavedTeamSummary) {
     if (!canAddSavedTeam(savedTeams.length)) {
-      setTeamStorageMessage("Team limit reached. Delete one first.");
+      setTeamStorageMessage(t("team.limitReached"));
       return;
     }
 
@@ -1240,7 +1313,7 @@ function App() {
     const nextTeams = [copiedTeam, ...savedTeams];
 
     updateSavedTeams(nextTeams);
-    setTeamStorageMessage(`Duplicated ${savedTeam.name}.`);
+    setTeamStorageMessage(t("team.duplicatedNamed", { name: savedTeam.name }));
     setPendingDeleteTeamId(null);
     setShowdownTeamId(null);
     setTeamShowdownDraft("");
@@ -1274,9 +1347,9 @@ function App() {
   async function handleExportSavedTeam() {
     try {
       await navigator.clipboard.writeText(teamShowdownDraft);
-      setTeamStorageMessage("Copied Showdown text.");
+      setTeamStorageMessage(t("team.copiedShowdown"));
     } catch {
-      setTeamStorageMessage("Export text could not be copied.");
+      setTeamStorageMessage(t("team.exportCopyFailed"));
     }
   }
 
@@ -1323,11 +1396,11 @@ function App() {
         });
       }
 
-      setTeamStorageMessage(`Imported into ${savedTeam.name}.`);
+      setTeamStorageMessage(t("team.importedInto", { name: savedTeam.name }));
       closeSavedTeamShowdown();
     } catch (error) {
       setTeamStorageMessage(
-        error instanceof Error ? error.message : "Showdown import failed.",
+        error instanceof Error ? error.message : t("toolbar.importFailed"),
       );
       setIsImportingSavedTeam(false);
     }
@@ -1357,7 +1430,11 @@ function App() {
 
     setPendingDeleteTeamId(null);
     setRenamingTeamId(null);
-    setTeamStorageMessage(deletedTeam ? `Deleted ${deletedTeam.name}.` : "Deleted team.");
+    setTeamStorageMessage(
+      deletedTeam
+        ? t("team.deletedNamed", { name: deletedTeam.name })
+        : t("team.deleted"),
+    );
   }
 
   return (
@@ -1366,12 +1443,12 @@ function App() {
         <span className="app-wordmark">PokePilot</span>
         <div className="app-header-layout">
           <div className="header-builder-workspace">
-            <nav className="team-actions" aria-label="Team actions" ref={teamActionsRef}>
+            <nav className="team-actions" aria-label={t("team.actions")} ref={teamActionsRef}>
           <button
             className="team-action-button"
             type="button"
-            aria-label="Manage teams"
-            title="Manage teams"
+            aria-label={t("team.manage")}
+            title={t("team.manage")}
             aria-expanded={isTeamManagerOpen}
             onClick={toggleTeamManager}
           >
@@ -1394,11 +1471,11 @@ function App() {
             onClose={closeNewTeamTools}
           />
           <label className="team-name-field">
-            <span className="sr-only">Team name</span>
+            <span className="sr-only">{t("team.name")}</span>
             <input
               type="text"
               value={teamNameDraft}
-              aria-label="Team name"
+              aria-label={t("team.name")}
               spellCheck="false"
               onBlur={commitTeamName}
               onChange={(event) => setTeamNameDraft(event.target.value)}
@@ -1408,8 +1485,8 @@ function App() {
           <button
             className={`team-action-button ${isSaveConfirmed ? "is-confirmed" : ""}`}
             type="button"
-            aria-label="Save team"
-            title="Save team"
+            aria-label={t("team.save")}
+            title={t("team.save")}
             onClick={handleSaveTeam}
           >
             <FontAwesomeIcon
@@ -1418,38 +1495,38 @@ function App() {
             />
           </button>
           {pendingTeamAction ? (
-            <div className="team-unsaved-warning" role="dialog" aria-label="Unsaved changes">
-              <strong>Discard unsaved changes?</strong>
+            <div className="team-unsaved-warning" role="dialog" aria-label={t("team.unsavedDialog")}>
+              <strong>{t("team.discardChanges")}</strong>
               <span>{getPendingTeamActionMessage(pendingTeamAction)}</span>
               <div className="team-unsaved-warning-actions">
                 <button
                   type="button"
                   onClick={cancelPendingTeamAction}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   className="is-danger"
                   type="button"
                   onClick={confirmPendingTeamAction}
                 >
-                  Continue
+                  {t("common.continue")}
                 </button>
               </div>
             </div>
           ) : null}
           {isTeamManagerOpen ? (
-            <div className="team-manager-panel" role="dialog" aria-label="Saved teams">
+            <div className="team-manager-panel" role="dialog" aria-label={t("team.saved")}>
               <div className="team-manager-header">
                 <strong>
-                  Saved Teams <small>{savedTeams.length} / {MAX_SAVED_TEAMS}</small>
+                  {t("team.saved")} <small>{savedTeams.length} / {MAX_SAVED_TEAMS}</small>
                 </strong>
                 <span
                   className={`${teamStorageMessage ? "has-message" : ""} ${
-                    teamStorageMessage?.startsWith("Team limit") ? "is-limit" : ""
+                    teamStorageMessage === t("team.limitReached") ? "is-limit" : ""
                   }`}
                 >
-                  {teamStorageMessage ?? "Manage teams"}
+                  {teamStorageMessage ?? t("team.manageHint")}
                 </span>
               </div>
               {savedTeams.length > 0 ? (
@@ -1495,11 +1572,50 @@ function App() {
                   ))}
                 </div>
               ) : (
-                <p className="team-manager-empty">No saved teams yet.</p>
+                <p className="team-manager-empty">{t("team.noneSaved")}</p>
               )}
             </div>
           ) : null}
             </nav>
+          </div>
+          <div className="language-control" ref={languageControlRef}>
+            <button
+              className={`team-action-button language-trigger ${
+                isLanguageMenuOpen ? "is-open" : ""
+              }`}
+              type="button"
+              aria-label={t("language.label")}
+              title={t("language.label")}
+              aria-haspopup="menu"
+              aria-expanded={isLanguageMenuOpen}
+              ref={languageTriggerRef}
+              onClick={toggleLanguageMenu}
+            >
+              <FontAwesomeIcon icon={faLanguage} aria-hidden="true" />
+            </button>
+            {isLanguageMenuOpen ? (
+              <div className="language-menu" role="menu" aria-label={t("language.label")}>
+                {([
+                  ["en", "language.english"],
+                  ["ko", "language.korean"],
+                ] as const).map(([value, labelKey]) => (
+                  <button
+                    className={`language-option ${locale === value ? "is-active" : ""}`}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={locale === value}
+                    key={value}
+                    lang={value}
+                    onClick={() => selectLocale(value)}
+                  >
+                    <span>{t(labelKey)}</span>
+                    {locale === value ? (
+                      <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </header>
@@ -1563,11 +1679,7 @@ function App() {
       </div>
 
       <footer className="footer">
-        <p>
-          PokePilot AI is unofficial and not affiliated with Nintendo, Game Freak,
-          Creatures, or The Pokemon Company. Data sources: PokeAPI and Pokemon
-          Showdown. Icons: Font Awesome and third-party type SVGs.
-        </p>
+        <p>{t("footer.disclaimer")}</p>
       </footer>
     </main>
   );

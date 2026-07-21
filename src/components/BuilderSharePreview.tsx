@@ -2,6 +2,7 @@ import type { KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { ACTIVE_TEAM_SIZE } from "../data/teamLimits";
+import { useLocalization } from "../i18n/useLocalization";
 import { PokemonIcon } from "./PokemonIcon";
 import {
   PokemonShareCard,
@@ -61,6 +62,7 @@ export function BuilderSharePreview({
   onTargetChange,
   onClose,
 }: BuilderSharePreviewProps) {
+  const { t } = useLocalization();
   const selectedBuild = typeof target === "number" ? builds[target] ?? null : null;
 
   if (target === null || (target !== "team" && !selectedBuild)) {
@@ -69,7 +71,7 @@ export function BuilderSharePreview({
 
   return (
     <ShareImageDialog
-      title={target === "team" ? "Team Image" : "Pokemon Image"}
+      title={target === "team" ? t("share.teamImage") : t("share.pokemonImage")}
       fileName={
         target === "team"
           ? `pokepilot-${teamName || "untitled-team"}-team`
@@ -83,7 +85,7 @@ export function BuilderSharePreview({
         <nav
           className="share-image-navigation"
           role="tablist"
-          aria-label="Image preview"
+          aria-label={t("share.imagePreview")}
         >
           <button
             className={target === "team" ? "is-active" : ""}
@@ -94,7 +96,7 @@ export function BuilderSharePreview({
             onKeyDown={handleNavigationKeyDown}
           >
             <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
-            <span>Team</span>
+            <span>{t("share.team")}</span>
           </button>
 
           {Array.from({ length: ACTIVE_TEAM_SIZE }, (_, slotIndex) => {
@@ -108,10 +110,12 @@ export function BuilderSharePreview({
                 aria-selected={target === slotIndex}
                 aria-label={
                   build
-                    ? `${build.displayName} image`
-                    : `Empty party slot ${slotIndex + 1}`
+                    ? `${build.displayName} ${t("toolbar.image")}`
+                    : t("share.emptyPartySlot", { slot: slotIndex + 1 })
                 }
-                title={build?.displayName ?? `Empty slot ${slotIndex + 1}`}
+                title={
+                  build?.displayName ?? t("share.emptySlot", { slot: slotIndex + 1 })
+                }
                 disabled={!build}
                 onClick={() => onTargetChange(slotIndex)}
                 onKeyDown={handleNavigationKeyDown}
@@ -120,7 +124,7 @@ export function BuilderSharePreview({
                 <span className="share-image-navigation-icon">
                   {build ? <PokemonIcon pokemon={build.member} /> : slotIndex + 1}
                 </span>
-                <span>{build?.displayName ?? "Empty"}</span>
+                <span>{build?.displayName ?? t("common.empty")}</span>
               </button>
             );
           })}

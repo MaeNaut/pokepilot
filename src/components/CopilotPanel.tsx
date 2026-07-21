@@ -21,6 +21,8 @@ import {
 } from "../utils/copilotAnalysis";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
 import type { TeamValidityResult } from "../utils/teamValidity";
+import { useLocalization } from "../i18n/useLocalization";
+import type { TranslationKey } from "../i18n/translations";
 
 type CopilotPanelProps = {
   teamName: string;
@@ -44,10 +46,13 @@ const initialAnalysisState: Record<CopilotAnalysisScope, AnalysisState> = {
   pokemon: { status: "idle" },
 };
 
-const priorityLabels = {
-  high: "High",
-  medium: "Medium",
-  low: "Low",
+const priorityTranslationKeys: Record<
+  CopilotAnalysisResponse["recommendations"][number]["priority"],
+  TranslationKey
+> = {
+  high: "copilot.priorityHigh",
+  medium: "copilot.priorityMedium",
+  low: "copilot.priorityLow",
 };
 
 export function CopilotPanel({
@@ -59,6 +64,7 @@ export function CopilotPanel({
   diagnostics,
   validity,
 }: CopilotPanelProps) {
+  const { pokemonName, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [analysisByScope, setAnalysisByScope] = useState(initialAnalysisState);
   const request = useMemo(
@@ -96,12 +102,12 @@ export function CopilotPanel({
   const response = analysisState.response;
   const analyzeLabel =
     analysisState.status === "loading"
-      ? "Analyzing"
+      ? t("copilot.analyzing")
       : response
-        ? "Refresh"
+        ? t("copilot.refresh")
         : scope === "team"
-          ? "Analyze Team"
-          : "Analyze Pokemon";
+          ? t("copilot.analyze")
+          : t("copilot.analyzePokemon");
 
   async function handleAnalyze() {
     setAnalysisByScope((current) => ({
@@ -130,7 +136,7 @@ export function CopilotPanel({
         [scope]: {
           ...current[scope],
           status: "error",
-          error: error instanceof Error ? error.message : "Analysis failed.",
+          error: error instanceof Error ? error.message : t("copilot.failed"),
         },
       }));
     }
@@ -161,7 +167,11 @@ export function CopilotPanel({
         </button>
       </header>
 
-      <div className="copilot-scope-tabs" role="tablist" aria-label="Analysis scope">
+      <div
+        className="copilot-scope-tabs"
+        role="tablist"
+        aria-label={t("copilot.scope")}
+      >
         <button
           type="button"
           role="tab"
@@ -170,7 +180,7 @@ export function CopilotPanel({
           onClick={() => setScope("team")}
         >
           <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
-          Team
+          {t("copilot.team")}
         </button>
         <button
           type="button"
@@ -180,7 +190,7 @@ export function CopilotPanel({
           onClick={() => setScope("pokemon")}
         >
           <FontAwesomeIcon icon={faUser} aria-hidden="true" />
-          Pokemon
+          {t("copilot.pokemon")}
         </button>
       </div>
 
@@ -188,16 +198,20 @@ export function CopilotPanel({
         {analysisState.status === "error" ? (
           <div className="copilot-empty-state is-error">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
-            <strong>Analysis unavailable</strong>
+            <strong>{t("copilot.unavailable")}</strong>
             <span>{analysisState.error}</span>
           </div>
         ) : response ? (
           <>
             {isStale ? (
               <div className="copilot-stale-notice">
-                <span>{scope === "team" ? "Team changed" : "Set changed"}</span>
+                <span>
+                  {scope === "team"
+                    ? t("copilot.teamChanged")
+                    : t("copilot.setChanged")}
+                </span>
                 <button type="button" onClick={() => void handleAnalyze()}>
-                  Refresh analysis
+                  {t("copilot.refreshAnalysis")}
                 </button>
               </div>
             ) : null}
@@ -214,7 +228,7 @@ export function CopilotPanel({
               <section className="copilot-section">
                 <div className="copilot-section-heading">
                   <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
-                  <h3>Strengths</h3>
+                  <h3>{t("copilot.strengths")}</h3>
                 </div>
                 <ul className="copilot-insight-list is-strength">
                   {response.strengths.map((strength) => (
@@ -230,7 +244,7 @@ export function CopilotPanel({
                   icon={response.weaknesses.length > 0 ? faTriangleExclamation : faCheck}
                   aria-hidden="true"
                 />
-                <h3>Focus</h3>
+                <h3>{t("copilot.focus")}</h3>
               </div>
               {response.weaknesses.length > 0 ? (
                 <ul className="copilot-insight-list is-focus">
@@ -239,21 +253,21 @@ export function CopilotPanel({
                   ))}
                 </ul>
               ) : (
-                <p className="copilot-clear-message">No priority concerns found.</p>
+                <p className="copilot-clear-message">{t("copilot.noConcerns")}</p>
               )}
             </section>
 
             <section className="copilot-section copilot-recommendations">
               <div className="copilot-section-heading">
                 <FontAwesomeIcon icon={faLightbulb} aria-hidden="true" />
-                <h3>Next Steps</h3>
+                <h3>{t("copilot.nextSteps")}</h3>
               </div>
               <ol>
                 {response.recommendations.map((recommendation) => (
                   <li className={`is-${recommendation.priority}`} key={recommendation.id}>
                     <div>
                       <strong>{recommendation.title}</strong>
-                      <span>{priorityLabels[recommendation.priority]}</span>
+                      <span>{t(priorityTranslationKeys[recommendation.priority])}</span>
                     </div>
                     <p>{recommendation.reason}</p>
                   </li>
@@ -264,19 +278,25 @@ export function CopilotPanel({
         ) : (
           <div className="copilot-empty-state">
             <FontAwesomeIcon icon={faWandMagicSparkles} aria-hidden="true" />
-            <strong>No analysis yet</strong>
+            <strong>{t("copilot.noAnalysis")}</strong>
             <span>
               {scope === "team"
-                ? `${diagnostics.filledSlots}/6 active sets`
-                : selectedSet?.pokemonName ?? `Slot ${selectedSlot + 1} is empty`}
+                ? t("copilot.activeSets", { count: diagnostics.filledSlots })
+                : selectedSet
+                  ? pokemonName({
+                      id: selectedSet.pokemonId,
+                      fallback: selectedSet.pokemonName,
+                      includeForm: false,
+                    })
+                  : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
             </span>
           </div>
         )}
       </div>
 
       <footer className="copilot-footer">
-        <span>Regulation M-B</span>
-        <span>Rules-based preview</span>
+        <span>{t("toolbar.regulation")}</span>
+        <span>{t("copilot.rulesPreview")}</span>
       </footer>
     </aside>
   );

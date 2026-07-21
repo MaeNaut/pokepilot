@@ -30,6 +30,7 @@ Current slice:
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
 - right-side PokePilot strategy briefs for the active team and selected Pokemon
+- persisted English/Korean UI selection with localized game names, forms, and tooltips
 
 ## Getting Started
 
@@ -64,7 +65,7 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - team-aware PokePilot chat/follow-up panel
 - account-backed Supabase/Postgres persistence after the local MVP is stable
 - calculator mode
-- Korean UI localization
+- complete Korean localization for deterministic analysis and remaining detail messages
 - Japanese localization under consideration
 - dark mode with a persisted theme preference
 - shareable team links if reasonable
@@ -94,6 +95,8 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - shared pointer, touch-hold, and keyboard reordering for moves, team slots, bench Pokemon, and saved teams
 - explicit local PokePilot analysis with structured summary, strengths, focus areas, and next steps
 - versioned Copilot request/response data contracts ready for a future server-side model provider
+- typed English/Korean interface copy, a persisted language setting, and checked-in
+  PokeAPI-derived Korean game names and descriptions
 
 ## Data Source
 
@@ -108,6 +111,13 @@ Champions Regulation M-B source data come from
 [Pokemon Showdown repository](https://github.com/smogon/pokemon-showdown). The
 shared Pokedex and move snapshot is cached locally, and move details no longer
 require one PokeAPI request per move.
+
+Korean display names and descriptions are generated during development from the
+official PokeAPI CSV dataset with `npm run data:locales`, then committed as a
+static client snapshot. Runtime team data continues to store canonical IDs, so
+changing language does not alter saved teams or Pokemon Showdown text. Intentional
+terminology corrections belong in `src/i18n/data/koOverrides.ts` and survive
+snapshot regeneration.
 Item names, descriptions, Mega Stone metadata, and ability descriptions come from
 compact checked-in catalogs generated from Showdown data. Item images still use
 the [PokeAPI sprites repository](https://github.com/PokeAPI/sprites), with current

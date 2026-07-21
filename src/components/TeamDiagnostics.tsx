@@ -1,4 +1,5 @@
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
+import { useLocalization } from "../i18n/useLocalization";
 import { TypeBadge } from "./TypeBadge";
 
 type TeamDiagnosticsProps = {
@@ -8,34 +9,42 @@ type TeamDiagnosticsProps = {
 export function TeamDiagnostics({
   diagnostics,
 }: TeamDiagnosticsProps) {
+  const { gameName, t } = useLocalization();
   const coveragePercent = Math.round(
     (diagnostics.coveredDefendingTypes.length / 18) * 100,
   );
   const coverageColor = `hsl(${Math.round(coveragePercent * 1.25)} 68% 42%)`;
 
   return (
-    <aside className="team-diagnostics" aria-label="Team type matchups and coverage">
+    <aside className="team-diagnostics" aria-label={t("diagnostics.aria")}>
       <div className="diagnostics-layout">
         <section className="diagnostics-section diagnostics-matchups">
           <div className="diagnostics-section-heading">
-            <h3>Defensive Matchups</h3>
+            <h3>{t("diagnostics.defensive")}</h3>
             <div className="matchup-legend" aria-hidden="true">
-              <span className="is-weak">Weak</span>
-              <span className="is-resist" title="Includes immunities">Resist</span>
+              <span className="is-weak">{t("diagnostics.weak")}</span>
+              <span className="is-resist" title={t("diagnostics.resistHint")}>{t("diagnostics.resist")}</span>
             </div>
           </div>
-          <div className="matchup-matrix" aria-label="Team type matchups">
+          <div className="matchup-matrix" aria-label={t("diagnostics.matchupAria")}>
             {diagnostics.defensiveMatchups.map((matchup) => {
               const resistCount = matchup.resistCount + matchup.immuneCount;
               const isExposed =
                 matchup.weakCount >= 2 && matchup.weakCount > resistCount;
-              const typeName =
-                matchup.type.charAt(0).toUpperCase() + matchup.type.slice(1);
+              const typeName = gameName(
+                "types",
+                matchup.type,
+                matchup.type.charAt(0).toUpperCase() + matchup.type.slice(1),
+              );
 
               return (
                 <div
                   className={`matchup-matrix-cell ${isExposed ? "is-exposed" : ""}`}
-                  aria-label={`${typeName}: ${matchup.weakCount} weak, ${resistCount} resist or immune`}
+                  aria-label={t("diagnostics.matchupCell", {
+                    type: typeName,
+                    weak: matchup.weakCount,
+                    resist: resistCount,
+                  })}
                   key={matchup.type}
                 >
                   <TypeBadge type={matchup.type} />
@@ -49,13 +58,13 @@ export function TeamDiagnostics({
 
         <section className="diagnostics-section diagnostics-coverage">
           <div className="diagnostics-section-heading">
-            <h3>Coverage Gaps</h3>
+            <h3>{t("diagnostics.coverage")}</h3>
           </div>
           <div className="coverage-content">
             <div
               className="coverage-ring"
               role="progressbar"
-              aria-label="Single-type offensive coverage"
+              aria-label={t("diagnostics.coverageAria")}
               aria-valuemin={0}
               aria-valuemax={18}
               aria-valuenow={diagnostics.coveredDefendingTypes.length}
@@ -72,15 +81,15 @@ export function TeamDiagnostics({
             <div className="coverage-gap-summary">
               {diagnostics.uncoveredDefendingTypes.length > 0 ? (
                 <>
-                  <span>Not covered</span>
-                  <div className="coverage-gap-types" aria-label="Types not covered">
+                  <span>{t("diagnostics.notCovered")}</span>
+                  <div className="coverage-gap-types" aria-label={t("diagnostics.typesNotCovered")}>
                     {diagnostics.uncoveredDefendingTypes.map((type) => (
                       <TypeBadge type={type} key={type} />
                     ))}
                   </div>
                 </>
               ) : (
-                <span className="is-complete">Full coverage</span>
+                <span className="is-complete">{t("diagnostics.fullCoverage")}</span>
               )}
             </div>
           </div>

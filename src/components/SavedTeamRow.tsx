@@ -15,6 +15,7 @@ import {
   type useLongPressReorder,
 } from "../hooks/useLongPressReorder";
 import type { SavedTeamSummary } from "../utils/teamStorage";
+import { useLocalization } from "../i18n/useLocalization";
 import { PokemonIcon } from "./PokemonIcon";
 
 type ReorderController = ReturnType<typeof useLongPressReorder>;
@@ -81,6 +82,7 @@ export function SavedTeamRow({
   onImportShowdown,
   onExportShowdown,
 }: SavedTeamRowProps) {
+  const { t } = useLocalization();
   const displacement = getReorderDisplacement(reorder.dragState, index);
   const isSource = reorder.dragState?.sourceIndex === index;
   const isDropTarget =
@@ -106,7 +108,7 @@ export function SavedTeamRow({
       data-saved-team-index={index}
       role="button"
       tabIndex={0}
-      aria-label={`${team.name}. Drag to reorder or press Alt and an arrow key.`}
+      aria-label={t("team.reorderHint", { name: team.name })}
       style={style}
       onClick={() => onSelect(team)}
       onKeyDown={(event) => onKeyDown(event, index, team)}
@@ -130,7 +132,7 @@ export function SavedTeamRow({
           {isRenaming ? (
             <input
               className="saved-team-rename-input"
-              aria-label={`Rename ${team.name}`}
+              aria-label={t("team.renameNamed", { name: team.name })}
               autoFocus
               value={renameDraft}
               onChange={(event) => onRenameDraftChange(event.target.value)}
@@ -144,7 +146,7 @@ export function SavedTeamRow({
 
         <div
           className="saved-team-actions"
-          aria-label={`${team.name} actions`}
+          aria-label={t("team.actionsNamed", { name: team.name })}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
@@ -153,8 +155,8 @@ export function SavedTeamRow({
               <button
                 className="saved-team-action-button"
                 type="button"
-                aria-label="Confirm rename"
-                title="Confirm rename"
+                aria-label={t("team.confirmRename")}
+                title={t("team.confirmRename")}
                 onClick={() => onConfirmRename(team.id)}
               >
                 <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
@@ -162,8 +164,8 @@ export function SavedTeamRow({
               <button
                 className="saved-team-action-button"
                 type="button"
-                aria-label="Cancel rename"
-                title="Cancel rename"
+                aria-label={t("team.cancelRename")}
+                title={t("team.cancelRename")}
                 onClick={onCancelRename}
               >
                 <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
@@ -174,8 +176,8 @@ export function SavedTeamRow({
               <button
                 className="saved-team-action-button"
                 type="button"
-                aria-label={`Rename ${team.name}`}
-                title="Rename"
+                aria-label={t("team.renameNamed", { name: team.name })}
+                title={t("team.rename")}
                 onClick={() => onStartRename(team)}
               >
                 <FontAwesomeIcon icon={faPen} aria-hidden="true" />
@@ -183,8 +185,8 @@ export function SavedTeamRow({
               <button
                 className="saved-team-action-button"
                 type="button"
-                aria-label={`Duplicate ${team.name}`}
-                title="Duplicate"
+                aria-label={t("team.duplicateNamed", { name: team.name })}
+                title={t("team.duplicate")}
                 onClick={() => onDuplicate(team)}
               >
                 <FontAwesomeIcon icon={faCopy} aria-hidden="true" />
@@ -192,8 +194,8 @@ export function SavedTeamRow({
               <button
                 className="saved-team-action-button"
                 type="button"
-                aria-label={`Open Showdown text tools for ${team.name}`}
-                title="Showdown Text"
+                aria-label={t("team.openShowdownNamed", { name: team.name })}
+                title={t("toolbar.showdownText")}
                 onClick={() => onToggleShowdown(team)}
               >
                 <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
@@ -201,8 +203,8 @@ export function SavedTeamRow({
               <button
                 className="saved-team-action-button is-danger"
                 type="button"
-                aria-label={`Delete ${team.name}`}
-                title="Delete"
+                aria-label={t("team.deleteNamed", { name: team.name })}
+                title={t("common.delete")}
                 onClick={() => onToggleDelete(team.id)}
               >
                 <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
@@ -212,7 +214,7 @@ export function SavedTeamRow({
         </div>
       </div>
 
-      <div className="saved-team-preview" aria-label={`Load ${team.name}`}>
+      <div className="saved-team-preview" aria-label={t("team.loadNamed", { name: team.name })}>
         {team.slots.map((slot, slotIndex) => (
           <span
             className="saved-team-preview-slot"
@@ -229,16 +231,16 @@ export function SavedTeamRow({
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          <span>Delete permanently?</span>
+          <span>{t("team.deletePermanently")}</span>
           <button type="button" onClick={onCancelDelete}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             className="is-danger"
             type="button"
             onClick={() => onDelete(team.id)}
           >
-            Delete
+            {t("common.delete")}
           </button>
         </div>
       ) : null}
@@ -249,10 +251,10 @@ export function SavedTeamRow({
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          <strong>Team Showdown Text</strong>
+          <strong>{t("team.showdownText")}</strong>
           <textarea
             value={showdownDraft}
-            placeholder="Paste Showdown team text here..."
+            placeholder={t("team.pasteShowdownHere")}
             onChange={(event) => onShowdownDraftChange(event.target.value)}
           />
           <div className="saved-team-import-actions">
@@ -262,11 +264,11 @@ export function SavedTeamRow({
               onClick={() => onImportShowdown(team)}
             >
               <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />
-              {isImportingShowdown ? "Importing..." : "Import"}
+              {isImportingShowdown ? t("team.importing") : t("common.import")}
             </button>
             <button type="button" onClick={onExportShowdown}>
               <FontAwesomeIcon icon={faFileExport} aria-hidden="true" />
-              Export
+              {t("common.export")}
             </button>
           </div>
         </div>

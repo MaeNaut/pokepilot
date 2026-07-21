@@ -43,6 +43,16 @@ describe("Showdown Pokemon index normalization", () => {
       formKind: "mega",
       isSelectorOption: false,
     });
+    expect(byName.get("meowstic-m-mega")).toMatchObject({
+      speciesKey: "meowstic",
+      formKind: "mega",
+      isSelectorOption: false,
+    });
+    expect(byName.get("meowstic-f-mega")).toMatchObject({
+      speciesKey: "meowstic",
+      formKind: "mega",
+      isSelectorOption: false,
+    });
   });
 
   it("keeps Showdown typing in the lightweight picker index", () => {

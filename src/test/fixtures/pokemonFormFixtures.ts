@@ -78,6 +78,22 @@ export const showdownPokemonIndexFixture: Record<string, ShowdownSpeciesData> = 
     baseSpecies: "Meowstic",
     forme: "F",
   },
+  meowsticmmega: {
+    id: "meowsticmmega",
+    name: "Meowstic-M-Mega",
+    num: 678,
+    abilities: [],
+    baseSpecies: "Meowstic",
+    forme: "M-Mega",
+  },
+  meowsticfmega: {
+    id: "meowsticfmega",
+    name: "Meowstic-F-Mega",
+    num: 678,
+    abilities: [],
+    baseSpecies: "Meowstic",
+    forme: "F-Mega",
+  },
   aegislash: { id: "aegislash", name: "Aegislash", num: 681, abilities: [] },
   aegislashblade: {
     id: "aegislashblade",
@@ -136,6 +152,15 @@ export const showdownPokemonIndexFixture: Record<string, ShowdownSpeciesData> = 
     baseSpecies: "Palafin",
     forme: "Hero",
   },
+  sinistcha: { id: "sinistcha", name: "Sinistcha", num: 1013, abilities: [] },
+  sinistchamasterpiece: {
+    id: "sinistchamasterpiece",
+    name: "Sinistcha-Masterpiece",
+    num: 1013,
+    abilities: [],
+    baseSpecies: "Sinistcha",
+    forme: "Masterpiece",
+  },
 };
 
 export const expectedVisiblePickerForms = [
@@ -149,6 +174,7 @@ export const expectedVisiblePickerForms = [
   "palafin-zero",
   "pikachu",
   "pyroar-male",
+  "sinistcha",
   "tauros-paldea-aqua-breed",
 ] as const;
 
@@ -157,9 +183,12 @@ export const expectedHiddenPickerForms = [
   "castform-sunny",
   "mimikyu-busted",
   "mimikyu-totem",
+  "meowstic-f-mega",
+  "meowstic-m-mega",
   "morpeko-hangry",
   "palafin-hero",
   "pikachu-rock-star",
   "pyroar-female",
+  "sinistcha-masterpiece",
 ] as const;
 import type { ShowdownSpeciesData } from "../../api/showdownData";

@@ -74,9 +74,7 @@ import {
   defaultEvs,
   getNatureByAlignment,
   getNatureById,
-  natureStatLabels,
   statKeys,
-  statLabels,
   type Nature,
 } from "../data/natures";
 import { PokemonIcon } from "./PokemonIcon";
@@ -95,6 +93,8 @@ import {
   BuilderSharePreview,
   type ShareImageTarget,
 } from "./BuilderSharePreview";
+import { useLocalization } from "../i18n/useLocalization";
+import { statTranslationKeys } from "../i18n/statTranslations";
 
 type TeamBuilderProps = {
   teamName: string;
@@ -139,6 +139,7 @@ type TeamBuilderProps = {
 type PokemonSelectOption = {
   id: string;
   name: string;
+  englishName: string;
   number: number;
   types: PokemonType[];
   abilityOptions: PokemonCandidateFilterValue[];
@@ -173,7 +174,6 @@ const defaultStats: StatBlock = {
 };
 
 const defaultAbilityOptions = ["Ability pending"];
-
 function fallbackMoves(types: PokemonType[]): PokemonMove[] {
   const primary = types[0] ?? "normal";
   const secondary = types[1] ?? primary;
@@ -361,6 +361,8 @@ export function TeamBuilder({
   onRetryShowdownLegality,
   onRetryPokemonSelection,
 }: TeamBuilderProps) {
+  const { gameDescription, gameName, pokemonFormName, pokemonName, t } =
+    useLocalization();
   const {
     itemBySlot,
     abilityBySlot,
@@ -605,13 +607,43 @@ export function TeamBuilder({
     [itemIndex],
   );
   const activeHeaderName = activeIndexEntry
-    ? formatIdLabel(activeIndexEntry.speciesKey)
-    : activeMember?.name;
+    ? pokemonName({
+        id: activeIndexEntry.name,
+        speciesId: activeIndexEntry.speciesKey,
+        fallback: formatIdLabel(activeIndexEntry.speciesKey),
+        includeForm: false,
+      })
+    : activeMember
+      ? pokemonName({ id: activeMember.id, fallback: activeMember.name, includeForm: false })
+      : undefined;
 
   function getMemberDisplayName(member: TeamMember) {
     const indexEntry = pokemonIndexByName.get(member.id);
 
-    return indexEntry ? formatIdLabel(indexEntry.speciesKey) : member.name;
+    return indexEntry
+      ? pokemonName({
+          id: indexEntry.name,
+          speciesId: indexEntry.speciesKey,
+          fallback: formatIdLabel(indexEntry.speciesKey),
+          includeForm: false,
+        })
+      : pokemonName({ id: member.id, fallback: member.name, includeForm: false });
+  }
+
+  function getLocalizedItemName(item: PokemonItem) {
+    return gameName("items", item.showdownId ?? item.id, item.name);
+  }
+
+  function getLocalizedAbilityName(ability: string) {
+    return gameName("abilities", ability, ability);
+  }
+
+  function getLocalizedNatureName(nature: Nature) {
+    return gameName("natures", nature.id, nature.label);
+  }
+
+  function getLocalizedStatLabel(stat: StatKey) {
+    return t(statTranslationKeys[stat]);
   }
 
   const megaOptions = useMemo(
@@ -698,7 +730,11 @@ export function TeamBuilder({
         formLabel,
         item: itemBySlot[slotIndex] ?? null,
         ability:
-          abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? "No ability",
+          gameName(
+            "abilities",
+            abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? "",
+            abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? t("builder.noAbility"),
+          ),
         nature: getNatureById(natureBySlot[slotIndex] ?? "hardy"),
         evs: evsBySlot[slotIndex] ?? defaultEvs,
         moves:
@@ -790,22 +826,39 @@ export function TeamBuilder({
                 entry.showdownId,
                 entry.speciesKey,
               );
+              const includeForm =
+                entry.formKind === "gender" ||
+                entry.formKind === "regional" ||
+                entry.displayName !== formatIdLabel(entry.speciesKey);
 
               return {
                 id: entry.name,
-                name: entry.displayName,
+                name: pokemonName({
+                  id: entry.name,
+                  speciesId: entry.speciesKey,
+                  fallback: entry.displayName,
+                  includeForm,
+                  formLabel: entry.formLabel,
+                  formKind: entry.formKind,
+                }),
+                englishName: entry.displayName,
                 number: entry.sortNumber,
                 types: entry.types,
                 abilityOptions: [...abilityIds].map((abilityId) => ({
                   id: abilityId,
-                  name: abilityNamesById.get(abilityId) ?? formatIdLabel(abilityId),
+                  name: gameName(
+                    "abilities",
+                    abilityId,
+                    abilityNamesById.get(abilityId) ?? formatIdLabel(abilityId),
+                  ),
                 })),
                 moveIds: [...(moveIds ?? [])],
               };
             })
         : pool.map((member) => ({
             id: member.id,
-            name: member.name,
+            name: pokemonName({ id: member.id, fallback: member.name }),
+            englishName: member.name,
             number: 0,
             types: member.types,
             abilityOptions: (member.abilities ?? []).map((ability) => ({
@@ -814,7 +867,7 @@ export function TeamBuilder({
             })),
             moveIds: (member.moves ?? []).map((move) => normalizeShowdownId(move.id)),
           })),
-    [pokemonIndex, pool, showdownLegality],
+    [gameName, pokemonIndex, pokemonName, pool, showdownLegality],
   );
   const candidateFilteredSelectOptions = useMemo(
     () =>
@@ -913,6 +966,7 @@ export function TeamBuilder({
             .filter(
               (option) =>
                 option.name.toLowerCase().includes(normalizedNameQuery) ||
+                option.englishName.toLowerCase().includes(normalizedNameQuery) ||
                 option.id.toLowerCase().includes(normalizedNameQuery) ||
                 String(option.number).includes(normalizedNameQuery),
             )
@@ -1016,7 +1070,7 @@ export function TeamBuilder({
         const move = candidateMoveById.get(moveId);
         return {
           id: moveId,
-          name: move?.name ?? formatIdLabel(moveId),
+          name: gameName("moves", moveId, move?.name ?? formatIdLabel(moveId)),
           type: move?.type,
           power: move?.power,
         };
@@ -1026,6 +1080,7 @@ export function TeamBuilder({
     activeCandidateFilters,
     candidateMoveById,
     candidateMoveFilterSlot,
+    gameName,
     selectOptions,
   ]);
   const matchingCandidateFilterOptions = useMemo(() => {
@@ -1067,11 +1122,14 @@ export function TeamBuilder({
             .filter(
               (option) =>
                 option.displayName.toLowerCase().includes(normalizedItemQuery) ||
+                gameName("items", option.showdownId || option.name, option.displayName)
+                  .toLowerCase()
+                  .includes(normalizedItemQuery) ||
                 option.name.toLowerCase().includes(normalizedItemQuery) ||
                 String(option.id).includes(normalizedItemQuery),
             )
         : itemOptions,
-    [itemOptions, normalizedItemQuery],
+    [gameName, itemOptions, normalizedItemQuery],
   );
   const {
     limit: itemOptionLimit,
@@ -1093,11 +1151,17 @@ export function TeamBuilder({
         ? moves.filter(
             (move) =>
               move.name.toLowerCase().includes(normalizedMoveQuery) ||
+              gameName("moves", move.id, move.name)
+                .toLowerCase()
+                .includes(normalizedMoveQuery) ||
               move.id.toLowerCase().includes(normalizedMoveQuery) ||
-              move.type.toLowerCase().includes(normalizedMoveQuery),
+              move.type.toLowerCase().includes(normalizedMoveQuery) ||
+              gameName("types", move.type, move.type)
+                .toLowerCase()
+                .includes(normalizedMoveQuery),
           )
         : moves,
-    [moves, normalizedMoveQuery],
+    [gameName, moves, normalizedMoveQuery],
   );
   const {
     limit: moveOptionLimit,
@@ -1824,7 +1888,10 @@ export function TeamBuilder({
 
     if (!canAddBenchPokemon(bench.length)) {
       setBenchLimitMessage(
-        `Bench limit reached (${bench.length}/${MAX_BENCH_POKEMON}). Delete one first.`,
+        t("builder.benchLimit", {
+          count: bench.length,
+          limit: MAX_BENCH_POKEMON,
+        }),
       );
       return false;
     }
@@ -2388,7 +2455,7 @@ export function TeamBuilder({
   }
 
   return (
-    <section className="builder-stage" aria-label="Team builder">
+    <section className="builder-stage" aria-label={t("builder.aria")}>
       <BuilderToolbar
         hasTeamMembers={team.some(Boolean)}
         activePokemonName={activeHeaderName ?? null}
@@ -2411,7 +2478,7 @@ export function TeamBuilder({
       <div className="builder-card-layout" ref={builderCardLayoutRef}>
         <div
           className={`team-tabs ${teamReorder.isDragging ? "is-reordering" : ""}`}
-          aria-label="Current team"
+          aria-label={t("builder.currentTeam")}
           ref={teamTabsRef}
         >
         {team.map((member, index) => {
@@ -2476,8 +2543,8 @@ export function TeamBuilder({
               onPointerCancel={teamReorder.handlePointerCancel}
               aria-label={
                 member
-                  ? `Show slot ${index + 1}. Drag to reorder, press Alt and an arrow key, or press Alt and End to bench.`
-                  : `Add Pokemon to slot ${index + 1}`
+                  ? t("builder.showSlot", { slot: index + 1 })
+                  : t("builder.addSlot", { slot: index + 1 })
               }
             >
               {member ? (
@@ -2496,7 +2563,7 @@ export function TeamBuilder({
                   <span
                     className={`team-tab-item ${railItem ? "" : "is-empty"}`}
                     aria-hidden="true"
-                    title={railItem?.name}
+                    title={railItem ? getLocalizedItemName(railItem) : undefined}
                   >
                     {railItem ? <ItemSprite item={railItem} /> : null}
                   </span>
@@ -2505,7 +2572,7 @@ export function TeamBuilder({
                 <>
                   <span className="team-tab-empty-mark" aria-hidden="true">+</span>
                   <span className="team-tab-empty-label" aria-hidden="true">
-                    <strong>Add Pokemon</strong>
+                    <strong>{t("builder.addPokemon")}</strong>
                   </span>
                 </>
               )}
@@ -2523,9 +2590,12 @@ export function TeamBuilder({
           <button
             className={`team-tab bench-tab ${isBenchOpen ? "is-active" : ""}`}
             type="button"
-            aria-label={`Bench. ${bench.length} of ${MAX_BENCH_POKEMON} Pokemon stored.`}
+            aria-label={t("builder.benchAria", {
+              count: bench.length,
+              limit: MAX_BENCH_POKEMON,
+            })}
             aria-expanded={isBenchOpen}
-            title="Bench"
+            title={t("builder.bench")}
             onClick={() => {
               if (teamReorder.shouldSuppressClick()) {
                 return;
@@ -2537,14 +2607,14 @@ export function TeamBuilder({
             }}
           >
             <FontAwesomeIcon icon={faChair} aria-hidden="true" />
-            <span className="bench-label" aria-hidden="true">Bench</span>
+            <span className="bench-label" aria-hidden="true">{t("builder.bench")}</span>
             {bench.length > 0 ? <span className="bench-count">{bench.length}</span> : null}
           </button>
 
           {isBenchOpen ? (
-            <div className="bench-panel" role="dialog" aria-label="Bench Pokemon">
+            <div className="bench-panel" role="dialog" aria-label={t("builder.benchPokemon")}>
               <div className="bench-panel-header">
-                <strong>Bench</strong>
+                <strong>{t("builder.bench")}</strong>
                 <span className={bench.length >= MAX_BENCH_POKEMON ? "is-limit" : ""}>
                   {bench.length} / {MAX_BENCH_POKEMON}
                 </span>
@@ -2599,7 +2669,7 @@ export function TeamBuilder({
                       >
                         {pendingBenchRemovalId === entry.id ? (
                           <div className="bench-remove-confirm" role="alertdialog">
-                            <span>Delete {benchDisplayName}?</span>
+                            <span>{t("builder.deleteNamed", { name: benchDisplayName })}</span>
                             <button
                               type="button"
                               onClick={(event) => {
@@ -2607,7 +2677,7 @@ export function TeamBuilder({
                                 setPendingBenchRemovalId(null);
                               }}
                             >
-                              Cancel
+                              {t("common.cancel")}
                             </button>
                             <button
                               className="is-danger"
@@ -2618,7 +2688,7 @@ export function TeamBuilder({
                                 setPendingBenchRemovalId(null);
                               }}
                             >
-                              Delete
+                              {t("common.delete")}
                             </button>
                           </div>
                         ) : (
@@ -2626,7 +2696,10 @@ export function TeamBuilder({
                             <button
                               className="bench-pokemon-main"
                               type="button"
-                              aria-label={`Move ${benchDisplayName} to selected slot ${selectedSlot + 1}. Drag to another slot or press Alt and an arrow key to reorder the bench.`}
+                              aria-label={t("builder.moveBenchNamed", {
+                                name: benchDisplayName,
+                                slot: selectedSlot + 1,
+                              })}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 handleBenchPokemonClick(index);
@@ -2651,8 +2724,8 @@ export function TeamBuilder({
                             <button
                               className="bench-pokemon-remove"
                               type="button"
-                              aria-label={`Delete ${benchDisplayName} from bench`}
-                              title="Delete from bench"
+                              aria-label={t("builder.deleteBenchNamed", { name: benchDisplayName })}
+                              title={t("builder.deleteFromBench")}
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -2668,7 +2741,7 @@ export function TeamBuilder({
                   })}
                 </div>
               ) : (
-                <p className="bench-empty">Bench is empty.</p>
+                <p className="bench-empty">{t("builder.benchEmpty")}</p>
               )}
             </div>
           ) : null}
@@ -2702,10 +2775,10 @@ export function TeamBuilder({
                 {isNamePickerVisible ? (
                   <input
                     className="pokemon-name-input"
-                    aria-label="Search Pokemon"
+                    aria-label={t("builder.searchPokemon")}
                     autoFocus
                     value={nameQuery}
-                    placeholder={activeHeaderName ?? "Pokemon"}
+                    placeholder={activeHeaderName ?? t("builder.choosePokemon")}
                     onChange={(event) => setNameQuery(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Escape") {
@@ -2731,7 +2804,7 @@ export function TeamBuilder({
                     aria-expanded={isNamePickerVisible}
                     onClick={() => setIsNamePickerOpen(true)}
                   >
-                    {activeHeaderName ?? "Pokemon"}
+                    {activeHeaderName ?? t("builder.choosePokemon")}
                   </button>
                 )}
 
@@ -2755,29 +2828,33 @@ export function TeamBuilder({
                         >
                           <span>{option.name}</span>
                           {usageRankByOptionId.has(option.id) ? (
-                            <small title="Usage rank">
+                            <small title={t("builder.usageRank", {
+                              rank: usageRankByOptionId.get(option.id) ?? "",
+                            })}>
                               #{usageRankByOptionId.get(option.id)}
                             </small>
                           ) : null}
                         </button>
                       ))}
                       {pokemonIndexStatus === "loading" && pokemonIndex.length === 0 ? (
-                        <DataStatusRow message="Loading Pokemon data" isLoading />
+                        <DataStatusRow message={t("builder.loadingPokemonData")} isLoading />
                       ) : null}
                       {pokemonIndexStatus === "error" ? (
                         <DataStatusRow
-                          message="Full Pokemon data is unavailable."
+                          message={t("builder.pokemonDataUnavailable")}
                           onRetry={onRetryPokemonIndex}
                         />
                       ) : null}
                       {!normalizedNameQuery &&
                       pokemonIndexStatus === "ready" &&
                       isUsageOrderLoading ? (
-                        <DataStatusRow message="Loading popular Pokemon" isLoading />
+                        <DataStatusRow message={t("builder.loadingPopularPokemon")} isLoading />
                       ) : null}
                       {!normalizedNameQuery && usageOrderError ? (
                         <DataStatusRow
-                          message={`${usageOrderError} Search is still available.`}
+                          message={t("builder.searchStillAvailable", {
+                            message: usageOrderError,
+                          })}
                           onRetry={() => {
                             setUsageOrderError(null);
                             setUsagePokemonIds(null);
@@ -2790,12 +2867,12 @@ export function TeamBuilder({
                       filteredOptions.length === 0 ? (
                         <div className="pokemon-name-empty">
                           {hasPokemonCandidateFilters(activeCandidateFilters)
-                            ? "No Pokemon match these filters"
-                            : "No popular Pokemon found"}
+                            ? t("builder.noFilterMatches")
+                            : t("builder.noPopularPokemon")}
                         </div>
                       ) : null}
                       {normalizedNameQuery && filteredOptions.length === 0 ? (
-                        <div className="pokemon-name-empty">No Pokemon found</div>
+                        <div className="pokemon-name-empty">{t("builder.noPokemon")}</div>
                       ) : null}
                     </div>
                   </div>
@@ -2803,7 +2880,7 @@ export function TeamBuilder({
               </div>
 
               {!isNamePickerVisible && visibleMegaOptions.length > 0 ? (
-                <div className="mega-controls" aria-label="Mega evolution options">
+                <div className="mega-controls" aria-label={t("builder.megaOptions")}>
                   {visibleMegaOptions.map((option) => {
                     const isActiveMega =
                       activeFormKind === "mega" &&
@@ -2811,15 +2888,22 @@ export function TeamBuilder({
                       (option.formLabel ?? "Mega") ===
                         (activeIndexEntry?.formLabel ?? "Mega");
                     const megaSuffix = option.formLabel?.replace("Mega", "").trim();
+                    const megaDisplayName = pokemonName({
+                      id: option.name,
+                      speciesId: option.speciesKey,
+                      fallback: option.displayName,
+                      formLabel: option.formLabel,
+                    });
 
                     return (
                       <button
                         className={`mega-button ${isActiveMega ? "is-active" : ""}`}
                         type="button"
-                        aria-label={`${isActiveMega ? "Return from" : "Use"} ${
-                          option.displayName
-                        }`}
-                        title={option.displayName}
+                        aria-label={t(
+                          isActiveMega ? "builder.returnFromMega" : "builder.useMega",
+                          { name: megaDisplayName },
+                        )}
+                        title={megaDisplayName}
                         key={option.name}
                         onClick={() =>
                           handleToggleMega(option.name, isActiveMega)
@@ -2837,7 +2921,12 @@ export function TeamBuilder({
                   <button
                     className="form-picker-trigger"
                     type="button"
-                    aria-label={`Form: ${activeBattleFormOption.label}`}
+                    aria-label={t("builder.form", {
+                      form: pokemonFormName(
+                        activeBattleFormOption.pokemonId,
+                        activeBattleFormOption.label,
+                      ),
+                    })}
                     aria-expanded={isBattleFormPickerOpen}
                     aria-haspopup="listbox"
                     onClick={() => {
@@ -2846,12 +2935,17 @@ export function TeamBuilder({
                     }}
                     onKeyDown={handleBattleFormKeyDown}
                   >
-                    <span>{activeBattleFormOption.label}</span>
+                    <span>
+                      {pokemonFormName(
+                        activeBattleFormOption.pokemonId,
+                        activeBattleFormOption.label,
+                      )}
+                    </span>
                     <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
                   </button>
 
                   {isBattleFormPickerOpen ? (
-                    <div className="form-picker-menu" role="listbox" aria-label="Battle form">
+                    <div className="form-picker-menu" role="listbox" aria-label={t("builder.battleForm")}>
                       {battleFormGroup.options.map((option, optionIndex) => {
                         const isSelected = activePokemonId === option.pokemonId;
                         const isActive = activeBattleFormOptionIndex === optionIndex;
@@ -2866,7 +2960,7 @@ export function TeamBuilder({
                             onMouseEnter={() => setActiveBattleFormOptionIndex(optionIndex)}
                             onClick={() => handleSelectBattleForm(option.pokemonId)}
                           >
-                            {option.label}
+                            {pokemonFormName(option.pokemonId, option.label)}
                           </button>
                         );
                       })}
@@ -2883,8 +2977,8 @@ export function TeamBuilder({
                 {failedPokemonSelectionSlot === selectedSlot ? (
                   <button
                     type="button"
-                    aria-label="Retry Pokemon loading"
-                    title="Retry"
+                    aria-label={t("builder.retryPokemon")}
+                    title={t("common.retry")}
                     onClick={onRetryPokemonSelection}
                   >
                     <FontAwesomeIcon icon={faRotateRight} aria-hidden="true" />
@@ -2895,7 +2989,7 @@ export function TeamBuilder({
             {selectingPokemonSlot === selectedSlot ? (
               <div className="search-notice" role="status">
                 <FontAwesomeIcon className="is-spinning" icon={faSpinner} aria-hidden="true" />
-                Loading Pokemon set
+                {t("builder.loadingPokemonSet")}
               </div>
             ) : searchNotice?.slotIndex === selectedSlot ? (
               <p className="search-notice">{searchNotice.message}</p>
@@ -2917,14 +3011,22 @@ export function TeamBuilder({
                 <button
                   className={`item-button ${activeItem ? "has-item" : ""}`}
                   type="button"
-                  aria-label={activeItem ? `Change ${activeItem.name}` : "Choose item"}
+                  aria-label={activeItem
+                    ? t("builder.changeItem", { item: getLocalizedItemName(activeItem) })
+                    : t("builder.chooseItem")}
                   aria-haspopup="listbox"
                   aria-expanded={isItemPickerOpen}
                   disabled={isItemLocked}
                   title={
                     isItemLocked
-                      ? `${activeItem?.name ?? "Mega Stone"} is locked by Mega Evolution`
-                      : activeItem?.name ?? "Choose item"
+                      ? t("builder.itemLocked", {
+                          item: activeItem
+                            ? getLocalizedItemName(activeItem)
+                            : t("builder.megaStone"),
+                        })
+                      : activeItem
+                        ? getLocalizedItemName(activeItem)
+                        : t("builder.chooseItem")
                   }
                   onBlur={() => setHoveredItemOption(null)}
                   onClick={() => {
@@ -2958,10 +3060,10 @@ export function TeamBuilder({
                   <div className="item-menu">
                     <input
                       className="item-search-input"
-                      aria-label="Search item"
+                      aria-label={t("builder.searchItem")}
                       autoFocus
                       value={itemQuery}
-                      placeholder="Search item"
+                      placeholder={t("builder.searchItem")}
                       onChange={(event) => setItemQuery(event.target.value)}
                       onKeyDown={(event) => {
                         if (event.key === "Escape") {
@@ -3004,7 +3106,7 @@ export function TeamBuilder({
                           <span className="item-option-icon" aria-hidden="true">
                             <FontAwesomeIcon icon={faXmark} />
                           </span>
-                          <span className="item-option-name">Remove Item</span>
+                          <span className="item-option-name">{t("builder.removeItem")}</span>
                         </button>
                       ) : null}
                       {visibleItemOptions.map((option, optionIndex) => {
@@ -3034,22 +3136,28 @@ export function TeamBuilder({
                             <span className="item-option-icon" aria-hidden="true">
                               <ItemSprite item={previewItemOption} />
                             </span>
-                            <span className="item-option-name">{option.displayName}</span>
+                            <span className="item-option-name">
+                              {gameName(
+                                "items",
+                                option.showdownId || option.name,
+                                option.displayName,
+                              )}
+                            </span>
                           </button>
                         );
                       })}
                       {itemIndexStatus === "loading" && itemIndex.length === 0 ? (
-                        <DataStatusRow message="Loading item data" isLoading />
+                        <DataStatusRow message={t("builder.loadingItemData")} isLoading />
                       ) : null}
                       {itemIndexStatus === "error" ? (
                         <DataStatusRow
-                          message="Item data is unavailable."
+                          message={t("builder.itemDataUnavailable")}
                           onRetry={onRetryItemIndex}
                         />
                       ) : null}
                       {filteredItemOptions.length === 0 &&
                       itemIndexStatus === "ready" ? (
-                        <div className="item-empty">No items found</div>
+                        <div className="item-empty">{t("builder.noItems")}</div>
                       ) : null}
                     </div>
                   </div>
@@ -3066,14 +3174,24 @@ export function TeamBuilder({
                     <div className="item-tooltip-header">
                       <ItemSprite item={hoveredItemOption} />
                       <div>
-                        <strong>{hoveredItemOption.name}</strong>
+                        <strong>{getLocalizedItemName(hoveredItemOption)}</strong>
                         {hoveredItemOption.category ? (
-                          <small>{hoveredItemOption.category}</small>
+                          <small>
+                            {hoveredItemOption.category === "Mega Stones"
+                              ? t("builder.megaStones")
+                              : hoveredItemOption.category}
+                          </small>
                         ) : null}
                       </div>
                     </div>
 
-                    <p>{getItemEffectText(hoveredItemOption)}</p>
+                    <p>
+                      {gameDescription(
+                        "items",
+                        hoveredItemOption.showdownId ?? hoveredItemOption.id,
+                        getItemEffectText(hoveredItemOption),
+                      )}
+                    </p>
                   </aside>
                 ) : null}
               </div>
@@ -3104,7 +3222,7 @@ export function TeamBuilder({
                     }
                   }}
                 >
-                  <span className="trait-label">Ability</span>
+                  <span className="trait-label">{t("builder.ability")}</span>
                   <button
                     className="trait-value"
                     type="button"
@@ -3130,7 +3248,7 @@ export function TeamBuilder({
                     onMouseEnter={() => void previewAbility(selectedAbility)}
                     onMouseLeave={() => setHoveredAbilityOption(null)}
                   >
-                    {selectedAbility}
+                    {getLocalizedAbilityName(selectedAbility)}
                   </button>
 
                   {openTraitPicker === "ability" ? (
@@ -3159,7 +3277,7 @@ export function TeamBuilder({
                           onMouseLeave={() => setHoveredAbilityOption(null)}
                           onClick={() => selectAbility(ability)}
                         >
-                          {ability}
+                          {getLocalizedAbilityName(ability)}
                         </button>
                       ))}
                     </div>
@@ -3174,11 +3292,23 @@ export function TeamBuilder({
                       role="tooltip"
                     >
                       <div className="ability-tooltip-header">
-                        <strong>{hoveredAbilityOption.name}</strong>
-                        <small>Ability</small>
+                        <strong>
+                          {gameName(
+                            "abilities",
+                            hoveredAbilityOption.id,
+                            hoveredAbilityOption.name,
+                          )}
+                        </strong>
+                        <small>{t("builder.ability")}</small>
                       </div>
 
-                      <p>{getAbilityEffectText(hoveredAbilityOption)}</p>
+                      <p>
+                        {gameDescription(
+                          "abilities",
+                          hoveredAbilityOption.id,
+                          getAbilityEffectText(hoveredAbilityOption),
+                        )}
+                      </p>
                     </aside>
                   ) : null}
                 </div>
@@ -3221,7 +3351,7 @@ export function TeamBuilder({
                     }
                   }}
                 >
-                  <span className="trait-label">Nature</span>
+                  <span className="trait-label">{t("builder.nature")}</span>
                   <button
                     className="trait-value"
                     type="button"
@@ -3236,15 +3366,19 @@ export function TeamBuilder({
                       }
                     }}
                   >
-                    {selectedNature.label}
+                    {getLocalizedNatureName(selectedNature)}
                   </button>
 
                   {openTraitPicker === "nature" ? (
-                    <div className="nature-grid-menu" role="dialog" aria-label="Select nature">
+                    <div
+                      className="nature-grid-menu"
+                      role="dialog"
+                      aria-label={t("builder.selectNature")}
+                    >
                       <div className="nature-grid">
                         <div className="nature-grid-corner" aria-hidden="true">
-                          <span className="nature-axis-up">Up</span>
-                          <span className="nature-axis-down">Down</span>
+                          <span className="nature-axis-up">{t("builder.up")}</span>
+                          <span className="nature-axis-down">{t("builder.down")}</span>
                         </div>
                         {battleStatKeys.map((downStat) => (
                           <div
@@ -3253,7 +3387,7 @@ export function TeamBuilder({
                             }`}
                             key={downStat}
                           >
-                            {natureStatLabels[downStat]}
+                            {getLocalizedStatLabel(downStat)}
                           </div>
                         ))}
                         {battleStatKeys.map((upStat) => (
@@ -3263,7 +3397,7 @@ export function TeamBuilder({
                                 selectedNature.up === upStat ? "is-selected-up" : ""
                               }`}
                             >
-                              {natureStatLabels[upStat]}
+                              {getLocalizedStatLabel(upStat)}
                             </div>
                             {battleStatKeys.map((downStat, downIndex) => {
                               const nature = getNatureByAlignment(upStat, downStat);
@@ -3297,7 +3431,7 @@ export function TeamBuilder({
                                     }));
                                   }}
                                 >
-                                  {nature.label}
+                                  {getLocalizedNatureName(nature)}
                                 </button>
                               );
                             })}
@@ -3311,9 +3445,12 @@ export function TeamBuilder({
               </div>
 
               <div className="stats-editor-header stats-meta-heading">
-                <h2>Stats</h2>
+                <h2>{t("builder.stats")}</h2>
                 <span className="ev-total">
-                  EV {evTotal}/{CHAMPIONS_MAX_EV_TOTAL}
+                  {t("builder.evTotal", {
+                    current: evTotal,
+                    max: CHAMPIONS_MAX_EV_TOTAL,
+                  })}
                 </span>
               </div>
             </div>
@@ -3322,7 +3459,7 @@ export function TeamBuilder({
             <div className="editor-detail-grid">
               <div
                 className={`move-list ${moveReorder.isDragging ? "is-reordering" : ""}`}
-                aria-label="Selected moves"
+                aria-label={t("builder.selectedMoves")}
                 ref={movePickerRef}
               >
               {activeMember ? (
@@ -3375,8 +3512,11 @@ export function TeamBuilder({
                       aria-expanded={openMoveSlot === index}
                       aria-label={
                         move
-                          ? `${move.name}, move ${index + 1}. Drag to reorder or press Alt and an arrow key.`
-                          : `Choose move ${index + 1}`
+                          ? t("builder.moveReorderAria", {
+                              move: gameName("moves", move.id, move.name),
+                              slot: index + 1,
+                            })
+                          : t("builder.chooseMoveSlot", { slot: index + 1 })
                       }
                       onClick={() => {
                         if (!moveReorder.shouldSuppressClick()) {
@@ -3398,7 +3538,7 @@ export function TeamBuilder({
                       ) : (
                         <span className="empty-move-label">
                           <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
-                          Add Move
+                          {t("builder.addMove")}
                         </span>
                       )}
                     </button>
@@ -3413,10 +3553,10 @@ export function TeamBuilder({
                       <div className="move-menu">
                         <input
                           className="move-search-input"
-                          aria-label="Search available moves"
+                          aria-label={t("builder.searchAvailableMoves")}
                           autoFocus
                           value={moveQuery}
-                          placeholder="Search moves"
+                          placeholder={t("filter.searchMoves")}
                           onChange={(event) => {
                             setMoveQuery(event.target.value);
                             resetMoveOptions();
@@ -3464,7 +3604,7 @@ export function TeamBuilder({
                             <span className="move-clear-icon" aria-hidden="true">
                               <FontAwesomeIcon icon={faXmark} />
                             </span>
-                            <span>Empty Move Slot</span>
+                            <span>{t("builder.emptyMove")}</span>
                           </button>
                           {filteredMoveOptions.length ? (
                             visibleMoveOptions.map((option, optionIndex) => (
@@ -3495,7 +3635,7 @@ export function TeamBuilder({
                               </button>
                             ))
                           ) : (
-                            <div className="move-empty">No moves found.</div>
+                            <div className="move-empty">{t("builder.noMoves")}</div>
                           )}
                         </div>
                       </div>
@@ -3564,19 +3704,22 @@ export function TeamBuilder({
               ) : null}
 
               {activeMember ? (
-                <section className="stats-editor" aria-label="Pokemon stats">
+                <section className="stats-editor" aria-label={t("builder.pokemonStats")}>
                   <div className="stats-editor-header stats-editor-header-mobile">
-                    <h2>Stats</h2>
+                    <h2>{t("builder.stats")}</h2>
                     <span className="ev-total">
-                      EV {evTotal}/{CHAMPIONS_MAX_EV_TOTAL}
+                      {t("builder.evTotal", {
+                        current: evTotal,
+                        max: CHAMPIONS_MAX_EV_TOTAL,
+                      })}
                     </span>
                   </div>
 
                   <div className="stats-editor-body">
                     <div className="stat-axis-labels" aria-hidden="true">
-                      <span className="is-base">Base</span>
-                      <span className="is-ev">EV</span>
-                      <span className="is-stat">Stat</span>
+                      <span className="is-base">{t("builder.base")}</span>
+                      <span className="is-ev">{t("builder.ev")}</span>
+                      <span className="is-stat">{t("builder.stat")}</span>
                     </div>
 
                     <div className="stats-editor-grid">
@@ -3592,14 +3735,18 @@ export function TeamBuilder({
 
                         return (
                           <div className="stat-editor-column" key={stat}>
-                            <strong className="stat-editor-label">{statLabels[stat]}</strong>
+                            <strong className="stat-editor-label">
+                              {getLocalizedStatLabel(stat)}
+                            </strong>
                             <span className="stat-base-value">{baseStats[stat]}</span>
 
                             <div className="ev-vertical-track">
                               <input
                                 className="ev-vertical-range"
                                 type="range"
-                                aria-label={`${statLabels[stat]} EV slider`}
+                                aria-label={t("builder.evSlider", {
+                                  stat: getLocalizedStatLabel(stat),
+                                })}
                                 min={0}
                                 max={CHAMPIONS_MAX_EV_PER_STAT}
                                 step={1}
@@ -3614,7 +3761,9 @@ export function TeamBuilder({
                             </div>
 
                             <label className="ev-number-field">
-                              <span className="sr-only">{statLabels[stat]} EV</span>
+                              <span className="sr-only">
+                                {getLocalizedStatLabel(stat)} {t("builder.ev")}
+                              </span>
                               <input
                                 className="ev-number-input"
                                 inputMode="numeric"
@@ -3633,8 +3782,8 @@ export function TeamBuilder({
                                     className={`stat-nature-arrow is-${natureShift}`}
                                     aria-label={
                                       natureShift === "up"
-                                        ? "Nature increases this stat"
-                                        : "Nature decreases this stat"
+                                        ? t("builder.natureIncreases")
+                                        : t("builder.natureDecreases")
                                     }
                                   />
                                 ) : null}
@@ -3651,7 +3800,7 @@ export function TeamBuilder({
           </div>
 
           <div className="sprite-crop">
-            <div className="type-stack" aria-label="Pokemon type">
+            <div className="type-stack" aria-label={t("builder.pokemonType")}>
               {(activeMember?.types ?? []).map((type) => (
                 <TypeBadge type={type} key={type} />
               ))}

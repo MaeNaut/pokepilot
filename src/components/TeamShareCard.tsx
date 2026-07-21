@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
-import { statKeys, statLabels } from "../data/natures";
+import { statKeys } from "../data/natures";
 import { shareTypeAccentColors } from "../data/shareImage";
+import { useLocalization } from "../i18n/useLocalization";
+import { statTranslationKeys } from "../i18n/statTranslations";
 import { ItemSprite } from "./ItemSprite";
 import type { PokemonShareBuild } from "./PokemonShareCard";
 import { TypeBadge } from "./TypeBadge";
@@ -27,27 +29,29 @@ function getNameLengthClass(name: string) {
 }
 
 export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
+  const { gameName, t } = useLocalization();
+
   return (
-    <article className="team-share-card" aria-label={`${teamName} team image`}>
+    <article className="team-share-card" aria-label={`${teamName} ${t("share.teamImage")}`}>
       <header className="team-share-header">
         <div className="team-share-brand">
           <span className="team-share-brand-mark" aria-hidden="true">P</span>
           <strong>PokePilot</strong>
         </div>
         <div className="team-share-title">
-          <h2>{teamName.trim() || "Untitled Team"}</h2>
+          <h2>{teamName.trim() || t("share.untitledTeam")}</h2>
         </div>
-        <span className="team-share-regulation">Regulation M-B</span>
+        <span className="team-share-regulation">{t("toolbar.regulation")}</span>
       </header>
 
-      <section className="team-share-grid" aria-label="Active party">
+      <section className="team-share-grid" aria-label={t("share.activeParty")}>
         {Array.from({ length: 6 }, (_, index) => {
           const build = builds[index] ?? null;
 
           if (!build) {
             return (
               <div className="team-share-member is-empty" key={`empty-${index}`}>
-                <span>Open Slot</span>
+                <span>{t("share.openSlot")}</span>
               </div>
             );
           }
@@ -75,10 +79,14 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
                     <span className={item ? "" : "is-empty"}>
                       {item ? <ItemSprite item={item} /> : null}
                     </span>
-                    <strong>{item?.name ?? "No item"}</strong>
+                    <strong>
+                      {item
+                        ? gameName("items", item.showdownId ?? item.id, item.name)
+                        : t("share.noItem")}
+                    </strong>
                   </div>
                 </div>
-                <div className="team-share-member-types" aria-label="Pokemon types">
+                <div className="team-share-member-types" aria-label={t("share.pokemonTypes")}>
                   {member.types.map((type) => (
                     <TypeBadge type={type} key={type} />
                   ))}
@@ -99,43 +107,57 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
 
               <div className="team-share-member-details">
                 <div className="team-share-member-detail">
-                  <span className="team-share-member-detail-label">Ability</span>
-                  <strong>{ability || "No ability"}</strong>
+                  <span className="team-share-member-detail-label">
+                    {t("share.ability")}
+                  </span>
+                  <strong>
+                    {ability
+                      ? gameName("abilities", ability, ability)
+                      : t("share.noAbility")}
+                  </strong>
                 </div>
                 <div className="team-share-member-detail">
-                  <span className="team-share-member-detail-label">Nature</span>
-                  <strong>{nature.label}</strong>
+                  <span className="team-share-member-detail-label">
+                    {t("share.nature")}
+                  </span>
+                  <strong>{gameName("natures", nature.id, nature.label)}</strong>
                 </div>
               </div>
 
-              <div className="team-share-member-moves" aria-label="Moves">
-                {moves.map((move, moveIndex) => (
-                  <div
-                    className={`team-share-member-move type-${move?.type ?? "normal"} ${
-                      move ? "" : "is-empty"
-                    }`}
-                    key={`${move?.id ?? "empty"}-${moveIndex}`}
-                  >
-                    <span className="team-share-member-move-icon" aria-hidden="true">
-                      {move ? <TypeBadge type={move.type} /> : null}
-                    </span>
-                    <strong className={move && move.name.length > 18 ? "is-long" : ""}>
-                      {move?.name ?? "No move"}
-                    </strong>
-                  </div>
-                ))}
+              <div className="team-share-member-moves" aria-label={t("share.moves")}>
+                {moves.map((move, moveIndex) => {
+                  const localizedMoveName = move
+                    ? gameName("moves", move.id, move.name)
+                    : t("share.noMove");
+
+                  return (
+                    <div
+                      className={`team-share-member-move type-${move?.type ?? "normal"} ${
+                        move ? "" : "is-empty"
+                      }`}
+                      key={`${move?.id ?? "empty"}-${moveIndex}`}
+                    >
+                      <span className="team-share-member-move-icon" aria-hidden="true">
+                        {move ? <TypeBadge type={move.type} /> : null}
+                      </span>
+                      <strong className={localizedMoveName.length > 18 ? "is-long" : ""}>
+                        {localizedMoveName}
+                      </strong>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="team-share-member-evs">
-                <span>EVs</span>
+                <span>{t("share.evs")}</span>
                 {investedEvs.length > 0 ? (
                   investedEvs.map((stat) => (
                     <strong key={stat}>
-                      {statLabels[stat]} {evs[stat]}
+                      {t(statTranslationKeys[stat])} {evs[stat]}
                     </strong>
                   ))
                 ) : (
-                  <strong>No investment</strong>
+                  <strong>{t("share.noInvestment")}</strong>
                 )}
               </div>
             </article>

@@ -14,6 +14,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { toBlob } from "html-to-image";
+import { useLocalization } from "../i18n/useLocalization";
 
 type ShareImageDialogProps = {
   title: string;
@@ -66,6 +67,7 @@ export function ShareImageDialog({
   children,
   onClose,
 }: ShareImageDialogProps) {
+  const { t } = useLocalization();
   const captureRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [activeAction, setActiveAction] = useState<ShareAction>(null);
@@ -99,7 +101,7 @@ export function ShareImageDialog({
     const node = captureRef.current;
 
     if (!node) {
-      throw new Error("The image preview is not ready yet.");
+      throw new Error(t("share.previewNotReady"));
     }
 
     await document.fonts?.ready;
@@ -111,7 +113,7 @@ export function ShareImageDialog({
     });
 
     if (!blob) {
-      throw new Error("The image could not be rendered.");
+      throw new Error(t("share.renderFailed"));
     }
 
     return blob;
@@ -123,14 +125,14 @@ export function ShareImageDialog({
 
     try {
       if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
-        throw new Error("Image copy is not supported by this browser.");
+        throw new Error(t("share.copyUnsupported"));
       }
 
       const blob = await createImageBlob();
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      setMessage("Image copied to clipboard.");
+      setMessage(t("share.copied"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Image copy failed.");
+      setMessage(error instanceof Error ? error.message : t("share.copyFailed"));
     } finally {
       setActiveAction(null);
     }
@@ -149,9 +151,9 @@ export function ShareImageDialog({
       link.download = normalizePngFileName(fileName);
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
-      setMessage("PNG saved.");
+      setMessage(t("share.saved"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Image export failed.");
+      setMessage(error instanceof Error ? error.message : t("share.exportFailed"));
     } finally {
       setActiveAction(null);
     }
@@ -189,8 +191,8 @@ export function ShareImageDialog({
           <button
             ref={closeButtonRef}
             type="button"
-            aria-label="Close image preview"
-            title="Close"
+            aria-label={t("share.closePreview")}
+            title={t("common.close")}
             onClick={onClose}
           >
             <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
@@ -220,7 +222,7 @@ export function ShareImageDialog({
                 icon={activeAction === "copy" ? faSpinner : faCopy}
                 aria-hidden="true"
               />
-              {activeAction === "copy" ? "Copying..." : "Copy Image"}
+              {activeAction === "copy" ? t("share.copying") : t("share.copyImage")}
             </button>
             <button
               className="is-primary"
@@ -233,7 +235,7 @@ export function ShareImageDialog({
                 icon={activeAction === "save" ? faSpinner : faDownload}
                 aria-hidden="true"
               />
-              {activeAction === "save" ? "Saving..." : "Save PNG"}
+              {activeAction === "save" ? t("share.saving") : t("share.savePng")}
             </button>
           </div>
         </footer>

@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileImport, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { useLocalization } from "../i18n/useLocalization";
 
 type NewTeamControlProps = {
   isMenuOpen: boolean;
@@ -28,13 +29,15 @@ export function NewTeamControl({
   onImport,
   onClose,
 }: NewTeamControlProps) {
+  const { t } = useLocalization();
+
   return (
     <div className="new-team-control">
       <button
         className="team-action-button"
         type="button"
-        aria-label="New or import team"
-        title="New or import team"
+        aria-label={t("team.newOrImport")}
+        title={t("team.newOrImport")}
         aria-haspopup="menu"
         aria-expanded={isMenuOpen || isImportOpen}
         onClick={onToggle}
@@ -46,7 +49,7 @@ export function NewTeamControl({
         <div
           className="new-team-menu"
           role="menu"
-          aria-label="Create team"
+          aria-label={t("team.create")}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               onClose();
@@ -55,11 +58,11 @@ export function NewTeamControl({
         >
           <button type="button" role="menuitem" onClick={onCreateTeam}>
             <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
-            <span>New Team</span>
+            <span>{t("team.new")}</span>
           </button>
           <button type="button" role="menuitem" onClick={onOpenImport}>
             <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />
-            <span>Import Showdown</span>
+            <span>{t("team.importShowdown")}</span>
           </button>
         </div>
       ) : null}
@@ -68,16 +71,16 @@ export function NewTeamControl({
         <div
           className="new-team-import-panel"
           role="dialog"
-          aria-label="Import Showdown team"
+          aria-label={t("team.importShowdown")}
         >
           <div className="new-team-import-header">
-            <strong>Import Showdown</strong>
+            <strong>{t("team.importShowdown")}</strong>
           </div>
           <textarea
             autoFocus
-            aria-label="Showdown team text"
+            aria-label={t("team.showdownTeamText")}
             value={showdownDraft}
-            placeholder="Paste Showdown team text..."
+            placeholder={t("team.pasteShowdown")}
             disabled={isImporting}
             onChange={(event) => onShowdownDraftChange(event.target.value)}
             onKeyDown={(event) => {
@@ -90,7 +93,7 @@ export function NewTeamControl({
             {importError ? <span role="alert">{importError}</span> : <span />}
             <button type="button" disabled={isImporting} onClick={onImport}>
               <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />
-              {isImporting ? "Importing..." : "Import"}
+              {isImporting ? t("team.importing") : t("common.import")}
             </button>
           </div>
         </div>
