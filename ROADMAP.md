@@ -122,11 +122,11 @@ The MVP should prove the core loop:
   - [x] Expose all three preferences through the localized header menu.
   - [x] Preserve semantic nature, validity, danger, move-type, and saved-team contrast in dark mode.
   - [x] Preserve the light share-card output while theming the surrounding preview dialog.
-- [ ] Complete the post-layout desktop detail pass for EV editing density, header
+- [x] Complete the post-layout desktop detail pass for EV editing density, header
   alignment and branding, and Team Rail navigation.
-- [ ] Begin the dedicated responsive-design phase only after Team Builder features and desktop UI/UX are stable.
-  - [ ] Treat the current responsive CSS as provisional rather than final tablet/mobile design.
-  - [ ] Complete a tablet layout and touch-interaction pass.
+- [ ] Complete the dedicated responsive-design phase now that Team Builder features and desktop UI/UX are stable.
+  - [x] Establish the first tablet workspace: preserve the complete Pokemon card, move PokePilot into a right-edge overlay drawer, and fit short landscape viewports without page overflow.
+  - [ ] Complete the remaining tablet popover, picker, team-management, and touch-interaction audit.
   - [ ] Complete a mobile layout and touch-interaction pass.
   - [ ] Verify popovers, pickers, reordering, diagnostics, and team management across target viewport sizes.
 - [x] Add loading, error, and empty states for the builder's external data sources and pickers.

@@ -130,6 +130,7 @@ button {
 
 .app-header {
   position: relative;
+  z-index: 60;
   display: flex;
   align-items: center;
   height: var(--app-header-height);
@@ -854,6 +855,16 @@ button {
   background: #0a0b0c;
   content: "";
   pointer-events: none;
+}
+
+.copilot-drawer {
+  min-width: 0;
+  min-height: 0;
+}
+
+.copilot-drawer-scrim,
+.copilot-drawer-handle {
+  display: none;
 }
 
 .builder-workspace {
@@ -3922,7 +3933,7 @@ select {
   gap: 3px;
 }
 
-@container (max-width: 660px) {
+@container (max-width: 820px) {
   .diagnostics-layout {
     grid-template-columns: 1fr;
   }
@@ -5777,6 +5788,224 @@ select {
   }
 }
 
+@media (min-width: 761px) and (max-width: 1420px) {
+  .app-wordmark {
+    display: none;
+  }
+
+  .header-builder-workspace {
+    width: calc(100% - 10vw);
+    justify-self: start;
+    margin-left: 5vw;
+  }
+
+  .team-actions {
+    margin-left: 0;
+  }
+
+  .workspace {
+    --tablet-copilot-width: clamp(360px, 42vw, 440px);
+    min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
+  }
+
+  .builder-workspace {
+    width: min(1040px, calc(100% - 80px));
+  }
+
+  .footer {
+    padding: 4px 8px;
+    font-size: 0.6rem;
+    line-height: 1.2;
+  }
+
+  .footer p {
+    white-space: nowrap;
+  }
+
+  .copilot-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    width: var(--tablet-copilot-width);
+    height: 100vh;
+    height: 100dvh;
+    visibility: hidden;
+    overscroll-behavior: contain;
+    pointer-events: none;
+    transform: translateX(calc(100% + 2px));
+    transition:
+      transform 220ms ease,
+      visibility 0s linear 220ms;
+  }
+
+  .copilot-drawer.is-open {
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+    transition-delay: 0s;
+  }
+
+  .copilot-drawer .copilot-panel {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    border-top: 0;
+    border-left: 1px solid #5d6267;
+    box-shadow: -18px 0 42px rgba(0, 0, 0, 0.22);
+  }
+
+  .copilot-drawer-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: block;
+    visibility: hidden;
+    border: 0;
+    padding: 0;
+    background: rgba(10, 11, 12, 0.38);
+    opacity: 0;
+    pointer-events: none;
+    touch-action: none;
+    transition:
+      opacity 180ms ease,
+      visibility 0s linear 180ms;
+  }
+
+  .copilot-drawer-scrim.is-open {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 0s;
+  }
+
+  .copilot-drawer-handle {
+    position: fixed;
+    top: 50vh;
+    top: 50dvh;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    width: 40px;
+    height: 122px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 9px;
+    border: 1px solid #4a4e52;
+    border-right: 0;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    padding: 10px 0;
+    background: #0a0b0c;
+    color: #f6f6f6;
+    font: inherit;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition:
+      right 220ms ease,
+      background 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .copilot-drawer-handle.is-open {
+    right: var(--tablet-copilot-width);
+  }
+
+  .copilot-drawer-handle:hover,
+  .copilot-drawer-handle:focus-visible {
+    border-color: #78bbaa;
+    background: #15191a;
+    outline: none;
+  }
+
+  .copilot-drawer-handle:focus-visible {
+    box-shadow: 0 0 0 2px rgba(120, 187, 170, 0.32);
+  }
+
+  .copilot-drawer-handle svg {
+    width: 11px;
+    height: 11px;
+    color: #9ed8cb;
+  }
+
+  .copilot-drawer-handle span {
+    font-size: 0.72rem;
+    font-weight: var(--font-medium);
+    line-height: 1;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1420px) and (max-height: 820px) {
+  .builder-stage {
+    margin-top: 8px;
+  }
+
+  .builder-card-toolbar {
+    margin-bottom: 4px;
+  }
+
+  .team-diagnostics {
+    margin-bottom: 0;
+  }
+
+  .diagnostics-section {
+    padding: 6px 10px 8px;
+  }
+
+  .diagnostics-section-heading {
+    min-height: 20px;
+    margin-bottom: 4px;
+  }
+
+  .diagnostics-section-heading h3 {
+    font-size: 0.88rem;
+  }
+
+  .matchup-matrix-cell {
+    min-height: 28px;
+    grid-template-columns: 22px repeat(2, minmax(20px, 1fr));
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+
+  .matchup-value {
+    font-size: 0.68rem;
+  }
+
+  .team-diagnostics .type-badge,
+  .team-diagnostics .type-badge.has-type-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .team-diagnostics .type-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .coverage-content {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .coverage-ring {
+    width: 78px;
+    height: 78px;
+  }
+
+  .coverage-ring::before {
+    inset: 7px;
+  }
+
+  .coverage-ring strong {
+    font-size: 1.3rem;
+  }
+}
+
 /* Theme overrides stay outside share-card capture styles so exported PNGs remain stable. */
 :root[data-theme="dark"] .app-header,
 :root[data-theme="dark"] .footer {
@@ -5928,8 +6157,11 @@ select {
   outline-color: var(--color-text);
 }
 
-:root[data-theme="dark"] .saved-team-row.is-drop-target::before {
-  border-color: rgba(242, 243, 244, 0.64);
+:root[data-theme="dark"] .saved-team-row.is-drop-target::before,
+:root[data-theme="dark"] .team-tab-shell.is-drop-target::before,
+:root[data-theme="dark"] .move-picker.is-drop-target::before {
+  border-color: #9ed8cb;
+  box-shadow: 0 0 0 2px rgba(158, 216, 203, 0.18);
 }
 
 :root[data-theme="dark"] .saved-team-name-button,

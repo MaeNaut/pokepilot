@@ -3,6 +3,8 @@ import type { KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
+  faChevronLeft,
+  faChevronRight,
   faDesktop,
   faFloppyDisk,
   faLanguage,
@@ -38,6 +40,7 @@ import { useBuilderData } from "./hooks/useBuilderData";
 import {
   useLongPressReorder,
 } from "./hooks/useLongPressReorder";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 import {
   getPreferredPokeApiId,
   shouldKeepSelectedPokemonForUsageTarget,
@@ -142,6 +145,9 @@ function isMegaPokemonId(value: string) {
 function App() {
   const { locale, setLocale, t } = useLocalization();
   const { themePreference, setThemePreference } = useTheme();
+  const isTabletDrawerLayout = useMediaQuery(
+    "(min-width: 761px) and (max-width: 1420px)",
+  );
   const [team, setTeam] = useState<TeamSlot[]>(() =>
     Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null),
   );
@@ -168,6 +174,7 @@ function App() {
   const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isCopilotDrawerOpen, setIsCopilotDrawerOpen] = useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
   const [newTeamShowdownDraft, setNewTeamShowdownDraft] = useState("");
   const [newTeamImportError, setNewTeamImportError] = useState<string | null>(null);
@@ -200,6 +207,7 @@ function App() {
   const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageControlRef = useRef<HTMLDivElement | null>(null);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const copilotDrawerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
@@ -447,6 +455,37 @@ function App() {
       document.removeEventListener("keydown", handleLanguageMenuKeyDown);
     };
   }, [isLanguageMenuOpen]);
+
+  useEffect(() => {
+    if (!isTabletDrawerLayout) {
+      setIsCopilotDrawerOpen(false);
+    }
+  }, [isTabletDrawerLayout]);
+
+  useEffect(() => {
+    if (!isTabletDrawerLayout || !isCopilotDrawerOpen) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    function handleCopilotDrawerKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      setIsCopilotDrawerOpen(false);
+      copilotDrawerTriggerRef.current?.focus();
+    }
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleCopilotDrawerKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleCopilotDrawerKeyDown);
+    };
+  }, [isCopilotDrawerOpen, isTabletDrawerLayout]);
 
   function hasLegalityFilter() {
     return (
@@ -1787,15 +1826,57 @@ function App() {
           />
           <TeamDiagnostics diagnostics={teamDiagnostics} />
         </div>
-        <CopilotPanel
-          teamName={teamNameDraft}
-          team={team}
-          pokemonIndex={pokemonIndex}
-          selectedSlot={selectedTeamSlot}
-          buildState={teamBuildState}
-          diagnostics={teamDiagnostics}
-          validity={teamValidity}
+        <button
+          className={`copilot-drawer-scrim${isCopilotDrawerOpen ? " is-open" : ""}`}
+          type="button"
+          tabIndex={-1}
+          aria-label={t("copilot.closePanel")}
+          onClick={() => {
+            setIsCopilotDrawerOpen(false);
+            copilotDrawerTriggerRef.current?.focus();
+          }}
         />
+        <div
+          className={`copilot-drawer${isCopilotDrawerOpen ? " is-open" : ""}`}
+          id="copilot-drawer"
+          aria-hidden={
+            isTabletDrawerLayout && !isCopilotDrawerOpen ? true : undefined
+          }
+        >
+          <CopilotPanel
+            teamName={teamNameDraft}
+            team={team}
+            pokemonIndex={pokemonIndex}
+            selectedSlot={selectedTeamSlot}
+            buildState={teamBuildState}
+            diagnostics={teamDiagnostics}
+            validity={teamValidity}
+          />
+        </div>
+        <button
+          ref={copilotDrawerTriggerRef}
+          className={`copilot-drawer-handle${isCopilotDrawerOpen ? " is-open" : ""}`}
+          type="button"
+          aria-controls="copilot-drawer"
+          aria-expanded={isCopilotDrawerOpen}
+          aria-label={
+            isCopilotDrawerOpen
+              ? t("copilot.closePanel")
+              : t("copilot.openPanel")
+          }
+          title={
+            isCopilotDrawerOpen
+              ? t("copilot.closePanel")
+              : t("copilot.openPanel")
+          }
+          onClick={() => setIsCopilotDrawerOpen((current) => !current)}
+        >
+          <FontAwesomeIcon
+            icon={isCopilotDrawerOpen ? faChevronRight : faChevronLeft}
+            aria-hidden="true"
+          />
+          <span>PokePilot</span>
+        </button>
       </div>
 
       <footer className="footer">

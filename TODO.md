@@ -205,9 +205,10 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Keep semantic nature, validity, danger, move-type, and saved-team states legible in dark mode.
   - [x] Keep exported Pokemon and team images on their stable light presentation in either app theme.
 - [ ] Add a real app icon / logo mark.
-- [ ] Defer the dedicated tablet/mobile UI pass until Team Builder functionality and desktop UI/UX are complete.
-  - [ ] Audit the provisional responsive CSS before treating any current breakpoint behavior as final.
-  - [ ] Design the tablet workspace layout and verify touch-first editing interactions.
+- [ ] Complete the dedicated tablet/mobile UI pass now that Team Builder functionality and desktop UI/UX are stable.
+  - [x] Add the first tablet workspace layout with a fully visible Pokemon card and an edge-triggered PokePilot drawer.
+  - [x] Fit short landscape tablet layouts without document overflow by compacting secondary diagnostics and footer spacing.
+  - [ ] Audit tablet popovers, pickers, team management, and touch-first editing interactions before treating the breakpoint as final.
   - [ ] Design the mobile workspace layout and verify touch-first editing interactions.
   - [ ] Test text fit, overflow, popover placement, drag/hold reordering, and scroll behavior at representative widths.
 - [x] Add loading states for Pokemon, item, and move fetches.

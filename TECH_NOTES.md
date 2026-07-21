@@ -563,6 +563,18 @@ The current first slice is a provider-independent local preview:
   a self-contained dark card with 16px vertical margins, rounded corners, and a
   height that stretches to the footer. This keeps QHD and UHD layouts centered
   without turning the panel into an oversized wall.
+- From 761px through 1420px, remove PokePilot from the workspace grid and expose
+  it as a right-edge overlay drawer. The persistent handle keeps the feature and
+  brand visible without shrinking the Pokemon card, so the duplicate header
+  wordmark is hidden at this breakpoint. The drawer closes through
+  the handle, backdrop, or Escape. When open, it spans the full dynamic viewport,
+  dims the header, workspace, and footer together, locks background scrolling,
+  and keeps analysis scrolling internal so document scroll cannot clip the panel.
+- On short landscape tablets, preserve the 490px editor card and compact the
+  secondary matchup report and footer so the document fits the dynamic viewport.
+  Portrait tablets may continue below the fold for diagnostics, but the complete
+  Pokemon card must remain visible in the initial viewport. Widths at or below
+  760px remain provisional until the dedicated mobile pass.
 
 For the first AI route, ask the AI to return structured JSON such as:
 
