@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -64,7 +64,7 @@ export function CopilotPanel({
   diagnostics,
   validity,
 }: CopilotPanelProps) {
-  const { pokemonName, t } = useLocalization();
+  const { locale, pokemonName, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [analysisByScope, setAnalysisByScope] = useState(initialAnalysisState);
   const request = useMemo(
@@ -109,6 +109,10 @@ export function CopilotPanel({
           ? t("copilot.analyze")
           : t("copilot.analyzePokemon");
 
+  useEffect(() => {
+    setAnalysisByScope(initialAnalysisState);
+  }, [locale]);
+
   async function handleAnalyze() {
     setAnalysisByScope((current) => ({
       ...current,
@@ -120,7 +124,9 @@ export function CopilotPanel({
     }));
 
     try {
-      const nextResponse = await Promise.resolve(createLocalCopilotAnalysis(request));
+      const nextResponse = await Promise.resolve(
+        createLocalCopilotAnalysis(request, locale),
+      );
 
       setAnalysisByScope((current) => ({
         ...current,

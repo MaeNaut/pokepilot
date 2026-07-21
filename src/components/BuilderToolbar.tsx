@@ -14,6 +14,7 @@ import {
 import type { DataLoadStatus } from "../types";
 import type { TeamValidityResult } from "../utils/teamValidity";
 import { useLocalization } from "../i18n/useLocalization";
+import { localizeValidityIssue } from "../i18n/validityTranslations";
 import { DataStatusRow } from "./DataStatusRow";
 
 type BuilderToolbarProps = {
@@ -76,7 +77,7 @@ export function BuilderToolbar({
   onOpenImage,
   onDeletePokemon,
 }: BuilderToolbarProps) {
-  const { t } = useLocalization();
+  const { gameName, locale, pokemonName, t } = useLocalization();
   const [isValidityPanelOpen, setIsValidityPanelOpen] = useState(false);
   const [isShowdownPanelOpen, setIsShowdownPanelOpen] = useState(false);
   const [pendingDeleteSlot, setPendingDeleteSlot] = useState<number | null>(null);
@@ -198,33 +199,101 @@ export function BuilderToolbar({
         ref={toolbarRef}
       >
         {hasTeamMembers ? (
-          <button
-            className={`builder-card-tool-button validity-trigger is-${toolbarStatus}`}
-            type="button"
-            aria-haspopup="dialog"
-            aria-expanded={isValidityPanelOpen}
-            title={t("toolbar.validityTitle")}
-            onClick={() => {
-              setIsShowdownPanelOpen(false);
-              setPendingDeleteSlot(null);
-              setIsValidityPanelOpen((isOpen) => !isOpen);
-            }}
-          >
-            <FontAwesomeIcon
-              icon={validityIcon}
-              className={toolbarStatus === "loading" ? "is-spinning" : undefined}
-              aria-hidden="true"
-            />
-            {toolbarStatus === "loading"
-              ? t("toolbar.loading")
-              : toolbarStatus === "invalid"
-                ? t(validity.errorCount === 1 ? "toolbar.issue" : "toolbar.issues", {
-                    count: validity.errorCount,
-                  })
-                : toolbarStatus === "unavailable"
-                  ? t("toolbar.unavailable")
-                  : t("toolbar.valid")}
-          </button>
+          <div className="validity-control">
+            <button
+              className={`builder-card-tool-button validity-trigger is-${toolbarStatus}`}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={isValidityPanelOpen}
+              title={t("toolbar.validityTitle")}
+              onClick={() => {
+                setIsShowdownPanelOpen(false);
+                setPendingDeleteSlot(null);
+                setIsValidityPanelOpen((isOpen) => !isOpen);
+              }}
+            >
+              <FontAwesomeIcon
+                icon={validityIcon}
+                className={toolbarStatus === "loading" ? "is-spinning" : undefined}
+                aria-hidden="true"
+              />
+              {toolbarStatus === "loading"
+                ? t("toolbar.loading")
+                : toolbarStatus === "invalid"
+                  ? t(validity.errorCount === 1 ? "toolbar.issue" : "toolbar.issues", {
+                      count: validity.errorCount,
+                    })
+                  : toolbarStatus === "unavailable"
+                    ? t("toolbar.unavailable")
+                    : t("toolbar.valid")}
+            </button>
+
+            {isValidityPanelOpen ? (
+              <div
+                className={`validity-panel is-${toolbarStatus}`}
+                role="dialog"
+                aria-label={t("toolbar.validityTitle")}
+                ref={validityPanelRef}
+              >
+                <div className="validity-panel-header">
+                  <span className="validity-panel-icon" aria-hidden="true">
+                    <FontAwesomeIcon
+                      icon={validityIcon}
+                      className={toolbarStatus === "loading" ? "is-spinning" : undefined}
+                    />
+                  </span>
+                  <div>
+                    <strong>
+                      {toolbarStatus === "loading"
+                        ? t("toolbar.loadingValidity")
+                        : toolbarStatus === "invalid"
+                          ? t("toolbar.teamInvalid")
+                          : toolbarStatus === "unavailable"
+                            ? t("toolbar.validityUnavailable")
+                            : t("toolbar.teamValid")}
+                    </strong>
+                    <span>{t("toolbar.regulation")}</span>
+                  </div>
+                </div>
+
+                {showdownLegalityStatus === "loading" ? (
+                  <DataStatusRow message={t("toolbar.refreshingValidity")} isLoading />
+                ) : showdownLegalityStatus === "error" ? (
+                  <DataStatusRow
+                    message={
+                      locale === "en" && showdownLegalityError
+                        ? showdownLegalityError
+                        : t("toolbar.regulationUnavailable")
+                    }
+                    onRetry={onRetryShowdownLegality}
+                  />
+                ) : displayedValidityIssues.length > 0 ? (
+                  <ul className="validity-issue-list">
+                    {displayedValidityIssues.map((issue) => (
+                      <li className={`is-${issue.severity}`} key={issue.id}>
+                        {issue.slotIndex !== undefined ? (
+                          <span className="validity-slot-label">
+                            {t("toolbar.slot", { slot: issue.slotIndex + 1 })}
+                          </span>
+                        ) : null}
+                        <span>
+                          {localizeValidityIssue(issue, {
+                            gameName,
+                            pokemonName,
+                            t,
+                          })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="validity-success-message">
+                    {t("toolbar.allPass")}
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
         ) : null}
 
         <button
@@ -268,64 +337,6 @@ export function BuilderToolbar({
           </button>
         ) : null}
       </div>
-
-      {isValidityPanelOpen ? (
-        <div
-          className={`validity-panel is-${toolbarStatus}`}
-          role="dialog"
-          aria-label={t("toolbar.validityTitle")}
-          ref={validityPanelRef}
-        >
-          <div className="validity-panel-header">
-            <span className="validity-panel-icon" aria-hidden="true">
-              <FontAwesomeIcon
-                icon={validityIcon}
-                className={toolbarStatus === "loading" ? "is-spinning" : undefined}
-              />
-            </span>
-            <div>
-              <strong>
-                {toolbarStatus === "loading"
-                  ? t("toolbar.loadingValidity")
-                  : toolbarStatus === "invalid"
-                    ? t("toolbar.teamInvalid")
-                    : toolbarStatus === "unavailable"
-                      ? t("toolbar.validityUnavailable")
-                      : t("toolbar.teamValid")}
-              </strong>
-              <span>{t("toolbar.regulation")}</span>
-            </div>
-          </div>
-
-          {showdownLegalityStatus === "loading" ? (
-            <DataStatusRow message={t("toolbar.refreshingValidity")} isLoading />
-          ) : showdownLegalityStatus === "error" ? (
-            <DataStatusRow
-              message={
-                showdownLegalityError ?? t("toolbar.regulationUnavailable")
-              }
-              onRetry={onRetryShowdownLegality}
-            />
-          ) : displayedValidityIssues.length > 0 ? (
-            <ul className="validity-issue-list">
-              {displayedValidityIssues.map((issue) => (
-                <li className={`is-${issue.severity}`} key={issue.id}>
-                  {issue.slotIndex !== undefined ? (
-                    <span className="validity-slot-label">
-                      {t("toolbar.slot", { slot: issue.slotIndex + 1 })}
-                    </span>
-                  ) : null}
-                  <span>{issue.message}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="validity-success-message">
-              {t("toolbar.allPass")}
-            </p>
-          )}
-        </div>
-      ) : null}
 
       {activePokemonName && pendingDeleteSlot === selectedSlot ? (
         <div

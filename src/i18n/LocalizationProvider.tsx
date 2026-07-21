@@ -13,7 +13,7 @@ import {
   translatePokemonName,
   type Locale,
 } from "./gameTranslations";
-import { en, interpolateTranslation, ko } from "./translations";
+import { getUiTranslation } from "./translations";
 import {
   LocalizationContext,
   type LocalizationContextValue,
@@ -54,13 +54,10 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
   }, [locale]);
 
   const value = useMemo<LocalizationContextValue>(() => {
-    const translations = locale === "ko" ? ko : en;
-
     return {
       locale,
       setLocale,
-      t: (key, variables) =>
-        interpolateTranslation(translations[key] ?? en[key], variables),
+      t: (key, variables) => getUiTranslation(locale, key, variables),
       gameName: (category, id, fallback) =>
         translateGameName(locale, category, id, fallback),
       gameDescription: (category, id, fallback) =>

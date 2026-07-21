@@ -114,7 +114,7 @@ The MVP should prove the core loop:
   - [x] Generate checked-in Korean Pokemon, form, move, item, ability, type,
     nature, and description catalogs from PokeAPI CSV data.
   - [x] Preserve canonical English IDs and Showdown text regardless of display language.
-  - [ ] Translate deterministic PokePilot prose and remaining validity/detail messages.
+  - [x] Translate deterministic PokePilot prose and remaining validity/detail messages.
   - [ ] Run a dedicated Korean text-fit and terminology review across all builder states.
 - [ ] Decide whether Japanese localization belongs in the initial public release.
 - [ ] Add dark mode and persist the user's theme preference.

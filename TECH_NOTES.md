@@ -383,6 +383,9 @@ Desktop UX decisions after the wide-builder layout change:
 - Keep UI copy in the typed flat dictionaries under `src/i18n/translations.ts`.
   The Korean dictionary must satisfy the complete English key set at build time,
   so missing keys and misspelled identifiers fail TypeScript verification.
+- Write Korean app-owned UI copy as concise status or action phrases rather than
+  polite full sentences. Preserve full prose for official game descriptions and
+  legal or attribution text where sentence form improves clarity.
 - Persist only the selected locale under `pokepilot:locale`; never duplicate team
   or Pokemon data per language. Saved builds and Showdown import/export continue
   to use canonical English IDs.
@@ -393,9 +396,15 @@ Desktop UX decisions after the wide-builder layout change:
 - Put deliberate terminology corrections in `src/i18n/data/koOverrides.ts` rather
   than editing generated data. Missing or newly introduced game records fall back
   to their English display text.
-- The first localization slice covers the builder, management controls,
-  diagnostics, tooltips, and share-image UI. Deterministic PokePilot analysis prose
-  and remaining validity detail messages still need a dedicated Korean pass.
+- Keep grammar-heavy deterministic PokePilot output in the typed locale packs in
+  `src/i18n/copilotText.ts`. Generate the local response in the active locale while
+  leaving the provider-independent request data and canonical game IDs unchanged.
+- Validity issues retain a stable issue code, canonical fallback message, and
+  structured display values. `validityTranslations.ts` localizes the visible
+  message and resolves Pokemon, item, ability, move, nature, and stat names through
+  the same game-data catalogs used by the editor.
+- Anchor the validity popover inside the validity control so its panel and pointer
+  follow the trigger instead of relying on Team Rail or card-width offsets.
 
 ## Regulation Target
 

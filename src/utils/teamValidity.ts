@@ -22,11 +22,29 @@ import { getMegaStoneItemName, isMegaPokemonName } from "./megaEvolution";
 
 export type ValidityStatus = "empty" | "valid" | "invalid" | "unavailable";
 
+export type ValidityIssueCode =
+  | "ev-stat"
+  | "ev-total"
+  | "duplicate-moves"
+  | "move-data-unavailable"
+  | "illegal-move"
+  | "unknown-nature"
+  | "mega-stone"
+  | "legality-unavailable"
+  | "illegal-pokemon"
+  | "illegal-item"
+  | "ability-data-unavailable"
+  | "illegal-ability"
+  | "duplicate-species"
+  | "duplicate-item";
+
 export type ValidityIssue = {
   id: string;
+  code: ValidityIssueCode;
   severity: "error" | "unavailable";
   scope: "pokemon" | "item" | "ability" | "nature" | "ev" | "move" | "team";
   message: string;
+  values?: Record<string, string | number>;
   slotIndex?: number;
 };
 
@@ -71,11 +89,21 @@ function getIndexEntry(member: TeamMember, pokemonIndex: PokemonIndexEntry[]) {
 function createIssue(
   slotIndex: number,
   id: string,
+  code: ValidityIssueCode,
   scope: ValidityIssue["scope"],
   message: string,
+  values?: ValidityIssue["values"],
   severity: ValidityIssue["severity"] = "error",
 ): ValidityIssue {
-  return { id: `${id}-${slotIndex}`, severity, scope, message, slotIndex };
+  return {
+    id: `${id}-${slotIndex}`,
+    code,
+    severity,
+    scope,
+    message,
+    values,
+    slotIndex,
+  };
 }
 
 function validateEvs(slotIndex: number, buildState: TeamBuildState) {
@@ -95,8 +123,10 @@ function validateEvs(slotIndex: number, buildState: TeamBuildState) {
         createIssue(
           slotIndex,
           `ev-${stat}`,
+          "ev-stat",
           "ev",
           `${stat} EV must be a whole number from 0 to ${CHAMPIONS_MAX_EV_PER_STAT}.`,
+          { stat, max: CHAMPIONS_MAX_EV_PER_STAT },
         ),
       );
     }
@@ -109,8 +139,10 @@ function validateEvs(slotIndex: number, buildState: TeamBuildState) {
       createIssue(
         slotIndex,
         "ev-total",
+        "ev-total",
         "ev",
         `EV total is ${total}; Regulation M-B allows ${CHAMPIONS_MAX_EV_TOTAL}.`,
+        { total, max: CHAMPIONS_MAX_EV_TOTAL },
       ),
     );
   }
@@ -134,7 +166,13 @@ function validateMoves(
 
   if (duplicateMoveIds.length > 0) {
     issues.push(
-      createIssue(slotIndex, "duplicate-moves", "move", "A Pokemon cannot use the same move twice."),
+      createIssue(
+        slotIndex,
+        "duplicate-moves",
+        "duplicate-moves",
+        "move",
+        "A Pokemon cannot use the same move twice.",
+      ),
     );
   }
 
@@ -152,8 +190,10 @@ function validateMoves(
       createIssue(
         slotIndex,
         "move-data-unavailable",
+        "move-data-unavailable",
         "move",
         "Move legality data is unavailable for this form.",
+        undefined,
         "unavailable",
       ),
     );
@@ -165,7 +205,14 @@ function validateMoves(
       const moveName =
         member.moves?.find((move) => normalizeLookup(move.id) === moveId)?.name ?? moveId;
       issues.push(
-        createIssue(slotIndex, `illegal-move-${moveId}`, "move", `${moveName} is not legal for this Pokemon.`),
+        createIssue(
+          slotIndex,
+          `illegal-move-${moveId}`,
+          "illegal-move",
+          "move",
+          `${moveName} is not legal for this Pokemon.`,
+          { moveId, moveName },
+        ),
       );
     }
   }
@@ -189,7 +236,16 @@ function validateSlot(
   const natureId = buildState.natureBySlot[slotIndex];
 
   if (natureId && !natures.some((nature) => nature.id === natureId)) {
-    issues.push(createIssue(slotIndex, "unknown-nature", "nature", `${natureId} is not a recognized nature.`));
+    issues.push(
+      createIssue(
+        slotIndex,
+        "unknown-nature",
+        "unknown-nature",
+        "nature",
+        `${natureId} is not a recognized nature.`,
+        { natureId, natureName: formatLookupLabel(natureId) },
+      ),
+    );
   }
 
   const indexEntry = getIndexEntry(member, pokemonIndex);
@@ -205,8 +261,13 @@ function validateSlot(
         createIssue(
           slotIndex,
           "mega-stone",
+          "mega-stone",
           "item",
           `This Mega form requires ${formatLookupLabel(expectedStone)}.`,
+          {
+            itemId: expectedStone,
+            itemName: formatLookupLabel(expectedStone),
+          },
         ),
       );
     }
@@ -217,18 +278,38 @@ function validateSlot(
       createIssue(
         slotIndex,
         "legality-unavailable",
+        "legality-unavailable",
         "pokemon",
         "Regulation M-B legality data is not available yet.",
+        undefined,
         "unavailable",
       ),
     );
   } else if (snapshot) {
     if (!isPokemonLegal(snapshot, member.id, speciesKey)) {
-      issues.push(createIssue(slotIndex, "illegal-pokemon", "pokemon", `${member.name} is not legal in Regulation M-B.`));
+      issues.push(
+        createIssue(
+          slotIndex,
+          "illegal-pokemon",
+          "illegal-pokemon",
+          "pokemon",
+          `${member.name} is not legal in Regulation M-B.`,
+          { pokemonId: member.id, pokemonName: member.name },
+        ),
+      );
     }
 
     if (activeItem && !isItemLegal(snapshot, activeItem.id || activeItem.name)) {
-      issues.push(createIssue(slotIndex, "illegal-item", "item", `${activeItem.name} is not legal in Regulation M-B.`));
+      issues.push(
+        createIssue(
+          slotIndex,
+          "illegal-item",
+          "illegal-item",
+          "item",
+          `${activeItem.name} is not legal in Regulation M-B.`,
+          { itemId: activeItem.id || activeItem.name, itemName: activeItem.name },
+        ),
+      );
     }
 
     const selectedAbility = buildState.abilityBySlot[slotIndex] ?? member.abilities?.[0];
@@ -241,13 +322,24 @@ function validateSlot(
           createIssue(
             slotIndex,
             "ability-data-unavailable",
+            "ability-data-unavailable",
             "ability",
             "Ability legality data is unavailable for this form.",
+            undefined,
             "unavailable",
           ),
         );
       } else if (!legalAbilities.has(normalizeLookup(selectedAbility))) {
-        issues.push(createIssue(slotIndex, "illegal-ability", "ability", `${selectedAbility} is not legal for this Pokemon.`));
+        issues.push(
+          createIssue(
+            slotIndex,
+            "illegal-ability",
+            "illegal-ability",
+            "ability",
+            `${selectedAbility} is not legal for this Pokemon.`,
+            { abilityId: selectedAbility, abilityName: selectedAbility },
+          ),
+        );
       }
     }
 
@@ -295,9 +387,11 @@ function createDuplicateIssues(
     if (speciesId && slots.length > 1) {
       issues.push({
         id: `duplicate-species-${speciesId}`,
+        code: "duplicate-species",
         severity: "error",
         scope: "team",
         message: `Species Clause: slots ${slots.map((slot) => slot + 1).join(", ")} use the same Pokemon species.`,
+        values: { slots: slots.map((slot) => slot + 1).join(", ") },
       });
     }
   }
@@ -306,9 +400,15 @@ function createDuplicateIssues(
     if (itemId && entry.slots.length > 1) {
       issues.push({
         id: `duplicate-item-${itemId}`,
+        code: "duplicate-item",
         severity: "error",
         scope: "team",
         message: `Item Clause: ${entry.name} is used in slots ${entry.slots.map((slot) => slot + 1).join(", ")}.`,
+        values: {
+          itemId,
+          itemName: entry.name,
+          slots: entry.slots.map((slot) => slot + 1).join(", "),
+        },
       });
     }
   }

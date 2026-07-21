@@ -886,6 +886,12 @@ button {
   margin-right: 0;
 }
 
+.validity-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .validity-trigger.is-valid {
   color: #167044;
 }
@@ -904,11 +910,11 @@ button {
 
 .validity-panel {
   position: absolute;
-  top: 34px;
-  left: 68px;
+  top: calc(100% + 10px);
+  left: 50%;
   z-index: 92;
   display: grid;
-  width: min(340px, calc(100% - 68px));
+  width: min(340px, calc(100vw - 24px));
   gap: 10px;
   border: 1px solid #d4d4d4;
   border-radius: var(--radius-md);
@@ -916,19 +922,20 @@ button {
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+  transform: translateX(-50%);
 }
 
 .validity-panel::before {
   content: "";
   position: absolute;
   top: -6px;
-  left: 22px;
+  left: 50%;
   width: 10px;
   height: 10px;
   border-top: 1px solid #d4d4d4;
   border-left: 1px solid #d4d4d4;
   background: var(--color-surface);
-  transform: rotate(45deg);
+  transform: translateX(-50%) rotate(45deg);
 }
 
 .validity-panel-header {
@@ -1592,11 +1599,6 @@ button {
   .builder-card-toolbar {
     width: calc(100% - var(--team-card-offset));
     margin-left: var(--team-card-offset);
-  }
-
-  .validity-panel {
-    left: var(--team-card-offset);
-    width: min(340px, calc(100% - var(--team-card-offset)));
   }
 
   .showdown-panel {
@@ -5600,11 +5602,6 @@ select {
     right: 0;
     width: calc(100% - 54px);
     margin: 0;
-  }
-
-  .validity-panel {
-    left: 54px;
-    width: min(340px, calc(100% - 54px));
   }
 
   .builder-card-layout {

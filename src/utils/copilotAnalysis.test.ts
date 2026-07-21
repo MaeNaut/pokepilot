@@ -175,6 +175,26 @@ describe("Copilot analysis", () => {
     });
   });
 
+  it("renders deterministic team guidance in Korean", () => {
+    const request = createCopilotAnalysisRequest({
+      scope: "team",
+      teamName: "테스트 팀",
+      team: [member, null, null, null, null, null],
+      selectedSlot: 0,
+      buildState,
+      diagnostics,
+      validity,
+    });
+    const response = createLocalCopilotAnalysis(request, "ko");
+
+    expect(response.summary).toContain("활성 샘플 1/6");
+    expect(response.playstyle).toBe("밸런스형");
+    expect(response.recommendations[0]).toMatchObject({
+      id: "fill-team",
+      title: "활성 파티 완성",
+    });
+  });
+
   it("does not recommend an ace from setup alone", () => {
     const request = createCopilotAnalysisRequest({
       scope: "team",
@@ -263,6 +283,25 @@ describe("Copilot analysis", () => {
     expect(response.summary).toContain("1 selected move");
     expect(response.strengths).toContain("All 66 EV points are allocated.");
     expect(response.weaknesses).not.toContain("No moves are currently configured for set analysis.");
+  });
+
+  it("localizes Pokemon roles, abilities, natures, and generated prose", () => {
+    const request = createCopilotAnalysisRequest({
+      scope: "pokemon",
+      teamName: "Test Team",
+      team: [member, null, null, null, null, null],
+      selectedSlot: 0,
+      buildState,
+      diagnostics,
+      validity,
+    });
+    const response = createLocalCopilotAnalysis(request, "ko");
+
+    expect(response.playstyle).toBe("물리 어태커");
+    expect(response.summary).toContain("물리 어태커");
+    expect(response.summary).toContain("위협 특성");
+    expect(response.summary).toContain("고집 성격");
+    expect(response.strengths).toContain("노력치 66포인트 투자 완료");
   });
 
   it("includes saved empty-slot requirements in the request and Pokemon recommendation", () => {
