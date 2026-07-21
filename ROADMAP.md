@@ -117,7 +117,11 @@ The MVP should prove the core loop:
   - [x] Translate deterministic PokePilot prose and remaining validity/detail messages.
   - [x] Run a dedicated Korean text-fit and terminology review across all builder states.
 - [ ] Decide whether Japanese localization belongs in the initial public release.
-- [ ] Add dark mode and persist the user's theme preference.
+- [x] Add system, light, and dark modes and persist the user's theme preference.
+  - [x] Default cold starts to system mode and follow operating-system changes live.
+  - [x] Expose all three preferences through the localized header menu.
+  - [x] Preserve semantic nature, validity, danger, move-type, and saved-team contrast in dark mode.
+  - [x] Preserve the light share-card output while theming the surrounding preview dialog.
 - [ ] Complete the post-layout desktop detail pass for EV editing density, header
   alignment and branding, and Team Rail navigation.
 - [ ] Begin the dedicated responsive-design phase only after Team Builder features and desktop UI/UX are stable.

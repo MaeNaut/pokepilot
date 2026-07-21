@@ -198,6 +198,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Anchor the validity popover and its pointer to the validity trigger.
   - [x] Standardize Korean app copy on concise status and action phrasing.
   - [x] Audit Korean terminology, long-label fit, and empty/loading/error states across the builder.
+- [x] Add persisted system/light/dark theme preferences.
+  - [x] Default cold starts to system mode, track operating-system changes live, and keep explicit choices in localStorage.
+  - [x] Expose all three preferences in a localized, keyboard-dismissable header menu.
+  - [x] Theme the editor, pickers, popovers, diagnostics, team management, and PokePilot shell consistently.
+  - [x] Keep semantic nature, validity, danger, move-type, and saved-team states legible in dark mode.
+  - [x] Keep exported Pokemon and team images on their stable light presentation in either app theme.
 - [ ] Add a real app icon / logo mark.
 - [ ] Defer the dedicated tablet/mobile UI pass until Team Builder functionality and desktop UI/UX are complete.
   - [ ] Audit the provisional responsive CSS before treating any current breakpoint behavior as final.

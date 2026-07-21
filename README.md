@@ -31,6 +31,7 @@ Current slice:
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
 - right-side PokePilot strategy briefs for the active team and selected Pokemon
 - persisted English/Korean UI selection with localized game names, forms, and tooltips
+- persisted system/light/dark theme selection with live operating-system preference tracking
 
 ## Getting Started
 
@@ -66,7 +67,6 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - account-backed Supabase/Postgres persistence after the local MVP is stable
 - calculator mode
 - Japanese localization under consideration
-- dark mode with a persisted theme preference
 - shareable team links if reasonable
 - deployment-ready responsive polish
 
@@ -96,6 +96,7 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - versioned Copilot request/response data contracts ready for a future server-side model provider
 - typed English/Korean interface copy, a persisted language setting, and checked-in
   PokeAPI-derived Korean game names and descriptions
+- system, light, and dark app theme preferences with stable light share-image exports
 
 ## Data Source
 

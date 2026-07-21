@@ -409,6 +409,31 @@ Desktop UX decisions after the wide-builder layout change:
 - Anchor the validity popover inside the validity control so its panel and pointer
   follow the trigger instead of relying on Team Rail or card-width offsets.
 
+## Theme Strategy
+
+- Keep theme state independent from localization and team persistence. Store the
+  `system`, `light`, or `dark` preference under `pokepilot:theme`; when no
+  supported value exists, use `system`. System mode resolves from
+  `prefers-color-scheme` and listens for operating-system changes while the app is open.
+- Apply `data-theme="light"` or `data-theme="dark"` to the document root and keep
+  the browser `color-scheme` property in sync. Components should consume shared
+  semantic surface, border, text, and muted-color tokens instead of branching in
+  React for visual styling.
+- Keep state and game-meaning colors more specific than generic dark surface
+  overrides. Nature increase/decrease axes, validity states, destructive actions,
+  move-type rows, and matchup weak/resist values must retain their semantic colors;
+  saved-team text, slots, and actions need explicit dark contrast rather than
+  inheriting light-only values.
+- Keep the header theme control icon-only and expose system, light, and dark in a
+  localized menu. Its desktop, sun, or moon icon reflects the stored preference.
+- Scope dark overrides away from the Pokemon and team share-card templates. Their
+  captured PNG output remains a stable light design while the surrounding preview
+  dialog follows the active app theme.
+- Recheck all three preferences and both resolved visual themes with English and
+  Korean UI at the 1440x900 and 1920x1080 desktop baselines. Include theme-menu
+  selection and dismissal, semantic status colors, pickers, popovers, saved-team
+  management, PokePilot output, image previews, and document-level overflow.
+
 ## Regulation Target
 
 The intended competitive target is Pokemon Champions Regulation M-B. The current

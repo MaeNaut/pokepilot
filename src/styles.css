@@ -1,12 +1,23 @@
 ﻿:root {
   --app-header-height: 64px;
   --app-footer-height: 32px;
+  --color-page: #e2e2e2;
   --color-text: #151515;
   --color-muted: #666666;
   --color-subtle: #777777;
   --color-border: #cfcfcf;
+  --color-border-strong: #b8b8b8;
   --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-subtle: #f7f7f7;
+  --color-surface-muted: #eeeeee;
+  --color-surface-hover: #f3f3f3;
+  --color-surface-active: #e5e5e5;
+  --color-success: #167044;
+  --color-success-surface: #e8f6ed;
   --color-danger: #c72e2e;
+  --color-danger-action: #d94242;
+  --color-danger-action-hover: #b71121;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -34,13 +45,35 @@
   --move-color-dark: #b4b6c0;
   --move-color-steel: #b5ced8;
   --move-color-fairy: #f5acd3;
-  color: #151515;
-  background: #e2e2e2;
+  color: var(--color-text);
+  background: var(--color-page);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-theme="dark"] {
+  --color-page: #16181a;
+  --color-text: #f2f3f4;
+  --color-muted: #b7bcc0;
+  --color-subtle: #92999e;
+  --color-border: #44494d;
+  --color-border-strong: #60666b;
+  --color-surface: #222528;
+  --color-surface-raised: #292c2f;
+  --color-surface-subtle: #25282b;
+  --color-surface-muted: #303438;
+  --color-surface-hover: #34383c;
+  --color-surface-active: #3b4045;
+  --color-success: #59d69b;
+  --color-success-surface: #173a2b;
+  --color-danger: #ff6674;
+  --color-danger-action: #d94755;
+  --color-danger-action-hover: #b83240;
+  --shadow-popover: 0 18px 40px rgba(0, 0, 0, 0.46);
+  --shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.34);
 }
 
 @font-face {
@@ -62,6 +95,7 @@ body {
   min-height: 100vh;
   margin: 0;
   color: var(--color-text);
+  background: var(--color-page);
   font-size: 16px;
   line-height: 1.4;
 }
@@ -99,9 +133,9 @@ button {
   display: flex;
   align-items: center;
   height: var(--app-header-height);
-  border-bottom: 1px solid #c9c9c9;
+  border-bottom: 1px solid var(--color-border);
   padding: 0;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .app-wordmark {
@@ -132,26 +166,32 @@ button {
   margin-right: 36px;
 }
 
-.language-control {
-  position: relative;
-  display: grid;
-  flex: 0 0 auto;
+.header-preferences {
+  display: flex;
+  align-items: center;
   align-self: center;
   justify-self: start;
+  gap: 4px;
   margin-left: 28px;
 }
 
-.language-trigger.is-open {
-  background: #eeeeee;
+.preference-control {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
 }
 
-.language-menu {
+.preference-trigger.is-open {
+  background: var(--color-surface-muted);
+}
+
+.preference-menu {
   position: absolute;
   top: calc(100% + 10px);
   left: 0;
   z-index: 54;
   display: grid;
-  width: 148px;
+  width: 156px;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -160,7 +200,7 @@ button {
   box-shadow: 0 18px 36px rgb(0 0 0 / 14%);
 }
 
-.language-option {
+.preference-option {
   display: grid;
   min-height: 38px;
   grid-template-columns: minmax(0, 1fr) 18px;
@@ -177,14 +217,14 @@ button {
   text-align: left;
 }
 
-.language-option:hover,
-.language-option:focus-visible,
-.language-option.is-active {
+.preference-option:hover,
+.preference-option:focus-visible,
+.preference-option.is-active {
   background: #eeeeee;
   outline: none;
 }
 
-.language-option svg {
+.preference-option svg {
   width: 12px;
   justify-self: center;
   color: #555555;
@@ -5443,6 +5483,12 @@ select {
   }
 }
 
+@media (min-width: 1421px) and (max-width: 1660px) {
+  .team-actions {
+    margin-left: 140px;
+  }
+}
+
 @media (max-width: 1420px) {
   .app-header-layout {
     grid-template-columns: 1fr;
@@ -5454,7 +5500,7 @@ select {
     margin-right: 0;
   }
 
-  .language-control {
+  .header-preferences {
     position: absolute;
     top: 50%;
     right: 24px;
@@ -5462,7 +5508,7 @@ select {
     transform: translateY(-50%);
   }
 
-  .language-menu {
+  .preference-menu {
     right: 0;
     left: auto;
   }
@@ -5548,7 +5594,7 @@ select {
     font-size: 1rem;
   }
 
-  .language-control {
+  .header-preferences {
     right: 10px;
   }
 
@@ -5729,5 +5775,562 @@ select {
   .move-picker:hover .move-tooltip {
     transform: translateY(0);
   }
+}
+
+/* Theme overrides stay outside share-card capture styles so exported PNGs remain stable. */
+:root[data-theme="dark"] .app-header,
+:root[data-theme="dark"] .footer {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .team-action-button,
+:root[data-theme="dark"] .team-name-field input {
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .builder-card-tool-button {
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .builder-card-tool-button:hover,
+:root[data-theme="dark"] .builder-card-tool-button:focus-visible {
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .builder-card-tool-button.is-danger,
+:root[data-theme="dark"] .validity-trigger.is-invalid {
+  color: var(--color-danger);
+}
+
+:root[data-theme="dark"] .builder-card-tool-button.is-danger:hover,
+:root[data-theme="dark"] .builder-card-tool-button.is-danger:focus-visible,
+:root[data-theme="dark"] .validity-trigger.is-invalid:hover,
+:root[data-theme="dark"] .validity-trigger.is-invalid:focus-visible {
+  color: #ff8b96;
+}
+
+:root[data-theme="dark"] .validity-trigger.is-valid {
+  color: var(--color-success);
+}
+
+:root[data-theme="dark"] .validity-trigger.is-valid:hover,
+:root[data-theme="dark"] .validity-trigger.is-valid:focus-visible {
+  color: #83e6b7;
+}
+
+:root[data-theme="dark"] .validity-trigger.is-unavailable {
+  color: var(--color-subtle);
+}
+
+:root[data-theme="dark"] .validity-trigger.is-loading {
+  color: #91b9d3;
+}
+
+:root[data-theme="dark"] .team-action-button:hover,
+:root[data-theme="dark"] .team-action-button:focus-visible,
+:root[data-theme="dark"] .preference-trigger.is-open,
+:root[data-theme="dark"] .preference-option:hover,
+:root[data-theme="dark"] .preference-option:focus-visible,
+:root[data-theme="dark"] .preference-option.is-active,
+:root[data-theme="dark"] .new-team-menu button:hover,
+:root[data-theme="dark"] .new-team-menu button:focus-visible,
+:root[data-theme="dark"] .team-name-field input:hover,
+:root[data-theme="dark"] .team-name-field input:focus {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-muted);
+}
+
+:root[data-theme="dark"] .preference-option svg,
+:root[data-theme="dark"] .new-team-menu button svg {
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .new-team-import-panel textarea,
+:root[data-theme="dark"] .new-team-import-actions button,
+:root[data-theme="dark"] .saved-team-showdown textarea,
+:root[data-theme="dark"] .saved-team-import-actions button,
+:root[data-theme="dark"] .showdown-textarea,
+:root[data-theme="dark"] .showdown-panel-button,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] .ev-number-input {
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .new-team-import-panel textarea:focus,
+:root[data-theme="dark"] .saved-team-showdown textarea:focus,
+:root[data-theme="dark"] .showdown-textarea:focus,
+:root[data-theme="dark"] .item-search-input:focus,
+:root[data-theme="dark"] .move-search-input:focus,
+:root[data-theme="dark"] .candidate-filter-search:focus {
+  border-color: var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .team-unsaved-warning-actions button,
+:root[data-theme="dark"] .saved-team-delete-confirm button,
+:root[data-theme="dark"] .bench-remove-confirm button,
+:root[data-theme="dark"] .clear-pokemon-confirm-button {
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .team-unsaved-warning-actions button.is-danger,
+:root[data-theme="dark"] .saved-team-delete-confirm button.is-danger,
+:root[data-theme="dark"] .bench-remove-confirm button.is-danger,
+:root[data-theme="dark"] .clear-pokemon-confirm-button.is-danger {
+  border-color: var(--color-danger-action);
+  background: var(--color-danger-action);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .team-unsaved-warning-actions button.is-danger:hover,
+:root[data-theme="dark"] .team-unsaved-warning-actions button.is-danger:focus-visible,
+:root[data-theme="dark"] .saved-team-delete-confirm button.is-danger:hover,
+:root[data-theme="dark"] .saved-team-delete-confirm button.is-danger:focus-visible,
+:root[data-theme="dark"] .bench-remove-confirm button.is-danger:hover,
+:root[data-theme="dark"] .bench-remove-confirm button.is-danger:focus-visible,
+:root[data-theme="dark"] .clear-pokemon-confirm-button.is-danger:hover,
+:root[data-theme="dark"] .clear-pokemon-confirm-button.is-danger:focus-visible {
+  border-color: var(--color-danger-action-hover);
+  background: var(--color-danger-action-hover);
+}
+
+:root[data-theme="dark"] .team-manager-header {
+  border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .team-manager-header span.has-message {
+  color: var(--color-success);
+}
+
+:root[data-theme="dark"] .saved-team-row {
+  border-color: var(--color-border);
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .saved-team-row:hover,
+:root[data-theme="dark"] .saved-team-row:focus-within {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-hover);
+}
+
+:root[data-theme="dark"] .saved-team-row.is-active {
+  border-color: var(--color-text);
+  background: var(--color-surface-raised);
+}
+
+:root[data-theme="dark"] .saved-team-row:focus-visible {
+  outline-color: var(--color-text);
+}
+
+:root[data-theme="dark"] .saved-team-row.is-drop-target::before {
+  border-color: rgba(242, 243, 244, 0.64);
+}
+
+:root[data-theme="dark"] .saved-team-name-button,
+:root[data-theme="dark"] .saved-team-rename-input {
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .saved-team-rename-input {
+  border-color: var(--color-text);
+}
+
+:root[data-theme="dark"] .saved-team-preview-slot {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+:root[data-theme="dark"] .saved-team-row:hover .saved-team-preview-slot,
+:root[data-theme="dark"] .saved-team-row:focus-visible .saved-team-preview-slot {
+  border-color: var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .saved-team-action-button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .saved-team-action-button:hover,
+:root[data-theme="dark"] .saved-team-action-button:focus-visible {
+  background: var(--color-surface-active);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .saved-team-action-button.is-danger {
+  color: var(--color-danger);
+}
+
+:root[data-theme="dark"] .saved-team-action-button.is-danger:hover,
+:root[data-theme="dark"] .saved-team-action-button.is-danger:focus-visible {
+  background: #4b292f;
+  color: #ff8b96;
+}
+
+:root[data-theme="dark"] .team-manager-empty,
+:root[data-theme="dark"] .team-storage-message,
+:root[data-theme="dark"] .showdown-panel-message,
+:root[data-theme="dark"] .data-status-row {
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .team-tab {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .team-tab.is-active {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .team-tab.is-empty:hover,
+:root[data-theme="dark"] .team-tab.is-empty:focus-visible,
+:root[data-theme="dark"] .bench-tab.is-active,
+:root[data-theme="dark"] .bench-pokemon-main,
+:root[data-theme="dark"] .bench-remove-confirm span {
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .bench-count,
+:root[data-theme="dark"] .item-fallback-label {
+  background: var(--color-text);
+  color: var(--color-page);
+}
+
+:root[data-theme="dark"] .bench-panel,
+:root[data-theme="dark"] .bench-panel-header,
+:root[data-theme="dark"] .bench-pokemon-row {
+  border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .bench-pokemon-main:hover,
+:root[data-theme="dark"] .bench-pokemon-main:focus-visible,
+:root[data-theme="dark"] .bench-pokemon-row.is-drop-target {
+  background: var(--color-surface-hover);
+}
+
+:root[data-theme="dark"] .pokemon-card,
+:root[data-theme="dark"] .team-diagnostics {
+  border-color: var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .pokemon-name-button,
+:root[data-theme="dark"] .pokemon-name-input,
+:root[data-theme="dark"] .pokemon-name-input::placeholder,
+:root[data-theme="dark"] .form-picker-trigger:hover,
+:root[data-theme="dark"] .form-picker-trigger:focus-visible,
+:root[data-theme="dark"] .item-button.has-item,
+:root[data-theme="dark"] .candidate-filter-trigger.has-value {
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .mega-button,
+:root[data-theme="dark"] .form-picker-menu,
+:root[data-theme="dark"] .form-picker-option,
+:root[data-theme="dark"] .data-status-row > button,
+:root[data-theme="dark"] .item-button,
+:root[data-theme="dark"] .item-menu,
+:root[data-theme="dark"] .item-search-input,
+:root[data-theme="dark"] .item-option,
+:root[data-theme="dark"] .trait-menu,
+:root[data-theme="dark"] .trait-option,
+:root[data-theme="dark"] .item-tooltip,
+:root[data-theme="dark"] .ability-tooltip,
+:root[data-theme="dark"] .nature-grid-menu,
+:root[data-theme="dark"] .move-menu,
+:root[data-theme="dark"] .move-search-input,
+:root[data-theme="dark"] .candidate-filter-menu,
+:root[data-theme="dark"] .candidate-filter-search,
+:root[data-theme="dark"] .candidate-filter-option {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .mega-button:hover,
+:root[data-theme="dark"] .mega-button:focus-visible,
+:root[data-theme="dark"] .mega-button.is-active,
+:root[data-theme="dark"] .form-picker-option[aria-selected="true"],
+:root[data-theme="dark"] .nature-cell.is-active {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-page);
+}
+
+:root[data-theme="dark"] .form-picker-option + .form-picker-option,
+:root[data-theme="dark"] .pokemon-name-option,
+:root[data-theme="dark"] .item-results,
+:root[data-theme="dark"] .item-option,
+:root[data-theme="dark"] .trait-option,
+:root[data-theme="dark"] .move-option,
+:root[data-theme="dark"] .candidate-filter-option {
+  border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .form-picker-option:hover,
+:root[data-theme="dark"] .pokemon-name-option:hover,
+:root[data-theme="dark"] .pokemon-name-option:focus-visible,
+:root[data-theme="dark"] .pokemon-name-option[aria-selected="true"],
+:root[data-theme="dark"] .item-option:hover,
+:root[data-theme="dark"] .item-option:focus-visible,
+:root[data-theme="dark"] .item-option[aria-selected="true"],
+:root[data-theme="dark"] .trait-option:hover,
+:root[data-theme="dark"] .trait-option:focus-visible,
+:root[data-theme="dark"] .trait-option[aria-selected="true"],
+:root[data-theme="dark"] .candidate-filter-option:hover,
+:root[data-theme="dark"] .candidate-filter-option:focus-visible,
+:root[data-theme="dark"] .candidate-filter-option[aria-selected="true"] {
+  background: var(--color-surface-hover);
+}
+
+:root[data-theme="dark"] .item-tooltip p,
+:root[data-theme="dark"] .ability-tooltip p,
+:root[data-theme="dark"] .move-tooltip p {
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .nature-grid-corner {
+  background: linear-gradient(45deg, #5b3139 0 49%, #60666b 50%, #244c56 51% 100%);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .nature-stat-heading,
+:root[data-theme="dark"] .nature-cell {
+  border-color: var(--color-border);
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .nature-stat-heading.is-down {
+  border-bottom-color: #39c5df;
+  background: #183d47;
+  color: #86e5f3;
+}
+
+:root[data-theme="dark"] .nature-stat-heading.is-down.is-selected-down {
+  border-bottom-color: #24b7d1;
+  background: #0b829b;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .nature-stat-heading.is-up {
+  border-right-color: #ff6078;
+  background: #4a272e;
+  color: #ff9aaa;
+}
+
+:root[data-theme="dark"] .nature-stat-heading.is-up.is-selected-up {
+  border-right-color: #ef4c65;
+  background: #c93650;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .nature-cell.is-neutral {
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .nature-cell:hover,
+:root[data-theme="dark"] .nature-cell:focus-visible,
+:root[data-theme="dark"] .nature-cell.is-keyboard-active {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-active);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .nature-cell.is-active,
+:root[data-theme="dark"] .nature-cell.is-active:hover,
+:root[data-theme="dark"] .nature-cell.is-active:focus-visible {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-page);
+}
+
+:root[data-theme="dark"] .candidate-filter-heading,
+:root[data-theme="dark"] .candidate-filter-trigger,
+:root[data-theme="dark"] .candidate-filter-search {
+  border-color: var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .candidate-filter-clear:hover,
+:root[data-theme="dark"] .candidate-filter-clear:focus-visible,
+:root[data-theme="dark"] .candidate-filter-remove:hover,
+:root[data-theme="dark"] .candidate-filter-remove:focus-visible,
+:root[data-theme="dark"] .candidate-filter-trigger:hover,
+:root[data-theme="dark"] .candidate-filter-trigger:focus-visible,
+:root[data-theme="dark"] .candidate-type-button:hover,
+:root[data-theme="dark"] .candidate-type-button:focus-visible,
+:root[data-theme="dark"] .candidate-type-button[aria-pressed="true"] {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .move-pill.is-empty,
+:root[data-theme="dark"] .candidate-filter-move-pill.is-empty {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .move-option {
+  border-color: rgba(21, 21, 21, 0.12);
+  color: #151515;
+}
+
+:root[data-theme="dark"] .move-option[aria-selected="true"] {
+  filter: saturate(1.1) brightness(0.88);
+}
+
+:root[data-theme="dark"] .move-option.move-clear-option {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .move-power-panel {
+  background: rgba(22, 24, 26, 0.9);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .move-tooltip-body {
+  background: var(--color-surface);
+}
+
+:root[data-theme="dark"] .move-tooltip-stats div,
+:root[data-theme="dark"] .move-tooltip-tags span {
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .team-diagnostics {
+  --diagnostics-border: var(--color-border);
+  --diagnostics-surface: var(--color-surface-subtle);
+  --diagnostics-muted: var(--color-muted);
+}
+
+:root[data-theme="dark"] .matchup-matrix-cell.is-exposed {
+  border-color: #8f4b49;
+  background: #3d292a;
+}
+
+:root[data-theme="dark"] .matchup-value + .matchup-value,
+:root[data-theme="dark"] .coverage-ring::before {
+  border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .validity-panel,
+:root[data-theme="dark"] .validity-panel::before,
+:root[data-theme="dark"] .clear-pokemon-confirm,
+:root[data-theme="dark"] .clear-pokemon-confirm::before,
+:root[data-theme="dark"] .showdown-panel,
+:root[data-theme="dark"] .showdown-panel::before {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+:root[data-theme="dark"] .validity-panel-header div > span,
+:root[data-theme="dark"] .validity-success-message,
+:root[data-theme="dark"] .validity-issue-list li,
+:root[data-theme="dark"] .clear-pokemon-confirm span {
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .validity-issue-list li,
+:root[data-theme="dark"] .validity-success-message,
+:root[data-theme="dark"] .validity-panel > .data-status-row {
+  border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .validity-slot-label {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .validity-panel-icon {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+:root[data-theme="dark"] .validity-panel.is-invalid .validity-panel-icon {
+  background: #4b292f;
+  color: var(--color-danger);
+}
+
+:root[data-theme="dark"] .validity-panel.is-unavailable .validity-panel-icon {
+  background: var(--color-surface-muted);
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .validity-panel.is-loading .validity-panel-icon {
+  background: #263742;
+  color: #91b9d3;
+}
+
+:root[data-theme="dark"] .team-tab-copy strong,
+:root[data-theme="dark"] .team-tab-empty-label strong,
+:root[data-theme="dark"] .bench-label,
+:root[data-theme="dark"] .trait-value,
+:root[data-theme="dark"] .stat-base-value,
+:root[data-theme="dark"] .stat-result-value,
+:root[data-theme="dark"] .move-tooltip-body,
+:root[data-theme="dark"] .move-tooltip-stats,
+:root[data-theme="dark"] .move-tooltip-tags {
+  color: var(--color-text);
+}
+
+:root[data-theme="dark"] .trait-label,
+:root[data-theme="dark"] .ev-total,
+:root[data-theme="dark"] .stat-axis-labels {
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] .stats-editor-header {
+  border-color: var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .ev-vertical-range {
+  background: linear-gradient(
+    to top,
+    var(--color-text) 0 var(--ev-fill),
+    var(--color-surface-active) var(--ev-fill) 100%
+  );
+}
+
+:root[data-theme="dark"] .ev-vertical-range::-webkit-slider-thumb {
+  border-color: var(--color-surface);
+  background: var(--color-text);
+  box-shadow: 0 0 0 1px var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .ev-vertical-range::-moz-range-thumb {
+  border-color: var(--color-surface);
+  background: var(--color-text);
+  box-shadow: 0 0 0 1px var(--color-border-strong);
+}
+
+:root[data-theme="dark"] .matchup-legend .is-weak,
+:root[data-theme="dark"] .matchup-matrix .is-weak {
+  color: #ff6674;
+}
+
+:root[data-theme="dark"] .matchup-legend .is-resist,
+:root[data-theme="dark"] .matchup-matrix .is-resist {
+  color: #62a5ff;
+}
+
+:root[data-theme="dark"] .sprite-crop img {
+  filter: brightness(1.18) saturate(0.92);
+  opacity: 0.22;
 }
 
