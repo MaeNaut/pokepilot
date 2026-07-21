@@ -65,7 +65,6 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - team-aware PokePilot chat/follow-up panel
 - account-backed Supabase/Postgres persistence after the local MVP is stable
 - calculator mode
-- complete Korean localization for deterministic analysis and remaining detail messages
 - Japanese localization under consideration
 - dark mode with a persisted theme preference
 - shareable team links if reasonable

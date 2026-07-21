@@ -190,14 +190,14 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Polish
 
-- [ ] Finish Korean localization.
+- [x] Finish Korean localization.
   - [x] Add a typed English/Korean UI dictionary and persist the language preference.
   - [x] Generate editable Korean game-name and description snapshots from PokeAPI.
   - [x] Localize builder controls, pickers, diagnostics, tooltips, and share previews.
   - [x] Localize deterministic PokePilot analysis and remaining validity prose.
   - [x] Anchor the validity popover and its pointer to the validity trigger.
   - [x] Standardize Korean app copy on concise status and action phrasing.
-  - [ ] Audit Korean terminology, long-label fit, and every empty/loading/error state.
+  - [x] Audit Korean terminology, long-label fit, and empty/loading/error states across the builder.
 - [ ] Add a real app icon / logo mark.
 - [ ] Defer the dedicated tablet/mobile UI pass until Team Builder functionality and desktop UI/UX are complete.
   - [ ] Audit the provisional responsive CSS before treating any current breakpoint behavior as final.

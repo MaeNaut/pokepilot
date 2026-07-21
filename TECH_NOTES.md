@@ -396,6 +396,9 @@ Desktop UX decisions after the wide-builder layout change:
 - Put deliberate terminology corrections in `src/i18n/data/koOverrides.ts` rather
   than editing generated data. Missing or newly introduced game records fall back
   to their English display text.
+- The Korean desktop QA baseline covers the empty builder, configured sets,
+  selection popovers, validity, Showdown text, image previews, team management,
+  and PokePilot analysis at 1440x900 and 1920x1080 without page overflow.
 - Keep grammar-heavy deterministic PokePilot output in the typed locale packs in
   `src/i18n/copilotText.ts`. Generate the local response in the active locale while
   leaving the provider-independent request data and canonical game IDs unchanged.
