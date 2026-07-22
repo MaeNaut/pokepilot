@@ -146,7 +146,8 @@ function App() {
   const { locale, setLocale, t } = useLocalization();
   const { themePreference, setThemePreference } = useTheme();
   const isTabletDrawerLayout = useMediaQuery(
-    "(min-width: 761px) and (max-width: 1420px)",
+    "(min-width: 600px) and (max-width: 1420px)",
+    { falseDelayMs: 1500 },
   );
   const [team, setTeam] = useState<TeamSlot[]>(() =>
     Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null),
@@ -175,6 +176,8 @@ function App() {
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isCopilotDrawerOpen, setIsCopilotDrawerOpen] = useState(false);
+  const [isCopilotDrawerTransitioning, setIsCopilotDrawerTransitioning] =
+    useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
   const [newTeamShowdownDraft, setNewTeamShowdownDraft] = useState("");
   const [newTeamImportError, setNewTeamImportError] = useState<string | null>(null);
@@ -207,11 +210,25 @@ function App() {
   const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageControlRef = useRef<HTMLDivElement | null>(null);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const copilotDrawerRef = useRef<HTMLDivElement | null>(null);
   const copilotDrawerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
+  const copilotDrawerTransitionTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
   const committedSnapshotRef = useRef<string | null>(null);
+  const transitionCopilotDrawer = useCallback((nextOpen: boolean) => {
+    if (copilotDrawerTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(copilotDrawerTransitionTimeoutRef.current);
+    }
+
+    setIsCopilotDrawerTransitioning(true);
+    setIsCopilotDrawerOpen(nextOpen);
+    copilotDrawerTransitionTimeoutRef.current = window.setTimeout(() => {
+      setIsCopilotDrawerTransitioning(false);
+      copilotDrawerTransitionTimeoutRef.current = null;
+    }, 240);
+  }, []);
   const teamDiagnostics = useMemo(
     () =>
       analyzeTeam(
@@ -362,6 +379,10 @@ function App() {
       if (saveFeedbackTimeoutRef.current !== null) {
         window.clearTimeout(saveFeedbackTimeoutRef.current);
       }
+
+      if (copilotDrawerTransitionTimeoutRef.current !== null) {
+        window.clearTimeout(copilotDrawerTransitionTimeoutRef.current);
+      }
     },
     [],
   );
@@ -457,35 +478,79 @@ function App() {
   }, [isLanguageMenuOpen]);
 
   useEffect(() => {
-    if (!isTabletDrawerLayout) {
-      setIsCopilotDrawerOpen(false);
-    }
-  }, [isTabletDrawerLayout]);
-
-  useEffect(() => {
     if (!isTabletDrawerLayout || !isCopilotDrawerOpen) {
       return undefined;
     }
 
     const previousOverflow = document.body.style.overflow;
+    const previousScrollPosition = {
+      x: window.scrollX,
+      y: window.scrollY,
+    };
+    const focusableSelector = [
+      "button:not([disabled])",
+      "[href]",
+      "input:not([disabled])",
+      "select:not([disabled])",
+      "textarea:not([disabled])",
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(",");
+
+    function getFocusableDrawerElements() {
+      return Array.from(
+        copilotDrawerRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
+      ).filter((element) => element.getClientRects().length > 0);
+    }
 
     function handleCopilotDrawerKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key !== "Escape") {
+      if (event.key === "Escape") {
+        transitionCopilotDrawer(false);
+        copilotDrawerTriggerRef.current?.focus();
         return;
       }
 
-      setIsCopilotDrawerOpen(false);
-      copilotDrawerTriggerRef.current?.focus();
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const focusableElements = getFocusableDrawerElements();
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!firstElement || !lastElement) {
+        event.preventDefault();
+        copilotDrawerRef.current?.focus();
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      if (!copilotDrawerRef.current?.contains(activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? lastElement : firstElement).focus();
+        return;
+      }
+
+      if (event.shiftKey && activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
     }
 
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleCopilotDrawerKeyDown);
+    window.requestAnimationFrame(() => {
+      getFocusableDrawerElements()[0]?.focus();
+    });
 
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleCopilotDrawerKeyDown);
+      window.scrollTo(previousScrollPosition.x, previousScrollPosition.y);
     };
-  }, [isCopilotDrawerOpen, isTabletDrawerLayout]);
+  }, [isCopilotDrawerOpen, isTabletDrawerLayout, transitionCopilotDrawer]);
 
   function hasLegalityFilter() {
     return (
@@ -1532,7 +1597,11 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main
+      className={`app-shell${
+        isTabletDrawerLayout ? " is-tablet-drawer-layout" : ""
+      }`}
+    >
       <header className="app-header">
         <span className="app-wordmark">PokePilot</span>
         <div className="app-header-layout">
@@ -1827,21 +1896,32 @@ function App() {
           <TeamDiagnostics diagnostics={teamDiagnostics} />
         </div>
         <button
-          className={`copilot-drawer-scrim${isCopilotDrawerOpen ? " is-open" : ""}`}
+          className={`copilot-drawer-scrim${
+            isCopilotDrawerOpen ? " is-open" : ""
+          }${isCopilotDrawerTransitioning ? " is-transitioning" : ""}`}
           type="button"
           tabIndex={-1}
           aria-label={t("copilot.closePanel")}
           onClick={() => {
-            setIsCopilotDrawerOpen(false);
+            transitionCopilotDrawer(false);
             copilotDrawerTriggerRef.current?.focus();
           }}
         />
         <div
-          className={`copilot-drawer${isCopilotDrawerOpen ? " is-open" : ""}`}
+          ref={copilotDrawerRef}
+          className={`copilot-drawer${isCopilotDrawerOpen ? " is-open" : ""}${
+            isCopilotDrawerTransitioning ? " is-transitioning" : ""
+          }`}
           id="copilot-drawer"
+          role={isTabletDrawerLayout ? "dialog" : undefined}
+          aria-label={isTabletDrawerLayout ? "PokePilot" : undefined}
+          aria-modal={
+            isTabletDrawerLayout && isCopilotDrawerOpen ? true : undefined
+          }
           aria-hidden={
             isTabletDrawerLayout && !isCopilotDrawerOpen ? true : undefined
           }
+          tabIndex={isTabletDrawerLayout ? -1 : undefined}
         >
           <CopilotPanel
             teamName={teamNameDraft}
@@ -1855,7 +1935,9 @@ function App() {
         </div>
         <button
           ref={copilotDrawerTriggerRef}
-          className={`copilot-drawer-handle${isCopilotDrawerOpen ? " is-open" : ""}`}
+          className={`copilot-drawer-handle${
+            isCopilotDrawerOpen ? " is-open" : ""
+          }${isCopilotDrawerTransitioning ? " is-transitioning" : ""}`}
           type="button"
           aria-controls="copilot-drawer"
           aria-expanded={isCopilotDrawerOpen}
@@ -1869,7 +1951,7 @@ function App() {
               ? t("copilot.closePanel")
               : t("copilot.openPanel")
           }
-          onClick={() => setIsCopilotDrawerOpen((current) => !current)}
+          onClick={() => transitionCopilotDrawer(!isCopilotDrawerOpen)}
         >
           <FontAwesomeIcon
             icon={isCopilotDrawerOpen ? faChevronRight : faChevronLeft}

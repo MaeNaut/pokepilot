@@ -208,9 +208,10 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [ ] Complete the dedicated tablet/mobile UI pass now that Team Builder functionality and desktop UI/UX are stable.
   - [x] Add the first tablet workspace layout with a fully visible Pokemon card and an edge-triggered PokePilot drawer.
   - [x] Fit short landscape tablet layouts without document overflow by compacting secondary diagnostics and footer spacing.
-  - [ ] Audit tablet popovers, pickers, team management, and touch-first editing interactions before treating the breakpoint as final.
+  - [x] Audit tablet popovers, pickers, team management, drawer behavior, and touch-first editing interactions across representative emulated tablet viewports.
+  - [ ] Perform a non-blocking real-device Safari check for safe areas, dynamic browser chrome, the virtual keyboard, and long-press gestures.
   - [ ] Design the mobile workspace layout and verify touch-first editing interactions.
-  - [ ] Test text fit, overflow, popover placement, drag/hold reordering, and scroll behavior at representative widths.
+  - [x] Test text fit, overflow, popover placement, drag/hold reordering, orientation changes, and scroll behavior at representative tablet widths.
 - [x] Add loading states for Pokemon, item, and move fetches.
 - [x] Add local error and Retry states for failed PokeAPI, Showdown legality, and Smogon usage requests.
 - [ ] Clean up generated assets and keep third-party notices current.

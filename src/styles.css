@@ -835,6 +835,7 @@ button {
 }
 
 .workspace {
+  --tablet-copilot-width: clamp(360px, 42vw, 440px);
   position: relative;
   display: grid;
   width: 100%;
@@ -2634,7 +2635,7 @@ select {
 .nature-grid-menu {
   position: absolute;
   top: calc(100% + 8px);
-  left: -210px;
+  right: -70px;
   z-index: 22;
   width: min(720px, calc(100vw - 32px));
   border: 1px solid #d2d2d2;
@@ -4493,8 +4494,14 @@ select {
   min-height: 0;
   place-items: center;
   overflow: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   padding: 16px 24px;
   background: #24272a;
+}
+
+.share-image-preview::-webkit-scrollbar {
+  display: none;
 }
 
 .share-image-capture {
@@ -5550,7 +5557,8 @@ select {
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 980px),
+  (min-width: 981px) and (max-width: 1100px) and (orientation: portrait) {
   .header-builder-workspace {
     width: min(608px, calc(100% - 32px));
   }
@@ -5788,7 +5796,260 @@ select {
   }
 }
 
-@media (min-width: 761px) and (max-width: 1420px) {
+:where(.app-shell.is-tablet-drawer-layout) .app-wordmark {
+  display: none;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .app-header-layout {
+  grid-template-columns: 1fr;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .header-builder-workspace {
+  width: calc(100% - 10vw);
+  justify-self: start;
+  margin-right: 0;
+  margin-left: 5vw;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .header-preferences {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  margin-left: 0;
+  transform: translateY(-50%);
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .preference-menu {
+  right: 0;
+  left: auto;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .team-actions {
+  margin-left: 0;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .workspace {
+  height: auto;
+  max-height: none;
+  grid-template-columns: 1fr;
+  min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .builder-workspace {
+  width: min(1040px, calc(100% - 80px));
+  justify-self: center;
+  margin-right: 0;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .team-diagnostics {
+  width: calc(100% - 68px);
+  margin: 0 0 32px auto;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .footer {
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  line-height: 1.2;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .footer p {
+  white-space: nowrap;
+}
+
+.copilot-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  width: var(--tablet-copilot-width);
+  height: 100vh;
+  height: 100dvh;
+  visibility: hidden;
+  overscroll-behavior: contain;
+  pointer-events: none;
+  transform: translateX(calc(100% + 2px));
+}
+
+@keyframes copilot-drawer-enter {
+  from {
+    transform: translateX(calc(100% + 2px));
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes copilot-drawer-exit {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(100% + 2px));
+  }
+}
+
+.copilot-drawer.is-open {
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.copilot-drawer.is-open.is-transitioning {
+  animation: copilot-drawer-enter 220ms ease both;
+}
+
+.copilot-drawer.is-transitioning:not(.is-open) {
+  visibility: visible;
+  animation: copilot-drawer-exit 220ms ease both;
+}
+
+:where(.app-shell.is-tablet-drawer-layout) .copilot-drawer .copilot-panel {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  border-top: 0;
+  border-left: 1px solid #5d6267;
+  box-shadow: -18px 0 42px rgba(0, 0, 0, 0.22);
+}
+
+.copilot-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: block;
+  visibility: hidden;
+  border: 0;
+  padding: 0;
+  background: rgba(10, 11, 12, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+}
+
+@keyframes copilot-scrim-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes copilot-scrim-exit {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.copilot-drawer-scrim.is-open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.copilot-drawer-scrim.is-open.is-transitioning {
+  animation: copilot-scrim-enter 180ms ease both;
+}
+
+.copilot-drawer-scrim.is-transitioning:not(.is-open) {
+  visibility: visible;
+  animation: copilot-scrim-exit 180ms ease both;
+}
+
+.copilot-drawer-handle {
+  position: fixed;
+  top: 50vh;
+  top: 50dvh;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  width: 40px;
+  height: 122px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 9px;
+  border: 1px solid #4a4e52;
+  border-right: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  padding: 10px 0;
+  background: #0a0b0c;
+  color: #f6f6f6;
+  font: inherit;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+@keyframes copilot-handle-enter {
+  from {
+    right: 0;
+  }
+
+  to {
+    right: var(--tablet-copilot-width);
+  }
+}
+
+@keyframes copilot-handle-exit {
+  from {
+    right: var(--tablet-copilot-width);
+  }
+
+  to {
+    right: 0;
+  }
+}
+
+.copilot-drawer-handle.is-open {
+  right: var(--tablet-copilot-width);
+}
+
+.copilot-drawer-handle.is-open.is-transitioning {
+  animation: copilot-handle-enter 220ms ease both;
+}
+
+.copilot-drawer-handle.is-transitioning:not(.is-open) {
+  animation: copilot-handle-exit 220ms ease both;
+}
+
+.copilot-drawer-handle:hover,
+.copilot-drawer-handle:focus-visible {
+  border-color: #78bbaa;
+  background: #15191a;
+  outline: none;
+}
+
+.copilot-drawer-handle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(120, 187, 170, 0.32);
+}
+
+.copilot-drawer-handle svg {
+  width: 11px;
+  height: 11px;
+  color: #9ed8cb;
+}
+
+.copilot-drawer-handle span {
+  font-size: 0.72rem;
+  font-weight: var(--font-medium);
+  line-height: 1;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+@media (min-width: 600px) and (max-width: 1420px) {
   .app-wordmark {
     display: none;
   }
@@ -5804,7 +6065,6 @@ select {
   }
 
   .workspace {
-    --tablet-copilot-width: clamp(360px, 42vw, 440px);
     min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
   }
 
@@ -5822,31 +6082,6 @@ select {
     white-space: nowrap;
   }
 
-  .copilot-drawer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 90;
-    width: var(--tablet-copilot-width);
-    height: 100vh;
-    height: 100dvh;
-    visibility: hidden;
-    overscroll-behavior: contain;
-    pointer-events: none;
-    transform: translateX(calc(100% + 2px));
-    transition:
-      transform 220ms ease,
-      visibility 0s linear 220ms;
-  }
-
-  .copilot-drawer.is-open {
-    visibility: visible;
-    pointer-events: auto;
-    transform: translateX(0);
-    transition-delay: 0s;
-  }
-
   .copilot-drawer .copilot-panel {
     width: 100%;
     height: 100%;
@@ -5856,86 +6091,93 @@ select {
     border-left: 1px solid #5d6267;
     box-shadow: -18px 0 42px rgba(0, 0, 0, 0.22);
   }
+}
 
-  .copilot-drawer-scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    display: block;
-    visibility: hidden;
-    border: 0;
-    padding: 0;
-    background: rgba(10, 11, 12, 0.38);
-    opacity: 0;
-    pointer-events: none;
-    touch-action: none;
-    transition:
-      opacity 180ms ease,
-      visibility 0s linear 180ms;
-  }
-
-  .copilot-drawer-scrim.is-open {
+@media (max-width: 599px), (min-width: 1421px) {
+  .app-shell:not(.is-tablet-drawer-layout) .copilot-drawer {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    width: auto;
+    height: auto;
     visibility: visible;
-    opacity: 1;
+    overscroll-behavior: auto;
     pointer-events: auto;
-    transition-delay: 0s;
+    transform: none;
+    transition: none;
   }
 
-  .copilot-drawer-handle {
+  .app-shell:not(.is-tablet-drawer-layout) .copilot-drawer-scrim,
+  .app-shell:not(.is-tablet-drawer-layout) .copilot-drawer-handle {
+    display: none;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 760px) and (min-height: 600px) {
+  .header-builder-workspace,
+  .builder-workspace {
+    width: min(608px, calc(100% - 16px));
+  }
+
+  .header-builder-workspace {
+    margin-left: 8px;
+  }
+
+  .footer p {
+    white-space: normal;
+  }
+
+  .nature-grid-menu {
     position: fixed;
-    top: 50vh;
-    top: 50dvh;
-    right: 0;
-    z-index: 100;
-    display: flex;
-    width: 40px;
-    height: 122px;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 9px;
-    border: 1px solid #4a4e52;
-    border-right: 0;
-    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-    padding: 10px 0;
-    background: #0a0b0c;
-    color: #f6f6f6;
-    font: inherit;
-    cursor: pointer;
+    top: 50%;
+    right: 16px;
+    left: 16px;
+    z-index: 110;
+    width: auto;
     transform: translateY(-50%);
-    transition:
-      right 220ms ease,
-      background 120ms ease,
-      border-color 120ms ease;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1100px) and (min-height: 600px) {
+  .move-option-tooltip {
+    position: fixed;
+    top: calc(var(--app-header-height) + 12px);
+    right: 16px;
+    left: auto;
+    width: min(360px, calc(100vw - 32px));
+    transform: none;
   }
 
-  .copilot-drawer-handle.is-open {
-    right: var(--tablet-copilot-width);
+  .move-picker:hover .move-option-tooltip {
+    transform: none;
   }
 
-  .copilot-drawer-handle:hover,
-  .copilot-drawer-handle:focus-visible {
-    border-color: #78bbaa;
-    background: #15191a;
-    outline: none;
+  .editor-column:has(.nature-grid-menu),
+  .editor-column:has(.move-menu),
+  .editor-column:has(.move-picker:hover) {
+    z-index: 110;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 980px) and (min-height: 600px) {
+  .move-tooltip {
+    position: fixed;
+    top: calc(var(--app-header-height) + 12px);
+    right: 16px;
+    left: auto;
+    width: min(360px, calc(100vw - 32px));
+    transform: none;
   }
 
-  .copilot-drawer-handle:focus-visible {
-    box-shadow: 0 0 0 2px rgba(120, 187, 170, 0.32);
+  .move-picker:hover .move-tooltip {
+    transform: none;
   }
+}
 
-  .copilot-drawer-handle svg {
-    width: 11px;
-    height: 11px;
-    color: #9ed8cb;
-  }
-
-  .copilot-drawer-handle span {
-    font-size: 0.72rem;
-    font-weight: var(--font-medium);
-    line-height: 1;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
+@media (min-width: 600px) and (max-width: 640px) {
+  .nature-grid,
+  .nature-grid-row {
+    grid-template-columns: 88px repeat(5, minmax(0, 1fr));
   }
 }
 
