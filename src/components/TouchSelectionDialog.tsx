@@ -3,19 +3,26 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useLocalization } from "../i18n/useLocalization";
 
 type TouchSelectionDialogProps = {
   kind: "pokemon" | "item" | "ability" | "nature" | "move";
   title: string;
-  closeLabel: string;
-  cancelLabel: string;
-  selectLabel: string;
-  canSelect: boolean;
+  canSelect?: boolean;
   search?: ReactNode;
   children: ReactNode;
   preview?: ReactNode;
   onClose: () => void;
   onSelect: () => void;
+};
+
+type TouchPickerSearchInputProps = {
+  value: string;
+  label: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+  onMove?: (direction: 1 | -1) => void;
+  onSubmit?: () => void;
 };
 
 const focusableSelector = [
@@ -26,19 +33,51 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
 
+export function TouchPickerSearchInput({
+  value,
+  label,
+  placeholder,
+  onChange,
+  onMove,
+  onSubmit,
+}: TouchPickerSearchInputProps) {
+  return (
+    <input
+      className="touch-picker-search-input"
+      data-touch-picker-autofocus
+      aria-label={label}
+      value={value}
+      placeholder={placeholder}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={(event) => {
+        if (
+          onMove &&
+          (event.key === "ArrowDown" || event.key === "ArrowUp")
+        ) {
+          event.preventDefault();
+          onMove(event.key === "ArrowDown" ? 1 : -1);
+        }
+
+        if (onSubmit && event.key === "Enter") {
+          event.preventDefault();
+          onSubmit();
+        }
+      }}
+    />
+  );
+}
+
 export function TouchSelectionDialog({
   kind,
   title,
-  closeLabel,
-  cancelLabel,
-  selectLabel,
-  canSelect,
+  canSelect = true,
   search,
   children,
   preview,
   onClose,
   onSelect,
 }: TouchSelectionDialogProps) {
+  const { t } = useLocalization();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const onCloseRef = useRef(onClose);
@@ -138,7 +177,7 @@ export function TouchSelectionDialog({
         className="touch-picker-scrim"
         type="button"
         tabIndex={-1}
-        aria-label={closeLabel}
+        aria-label={t("common.close")}
         onClick={onClose}
       />
       <div
@@ -154,8 +193,8 @@ export function TouchSelectionDialog({
           <button
             className="touch-picker-close"
             type="button"
-            aria-label={closeLabel}
-            title={closeLabel}
+            aria-label={t("common.close")}
+            title={t("common.close")}
             onClick={onClose}
           >
             <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
@@ -173,7 +212,7 @@ export function TouchSelectionDialog({
 
         <footer className="touch-picker-actions">
           <button type="button" onClick={onClose}>
-            {cancelLabel}
+            {t("common.cancel")}
           </button>
           <button
             className="is-primary"
@@ -181,7 +220,7 @@ export function TouchSelectionDialog({
             disabled={!canSelect}
             onClick={onSelect}
           >
-            {selectLabel}
+            {t("common.select")}
           </button>
         </footer>
       </div>

@@ -2,12 +2,10 @@
 import type { CSSProperties, KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faChair,
   faChevronDown,
   faPlus,
   faRotateRight,
   faSpinner,
-  faTrash,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "../api/pokeApi";
@@ -47,7 +45,9 @@ import {
   getReorderDisplacement,
   useLongPressReorder,
 } from "../hooks/useLongPressReorder";
+import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
 import { getIndexAfterSwap } from "../utils/reorder";
 import {
   emptyPokemonCandidateFilters,
@@ -78,7 +78,6 @@ import {
   statKeys,
   type Nature,
 } from "../data/natures";
-import { PokemonIcon } from "./PokemonIcon";
 import { ItemSprite } from "./ItemSprite";
 import type { PokemonShareBuild } from "./PokemonShareCard";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
@@ -94,7 +93,15 @@ import {
   BuilderSharePreview,
   type ShareImageTarget,
 } from "./BuilderSharePreview";
-import { TouchSelectionDialog } from "./TouchSelectionDialog";
+import {
+  TouchPickerSearchInput,
+  TouchSelectionDialog,
+} from "./TouchSelectionDialog";
+import { TeamRail } from "./TeamRail";
+import {
+  AbilityDetailsContent,
+  ItemDetailsContent,
+} from "./SelectionDetails";
 import { useLocalization } from "../i18n/useLocalization";
 import { statTranslationKeys } from "../i18n/statTranslations";
 
@@ -147,18 +154,6 @@ type PokemonSelectOption = {
   abilityOptions: PokemonCandidateFilterValue[];
   moveIds: string[];
 };
-
-
-function getBaseUsageLookup(value: string) {
-  const withoutMega = value.replace(/-mega(?:-.+)?$/, "");
-  const regionalMatch = withoutMega.match(/^(.+)-(alola|galar|hisui|paldea)$/);
-
-  if (regionalMatch) {
-    return withoutMega;
-  }
-
-  return withoutMega.split("-")[0];
-}
 
 type NatureGridPosition = {
   upIndex: number;
@@ -267,24 +262,6 @@ function resolveShareMoves(
   });
 }
 
-function getItemEffectText(item: PokemonItem) {
-  return (
-    item.effect
-      ?.replace(/\$effect_chance/g, "effect chance")
-      .replace(/\s+/g, " ")
-      .trim() || "Item details are not available from Showdown."
-  );
-}
-
-function getAbilityEffectText(ability: PokemonAbility) {
-  return (
-    (ability.shortEffect ?? ability.effect)
-      ?.replace(/\$effect_chance/g, "effect chance")
-      .replace(/\s+/g, " ")
-      .trim() || "Ability details are not available from Showdown."
-  );
-}
-
 function isExactPokemonFormLegal(
   showdownLegality: ShowdownLegalitySnapshot | null | undefined,
   pokemonId: string,
@@ -379,8 +356,7 @@ export function TeamBuilder({
   onRetryShowdownLegality,
   onRetryPokemonSelection,
 }: TeamBuilderProps) {
-  const { gameDescription, gameName, pokemonFormName, pokemonName, t } =
-    useLocalization();
+  const { gameName, pokemonFormName, pokemonName, t } = useLocalization();
   const isTouchPickerLayout = useMediaQuery("(max-width: 1420px)");
   const {
     itemBySlot,
@@ -415,11 +391,8 @@ export function TeamBuilder({
   const [usageOrderError, setUsageOrderError] = useState<string | null>(null);
   const [isBenchOpen, setIsBenchOpen] = useState(false);
   const [benchLimitMessage, setBenchLimitMessage] = useState<string | null>(null);
-  const [pendingBenchRemovalId, setPendingBenchRemovalId] = useState<string | null>(null);
   const [shareImageTarget, setShareImageTarget] = useState<ShareImageTarget>(null);
   const builderCardLayoutRef = useRef<HTMLDivElement | null>(null);
-  const teamTabsRef = useRef<HTMLDivElement | null>(null);
-  const benchShellRef = useRef<HTMLDivElement | null>(null);
   const namePickerRef = useRef<HTMLDivElement | null>(null);
   const candidateFilterPickerRef = useRef<HTMLDivElement | null>(null);
   const battleFormPickerRef = useRef<HTMLDivElement | null>(null);
@@ -910,68 +883,14 @@ export function TeamBuilder({
       ),
     [activeCandidateFilters, selectOptions],
   );
-  const popularSelectOptions = useMemo(() => {
-    const optionsByLookup = new Map<string, PokemonSelectOption>();
-
-    for (const option of candidateFilteredSelectOptions) {
-      for (const lookup of getPokemonLookupAliases(option.id)) {
-        optionsByLookup.set(normalizeShowdownId(lookup), option);
-      }
-    }
-
-    const seenOptionIds = new Set<string>();
-    const orderedOptions: PokemonSelectOption[] = [];
-
-    for (const usageId of usagePokemonIds ?? []) {
-      const exactOption = getPokemonLookupAliases(usageId)
-        .map((lookup) => optionsByLookup.get(normalizeShowdownId(lookup)))
-        .find((option): option is PokemonSelectOption => Boolean(option));
-      const baseOption = optionsByLookup.get(
-        normalizeShowdownId(getBaseUsageLookup(usageId)),
-      );
-      const option = exactOption ?? baseOption;
-
-      if (!option || seenOptionIds.has(option.id)) {
-        continue;
-      }
-
-      seenOptionIds.add(option.id);
-      orderedOptions.push(option);
-    }
-
-    for (const option of candidateFilteredSelectOptions) {
-      if (!seenOptionIds.has(option.id)) {
-        orderedOptions.push(option);
-      }
-    }
-
-    return orderedOptions;
-  }, [candidateFilteredSelectOptions, usagePokemonIds]);
-  const usageRankByOptionId = useMemo(() => {
-    const optionsByLookup = new Map<string, PokemonSelectOption>();
-
-    for (const option of candidateFilteredSelectOptions) {
-      for (const lookup of getPokemonLookupAliases(option.id)) {
-        optionsByLookup.set(normalizeShowdownId(lookup), option);
-      }
-    }
-
-    const ranks = new Map<string, number>();
-
-    for (const [usageIndex, usageId] of (usagePokemonIds ?? []).entries()) {
-      const exactOption = getPokemonLookupAliases(usageId)
-        .map((lookup) => optionsByLookup.get(normalizeShowdownId(lookup)))
-        .find((option): option is PokemonSelectOption => Boolean(option));
-      const option =
-        exactOption ??
-        optionsByLookup.get(normalizeShowdownId(getBaseUsageLookup(usageId)));
-
-      if (option && !ranks.has(option.id)) {
-        ranks.set(option.id, usageIndex + 1);
-      }
-    }
-
-    return ranks;
+  const {
+    orderedOptions: popularSelectOptions,
+    rankByOptionId: usageRankByOptionId,
+  } = useMemo(() => {
+    return orderPokemonOptionsByUsage(
+      candidateFilteredSelectOptions,
+      usagePokemonIds,
+    );
   }, [candidateFilteredSelectOptions, usagePokemonIds]);
   const itemOptions = useMemo(
     () =>
@@ -1570,48 +1489,17 @@ export function TeamBuilder({
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [activeMoveOptionIndex, openMoveSlot, visibleMoveOptions]);
 
-  useEffect(() => {
-    if (
-      !isNamePickerVisible ||
-      !activeMember ||
-      isTouchPickerLayout
-    ) {
-      return;
-    }
+  useDismissOnOutsidePointer(
+    namePickerRef,
+    isNamePickerVisible && Boolean(activeMember) && !isTouchPickerLayout,
+    closeNamePicker,
+  );
 
-    function handlePointerDown(event: PointerEvent) {
-      if (!namePickerRef.current?.contains(event.target as Node)) {
-        setIsNamePickerOpen(false);
-        setNameQuery("");
-        setHoveredPokemonOption(null);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [activeMember, isNamePickerVisible, isTouchPickerLayout]);
-
-  useEffect(() => {
-    if (!openCandidateFilterPicker) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!candidateFilterPickerRef.current?.contains(event.target as Node)) {
-        setOpenCandidateFilterPicker(null);
-        setCandidateFilterQuery("");
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [openCandidateFilterPicker]);
+  useDismissOnOutsidePointer(
+    candidateFilterPickerRef,
+    Boolean(openCandidateFilterPicker),
+    closeCandidateFilterPicker,
+  );
 
   useEffect(() => {
     setOpenCandidateFilterPicker(null);
@@ -1619,104 +1507,34 @@ export function TeamBuilder({
     setCandidateFilterQuery("");
   }, [selectedSlot]);
 
-  useEffect(() => {
-    if (!isBattleFormPickerOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!battleFormPickerRef.current?.contains(event.target as Node)) {
-        setIsBattleFormPickerOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isBattleFormPickerOpen]);
+  useDismissOnOutsidePointer(
+    battleFormPickerRef,
+    isBattleFormPickerOpen,
+    () => setIsBattleFormPickerOpen(false),
+  );
 
   useEffect(() => {
     setIsBattleFormPickerOpen(false);
     setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
   }, [activeBattleFormOptionIndexFromPokemon, selectedSlot]);
 
-  useEffect(() => {
-    if (!isItemPickerOpen || isTouchPickerLayout) {
-      return;
-    }
+  useDismissOnOutsidePointer(
+    itemPickerRef,
+    isItemPickerOpen && !isTouchPickerLayout,
+    closeItemPicker,
+  );
 
-    function handlePointerDown(event: PointerEvent) {
-      if (!itemPickerRef.current?.contains(event.target as Node)) {
-        setIsItemPickerOpen(false);
-        setItemQuery("");
-        setHoveredItemOption(null);
-      }
-    }
+  useDismissOnOutsidePointer(
+    traitPickerRef,
+    Boolean(openTraitPicker) && !isTouchPickerLayout,
+    closeTraitPicker,
+  );
 
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isItemPickerOpen, isTouchPickerLayout]);
-
-  useEffect(() => {
-    if (!openTraitPicker || isTouchPickerLayout) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!traitPickerRef.current?.contains(event.target as Node)) {
-        setOpenTraitPicker(null);
-        setHoveredAbilityOption(null);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isTouchPickerLayout, openTraitPicker]);
-
-  useEffect(() => {
-    if (openMoveSlot === null || isTouchPickerLayout) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!movePickerRef.current?.contains(event.target as Node)) {
-        closeMovePicker();
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isTouchPickerLayout, openMoveSlot]);
-
-  useEffect(() => {
-    if (!isBenchOpen) {
-      return;
-    }
-
-    function handleClick(event: MouseEvent) {
-      if (!benchShellRef.current?.contains(event.target as Node)) {
-        setIsBenchOpen(false);
-        setPendingBenchRemovalId(null);
-      }
-    }
-
-    document.addEventListener("click", handleClick);
-
-    return () => {
-      document.removeEventListener("click", handleClick);
-    };
-  }, [isBenchOpen]);
+  useDismissOnOutsidePointer(
+    movePickerRef,
+    openMoveSlot !== null && !isTouchPickerLayout,
+    closeMovePicker,
+  );
 
   useEffect(() => {
     if (!activeMegaStoneName || !activeMegaStoneOption) {
@@ -2086,7 +1904,6 @@ export function TeamBuilder({
     }
 
     setIsBenchOpen(false);
-    setPendingBenchRemovalId(null);
     selectTeamSlot(index);
   }
 
@@ -2137,34 +1954,6 @@ export function TeamBuilder({
 
     closeBuilderPopovers();
     onMoveBenchPokemonToTeam(benchIndex, selectedSlot);
-  }
-
-  function handleBenchPokemonKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    benchIndex: number,
-  ) {
-    if (!event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) {
-      return;
-    }
-
-    event.preventDefault();
-    const targetIndex = Math.max(
-      0,
-      Math.min(bench.length - 1, benchIndex + (event.key === "ArrowUp" ? -1 : 1)),
-    );
-
-    if (targetIndex === benchIndex) {
-      return;
-    }
-
-    onReorderBenchPokemon(benchIndex, targetIndex);
-    window.requestAnimationFrame(() => {
-      benchShellRef.current
-        ?.querySelector<HTMLButtonElement>(
-          `[data-bench-index="${targetIndex}"] .bench-pokemon-main`,
-        )
-        ?.focus();
-    });
   }
 
   function handleMovePillKeyDown(
@@ -3091,31 +2880,19 @@ export function TeamBuilder({
         <TouchSelectionDialog
           kind="pokemon"
           title={t("builder.selectPokemon")}
-          closeLabel={t("common.close")}
-          cancelLabel={t("common.cancel")}
-          selectLabel={t("common.select")}
           canSelect={Boolean(previewOption)}
           search={
-            <input
-              className="touch-picker-search-input"
-              data-touch-picker-autofocus
-              aria-label={t("builder.searchPokemon")}
+            <TouchPickerSearchInput
               value={nameQuery}
+              label={t("builder.searchPokemon")}
               placeholder={t("builder.searchPokemon")}
-              onChange={(event) => setNameQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-                  event.preventDefault();
-                  movePokemonKeyboardOption(
-                    event.key === "ArrowDown" ? 1 : -1,
-                  );
-                }
-
-                if (event.key === "Enter" && filteredOptions.length > 0) {
-                  event.preventDefault();
-                  selectActivePokemonOption();
-                }
-              }}
+              onChange={setNameQuery}
+              onMove={movePokemonKeyboardOption}
+              onSubmit={
+                filteredOptions.length > 0
+                  ? selectActivePokemonOption
+                  : undefined
+              }
             />
           }
           preview={
@@ -3153,59 +2930,25 @@ export function TeamBuilder({
         <TouchSelectionDialog
           kind="item"
           title={t("builder.selectItem")}
-          closeLabel={t("common.close")}
-          cancelLabel={t("common.cancel")}
-          selectLabel={t("common.select")}
           canSelect={displayedItemOptions.length > 0}
           search={
-            <input
-              className="touch-picker-search-input"
-              data-touch-picker-autofocus
-              aria-label={t("builder.searchItem")}
+            <TouchPickerSearchInput
               value={itemQuery}
+              label={t("builder.searchItem")}
               placeholder={t("builder.searchItem")}
-              onChange={(event) => setItemQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-                  event.preventDefault();
-                  moveItemKeyboardOption(
-                    event.key === "ArrowDown" ? 1 : -1,
-                  );
-                }
-
-                if (
-                  event.key === "Enter" &&
-                  displayedItemOptions.length > 0
-                ) {
-                  event.preventDefault();
-                  selectActiveItemOption();
-                }
-              }}
+              onChange={setItemQuery}
+              onMove={moveItemKeyboardOption}
+              onSubmit={
+                displayedItemOptions.length > 0
+                  ? selectActiveItemOption
+                  : undefined
+              }
             />
           }
           preview={
             previewedItem ? (
               <div className="touch-item-preview">
-                <div className="item-tooltip-header">
-                  <ItemSprite item={previewedItem} />
-                  <div>
-                    <strong>{getLocalizedItemName(previewedItem)}</strong>
-                    {previewedItem.category ? (
-                      <small>
-                        {previewedItem.category === "Mega Stones"
-                          ? t("builder.megaStones")
-                          : previewedItem.category}
-                      </small>
-                    ) : null}
-                  </div>
-                </div>
-                <p>
-                  {gameDescription(
-                    "items",
-                    previewedItem.showdownId ?? previewedItem.id,
-                    getItemEffectText(previewedItem),
-                  )}
-                </p>
+                <ItemDetailsContent item={previewedItem} />
               </div>
             ) : (
               <p className="touch-picker-empty-preview">
@@ -3249,30 +2992,11 @@ export function TeamBuilder({
         <TouchSelectionDialog
           kind="ability"
           title={t("builder.selectAbility")}
-          closeLabel={t("common.close")}
-          cancelLabel={t("common.cancel")}
-          selectLabel={t("common.select")}
           canSelect={displayedAbilityOptions.length > 0}
           preview={
             previewedAbility ? (
               <div className="touch-ability-preview">
-                <div className="ability-tooltip-header">
-                  <strong>
-                    {gameName(
-                      "abilities",
-                      previewedAbility.id,
-                      previewedAbility.name,
-                    )}
-                  </strong>
-                  <small>{t("builder.ability")}</small>
-                </div>
-                <p>
-                  {gameDescription(
-                    "abilities",
-                    previewedAbility.id,
-                    getAbilityEffectText(previewedAbility),
-                  )}
-                </p>
+                <AbilityDetailsContent ability={previewedAbility} />
               </div>
             ) : (
               <p className="touch-picker-empty-preview">
@@ -3312,10 +3036,6 @@ export function TeamBuilder({
         <TouchSelectionDialog
           kind="nature"
           title={t("builder.selectNature")}
-          closeLabel={t("common.close")}
-          cancelLabel={t("common.cancel")}
-          selectLabel={t("common.select")}
-          canSelect
           onClose={closeTraitPicker}
           onSelect={confirmActiveNature}
         >
@@ -3359,34 +3079,18 @@ export function TeamBuilder({
         <TouchSelectionDialog
           kind="move"
           title={t("builder.selectMove", { slot: openMoveSlot + 1 })}
-          closeLabel={t("common.close")}
-          cancelLabel={t("common.cancel")}
-          selectLabel={t("common.select")}
           canSelect={filteredMoveOptions.length > 0 || activeMoveOptionIndex === 0}
           search={
-            <input
-              className="touch-picker-search-input"
-              data-touch-picker-autofocus
-              aria-label={t("builder.searchAvailableMoves")}
+            <TouchPickerSearchInput
               value={moveQuery}
+              label={t("builder.searchAvailableMoves")}
               placeholder={t("filter.searchMoves")}
-              onChange={(event) => {
-                setMoveQuery(event.target.value);
+              onChange={(value) => {
+                setMoveQuery(value);
                 resetMoveOptions();
               }}
-              onKeyDown={(event) => {
-                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-                  event.preventDefault();
-                  moveMoveKeyboardOption(
-                    event.key === "ArrowDown" ? 1 : -1,
-                  );
-                }
-
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  selectActiveMoveOption(openMoveSlot);
-                }
-              }}
+              onMove={moveMoveKeyboardOption}
+              onSubmit={() => selectActiveMoveOption(openMoveSlot)}
             />
           }
           preview={
@@ -3431,284 +3135,33 @@ export function TeamBuilder({
         onOpenImage={() => {
           closeBuilderPopovers();
           setIsBenchOpen(false);
-          setPendingBenchRemovalId(null);
           setShareImageTarget(selectedSlot);
         }}
         onDeletePokemon={() => handleClearSlot(selectedSlot)}
       />
 
       <div className="builder-card-layout" ref={builderCardLayoutRef}>
-        <div
-          className={`team-tabs ${teamReorder.isDragging ? "is-reordering" : ""}`}
-          aria-label={t("builder.currentTeam")}
-          ref={teamTabsRef}
-        >
-        {team.map((member, index) => {
-          const displacement = getReorderDisplacement(teamReorder.dragState, index);
-          const railItem = itemBySlot[index] ?? null;
-          const railDisplayName = member ? getMemberDisplayName(member) : "";
-          const isActiveRailSlot = selectedSlot === index;
-
-          return (
-            <div
-            className={`team-tab-shell ${isActiveRailSlot ? "is-active" : ""} ${
-              teamReorder.dragState?.sourceIndex === index ? "is-dragging" : ""
-            } ${
-              teamReorder.dragState?.sourceIndex === index &&
-              teamReorder.dragState.isDropping
-                ? "is-dropping"
-                : ""
-            } ${
-              teamReorder.dragState?.targetIndex === index &&
-              teamReorder.dragState.sourceIndex !== index
-                ? "is-drop-target"
-                : ""
-            } ${
-              validity.slotResults[index]?.status === "invalid"
-                ? "has-validity-error"
-                : validity.slotResults[index]?.status === "unavailable"
-                  ? "has-validity-unavailable"
-                  : ""
-            } ${
-              displacement ? "is-reorder-displaced" : ""
-            }`}
-            data-team-drag-index={index}
-            data-team-slot-index={index}
-            key={`${member?.id ?? "empty"}-${index}`}
-            style={
-              teamReorder.dragState?.sourceIndex === index
-                ? ({
-                    "--tab-drag-x": `${teamReorder.dragState.offsetX}px`,
-                    "--tab-drag-y": `${teamReorder.dragState.offsetY}px`,
-                  } as CSSProperties)
-                : displacement
-                  ? {
-                      transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
-                    }
-                  : undefined
-            }
-          >
-            <button
-              className={`team-tab ${isActiveRailSlot ? "is-active" : ""} ${
-                member ? "" : "is-empty"
-              }`}
-              type="button"
-              onClick={() => handleTeamTabClick(index)}
-              onKeyDown={(event) => handleTeamTabKeyDown(event, index)}
-              onPointerDown={(event) => {
-                if (member) {
-                  teamReorder.handlePointerDown(event, index);
-                }
-              }}
-              onPointerMove={teamReorder.handlePointerMove}
-              onPointerUp={teamReorder.handlePointerUp}
-              onPointerCancel={teamReorder.handlePointerCancel}
-              aria-label={
-                member
-                  ? t("builder.showSlot", { slot: index + 1 })
-                  : t("builder.addSlot", { slot: index + 1 })
-              }
-            >
-              {member ? (
-                <>
-                  <span className="team-tab-sprite" aria-hidden="true">
-                    <PokemonIcon pokemon={member} />
-                  </span>
-                  <span className="team-tab-copy" aria-hidden="true">
-                    <strong>{railDisplayName}</strong>
-                    <span className="team-tab-types">
-                      {member.types.map((type) => (
-                        <TypeBadge type={type} key={type} />
-                      ))}
-                    </span>
-                  </span>
-                  <span
-                    className={`team-tab-item ${railItem ? "" : "is-empty"}`}
-                    aria-hidden="true"
-                    title={railItem ? getLocalizedItemName(railItem) : undefined}
-                  >
-                    {railItem ? <ItemSprite item={railItem} /> : null}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="team-tab-empty-mark" aria-hidden="true">+</span>
-                  <span className="team-tab-empty-label" aria-hidden="true">
-                    <strong>{t("builder.addPokemon")}</strong>
-                  </span>
-                </>
-              )}
-            </button>
-            </div>
-          );
-        })}
-        <div
-          className={`team-tab-shell bench-tab-shell ${isBenchOpen ? "is-active" : ""} ${
-            teamReorder.dragState?.targetIndex === team.length ? "is-drop-target" : ""
-          }`}
-          data-team-drag-index={team.length}
-          ref={benchShellRef}
-        >
-          <button
-            className={`team-tab bench-tab ${isBenchOpen ? "is-active" : ""}`}
-            type="button"
-            aria-label={t("builder.benchAria", {
-              count: bench.length,
-              limit: MAX_BENCH_POKEMON,
-            })}
-            aria-expanded={isBenchOpen}
-            title={t("builder.bench")}
-            onClick={() => {
-              if (teamReorder.shouldSuppressClick()) {
-                return;
-              }
-
-              closeBuilderPopovers();
-              setPendingBenchRemovalId(null);
-              setIsBenchOpen((current) => !current);
-            }}
-          >
-            <FontAwesomeIcon icon={faChair} aria-hidden="true" />
-            <span className="bench-label" aria-hidden="true">{t("builder.bench")}</span>
-            {bench.length > 0 ? <span className="bench-count">{bench.length}</span> : null}
-          </button>
-
-          {isBenchOpen ? (
-            <div className="bench-panel" role="dialog" aria-label={t("builder.benchPokemon")}>
-              <div className="bench-panel-header">
-                <strong>{t("builder.bench")}</strong>
-                <span className={bench.length >= MAX_BENCH_POKEMON ? "is-limit" : ""}>
-                  {bench.length} / {MAX_BENCH_POKEMON}
-                </span>
-              </div>
-              {benchLimitMessage ? (
-                <p className="bench-limit-message" role="status">
-                  {benchLimitMessage}
-                </p>
-              ) : null}
-              {bench.length > 0 ? (
-                <div className="bench-pokemon-list">
-                  {bench.map((entry, index) => {
-                    const dragIndex = team.length + 1 + index;
-                    const benchDisplayName = getMemberDisplayName(entry.member);
-                    const isDragging = teamReorder.dragState?.sourceIndex === dragIndex;
-                    const displacement = getReorderDisplacement(
-                      teamReorder.dragState,
-                      dragIndex,
-                    );
-                    const isDropTarget =
-                      teamReorder.dragState?.targetIndex === dragIndex &&
-                      teamReorder.dragState.sourceIndex !== dragIndex;
-
-                    return (
-                      <div
-                        className={`bench-pokemon-row ${isDragging ? "is-dragging" : ""} ${
-                          isDragging && teamReorder.dragState?.isDropping
-                            ? "is-dropping"
-                            : ""
-                        } ${isDropTarget ? "is-drop-target" : ""} ${
-                          displacement ? "is-reorder-displaced" : ""
-                        }`}
-                        data-bench-index={index}
-                        data-team-drag-index={dragIndex}
-                        key={entry.id}
-                        style={
-                          isDragging
-                            ? ({
-                                "--tab-drag-x": `${teamReorder.dragState?.offsetX ?? 0}px`,
-                                "--tab-drag-y": `${teamReorder.dragState?.offsetY ?? 0}px`,
-                                "--bench-drag-left": `${teamReorder.dragState?.originX ?? 0}px`,
-                                "--bench-drag-top": `${teamReorder.dragState?.originY ?? 0}px`,
-                                "--bench-drag-width": `${teamReorder.dragState?.originWidth ?? 0}px`,
-                                "--bench-drag-height": `${teamReorder.dragState?.originHeight ?? 0}px`,
-                              } as CSSProperties)
-                            : displacement
-                              ? {
-                                  transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
-                                }
-                              : undefined
-                        }
-                      >
-                        {pendingBenchRemovalId === entry.id ? (
-                          <div className="bench-remove-confirm" role="alertdialog">
-                            <span>{t("builder.deleteNamed", { name: benchDisplayName })}</span>
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setPendingBenchRemovalId(null);
-                              }}
-                            >
-                              {t("common.cancel")}
-                            </button>
-                            <button
-                              className="is-danger"
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                onRemoveBenchPokemon(entry.id);
-                                setPendingBenchRemovalId(null);
-                              }}
-                            >
-                              {t("common.delete")}
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <button
-                              className="bench-pokemon-main"
-                              type="button"
-                              aria-label={t("builder.moveBenchNamed", {
-                                name: benchDisplayName,
-                                slot: selectedSlot + 1,
-                              })}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleBenchPokemonClick(index);
-                              }}
-                              onKeyDown={(event) => handleBenchPokemonKeyDown(event, index)}
-                              onPointerDown={(event) =>
-                                teamReorder.handlePointerDown(
-                                  event,
-                                  dragIndex,
-                                  event.currentTarget.closest<HTMLElement>(
-                                    ".bench-pokemon-row",
-                                  ) ?? undefined,
-                                )
-                              }
-                              onPointerMove={teamReorder.handlePointerMove}
-                              onPointerUp={teamReorder.handlePointerUp}
-                              onPointerCancel={teamReorder.handlePointerCancel}
-                            >
-                              <PokemonIcon pokemon={entry.member} />
-                              <span>{benchDisplayName}</span>
-                            </button>
-                            <button
-                              className="bench-pokemon-remove"
-                              type="button"
-                              aria-label={t("builder.deleteBenchNamed", { name: benchDisplayName })}
-                              title={t("builder.deleteFromBench")}
-                              onPointerDown={(event) => event.stopPropagation()}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setPendingBenchRemovalId(entry.id);
-                              }}
-                            >
-                              <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="bench-empty">{t("builder.benchEmpty")}</p>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </div>
+        <TeamRail
+          team={team}
+          bench={bench}
+          selectedSlot={selectedSlot}
+          itemBySlot={itemBySlot}
+          validity={validity}
+          isBenchOpen={isBenchOpen}
+          benchLimitMessage={benchLimitMessage}
+          reorder={teamReorder}
+          getMemberDisplayName={getMemberDisplayName}
+          onTeamTabClick={handleTeamTabClick}
+          onTeamTabKeyDown={handleTeamTabKeyDown}
+          onToggleBench={() => {
+            closeBuilderPopovers();
+            setIsBenchOpen((current) => !current);
+          }}
+          onCloseBench={() => setIsBenchOpen(false)}
+          onBenchPokemonClick={handleBenchPokemonClick}
+          onReorderBenchPokemon={onReorderBenchPokemon}
+          onRemoveBenchPokemon={onRemoveBenchPokemon}
+        />
 
       <article
         className={`pokemon-card${activeMember ? "" : " is-empty-slot"}`}
@@ -4020,27 +3473,7 @@ export function TeamBuilder({
                     id={isItemPickerOpen ? "item-option-tooltip" : undefined}
                     role="tooltip"
                   >
-                    <div className="item-tooltip-header">
-                      <ItemSprite item={hoveredItemOption} />
-                      <div>
-                        <strong>{getLocalizedItemName(hoveredItemOption)}</strong>
-                        {hoveredItemOption.category ? (
-                          <small>
-                            {hoveredItemOption.category === "Mega Stones"
-                              ? t("builder.megaStones")
-                              : hoveredItemOption.category}
-                          </small>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <p>
-                      {gameDescription(
-                        "items",
-                        hoveredItemOption.showdownId ?? hoveredItemOption.id,
-                        getItemEffectText(hoveredItemOption),
-                      )}
-                    </p>
+                    <ItemDetailsContent item={hoveredItemOption} />
                   </aside>
                 ) : null}
               </div>
@@ -4118,24 +3551,7 @@ export function TeamBuilder({
                       id={openTraitPicker === "ability" ? "ability-option-tooltip" : undefined}
                       role="tooltip"
                     >
-                      <div className="ability-tooltip-header">
-                        <strong>
-                          {gameName(
-                            "abilities",
-                            hoveredAbilityOption.id,
-                            hoveredAbilityOption.name,
-                          )}
-                        </strong>
-                        <small>{t("builder.ability")}</small>
-                      </div>
-
-                      <p>
-                        {gameDescription(
-                          "abilities",
-                          hoveredAbilityOption.id,
-                          getAbilityEffectText(hoveredAbilityOption),
-                        )}
-                      </p>
+                      <AbilityDetailsContent ability={hoveredAbilityOption} />
                     </aside>
                   ) : null}
                 </div>

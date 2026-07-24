@@ -7023,7 +7023,6 @@ select {
 
 :root[data-theme="dark"] .new-team-import-panel textarea,
 :root[data-theme="dark"] .new-team-import-actions button,
-:root[data-theme="dark"] .saved-team-showdown textarea,
 :root[data-theme="dark"] .saved-team-import-actions button,
 :root[data-theme="dark"] .showdown-textarea,
 :root[data-theme="dark"] .showdown-panel-button,
@@ -7035,7 +7034,6 @@ select {
 }
 
 :root[data-theme="dark"] .new-team-import-panel textarea:focus,
-:root[data-theme="dark"] .saved-team-showdown textarea:focus,
 :root[data-theme="dark"] .showdown-textarea:focus,
 :root[data-theme="dark"] .item-search-input:focus,
 :root[data-theme="dark"] .move-search-input:focus,
@@ -7151,7 +7149,6 @@ select {
 }
 
 :root[data-theme="dark"] .team-manager-empty,
-:root[data-theme="dark"] .team-storage-message,
 :root[data-theme="dark"] .showdown-panel-message,
 :root[data-theme="dark"] .data-status-row {
   color: var(--color-muted);

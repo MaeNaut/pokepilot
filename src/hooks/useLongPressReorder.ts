@@ -375,3 +375,7 @@ export function useLongPressReorder({
     shouldSuppressClick,
   };
 }
+
+export type LongPressReorderController = ReturnType<
+  typeof useLongPressReorder
+>;

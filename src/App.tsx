@@ -37,9 +37,8 @@ import {
 } from "./data/teamLimits";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
 import { useBuilderData } from "./hooks/useBuilderData";
-import {
-  useLongPressReorder,
-} from "./hooks/useLongPressReorder";
+import { useDismissOnOutsidePointer } from "./hooks/useDismissOnOutsidePointer";
+import { useLongPressReorder } from "./hooks/useLongPressReorder";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import {
   getPreferredPokeApiId,
@@ -387,37 +386,18 @@ function App() {
     [],
   );
 
-  useEffect(() => {
-    if (
-      !isTeamManagerOpen &&
-      !isNewTeamMenuOpen &&
-      !isNewTeamImportOpen &&
-      !pendingTeamAction
-    ) {
-      return undefined;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!teamActionsRef.current?.contains(event.target as Node)) {
-        closeTeamManager();
-        closeNewTeamTools();
-        setPendingTeamAction(null);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [
-    closeNewTeamTools,
-    closeTeamManager,
-    isNewTeamImportOpen,
-    isNewTeamMenuOpen,
-    isTeamManagerOpen,
-    pendingTeamAction,
-  ]);
+  useDismissOnOutsidePointer(
+    teamActionsRef,
+    isTeamManagerOpen ||
+      isNewTeamMenuOpen ||
+      isNewTeamImportOpen ||
+      Boolean(pendingTeamAction),
+    () => {
+      closeTeamManager();
+      closeNewTeamTools();
+      setPendingTeamAction(null);
+    },
+  );
 
   useEffect(() => {
     if (!isThemeMenuOpen) {
