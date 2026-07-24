@@ -145,8 +145,8 @@ function isMegaPokemonId(value: string) {
 function App() {
   const { locale, setLocale, t } = useLocalization();
   const { themePreference, setThemePreference } = useTheme();
-  const isTabletDrawerLayout = useMediaQuery(
-    "(min-width: 600px) and (max-width: 1420px)",
+  const isCompactDrawerLayout = useMediaQuery(
+    "(max-width: 1420px)",
     { falseDelayMs: 1500 },
   );
   const [team, setTeam] = useState<TeamSlot[]>(() =>
@@ -478,7 +478,7 @@ function App() {
   }, [isLanguageMenuOpen]);
 
   useEffect(() => {
-    if (!isTabletDrawerLayout || !isCopilotDrawerOpen) {
+    if (!isCompactDrawerLayout || !isCopilotDrawerOpen) {
       return undefined;
     }
 
@@ -550,7 +550,7 @@ function App() {
       document.removeEventListener("keydown", handleCopilotDrawerKeyDown);
       window.scrollTo(previousScrollPosition.x, previousScrollPosition.y);
     };
-  }, [isCopilotDrawerOpen, isTabletDrawerLayout, transitionCopilotDrawer]);
+  }, [isCompactDrawerLayout, isCopilotDrawerOpen, transitionCopilotDrawer]);
 
   function hasLegalityFilter() {
     return (
@@ -1599,7 +1599,7 @@ function App() {
   return (
     <main
       className={`app-shell${
-        isTabletDrawerLayout ? " is-tablet-drawer-layout" : ""
+        isCompactDrawerLayout ? " is-compact-drawer-layout" : ""
       }`}
     >
       <header className="app-header">
@@ -1913,15 +1913,15 @@ function App() {
             isCopilotDrawerTransitioning ? " is-transitioning" : ""
           }`}
           id="copilot-drawer"
-          role={isTabletDrawerLayout ? "dialog" : undefined}
-          aria-label={isTabletDrawerLayout ? "PokePilot" : undefined}
+          role={isCompactDrawerLayout ? "dialog" : undefined}
+          aria-label={isCompactDrawerLayout ? "PokePilot" : undefined}
           aria-modal={
-            isTabletDrawerLayout && isCopilotDrawerOpen ? true : undefined
+            isCompactDrawerLayout && isCopilotDrawerOpen ? true : undefined
           }
           aria-hidden={
-            isTabletDrawerLayout && !isCopilotDrawerOpen ? true : undefined
+            isCompactDrawerLayout && !isCopilotDrawerOpen ? true : undefined
           }
-          tabIndex={isTabletDrawerLayout ? -1 : undefined}
+          tabIndex={isCompactDrawerLayout ? -1 : undefined}
         >
           <CopilotPanel
             teamName={teamNameDraft}

@@ -127,8 +127,11 @@ The MVP should prove the core loop:
 - [ ] Complete the dedicated responsive-design phase now that Team Builder features and desktop UI/UX are stable.
   - [x] Establish the first tablet workspace: preserve the complete Pokemon card, move PokePilot into a right-edge overlay drawer, and fit short landscape viewports without page overflow.
   - [x] Complete the tablet popover, picker, team-management, drawer, orientation, and touch-interaction audit across representative emulated devices.
+  - [x] Replace hover-dependent compact pickers with shared Pokemon, item, ability, and move selection dialogs that keep previews visible until explicit confirmation.
   - [ ] Run a non-blocking real-device Safari pass for safe areas, dynamic browser chrome, the virtual keyboard, and long-press gestures.
-  - [ ] Complete a mobile layout and touch-interaction pass.
+  - [x] Establish the mobile workspace with a compact header, horizontal Team Rail, single-column editor, and near-full-screen PokePilot drawer.
+  - [x] Verify core mobile layout, picker, team-management, and orientation behavior across representative emulated phones.
+  - [ ] Run a non-blocking real-device mobile pass for long-press reordering, EV sliders, safe areas, dynamic browser chrome, and the virtual keyboard.
   - [x] Verify popovers, pickers, reordering, diagnostics, and team management across target tablet viewport sizes.
 - [x] Add loading, error, and empty states for the builder's external data sources and pickers.
 - [ ] Write a strong portfolio case study.

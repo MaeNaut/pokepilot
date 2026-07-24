@@ -42,6 +42,7 @@ import {
   getOptionLimitForIndex,
   useIncrementalOptions,
 } from "../hooks/useIncrementalOptions";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import {
   getReorderDisplacement,
   useLongPressReorder,
@@ -93,6 +94,7 @@ import {
   BuilderSharePreview,
   type ShareImageTarget,
 } from "./BuilderSharePreview";
+import { TouchSelectionDialog } from "./TouchSelectionDialog";
 import { useLocalization } from "../i18n/useLocalization";
 import { statTranslationKeys } from "../i18n/statTranslations";
 
@@ -312,6 +314,22 @@ function getActiveOption<T>(options: T[], activeIndex: number) {
   return options[activeIndex >= 0 ? activeIndex : 0];
 }
 
+function findItemOptionIndex(
+  options: ItemIndexEntry[],
+  item: PokemonItem | null,
+) {
+  if (!item) {
+    return -1;
+  }
+
+  return options.findIndex(
+    (option) =>
+      normalizeShowdownId(option.name) === normalizeShowdownId(item.id) ||
+      normalizeShowdownId(option.showdownId) ===
+        normalizeShowdownId(item.showdownId ?? item.id),
+  );
+}
+
 function getNaturePosition(nature: Nature): NatureGridPosition {
   return {
     upIndex: Math.max(0, battleStatKeys.indexOf(nature.up)),
@@ -363,6 +381,7 @@ export function TeamBuilder({
 }: TeamBuilderProps) {
   const { gameDescription, gameName, pokemonFormName, pokemonName, t } =
     useLocalization();
+  const isTouchPickerLayout = useMediaQuery("(max-width: 1420px)");
   const {
     itemBySlot,
     abilityBySlot,
@@ -423,6 +442,8 @@ export function TeamBuilder({
   const [moveQuery, setMoveQuery] = useState("");
   const [hoveredItemOption, setHoveredItemOption] = useState<PokemonItem | null>(null);
   const [activePokemonOptionIndex, setActivePokemonOptionIndex] = useState(-1);
+  const [hoveredPokemonOption, setHoveredPokemonOption] =
+    useState<PokemonSelectOption | null>(null);
   const [activeItemOptionIndex, setActiveItemOptionIndex] = useState(-1);
   const [activeAbilityOptionIndex, setActiveAbilityOptionIndex] = useState(-1);
   const [activeNaturePosition, setActiveNaturePosition] = useState<NatureGridPosition>({
@@ -436,6 +457,9 @@ export function TeamBuilder({
     Record<string, PokemonAbility>
   >({});
   const [hoveredMoveOption, setHoveredMoveOption] = useState<PokemonMove | null>(null);
+  const [pokemonOptionPreviewArtwork, setPokemonOptionPreviewArtwork] = useState<
+    string | null
+  >(null);
   const [preMegaMovesByPokemonId, setPreMegaMovesByPokemonId] = useState<
     Record<string, PokemonMove[]>
   >({});
@@ -446,7 +470,10 @@ export function TeamBuilder({
   );
   const activeMember = team[selectedSlot];
   const activePokemonId = activeMember?.id ?? "";
-  const isNamePickerVisible = isNamePickerOpen || !activeMember;
+  const isNamePickerVisible =
+    isNamePickerOpen || (!activeMember && !isTouchPickerLayout);
+  const isInlineNamePickerVisible =
+    isNamePickerVisible && !isTouchPickerLayout;
   const activeCandidateFilters =
     candidateFiltersBySlot[selectedSlot] ?? emptyPokemonCandidateFilters;
   const activeItem = itemBySlot[selectedSlot] ?? null;
@@ -982,6 +1009,13 @@ export function TeamBuilder({
     () => matchingPokemonOptions.slice(0, pokemonOptionLimit),
     [matchingPokemonOptions, pokemonOptionLimit],
   );
+  const activeTouchPokemonOption = getActiveOption(
+    filteredOptions,
+    activePokemonOptionIndex,
+  );
+  const previewedPokemonOption = isTouchPickerLayout
+    ? activeTouchPokemonOption
+    : hoveredPokemonOption;
   const candidateAbilityOptions = useMemo(() => {
     const optionsById = new Map<string, PokemonCandidateFilterValue>();
     const filtersWithoutAbility = { ...activeCandidateFilters, ability: null };
@@ -1278,6 +1312,52 @@ export function TeamBuilder({
   }, [filteredOptions]);
 
   useEffect(() => {
+    if (!isNamePickerVisible || !previewedPokemonOption) {
+      setPokemonOptionPreviewArtwork(null);
+      return;
+    }
+
+    if (
+      activeMember?.spriteUrl &&
+      getPokemonLookupAliases(activeMember.id).some(
+        (lookup) =>
+          normalizeShowdownId(lookup) ===
+          normalizeShowdownId(previewedPokemonOption.id),
+      )
+    ) {
+      setPokemonOptionPreviewArtwork(activeMember.spriteUrl);
+      return;
+    }
+
+    let isCurrent = true;
+    setPokemonOptionPreviewArtwork(null);
+
+    const loadTimer = window.setTimeout(() => {
+      void fetchPokemon(previewedPokemonOption.id)
+        .then((pokemon) => {
+          if (isCurrent) {
+            setPokemonOptionPreviewArtwork(pokemon.spriteUrl ?? null);
+          }
+        })
+        .catch(() => {
+          if (isCurrent) {
+            setPokemonOptionPreviewArtwork(null);
+          }
+        });
+    }, 140);
+
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(loadTimer);
+    };
+  }, [
+    activeMember?.id,
+    activeMember?.spriteUrl,
+    isNamePickerVisible,
+    previewedPokemonOption,
+  ]);
+
+  useEffect(() => {
     if (displayedItemOptions.length === 0) {
       setActiveItemOptionIndex(-1);
       return;
@@ -1291,6 +1371,32 @@ export function TeamBuilder({
           : 0,
     );
   }, [activeItem, displayedItemOptions.length, filteredItemOptions.length, normalizedItemQuery]);
+
+  useEffect(() => {
+    if (
+      !isItemPickerOpen ||
+      normalizedItemQuery ||
+      !activeItem ||
+      itemOptions.length === 0
+    ) {
+      return;
+    }
+
+    const selectedItemIndex = findItemOptionIndex(itemOptions, activeItem);
+
+    if (selectedItemIndex < 0) {
+      return;
+    }
+
+    ensureItemOptionVisible(selectedItemIndex);
+    setActiveItemOptionIndex(selectedItemIndex + 1);
+  }, [
+    activeItem,
+    ensureItemOptionVisible,
+    isItemPickerOpen,
+    itemOptions,
+    normalizedItemQuery,
+  ]);
 
   useEffect(() => {
     if (filteredMoveOptions.length === 0) {
@@ -1465,7 +1571,11 @@ export function TeamBuilder({
   }, [activeMoveOptionIndex, openMoveSlot, visibleMoveOptions]);
 
   useEffect(() => {
-    if (!isNamePickerVisible || !activeMember) {
+    if (
+      !isNamePickerVisible ||
+      !activeMember ||
+      isTouchPickerLayout
+    ) {
       return;
     }
 
@@ -1473,6 +1583,7 @@ export function TeamBuilder({
       if (!namePickerRef.current?.contains(event.target as Node)) {
         setIsNamePickerOpen(false);
         setNameQuery("");
+        setHoveredPokemonOption(null);
       }
     }
 
@@ -1481,7 +1592,7 @@ export function TeamBuilder({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [activeMember, isNamePickerVisible]);
+  }, [activeMember, isNamePickerVisible, isTouchPickerLayout]);
 
   useEffect(() => {
     if (!openCandidateFilterPicker) {
@@ -1532,7 +1643,7 @@ export function TeamBuilder({
   }, [activeBattleFormOptionIndexFromPokemon, selectedSlot]);
 
   useEffect(() => {
-    if (!isItemPickerOpen) {
+    if (!isItemPickerOpen || isTouchPickerLayout) {
       return;
     }
 
@@ -1549,10 +1660,10 @@ export function TeamBuilder({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isItemPickerOpen]);
+  }, [isItemPickerOpen, isTouchPickerLayout]);
 
   useEffect(() => {
-    if (!openTraitPicker) {
+    if (!openTraitPicker || isTouchPickerLayout) {
       return;
     }
 
@@ -1568,10 +1679,10 @@ export function TeamBuilder({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [openTraitPicker]);
+  }, [isTouchPickerLayout, openTraitPicker]);
 
   useEffect(() => {
-    if (openMoveSlot === null) {
+    if (openMoveSlot === null || isTouchPickerLayout) {
       return;
     }
 
@@ -1586,7 +1697,7 @@ export function TeamBuilder({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [openMoveSlot]);
+  }, [isTouchPickerLayout, openMoveSlot]);
 
   useEffect(() => {
     if (!isBenchOpen) {
@@ -1695,6 +1806,14 @@ export function TeamBuilder({
   function closeNamePicker() {
     setIsNamePickerOpen(false);
     setNameQuery("");
+    setHoveredPokemonOption(null);
+  }
+
+  function openNamePicker() {
+    setActivePokemonOptionIndex(0);
+    setNameQuery("");
+    resetPokemonOptions();
+    setIsNamePickerOpen(true);
   }
 
   function togglePokemonType(type: PokemonType) {
@@ -1783,6 +1902,20 @@ export function TeamBuilder({
     setIsItemPickerOpen(false);
     setItemQuery("");
     setHoveredItemOption(null);
+  }
+
+  function openItemPicker() {
+    const selectedItemIndex = findItemOptionIndex(itemOptions, activeItem);
+    const nextIndex = activeItem
+      ? Math.max(0, selectedItemIndex) + 1
+      : 0;
+
+    setItemQuery("");
+    resetItemOptions();
+    ensureItemOptionVisible(nextIndex - (activeItem ? 1 : 0));
+    setActiveItemOptionIndex(nextIndex);
+    previewItemOptionAt(nextIndex);
+    setIsItemPickerOpen(true);
   }
 
   function closeTraitPicker() {
@@ -1943,8 +2076,7 @@ export function TeamBuilder({
     closeBuilderPopovers();
 
     if (!member) {
-      setIsNamePickerOpen(true);
-      setNameQuery("");
+      openNamePicker();
     }
   }
 
@@ -2070,8 +2202,7 @@ export function TeamBuilder({
     onClearSlot(slotIndex);
     clearSlot(slotIndex);
     if (slotIndex === selectedSlot) {
-      setIsNamePickerOpen(true);
-      setNameQuery("");
+      openNamePicker();
     } else {
       closeNamePicker();
     }
@@ -2303,6 +2434,18 @@ export function TeamBuilder({
     closeTraitPicker();
   }
 
+  function openAbilityPicker() {
+    const selectedIndex = displayedAbilityOptions.findIndex(
+      (ability) => ability === selectedAbility,
+    );
+    const nextIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+    ensureAbilityOptionVisible(nextIndex);
+    setActiveAbilityOptionIndex(nextIndex);
+    previewAbilityOptionAt(nextIndex);
+    setOpenTraitPicker("ability");
+  }
+
   function openAbilityPickerFromKeyboard(direction: 1 | -1) {
     const selectedIndex = displayedAbilityOptions.findIndex(
       (ability) => ability === selectedAbility,
@@ -2359,6 +2502,11 @@ export function TeamBuilder({
       ...current,
       [selectedSlot]: nature.id,
     }));
+  }
+
+  function confirmActiveNature() {
+    selectActiveNature();
+    closeTraitPicker();
   }
 
   function moveMoveKeyboardOption(direction: 1 | -1) {
@@ -2452,6 +2600,820 @@ export function TeamBuilder({
       };
     });
     closeMovePicker();
+  }
+
+  function renderPokemonOptionPreview(option: PokemonSelectOption) {
+    return (
+      <div className="touch-pokemon-preview">
+        {pokemonOptionPreviewArtwork ? (
+          <img
+            className="touch-pokemon-preview-artwork"
+            src={pokemonOptionPreviewArtwork}
+            alt=""
+            aria-hidden="true"
+            key={pokemonOptionPreviewArtwork}
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+            }}
+          />
+        ) : null}
+        <div className="touch-pokemon-preview-copy">
+          <strong>{option.name}</strong>
+          {usageRankByOptionId.has(option.id) ? (
+            <small>
+              {t("builder.usageRank", {
+                rank: usageRankByOptionId.get(option.id) ?? "",
+              })}
+            </small>
+          ) : null}
+        </div>
+        <div className="touch-pokemon-preview-types">
+          {option.types.map((type) => (
+            <TypeBadge type={type} key={type} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderPokemonOptionRows(previewOnly: boolean) {
+    return (
+      <>
+        {filteredOptions.map((option, optionIndex) => (
+          <button
+            className="pokemon-name-option"
+            type="button"
+            role="option"
+            aria-selected={activePokemonOptionIndex === optionIndex}
+            value={option.id}
+            key={option.id}
+            aria-describedby={
+              previewOnly ? undefined : "pokemon-option-preview"
+            }
+            onBlur={() => {
+              if (!previewOnly) {
+                setHoveredPokemonOption(null);
+              }
+            }}
+            onFocus={() => {
+              setActivePokemonOptionIndex(optionIndex);
+
+              if (!previewOnly) {
+                setHoveredPokemonOption(option);
+              }
+            }}
+            onMouseEnter={
+              previewOnly
+                ? undefined
+                : () => {
+                    setActivePokemonOptionIndex(optionIndex);
+                    setHoveredPokemonOption(option);
+                  }
+            }
+            onMouseLeave={() => {
+              if (!previewOnly) {
+                setHoveredPokemonOption(null);
+              }
+            }}
+            onClick={() => {
+              if (previewOnly) {
+                setActivePokemonOptionIndex(optionIndex);
+                return;
+              }
+
+              handleSelectOption(option.id, true);
+            }}
+          >
+            <span>{option.name}</span>
+            {usageRankByOptionId.has(option.id) ? (
+              <small
+                title={t("builder.usageRank", {
+                  rank: usageRankByOptionId.get(option.id) ?? "",
+                })}
+              >
+                #{usageRankByOptionId.get(option.id)}
+              </small>
+            ) : null}
+          </button>
+        ))}
+        {pokemonIndexStatus === "loading" && pokemonIndex.length === 0 ? (
+          <DataStatusRow message={t("builder.loadingPokemonData")} isLoading />
+        ) : null}
+        {pokemonIndexStatus === "error" ? (
+          <DataStatusRow
+            message={t("builder.pokemonDataUnavailable")}
+            onRetry={onRetryPokemonIndex}
+          />
+        ) : null}
+        {!normalizedNameQuery &&
+        pokemonIndexStatus === "ready" &&
+        isUsageOrderLoading ? (
+          <DataStatusRow message={t("builder.loadingPopularPokemon")} isLoading />
+        ) : null}
+        {!normalizedNameQuery && usageOrderError ? (
+          <DataStatusRow
+            message={t("builder.searchStillAvailable", {
+              message: usageOrderError,
+            })}
+            onRetry={() => {
+              setUsageOrderError(null);
+              setUsagePokemonIds(null);
+            }}
+          />
+        ) : null}
+        {!normalizedNameQuery &&
+        !isUsageOrderLoading &&
+        usagePokemonIds !== null &&
+        filteredOptions.length === 0 ? (
+          <div className="pokemon-name-empty">
+            {hasPokemonCandidateFilters(activeCandidateFilters)
+              ? t("builder.noFilterMatches")
+              : t("builder.noPopularPokemon")}
+          </div>
+        ) : null}
+        {normalizedNameQuery && filteredOptions.length === 0 ? (
+          <div className="pokemon-name-empty">{t("builder.noPokemon")}</div>
+        ) : null}
+      </>
+    );
+  }
+
+  function renderItemOptionRows(previewOnly: boolean) {
+    return (
+      <>
+        {activeItem ? (
+          <button
+            className="item-option item-clear-option"
+            type="button"
+            role="option"
+            aria-selected={activeItemOptionIndex === 0}
+            onFocus={() => {
+              setActiveItemOptionIndex(0);
+              setHoveredItemOption(null);
+            }}
+            onMouseEnter={
+              previewOnly
+                ? undefined
+                : () => {
+                    setActiveItemOptionIndex(0);
+                    setHoveredItemOption(null);
+                  }
+            }
+            onClick={() => {
+              if (previewOnly) {
+                setActiveItemOptionIndex(0);
+                setHoveredItemOption(null);
+                return;
+              }
+
+              clearItem();
+            }}
+          >
+            <span className="item-option-icon" aria-hidden="true">
+              <FontAwesomeIcon icon={faXmark} />
+            </span>
+            <span className="item-option-name">{t("builder.removeItem")}</span>
+          </button>
+        ) : null}
+        {visibleItemOptions.map((option, optionIndex) => {
+          const previewItemOption = itemFromIndexEntry(option);
+          const displayedOptionIndex = optionIndex + (activeItem ? 1 : 0);
+
+          return (
+            <button
+              className="item-option"
+              type="button"
+              role="option"
+              aria-selected={activeItemOptionIndex === displayedOptionIndex}
+              key={option.name}
+              aria-describedby={
+                previewOnly ? undefined : "item-option-tooltip"
+              }
+              onBlur={() => {
+                if (!previewOnly) {
+                  setHoveredItemOption(null);
+                }
+              }}
+              onFocus={() => {
+                setActiveItemOptionIndex(displayedOptionIndex);
+                previewItem(option.name, previewItemOption);
+              }}
+              onMouseEnter={
+                previewOnly
+                  ? undefined
+                  : () => {
+                      setActiveItemOptionIndex(displayedOptionIndex);
+                      previewItem(option.name, previewItemOption);
+                    }
+              }
+              onMouseLeave={() => {
+                if (!previewOnly) {
+                  setHoveredItemOption(null);
+                }
+              }}
+              onClick={() => {
+                if (previewOnly) {
+                  setActiveItemOptionIndex(displayedOptionIndex);
+                  previewItem(option.name, previewItemOption);
+                  return;
+                }
+
+                handleSelectItem(option.name);
+              }}
+            >
+              <span className="item-option-icon" aria-hidden="true">
+                <ItemSprite item={previewItemOption} />
+              </span>
+              <span className="item-option-name">
+                {gameName(
+                  "items",
+                  option.showdownId || option.name,
+                  option.displayName,
+                )}
+              </span>
+            </button>
+          );
+        })}
+        {itemIndexStatus === "loading" && itemIndex.length === 0 ? (
+          <DataStatusRow message={t("builder.loadingItemData")} isLoading />
+        ) : null}
+        {itemIndexStatus === "error" ? (
+          <DataStatusRow
+            message={t("builder.itemDataUnavailable")}
+            onRetry={onRetryItemIndex}
+          />
+        ) : null}
+        {filteredItemOptions.length === 0 && itemIndexStatus === "ready" ? (
+          <div className="item-empty">{t("builder.noItems")}</div>
+        ) : null}
+      </>
+    );
+  }
+
+  function renderAbilityOptionRows(previewOnly: boolean) {
+    return visibleAbilityOptions.map((ability, optionIndex) => (
+      <button
+        className="trait-option"
+        type="button"
+        role="option"
+        aria-selected={activeAbilityOptionIndex === optionIndex}
+        aria-describedby={
+          previewOnly ? undefined : "ability-option-tooltip"
+        }
+        key={ability}
+        onBlur={() => {
+          if (!previewOnly) {
+            setHoveredAbilityOption(null);
+          }
+        }}
+        onFocus={() => {
+          setActiveAbilityOptionIndex(optionIndex);
+          void previewAbility(ability);
+        }}
+        onMouseEnter={
+          previewOnly
+            ? undefined
+            : () => {
+                setActiveAbilityOptionIndex(optionIndex);
+                void previewAbility(ability);
+              }
+        }
+        onMouseLeave={() => {
+          if (!previewOnly) {
+            setHoveredAbilityOption(null);
+          }
+        }}
+        onClick={() => {
+          if (previewOnly) {
+            setActiveAbilityOptionIndex(optionIndex);
+            void previewAbility(ability);
+            return;
+          }
+
+          selectAbility(ability);
+        }}
+      >
+        {getLocalizedAbilityName(ability)}
+      </button>
+    ));
+  }
+
+  function renderNatureGrid(previewOnly: boolean) {
+    const displayedNature = previewOnly
+      ? getNatureFromPosition(activeNaturePosition)
+      : selectedNature;
+
+    return (
+      <div className="nature-grid">
+        <div className="nature-grid-corner" aria-hidden="true">
+          <span className="nature-axis-up">{t("builder.up")}</span>
+          <span className="nature-axis-down">{t("builder.down")}</span>
+        </div>
+        {battleStatKeys.map((downStat) => (
+          <div
+            className={`nature-stat-heading is-down ${
+              displayedNature.down === downStat ? "is-selected-down" : ""
+            }`}
+            key={downStat}
+          >
+            {getLocalizedStatLabel(downStat)}
+          </div>
+        ))}
+        {battleStatKeys.map((upStat, upIndex) => (
+          <div className="nature-grid-row" key={upStat}>
+            <div
+              className={`nature-stat-heading is-up ${
+                displayedNature.up === upStat ? "is-selected-up" : ""
+              }`}
+            >
+              {getLocalizedStatLabel(upStat)}
+            </div>
+            {battleStatKeys.map((downStat, downIndex) => {
+              const nature = getNatureByAlignment(upStat, downStat);
+              const isNeutral = upStat === downStat;
+              const isKeyboardActive =
+                activeNaturePosition.upIndex === upIndex &&
+                activeNaturePosition.downIndex === downIndex;
+
+              return (
+                <button
+                  className={`nature-cell ${
+                    displayedNature.id === nature.id ? "is-active" : ""
+                  } ${isKeyboardActive ? "is-keyboard-active" : ""} ${
+                    isNeutral ? "is-neutral" : ""
+                  }`}
+                  type="button"
+                  role="option"
+                  aria-selected={displayedNature.id === nature.id}
+                  key={nature.id}
+                  onFocus={() =>
+                    setActiveNaturePosition({
+                      upIndex,
+                      downIndex,
+                    })
+                  }
+                  onMouseEnter={
+                    previewOnly
+                      ? undefined
+                      : () =>
+                          setActiveNaturePosition({
+                            upIndex,
+                            downIndex,
+                          })
+                  }
+                  onClick={() => {
+                    setActiveNaturePosition({
+                      upIndex,
+                      downIndex,
+                    });
+
+                    if (!previewOnly) {
+                      setNatureBySlot((current) => ({
+                        ...current,
+                        [selectedSlot]: nature.id,
+                      }));
+                    }
+                  }}
+                >
+                  {getLocalizedNatureName(nature)}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function renderMoveOptionRows(slotIndex: number, previewOnly: boolean) {
+    return (
+      <>
+        <button
+          className={`move-option move-clear-option ${
+            activeMoveOptionIndex === 0 ? "is-keyboard-active" : ""
+          }`}
+          type="button"
+          role="option"
+          aria-selected={activeMoveOptionIndex === 0}
+          onFocus={() => {
+            setActiveMoveOptionIndex(0);
+            setHoveredMoveOption(null);
+          }}
+          onMouseEnter={
+            previewOnly
+              ? undefined
+              : () => {
+                  setActiveMoveOptionIndex(0);
+                  setHoveredMoveOption(null);
+                }
+          }
+          onClick={() => {
+            if (previewOnly) {
+              setActiveMoveOptionIndex(0);
+              setHoveredMoveOption(null);
+              return;
+            }
+
+            clearMove(slotIndex);
+          }}
+        >
+          <span className="move-clear-icon" aria-hidden="true">
+            <FontAwesomeIcon icon={faXmark} />
+          </span>
+          <span>{t("builder.emptyMove")}</span>
+        </button>
+        {filteredMoveOptions.length ? (
+          visibleMoveOptions.map((option, optionIndex) => (
+            <button
+              className={`move-option type-${option.type} ${
+                activeMoveOptionIndex === optionIndex + 1
+                  ? "is-keyboard-active"
+                  : ""
+              }`}
+              type="button"
+              role="option"
+              key={option.id}
+              aria-selected={activeMoveOptionIndex === optionIndex + 1}
+              aria-describedby={
+                previewOnly ? undefined : `move-option-tooltip-${slotIndex}`
+              }
+              onBlur={() => {
+                if (!previewOnly) {
+                  setHoveredMoveOption(null);
+                }
+              }}
+              onFocus={() => {
+                setActiveMoveOptionIndex(optionIndex + 1);
+                setHoveredMoveOption(option);
+              }}
+              onMouseEnter={
+                previewOnly
+                  ? undefined
+                  : () => {
+                      setActiveMoveOptionIndex(optionIndex + 1);
+                      setHoveredMoveOption(option);
+                    }
+              }
+              onMouseLeave={() => {
+                if (!previewOnly) {
+                  setHoveredMoveOption(null);
+                }
+              }}
+              onClick={() => {
+                if (previewOnly) {
+                  setActiveMoveOptionIndex(optionIndex + 1);
+                  setHoveredMoveOption(option);
+                  return;
+                }
+
+                selectMove(slotIndex, option.id);
+              }}
+            >
+              <MoveSummary move={option} />
+            </button>
+          ))
+        ) : (
+          <div className="move-empty">{t("builder.noMoves")}</div>
+        )}
+      </>
+    );
+  }
+
+  function renderTouchSelectionDialog() {
+    if (!isTouchPickerLayout) {
+      return null;
+    }
+
+    if (isNamePickerOpen) {
+      const previewOption = activeTouchPokemonOption;
+
+      return (
+        <TouchSelectionDialog
+          kind="pokemon"
+          title={t("builder.selectPokemon")}
+          closeLabel={t("common.close")}
+          cancelLabel={t("common.cancel")}
+          selectLabel={t("common.select")}
+          canSelect={Boolean(previewOption)}
+          search={
+            <input
+              className="touch-picker-search-input"
+              data-touch-picker-autofocus
+              aria-label={t("builder.searchPokemon")}
+              value={nameQuery}
+              placeholder={t("builder.searchPokemon")}
+              onChange={(event) => setNameQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                  event.preventDefault();
+                  movePokemonKeyboardOption(
+                    event.key === "ArrowDown" ? 1 : -1,
+                  );
+                }
+
+                if (event.key === "Enter" && filteredOptions.length > 0) {
+                  event.preventDefault();
+                  selectActivePokemonOption();
+                }
+              }}
+            />
+          }
+          preview={
+            previewOption ? (
+              renderPokemonOptionPreview(previewOption)
+            ) : (
+              <p className="touch-picker-empty-preview">
+                {t("builder.noPokemon")}
+              </p>
+            )
+          }
+          onClose={closeNamePicker}
+          onSelect={selectActivePokemonOption}
+        >
+          <div
+            className="touch-picker-option-list pokemon-name-results"
+            role="listbox"
+            onScroll={handlePokemonOptionsScroll}
+          >
+            {renderPokemonOptionRows(true)}
+          </div>
+        </TouchSelectionDialog>
+      );
+    }
+
+    if (isItemPickerOpen) {
+      const activeItemEntry = getItemOptionAt(
+        activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0,
+      );
+      const previewedItem = activeItemEntry
+        ? itemFromIndexEntry(activeItemEntry)
+        : null;
+
+      return (
+        <TouchSelectionDialog
+          kind="item"
+          title={t("builder.selectItem")}
+          closeLabel={t("common.close")}
+          cancelLabel={t("common.cancel")}
+          selectLabel={t("common.select")}
+          canSelect={displayedItemOptions.length > 0}
+          search={
+            <input
+              className="touch-picker-search-input"
+              data-touch-picker-autofocus
+              aria-label={t("builder.searchItem")}
+              value={itemQuery}
+              placeholder={t("builder.searchItem")}
+              onChange={(event) => setItemQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                  event.preventDefault();
+                  moveItemKeyboardOption(
+                    event.key === "ArrowDown" ? 1 : -1,
+                  );
+                }
+
+                if (
+                  event.key === "Enter" &&
+                  displayedItemOptions.length > 0
+                ) {
+                  event.preventDefault();
+                  selectActiveItemOption();
+                }
+              }}
+            />
+          }
+          preview={
+            previewedItem ? (
+              <div className="touch-item-preview">
+                <div className="item-tooltip-header">
+                  <ItemSprite item={previewedItem} />
+                  <div>
+                    <strong>{getLocalizedItemName(previewedItem)}</strong>
+                    {previewedItem.category ? (
+                      <small>
+                        {previewedItem.category === "Mega Stones"
+                          ? t("builder.megaStones")
+                          : previewedItem.category}
+                      </small>
+                    ) : null}
+                  </div>
+                </div>
+                <p>
+                  {gameDescription(
+                    "items",
+                    previewedItem.showdownId ?? previewedItem.id,
+                    getItemEffectText(previewedItem),
+                  )}
+                </p>
+              </div>
+            ) : (
+              <p className="touch-picker-empty-preview">
+                {t("builder.removeItem")}
+              </p>
+            )
+          }
+          onClose={closeItemPicker}
+          onSelect={selectActiveItemOption}
+        >
+          <div
+            className="touch-picker-option-list item-results"
+            role="listbox"
+            onScroll={handleItemOptionsScroll}
+          >
+            {renderItemOptionRows(true)}
+          </div>
+        </TouchSelectionDialog>
+      );
+    }
+
+    if (openTraitPicker === "ability") {
+      const previewedAbilityName = getActiveOption(
+        displayedAbilityOptions,
+        activeAbilityOptionIndex,
+      );
+      const previewedAbilityId = normalizeShowdownId(
+        previewedAbilityName ?? "",
+      );
+      const previewedAbility =
+        previewedAbilityName && previewedAbilityId
+          ? hoveredAbilityOption?.id === previewedAbilityId
+            ? hoveredAbilityOption
+            : (abilityDetailsByName[previewedAbilityId] ?? {
+                id: previewedAbilityId,
+                name: previewedAbilityName,
+              })
+          : null;
+
+      return (
+        <TouchSelectionDialog
+          kind="ability"
+          title={t("builder.selectAbility")}
+          closeLabel={t("common.close")}
+          cancelLabel={t("common.cancel")}
+          selectLabel={t("common.select")}
+          canSelect={displayedAbilityOptions.length > 0}
+          preview={
+            previewedAbility ? (
+              <div className="touch-ability-preview">
+                <div className="ability-tooltip-header">
+                  <strong>
+                    {gameName(
+                      "abilities",
+                      previewedAbility.id,
+                      previewedAbility.name,
+                    )}
+                  </strong>
+                  <small>{t("builder.ability")}</small>
+                </div>
+                <p>
+                  {gameDescription(
+                    "abilities",
+                    previewedAbility.id,
+                    getAbilityEffectText(previewedAbility),
+                  )}
+                </p>
+              </div>
+            ) : (
+              <p className="touch-picker-empty-preview">
+                {t("builder.noAbility")}
+              </p>
+            )
+          }
+          onClose={closeTraitPicker}
+          onSelect={selectActiveAbilityOption}
+        >
+          <div
+            className="touch-picker-option-list touch-ability-options"
+            role="listbox"
+            onScroll={handleAbilityOptionsScroll}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                moveAbilityKeyboardOption(
+                  event.key === "ArrowDown" ? 1 : -1,
+                );
+              }
+
+              if (event.key === "Enter") {
+                event.preventDefault();
+                selectActiveAbilityOption();
+              }
+            }}
+          >
+            {renderAbilityOptionRows(true)}
+          </div>
+        </TouchSelectionDialog>
+      );
+    }
+
+    if (openTraitPicker === "nature") {
+      return (
+        <TouchSelectionDialog
+          kind="nature"
+          title={t("builder.selectNature")}
+          closeLabel={t("common.close")}
+          cancelLabel={t("common.cancel")}
+          selectLabel={t("common.select")}
+          canSelect
+          onClose={closeTraitPicker}
+          onSelect={confirmActiveNature}
+        >
+          <div
+            className="touch-nature-grid-wrap"
+            role="listbox"
+            onKeyDown={(event) => {
+              if (
+                event.key === "ArrowDown" ||
+                event.key === "ArrowUp" ||
+                event.key === "ArrowLeft" ||
+                event.key === "ArrowRight"
+              ) {
+                event.preventDefault();
+
+                if (event.key === "ArrowDown") {
+                  moveNatureKeyboardPosition(1, 0);
+                } else if (event.key === "ArrowUp") {
+                  moveNatureKeyboardPosition(-1, 0);
+                } else if (event.key === "ArrowRight") {
+                  moveNatureKeyboardPosition(0, 1);
+                } else {
+                  moveNatureKeyboardPosition(0, -1);
+                }
+              }
+
+              if (event.key === "Enter") {
+                event.preventDefault();
+                confirmActiveNature();
+              }
+            }}
+          >
+            {renderNatureGrid(true)}
+          </div>
+        </TouchSelectionDialog>
+      );
+    }
+
+    if (openMoveSlot !== null) {
+      return (
+        <TouchSelectionDialog
+          kind="move"
+          title={t("builder.selectMove", { slot: openMoveSlot + 1 })}
+          closeLabel={t("common.close")}
+          cancelLabel={t("common.cancel")}
+          selectLabel={t("common.select")}
+          canSelect={filteredMoveOptions.length > 0 || activeMoveOptionIndex === 0}
+          search={
+            <input
+              className="touch-picker-search-input"
+              data-touch-picker-autofocus
+              aria-label={t("builder.searchAvailableMoves")}
+              value={moveQuery}
+              placeholder={t("filter.searchMoves")}
+              onChange={(event) => {
+                setMoveQuery(event.target.value);
+                resetMoveOptions();
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                  event.preventDefault();
+                  moveMoveKeyboardOption(
+                    event.key === "ArrowDown" ? 1 : -1,
+                  );
+                }
+
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  selectActiveMoveOption(openMoveSlot);
+                }
+              }}
+            />
+          }
+          preview={
+            hoveredMoveOption ? (
+              <MoveTooltip move={hoveredMoveOption} placement="dialog" />
+            ) : (
+              <p className="touch-picker-empty-preview">
+                {t("builder.emptyMove")}
+              </p>
+            )
+          }
+          onClose={closeMovePicker}
+          onSelect={() => selectActiveMoveOption(openMoveSlot)}
+        >
+          <div
+            className="touch-picker-option-list move-results"
+            role="listbox"
+            ref={moveResultsRef}
+            onScroll={handleMoveOptionsScroll}
+          >
+            {renderMoveOptionRows(openMoveSlot, true)}
+          </div>
+        </TouchSelectionDialog>
+      );
+    }
+
+    return null;
   }
 
   return (
@@ -2749,7 +3711,7 @@ export function TeamBuilder({
       </div>
 
       <article
-        className="pokemon-card"
+        className={`pokemon-card${activeMember ? "" : " is-empty-slot"}`}
         onClick={(event) => {
           if (activeMember || isNamePickerVisible) {
             return;
@@ -2764,15 +3726,14 @@ export function TeamBuilder({
             return;
           }
 
-          setIsNamePickerOpen(true);
-          setNameQuery("");
+          openNamePicker();
         }}
       >
         <div className="card-main">
           <div className="editor-column">
             <div className="name-row">
               <div className="pokemon-name-picker" ref={namePickerRef}>
-                {isNamePickerVisible ? (
+                {isInlineNamePickerVisible ? (
                   <input
                     className="pokemon-name-input"
                     aria-label={t("builder.searchPokemon")}
@@ -2802,80 +3763,32 @@ export function TeamBuilder({
                     type="button"
                     aria-haspopup="listbox"
                     aria-expanded={isNamePickerVisible}
-                    onClick={() => setIsNamePickerOpen(true)}
+                    onClick={openNamePicker}
                   >
                     {activeHeaderName ?? t("builder.choosePokemon")}
                   </button>
                 )}
 
-                {isNamePickerVisible ? (
+                {isInlineNamePickerVisible ? (
                   <div className="pokemon-name-menu">
                     <div
                       className="pokemon-name-results"
                       role="listbox"
                       onScroll={handlePokemonOptionsScroll}
                     >
-                      {filteredOptions.map((option, optionIndex) => (
-                        <button
-                          className="pokemon-name-option"
-                          type="button"
-                          role="option"
-                          aria-selected={activePokemonOptionIndex === optionIndex}
-                          value={option.id}
-                          key={option.id}
-                          onMouseEnter={() => setActivePokemonOptionIndex(optionIndex)}
-                          onClick={() => handleSelectOption(option.id, true)}
-                        >
-                          <span>{option.name}</span>
-                          {usageRankByOptionId.has(option.id) ? (
-                            <small title={t("builder.usageRank", {
-                              rank: usageRankByOptionId.get(option.id) ?? "",
-                            })}>
-                              #{usageRankByOptionId.get(option.id)}
-                            </small>
-                          ) : null}
-                        </button>
-                      ))}
-                      {pokemonIndexStatus === "loading" && pokemonIndex.length === 0 ? (
-                        <DataStatusRow message={t("builder.loadingPokemonData")} isLoading />
-                      ) : null}
-                      {pokemonIndexStatus === "error" ? (
-                        <DataStatusRow
-                          message={t("builder.pokemonDataUnavailable")}
-                          onRetry={onRetryPokemonIndex}
-                        />
-                      ) : null}
-                      {!normalizedNameQuery &&
-                      pokemonIndexStatus === "ready" &&
-                      isUsageOrderLoading ? (
-                        <DataStatusRow message={t("builder.loadingPopularPokemon")} isLoading />
-                      ) : null}
-                      {!normalizedNameQuery && usageOrderError ? (
-                        <DataStatusRow
-                          message={t("builder.searchStillAvailable", {
-                            message: usageOrderError,
-                          })}
-                          onRetry={() => {
-                            setUsageOrderError(null);
-                            setUsagePokemonIds(null);
-                          }}
-                        />
-                      ) : null}
-                      {!normalizedNameQuery &&
-                      !isUsageOrderLoading &&
-                      usagePokemonIds !== null &&
-                      filteredOptions.length === 0 ? (
-                        <div className="pokemon-name-empty">
-                          {hasPokemonCandidateFilters(activeCandidateFilters)
-                            ? t("builder.noFilterMatches")
-                            : t("builder.noPopularPokemon")}
-                        </div>
-                      ) : null}
-                      {normalizedNameQuery && filteredOptions.length === 0 ? (
-                        <div className="pokemon-name-empty">{t("builder.noPokemon")}</div>
-                      ) : null}
+                      {renderPokemonOptionRows(false)}
                     </div>
                   </div>
+                ) : null}
+
+                {isInlineNamePickerVisible && hoveredPokemonOption ? (
+                  <aside
+                    className="desktop-pokemon-option-preview"
+                    id="pokemon-option-preview"
+                    role="tooltip"
+                  >
+                    {renderPokemonOptionPreview(hoveredPokemonOption)}
+                  </aside>
                 ) : null}
               </div>
 
@@ -3028,13 +3941,16 @@ export function TeamBuilder({
                         ? getLocalizedItemName(activeItem)
                         : t("builder.chooseItem")
                   }
-                  onBlur={() => setHoveredItemOption(null)}
+                  onBlur={() => {
+                    if (!isTouchPickerLayout) {
+                      setHoveredItemOption(null);
+                    }
+                  }}
                   onClick={() => {
                     if (isItemPickerOpen) {
                       closeItemPicker();
                     } else {
-                      setIsItemPickerOpen(true);
-                      setHoveredItemOption(null);
+                      openItemPicker();
                     }
                   }}
                   onFocus={() => {
@@ -3047,7 +3963,11 @@ export function TeamBuilder({
                       previewItem(activeItem.id, activeItem);
                     }
                   }}
-                  onMouseLeave={() => setHoveredItemOption(null)}
+                  onMouseLeave={() => {
+                    if (!isTouchPickerLayout) {
+                      setHoveredItemOption(null);
+                    }
+                  }}
                 >
                   {activeItem ? (
                     <ItemSprite item={activeItem} />
@@ -3056,7 +3976,7 @@ export function TeamBuilder({
                   )}
                 </button>
 
-                {isItemPickerOpen ? (
+                {isItemPickerOpen && !isTouchPickerLayout ? (
                   <div className="item-menu">
                     <input
                       className="item-search-input"
@@ -3087,83 +4007,12 @@ export function TeamBuilder({
                       role="listbox"
                       onScroll={handleItemOptionsScroll}
                     >
-                      {activeItem ? (
-                        <button
-                          className="item-option item-clear-option"
-                          type="button"
-                          role="option"
-                          aria-selected={activeItemOptionIndex === 0}
-                          onFocus={() => {
-                            setActiveItemOptionIndex(0);
-                            setHoveredItemOption(null);
-                          }}
-                          onMouseEnter={() => {
-                            setActiveItemOptionIndex(0);
-                            setHoveredItemOption(null);
-                          }}
-                          onClick={clearItem}
-                        >
-                          <span className="item-option-icon" aria-hidden="true">
-                            <FontAwesomeIcon icon={faXmark} />
-                          </span>
-                          <span className="item-option-name">{t("builder.removeItem")}</span>
-                        </button>
-                      ) : null}
-                      {visibleItemOptions.map((option, optionIndex) => {
-                        const previewItemOption = itemFromIndexEntry(option);
-                        const displayedOptionIndex = optionIndex + (activeItem ? 1 : 0);
-
-                        return (
-                          <button
-                            className="item-option"
-                            type="button"
-                            role="option"
-                            aria-selected={activeItemOptionIndex === displayedOptionIndex}
-                            key={option.name}
-                            aria-describedby="item-option-tooltip"
-                            onBlur={() => setHoveredItemOption(null)}
-                            onFocus={() => {
-                              setActiveItemOptionIndex(displayedOptionIndex);
-                              previewItem(option.name, previewItemOption);
-                            }}
-                            onMouseEnter={() => {
-                              setActiveItemOptionIndex(displayedOptionIndex);
-                              previewItem(option.name, previewItemOption);
-                            }}
-                            onMouseLeave={() => setHoveredItemOption(null)}
-                            onClick={() => handleSelectItem(option.name)}
-                          >
-                            <span className="item-option-icon" aria-hidden="true">
-                              <ItemSprite item={previewItemOption} />
-                            </span>
-                            <span className="item-option-name">
-                              {gameName(
-                                "items",
-                                option.showdownId || option.name,
-                                option.displayName,
-                              )}
-                            </span>
-                          </button>
-                        );
-                      })}
-                      {itemIndexStatus === "loading" && itemIndex.length === 0 ? (
-                        <DataStatusRow message={t("builder.loadingItemData")} isLoading />
-                      ) : null}
-                      {itemIndexStatus === "error" ? (
-                        <DataStatusRow
-                          message={t("builder.itemDataUnavailable")}
-                          onRetry={onRetryItemIndex}
-                        />
-                      ) : null}
-                      {filteredItemOptions.length === 0 &&
-                      itemIndexStatus === "ready" ? (
-                        <div className="item-empty">{t("builder.noItems")}</div>
-                      ) : null}
+                      {renderItemOptionRows(false)}
                     </div>
                   </div>
                 ) : null}
 
-                {hoveredItemOption ? (
+                {!isTouchPickerLayout && hoveredItemOption ? (
                   <aside
                     className={`item-tooltip ${
                       isItemPickerOpen ? "item-option-tooltip" : ""
@@ -3226,64 +4075,42 @@ export function TeamBuilder({
                   <button
                     className="trait-value"
                     type="button"
-                    aria-haspopup="listbox"
+                    aria-haspopup={isTouchPickerLayout ? "dialog" : "listbox"}
                     aria-expanded={openTraitPicker === "ability"}
-                    onBlur={() => setHoveredAbilityOption(null)}
+                    onBlur={() => {
+                      if (!isTouchPickerLayout) {
+                        setHoveredAbilityOption(null);
+                      }
+                    }}
                     onClick={() => {
-                      setHoveredAbilityOption(null);
                       if (openTraitPicker === "ability") {
                         closeTraitPicker();
                       } else {
-                        const selectedIndex = displayedAbilityOptions.findIndex(
-                          (ability) => ability === selectedAbility,
-                        );
-                        const nextIndex = selectedIndex >= 0 ? selectedIndex : 0;
-
-                        setActiveAbilityOptionIndex(nextIndex);
-                        previewAbilityOptionAt(nextIndex);
-                        setOpenTraitPicker("ability");
+                        openAbilityPicker();
                       }
                     }}
                     onFocus={() => void previewAbility(selectedAbility)}
                     onMouseEnter={() => void previewAbility(selectedAbility)}
-                    onMouseLeave={() => setHoveredAbilityOption(null)}
+                    onMouseLeave={() => {
+                      if (!isTouchPickerLayout) {
+                        setHoveredAbilityOption(null);
+                      }
+                    }}
                   >
                     {getLocalizedAbilityName(selectedAbility)}
                   </button>
 
-                  {openTraitPicker === "ability" ? (
+                  {openTraitPicker === "ability" && !isTouchPickerLayout ? (
                     <div
                       className="trait-menu"
                       role="listbox"
                       onScroll={handleAbilityOptionsScroll}
                     >
-                      {visibleAbilityOptions.map((ability, optionIndex) => (
-                        <button
-                          className="trait-option"
-                          type="button"
-                          role="option"
-                          aria-selected={activeAbilityOptionIndex === optionIndex}
-                          aria-describedby="ability-option-tooltip"
-                          key={ability}
-                          onBlur={() => setHoveredAbilityOption(null)}
-                          onFocus={() => {
-                            setActiveAbilityOptionIndex(optionIndex);
-                            void previewAbility(ability);
-                          }}
-                          onMouseEnter={() => {
-                            setActiveAbilityOptionIndex(optionIndex);
-                            void previewAbility(ability);
-                          }}
-                          onMouseLeave={() => setHoveredAbilityOption(null)}
-                          onClick={() => selectAbility(ability)}
-                        >
-                          {getLocalizedAbilityName(ability)}
-                        </button>
-                      ))}
+                      {renderAbilityOptionRows(false)}
                     </div>
                   ) : null}
 
-                  {hoveredAbilityOption ? (
+                  {!isTouchPickerLayout && hoveredAbilityOption ? (
                     <aside
                       className={`ability-tooltip ${
                         openTraitPicker === "ability" ? "ability-option-tooltip" : ""
@@ -3369,75 +4196,13 @@ export function TeamBuilder({
                     {getLocalizedNatureName(selectedNature)}
                   </button>
 
-                  {openTraitPicker === "nature" ? (
+                  {openTraitPicker === "nature" && !isTouchPickerLayout ? (
                     <div
                       className="nature-grid-menu"
                       role="dialog"
                       aria-label={t("builder.selectNature")}
                     >
-                      <div className="nature-grid">
-                        <div className="nature-grid-corner" aria-hidden="true">
-                          <span className="nature-axis-up">{t("builder.up")}</span>
-                          <span className="nature-axis-down">{t("builder.down")}</span>
-                        </div>
-                        {battleStatKeys.map((downStat) => (
-                          <div
-                            className={`nature-stat-heading is-down ${
-                              selectedNature.down === downStat ? "is-selected-down" : ""
-                            }`}
-                            key={downStat}
-                          >
-                            {getLocalizedStatLabel(downStat)}
-                          </div>
-                        ))}
-                        {battleStatKeys.map((upStat) => (
-                          <div className="nature-grid-row" key={upStat}>
-                            <div
-                              className={`nature-stat-heading is-up ${
-                                selectedNature.up === upStat ? "is-selected-up" : ""
-                              }`}
-                            >
-                              {getLocalizedStatLabel(upStat)}
-                            </div>
-                            {battleStatKeys.map((downStat, downIndex) => {
-                              const nature = getNatureByAlignment(upStat, downStat);
-                              const isNeutral = upStat === downStat;
-                              const isKeyboardActive =
-                                activeNaturePosition.upIndex ===
-                                  battleStatKeys.indexOf(upStat) &&
-                                activeNaturePosition.downIndex === downIndex;
-
-                              return (
-                                <button
-                                  className={`nature-cell ${
-                                    selectedNature.id === nature.id ? "is-active" : ""
-                                  } ${isKeyboardActive ? "is-keyboard-active" : ""} ${
-                                    isNeutral ? "is-neutral" : ""
-                                  }`}
-                                  type="button"
-                                  role="option"
-                                  aria-selected={selectedNature.id === nature.id}
-                                  key={nature.id}
-                                  onMouseEnter={() =>
-                                    setActiveNaturePosition({
-                                      upIndex: battleStatKeys.indexOf(upStat),
-                                      downIndex,
-                                    })
-                                  }
-                                  onClick={() => {
-                                    setNatureBySlot((current) => ({
-                                      ...current,
-                                      [selectedSlot]: nature.id,
-                                    }));
-                                  }}
-                                >
-                                  {getLocalizedNatureName(nature)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ))}
-                      </div>
+                      {renderNatureGrid(false)}
                     </div>
                   ) : null}
                 </div>
@@ -3544,12 +4309,13 @@ export function TeamBuilder({
                     </button>
 
                     {move &&
+                    !isTouchPickerLayout &&
                     openMoveSlot !== index &&
                     suppressedMoveTooltipSlot !== index ? (
                       <MoveTooltip move={move} />
                     ) : null}
 
-                    {openMoveSlot === index ? (
+                    {openMoveSlot === index && !isTouchPickerLayout ? (
                       <div className="move-menu">
                         <input
                           className="move-search-input"
@@ -3584,64 +4350,14 @@ export function TeamBuilder({
                           ref={moveResultsRef}
                           onScroll={handleMoveOptionsScroll}
                         >
-                          <button
-                            className={`move-option move-clear-option ${
-                              activeMoveOptionIndex === 0 ? "is-keyboard-active" : ""
-                            }`}
-                            type="button"
-                            role="option"
-                            aria-selected={activeMoveOptionIndex === 0}
-                            onFocus={() => {
-                              setActiveMoveOptionIndex(0);
-                              setHoveredMoveOption(null);
-                            }}
-                            onMouseEnter={() => {
-                              setActiveMoveOptionIndex(0);
-                              setHoveredMoveOption(null);
-                            }}
-                            onClick={() => clearMove(index)}
-                          >
-                            <span className="move-clear-icon" aria-hidden="true">
-                              <FontAwesomeIcon icon={faXmark} />
-                            </span>
-                            <span>{t("builder.emptyMove")}</span>
-                          </button>
-                          {filteredMoveOptions.length ? (
-                            visibleMoveOptions.map((option, optionIndex) => (
-                              <button
-                                className={`move-option type-${option.type} ${
-                                  activeMoveOptionIndex === optionIndex + 1
-                                    ? "is-keyboard-active"
-                                    : ""
-                                }`}
-                                type="button"
-                                role="option"
-                                key={option.id}
-                                aria-selected={activeMoveOptionIndex === optionIndex + 1}
-                                aria-describedby={`move-option-tooltip-${index}`}
-                                onBlur={() => setHoveredMoveOption(null)}
-                                onFocus={() => {
-                                  setActiveMoveOptionIndex(optionIndex + 1);
-                                  setHoveredMoveOption(option);
-                                }}
-                                onMouseEnter={() => {
-                                  setActiveMoveOptionIndex(optionIndex + 1);
-                                  setHoveredMoveOption(option);
-                                }}
-                                onMouseLeave={() => setHoveredMoveOption(null)}
-                                onClick={() => selectMove(index, option.id)}
-                              >
-                                <MoveSummary move={option} />
-                              </button>
-                            ))
-                          ) : (
-                            <div className="move-empty">{t("builder.noMoves")}</div>
-                          )}
+                          {renderMoveOptionRows(index, false)}
                         </div>
                       </div>
                     ) : null}
 
-                    {openMoveSlot === index && hoveredMoveOption ? (
+                    {openMoveSlot === index &&
+                    !isTouchPickerLayout &&
+                    hoveredMoveOption ? (
                       <MoveTooltip
                         id={`move-option-tooltip-${index}`}
                         move={hoveredMoveOption}
@@ -3818,6 +4534,7 @@ export function TeamBuilder({
         </div>
       </article>
       </div>
+      {renderTouchSelectionDialog()}
       <BuilderSharePreview
         target={shareImageTarget}
         teamName={teamName}

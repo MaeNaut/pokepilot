@@ -1936,6 +1936,7 @@ select {
 }
 
 .pokemon-name-picker {
+  --pokemon-name-menu-width: min(380px, 86vw);
   position: relative;
   flex: 0 0 auto;
   width: auto;
@@ -2083,12 +2084,38 @@ select {
   left: 0;
   z-index: 20;
   display: grid;
-  width: min(380px, 86vw);
+  width: var(--pokemon-name-menu-width);
   overflow: hidden;
   border: 1px solid #cfcfcf;
   border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-popover);
+}
+
+.desktop-pokemon-option-preview {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: calc(var(--pokemon-name-menu-width) + 10px);
+  z-index: 21;
+  width: 300px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+  pointer-events: none;
+}
+
+.desktop-pokemon-option-preview .touch-pokemon-preview {
+  min-height: 118px;
+}
+
+.desktop-pokemon-option-preview .touch-pokemon-preview-artwork {
+  right: 28px;
+  bottom: -44px;
+  width: 190px;
+  height: 166px;
 }
 
 .pokemon-name-results {
@@ -5796,22 +5823,22 @@ select {
   }
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .app-wordmark {
+:where(.app-shell.is-compact-drawer-layout) .app-wordmark {
   display: none;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .app-header-layout {
+:where(.app-shell.is-compact-drawer-layout) .app-header-layout {
   grid-template-columns: 1fr;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .header-builder-workspace {
+:where(.app-shell.is-compact-drawer-layout) .header-builder-workspace {
   width: calc(100% - 10vw);
   justify-self: start;
   margin-right: 0;
   margin-left: 5vw;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .header-preferences {
+:where(.app-shell.is-compact-drawer-layout) .header-preferences {
   position: absolute;
   top: 50%;
   right: 24px;
@@ -5819,40 +5846,40 @@ select {
   transform: translateY(-50%);
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .preference-menu {
+:where(.app-shell.is-compact-drawer-layout) .preference-menu {
   right: 0;
   left: auto;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .team-actions {
+:where(.app-shell.is-compact-drawer-layout) .team-actions {
   margin-left: 0;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .workspace {
+:where(.app-shell.is-compact-drawer-layout) .workspace {
   height: auto;
   max-height: none;
   grid-template-columns: 1fr;
   min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .builder-workspace {
+:where(.app-shell.is-compact-drawer-layout) .builder-workspace {
   width: min(1040px, calc(100% - 80px));
   justify-self: center;
   margin-right: 0;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .team-diagnostics {
+:where(.app-shell.is-compact-drawer-layout) .team-diagnostics {
   width: calc(100% - 68px);
   margin: 0 0 32px auto;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .footer {
+:where(.app-shell.is-compact-drawer-layout) .footer {
   padding: 4px 8px;
   font-size: 0.6rem;
   line-height: 1.2;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .footer p {
+:where(.app-shell.is-compact-drawer-layout) .footer p {
   white-space: nowrap;
 }
 
@@ -5906,7 +5933,7 @@ select {
   animation: copilot-drawer-exit 220ms ease both;
 }
 
-:where(.app-shell.is-tablet-drawer-layout) .copilot-drawer .copilot-panel {
+:where(.app-shell.is-compact-drawer-layout) .copilot-drawer .copilot-panel {
   width: 100%;
   height: 100%;
   max-height: 100%;
@@ -6094,7 +6121,7 @@ select {
 }
 
 @media (max-width: 599px), (min-width: 1421px) {
-  .app-shell:not(.is-tablet-drawer-layout) .copilot-drawer {
+  .app-shell:not(.is-compact-drawer-layout) .copilot-drawer {
     position: static;
     inset: auto;
     z-index: auto;
@@ -6107,8 +6134,8 @@ select {
     transition: none;
   }
 
-  .app-shell:not(.is-tablet-drawer-layout) .copilot-drawer-scrim,
-  .app-shell:not(.is-tablet-drawer-layout) .copilot-drawer-handle {
+  .app-shell:not(.is-compact-drawer-layout) .copilot-drawer-scrim,
+  .app-shell:not(.is-compact-drawer-layout) .copilot-drawer-handle {
     display: none;
   }
 }
@@ -6245,6 +6272,682 @@ select {
 
   .coverage-ring strong {
     font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 599px),
+  (max-width: 980px) and (max-height: 599px) and (orientation: landscape) {
+  :root {
+    --app-header-height: 56px;
+    --mobile-copilot-sheet-offset: calc(
+      44px + env(safe-area-inset-top, 0px)
+    );
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 70;
+    height: var(--app-header-height);
+  }
+
+  .app-header-layout {
+    min-width: 0;
+  }
+
+  .header-builder-workspace {
+    width: calc(100% - 84px);
+    min-width: 0;
+    justify-self: start;
+    margin-left: 8px;
+  }
+
+  .team-actions {
+    width: 100%;
+    gap: 2px;
+    margin-left: 0;
+  }
+
+  .team-name-field {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .team-name-field input {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    padding: 0 4px;
+    font-size: 0.88rem;
+  }
+
+  .team-action-button {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+  }
+
+  .team-action-button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .header-preferences {
+    right: 6px;
+    gap: 0;
+  }
+
+  .preference-menu {
+    top: calc(100% + 8px);
+    width: 146px;
+  }
+
+  .team-manager-panel,
+  .new-team-import-panel,
+  .team-unsaved-warning {
+    position: fixed;
+    top: calc(var(--app-header-height) + 6px);
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-height: calc(100dvh - var(--app-header-height) - 14px);
+  }
+
+  .new-team-import-panel textarea {
+    min-height: 180px;
+  }
+
+  .workspace {
+    --tablet-copilot-width: calc(100vw - 40px);
+    min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
+  }
+
+  .builder-workspace {
+    width: calc(100% - 24px);
+    gap: 8px;
+  }
+
+  .builder-stage {
+    margin-top: 10px;
+  }
+
+  .builder-card-toolbar {
+    width: 100%;
+    min-height: 30px;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 10px;
+    margin: 0 0 6px;
+  }
+
+  .builder-card-tool-button {
+    gap: 5px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .builder-card-tool-button svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .showdown-panel {
+    right: 0;
+    width: 100%;
+  }
+
+  .builder-card-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .team-tabs {
+    position: relative;
+    z-index: 7;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    align-items: end;
+    gap: 0;
+    margin-bottom: -1px;
+  }
+
+  .team-tab-shell {
+    width: 100%;
+    align-items: end;
+  }
+
+  .team-tab-shell + .team-tab-shell {
+    margin-top: 0;
+  }
+
+  .team-tab-shell.is-active {
+    z-index: 3;
+  }
+
+  .team-tab-shell.has-validity-error::after,
+  .team-tab-shell.has-validity-unavailable::after {
+    top: 4px;
+    right: 4px;
+  }
+
+  .team-tab-shell.is-drop-target::before {
+    inset: -2px;
+    border-radius: calc(var(--radius-md) + 1px)
+      calc(var(--radius-md) + 1px) 0 0;
+  }
+
+  .team-tab,
+  .team-tab.is-active {
+    width: 100%;
+    height: 56px;
+    border: 1px solid #c7c7c7;
+    border-bottom: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    padding: 0;
+    transform: none;
+  }
+
+  .team-tab-shell + .team-tab-shell .team-tab {
+    border-left: 0;
+  }
+
+  .team-tab.is-active {
+    border-color: #8f8f8f;
+    background: var(--color-surface);
+    box-shadow: 0 -5px 12px rgba(0, 0, 0, 0.07);
+    transform: translateY(1px);
+  }
+
+  .team-tab img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .team-tab.is-empty {
+    font-size: 1.35rem;
+  }
+
+  .bench-tab {
+    font-size: 1rem;
+  }
+
+  .bench-count {
+    top: 3px;
+    right: 3px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    font-size: 0.55rem;
+  }
+
+  .bench-panel {
+    top: calc(100% + 8px);
+    right: 0;
+    left: auto;
+    width: min(320px, calc(100vw - 24px));
+    max-height: calc(100dvh - var(--app-header-height) - 96px);
+  }
+
+  .bench-pokemon-list {
+    max-height: calc(100dvh - var(--app-header-height) - 166px);
+  }
+
+  .pokemon-card {
+    width: 100%;
+    min-height: 0;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .pokemon-card.is-empty-slot .sprite-crop {
+    display: none;
+  }
+
+  .card-main {
+    min-height: 0;
+    padding: 16px 14px 22px;
+  }
+
+  .sprite-crop {
+    width: calc(100% + 28px);
+    min-height: 174px;
+    margin-right: -14px;
+    margin-left: -14px;
+    padding-top: 0;
+  }
+
+  .sprite-crop img {
+    right: -26px;
+    bottom: -28px;
+    width: 270px;
+    height: 250px;
+  }
+
+  .type-stack {
+    top: 12px;
+    right: 14px;
+    width: auto;
+  }
+
+  .name-row {
+    width: 100%;
+    max-width: 100%;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pokemon-name-picker,
+  .pokemon-name-button,
+  .pokemon-name-input {
+    height: 2.4rem;
+  }
+
+  .pokemon-name-button,
+  .pokemon-name-input {
+    font-size: 2.2rem;
+  }
+
+  .pokemon-name-input {
+    width: min(300px, calc(100vw - 52px));
+  }
+
+  .mega-controls {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .mega-button,
+  .form-picker-trigger {
+    height: 30px;
+  }
+
+  .mega-button {
+    min-width: 34px;
+    padding: 0 8px;
+  }
+
+  .pokemon-name-menu {
+    width: min(340px, calc(100vw - 40px));
+  }
+
+  .pokemon-card.is-empty-slot .name-row,
+  .pokemon-card.is-empty-slot .pokemon-name-picker,
+  .pokemon-card.is-empty-slot .pokemon-name-input,
+  .pokemon-card.is-empty-slot .pokemon-name-menu {
+    width: 100%;
+  }
+
+  .pokemon-card.is-empty-slot .name-row,
+  .pokemon-card.is-empty-slot .pokemon-name-picker {
+    height: auto;
+  }
+
+  .pokemon-card.is-empty-slot .pokemon-name-menu {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-top: 8px;
+  }
+
+  .pokemon-card.is-empty-slot .pokemon-name-results {
+    max-height: 260px;
+  }
+
+  .meta-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 14px;
+  }
+
+  .set-meta-controls {
+    align-items: center;
+    gap: 14px;
+  }
+
+  .trait-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .trait-label {
+    font-size: 0.7rem;
+  }
+
+  .trait-value {
+    font-size: 0.96rem;
+  }
+
+  .editor-detail-grid {
+    gap: 20px;
+    margin-top: 18px;
+  }
+
+  .move-list {
+    gap: 8px;
+  }
+
+  .move-pill {
+    min-height: 46px;
+    grid-template-columns: 38px minmax(0, 1fr) 64px;
+    gap: 8px;
+    padding-left: 9px;
+    font-size: 0.9rem;
+  }
+
+  .move-power-panel {
+    min-height: 46px;
+  }
+
+  .move-results {
+    max-height: min(292px, 45dvh);
+  }
+
+  .candidate-filter-panel {
+    gap: 10px;
+  }
+
+  .candidate-filter-row {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .candidate-type-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .candidate-filter-menu,
+  .candidate-filter-move-menu {
+    width: 100%;
+  }
+
+  .nature-grid-menu {
+    position: fixed;
+    top: auto;
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    z-index: 130;
+    width: auto;
+    max-height: calc(100dvh - var(--app-header-height) - 16px);
+    overflow: auto;
+    padding: 8px;
+    transform: none;
+  }
+
+  .nature-grid,
+  .nature-grid-row {
+    grid-template-columns: 70px repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .nature-cell {
+    min-height: 35px;
+    padding: 4px 2px;
+    font-size: 0.66rem;
+  }
+
+  .stats-editor-body {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .stats-editor-grid {
+    gap: 4px;
+  }
+
+  .stat-axis-labels,
+  .stat-editor-column {
+    grid-template-rows: 17px 20px 140px 28px 30px;
+    gap: 4px;
+  }
+
+  .ev-vertical-track {
+    height: 140px;
+  }
+
+  .ev-vertical-range {
+    height: 124px;
+  }
+
+  .stat-editor-label,
+  .stat-base-value,
+  .stat-result-value {
+    font-size: 0.72rem;
+  }
+
+  .ev-number-input {
+    width: 36px;
+  }
+
+  .team-diagnostics {
+    width: 100%;
+    margin: 0 0 20px;
+  }
+
+  .diagnostics-section {
+    padding: 10px;
+  }
+
+  .matchup-matrix {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .matchup-matrix-cell {
+    min-height: 38px;
+  }
+
+  .coverage-content {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .coverage-ring {
+    width: 82px;
+    height: 82px;
+  }
+
+  .coverage-ring::before {
+    inset: 7px;
+  }
+
+  .coverage-ring strong {
+    font-size: 1.35rem;
+  }
+
+  .copilot-drawer {
+    top: var(--mobile-copilot-sheet-offset);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    transform: translateY(calc(100% + 2px));
+  }
+
+  @keyframes mobile-copilot-sheet-enter {
+    from {
+      transform: translateY(calc(100% + 2px));
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mobile-copilot-sheet-exit {
+    from {
+      transform: translateY(0);
+    }
+
+    to {
+      transform: translateY(calc(100% + 2px));
+    }
+  }
+
+  .copilot-drawer.is-open {
+    transform: translateY(0);
+  }
+
+  .copilot-drawer.is-open.is-transitioning {
+    animation: mobile-copilot-sheet-enter 220ms ease both;
+  }
+
+  .copilot-drawer.is-transitioning:not(.is-open) {
+    animation: mobile-copilot-sheet-exit 220ms ease both;
+  }
+
+  :where(.app-shell.is-compact-drawer-layout)
+    .copilot-drawer
+    .copilot-panel {
+    border: 1px solid #5d6267;
+    border-bottom: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.22);
+  }
+
+  .copilot-drawer-handle {
+    top: auto;
+    right: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: 108px;
+    height: 40px;
+    flex-direction: row;
+    gap: 7px;
+    border: 1px solid #4a4e52;
+    border-radius: 999px;
+    padding: 0 13px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+    transform: translateX(50%);
+    transition:
+      bottom 220ms ease,
+      width 180ms ease,
+      border-radius 180ms ease,
+      background 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .copilot-drawer-handle.is-open {
+    top: auto;
+    right: 50%;
+    bottom: calc(100dvh - var(--mobile-copilot-sheet-offset));
+    left: auto;
+    width: 44px;
+    height: 40px;
+    flex-direction: row;
+    gap: 0;
+    border: 1px solid #4a4e52;
+    border-bottom: 0;
+    border-radius: 10px 10px 0 0;
+    padding: 0;
+    transform: translateX(50%);
+  }
+
+  .copilot-drawer-handle.is-open.is-transitioning,
+  .copilot-drawer-handle.is-transitioning:not(.is-open) {
+    animation: none;
+  }
+
+  .copilot-drawer-handle span {
+    font-size: 0.7rem;
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+
+  .copilot-drawer-handle.is-open span {
+    display: none;
+  }
+
+  .copilot-drawer-handle svg {
+    transform: rotate(90deg);
+  }
+
+  .app-shell:has(.nature-grid-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.item-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.trait-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.move-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.candidate-filter-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.validity-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.showdown-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.clear-pokemon-confirm) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.team-manager-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.new-team-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.new-team-import-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.team-unsaved-warning) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.preference-menu) .copilot-drawer-handle:not(.is-open) {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .footer {
+    padding: 6px 10px;
+  }
+
+  .footer p {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 599px) and (orientation: portrait) {
+  .validity-panel {
+    position: fixed;
+    top: calc(var(--app-header-height) + 50px);
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - var(--app-header-height) - 62px);
+    overflow: hidden;
+    transform: none;
+  }
+
+  .validity-panel::before {
+    display: none;
+  }
+
+  .validity-issue-list {
+    max-height: min(220px, calc(100dvh - var(--app-header-height) - 142px));
+  }
+}
+
+@media (max-width: 359px) {
+  .header-builder-workspace {
+    width: calc(100% - 76px);
+  }
+
+  .team-name-field input {
+    font-size: 0.8rem;
+  }
+
+  .team-action-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .header-preferences {
+    right: 4px;
+  }
+
+  .builder-card-toolbar {
+    gap: 6px;
+  }
+
+  .builder-card-tool-button {
+    font-size: 0.66rem;
+  }
+
+  .pokemon-name-button,
+  .pokemon-name-input {
+    font-size: 1.95rem;
+  }
+
+  .team-tab,
+  .team-tab.is-active {
+    height: 52px;
+  }
+
+  .team-tab img {
+    width: 38px;
+    height: 38px;
   }
 }
 
@@ -6464,6 +7167,14 @@ select {
   border-color: var(--color-border-strong);
   background: var(--color-surface);
   color: var(--color-text);
+}
+
+@media (min-width: 1720px) {
+  :root[data-theme="dark"] .team-tab.is-active {
+    box-shadow:
+      inset 3px 0 0 #ffffff,
+      0 5px 14px rgba(0, 0, 0, 0.24);
+  }
 }
 
 :root[data-theme="dark"] .team-tab.is-empty:hover,
@@ -6806,5 +7517,615 @@ select {
 :root[data-theme="dark"] .sprite-crop img {
   filter: brightness(1.18) saturate(0.92);
   opacity: 0.22;
+}
+
+/* Compact-layout selection dialogs */
+.touch-picker-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.touch-picker-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(7, 9, 11, 0.64);
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-picker-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(640px, calc(100vw - 64px));
+  height: min(680px, calc(100dvh - 80px));
+  min-height: 420px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+}
+
+.touch-picker-header {
+  display: flex;
+  min-height: 50px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--color-border);
+  padding: 8px 10px 8px 18px;
+}
+
+.touch-picker-header h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.05rem;
+  font-weight: var(--font-semibold);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.touch-picker-close {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1rem;
+}
+
+.touch-picker-close:hover,
+.touch-picker-close:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.touch-picker-search {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--color-border);
+  padding: 8px 12px;
+  background: var(--color-surface-subtle);
+}
+
+.touch-picker-search-input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 13px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: var(--font-medium);
+}
+
+.touch-picker-search-input::placeholder {
+  color: var(--color-subtle);
+}
+
+.touch-picker-search-input:focus {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+
+.touch-picker-results {
+  min-height: 150px;
+  flex: 1 1 320px;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.touch-picker-option-list {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.touch-picker-option-list::-webkit-scrollbar {
+  display: none;
+}
+
+.touch-picker-option-list.pokemon-name-results,
+.touch-picker-option-list.item-results,
+.touch-picker-option-list.move-results {
+  position: static;
+  width: 100%;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.touch-picker-option-list.pokemon-name-results,
+.touch-picker-option-list.item-results {
+  align-content: start;
+  grid-auto-rows: minmax(50px, max-content);
+}
+
+.touch-picker-option-list .pokemon-name-option,
+.touch-picker-option-list .item-option,
+.touch-picker-option-list .trait-option,
+.touch-picker-option-list .move-option {
+  min-height: 50px;
+  touch-action: manipulation;
+}
+
+.touch-ability-options {
+  display: grid;
+  align-content: start;
+}
+
+.touch-ability-options .trait-option {
+  width: 100%;
+}
+
+.touch-picker-dialog.is-ability {
+  height: auto;
+  min-height: 0;
+  max-height: min(480px, calc(100dvh - 80px));
+}
+
+.touch-picker-dialog.is-ability .touch-picker-results {
+  min-height: 0;
+  max-height: 200px;
+  flex: 0 1 auto;
+}
+
+.touch-picker-dialog.is-ability .touch-picker-option-list {
+  height: auto;
+  max-height: 200px;
+}
+
+.touch-picker-dialog.is-ability .touch-picker-preview {
+  min-height: 104px;
+  max-height: 160px;
+}
+
+.touch-picker-dialog.is-nature {
+  width: min(640px, calc(100vw - 32px));
+  height: auto;
+  min-height: 0;
+  max-height: calc(100dvh - 48px);
+}
+
+.touch-picker-dialog.is-nature .touch-picker-results {
+  min-height: 0;
+  flex: 0 0 auto;
+  overflow: auto;
+  padding: 12px;
+}
+
+.touch-nature-grid-wrap {
+  min-width: 0;
+}
+
+.touch-picker-dialog.is-nature .nature-grid,
+.touch-picker-dialog.is-nature .nature-grid-row {
+  grid-template-columns: 92px repeat(5, minmax(72px, 1fr));
+}
+
+.touch-picker-preview {
+  min-height: 112px;
+  max-height: 210px;
+  flex: 0 1 auto;
+  overflow: auto;
+  border-top: 1px solid var(--color-border);
+  padding: 12px 16px;
+  background: var(--color-surface-subtle);
+  scrollbar-width: none;
+}
+
+.touch-picker-preview::-webkit-scrollbar {
+  display: none;
+}
+
+.touch-picker-empty-preview {
+  display: grid;
+  min-height: 94px;
+  place-items: center;
+  margin: 0;
+  color: var(--color-subtle);
+  font-size: 0.88rem;
+}
+
+.touch-pokemon-preview {
+  position: relative;
+  display: flex;
+  min-height: 86px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.touch-pokemon-preview-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.touch-pokemon-preview-artwork {
+  position: absolute;
+  right: 48px;
+  bottom: -52px;
+  width: 220px;
+  height: 190px;
+  object-fit: contain;
+  object-position: right bottom;
+  opacity: 0.17;
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] .touch-pokemon-preview-artwork {
+  filter: brightness(1.18) saturate(0.92);
+  opacity: 0.22;
+}
+
+.touch-pokemon-preview strong {
+  overflow: hidden;
+  font-size: 1.25rem;
+  font-weight: var(--font-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.touch-pokemon-preview small,
+.touch-item-preview small,
+.touch-ability-preview small {
+  color: var(--color-subtle);
+  font-size: 0.74rem;
+  font-weight: var(--font-medium);
+}
+
+.touch-pokemon-preview-types {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.touch-pokemon-preview-types .type-badge {
+  width: 38px;
+  height: 38px;
+}
+
+.touch-pokemon-preview-types .type-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.touch-item-preview,
+.touch-ability-preview {
+  min-height: 94px;
+}
+
+.touch-item-preview p,
+.touch-ability-preview p {
+  margin: 12px 0 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: var(--font-regular);
+  line-height: 1.5;
+}
+
+.touch-picker-preview .move-tooltip.move-dialog-preview {
+  position: static;
+  inset: auto;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition: none;
+}
+
+.touch-picker-preview .move-dialog-preview .move-tooltip-shell {
+  border-radius: var(--radius-lg);
+}
+
+.touch-picker-dialog.is-move .touch-picker-results {
+  flex-basis: 220px;
+}
+
+.touch-picker-dialog.is-move .touch-picker-preview {
+  min-height: 250px;
+  max-height: 300px;
+  flex: 0 0 auto;
+  overflow-y: auto;
+}
+
+.touch-picker-actions {
+  display: flex;
+  min-height: 56px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  border-top: 1px solid var(--color-border);
+  padding: 8px 12px;
+  background: var(--color-surface);
+}
+
+.touch-picker-actions button {
+  min-width: 92px;
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: var(--font-medium);
+  touch-action: manipulation;
+}
+
+.touch-picker-actions button:hover,
+.touch-picker-actions button:focus-visible {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-hover);
+}
+
+.touch-picker-actions button.is-primary {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-surface);
+}
+
+.touch-picker-actions button.is-primary:hover,
+.touch-picker-actions button.is-primary:focus-visible {
+  filter: brightness(0.88);
+}
+
+.touch-picker-actions button:disabled {
+  cursor: not-allowed;
+  filter: none;
+  opacity: 0.42;
+}
+
+body:has(.touch-picker-layer) .copilot-drawer-handle {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 599px) {
+  .touch-picker-layer {
+    padding:
+      max(16px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .touch-picker-dialog {
+    width: 100%;
+    height: min(700px, calc(100dvh - 32px));
+    min-height: 0;
+    border-radius: var(--radius-md);
+  }
+
+  .touch-picker-header {
+    min-height: 50px;
+    padding-left: 14px;
+  }
+
+  .touch-picker-header h2 {
+    font-size: 0.98rem;
+  }
+
+  .touch-picker-search {
+    padding: 8px 10px;
+  }
+
+  .touch-picker-search-input {
+    height: 42px;
+    font-size: 0.94rem;
+  }
+
+  .touch-picker-preview {
+    min-height: 112px;
+    max-height: 190px;
+    padding: 12px 14px;
+  }
+
+  .touch-picker-dialog.is-move .touch-picker-preview {
+    min-height: 240px;
+    max-height: 288px;
+  }
+
+  .touch-picker-dialog.is-ability {
+    max-height: calc(100dvh - 32px);
+  }
+
+  .touch-picker-dialog.is-nature {
+    width: 100%;
+    max-height: calc(100dvh - 32px);
+  }
+
+  .touch-picker-dialog.is-nature .touch-picker-results {
+    padding: 10px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-grid,
+  .touch-picker-dialog.is-nature .nature-grid-row {
+    grid-template-columns: 64px repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-cell {
+    min-height: 38px;
+    padding: 3px 1px;
+    font-size: 0.66rem;
+  }
+
+  .touch-picker-actions {
+    min-height: 58px;
+    padding: 8px 10px;
+  }
+
+  .touch-picker-actions button {
+    min-width: 84px;
+  }
+}
+
+@media (max-width: 980px) and (max-height: 599px) and (orientation: landscape) {
+  .touch-picker-layer {
+    padding: 6px;
+  }
+
+  .touch-picker-dialog {
+    width: min(680px, calc(100vw - 24px));
+    height: calc(100dvh - 12px);
+    min-height: 0;
+  }
+
+  .touch-picker-header {
+    min-height: 44px;
+  }
+
+  .touch-picker-search {
+    padding: 6px 10px;
+  }
+
+  .touch-picker-search-input {
+    height: 36px;
+  }
+
+  .touch-picker-results {
+    min-height: 80px;
+  }
+
+  .touch-picker-preview {
+    min-height: 80px;
+    max-height: 132px;
+    padding: 9px 12px;
+  }
+
+  .touch-picker-dialog.is-move .touch-picker-results {
+    min-height: 50px;
+    flex-basis: 50px;
+  }
+
+  .touch-picker-dialog.is-move .touch-picker-preview {
+    min-height: 154px;
+    max-height: 184px;
+  }
+
+  .touch-picker-dialog.is-ability,
+  .touch-picker-dialog.is-nature {
+    max-height: calc(100dvh - 12px);
+  }
+
+  .touch-picker-dialog.is-nature .touch-picker-results {
+    padding: 6px 10px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-grid,
+  .touch-picker-dialog.is-nature .nature-grid-row {
+    grid-template-columns: 76px repeat(5, minmax(64px, 1fr));
+    gap: 3px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-grid-corner,
+  .touch-picker-dialog.is-nature .nature-stat-heading {
+    min-height: 28px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-cell {
+    min-height: 28px;
+    padding: 2px;
+    font-size: 0.66rem;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-shell {
+    padding: 8px 8px 6px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-header {
+    min-height: 32px;
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-header strong {
+    font-size: 1rem;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-type,
+  .touch-picker-dialog.is-move .move-tooltip-type .type-badge {
+    width: 30px;
+    height: 30px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-type .type-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .touch-picker-dialog.is-move .move-category-icon {
+    font-size: 1.4rem;
+  }
+
+  .touch-picker-preview .move-tooltip-body {
+    margin-top: 6px;
+    padding: 8px 10px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-stats div {
+    padding: 4px 6px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip p {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .touch-picker-preview .move-tooltip-tags {
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-tags span {
+    padding: 3px 6px;
+    font-size: 0.62rem;
+  }
+
+  .touch-picker-actions {
+    min-height: 48px;
+    padding: 5px 10px;
+  }
+
+  .touch-picker-actions button {
+    min-height: 36px;
+  }
 }
 

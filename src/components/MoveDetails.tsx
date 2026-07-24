@@ -8,7 +8,7 @@ type MoveSummaryProps = {
 
 type MoveTooltipProps = MoveSummaryProps & {
   id?: string;
-  placement?: "pill" | "option";
+  placement?: "pill" | "option" | "dialog";
 };
 
 function getMoveCategoryClass(category?: string) {
@@ -51,9 +51,11 @@ export function MoveTooltip({ move, id, placement = "pill" }: MoveTooltipProps) 
     <aside
       className={`move-tooltip${
         placement === "option" ? " move-option-tooltip" : ""
+      }${
+        placement === "dialog" ? " move-dialog-preview" : ""
       } type-${move.type}`}
       id={id}
-      role="tooltip"
+      role={placement === "dialog" ? "group" : "tooltip"}
     >
       <div className="move-tooltip-shell">
         <div className="move-tooltip-header">
