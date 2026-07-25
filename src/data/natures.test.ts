@@ -25,7 +25,7 @@ describe("Pokemon Champions stat calculation", () => {
     );
 
     expect(stats).toEqual({
-      hp: 122,
+      hp: 177,
       attack: 120,
       defense: 120,
       specialAttack: 152,
@@ -43,7 +43,7 @@ describe("Pokemon Champions stat calculation", () => {
 
     expect(stats.attack).toBe(108);
     expect(stats.specialAttack).toBe(167);
-    expect(stats.hp).toBe(122);
+    expect(stats.hp).toBe(177);
   });
 
   it("caps an individual EV value at the Champions limit", () => {
@@ -55,6 +55,6 @@ describe("Pokemon Champions stat calculation", () => {
 
     expect(CHAMPIONS_MAX_EV_PER_STAT).toBe(32);
     expect(CHAMPIONS_MAX_EV_TOTAL).toBe(66);
-    expect(stats.hp).toBe(152);
+    expect(stats.hp).toBe(207);
   });
 });

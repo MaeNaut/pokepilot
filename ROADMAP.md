@@ -64,7 +64,37 @@ The MVP should prove the core loop:
   consolidate legacy browser-cache cleanup, memoize the hydrated legality snapshot,
   and remove redundant base-form move requests from the editor.
 
-## Phase 4 - AI Assistant
+## Phase 4 - Damage Calculator
+
+- [x] Add a dedicated Calculator mode while preserving the shared team-management header.
+- [x] Keep PokePilot available beside the Calculator and retain the temporary
+      opponent, field, and battle state when moving between app modes.
+- [x] Keep My Pokemon and Opponent Pokemon in fixed left/right panels and reverse
+  only the damage direction.
+- [x] Reuse the active team's complete build state and normal save/dirty workflow
+  for My Pokemon.
+- [x] Keep the opponent build local to the calculator with direct set and battle-state editing.
+- [x] Add a shared, persisted Singles/Doubles header setting that switches
+      calculator rules, PokePilot context, and BSS/VGC usage rankings.
+- [x] Adapt `@smogon/calc` to Pokemon Champions level 50, fixed IV 31, and
+  0-32 stat-point assumptions.
+- [x] Support doubles spread damage, weather, terrain, Magic Room, Wonder Room,
+  Gravity, Fairy Aura, critical hits, Helping Hand, Tailwind, Friend Guard,
+  Plus/Minus activation, burn, defensive screens, current HP, and stat stages.
+- [x] Show the damage range, percentage range, current-HP KO chance, multi-hit KO
+  summary, and the attacking/defending stats used.
+- [x] Restrict calculator Pokemon and items to the Regulation M-B legality
+  snapshot and lock matching Mega Stones for Mega forms.
+- [x] Lazy-load the calculator UI and engine so it does not join the initial Team
+  Builder module.
+- [x] Reuse builder visual primitives for Pokemon types, items, moves, and the
+  searchable Regulation M-B opponent selector.
+- [ ] Verify additional Pokemon Champions-only mechanics against live reference
+  cases and add explicit overrides where upstream generation-9 data is incomplete.
+- [ ] Revisit simultaneous two-way results, usage-based opponent defaults,
+  opponent presets, and dedicated power/bulk summaries after MVP playtesting.
+
+## Phase 5 - AI Assistant
 
 - [x] Start with structured analysis of the active team and selected Pokemon.
 - [x] Feed deterministic field/weather concept summaries into local team analysis and recommendations.
@@ -85,7 +115,7 @@ The MVP should prove the core loop:
 - [ ] Add request limits, response caps, caching, and graceful API-unavailable behavior
   before public deployment.
 
-## Phase 5 - Persistence and Polish
+## Phase 6 - Persistence and Polish
 
 - [x] Save and load teams through localStorage.
 - [x] Persist Pokemon slots plus item, ability, nature, EV, move, Mega, and form state.
@@ -136,7 +166,7 @@ The MVP should prove the core loop:
 - [x] Add loading, error, and empty states for the builder's external data sources and pickers.
 - [ ] Write a strong portfolio case study.
 
-## Phase 6 - Optional Enhancements
+## Phase 7 - Optional Enhancements
 
 - Compare two teams.
 - Lock selected team members and ask AI to fill the rest.

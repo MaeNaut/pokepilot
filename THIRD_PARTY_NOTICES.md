@@ -77,3 +77,14 @@ Usage stats: https://www.smogon.com/stats/
 Pokemon Showdown is licensed under the MIT License. PokePilot AI uses Showdown
 data as a practical legality reference and is not affiliated with Pokemon
 Showdown or Smogon.
+
+## @smogon/calc
+
+Damage ranges and battle modifiers are calculated with the `@smogon/calc`
+package through a PokePilot Pokemon Champions adapter.
+
+Repository: https://github.com/smogon/damage-calc
+
+The installed package declares the MIT License. PokePilot supplies its current
+Pokemon Champions species, move, stat-point, and field inputs to the engine and
+is not affiliated with Smogon.

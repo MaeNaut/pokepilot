@@ -35,6 +35,7 @@ import type {
   ValidityStatus,
 } from "./teamValidity";
 import { hasPokemonCandidateFilters } from "./pokemonCandidateFilters";
+import type { BattleFormat } from "../battleFormat/battleFormat";
 
 export type CopilotAnalysisScope = "team" | "pokemon";
 export type CopilotPriority = "high" | "medium" | "low";
@@ -86,6 +87,7 @@ export type CopilotCandidateFilterSnapshot = {
 export type CopilotAnalysisRequest = {
   version: 1;
   scope: CopilotAnalysisScope;
+  battleFormat: BattleFormat;
   teamName: string;
   selectedSlot: number;
   sets: CopilotSetSnapshot[];
@@ -114,6 +116,7 @@ export type CopilotAnalysisResponse = {
 
 type CreateCopilotRequestInput = {
   scope: CopilotAnalysisScope;
+  battleFormat?: BattleFormat;
   teamName: string;
   team: TeamSlot[];
   pokemonIndex?: PokemonIndexEntry[];
@@ -258,6 +261,7 @@ function createRoleCounts(diagnostics: TeamDiagnosticsResult) {
 
 export function createCopilotAnalysisRequest({
   scope,
+  battleFormat = "doubles",
   teamName,
   team,
   pokemonIndex = [],
@@ -325,6 +329,7 @@ export function createCopilotAnalysisRequest({
   return {
     version: 1,
     scope,
+    battleFormat,
     teamName: teamName.trim() || "Untitled Team",
     selectedSlot,
     sets,
@@ -354,6 +359,7 @@ export function getCopilotRequestFingerprint(request: CopilotAnalysisRequest) {
   return JSON.stringify({
     version: request.version,
     scope: request.scope,
+    battleFormat: request.battleFormat,
     selectedSlot: request.selectedSlot,
     selectedSet: request.sets.find((set) => set.slotIndex === request.selectedSlot),
     selectedCandidateFilters: request.candidateFilters.find(

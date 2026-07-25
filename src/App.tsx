@@ -1,16 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
   faChevronLeft,
   faChevronRight,
+  faCalculator,
   faDesktop,
   faFloppyDisk,
   faLanguage,
   faList,
   faMoon,
   faSun,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "./api/pokeApi";
 import { fetchItem } from "./api/showdownCatalog";
@@ -88,6 +98,18 @@ import { useLocalization } from "./i18n/useLocalization";
 import type { Locale } from "./i18n/gameTranslations";
 import { useTheme } from "./theme/useTheme";
 import type { ThemePreference } from "./theme/theme";
+import {
+  battleFormats,
+  type BattleFormat,
+} from "./battleFormat/battleFormat";
+import { useBattleFormat } from "./battleFormat/useBattleFormat";
+import { useAppMode } from "./appMode/useAppMode";
+
+const Calculator = lazy(() =>
+  import("./components/Calculator").then((module) => ({
+    default: module.Calculator,
+  })),
+);
 
 type PendingTeamAction =
   | {
@@ -144,12 +166,14 @@ function isMegaPokemonId(value: string) {
 function App() {
   const { locale, setLocale, t } = useLocalization();
   const { themePreference, setThemePreference } = useTheme();
-  const isCompactDrawerLayout = useMediaQuery(
-    "(max-width: 1420px)",
-    { falseDelayMs: 1500 },
-  );
+  const { battleFormat, setBattleFormat } = useBattleFormat();
+  const { appMode, setAppMode } = useAppMode();
+  const isCompactDrawerLayout = useMediaQuery("(max-width: 1420px)");
   const [team, setTeam] = useState<TeamSlot[]>(() =>
     Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null),
+  );
+  const [hasOpenedCalculator, setHasOpenedCalculator] = useState(
+    appMode === "calculator",
   );
   const [bench, setBench] = useState<BenchPokemon[]>([]);
   const [selectedTeamSlot, setSelectedTeamSlot] = useState(0);
@@ -306,6 +330,7 @@ function App() {
   function getCurrentTeamSnapshot(name = teamNameDraft): TeamSnapshot {
     return {
       name: name.trim() || t("team.untitled"),
+      battleFormat,
       slots: team.map(createSavedSlot),
       bench: bench.map(createSavedBenchPokemon),
       buildState: teamBuildState.getBuildStateSnapshot(),
@@ -810,7 +835,7 @@ function App() {
       let usageSet: SmogonUsageSet | null = null;
 
       if (options.applyUsageStats) {
-        usageSet = await loadPopularSmogonSet(lookup);
+        usageSet = await loadPopularSmogonSet(lookup, battleFormat);
 
         if (usageSet) {
           targetMember = await resolveUsageTargetMember(usageSet, selectedMember);
@@ -1072,6 +1097,7 @@ function App() {
       setNewTeamShowdownDraft("");
       committedSnapshotRef.current = serializeTeamSnapshot({
         name: importedTeamName,
+        battleFormat,
         slots: emptyTeam.map(createSavedSlot),
         bench: [],
         buildState: createEmptyBuildState(),
@@ -1128,6 +1154,7 @@ function App() {
       version: SAVED_TEAM_SCHEMA_VERSION,
       id: nextTeamId,
       name: nextName,
+      battleFormat: nextSnapshot.battleFormat,
       slots: nextSnapshot.slots,
       bench: nextSnapshot.bench,
       buildState: nextSnapshot.buildState,
@@ -1191,11 +1218,13 @@ function App() {
     setBench(hydratedBench);
     setTeamName(savedTeam.name);
     setTeamNameDraft(savedTeam.name);
+    setBattleFormat(savedTeam.battleFormat);
     teamBuildState.replaceBuildState(savedTeam.buildState);
     setActiveSavedTeamId(savedTeam.id);
     storeLastActiveTeamId(savedTeam.id);
     committedSnapshotRef.current = serializeTeamSnapshot({
       name: savedTeam.name,
+      battleFormat: savedTeam.battleFormat,
       slots: savedTeam.slots,
       bench: savedTeam.bench,
       buildState: savedTeam.buildState ?? createEmptyBuildState(),
@@ -1255,6 +1284,7 @@ function App() {
     setNewTeamShowdownDraft("");
     committedSnapshotRef.current = serializeTeamSnapshot({
       name: untitledTeamName,
+      battleFormat,
       slots: emptyTeam.map(createSavedSlot),
       bench: [],
       buildState: createEmptyBuildState(),
@@ -1529,6 +1559,7 @@ function App() {
         teamBuildState.replaceBuildState(importedSnapshot.buildState);
         committedSnapshotRef.current = serializeTeamSnapshot({
           name: savedTeam.name,
+          battleFormat: savedTeam.battleFormat,
           slots: nextSavedTeam.slots,
           bench: nextSavedTeam.bench,
           buildState: importedSnapshot.buildState,
@@ -1720,6 +1751,111 @@ function App() {
             </div>
           ) : null}
             </nav>
+            <div className="header-format-controls">
+              <button
+                className={`battle-format-switch is-${battleFormat}`}
+                type="button"
+                aria-label={t(
+                  battleFormat === "singles"
+                    ? "battleFormat.switchToDoubles"
+                    : "battleFormat.switchToSingles",
+                )}
+                title={t(
+                  battleFormat === "singles"
+                    ? "battleFormat.switchToDoubles"
+                    : "battleFormat.switchToSingles",
+                )}
+                onClick={() =>
+                  setBattleFormat(
+                    (battleFormat === "singles"
+                      ? "doubles"
+                      : "singles") satisfies BattleFormat,
+                  )
+                }
+              >
+                {battleFormats.map((format) => (
+                  <span
+                    className={`battle-format-option${
+                      battleFormat === format ? " is-active" : ""
+                    }`}
+                    aria-hidden="true"
+                    key={format}
+                  >
+                    {t(
+                      format === "singles"
+                        ? "battleFormat.singles"
+                        : "battleFormat.doubles",
+                    )}
+                  </span>
+                ))}
+              </button>
+              <button
+                className="battle-format-compact-toggle"
+                type="button"
+                aria-label={t(
+                  battleFormat === "singles"
+                    ? "battleFormat.switchToDoubles"
+                    : "battleFormat.switchToSingles",
+                )}
+                title={t(
+                  battleFormat === "singles"
+                    ? "battleFormat.switchToDoubles"
+                    : "battleFormat.switchToSingles",
+                )}
+                onClick={() =>
+                  setBattleFormat(
+                    (battleFormat === "singles"
+                      ? "doubles"
+                      : "singles") satisfies BattleFormat,
+                  )
+                }
+              >
+                {battleFormat === "singles" ? "1v1" : "2v2"}
+              </button>
+            </div>
+          </div>
+          <div className="header-mode-controls">
+            <button
+              className={`app-mode-toggle is-${appMode}`}
+              type="button"
+              aria-label={t(
+                appMode === "builder"
+                  ? "nav.switchToCalculator"
+                  : "nav.switchToBuilder",
+              )}
+              title={t(
+                appMode === "builder"
+                  ? "nav.switchToCalculator"
+                  : "nav.switchToBuilder",
+              )}
+              onClick={() => {
+                const nextMode =
+                  appMode === "builder" ? "calculator" : "builder";
+
+                if (nextMode === "calculator") {
+                  setHasOpenedCalculator(true);
+                }
+
+                setAppMode(nextMode);
+              }}
+            >
+              <span
+                className={`app-mode-icon${
+                  appMode === "builder" ? " is-active" : ""
+                }`}
+                aria-hidden="true"
+              >
+                <FontAwesomeIcon icon={faUsers} />
+              </span>
+              <span
+                className={`app-mode-icon${
+                  appMode === "calculator" ? " is-active" : ""
+                }`}
+                aria-hidden="true"
+              >
+                <FontAwesomeIcon icon={faCalculator} />
+              </span>
+            </button>
           </div>
           <div className="header-preferences">
             <div className="preference-control theme-control" ref={themeControlRef}>
@@ -1828,53 +1964,86 @@ function App() {
         </div>
       </header>
 
-      <div className="workspace">
-        <div className="builder-workspace">
-          <TeamBuilder
-            teamName={teamNameDraft}
-            team={team}
-            bench={bench}
-            selectedSlot={selectedTeamSlot}
-            pool={customPool}
-            pokemonIndex={pokemonIndex}
-            itemIndex={itemIndex}
-            showdownLegality={showdownLegality}
-            pokemonIndexStatus={indexStatus}
-            itemIndexStatus={itemIndexStatus}
-            showdownLegalityStatus={showdownLegalityStatus}
-            showdownLegalityError={showdownLegalityError}
-            selectingPokemonSlot={selectingPokemonSlot}
-            searchError={searchError}
-            searchNotice={searchNotice}
-            failedPokemonSelectionSlot={failedPokemonSelection?.slotIndex ?? null}
-            buildState={teamBuildState}
-            validity={teamValidity}
-            onSelectedSlotChange={setSelectedTeamSlot}
-            onRetryPokemonIndex={retryPokemonIndex}
-            onRetryItemIndex={retryItemIndex}
-            onRetryShowdownLegality={retryShowdownLegality}
-            onRetryPokemonSelection={() => {
-              if (failedPokemonSelection) {
-                void handleSelectPokemon(
-                  failedPokemonSelection.slotIndex,
-                  failedPokemonSelection.lookup,
-                  failedPokemonSelection.options,
-                );
+      <div
+        className={`workspace${
+          appMode === "calculator" ? " is-calculator-workspace" : ""
+        }`}
+      >
+        {appMode === "builder" ? (
+          <div className="builder-workspace">
+            <TeamBuilder
+              teamName={teamNameDraft}
+              battleFormat={battleFormat}
+              team={team}
+              bench={bench}
+              selectedSlot={selectedTeamSlot}
+              pool={customPool}
+              pokemonIndex={pokemonIndex}
+              itemIndex={itemIndex}
+              showdownLegality={showdownLegality}
+              pokemonIndexStatus={indexStatus}
+              itemIndexStatus={itemIndexStatus}
+              showdownLegalityStatus={showdownLegalityStatus}
+              showdownLegalityError={showdownLegalityError}
+              selectingPokemonSlot={selectingPokemonSlot}
+              searchError={searchError}
+              searchNotice={searchNotice}
+              failedPokemonSelectionSlot={
+                failedPokemonSelection?.slotIndex ?? null
               }
-            }}
-            onChangeSlot={handleChangeSlot}
-            onSelectPokemon={handleSelectPokemon}
-            onClearSlot={handleClearSlot}
-            onReorderSlots={handleReorderSlots}
-            onMoveTeamPokemonToBench={handleMoveTeamPokemonToBench}
-            onMoveBenchPokemonToTeam={handleMoveBenchPokemonToTeam}
-            onReorderBenchPokemon={handleReorderBenchPokemon}
-            onRemoveBenchPokemon={handleRemoveBenchPokemon}
-            onExportShowdown={getShowdownExportText}
-            onImportShowdown={handleImportShowdownSlot}
-          />
-          <TeamDiagnostics diagnostics={teamDiagnostics} />
-        </div>
+              buildState={teamBuildState}
+              validity={teamValidity}
+              onSelectedSlotChange={setSelectedTeamSlot}
+              onRetryPokemonIndex={retryPokemonIndex}
+              onRetryItemIndex={retryItemIndex}
+              onRetryShowdownLegality={retryShowdownLegality}
+              onRetryPokemonSelection={() => {
+                if (failedPokemonSelection) {
+                  void handleSelectPokemon(
+                    failedPokemonSelection.slotIndex,
+                    failedPokemonSelection.lookup,
+                    failedPokemonSelection.options,
+                  );
+                }
+              }}
+              onChangeSlot={handleChangeSlot}
+              onSelectPokemon={handleSelectPokemon}
+              onClearSlot={handleClearSlot}
+              onReorderSlots={handleReorderSlots}
+              onMoveTeamPokemonToBench={handleMoveTeamPokemonToBench}
+              onMoveBenchPokemonToTeam={handleMoveBenchPokemonToTeam}
+              onReorderBenchPokemon={handleReorderBenchPokemon}
+              onRemoveBenchPokemon={handleRemoveBenchPokemon}
+              onExportShowdown={getShowdownExportText}
+              onImportShowdown={handleImportShowdownSlot}
+            />
+            <TeamDiagnostics diagnostics={teamDiagnostics} />
+          </div>
+        ) : null}
+
+        {hasOpenedCalculator ? (
+          <Suspense
+            fallback={
+              appMode === "calculator" ? (
+                <div className="calculator-loading">{t("common.loading")}</div>
+              ) : null
+            }
+          >
+            <Calculator
+              battleFormat={battleFormat}
+              team={team}
+              selectedSlot={selectedTeamSlot}
+              pokemonIndex={pokemonIndex}
+              itemIndex={itemIndex}
+              showdownLegality={showdownLegality}
+              buildState={teamBuildState}
+              onSelectedSlotChange={setSelectedTeamSlot}
+              onSelectPokemon={handleSelectPokemon}
+              isVisible={appMode === "calculator"}
+            />
+          </Suspense>
+        ) : null}
+
         <button
           className={`copilot-drawer-scrim${
             isCopilotDrawerOpen ? " is-open" : ""
@@ -1889,9 +2058,9 @@ function App() {
         />
         <div
           ref={copilotDrawerRef}
-          className={`copilot-drawer${isCopilotDrawerOpen ? " is-open" : ""}${
-            isCopilotDrawerTransitioning ? " is-transitioning" : ""
-          }`}
+          className={`copilot-drawer${
+            isCopilotDrawerOpen ? " is-open" : ""
+          }${isCopilotDrawerTransitioning ? " is-transitioning" : ""}`}
           id="copilot-drawer"
           role={isCompactDrawerLayout ? "dialog" : undefined}
           aria-label={isCompactDrawerLayout ? "PokePilot" : undefined}
@@ -1905,6 +2074,7 @@ function App() {
         >
           <CopilotPanel
             teamName={teamNameDraft}
+            battleFormat={battleFormat}
             team={team}
             pokemonIndex={pokemonIndex}
             selectedSlot={selectedTeamSlot}

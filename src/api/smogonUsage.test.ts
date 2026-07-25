@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { PokemonMove } from "../types";
-import { resolveSmogonUsageMoveIds } from "./smogonUsage";
+import {
+  getSmogonUsageFormatId,
+  resolveSmogonUsageMoveIds,
+} from "./smogonUsage";
 
 function createMove(id: string, name: string): PokemonMove {
   return {
@@ -52,5 +55,16 @@ describe("Smogon usage move resolution", () => {
         "will-o-wisp",
       ]),
     ).toEqual(["protect", "shadowball", "solarbeam", "willowisp"]);
+  });
+});
+
+describe("Smogon usage formats", () => {
+  it("maps singles and doubles to their Regulation M-B ladders", () => {
+    expect(getSmogonUsageFormatId("singles")).toBe(
+      "gen9championsbssregmb",
+    );
+    expect(getSmogonUsageFormatId("doubles")).toBe(
+      "gen9championsvgc2026regmb",
+    );
   });
 });

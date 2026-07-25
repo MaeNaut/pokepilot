@@ -6,7 +6,7 @@ The goal is to help players build better teams by visualizing type coverage, ide
 
 ## Status
 
-Team builder prototype in progress.
+Team Builder and damage-calculator prototype in progress.
 
 Current slice:
 
@@ -29,9 +29,13 @@ Current slice:
 - live team diagnostics for defensive matchups, offensive coverage, six multi-label set roles, and setup alerts
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
-- right-side PokePilot strategy briefs for the active team and selected Pokemon
+- right-side PokePilot strategy briefs in both Team Builder and Calculator modes
+  for the active team and selected Pokemon
 - persisted English/Korean UI selection with localized game names, forms, and tooltips
 - persisted system/light/dark theme selection with live operating-system preference tracking
+- lazy-loaded damage Calculator mode with fixed My Pokemon / Opponent Pokemon
+  panels, reversible attack direction, Champions stat assumptions, and
+  Regulation M-B selection
 
 ## Getting Started
 
@@ -65,7 +69,7 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - AI-assisted team analysis through a server-side API route
 - team-aware PokePilot chat/follow-up panel
 - account-backed Supabase/Postgres persistence after the local MVP is stable
-- calculator mode
+- additional Pokemon Champions-only calculator mechanic overrides and matchup presets
 - Japanese localization under consideration
 - shareable team links if reasonable
 - deployment-ready responsive polish
@@ -97,6 +101,12 @@ Use `npm test` while developing to rerun affected Vitest tests on file changes.
 - typed English/Korean interface copy, a persisted language setting, and checked-in
   PokeAPI-derived Korean game names and descriptions
 - system, light, and dark app theme preferences with stable light share-image exports
+- one-direction-at-a-time damage calculation using the active team, an editable
+  local opponent, current HP, stat stages, shared Singles/Doubles rules,
+  format-specific usage rankings, spread damage, weather, terrain, screens,
+  Helping Hand, critical hits, and burn
+- localized damage ranges, percentage ranges, current-HP KO odds, multi-hit KO
+  summaries, and the combat stats used by the calculation
 
 ## Data Source
 
@@ -128,6 +138,10 @@ multi-megabyte teambuilder table and raw learnset/mod files at runtime.
 Popular default sets are loaded from the latest available monthly
 [Smogon usage stats](https://www.smogon.com/stats/) moveset file for the same
 Champions Regulation M-B format.
+Damage calculation is provided through a typed Pokemon Champions adapter around
+the MIT-licensed [Smogon damage calculator](https://github.com/smogon/damage-calc).
+PokePilot supplies current local species and move data to the engine, while
+new Champions-only mechanics remain subject to explicit fixtures and overrides.
 When PokeAPI's generation-specific icon path is missing, the app falls back to
 PokeAPI's `front_default` sprite before older icon paths so Pokemon without
 current icons can still show the more detailed 96x96 sprite in the Team Rail and

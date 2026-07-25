@@ -47,6 +47,10 @@ import {
 } from "../hooks/useLongPressReorder";
 import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+import {
+  findMoveByLookup,
+  reconcileMoveIds,
+} from "../utils/pokemonMoves";
 import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
 import { getIndexAfterSwap } from "../utils/reorder";
 import {
@@ -73,7 +77,6 @@ import {
   CHAMPIONS_MAX_EV_PER_STAT,
   CHAMPIONS_MAX_EV_TOTAL,
   defaultEvs,
-  getNatureByAlignment,
   getNatureById,
   statKeys,
   type Nature,
@@ -102,11 +105,21 @@ import {
   AbilityDetailsContent,
   ItemDetailsContent,
 } from "./SelectionDetails";
+import {
+  NatureGrid,
+} from "./NatureGrid";
+import {
+  getNatureAtGridPosition,
+  getNatureGridPosition,
+  type NatureGridPosition,
+} from "./natureGridUtils";
 import { useLocalization } from "../i18n/useLocalization";
 import { statTranslationKeys } from "../i18n/statTranslations";
+import type { BattleFormat } from "../battleFormat/battleFormat";
 
 type TeamBuilderProps = {
   teamName: string;
+  battleFormat: BattleFormat;
   team: TeamSlot[];
   bench: BenchPokemon[];
   selectedSlot: number;
@@ -153,11 +166,6 @@ type PokemonSelectOption = {
   types: PokemonType[];
   abilityOptions: PokemonCandidateFilterValue[];
   moveIds: string[];
-};
-
-type NatureGridPosition = {
-  upIndex: number;
-  downIndex: number;
 };
 
 type MoveOptionScrollMode = "start" | "nearest";
@@ -217,16 +225,6 @@ function fallbackMoves(types: PokemonType[]): PokemonMove[] {
       description: "Utility move placeholder until legal moves are connected.",
     },
   ];
-}
-
-function findMoveByLookup(moves: PokemonMove[], value: string) {
-  const lookup = normalizeShowdownId(value);
-
-  return moves.find(
-    (move) =>
-      normalizeShowdownId(move.id) === lookup ||
-      normalizeShowdownId(move.name) === lookup,
-  );
 }
 
 function resolveShareMoves(
@@ -307,22 +305,9 @@ function findItemOptionIndex(
   );
 }
 
-function getNaturePosition(nature: Nature): NatureGridPosition {
-  return {
-    upIndex: Math.max(0, battleStatKeys.indexOf(nature.up)),
-    downIndex: Math.max(0, battleStatKeys.indexOf(nature.down)),
-  };
-}
-
-function getNatureFromPosition(position: NatureGridPosition) {
-  const upStat = battleStatKeys[position.upIndex];
-  const downStat = battleStatKeys[position.downIndex];
-
-  return getNatureByAlignment(upStat, downStat);
-}
-
 export function TeamBuilder({
   teamName,
+  battleFormat,
   team,
   bench,
   selectedSlot,
@@ -1185,6 +1170,11 @@ export function TeamBuilder({
   }, [activePokemonId, openTraitPicker, resetAbilityOptions]);
 
   useEffect(() => {
+    setUsagePokemonIds(null);
+    setUsageOrderError(null);
+  }, [battleFormat]);
+
+  useEffect(() => {
     if (!isNamePickerVisible || usagePokemonIds !== null) {
       return undefined;
     }
@@ -1193,7 +1183,7 @@ export function TeamBuilder({
     setIsUsageOrderLoading(true);
     setUsageOrderError(null);
 
-    void loadSmogonUsagePokemonIds()
+    void loadSmogonUsagePokemonIds(battleFormat)
       .then((pokemonIds) => {
         if (!isCurrent) {
           return;
@@ -1218,7 +1208,7 @@ export function TeamBuilder({
     return () => {
       isCurrent = false;
     };
-  }, [isNamePickerVisible, usagePokemonIds]);
+  }, [battleFormat, isNamePickerVisible, usagePokemonIds]);
 
   useEffect(() => {
     setActivePokemonOptionIndex((current) => {
@@ -1357,7 +1347,7 @@ export function TeamBuilder({
   }, [activePokemonId, displayedAbilityOptionKey, selectedAbilityOptionIndex, selectedSlot]);
 
   useEffect(() => {
-    setActiveNaturePosition(getNaturePosition(selectedNature));
+    setActiveNaturePosition(getNatureGridPosition(selectedNature));
   }, [selectedNature]);
 
   useEffect(() => {
@@ -1394,30 +1384,9 @@ export function TeamBuilder({
 
     setMoveIdsBySlot((current) => {
       const currentMoveIds = current[selectedSlot] ?? [];
-      const defaultMoveIds = moves.slice(0, 4).map((move) => move.id);
+      const nextMoveIds = reconcileMoveIds(moves, currentMoveIds);
 
-      if (defaultMoveIds.length === 0) {
-        return current;
-      }
-
-      const nextMoveIds = [0, 1, 2, 3].map((index) => {
-        const currentMoveId = currentMoveIds[index];
-
-        if (currentMoveId === "") {
-          return "";
-        }
-
-        const matchedMove = currentMoveId
-          ? findMoveByLookup(moves, currentMoveId)
-          : null;
-
-        return matchedMove?.id ?? defaultMoveIds[index] ?? "";
-      });
-      const isUnchanged =
-        currentMoveIds.length === nextMoveIds.length &&
-        currentMoveIds.every((moveId, index) => moveId === nextMoveIds[index]);
-
-      if (isUnchanged) {
+      if (nextMoveIds === currentMoveIds) {
         return current;
       }
 
@@ -2272,7 +2241,7 @@ export function TeamBuilder({
 
   function openNaturePickerFromKeyboard() {
     setOpenTraitPicker("nature");
-    setActiveNaturePosition(getNaturePosition(selectedNature));
+    setActiveNaturePosition(getNatureGridPosition(selectedNature));
   }
 
   function moveNatureKeyboardPosition(upDelta: number, downDelta: number) {
@@ -2285,7 +2254,7 @@ export function TeamBuilder({
   }
 
   function selectActiveNature() {
-    const nature = getNatureFromPosition(activeNaturePosition);
+    const nature = getNatureAtGridPosition(activeNaturePosition);
 
     setNatureBySlot((current) => ({
       ...current,
@@ -2688,89 +2657,23 @@ export function TeamBuilder({
   }
 
   function renderNatureGrid(previewOnly: boolean) {
-    const displayedNature = previewOnly
-      ? getNatureFromPosition(activeNaturePosition)
-      : selectedNature;
-
     return (
-      <div className="nature-grid">
-        <div className="nature-grid-corner" aria-hidden="true">
-          <span className="nature-axis-up">{t("builder.up")}</span>
-          <span className="nature-axis-down">{t("builder.down")}</span>
-        </div>
-        {battleStatKeys.map((downStat) => (
-          <div
-            className={`nature-stat-heading is-down ${
-              displayedNature.down === downStat ? "is-selected-down" : ""
-            }`}
-            key={downStat}
-          >
-            {getLocalizedStatLabel(downStat)}
-          </div>
-        ))}
-        {battleStatKeys.map((upStat, upIndex) => (
-          <div className="nature-grid-row" key={upStat}>
-            <div
-              className={`nature-stat-heading is-up ${
-                displayedNature.up === upStat ? "is-selected-up" : ""
-              }`}
-            >
-              {getLocalizedStatLabel(upStat)}
-            </div>
-            {battleStatKeys.map((downStat, downIndex) => {
-              const nature = getNatureByAlignment(upStat, downStat);
-              const isNeutral = upStat === downStat;
-              const isKeyboardActive =
-                activeNaturePosition.upIndex === upIndex &&
-                activeNaturePosition.downIndex === downIndex;
-
-              return (
-                <button
-                  className={`nature-cell ${
-                    displayedNature.id === nature.id ? "is-active" : ""
-                  } ${isKeyboardActive ? "is-keyboard-active" : ""} ${
-                    isNeutral ? "is-neutral" : ""
-                  }`}
-                  type="button"
-                  role="option"
-                  aria-selected={displayedNature.id === nature.id}
-                  key={nature.id}
-                  onFocus={() =>
-                    setActiveNaturePosition({
-                      upIndex,
-                      downIndex,
-                    })
-                  }
-                  onMouseEnter={
-                    previewOnly
-                      ? undefined
-                      : () =>
-                          setActiveNaturePosition({
-                            upIndex,
-                            downIndex,
-                          })
-                  }
-                  onClick={() => {
-                    setActiveNaturePosition({
-                      upIndex,
-                      downIndex,
-                    });
-
-                    if (!previewOnly) {
-                      setNatureBySlot((current) => ({
-                        ...current,
-                        [selectedSlot]: nature.id,
-                      }));
-                    }
-                  }}
-                >
-                  {getLocalizedNatureName(nature)}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      <NatureGrid
+        selectedNature={selectedNature}
+        activePosition={activeNaturePosition}
+        previewOnly={previewOnly}
+        upLabel={t("builder.up")}
+        downLabel={t("builder.down")}
+        getNatureName={getLocalizedNatureName}
+        getStatLabel={getLocalizedStatLabel}
+        onActivePositionChange={setActiveNaturePosition}
+        onSelectNature={(nature) =>
+          setNatureBySlot((current) => ({
+            ...current,
+            [selectedSlot]: nature.id,
+          }))
+        }
+      />
     );
   }
 
@@ -3604,7 +3507,7 @@ export function TeamBuilder({
                       if (openTraitPicker === "nature") {
                         closeTraitPicker();
                       } else {
-                        setActiveNaturePosition(getNaturePosition(selectedNature));
+                        setActiveNaturePosition(getNatureGridPosition(selectedNature));
                         setOpenTraitPicker("nature");
                       }
                     }}

@@ -23,9 +23,11 @@ import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
 import type { TeamValidityResult } from "../utils/teamValidity";
 import { useLocalization } from "../i18n/useLocalization";
 import type { TranslationKey } from "../i18n/translations";
+import type { BattleFormat } from "../battleFormat/battleFormat";
 
 type CopilotPanelProps = {
   teamName: string;
+  battleFormat: BattleFormat;
   team: TeamSlot[];
   pokemonIndex: PokemonIndexEntry[];
   selectedSlot: number;
@@ -57,6 +59,7 @@ const priorityTranslationKeys: Record<
 
 export function CopilotPanel({
   teamName,
+  battleFormat,
   team,
   pokemonIndex,
   selectedSlot,
@@ -71,6 +74,7 @@ export function CopilotPanel({
     () =>
       createCopilotAnalysisRequest({
         scope,
+        battleFormat,
         teamName,
         team,
         pokemonIndex,
@@ -80,6 +84,7 @@ export function CopilotPanel({
         validity,
       }),
     [
+      battleFormat,
       buildState,
       diagnostics,
       pokemonIndex,
@@ -301,7 +306,14 @@ export function CopilotPanel({
       </div>
 
       <footer className="copilot-footer">
-        <span>{t("toolbar.regulation")}</span>
+        <span>
+          {t("toolbar.regulation")} ·{" "}
+          {t(
+            battleFormat === "singles"
+              ? "battleFormat.singles"
+              : "battleFormat.doubles",
+          )}
+        </span>
         <span>{t("copilot.rulesPreview")}</span>
       </footer>
     </aside>

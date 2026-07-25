@@ -7,6 +7,7 @@
 - Server option: add a small server-side API route or deployment function when hosted AI begins
 - AI: OpenAI API or another LLM provider through a server-side API route
 - Data: localStorage first; Supabase-managed PostgreSQL is the leading server-persistence candidate, with Neon as the primary alternative
+- Damage engine: a typed Pokemon Champions adapter around `@smogon/calc`
 - Image export: `html-to-image` for rendering dedicated share-card DOM into PNG blobs
 - Deployment: Vercel or another simple web deployment platform
 
@@ -196,6 +197,57 @@ Current direction:
 The user is comfortable using Pokemon names and sprites/artwork for this unofficial
 portfolio tool. Continue to avoid official logos, official UI branding, and any
 claim of affiliation.
+
+## Calculator Strategy
+
+- Keep My Pokemon on the left and Opponent Pokemon on the right. Reversing the
+  damage direction changes the attacker and defender roles without moving either
+  panel, preserving spatial memory while the user tunes a matchup.
+- Reuse the active team, selected slot, header team controls, and
+  `useTeamBuildState` for My Pokemon. Calculator edits therefore participate in
+  the existing unsaved-change and saved-team flow. Keep the opponent build and
+  temporary battle state local to `Calculator.tsx`; do not silently add them to a
+  saved team.
+- Lazy-load `Calculator.tsx` and its `@smogon/calc` dependency so opening the Team
+  Builder does not require parsing the damage engine. After the first Calculator
+  visit, keep its component mounted while hidden so the local opponent, field, and
+  battle state survive normal Builder/Calculator navigation.
+- Render the shared `CopilotPanel` outside the app-mode branch so the same PokePilot
+  workspace remains available in both Builder and Calculator modes, including the
+  existing tablet and mobile drawer behavior.
+- Reuse `PokemonIcon`, `TypeBadge`, `ItemSprite`, and `MoveSummary` in Calculator
+  surfaces. Keep the opponent picker searchable and keyboard-navigable rather than
+  falling back to a browser-native species select.
+- Treat `src/calculator/damageCalculator.ts` as the boundary between PokePilot's
+  canonical data model and the third-party engine. Pass local species base stats,
+  typing, abilities, and move metadata through engine overrides so newly added
+  Champions records do not depend entirely on the package's bundled dex.
+- Calculate at level 50 with fixed IV 31. A Champions stat-point value of zero maps
+  to zero EV, while values 1-32 map to `statPoints * 8 - 4` EV. This produces the
+  displayed Champions formulas used elsewhere in the app: HP is
+  `base + 75 + stat points`; other stats are `base + 20 + stat points`, followed
+  by the nature modifier.
+- Treat the header Singles/Doubles control as shared team context. Persist it with
+  each saved team and as the latest browser preference, pass it to PokePilot
+  requests, and use separate Smogon BSS/VGC Regulation M-B usage snapshots.
+  The calculator follows this shared format, enabling spread damage by default
+  only in doubles and removing partner-only controls in singles.
+- The field model currently supports singles/doubles, weather, terrain, Magic
+  Room, Wonder Room, Gravity, Fairy Aura,
+  critical hits, Helping Hand, Tailwind, Friend Guard, Plus/Minus activation,
+  burn, a unified defensive-wall control, current HP, and Attack/Defense/Special
+  Attack/Special Defense stages. The wall control maps to Reflect for physical
+  moves and Light Screen for special moves. Plus/Minus only activates when the
+  current attacker actually has Plus or Minus.
+- Return structured ranges and KO data from the adapter. React localizes the KO
+  summary rather than parsing the engine's English description.
+- Status moves and missing battle data return explicit unsupported results.
+  Generation-9 mechanics covered by `@smogon/calc` are available immediately, but
+  newly introduced Champions-only move, item, or ability behavior needs a checked
+  local override and a focused regression fixture before it is claimed as exact.
+- Do not persist damage output. It is derived from the two current builds, battle
+  state, direction, and field controls and should be recalculated whenever an input
+  changes.
 
 ## Builder UX Notes
 

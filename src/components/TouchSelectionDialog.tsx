@@ -6,14 +6,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useLocalization } from "../i18n/useLocalization";
 
 type TouchSelectionDialogProps = {
-  kind: "pokemon" | "item" | "ability" | "nature" | "move";
+  kind: "pokemon" | "item" | "ability" | "nature" | "move" | "rank";
   title: string;
   canSelect?: boolean;
+  showActions?: boolean;
   search?: ReactNode;
   children: ReactNode;
   preview?: ReactNode;
   onClose: () => void;
-  onSelect: () => void;
+  onSelect?: () => void;
 };
 
 type TouchPickerSearchInputProps = {
@@ -71,6 +72,7 @@ export function TouchSelectionDialog({
   kind,
   title,
   canSelect = true,
+  showActions = true,
   search,
   children,
   preview,
@@ -210,19 +212,21 @@ export function TouchSelectionDialog({
           </div>
         ) : null}
 
-        <footer className="touch-picker-actions">
-          <button type="button" onClick={onClose}>
-            {t("common.cancel")}
-          </button>
-          <button
-            className="is-primary"
-            type="button"
-            disabled={!canSelect}
-            onClick={onSelect}
-          >
-            {t("common.select")}
-          </button>
-        </footer>
+        {showActions ? (
+          <footer className="touch-picker-actions">
+            <button type="button" onClick={onClose}>
+              {t("common.cancel")}
+            </button>
+            <button
+              className="is-primary"
+              type="button"
+              disabled={!canSelect || !onSelect}
+              onClick={onSelect}
+            >
+              {t("common.select")}
+            </button>
+          </footer>
+        ) : null}
       </div>
     </div>,
     document.body,

@@ -131,6 +131,7 @@ describe("Copilot analysis", () => {
     expect(request).toMatchObject({
       version: 1,
       scope: "pokemon",
+      battleFormat: "doubles",
       teamName: "Test Team",
       selectedSlot: 0,
       diagnostics: {

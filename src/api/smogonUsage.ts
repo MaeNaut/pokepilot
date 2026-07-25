@@ -1,4 +1,5 @@
 import type { PokemonMove, StatBlock } from "../types";
+import type { BattleFormat } from "../battleFormat/battleFormat";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
 import { toPokemonId } from "../utils/showdownText";
 import { normalizeShowdownId } from "./showdownIds";
@@ -22,8 +23,11 @@ type SmogonUsageSnapshot = {
 };
 
 const SMOGON_STATS_BASE_URL = "/smogon-stats";
-const SMOGON_FORMAT_ID = "gen9championsvgc2026regmb";
-const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v2";
+const SMOGON_FORMAT_IDS: Record<BattleFormat, string> = {
+  singles: "gen9championsbssregmb",
+  doubles: "gen9championsvgc2026regmb",
+};
+const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v3";
 const SMOGON_USAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 const SMOGON_MOVE_CANDIDATE_LIMIT = 8;
 const preferredCutoffs = [1630, 1500, 0];
@@ -36,8 +40,10 @@ const sectionLabels = new Set([
   "Checks and Counters",
 ]);
 
-let memorySnapshot: SmogonUsageSnapshot | null = null;
-let smogonUsagePromise: Promise<SmogonUsageSnapshot | null> | null = null;
+const memorySnapshots: Partial<Record<BattleFormat, SmogonUsageSnapshot>> = {};
+const smogonUsagePromises: Partial<
+  Record<BattleFormat, Promise<SmogonUsageSnapshot | null>>
+> = {};
 
 function getMonthCandidates() {
   const candidates: string[] = [];
@@ -56,8 +62,18 @@ function getMonthCandidates() {
   return candidates;
 }
 
-function getMovesetUrl(month: string, cutoff: number) {
-  return `${SMOGON_STATS_BASE_URL}/${month}/moveset/${SMOGON_FORMAT_ID}-${cutoff}.txt`;
+export function getSmogonUsageFormatId(battleFormat: BattleFormat) {
+  return SMOGON_FORMAT_IDS[battleFormat];
+}
+
+function getMovesetUrl(
+  month: string,
+  cutoff: number,
+  battleFormat: BattleFormat,
+) {
+  return `${SMOGON_STATS_BASE_URL}/${month}/moveset/${getSmogonUsageFormatId(
+    battleFormat,
+  )}-${cutoff}.txt`;
 }
 
 function cleanTableRow(line: string) {
@@ -228,9 +244,14 @@ function parseMovesetText(
   };
 }
 
-function getCachedSnapshot() {
+function getCacheKey(battleFormat: BattleFormat) {
+  return `${SMOGON_USAGE_CACHE_KEY}:${battleFormat}`;
+}
+
+function getCachedSnapshot(battleFormat: BattleFormat) {
   try {
-    const cachedValue = localStorage.getItem(SMOGON_USAGE_CACHE_KEY);
+    const cacheKey = getCacheKey(battleFormat);
+    const cachedValue = localStorage.getItem(cacheKey);
 
     if (!cachedValue) {
       return null;
@@ -245,7 +266,7 @@ function getCachedSnapshot() {
       Date.now() - parsed.cachedAt > SMOGON_USAGE_CACHE_TTL_MS ||
       !Array.isArray(parsed.sets)
     ) {
-      localStorage.removeItem(SMOGON_USAGE_CACHE_KEY);
+      localStorage.removeItem(cacheKey);
       return null;
     }
 
@@ -255,10 +276,13 @@ function getCachedSnapshot() {
   }
 }
 
-function saveSnapshot(snapshot: SmogonUsageSnapshot) {
+function saveSnapshot(
+  battleFormat: BattleFormat,
+  snapshot: SmogonUsageSnapshot,
+) {
   try {
     localStorage.setItem(
-      SMOGON_USAGE_CACHE_KEY,
+      getCacheKey(battleFormat),
       JSON.stringify({
         ...snapshot,
         cachedAt: Date.now(),
@@ -269,11 +293,13 @@ function saveSnapshot(snapshot: SmogonUsageSnapshot) {
   }
 }
 
-async function fetchSmogonUsageSnapshot() {
+async function fetchSmogonUsageSnapshot(battleFormat: BattleFormat) {
   for (const month of getMonthCandidates()) {
     for (const cutoff of preferredCutoffs) {
       try {
-        const response = await fetch(getMovesetUrl(month, cutoff));
+        const response = await fetch(
+          getMovesetUrl(month, cutoff, battleFormat),
+        );
 
         if (!response.ok) {
           continue;
@@ -285,8 +311,8 @@ async function fetchSmogonUsageSnapshot() {
           continue;
         }
 
-        memorySnapshot = snapshot;
-        saveSnapshot(snapshot);
+        memorySnapshots[battleFormat] = snapshot;
+        saveSnapshot(battleFormat, snapshot);
         return snapshot;
       } catch {
         // Try the next month/cutoff candidate.
@@ -297,31 +323,37 @@ async function fetchSmogonUsageSnapshot() {
   return null;
 }
 
-async function loadSmogonUsageSnapshot() {
+async function loadSmogonUsageSnapshot(battleFormat: BattleFormat) {
+  const memorySnapshot = memorySnapshots[battleFormat];
+
   if (memorySnapshot) {
     return memorySnapshot;
   }
 
-  const cached = getCachedSnapshot();
+  const cached = getCachedSnapshot(battleFormat);
 
   if (cached) {
-    memorySnapshot = cached;
+    memorySnapshots[battleFormat] = cached;
     return cached;
   }
 
-  if (!smogonUsagePromise) {
-    smogonUsagePromise = fetchSmogonUsageSnapshot();
+  if (!smogonUsagePromises[battleFormat]) {
+    smogonUsagePromises[battleFormat] =
+      fetchSmogonUsageSnapshot(battleFormat);
   }
 
   try {
-    return await smogonUsagePromise;
+    return await smogonUsagePromises[battleFormat];
   } finally {
-    smogonUsagePromise = null;
+    delete smogonUsagePromises[battleFormat];
   }
 }
 
-export async function loadPopularSmogonSet(pokemonId: string) {
-  const snapshot = await loadSmogonUsageSnapshot();
+export async function loadPopularSmogonSet(
+  pokemonId: string,
+  battleFormat: BattleFormat = "doubles",
+) {
+  const snapshot = await loadSmogonUsageSnapshot(battleFormat);
   const lookupCandidates = getPokemonLookupAliases(pokemonId).map(toPokemonId);
 
   if (!snapshot || lookupCandidates.length === 0) {
@@ -345,8 +377,10 @@ export async function loadPopularSmogonSet(pokemonId: string) {
   );
 }
 
-export async function loadSmogonUsagePokemonIds() {
-  const snapshot = await loadSmogonUsageSnapshot();
+export async function loadSmogonUsagePokemonIds(
+  battleFormat: BattleFormat = "doubles",
+) {
+  const snapshot = await loadSmogonUsageSnapshot(battleFormat);
 
   if (!snapshot) {
     throw new Error("Smogon usage data is unavailable.");

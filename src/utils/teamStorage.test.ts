@@ -16,6 +16,7 @@ function savedTeam(name: string): SavedTeamSummary {
     version: SAVED_TEAM_SCHEMA_VERSION,
     id: name.toLowerCase().replace(/ /g, "-"),
     name,
+    battleFormat: "doubles",
     slots: [],
     bench: [],
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -36,6 +37,7 @@ describe("team storage normalization", () => {
     expect(normalized).toMatchObject({
       version: SAVED_TEAM_SCHEMA_VERSION,
       id: "legacy-team",
+      battleFormat: "doubles",
       bench: [],
     });
   });
@@ -89,6 +91,7 @@ describe("saved-team helpers", () => {
 
     const serialized = serializeTeamSnapshot({
       name: "Candidate Team",
+      battleFormat: "singles",
       slots: [null, null, null, null, null, null],
       bench: [],
       buildState,
@@ -99,5 +102,6 @@ describe("saved-team helpers", () => {
       ability: { id: "intimidate", name: "Intimidate" },
       moves: [{ id: "fakeout", name: "Fake Out" }],
     });
+    expect(JSON.parse(serialized).battleFormat).toBe("singles");
   });
 });

@@ -84,6 +84,7 @@ export const CHAMPIONS_MAX_EV_PER_STAT = 32;
 export const CHAMPIONS_MAX_EV_TOTAL = 66;
 
 const CHAMPIONS_IV_STAT_BONUS = 20;
+const CHAMPIONS_HP_STAT_BONUS = 75;
 const natureById = new Map(natures.map((nature) => [nature.id, nature]));
 const natureByAlignment = new Map(
   natures.map((nature) => [`${nature.up}:${nature.down}`, nature]),
@@ -116,7 +117,10 @@ export function calculateChampionsStats(
 ) {
   return statKeys.reduce((result, stat) => {
     const ev = Math.max(0, Math.min(CHAMPIONS_MAX_EV_PER_STAT, evs[stat]));
-    const rawStat = baseStats[stat] + CHAMPIONS_IV_STAT_BONUS + ev;
+    const rawStat =
+      baseStats[stat] +
+      (stat === "hp" ? CHAMPIONS_HP_STAT_BONUS : CHAMPIONS_IV_STAT_BONUS) +
+      ev;
 
     result[stat] = Math.floor(rawStat * getNatureMultiplier(nature, stat));
     return result;

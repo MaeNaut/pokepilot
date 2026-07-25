@@ -4,88 +4,44 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Now
 
-- [x] Refine post-layout desktop UI details.
-  - [x] Replace horizontal EV value scrubbing with always-visible vertical sliders and direct numeric entry above each displayed stat.
-  - [x] Shorten the header team-name field and align the team-management controls with the Pokemon card's left edge.
-  - [x] Restore the PokePilot wordmark in the header space freed by moving the team controls.
-  - [x] Simplify set navigation around the persistent Team Rail.
-    - [x] Remove the redundant Team View and Pokemon/Team view switch.
-    - [x] Keep the Team Rail as the active-six selector, reorder surface, and Bench entry point.
-- [x] Keep keyboard and mouse picker behavior consistent across current controls.
-  - [x] Preserve the current hover-to-keyboard active-selection flow across dropdowns.
-  - [x] Re-test Pokemon, item, ability, nature, and move pickers after major TeamBuilder refactors.
-- [x] Replace temporary CSS move category icons with EssentiarumVG Gen 8 glyphs.
-- [x] Add explicit team slot controls.
-  - [x] Add a clear Pokemon delete/remove action.
-  - [x] Add a Pokemon add action for empty slots.
-  - [x] Reorder Pokemon slots while keeping each complete build attached.
-- [x] Add short third-party source credit in the footer and notices document.
-- [x] Finish the current builder-card desktop layout pass.
-  - [x] Fit header, body, and footer without accidental page scroll on the target desktop layout.
-  - [x] Move Pokemon tabs to the card side.
-  - [x] Keep long names, Mega controls, type icons, and card artwork from crowding the editor controls.
-
-## Next
-
-- [x] Keep the single-Pokemon editor as the sole active build surface.
-- [x] Replace the Copilot panel placeholder with a working local analysis preview.
-  - [x] Add team and selected-Pokemon analysis scopes.
-  - [x] Keep deterministic team diagnostics outside the future AI response area.
-  - [x] Contain long analysis inside a panel-local scroller instead of growing the desktop page.
-- [x] Add team-level non-AI diagnostics.
-  - [x] Type weakness/resistance summary.
-  - [x] Apply fixed type-immunity abilities to defensive matchups and alerts.
-  - [x] Offensive coverage summary.
-  - [x] Set-based physical attacker, special attacker, wall, supporter, and setter summaries.
-  - [x] Keep the visible panel focused on defensive matchups and coverage gaps.
-  - [x] Present the visible type report without a redundant Team Diagnostics header or active-slot count.
-  - [x] Use a 6-by-3 defensive matrix beside a circular coverage score with clearly labeled uncovered types.
-  - [x] Keep role and alert calculations as PokePilot inputs instead of duplicating them in the panel.
-  - [x] Classify field, weather, screen, terrain, and hazard setup as the sixth Setter role.
-  - [x] Detect Trick Room, Tailwind, Gravity, rain, sun, sand, and snow team concepts.
-  - [x] Distinguish concept setters, dependent aces, and independent off-mode attackers.
-  - [x] Treat setup-only detection as informational data, not a reason to demand a dedicated ace.
-  - [x] Warn about explicit weather dependency without a setter and complete modes without an off-mode attacker.
-  - [x] Duplicate type warnings.
-  - [x] Role-based physical/special attacker imbalance warnings.
-  - [x] Role-based physical/special wall imbalance warnings.
-  - [x] Avoid false completion warnings for intentional no-item or sub-four-move sets.
-  - [x] Unify matchup and coverage surfaces with the builder UI.
-- [x] Improve move editing.
-  - [x] Keep the current move visible when opening the move dropdown.
-  - [x] Preserve natural keyboard scrolling and prevent hover-triggered scroll loops.
-  - [x] Reorder selected moves with desktop drag, touch hold-and-drag, or keyboard shortcuts.
-  - [x] Add a clear action and a stable empty state for each of the four move slots.
-  - [x] Keep selected move pills focused on power; show PP, accuracy, and descriptions in the detail tooltip.
-- [x] Improve item editing.
-  - [x] Verify Mega Stone auto-set, lock, and unlock behavior after item changes.
-  - [x] Allow ordinary held items to be cleared while preserving locked Mega Stones.
-- [x] Improve EV editing with vertical sliders, direct numeric entry, and a shared allocation total.
-- [x] Rebalance the desktop workspace around the builder and PokePilot.
-  - [x] Keep the Pokemon card focused on the selected set.
-  - [x] Reserve PokePilot for future AI interpretation and recommendations.
-  - [x] Keep a full-height PokePilot panel on the right and stack the builder and diagnostics on the left.
-  - [x] Use a wider, shorter Pokemon card with moves and stats side by side.
-  - [x] Cap the desktop workspace at 1920px so QHD and wider displays do not over-stretch the UI.
-- [x] Add shareable PNG build images.
-  - [x] Add a card-toolbar action that opens a dimmed preview for the selected Pokemon build.
-  - [x] Export the dedicated Pokemon share card as a 1080-by-1080 PNG through clipboard copy or file save.
-  - [x] Preserve Pokemon identity, artwork, item, ability, nature, moves, and EVs in the image.
-  - [x] Add a whole-team image template and navigate between team/Pokemon previews in the same dialog.
+- [x] Define the Calculator MVP before building its UI.
+  - [x] Keep the first release focused on damage while showing the calculated
+        combat stats inside each Pokemon panel instead of adding a separate
+        stat-calculation surface.
+  - [x] Document the Pokemon Champions level, IV, EV, nature, field, and damage
+        assumptions used by the engine.
+  - [x] Define calculator input and result types around the existing canonical
+        Pokemon, item, ability, nature, and move IDs.
+- [x] Implement the deterministic calculator engine before the page shell.
+  - [x] Add focused fixtures for stats, STAB, type effectiveness, damage rolls,
+        critical hits, spread moves, weather, and representative item/ability effects.
+  - [x] Keep unsupported mechanics explicit instead of silently approximating them.
+- [x] Add the Calculator app mode after the engine fixtures pass.
+  - [x] Add Team Builder / Calculator navigation.
+  - [x] Reuse the shared header, saved team, build state, legality data, and
+        localized game catalogs.
+  - [x] Keep the shared PokePilot panel available in both modes and preserve
+        calculator-local matchup state while switching between them.
+- [ ] Compare representative PokePilot results with live Pokemon Champions
+      calculations as official edge cases become available.
 
 ## Team Management
 
-- [ ] Design a serializable `TeamBuildState`.
+- [x] Design a serializable `TeamBuildState`.
   - [x] Include Pokemon slot identity.
   - [x] Include item, ability, nature, EVs, moves, and Mega/form state.
   - [x] Add a saved-team schema version for future migrations.
-  - [ ] Keep the format compatible with future Supabase/Postgres storage.
-    - [x] Separate user-owned team data conceptually from PokeAPI, Showdown, and Smogon caches.
-    - [ ] Draft normalized `teams` and `pokemon_sets` tables with active/bench location and ordering.
-    - [ ] Reduce persisted Pokemon sets to canonical IDs plus editable build values when the server migration begins.
-    - [ ] Add a regulation/format identifier so saved teams can be revalidated against later rule data.
-    - [x] Enforce current limits of 30 saved teams and six bench Pokemon per team without deleting legacy over-limit data.
-    - [ ] Revisit the limits from real usage before treating them as permanent public-product rules.
+  - [x] Preserve complete active and bench builds through JSON/localStorage round trips.
+  - [x] Enforce current limits of 30 saved teams and six bench Pokemon per team
+        without deleting legacy over-limit data.
+- [ ] Prepare saved-team records for account-backed storage when server migration begins.
+  - [ ] Draft normalized `teams` and `pokemon_sets` tables with active/bench
+        location and ordering.
+  - [ ] Persist canonical IDs plus editable build values instead of display text
+        and asset URLs.
+  - [ ] Add a regulation/format identifier so saved teams can be revalidated
+        against later rule data.
+  - [ ] Revisit team and bench limits using real product usage.
 - [x] Lift or expose TeamBuilder slot edit state so it can be saved.
   - [x] Avoid saving only the visible Pokemon slots while losing item/ability/nature/EV/move choices.
   - [x] Keep existing picker behavior stable during the state refactor.
@@ -140,13 +96,16 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Replace the large runtime teambuilder-table download with a compact Regulation M-B snapshot.
   - [x] Finish the post-migration refactor and remove duplicate ID, cache, and form-move loading paths.
   - [x] Document known Showdown/PokeAPI name mapping exceptions.
-- [ ] Improve usage-stats default sets.
+- [x] Add usage-stats default sets.
   - [x] Fetch and parse Smogon monthly moveset stats for Regulation M-B.
   - [x] Auto-apply popular usage sets only from the main Pokemon picker.
   - [x] Show empty-query Pokemon dropdown suggestions in Smogon usage order with usage ranks and 20-at-a-time scroll loading.
   - [x] Apply hidden-scrollbar infinite loading to Pokemon, item, ability, move, and reverse-filter option lists.
-  - [ ] Add a small non-card status or debug surface for the selected usage source if needed.
-  - [ ] Decide how aggressively base Pokemon should auto-upgrade into their most-used form or Mega.
+- [ ] Revisit optional usage-data behavior after more team-building use.
+  - [ ] Decide whether base Pokemon should ever auto-upgrade into a popular form
+        or Mega instead of requiring an explicit choice.
+  - [ ] Add a small usage-source status surface only if debugging or user trust
+        demonstrates a real need.
 - [x] Add persistent reverse candidate filters to empty Pokemon slots.
   - [x] Keep Pokemon search and its candidate list permanently visible while the selected slot is empty.
   - [x] Keep type, ability, and move controls in the empty card instead of crowding the Pokemon dropdown.
@@ -162,8 +121,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Decide the first AI feature shape.
   - [x] Start with structured analysis of the active team and selected Pokemon.
   - [x] Keep deterministic diagnostics and legality as the factual source of truth.
-  - [ ] Add limited follow-up chat after the first analysis flow is stable.
-  - [ ] Add recommendation generation from locked team slots later.
+- [ ] Add limited follow-up chat after hosted analysis is stable.
+- [ ] Add recommendation generation from locked team slots later.
 - [x] Define a provider-independent Copilot request and response contract.
   - [x] Send structured team, selected Pokemon, diagnostics, and validity summaries rather than raw UI text.
   - [x] Render summary, strengths, weaknesses, priorities, and recommendations as product UI rather than plain chat text.
@@ -182,11 +141,31 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Calculator
 
-- [ ] Add a calculator mode to the app.
-  - [ ] Decide whether it should be a damage calculator, stat calculator, or both.
-  - [ ] Add navigation between Team Builder and Calculator.
-  - [ ] Reuse the same Pokemon/item/move data model where possible.
-  - [ ] Keep the calculator compatible with Pokemon Champions assumptions.
+- [x] Add a one-direction-at-a-time damage calculator with fixed My Pokemon and
+      Opponent Pokemon panels.
+- [x] Let the direction control change which side attacks without moving either
+      Pokemon panel.
+- [x] Reuse the active saved team on the left and keep edits connected to the
+      normal dirty/save flow.
+- [x] Keep the opponent build local to the calculator and allow direct Pokemon,
+      item, ability, nature, move, EV, HP, status, and stat-stage editing.
+- [x] Add a team-aware Singles/Doubles header toggle and connect it to saved
+      teams, format-specific usage rankings, PokePilot context, and calculator rules.
+- [x] Support Regulation M-B Pokemon/item filtering, required Mega Stone locking,
+      level 50, fixed IV 31, Champions stat points, doubles spread damage,
+      weather, terrain, room/gravity effects, Fairy Aura, critical hits, Helping
+      Hand, Tailwind, Friend Guard, Plus/Minus activation, screens, and burn.
+- [x] Show damage rolls, percentages, current-HP KO chance, multi-hit KO summary,
+      and the attack/defense stats used by the calculation.
+- [x] Lazy-load the calculator page and damage engine outside the initial Team
+      Builder module.
+- [x] Reuse the builder's Pokemon, item, type, and move presentation patterns,
+      including a searchable Regulation M-B opponent picker.
+- [ ] Expand explicit Champions-only move, item, and ability overrides when the
+      upstream generation-9 engine does not yet model a new mechanic.
+- [ ] Decide after playtesting whether to add simultaneous two-way results,
+      usage-based opponent defaults, reusable opponent presets, and dedicated
+      offensive-power / physical-bulk / special-bulk summaries.
 
 ## Polish
 
@@ -205,24 +184,32 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Keep semantic nature, validity, danger, move-type, and saved-team states legible in dark mode.
   - [x] Keep exported Pokemon and team images on their stable light presentation in either app theme.
 - [ ] Add a real app icon / logo mark.
-- [ ] Complete the dedicated tablet/mobile UI pass now that Team Builder functionality and desktop UI/UX are stable.
+- [x] Complete the emulated tablet/mobile UI pass.
   - [x] Add the first tablet workspace layout with a fully visible Pokemon card and an edge-triggered PokePilot drawer.
   - [x] Fit short landscape tablet layouts without document overflow by compacting secondary diagnostics and footer spacing.
   - [x] Audit tablet popovers, pickers, team management, drawer behavior, and touch-first editing interactions across representative emulated tablet viewports.
   - [x] Use shared dimmed selection dialogs for Pokemon, item, ability, and move editing on compact layouts, with tap-to-preview, explicit confirmation, and orientation-stable controls.
-  - [ ] Perform a non-blocking real-device Safari check for safe areas, dynamic browser chrome, the virtual keyboard, and long-press gestures.
   - [x] Add the first mobile workspace layout with a compact header, horizontal Team Rail, single-column editor, and near-full-screen PokePilot drawer.
   - [x] Verify mobile text fit, overflow, picker placement, empty-slot filtering, team management, and portrait/landscape transitions across representative emulated phones.
-  - [ ] Complete a non-blocking real-device mobile pass for long-press reordering, EV sliders, safe areas, dynamic browser chrome, and the virtual keyboard.
   - [x] Test text fit, overflow, popover placement, drag/hold reordering, orientation changes, and scroll behavior at representative tablet widths.
+- [ ] Run non-blocking real-device compact-layout QA before public release.
+  - [ ] Check Safari safe areas, dynamic browser chrome, and the virtual keyboard.
+  - [ ] Check long-press reordering, EV sliders, picker dialogs, and orientation changes.
 - [x] Add loading states for Pokemon, item, and move fetches.
 - [x] Add local error and Retry states for failed PokeAPI, Showdown legality, and Smogon usage requests.
-- [ ] Clean up generated assets and keep third-party notices current.
-- [ ] Run `npm run lint` before wrapping UI work.
-- [ ] Run `npm run build` before public deployment.
+
+## Before Public Deployment
+
+- [ ] Clean up generated assets and audit `THIRD_PARTY_NOTICES.md`.
+- [ ] Measure the production bundle and lazy-load genuinely deferred features if
+      initial transfer or parse cost warrants it.
+- [ ] Run Lighthouse and representative cold-load/network checks.
+- [ ] Run `npm run lint`, `npm run test:run`, and `npm run build`.
 
 ## Done Recently
 
+- [x] Split Team Rail, selection details, usage ordering, touch search, and
+      outside-click behavior out of the monolithic TeamBuilder implementation.
 - [x] Centralize slot mutations, nature/stat rules, and repeated move-detail UI.
 - [x] Load Pokemon battle data from Showdown with PokeAPI artwork/icon fallback.
 - [x] Add Pokemon name search with type-to-filter behavior.

@@ -1,4 +1,8 @@
 import type { TeamMember, TeamSlot } from "../types";
+import {
+  resolveBattleFormat,
+  type BattleFormat,
+} from "../battleFormat/battleFormat";
 import type { BenchPokemon, PokemonBuildSnapshot } from "./benchPokemon";
 import type { TeamBuildState } from "./teamBuildState";
 export { createEmptyBuildState } from "./teamBuildState";
@@ -30,6 +34,7 @@ export type SavedTeamSummary = {
   version: typeof SAVED_TEAM_SCHEMA_VERSION;
   id: string;
   name: string;
+  battleFormat: BattleFormat;
   slots: SavedTeamSlot[];
   bench: SavedBenchPokemon[];
   buildState?: TeamBuildState;
@@ -39,6 +44,7 @@ export type SavedTeamSummary = {
 
 export type TeamSnapshot = {
   name: string;
+  battleFormat: BattleFormat;
   slots: SavedTeamSlot[];
   bench: SavedBenchPokemon[];
   buildState: TeamBuildState;
@@ -61,6 +67,7 @@ export function normalizeSavedTeam(
     version: SAVED_TEAM_SCHEMA_VERSION,
     id: team.id,
     name: team.name,
+    battleFormat: resolveBattleFormat(team.battleFormat),
     slots: team.slots,
     bench: Array.isArray(team.bench) ? team.bench : [],
     buildState: team.buildState,
