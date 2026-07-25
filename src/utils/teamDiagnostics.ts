@@ -112,6 +112,7 @@ const roleDefinitions: Array<{
 const typeImmunityByAbility: Record<string, PokemonType> = {
   dryskin: "water",
   eartheater: "ground",
+  eelevate: "ground",
   flashfire: "fire",
   levitate: "ground",
   lightningrod: "electric",

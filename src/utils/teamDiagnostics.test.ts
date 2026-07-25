@@ -62,16 +62,24 @@ describe("team diagnostics", () => {
     expect(getDefensiveMultiplier("ground", ["flying"])).toBe(0);
   });
 
-  it("counts ability-based type immunities", () => {
+  it.each(["Levitate", "Eelevate"])(
+    "counts the %s ability as a Ground immunity",
+    (ability) => {
     const member = createMember("levitating-pokemon", []);
     const result = analyzeTeam(
       [member],
-      { moveIdsBySlot: {}, evsBySlot: {}, natureBySlot: {}, abilityBySlot: { 0: "Levitate" } },
+      {
+        moveIdsBySlot: {},
+        evsBySlot: {},
+        natureBySlot: {},
+        abilityBySlot: { 0: ability },
+      },
     );
     const ground = result.defensiveMatchups.find((matchup) => matchup.type === "ground");
 
     expect(ground).toMatchObject({ weakCount: 0, immuneCount: 1 });
-  });
+    },
+  );
 
   it("warns only when multiple attackers lean into one damage category", () => {
     const physicalMoves = [createMove("body-slam", "physical"), createMove("crunch", "physical")];

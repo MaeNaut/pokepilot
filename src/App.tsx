@@ -2038,6 +2038,7 @@ function App() {
               showdownLegality={showdownLegality}
               buildState={teamBuildState}
               onSelectedSlotChange={setSelectedTeamSlot}
+              onReorderSlots={handleReorderSlots}
               onSelectPokemon={handleSelectPokemon}
               isVisible={appMode === "calculator"}
             />

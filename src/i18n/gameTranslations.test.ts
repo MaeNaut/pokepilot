@@ -34,6 +34,34 @@ describe("Korean game translations", () => {
     expect(translateGameName("ko", "types", "fire", "Fire")).toBe("불꽃");
   });
 
+  it("translates post-PokeAPI override data", () => {
+    expect(translateGameName("ko", "abilities", "eelevate", "Eelevate")).toBe(
+      "천정부지",
+    );
+    expect(translateGameName("ko", "abilities", "firemane", "Fire Mane")).toBe(
+      "불꽃의갈기",
+    );
+    expect(
+      translateGameDescription(
+        "ko",
+        "abilities",
+        "eelevate",
+        "This Pokemon is immune to Ground; +1 to highest stat if it KOes another Pokemon.",
+      ),
+    ).toContain("가장 높은 능력");
+    expect(
+      translateGameDescription(
+        "ko",
+        "abilities",
+        "firemane",
+        "Boosts the power of the Pokemon's Fire-type moves by 50%.",
+      ),
+    ).toBe("불꽃타입 기술의 위력이 1.5배가 된다.");
+    expect(
+      translateGameName("ko", "abilities", "innardsout", "Innards Out"),
+    ).toBe("내용물분출");
+  });
+
   it("translates descriptions and PokePilot move tags", () => {
     expect(
       translateGameDescription(

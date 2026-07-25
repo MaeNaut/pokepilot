@@ -26,6 +26,8 @@ export type CalculatorBoosts = Record<
   number
 >;
 
+export type CalculatorPokemonStatus = "healthy" | "burned";
+
 export type CalculatorPokemon = {
   member: TeamMember;
   item: PokemonItem | null;
@@ -34,7 +36,7 @@ export type CalculatorPokemon = {
   evs: StatBlock;
   boosts: CalculatorBoosts;
   currentHp: number;
-  status: "healthy" | "burned";
+  status: CalculatorPokemonStatus;
   move: PokemonMove;
 };
 

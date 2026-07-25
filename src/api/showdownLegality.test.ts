@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { regulationMbSnapshotFixture } from "../test/fixtures/showdownLegalityFixtures";
 import {
+  getPokemonCandidateAbilities,
   getLegalAbilities,
   getLegalMoves,
   hydrateShowdownLegalitySnapshot,
@@ -112,6 +113,123 @@ describe("Showdown Regulation M-B compact snapshot", () => {
     expect(getLegalMoves(snapshot, "mr-mime", "mr-mime")).toEqual(
       new Set(["protect"]),
     );
+  });
+
+  it("exposes legal Mega-only abilities through base Pokemon candidate filters", () => {
+    const snapshot = hydrateShowdownLegalitySnapshot({
+      ...regulationMbSnapshotFixture,
+      pokemonIds: [
+        ...regulationMbSnapshotFixture.pokemonIds,
+        "eelektross",
+        "eelektrossmega",
+        "slowbrogalar",
+        "slowbromega",
+        "victreebel",
+        "victreebelmega",
+      ],
+      knownPokemonIds: [
+        ...regulationMbSnapshotFixture.knownPokemonIds,
+        "eelektross",
+        "eelektrossmega",
+        "slowbrogalar",
+        "slowbromega",
+        "victreebel",
+        "victreebelmega",
+      ],
+      abilityByPokemon: [
+        ...regulationMbSnapshotFixture.abilityByPokemon,
+        ["eelektross", ["levitate"]],
+        ["eelektrossmega", ["eelevate"]],
+        ["slowbrogalar", ["quickdraw"]],
+        ["slowbromega", ["shellarmor"]],
+        ["victreebel", ["chlorophyll"]],
+        ["victreebelmega", ["innardsout"]],
+      ],
+    });
+    const pokemonIndex = [
+      {
+        name: "eelektross",
+        showdownId: "eelektross",
+        displayName: "Eelektross",
+        speciesKey: "eelektross",
+        sortNumber: 604,
+        types: ["electric"],
+        abilities: ["Levitate"],
+        formKind: "base",
+        isSelectorOption: true,
+      },
+      {
+        name: "eelektross-mega",
+        showdownId: "eelektrossmega",
+        displayName: "Eelektross Mega",
+        speciesKey: "eelektross",
+        sortNumber: 604,
+        types: ["electric"],
+        abilities: ["Eelevate"],
+        formKind: "mega",
+        isSelectorOption: false,
+      },
+      {
+        name: "victreebel",
+        showdownId: "victreebel",
+        displayName: "Victreebel",
+        speciesKey: "victreebel",
+        sortNumber: 71,
+        types: ["grass", "poison"],
+        abilities: ["Chlorophyll"],
+        formKind: "base",
+        isSelectorOption: true,
+      },
+      {
+        name: "victreebel-mega",
+        showdownId: "victreebelmega",
+        displayName: "Victreebel Mega",
+        speciesKey: "victreebel",
+        sortNumber: 71,
+        types: ["grass", "poison"],
+        abilities: ["Innards Out"],
+        formKind: "mega",
+        isSelectorOption: false,
+      },
+      {
+        name: "slowbro-galar",
+        showdownId: "slowbrogalar",
+        displayName: "Slowbro Galar",
+        speciesKey: "slowbro",
+        sortNumber: 80,
+        types: ["poison", "psychic"],
+        abilities: ["Quick Draw"],
+        formKind: "regional",
+        isSelectorOption: true,
+      },
+      {
+        name: "slowbro-mega",
+        showdownId: "slowbromega",
+        displayName: "Slowbro Mega",
+        speciesKey: "slowbro",
+        sortNumber: 80,
+        types: ["water", "psychic"],
+        abilities: ["Shell Armor"],
+        formKind: "mega",
+        isSelectorOption: false,
+      },
+    ] satisfies import("../types").PokemonIndexEntry[];
+
+    expect(
+      getPokemonCandidateAbilities(snapshot, pokemonIndex[0], pokemonIndex).map(
+        (ability) => ability.id,
+      ),
+    ).toEqual(["levitate", "eelevate"]);
+    expect(
+      getPokemonCandidateAbilities(snapshot, pokemonIndex[2], pokemonIndex).map(
+        (ability) => ability.id,
+      ),
+    ).toEqual(["chlorophyll", "innardsout"]);
+    expect(
+      getPokemonCandidateAbilities(snapshot, pokemonIndex[4], pokemonIndex).map(
+        (ability) => ability.id,
+      ),
+    ).toEqual(["quickdraw"]);
   });
 
 });

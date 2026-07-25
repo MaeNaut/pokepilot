@@ -6,7 +6,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useLocalization } from "../i18n/useLocalization";
 
 type TouchSelectionDialogProps = {
-  kind: "pokemon" | "item" | "ability" | "nature" | "move" | "rank";
+  kind:
+    | "pokemon"
+    | "item"
+    | "ability"
+    | "nature"
+    | "move"
+    | "rank"
+    | "status";
   title: string;
   canSelect?: boolean;
   showActions?: boolean;

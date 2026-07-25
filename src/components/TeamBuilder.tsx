@@ -13,6 +13,7 @@ import { loadShowdownData } from "../api/showdownData";
 import { fetchAbility, itemFromIndexEntry } from "../api/showdownCatalog";
 import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
+  getPokemonCandidateAbilities,
   getShowdownLookupKeys,
   type ShowdownLegalitySnapshot,
   getLegalAbilities,
@@ -797,15 +798,11 @@ export function TeamBuilder({
               ),
             )
             .map((entry) => {
-              const abilityNamesById = new Map(
-                entry.abilities.map((ability) => [normalizeShowdownId(ability), ability]),
-              );
-              const legalAbilityIds = getLegalAbilities(
+              const candidateAbilities = getPokemonCandidateAbilities(
                 showdownLegality ?? null,
-                entry.showdownId,
-                entry.speciesKey,
+                entry,
+                pokemonIndex,
               );
-              const abilityIds = legalAbilityIds ?? new Set(abilityNamesById.keys());
               const moveIds = getLegalMoves(
                 showdownLegality ?? null,
                 entry.showdownId,
@@ -829,12 +826,12 @@ export function TeamBuilder({
                 englishName: entry.displayName,
                 number: entry.sortNumber,
                 types: entry.types,
-                abilityOptions: [...abilityIds].map((abilityId) => ({
-                  id: abilityId,
+                abilityOptions: candidateAbilities.map((ability) => ({
+                  id: ability.id,
                   name: gameName(
                     "abilities",
-                    abilityId,
-                    abilityNamesById.get(abilityId) ?? formatIdLabel(abilityId),
+                    ability.id,
+                    ability.name,
                   ),
                 })),
                 moveIds: [...(moveIds ?? [])],

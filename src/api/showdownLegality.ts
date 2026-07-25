@@ -1,3 +1,7 @@
+import type {
+  PokemonCandidateFilterValue,
+  PokemonIndexEntry,
+} from "../types";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
 import { cleanLegacyDataCaches } from "./legacyDataCache";
 import { normalizeShowdownId } from "./showdownIds";
@@ -210,6 +214,19 @@ export function isPokemonLegal(
   );
 }
 
+export function isExactPokemonFormLegal(
+  showdownLegality: ShowdownLegalitySnapshot | null | undefined,
+  pokemonId: string,
+) {
+  if (!showdownLegality || showdownLegality.pokemonIds.size === 0) {
+    return true;
+  }
+
+  return getShowdownLookupKeys(pokemonId).some((lookup) =>
+    showdownLegality.pokemonIds.has(lookup),
+  );
+}
+
 export function isItemLegal(
   showdownLegality: ShowdownLegalitySnapshot | null,
   itemId: string,
@@ -251,4 +268,57 @@ export function getLegalMoves(
     pokemonId,
     speciesKey,
   );
+}
+
+function addCandidateAbilities(
+  abilitiesById: Map<string, PokemonCandidateFilterValue>,
+  showdownLegality: ShowdownLegalitySnapshot | null,
+  entry: PokemonIndexEntry,
+) {
+  const namesById = new Map(
+    entry.abilities.map((ability) => [normalizeShowdownId(ability), ability]),
+  );
+  const legalAbilityIds =
+    getLegalAbilities(showdownLegality, entry.showdownId) ??
+    new Set(namesById.keys());
+
+  for (const abilityId of legalAbilityIds) {
+    const id = normalizeShowdownId(abilityId);
+
+    if (!id) {
+      continue;
+    }
+
+    abilitiesById.set(id, {
+      id,
+      name: namesById.get(id) ?? abilityId,
+    });
+  }
+}
+
+export function getPokemonCandidateAbilities(
+  showdownLegality: ShowdownLegalitySnapshot | null,
+  entry: PokemonIndexEntry,
+  pokemonIndex: readonly PokemonIndexEntry[],
+) {
+  const abilitiesById = new Map<string, PokemonCandidateFilterValue>();
+  addCandidateAbilities(abilitiesById, showdownLegality, entry);
+
+  if (entry.formKind === "regional") {
+    return [...abilitiesById.values()];
+  }
+
+  for (const form of pokemonIndex) {
+    if (
+      form.speciesKey !== entry.speciesKey ||
+      form.formKind !== "mega" ||
+      !isExactPokemonFormLegal(showdownLegality, form.showdownId)
+    ) {
+      continue;
+    }
+
+    addCandidateAbilities(abilitiesById, showdownLegality, form);
+  }
+
+  return [...abilitiesById.values()];
 }

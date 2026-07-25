@@ -135,7 +135,8 @@ button {
 }
 
 .app-header {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 60;
   display: flex;
   align-items: center;
@@ -1146,9 +1147,44 @@ button {
   justify-self: center;
 }
 
+.calculator-team-slot {
+  position: relative;
+  min-width: 0;
+  transition: transform 140ms ease;
+}
+
+.calculator-team-slot.is-dragging {
+  z-index: 28;
+  pointer-events: none;
+  transform:
+    translate3d(
+      var(--calculator-team-drag-x),
+      var(--calculator-team-drag-y),
+      0
+    )
+    scale(1.04);
+  transition: none;
+}
+
+.calculator-team-slot.is-dragging.is-dropping,
+.calculator-team-slot.is-reorder-displaced {
+  transition: transform 150ms ease-out;
+}
+
+.calculator-team-slot.is-drop-target::before {
+  position: absolute;
+  inset: -3px;
+  z-index: 4;
+  border: 2px solid var(--color-selection-border);
+  border-radius: calc(var(--radius-sm) + 3px);
+  content: "";
+  pointer-events: none;
+}
+
 .calculator-team-strip button {
   position: relative;
   display: grid;
+  width: 100%;
   height: 34px;
   min-width: 0;
   padding: 0;
@@ -1161,6 +1197,22 @@ button {
     border-color 120ms ease,
     background 120ms ease,
     transform 120ms ease;
+}
+
+.calculator-team-strip button.is-reorderable {
+  cursor: grab;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
+
+.calculator-team-strip.is-reordering button {
+  cursor: grabbing;
+}
+
+.calculator-team-slot.is-dragging button {
+  filter: saturate(1.06) brightness(1.02);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
 }
 
 .calculator-team-strip button:not(:disabled):hover,
@@ -1638,14 +1690,6 @@ button {
   text-align: center;
 }
 
-.calculator-empty-side {
-  display: grid;
-  min-height: 476px;
-  place-items: center;
-  color: var(--color-muted);
-  text-align: center;
-}
-
 .calculator-result-panel {
   position: sticky;
   top: 16px;
@@ -1926,6 +1970,8 @@ button {
 
 .calculator-set-editor {
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   overflow: visible;
   border: 0;
   padding: 0;
@@ -1947,6 +1993,7 @@ button {
     .trait-menu,
     .nature-grid-menu,
     .move-menu,
+    .candidate-filter-menu,
     .form-picker-menu,
     .calculator-rank-menu
   ) {
@@ -1963,6 +2010,7 @@ button {
 }
 
 .pokemon-card.calculator-editor-card {
+  flex: 1;
   min-height: 490px;
   overflow: visible;
   border-radius: var(--radius-md);
@@ -2003,6 +2051,25 @@ button {
 .calculator-editor-card .meta-row {
   grid-template-columns: minmax(0, 1fr);
   margin-top: 14px;
+}
+
+.calculator-editor-card.is-empty-slot {
+  min-height: 650px;
+}
+
+.calculator-editor-card.is-empty-slot .card-main {
+  min-height: 646px;
+}
+
+.calculator-editor-card.is-empty-slot .candidate-filter-panel {
+  width: 100%;
+  grid-column: 1;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.calculator-editor-card.is-empty-slot .candidate-filter-move-grid {
+  gap: 8px;
 }
 
 .calculator-editor-card .set-meta-controls {
@@ -2161,6 +2228,7 @@ button {
 }
 
 .calculator-status-control {
+  position: relative;
   display: grid;
   min-width: 0;
   grid-template-columns: auto minmax(0, 1fr);
@@ -2168,12 +2236,55 @@ button {
   gap: 7px;
 }
 
-.calculator-status-control select {
+.calculator-status-trigger {
+  display: flex;
+  width: 100%;
   height: 30px;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 0 6px;
   background: var(--color-surface-subtle);
+  color: var(--color-text);
+  font: inherit;
   font-size: 0.7rem;
   font-weight: var(--font-medium);
+  text-align: left;
+}
+
+.calculator-status-trigger:hover,
+.calculator-status-trigger:focus-visible,
+.calculator-status-trigger[aria-expanded="true"] {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-hover);
+  outline: none;
+}
+
+.calculator-status-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calculator-status-trigger svg {
+  width: 9px;
+  flex: 0 0 auto;
+  color: var(--color-muted);
+}
+
+.calculator-status-control .calculator-status-menu {
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  width: max(100%, 132px);
+  min-width: 0;
+}
+
+.calculator-status-option:last-child {
+  border-bottom: 0;
 }
 
 .calculator-editor-card .editor-detail-grid {
@@ -2364,8 +2475,55 @@ button {
     overflow: hidden;
   }
 
+  .calculator-editor-card.is-empty-slot {
+    overflow: visible;
+  }
+
   .calculator-editor-card .editor-detail-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1420px) {
+  .calculator-pokemon-panel:first-child,
+  .calculator-pokemon-panel:last-child {
+    grid-row: 1;
+  }
+
+  .calculator-result-panel {
+    grid-row: 2;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+    grid-template-rows: auto auto;
+    align-items: start;
+    gap: 10px 16px;
+    padding: 14px 16px 16px;
+  }
+
+  .calculator-direction-control {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .calculator-result {
+    grid-column: 1;
+    grid-row: 2;
+    align-content: start;
+  }
+
+  .calculator-move-results-table {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .calculator-move-result-row {
+    align-content: start;
+  }
+
+  .calculator-field-controls {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: stretch;
   }
 }
 
@@ -2428,6 +2586,17 @@ button {
     min-height: 430px;
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(180px, 1fr) auto;
+  }
+
+  .calculator-direction-control,
+  .calculator-result,
+  .calculator-field-controls {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .calculator-move-results-table {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .calculator-field-controls {
@@ -7344,6 +7513,11 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .candidate-filter-panel {
+    grid-column: 1;
+    margin-top: 0;
+  }
+
   .meta-row {
     grid-template-columns: 1fr;
   }
@@ -7471,11 +7645,6 @@ select {
   .card-main,
   .editor-detail-grid {
     grid-template-columns: 1fr;
-  }
-
-  .candidate-filter-panel {
-    grid-column: 1;
-    margin-top: 0;
   }
 
   .mega-controls,
@@ -9481,6 +9650,28 @@ select {
 .touch-picker-dialog.is-ability .touch-picker-preview {
   min-height: 104px;
   max-height: 160px;
+}
+
+.touch-picker-dialog.is-status {
+  width: min(360px, calc(100vw - 32px));
+  height: auto;
+  min-height: 0;
+}
+
+.touch-picker-dialog.is-status .touch-picker-results {
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.touch-status-options {
+  display: grid;
+  height: auto;
+  align-content: start;
+}
+
+.touch-status-options .calculator-status-option {
+  width: 100%;
+  min-height: 52px;
 }
 
 .touch-picker-dialog.is-nature {

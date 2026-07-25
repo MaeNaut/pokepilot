@@ -9,13 +9,20 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "../api/pokeApi";
 import { itemFromIndexEntry } from "../api/showdownCatalog";
+import { loadShowdownData } from "../api/showdownData";
 import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
+  getLegalMoves,
+  getPokemonCandidateAbilities,
   isItemLegal,
   isPokemonLegal,
   type ShowdownLegalitySnapshot,
 } from "../api/showdownLegality";
-import { loadSmogonUsagePokemonIds } from "../api/smogonUsage";
+import {
+  loadPopularSmogonSet,
+  loadSmogonUsagePokemonIds,
+  type SmogonUsageSet,
+} from "../api/smogonUsage";
 import {
   calculateChampionsDamage,
   type CalculatorBoosts,
@@ -23,6 +30,10 @@ import {
   type CalculatorPokemon,
   type DamageCalculationResult,
 } from "../calculator/damageCalculator";
+import {
+  createDefaultCalculatorBuild,
+  createUsageCalculatorBuild,
+} from "../calculator/calculatorUsageBuild";
 import {
   calculateChampionsStats,
   defaultEvs,
@@ -32,7 +43,6 @@ import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
 import { useLocalization } from "../i18n/useLocalization";
 import type {
   ItemIndexEntry,
-  PokemonItem,
   PokemonMove,
   PokemonIndexEntry,
   TeamMember,
@@ -44,7 +54,12 @@ import {
   findMoveByLookup,
   reconcileMoveIds,
 } from "../utils/pokemonMoves";
+import {
+  getPreferredPokeApiId,
+  shouldKeepSelectedPokemonForUsageTarget,
+} from "../utils/pokemonAliases";
 import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
+import { getIndexAfterSwap, swapArrayItems } from "../utils/reorder";
 import {
   CalculatorPokemonEditor,
   type CalculatorBuildValues,
@@ -70,6 +85,7 @@ type CalculatorProps = {
   showdownLegality: ShowdownLegalitySnapshot | null;
   buildState: TeamBuildStateController;
   onSelectedSlotChange: (slotIndex: number) => void;
+  onReorderSlots: (sourceIndex: number, targetIndex: number) => void;
   onSelectPokemon: (
     slotIndex: number,
     lookup: string,
@@ -208,29 +224,6 @@ function usePreMegaMoves(
   return moves;
 }
 
-function createOpponentBuild(
-  member: TeamMember,
-  item: PokemonItem | null = null,
-): OpponentBuild {
-  return {
-    member,
-    item,
-    ability: member.abilities?.[0] ?? "",
-    natureId: "hardy",
-    evs: { ...defaultEvs },
-    moveIds: [
-      ...(member.moves
-        ?.filter((move) => move.category !== "Status")
-        .slice(0, 4)
-        .map((move) => move.id) ?? []),
-      "",
-      "",
-      "",
-      "",
-    ].slice(0, 4),
-  };
-}
-
 function formatChance(value: number) {
   if (value === 0 || value === 100) {
     return `${value}%`;
@@ -248,6 +241,7 @@ export function Calculator({
   showdownLegality,
   buildState,
   onSelectedSlotChange,
+  onReorderSlots,
   onSelectPokemon,
   isVisible,
 }: CalculatorProps) {
@@ -299,11 +293,16 @@ export function Calculator({
   const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(
     null,
   );
+  const [candidateMoveIndex, setCandidateMoveIndex] = useState<PokemonMove[]>(
+    [],
+  );
   const [isOpponentLoading, setIsOpponentLoading] = useState(false);
   const [opponentError, setOpponentError] = useState<string | null>(null);
   const [opponentPreMegaPokemonId, setOpponentPreMegaPokemonId] = useState("");
   const playerIdentityRef = useRef<string | null>(null);
+  const preservePlayerBattleOnNextIdentityRef = useRef(false);
   const opponentIdentityRef = useRef<string | null>(null);
+  const opponentSelectionRequestRef = useRef(0);
   const numberFormatter = useMemo(
     () => new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US"),
     [locale],
@@ -449,6 +448,26 @@ export function Calculator({
   }, [battleFormat]);
 
   useEffect(() => {
+    let isCurrent = true;
+
+    void loadShowdownData()
+      .then((snapshot) => {
+        if (isCurrent) {
+          setCandidateMoveIndex(Object.values(snapshot.movesById));
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setCandidateMoveIndex([]);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const identity = selectedMember
       ? `${selectedSlot}:${selectedMember.id}`
       : null;
@@ -458,6 +477,12 @@ export function Calculator({
     }
 
     playerIdentityRef.current = identity;
+
+    if (preservePlayerBattleOnNextIdentityRef.current) {
+      preservePlayerBattleOnNextIdentityRef.current = false;
+      return;
+    }
+
     setPlayerBattle(createBattleState(playerMaxHp));
   }, [playerMaxHp, selectedMember, selectedSlot]);
 
@@ -555,6 +580,16 @@ export function Calculator({
           ),
         )
         .map((entry) => {
+          const candidateAbilities = getPokemonCandidateAbilities(
+            showdownLegality,
+            entry,
+            pokemonIndex,
+          );
+          const moveIds = getLegalMoves(
+            showdownLegality,
+            entry.showdownId,
+            entry.speciesKey,
+          );
           const includeForm =
             entry.formKind === "gender" ||
             entry.formKind === "regional" ||
@@ -574,9 +609,18 @@ export function Calculator({
             number: entry.sortNumber,
             types: entry.types,
             entry,
+            abilityOptions: candidateAbilities.map((ability) => ({
+              id: ability.id,
+              name: gameName(
+                "abilities",
+                ability.id,
+                ability.name,
+              ),
+            })),
+            moveIds: [...(moveIds ?? [])],
           };
         }),
-    [pokemonIndex, pokemonName, showdownLegality],
+    [gameName, pokemonIndex, pokemonName, showdownLegality],
   );
   const pokemonOptions = useMemo(() => {
     const { orderedOptions, rankByOptionId } = orderPokemonOptionsByUsage(
@@ -668,6 +712,65 @@ export function Calculator({
     }));
   }
 
+  function reorderMoves(
+    side: "player" | "opponent",
+    sourceIndex: number,
+    targetIndex: number,
+  ) {
+    if (sourceIndex === targetIndex) {
+      return;
+    }
+
+    if (side === "player") {
+      const moveIds = [0, 1, 2, 3].map(
+        (index) =>
+          resolvedPlayerMoveIds[index] ?? playerMoves[index]?.id ?? "",
+      );
+
+      if (!moveIds[sourceIndex]) {
+        return;
+      }
+
+      updatePlayerBuild({
+        moveIds: swapArrayItems(moveIds, sourceIndex, targetIndex),
+      });
+      return;
+    }
+
+    setOpponentBuild((current) => {
+      const moveIds = [0, 1, 2, 3].map(
+        (index) =>
+          current.moveIds[index] ?? opponentMoves[index]?.id ?? "",
+      );
+
+      if (!moveIds[sourceIndex]) {
+        return current;
+      }
+
+      return {
+        ...current,
+        moveIds: swapArrayItems(moveIds, sourceIndex, targetIndex),
+      };
+    });
+  }
+
+  function reorderPlayerTeam(sourceIndex: number, targetIndex: number) {
+    if (sourceIndex === targetIndex || !team[sourceIndex]) {
+      return;
+    }
+
+    const nextSelectedSlot = getIndexAfterSwap(
+      selectedSlot,
+      sourceIndex,
+      targetIndex,
+    );
+
+    preservePlayerBattleOnNextIdentityRef.current =
+      nextSelectedSlot !== selectedSlot;
+    onReorderSlots(sourceIndex, targetIndex);
+    onSelectedSlotChange(nextSelectedSlot);
+  }
+
   async function selectPlayerPokemon(
     pokemonId: string,
     options: CalculatorPokemonSelectOptions = {},
@@ -705,16 +808,33 @@ export function Calculator({
     pokemonId: string,
     options: CalculatorPokemonSelectOptions = {},
   ) {
+    const requestId = opponentSelectionRequestRef.current + 1;
+    opponentSelectionRequestRef.current = requestId;
     setIsOpponentLoading(true);
     setOpponentError(null);
 
     try {
-      const member = await fetchPokemon(pokemonId);
+      const selectedMember = await fetchPokemon(pokemonId);
+      let member = selectedMember;
+      let usageSet: SmogonUsageSet | null = null;
+
+      if (options.applyUsageStats) {
+        usageSet = await loadPopularSmogonSet(pokemonId, battleFormat);
+
+        if (usageSet) {
+          member = await resolveOpponentUsageTargetMember(
+            usageSet,
+            selectedMember,
+          );
+        }
+      }
+
+      if (opponentSelectionRequestRef.current !== requestId) {
+        return;
+      }
+
       const targetEntry = pokemonIndex.find(
-        (entry) => entry.name === pokemonId,
-      );
-      const currentEntry = pokemonIndex.find(
-        (entry) => entry.name === opponentBuild.member?.id,
+        (entry) => entry.name === member.id,
       );
       const megaStoneName = getMegaStoneItemName(
         member.id,
@@ -723,21 +843,46 @@ export function Calculator({
       const megaStone = megaStoneName
         ? selectableItems.find((entry) => entry.name === megaStoneName)
         : undefined;
+      const usageItem = usageSet?.itemName
+        ? selectableItems.find((entry) => {
+            const usageItemId = normalizeShowdownId(usageSet.itemName ?? "");
+
+            return [entry.showdownId, entry.name, entry.displayName].some(
+              (value) => normalizeShowdownId(value ?? "") === usageItemId,
+            );
+          })
+        : undefined;
+      const item = usageItem ?? megaStone;
 
       if (
         targetEntry?.formKind === "mega" &&
-        opponentBuild.member &&
-        currentEntry?.formKind !== "mega"
+        selectedMember.id !== member.id
       ) {
-        setOpponentPreMegaPokemonId(opponentBuild.member.id);
+        setOpponentPreMegaPokemonId(selectedMember.id);
+      } else if (targetEntry?.formKind !== "mega") {
+        setOpponentPreMegaPokemonId("");
       }
 
       setOpponentBuild((current) => {
-        if (options.applyUsageStats) {
-          return createOpponentBuild(
+        if (options.applyUsageStats && usageSet) {
+          return {
             member,
-            megaStone ? itemFromIndexEntry(megaStone) : null,
-          );
+            ...createUsageCalculatorBuild(
+              member,
+              usageSet,
+              item ? itemFromIndexEntry(item) : null,
+            ),
+          };
+        }
+
+        if (options.applyUsageStats) {
+          return {
+            member,
+            ...createDefaultCalculatorBuild(
+              member,
+              item ? itemFromIndexEntry(item) : null,
+            ),
+          };
         }
 
         const availableMoveIds = new Set(
@@ -768,7 +913,50 @@ export function Calculator({
           : t("calculator.lookupFailed"),
       );
     } finally {
-      setIsOpponentLoading(false);
+      if (opponentSelectionRequestRef.current === requestId) {
+        setIsOpponentLoading(false);
+      }
+    }
+  }
+
+  function resolveUsagePokemonId(name: string) {
+    const preferredId = getPreferredPokeApiId(name);
+
+    if (preferredId) {
+      return preferredId;
+    }
+
+    const normalized = normalizeShowdownId(name);
+    const matchedEntry = pokemonIndex.find((entry) =>
+      [entry.name, entry.displayName, entry.displayName.replace(/\s+/g, "-")]
+        .map(normalizeShowdownId)
+        .includes(normalized),
+    );
+
+    return matchedEntry?.name ?? normalized;
+  }
+
+  async function resolveOpponentUsageTargetMember(
+    usageSet: SmogonUsageSet,
+    selectedMember: TeamMember,
+  ) {
+    const usagePokemonId = resolveUsagePokemonId(usageSet.pokemonName);
+
+    if (
+      normalizeShowdownId(usagePokemonId) ===
+        normalizeShowdownId(selectedMember.id) ||
+      shouldKeepSelectedPokemonForUsageTarget(
+        selectedMember.id,
+        usagePokemonId,
+      )
+    ) {
+      return selectedMember;
+    }
+
+    try {
+      return await fetchPokemon(usagePokemonId);
+    } catch {
+      return selectedMember;
     }
   }
 
@@ -869,6 +1057,7 @@ export function Calculator({
           team={team}
           selectedSlot={selectedSlot}
           pokemonOptions={pokemonOptions}
+          candidateMoveIndex={candidateMoveIndex}
           pokemonIndex={pokemonIndex}
           itemOptions={playerItemOptions}
           showdownLegality={showdownLegality}
@@ -876,6 +1065,7 @@ export function Calculator({
           preMegaMoves={playerPreMegaMoves}
           isAttacking={direction === "player-to-opponent"}
           onSelectedSlotChange={onSelectedSlotChange}
+          onReorderTeamSlots={reorderPlayerTeam}
           onSelectPokemon={selectPlayerPokemon}
           onRememberPreMegaPokemon={(pokemonId) =>
             buildState.setPreMegaPokemonBySlot((current) => ({
@@ -886,6 +1076,9 @@ export function Calculator({
           onBuildChange={updatePlayerBuild}
           onMoveChange={(moveIndex, moveId) =>
             updateMove("player", moveIndex, moveId)
+          }
+          onReorderMoves={(sourceIndex, targetIndex) =>
+            reorderMoves("player", sourceIndex, targetIndex)
           }
           onBattleChange={setPlayerBattle}
         />
@@ -1189,6 +1382,7 @@ export function Calculator({
           maxHp={opponentMaxHp}
           moves={opponentMoves}
           pokemonOptions={pokemonOptions}
+          candidateMoveIndex={candidateMoveIndex}
           pokemonIndex={pokemonIndex}
           itemOptions={opponentItemOptions}
           showdownLegality={showdownLegality}
@@ -1206,6 +1400,9 @@ export function Calculator({
           }
           onMoveChange={(moveIndex, moveId) =>
             updateMove("opponent", moveIndex, moveId)
+          }
+          onReorderMoves={(sourceIndex, targetIndex) =>
+            reorderMoves("opponent", sourceIndex, targetIndex)
           }
           onBattleChange={setOpponentBattle}
         />
