@@ -1463,7 +1463,7 @@ export function TeamBuilder({
 
   useDismissOnOutsidePointer(
     candidateFilterPickerRef,
-    Boolean(openCandidateFilterPicker),
+    Boolean(openCandidateFilterPicker) && !isTouchPickerLayout,
     closeCandidateFilterPicker,
   );
 
@@ -3697,6 +3697,7 @@ export function TeamBuilder({
                   selectedMoves={selectedCandidateMoveOptions}
                   activeMoveSlot={candidateMoveFilterSlot}
                   activeOptionIndex={activeCandidateFilterOptionIndex}
+                  isTouchLayout={isTouchPickerLayout}
                   panelRef={candidateFilterPickerRef}
                   onToggleType={togglePokemonType}
                   onClearFilters={() =>

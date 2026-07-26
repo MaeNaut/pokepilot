@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAnglesLeft,
@@ -71,6 +77,13 @@ import { TypeBadge } from "./TypeBadge";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 
 type DamageDirection = "player-to-opponent" | "opponent-to-player";
+type CalculatorMobilePage = "player" | "damage" | "opponent";
+
+const calculatorMobilePageOrder: CalculatorMobilePage[] = [
+  "player",
+  "damage",
+  "opponent",
+];
 
 type OpponentBuild = CalculatorBuildValues & {
   member: TeamMember | null;
@@ -299,6 +312,12 @@ export function Calculator({
   const [isOpponentLoading, setIsOpponentLoading] = useState(false);
   const [opponentError, setOpponentError] = useState<string | null>(null);
   const [opponentPreMegaPokemonId, setOpponentPreMegaPokemonId] = useState("");
+  const [mobilePage, setMobilePage] =
+    useState<CalculatorMobilePage>("player");
+  const calculatorLayoutRef = useRef<HTMLDivElement | null>(null);
+  const mobilePageRef = useRef<CalculatorMobilePage>("player");
+  const mobileScrollTargetRef = useRef<CalculatorMobilePage | null>(null);
+  const mobileScrollFrameRef = useRef<number | null>(null);
   const playerIdentityRef = useRef<string | null>(null);
   const preservePlayerBattleOnNextIdentityRef = useRef(false);
   const opponentIdentityRef = useRef<string | null>(null);
@@ -391,6 +410,61 @@ export function Calculator({
         battleFormat === "doubles" ? current.isPlusMinus : false,
     }));
   }, [battleFormat]);
+
+  useEffect(() => {
+    mobilePageRef.current = mobilePage;
+  }, [mobilePage]);
+
+  useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
+
+    let resizeFrame: number | null = null;
+
+    const alignMobilePage = () => {
+      if (!window.matchMedia("(max-width: 760px)").matches) {
+        return;
+      }
+
+      const layout = calculatorLayoutRef.current;
+      if (!layout) {
+        return;
+      }
+
+      const pageIndex = calculatorMobilePageOrder.indexOf(
+        mobilePageRef.current,
+      );
+      layout.scrollLeft = pageIndex * layout.clientWidth;
+    };
+
+    const scheduleAlignment = () => {
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+
+      resizeFrame = window.requestAnimationFrame(alignMobilePage);
+    };
+
+    scheduleAlignment();
+    window.addEventListener("resize", scheduleAlignment);
+
+    return () => {
+      window.removeEventListener("resize", scheduleAlignment);
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+    };
+  }, [isVisible]);
+
+  useEffect(
+    () => () => {
+      if (mobileScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(mobileScrollFrameRef.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (canActivatePlusMinus) {
@@ -1040,14 +1114,180 @@ export function Calculator({
     };
   }
 
+  function showMobilePage(nextPage: CalculatorMobilePage) {
+    const layout = calculatorLayoutRef.current;
+    mobilePageRef.current = nextPage;
+    mobileScrollTargetRef.current = nextPage;
+    setMobilePage(nextPage);
+
+    if (!layout) {
+      return;
+    }
+
+    const pageIndex = calculatorMobilePageOrder.indexOf(nextPage);
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    layout.scrollTo({
+      left: pageIndex * layout.clientWidth,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }
+
+  function handleMobileLayoutScroll() {
+    if (mobileScrollFrameRef.current !== null) {
+      return;
+    }
+
+    mobileScrollFrameRef.current = window.requestAnimationFrame(() => {
+      mobileScrollFrameRef.current = null;
+
+      const layout = calculatorLayoutRef.current;
+      if (!layout || layout.clientWidth === 0) {
+        return;
+      }
+
+      const nextIndex = Math.max(
+        0,
+        Math.min(
+          calculatorMobilePageOrder.length - 1,
+          Math.round(layout.scrollLeft / layout.clientWidth),
+        ),
+      );
+      const nextPage = calculatorMobilePageOrder[nextIndex];
+      const targetPage = mobileScrollTargetRef.current;
+
+      if (targetPage) {
+        const targetIndex = calculatorMobilePageOrder.indexOf(targetPage);
+        const reachedTarget =
+          Math.abs(layout.scrollLeft - targetIndex * layout.clientWidth) <= 2;
+
+        if (!reachedTarget) {
+          return;
+        }
+
+        mobileScrollTargetRef.current = null;
+      }
+
+      if (mobilePageRef.current !== nextPage) {
+        mobilePageRef.current = nextPage;
+        setMobilePage(nextPage);
+      }
+    });
+  }
+
+  function handleMobileTabKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentPage: CalculatorMobilePage,
+  ) {
+    const currentIndex = calculatorMobilePageOrder.indexOf(currentPage);
+    let nextIndex = currentIndex;
+
+    if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + calculatorMobilePageOrder.length) %
+        calculatorMobilePageOrder.length;
+    } else if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % calculatorMobilePageOrder.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = calculatorMobilePageOrder.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    showMobilePage(calculatorMobilePageOrder[nextIndex]);
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(
+          `calculator-mobile-tab-${calculatorMobilePageOrder[nextIndex]}`,
+        )
+        ?.focus();
+    });
+  }
+
   return (
     <section
       className="calculator-workspace"
       aria-label={t("calculator.title")}
       hidden={!isVisible}
     >
-      <div className="calculator-layout">
+      <div
+        className="calculator-mobile-tabs"
+        role="tablist"
+        aria-label={t("calculator.title")}
+      >
+        {calculatorMobilePageOrder.map((page) => {
+          const label =
+            page === "player"
+              ? t("calculator.yourPokemon")
+              : page === "damage"
+                ? t("calculator.damage")
+                : t("calculator.mobileOpponent");
+          const isPokemonPage = page !== "damage";
+          const isAttackingSide =
+            (page === "player" && direction === "player-to-opponent") ||
+            (page === "opponent" && direction === "opponent-to-player");
+          const roleLabel = isAttackingSide
+            ? t("calculator.attacking")
+            : t("calculator.defending");
+
+          return (
+            <button
+              id={`calculator-mobile-tab-${page}`}
+              className={`${mobilePage === page ? "is-active" : ""}${
+                isPokemonPage
+                  ? isAttackingSide
+                    ? " is-attacking-side"
+                    : " is-defending-side"
+                  : " is-damage-direction"
+              }`}
+              type="button"
+              role="tab"
+              aria-controls={`calculator-mobile-panel-${page}`}
+              aria-selected={mobilePage === page}
+              aria-label={
+                isPokemonPage ? `${label}, ${roleLabel}` : label
+              }
+              tabIndex={mobilePage === page ? 0 : -1}
+              key={page}
+              onClick={() => showMobilePage(page)}
+              onKeyDown={(event) => handleMobileTabKeyDown(event, page)}
+            >
+              <span className="calculator-mobile-tab-label">{label}</span>
+              {isPokemonPage ? (
+                <span className="calculator-mobile-tab-role">
+                  {roleLabel}
+                </span>
+              ) : (
+                <FontAwesomeIcon
+                  className="calculator-mobile-tab-arrow"
+                  icon={
+                    direction === "player-to-opponent"
+                      ? faArrowRight
+                      : faArrowLeft
+                  }
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div
+        className="calculator-layout"
+        ref={calculatorLayoutRef}
+        onPointerDown={() => {
+          mobileScrollTargetRef.current = null;
+        }}
+        onScroll={handleMobileLayoutScroll}
+      >
         <CalculatorPokemonEditor
+          panelId="calculator-mobile-panel-player"
+          panelLabelledBy="calculator-mobile-tab-player"
           side="player"
           member={selectedMember}
           build={playerBuild}
@@ -1083,7 +1323,12 @@ export function Calculator({
           onBattleChange={setPlayerBattle}
         />
 
-        <section className="calculator-result-panel">
+        <section
+          id="calculator-mobile-panel-damage"
+          className="calculator-result-panel"
+          role="tabpanel"
+          aria-labelledby="calculator-mobile-tab-damage"
+        >
           <div className="calculator-direction-control">
             <span
               className={`calculator-speed-indicator ${
@@ -1375,6 +1620,8 @@ export function Calculator({
         </section>
 
         <CalculatorPokemonEditor
+          panelId="calculator-mobile-panel-opponent"
+          panelLabelledBy="calculator-mobile-tab-opponent"
           side="opponent"
           member={opponentBuild.member}
           build={opponentBuild}

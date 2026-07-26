@@ -147,6 +147,8 @@ type HpScrubGesture = {
 };
 
 type CalculatorPokemonEditorProps = {
+  panelId?: string;
+  panelLabelledBy?: string;
   side: "player" | "opponent";
   member: TeamMember | null;
   build: CalculatorBuildValues;
@@ -243,6 +245,8 @@ function isExactPokemonFormLegal(
 }
 
 export function CalculatorPokemonEditor({
+  panelId,
+  panelLabelledBy,
   side,
   member,
   build,
@@ -829,7 +833,7 @@ export function CalculatorPokemonEditor({
 
   useDismissOnOutsidePointer(
     candidateFilterPickerRef,
-    openCandidateFilterPicker !== null,
+    openCandidateFilterPicker !== null && !isTouchPickerLayout,
     closeCandidateFilterPicker,
   );
 
@@ -1971,10 +1975,13 @@ export function CalculatorPokemonEditor({
 
   return (
     <section
+      id={panelId}
       ref={cardRef}
-      className={`calculator-pokemon-panel calculator-set-editor${
+      className={`calculator-pokemon-panel calculator-set-editor is-${side}-side${
         isAttacking ? " is-attacking" : " is-defending"
       }`}
+      role={panelLabelledBy ? "tabpanel" : undefined}
+      aria-labelledby={panelLabelledBy}
       aria-label={
         side === "player"
           ? t("calculator.yourPokemon")
@@ -2931,6 +2938,7 @@ export function CalculatorPokemonEditor({
                 selectedMoves={selectedCandidateMoveOptions}
                 activeMoveSlot={candidateMoveFilterSlot}
                 activeOptionIndex={activeCandidateFilterOptionIndex}
+                isTouchLayout={isTouchPickerLayout}
                 panelRef={candidateFilterPickerRef}
                 onToggleType={toggleCandidatePokemonType}
                 onClearFilters={() => {

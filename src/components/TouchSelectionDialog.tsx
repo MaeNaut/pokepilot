@@ -181,7 +181,11 @@ export function TouchSelectionDialog({
   }
 
   return createPortal(
-    <div className="touch-picker-layer">
+    <div
+      className="touch-picker-layer"
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
       <button
         className="touch-picker-scrim"
         type="button"

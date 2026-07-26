@@ -162,6 +162,7 @@ export const en = {
   "calculator.title": "Damage Calculator",
   "calculator.yourPokemon": "My Pokemon",
   "calculator.opponent": "Opponent Pokemon",
+  "calculator.mobileOpponent": "Opponent",
   "calculator.teamReorderAria":
     "{name}, team slot {slot}. Drag to reorder or press Alt and an arrow key.",
   "calculator.attacking": "Attacking",
@@ -545,6 +546,7 @@ export const ko = {
   "calculator.title": "대미지 계산기",
   "calculator.yourPokemon": "내 포켓몬",
   "calculator.opponent": "상대 포켓몬",
+  "calculator.mobileOpponent": "상대 포켓몬",
   "calculator.teamReorderAria":
     "{name}, 팀 {slot}번 슬롯 · 드래그 또는 Alt+방향키로 순서 변경",
   "calculator.attacking": "공격",

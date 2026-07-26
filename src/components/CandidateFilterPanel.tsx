@@ -14,6 +14,10 @@ import type {
 } from "../types";
 import { hasPokemonCandidateFilters } from "../utils/pokemonCandidateFilters";
 import { useLocalization } from "../i18n/useLocalization";
+import {
+  TouchPickerSearchInput,
+  TouchSelectionDialog,
+} from "./TouchSelectionDialog";
 import { TypeBadge } from "./TypeBadge";
 
 export type CandidateFilterPicker = "ability" | "move";
@@ -33,6 +37,7 @@ type CandidateFilterPanelProps = {
   selectedMoves: CandidateFilterOption[];
   activeMoveSlot: number | null;
   activeOptionIndex: number;
+  isTouchLayout: boolean;
   panelRef: RefObject<HTMLDivElement | null>;
   onToggleType: (type: PokemonType) => void;
   onClearFilters: () => void;
@@ -58,6 +63,7 @@ export function CandidateFilterPanel({
   selectedMoves,
   activeMoveSlot,
   activeOptionIndex,
+  isTouchLayout,
   panelRef,
   onToggleType,
   onClearFilters,
@@ -75,6 +81,32 @@ export function CandidateFilterPanel({
   const { gameName, t } = useLocalization();
   const hasFilters = hasPokemonCandidateFilters(filters);
 
+  function hasClearMoveOption(moveSlot = activeMoveSlot) {
+    return (
+      openPicker === "move" &&
+      moveSlot !== null &&
+      moveSlot !== undefined &&
+      Boolean(filters.moves[moveSlot])
+    );
+  }
+
+  function selectActivePickerOption() {
+    if (activeOptionIndex < 0) {
+      return;
+    }
+
+    const hasClearOption = hasClearMoveOption();
+    if (hasClearOption && activeOptionIndex === 0 && activeMoveSlot !== null) {
+      onRemoveMove(activeMoveSlot);
+      return;
+    }
+
+    const option = options[activeOptionIndex - (hasClearOption ? 1 : 0)];
+    if (option) {
+      onSelectOption(option);
+    }
+  }
+
   function handlePickerKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
       onClosePicker();
@@ -88,40 +120,101 @@ export function CandidateFilterPanel({
     }
 
     if (event.key === "Enter" && activeOptionIndex >= 0) {
-      const hasClearMoveOption =
-        openPicker === "move" &&
-        activeMoveSlot !== null &&
-        Boolean(filters.moves[activeMoveSlot]);
-
-      if (hasClearMoveOption && activeOptionIndex === 0) {
-        event.preventDefault();
-        onRemoveMove(activeMoveSlot);
-        return;
-      }
-
-      const option = options[
-        activeOptionIndex - (hasClearMoveOption ? 1 : 0)
-      ];
-      if (option) {
-        event.preventDefault();
-        onSelectOption(option);
-      }
+      event.preventDefault();
+      selectActivePickerOption();
     }
   }
 
-  function renderPicker(picker: CandidateFilterPicker, moveSlot?: number) {
+  function renderPickerOptions(
+    picker: CandidateFilterPicker,
+    moveSlot?: number,
+  ) {
+    const hasClearOption = hasClearMoveOption(moveSlot);
+    const optionOffset = hasClearOption ? 1 : 0;
+
+    return (
+      <>
+        {hasClearOption && moveSlot !== undefined ? (
+          <button
+            className={`move-option move-clear-option ${
+              activeOptionIndex === 0 ? "is-keyboard-active" : ""
+            }`}
+            type="button"
+            role="option"
+            aria-selected={activeOptionIndex === 0}
+            onFocus={() => onActiveOptionChange(0)}
+            onMouseEnter={() => onActiveOptionChange(0)}
+            onClick={() => onRemoveMove(moveSlot)}
+          >
+            <span className="move-clear-icon" aria-hidden="true">
+              <FontAwesomeIcon icon={faXmark} />
+            </span>
+            <span>{t("filter.removeMove")}</span>
+          </button>
+        ) : null}
+        {options.map((option, optionIndex) =>
+          picker === "move" ? (
+            <button
+              className={`move-option ${option.type ? `type-${option.type}` : ""} ${
+                activeOptionIndex === optionIndex + optionOffset
+                  ? "is-keyboard-active"
+                  : ""
+              }`}
+              type="button"
+              role="option"
+              aria-selected={activeOptionIndex === optionIndex + optionOffset}
+              key={option.id}
+              onFocus={() =>
+                onActiveOptionChange(optionIndex + optionOffset)
+              }
+              onMouseEnter={() =>
+                onActiveOptionChange(optionIndex + optionOffset)
+              }
+              onClick={() => onSelectOption(option)}
+            >
+              <span className="move-type-mark">
+                {option.type ? <TypeBadge type={option.type} /> : null}
+              </span>
+              <span className="move-name">
+                {gameName("moves", option.id, option.name)}
+              </span>
+              <span className="move-power-panel">{option.power ?? "-"}</span>
+            </button>
+          ) : (
+            <button
+              className="candidate-filter-option"
+              type="button"
+              role="option"
+              aria-selected={activeOptionIndex === optionIndex}
+              key={option.id}
+              onFocus={() => onActiveOptionChange(optionIndex)}
+              onMouseEnter={() => onActiveOptionChange(optionIndex)}
+              onClick={() => onSelectOption(option)}
+            >
+              <span>
+                {gameName("abilities", option.id, option.name)}
+              </span>
+            </button>
+          ),
+        )}
+        {query && options.length === 0 ? (
+          <div className="candidate-filter-empty">{t("filter.noMatches")}</div>
+        ) : null}
+      </>
+    );
+  }
+
+  function renderInlinePicker(
+    picker: CandidateFilterPicker,
+    moveSlot?: number,
+  ) {
     if (
+      isTouchLayout ||
       openPicker !== picker ||
       (picker === "move" && activeMoveSlot !== moveSlot)
     ) {
       return null;
     }
-
-    const hasClearMoveOption =
-      picker === "move" &&
-      moveSlot !== undefined &&
-      Boolean(filters.moves[moveSlot]);
-    const optionOffset = hasClearMoveOption ? 1 : 0;
 
     return (
       <div
@@ -130,81 +223,100 @@ export function CandidateFilterPanel({
         }`}
       >
         <input
-          className={picker === "move" ? "move-search-input" : "candidate-filter-search"}
-          aria-label={t(picker === "ability" ? "filter.searchAbilities" : "filter.searchMoves")}
+          className={
+            picker === "move"
+              ? "move-search-input"
+              : "candidate-filter-search"
+          }
+          aria-label={t(
+            picker === "ability"
+              ? "filter.searchAbilities"
+              : "filter.searchMoves",
+          )}
           autoFocus
           value={query}
-          placeholder={t(picker === "ability" ? "filter.searchAbilities" : "filter.searchMoves")}
+          placeholder={t(
+            picker === "ability"
+              ? "filter.searchAbilities"
+              : "filter.searchMoves",
+          )}
           onChange={(event) => onQueryChange(event.target.value)}
           onKeyDown={handlePickerKeyDown}
         />
         <div
-          className={picker === "move" ? "move-results" : "candidate-filter-results"}
+          className={
+            picker === "move"
+              ? "move-results"
+              : "candidate-filter-results"
+          }
           role="listbox"
           onScroll={onResultsScroll}
         >
-          {hasClearMoveOption && moveSlot !== undefined ? (
-            <button
-              className={`move-option move-clear-option ${
-                activeOptionIndex === 0 ? "is-keyboard-active" : ""
-              }`}
-              type="button"
-              role="option"
-              aria-selected={activeOptionIndex === 0}
-              onMouseEnter={() => onActiveOptionChange(0)}
-              onClick={() => onRemoveMove(moveSlot)}
-            >
-              <span className="move-clear-icon" aria-hidden="true">
-                <FontAwesomeIcon icon={faXmark} />
-              </span>
-              <span>{t("filter.removeMove")}</span>
-            </button>
-          ) : null}
-          {options.map((option, optionIndex) =>
-            picker === "move" ? (
-              <button
-                className={`move-option ${option.type ? `type-${option.type}` : ""} ${
-                  activeOptionIndex === optionIndex + optionOffset
-                    ? "is-keyboard-active"
-                    : ""
-                }`}
-                type="button"
-                role="option"
-                aria-selected={activeOptionIndex === optionIndex + optionOffset}
-                key={option.id}
-                onMouseEnter={() => onActiveOptionChange(optionIndex + optionOffset)}
-                onClick={() => onSelectOption(option)}
-              >
-                <span className="move-type-mark">
-                  {option.type ? <TypeBadge type={option.type} /> : null}
-                </span>
-                <span className="move-name">{gameName("moves", option.id, option.name)}</span>
-                <span className="move-power-panel">{option.power ?? "-"}</span>
-              </button>
-            ) : (
-              <button
-                className="candidate-filter-option"
-                type="button"
-                role="option"
-                aria-selected={activeOptionIndex === optionIndex}
-                key={option.id}
-                onMouseEnter={() => onActiveOptionChange(optionIndex)}
-                onClick={() => onSelectOption(option)}
-              >
-                <span>{gameName("abilities", option.id, option.name)}</span>
-              </button>
-            ),
-          )}
-          {query && options.length === 0 ? (
-            <div className="candidate-filter-empty">{t("filter.noMatches")}</div>
-          ) : null}
+          {renderPickerOptions(picker, moveSlot)}
         </div>
       </div>
     );
   }
 
+  function renderTouchPicker() {
+    if (!isTouchLayout || !openPicker) {
+      return null;
+    }
+
+    const picker = openPicker;
+    const moveSlot = picker === "move" ? (activeMoveSlot ?? 0) : undefined;
+
+    return (
+      <TouchSelectionDialog
+        kind={picker}
+        title={
+          picker === "ability"
+            ? t("builder.selectAbility")
+            : t("builder.selectMove", { slot: (moveSlot ?? 0) + 1 })
+        }
+        showActions={false}
+        search={
+          <TouchPickerSearchInput
+            value={query}
+            label={t(
+              picker === "ability"
+                ? "filter.searchAbilities"
+                : "filter.searchMoves",
+            )}
+            placeholder={t(
+              picker === "ability"
+                ? "filter.searchAbilities"
+                : "filter.searchMoves",
+            )}
+            onChange={onQueryChange}
+            onMove={onMoveActiveOption}
+            onSubmit={selectActivePickerOption}
+          />
+        }
+        onClose={onClosePicker}
+      >
+        <div
+          className={`touch-picker-option-list ${
+            picker === "move"
+              ? "move-results"
+              : "touch-ability-options candidate-filter-touch-options"
+          }`}
+          role="listbox"
+          onScroll={onResultsScroll}
+        >
+          {renderPickerOptions(picker, moveSlot)}
+        </div>
+      </TouchSelectionDialog>
+    );
+  }
+
   return (
-    <section className="candidate-filter-panel" aria-label={t("filter.aria")} ref={panelRef}>
+    <>
+      <section
+        className="candidate-filter-panel"
+        aria-label={t("filter.aria")}
+        ref={panelRef}
+      >
       <header className="candidate-filter-heading">
         <div>
           <h2>{t("filter.title")}</h2>
@@ -259,7 +371,7 @@ export function CandidateFilterPanel({
             className={`candidate-filter-trigger ${filters.ability ? "has-value" : ""}`}
             type="button"
             aria-expanded={openPicker === "ability"}
-            aria-haspopup="listbox"
+            aria-haspopup={isTouchLayout ? "dialog" : "listbox"}
             onClick={() => onOpenPicker("ability")}
           >
             <span>
@@ -282,7 +394,7 @@ export function CandidateFilterPanel({
               <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
             </button>
           ) : null}
-          {renderPicker("ability")}
+          {renderInlinePicker("ability")}
         </div>
       </div>
 
@@ -302,7 +414,7 @@ export function CandidateFilterPanel({
                   aria-expanded={
                     openPicker === "move" && activeMoveSlot === slotIndex
                   }
-                  aria-haspopup="listbox"
+                  aria-haspopup={isTouchLayout ? "dialog" : "listbox"}
                   aria-label={
                     move
                       ? t("filter.changeMove", {
@@ -327,12 +439,14 @@ export function CandidateFilterPanel({
                     </span>
                   )}
                 </button>
-                {renderPicker("move", slotIndex)}
+                {renderInlinePicker("move", slotIndex)}
               </div>
             );
           })}
         </div>
       </div>
-    </section>
+      </section>
+      {renderTouchPicker()}
+    </>
   );
 }
