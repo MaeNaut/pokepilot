@@ -317,134 +317,169 @@ export function CandidateFilterPanel({
         aria-label={t("filter.aria")}
         ref={panelRef}
       >
-      <header className="candidate-filter-heading">
-        <div>
-          <h2>{t("filter.title")}</h2>
-          <span>{t("filter.count", { matching: matchingCount, total: totalCount })}</span>
-        </div>
-        {hasFilters ? (
-          <button
-            className="candidate-filter-clear"
-            type="button"
-            aria-label={t("filter.clear")}
-            title={t("filter.clearTitle")}
-            onClick={onClearFilters}
-          >
-            <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
-          </button>
-        ) : null}
-      </header>
-
-      <div className="candidate-filter-group">
-        <span className="candidate-filter-label">{t("filter.type")}</span>
-        <div className="candidate-type-grid" role="group" aria-label={t("filter.typesAria")}>
-          {pokemonTypes.map((type) => {
-            const isSelected = filters.types.includes(type);
-            const isUnavailable = filters.types.length >= 2 && !isSelected;
-
-            return (
-              <button
-                className="candidate-type-button"
-                type="button"
-                aria-label={t(isSelected ? "filter.removeType" : "filter.addType", {
-                  type: gameName("types", type, formatIdLabel(type)),
-                })}
-                aria-pressed={isSelected}
-                disabled={isUnavailable}
-                title={isUnavailable
-                  ? t("filter.removeTypeFirst")
-                  : gameName("types", type, formatIdLabel(type))}
-                key={type}
-                onClick={() => onToggleType(type)}
-              >
-                <TypeBadge type={type} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="candidate-filter-row">
-        <span className="candidate-filter-label">{t("filter.ability")}</span>
-        <div className="candidate-filter-picker-shell">
-          <button
-            className={`candidate-filter-trigger ${filters.ability ? "has-value" : ""}`}
-            type="button"
-            aria-expanded={openPicker === "ability"}
-            aria-haspopup={isTouchLayout ? "dialog" : "listbox"}
-            onClick={() => onOpenPicker("ability")}
-          >
+        <header className="candidate-filter-heading">
+          <div>
+            <h2>{t("filter.title")}</h2>
             <span>
-              {filters.ability
-                ? gameName("abilities", filters.ability.id, filters.ability.name)
-                : t("filter.anyAbility")}
-            </span>
-            <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
-          </button>
-          {filters.ability ? (
-            <button
-              className="candidate-filter-remove"
-              type="button"
-              aria-label={t("filter.removeAbilityNamed", {
-                ability: gameName("abilities", filters.ability.id, filters.ability.name),
+              {t("filter.count", {
+                matching: matchingCount,
+                total: totalCount,
               })}
-              title={t("filter.removeAbility")}
-              onClick={onRemoveAbility}
+            </span>
+          </div>
+          {hasFilters ? (
+            <button
+              className="candidate-filter-clear"
+              type="button"
+              aria-label={t("filter.clear")}
+              title={t("filter.clearTitle")}
+              onClick={onClearFilters}
             >
               <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
             </button>
           ) : null}
-          {renderInlinePicker("ability")}
-        </div>
-      </div>
+        </header>
 
-      <div className="candidate-filter-group candidate-move-group">
-        <span className="candidate-filter-label">{t("filter.moves")}</span>
-        <div className="candidate-filter-move-grid">
-          {Array.from({ length: 4 }, (_, slotIndex) => {
-            const move = selectedMoves[slotIndex];
+        <div className="candidate-filter-group">
+          <span className="candidate-filter-label">{t("filter.type")}</span>
+          <div
+            className="candidate-type-grid"
+            role="group"
+            aria-label={t("filter.typesAria")}
+          >
+            {pokemonTypes.map((type) => {
+              const isSelected = filters.types.includes(type);
+              const isUnavailable = filters.types.length >= 2 && !isSelected;
 
-            return (
-              <div className="candidate-filter-move-picker" key={slotIndex}>
+              return (
                 <button
-                  className={`move-pill candidate-filter-move-pill ${
-                    move?.type ? `type-${move.type}` : "is-empty"
-                  }`}
+                  className="candidate-type-button"
                   type="button"
-                  aria-expanded={
-                    openPicker === "move" && activeMoveSlot === slotIndex
-                  }
-                  aria-haspopup={isTouchLayout ? "dialog" : "listbox"}
-                  aria-label={
-                    move
-                      ? t("filter.changeMove", {
-                          move: gameName("moves", move.id, move.name),
-                        })
-                      : t("filter.addMoveSlot", { slot: slotIndex + 1 })
-                  }
-                  onClick={() => onOpenMovePicker(slotIndex)}
-                >
-                  {move ? (
-                    <>
-                      <span className="move-type-mark">
-                        {move.type ? <TypeBadge type={move.type} /> : null}
-                      </span>
-                      <span className="move-name">{gameName("moves", move.id, move.name)}</span>
-                      <span className="move-power-panel">{move.power ?? "-"}</span>
-                    </>
-                  ) : (
-                    <span className="empty-move-label">
-                      <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
-                      {t("filter.addMove")}
-                    </span>
+                  aria-label={t(
+                    isSelected ? "filter.removeType" : "filter.addType",
+                    {
+                      type: gameName("types", type, formatIdLabel(type)),
+                    },
                   )}
+                  aria-pressed={isSelected}
+                  disabled={isUnavailable}
+                  title={
+                    isUnavailable
+                      ? t("filter.removeTypeFirst")
+                      : gameName("types", type, formatIdLabel(type))
+                  }
+                  key={type}
+                  onClick={() => onToggleType(type)}
+                >
+                  <TypeBadge type={type} />
                 </button>
-                {renderInlinePicker("move", slotIndex)}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+
+        <div className="candidate-filter-row">
+          <span className="candidate-filter-label">
+            {t("filter.ability")}
+          </span>
+          <div className="candidate-filter-picker-shell">
+            <button
+              className={`candidate-filter-trigger ${
+                filters.ability ? "has-value" : ""
+              }`}
+              type="button"
+              aria-expanded={openPicker === "ability"}
+              aria-haspopup={isTouchLayout ? "dialog" : "listbox"}
+              onClick={() => onOpenPicker("ability")}
+            >
+              <span>
+                {filters.ability
+                  ? gameName(
+                      "abilities",
+                      filters.ability.id,
+                      filters.ability.name,
+                    )
+                  : t("filter.anyAbility")}
+              </span>
+              <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
+            </button>
+            {filters.ability ? (
+              <button
+                className="candidate-filter-remove"
+                type="button"
+                aria-label={t("filter.removeAbilityNamed", {
+                  ability: gameName(
+                    "abilities",
+                    filters.ability.id,
+                    filters.ability.name,
+                  ),
+                })}
+                title={t("filter.removeAbility")}
+                onClick={onRemoveAbility}
+              >
+                <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
+              </button>
+            ) : null}
+            {renderInlinePicker("ability")}
+          </div>
+        </div>
+
+        <div className="candidate-filter-group candidate-move-group">
+          <span className="candidate-filter-label">
+            {t("filter.moves")}
+          </span>
+          <div className="candidate-filter-move-grid">
+            {Array.from({ length: 4 }, (_, slotIndex) => {
+              const move = selectedMoves[slotIndex];
+
+              return (
+                <div
+                  className="candidate-filter-move-picker"
+                  key={slotIndex}
+                >
+                  <button
+                    className={`move-pill candidate-filter-move-pill ${
+                      move?.type ? `type-${move.type}` : "is-empty"
+                    }`}
+                    type="button"
+                    aria-expanded={
+                      openPicker === "move" && activeMoveSlot === slotIndex
+                    }
+                    aria-haspopup={isTouchLayout ? "dialog" : "listbox"}
+                    aria-label={
+                      move
+                        ? t("filter.changeMove", {
+                            move: gameName("moves", move.id, move.name),
+                          })
+                        : t("filter.addMoveSlot", { slot: slotIndex + 1 })
+                    }
+                    onClick={() => onOpenMovePicker(slotIndex)}
+                  >
+                    {move ? (
+                      <>
+                        <span className="move-type-mark">
+                          {move.type ? <TypeBadge type={move.type} /> : null}
+                        </span>
+                        <span className="move-name">
+                          {gameName("moves", move.id, move.name)}
+                        </span>
+                        <span className="move-power-panel">
+                          {move.power ?? "-"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="empty-move-label">
+                        <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
+                        {t("filter.addMove")}
+                      </span>
+                    )}
+                  </button>
+                  {renderInlinePicker("move", slotIndex)}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </section>
       {renderTouchPicker()}
     </>

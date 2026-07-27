@@ -4,16 +4,11 @@ import {
   useRef,
   useState,
 } from "react";
-import type {
-  CSSProperties,
-  KeyboardEvent,
-  PointerEvent as ReactPointerEvent,
-} from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronDown,
   faPlus,
-  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "../api/pokeApi";
 import {
@@ -27,10 +22,13 @@ import {
   getShowdownLookupKeys,
   type ShowdownLegalitySnapshot,
 } from "../api/showdownLegality";
+import type { CalculatorPokemonStatus } from "../calculator/damageCalculator";
 import type {
-  CalculatorBoosts,
-  CalculatorPokemonStatus,
-} from "../calculator/damageCalculator";
+  CalculatorBuildValues,
+  CalculatorPokemonOption,
+  CalculatorPokemonSelectOptions,
+  CalculatorSideBattleState,
+} from "../calculator/calculatorEditorTypes";
 import {
   calculateChampionsStats,
   CHAMPIONS_MAX_EV_PER_STAT,
@@ -40,6 +38,7 @@ import {
 } from "../data/natures";
 import { getBattleFormGroup } from "../data/battleForms";
 import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
+import { useCalculatorCandidateFilters } from "../hooks/useCalculatorCandidateFilters";
 import {
   useIncrementalOptions,
 } from "../hooks/useIncrementalOptions";
@@ -48,30 +47,26 @@ import {
   useLongPressReorder,
 } from "../hooks/useLongPressReorder";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { useScrubbableNumberInput } from "../hooks/useScrubbableNumberInput";
 import { useLocalization } from "../i18n/useLocalization";
 import type {
   ItemIndexEntry,
   PokemonAbility,
-  PokemonCandidateFilters,
-  PokemonCandidateFilterValue,
   PokemonIndexEntry,
   PokemonItem,
   PokemonMove,
-  PokemonType,
   StatBlock,
   StatKey,
   TeamMember,
   TeamSlot,
 } from "../types";
+import { CandidateFilterPanel } from "./CandidateFilterPanel";
 import {
-  matchesPokemonCandidateFilters,
-  togglePokemonTypeFilter,
-} from "../utils/pokemonCandidateFilters";
-import {
-  CandidateFilterPanel,
-  type CandidateFilterOption,
-  type CandidateFilterPicker,
-} from "./CandidateFilterPanel";
+  AbilityPickerOptions,
+  ItemPickerOptions,
+  MovePickerOptions,
+  PokemonPickerOptions,
+} from "./CalculatorPickerOptions";
 import { ItemSprite } from "./ItemSprite";
 import {
   NatureGrid,
@@ -94,37 +89,6 @@ import {
 import { StatStagePicker } from "./StatStagePicker";
 import { TypeBadge } from "./TypeBadge";
 
-export type CalculatorBuildValues = {
-  item: PokemonItem | null;
-  ability: string;
-  natureId: string;
-  evs: StatBlock;
-  moveIds: string[];
-};
-
-export type CalculatorSideBattleState = {
-  currentHp: number;
-  status: CalculatorPokemonStatus;
-  boosts: CalculatorBoosts;
-};
-
-export type CalculatorPokemonOption = {
-  id: string;
-  label: string;
-  englishName: string;
-  number: number;
-  types: TeamMember["types"];
-  entry: PokemonIndexEntry;
-  abilityOptions: PokemonCandidateFilterValue[];
-  moveIds: string[];
-  usageRank?: number;
-};
-
-export type CalculatorPokemonSelectOptions = {
-  applyUsageStats?: boolean;
-  allowBattleForm?: boolean;
-};
-
 type OpenPicker =
   | "pokemon"
   | "item"
@@ -138,13 +102,6 @@ const calculatorStatusOptions = [
   "healthy",
   "burned",
 ] as const satisfies readonly CalculatorPokemonStatus[];
-
-type HpScrubGesture = {
-  pointerId: number;
-  startX: number;
-  startValue: number;
-  isDragging: boolean;
-};
 
 type CalculatorPokemonEditorProps = {
   panelId?: string;
@@ -219,18 +176,6 @@ function clampEvSpread(current: StatBlock, stat: StatKey, nextValue: number) {
   };
 }
 
-function clampCurrentHp(value: number, maxHp: number) {
-  return Math.max(1, Math.min(maxHp, Math.round(value)));
-}
-
-function createEmptyCandidateFilters(): PokemonCandidateFilters {
-  return {
-    types: [],
-    ability: null,
-    moves: [],
-  };
-}
-
 function isExactPokemonFormLegal(
   showdownLegality: ShowdownLegalitySnapshot | null,
   pokemonId: string,
@@ -280,8 +225,6 @@ export function CalculatorPokemonEditor({
   const moveListRef = useRef<HTMLDivElement | null>(null);
   const battleFormPickerRef = useRef<HTMLDivElement | null>(null);
   const moveResultsRef = useRef<HTMLDivElement | null>(null);
-  const candidateFilterPickerRef = useRef<HTMLDivElement | null>(null);
-  const hpScrubGestureRef = useRef<HpScrubGesture | null>(null);
   const [openPicker, setOpenPicker] = useState<OpenPicker>(null);
   const [openMoveSlot, setOpenMoveSlot] = useState<number | null>(null);
   const [openRankStat, setOpenRankStat] =
@@ -311,18 +254,35 @@ export function CalculatorPokemonEditor({
   const [isBattleFormPickerOpen, setIsBattleFormPickerOpen] = useState(false);
   const [activeBattleFormOptionIndex, setActiveBattleFormOptionIndex] =
     useState(0);
-  const [isHpScrubbing, setIsHpScrubbing] = useState(false);
-  const [candidateFilters, setCandidateFilters] =
-    useState<PokemonCandidateFilters>(createEmptyCandidateFilters);
-  const [openCandidateFilterPicker, setOpenCandidateFilterPicker] =
-    useState<CandidateFilterPicker | null>(null);
-  const [candidateMoveFilterSlot, setCandidateMoveFilterSlot] =
-    useState<number | null>(null);
-  const [candidateFilterQuery, setCandidateFilterQuery] = useState("");
-  const [
-    activeCandidateFilterOptionIndex,
-    setActiveCandidateFilterOptionIndex,
-  ] = useState(0);
+  const {
+    activeOptionIndex: activeCandidateFilterOptionIndex,
+    filteredPokemonOptions: candidateFilteredPokemonOptions,
+    filters: candidateFilters,
+    moveFilterSlot: candidateMoveFilterSlot,
+    openPicker: openCandidateFilterPicker,
+    panelRef: candidateFilterPickerRef,
+    query: candidateFilterQuery,
+    selectedMoveOptions: selectedCandidateMoveOptions,
+    visibleOptions: visibleCandidateFilterOptions,
+    changeQuery: changeCandidateFilterQuery,
+    clearFilters: clearCandidateFilters,
+    closePicker: closeCandidateFilterPicker,
+    handleResultsScroll: handleCandidateFilterOptionsScroll,
+    moveActiveOption: moveCandidateFilterKeyboardOption,
+    openFilterPicker: openCandidatePicker,
+    openMovePicker: openCandidateMovePicker,
+    removeAbility: removeCandidateAbility,
+    removeMove: removeCandidateMove,
+    selectOption: selectCandidateFilterOption,
+    setActiveOptionIndex: setActiveCandidateFilterOptionIndex,
+    toggleType: toggleCandidatePokemonType,
+  } = useCalculatorCandidateFilters({
+    pokemonOptions,
+    candidateMoveIndex,
+    isTouchLayout: isTouchPickerLayout,
+    resetKey: `${side}:${selectedSlot ?? "none"}`,
+    closeOtherPicker: closePicker,
+  });
 
   const memberIndexEntry = useMemo(
     () =>
@@ -485,237 +445,27 @@ export function CalculatorPokemonEditor({
     0,
     Math.min(100, (battle.currentHp / Math.max(1, maxHp)) * 100),
   );
-
-  function updateCurrentHp(nextValue: number) {
-    const currentHp = clampCurrentHp(nextValue, maxHp);
-
-    onBattleChange((current) =>
-      current.currentHp === currentHp
-        ? current
-        : {
-            ...current,
-            currentHp,
-          },
-    );
-  }
-
-  function handleHpScrubPointerDown(
-    event: ReactPointerEvent<HTMLInputElement>,
-  ) {
-    if (event.button !== 0 || !event.isPrimary) {
-      return;
-    }
-
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    hpScrubGestureRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startValue: battle.currentHp,
-      isDragging: false,
-    };
-  }
-
-  function handleHpScrubPointerMove(
-    event: ReactPointerEvent<HTMLInputElement>,
-  ) {
-    const gesture = hpScrubGestureRef.current;
-
-    if (!gesture || gesture.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const offsetX = event.clientX - gesture.startX;
-
-    if (!gesture.isDragging && Math.abs(offsetX) < 3) {
-      return;
-    }
-
-    if (!gesture.isDragging) {
-      gesture.isDragging = true;
-      setIsHpScrubbing(true);
-    }
-
-    event.preventDefault();
-    updateCurrentHp(gesture.startValue + offsetX / 2);
-  }
-
-  function finishHpScrub(
-    event: ReactPointerEvent<HTMLInputElement>,
-    shouldFocus: boolean,
-  ) {
-    const gesture = hpScrubGestureRef.current;
-
-    if (!gesture || gesture.pointerId !== event.pointerId) {
-      return;
-    }
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
-    hpScrubGestureRef.current = null;
-    setIsHpScrubbing(false);
-
-    if (shouldFocus && !gesture.isDragging) {
-      event.currentTarget.focus();
-    }
-  }
-
-  const candidateFilteredPokemonOptions = useMemo(
-    () =>
-      pokemonOptions.filter((option) =>
-        matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          candidateFilters,
-        ),
-      ),
-    [candidateFilters, pokemonOptions],
-  );
-  const candidateAbilityOptions = useMemo(() => {
-    const optionsById = new Map<string, PokemonCandidateFilterValue>();
-    const filtersWithoutAbility = { ...candidateFilters, ability: null };
-
-    for (const option of pokemonOptions) {
-      if (
-        !matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          filtersWithoutAbility,
-        )
-      ) {
-        continue;
-      }
-
-      for (const ability of option.abilityOptions) {
-        optionsById.set(ability.id, ability);
-      }
-    }
-
-    return [...optionsById.values()].sort((first, second) =>
-      first.name.localeCompare(second.name),
-    );
-  }, [candidateFilters, pokemonOptions]);
-  const candidateMoveById = useMemo(
-    () =>
-      new Map(
-        candidateMoveIndex.map((move) => [
-          normalizeShowdownId(move.id),
-          move,
-        ]),
-      ),
-    [candidateMoveIndex],
-  );
-  const selectedCandidateMoveOptions = useMemo(
-    () =>
-      candidateFilters.moves.map((filter): CandidateFilterOption => {
-        const move = candidateMoveById.get(filter.id);
-
-        return {
-          ...filter,
-          type: move?.type,
-          power: move?.power,
-        };
-      }),
-    [candidateFilters.moves, candidateMoveById],
-  );
-  const candidateMoveOptions = useMemo(() => {
-    const editedMoveIndex = Math.min(
-      candidateMoveFilterSlot ?? candidateFilters.moves.length,
-      candidateFilters.moves.length,
-    );
-    const retainedMoves = candidateFilters.moves.filter(
-      (_, moveIndex) => moveIndex !== editedMoveIndex,
-    );
-    const filtersWithoutEditedMove = {
-      ...candidateFilters,
-      moves: retainedMoves,
-    };
-    const selectedMoveIds = new Set(retainedMoves.map((move) => move.id));
-    const moveIds = new Set<string>();
-
-    for (const option of pokemonOptions) {
-      if (
-        !matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          filtersWithoutEditedMove,
-        )
-      ) {
-        continue;
-      }
-
-      for (const moveId of option.moveIds) {
-        if (!selectedMoveIds.has(moveId)) {
-          moveIds.add(moveId);
-        }
-      }
-    }
-
-    return [...moveIds]
-      .map((moveId): CandidateFilterOption => {
-        const move = candidateMoveById.get(moveId);
-
-        return {
-          id: moveId,
-          name: gameName(
-            "moves",
-            moveId,
-            move?.name ?? formatIdLabel(moveId),
-          ),
-          type: move?.type,
-          power: move?.power,
-        };
-      })
-      .sort((first, second) => first.name.localeCompare(second.name));
-  }, [
-    candidateFilters,
-    candidateMoveById,
-    candidateMoveFilterSlot,
-    gameName,
-    pokemonOptions,
-  ]);
-  const normalizedCandidateFilterQuery = candidateFilterQuery
-    .trim()
-    .toLowerCase();
-  const matchingCandidateFilterOptions = useMemo(() => {
-    const options: CandidateFilterOption[] =
-      openCandidateFilterPicker === "ability"
-        ? candidateAbilityOptions
-        : candidateMoveOptions;
-
-    return options.filter(
-      (option) =>
-        !normalizedCandidateFilterQuery ||
-        option.name.toLowerCase().includes(normalizedCandidateFilterQuery) ||
-        option.id.includes(normalizedCandidateFilterQuery),
-    );
-  }, [
-    candidateAbilityOptions,
-    candidateMoveOptions,
-    normalizedCandidateFilterQuery,
-    openCandidateFilterPicker,
-  ]);
   const {
-    limit: candidateFilterOptionLimit,
-    reset: resetCandidateFilterOptions,
-    ensureIndexVisible: ensureCandidateFilterOptionVisible,
-    handleScroll: handleCandidateFilterOptionsScroll,
-  } = useIncrementalOptions(matchingCandidateFilterOptions.length);
-  const visibleCandidateFilterOptions = matchingCandidateFilterOptions.slice(
-    0,
-    candidateFilterOptionLimit,
-  );
+    isScrubbing: isHpScrubbing,
+    updateValue: updateCurrentHp,
+    handlePointerDown: handleHpScrubPointerDown,
+    handlePointerMove: handleHpScrubPointerMove,
+    finishPointerInteraction: finishHpScrub,
+  } = useScrubbableNumberInput({
+    value: battle.currentHp,
+    min: 1,
+    max: maxHp,
+    onChange: (currentHp) =>
+      onBattleChange((current) =>
+        current.currentHp === currentHp
+          ? current
+          : {
+              ...current,
+              currentHp,
+            },
+      ),
+  });
+
   const normalizedPokemonQuery = pokemonQuery.trim().toLowerCase();
   const matchingPokemonOptions = useMemo(
     () =>
@@ -794,7 +544,7 @@ export function CalculatorPokemonEditor({
       ? null
       : matchingMoveOptions[activeMoveIndex - 1] ?? null;
 
-  const closePicker = () => {
+  function closePicker() {
     setOpenPicker(null);
     setOpenMoveSlot(null);
     setOpenRankStat(null);
@@ -805,7 +555,7 @@ export function CalculatorPokemonEditor({
     setHoveredItem(null);
     setHoveredAbility(null);
     setHoveredMove(null);
-  };
+  }
 
   const teamReorder = useLongPressReorder({
     containerRef: teamStripRef,
@@ -829,12 +579,6 @@ export function CalculatorPokemonEditor({
     cardRef,
     openPicker !== null && !isTouchPickerLayout,
     closePicker,
-  );
-
-  useDismissOnOutsidePointer(
-    candidateFilterPickerRef,
-    openCandidateFilterPicker !== null && !isTouchPickerLayout,
-    closeCandidateFilterPicker,
   );
 
   useDismissOnOutsidePointer(
@@ -903,111 +647,6 @@ export function CalculatorPokemonEditor({
     matchingPokemonOptions.length,
     resetPokemonOptions,
   ]);
-
-  useEffect(() => {
-    resetCandidateFilterOptions();
-    setActiveCandidateFilterOptionIndex(
-      matchingCandidateFilterOptions.length > 0 ? 0 : -1,
-    );
-  }, [
-    candidateMoveFilterSlot,
-    matchingCandidateFilterOptions.length,
-    normalizedCandidateFilterQuery,
-    openCandidateFilterPicker,
-    resetCandidateFilterOptions,
-  ]);
-
-  useEffect(() => {
-    setCandidateFilters(createEmptyCandidateFilters());
-    setOpenCandidateFilterPicker(null);
-    setCandidateMoveFilterSlot(null);
-    setCandidateFilterQuery("");
-  }, [selectedSlot, side]);
-
-  function closeCandidateFilterPicker() {
-    setOpenCandidateFilterPicker(null);
-    setCandidateMoveFilterSlot(null);
-    setCandidateFilterQuery("");
-  }
-
-  function toggleCandidatePokemonType(type: PokemonType) {
-    setCandidateFilters((current) => ({
-      ...current,
-      types: togglePokemonTypeFilter(current.types, type),
-    }));
-  }
-
-  function openCandidatePicker(picker: CandidateFilterPicker) {
-    const shouldClose = openCandidateFilterPicker === picker;
-
-    closePicker();
-    setCandidateMoveFilterSlot(null);
-    setOpenCandidateFilterPicker(shouldClose ? null : picker);
-    setCandidateFilterQuery("");
-    resetCandidateFilterOptions();
-    setActiveCandidateFilterOptionIndex(0);
-  }
-
-  function openCandidateMovePicker(slotIndex: number) {
-    const shouldClose =
-      openCandidateFilterPicker === "move" &&
-      candidateMoveFilterSlot === slotIndex;
-
-    closePicker();
-    setOpenCandidateFilterPicker(shouldClose ? null : "move");
-    setCandidateMoveFilterSlot(shouldClose ? null : slotIndex);
-    setCandidateFilterQuery("");
-    resetCandidateFilterOptions();
-    setActiveCandidateFilterOptionIndex(0);
-  }
-
-  function selectCandidateFilterOption(option: CandidateFilterOption) {
-    if (openCandidateFilterPicker === "ability") {
-      setCandidateFilters((current) => ({
-        ...current,
-        ability: { id: option.id, name: option.name },
-      }));
-      closeCandidateFilterPicker();
-      return;
-    }
-
-    if (openCandidateFilterPicker === "move") {
-      setCandidateFilters((current) => {
-        const targetIndex = Math.min(
-          candidateMoveFilterSlot ?? current.moves.length,
-          current.moves.length,
-        );
-        const nextMoves = [...current.moves];
-        nextMoves[targetIndex] = { id: option.id, name: option.name };
-
-        return {
-          ...current,
-          moves: nextMoves,
-        };
-      });
-      closeCandidateFilterPicker();
-    }
-  }
-
-  function moveCandidateFilterKeyboardOption(direction: 1 | -1) {
-    const hasClearMoveOption =
-      openCandidateFilterPicker === "move" &&
-      candidateMoveFilterSlot !== null &&
-      Boolean(candidateFilters.moves[candidateMoveFilterSlot]);
-
-    setActiveCandidateFilterOptionIndex((current) => {
-      const nextIndex = getNextIndex(
-        current,
-        matchingCandidateFilterOptions.length +
-          (hasClearMoveOption ? 1 : 0),
-        direction,
-      );
-      const optionIndex = nextIndex - (hasClearMoveOption ? 1 : 0);
-
-      ensureCandidateFilterOptionVisible(optionIndex);
-      return nextIndex;
-    });
-  }
 
   function openPokemonPicker() {
     const selectedIndex = matchingPokemonOptions.findIndex(
@@ -1195,8 +834,7 @@ export function CalculatorPokemonEditor({
   async function selectPokemonOption(option: CalculatorPokemonOption) {
     try {
       await onSelectPokemon(option.id, { applyUsageStats: true });
-      setCandidateFilters(createEmptyCandidateFilters());
-      closeCandidateFilterPicker();
+      clearCandidateFilters();
       closePicker();
     } catch {
       // The parent owns the visible lookup error; keep the picker open for retry.
@@ -1496,138 +1134,57 @@ export function CalculatorPokemonEditor({
   }
 
   function renderPokemonOptions(previewOnly: boolean) {
-    return visiblePokemonOptions.map((option, index) => (
-      <button
-        className="pokemon-name-option"
-        type="button"
-        role="option"
-        aria-selected={activePokemonIndex === index}
-        key={option.id}
-        onFocus={() => {
+    return (
+      <PokemonPickerOptions
+        options={visiblePokemonOptions}
+        activeIndex={activePokemonIndex}
+        previewOnly={previewOnly}
+        onActiveChange={(index, option) => {
           setActivePokemonIndex(index);
           setHoveredPokemon(option);
         }}
-        onMouseEnter={
-          previewOnly
-            ? undefined
-            : () => {
-                setActivePokemonIndex(index);
-                setHoveredPokemon(option);
-              }
-        }
-        onMouseLeave={() => {
-          if (!previewOnly) {
-            setHoveredPokemon(null);
-          }
-        }}
-        onClick={() => {
-          setActivePokemonIndex(index);
-          if (!previewOnly) {
-            void selectPokemonOption(option);
-          }
-        }}
-      >
-        <span>{option.label}</span>
-        {option.usageRank ? <small>#{option.usageRank}</small> : null}
-      </button>
-    ));
+        onPreviewClear={() => setHoveredPokemon(null)}
+        onSelect={(option) => void selectPokemonOption(option)}
+      />
+    );
   }
 
   function renderItemOptions(previewOnly: boolean) {
-    return displayedItemOptions.map((option, index) => {
-      const item = option ? itemFromIndexEntry(option) : null;
-
-      return (
-        <button
-          className={`item-option${option ? "" : " item-clear-option"}`}
-          type="button"
-          role="option"
-          aria-selected={activeItemIndex === index}
-          key={option?.name ?? "clear-item"}
-          onFocus={() => {
-            setActiveItemIndex(index);
-            setHoveredItem(item);
-          }}
-          onMouseEnter={
-            previewOnly
-              ? undefined
-              : () => {
-                  setActiveItemIndex(index);
-                  setHoveredItem(item);
-                }
-          }
-          onMouseLeave={() => {
-            if (!previewOnly) {
-              setHoveredItem(null);
-            }
-          }}
-          onClick={() => {
-            setActiveItemIndex(index);
-            setHoveredItem(item);
-            if (!previewOnly) {
-              onBuildChange({ item });
-              closePicker();
-            }
-          }}
-        >
-          <span className="item-option-icon" aria-hidden="true">
-            {item ? (
-              <ItemSprite item={item} />
-            ) : (
-              <FontAwesomeIcon icon={faXmark} />
-            )}
-          </span>
-          <span className="item-option-name">
-            {option
-              ? gameName(
-                  "items",
-                  option.showdownId,
-                  option.displayName,
-                )
-              : t("builder.removeItem")}
-          </span>
-        </button>
-      );
-    });
+    return (
+      <ItemPickerOptions
+        options={displayedItemOptions}
+        activeIndex={activeItemIndex}
+        previewOnly={previewOnly}
+        onActiveChange={(index, item) => {
+          setActiveItemIndex(index);
+          setHoveredItem(item);
+        }}
+        onPreviewClear={() => setHoveredItem(null)}
+        onSelect={(item) => {
+          onBuildChange({ item });
+          closePicker();
+        }}
+      />
+    );
   }
 
   function renderAbilityOptions(previewOnly: boolean) {
-    return abilityOptions.map((ability, index) => (
-      <button
-        className="trait-option"
-        type="button"
-        role="option"
-        aria-selected={activeAbilityIndex === index}
-        key={ability}
-        onFocus={() => {
+    return (
+      <AbilityPickerOptions
+        abilities={abilityOptions}
+        activeIndex={activeAbilityIndex}
+        previewOnly={previewOnly}
+        onActiveChange={(index, ability) => {
           setActiveAbilityIndex(index);
           void previewAbility(ability);
         }}
-        onMouseEnter={
-          previewOnly
-            ? undefined
-            : () => {
-                setActiveAbilityIndex(index);
-                void previewAbility(ability);
-              }
-        }
-        onMouseLeave={() => {
-          if (!previewOnly) {
-            setHoveredAbility(null);
-          }
+        onPreviewClear={() => setHoveredAbility(null)}
+        onSelect={(ability) => {
+          onBuildChange({ ability });
+          closePicker();
         }}
-        onClick={() => {
-          setActiveAbilityIndex(index);
-          void previewAbility(ability);
-          if (!previewOnly) {
-            onBuildChange({ ability });
-            closePicker();
-          }
-        }}
-      >
-        {gameName("abilities", ability, ability)}
-      </button>
-    ));
+      />
+    );
   }
 
   function renderStatusOptions(isTouchDialog: boolean) {
@@ -1660,81 +1217,21 @@ export function CalculatorPokemonEditor({
 
   function renderMoveOptions(previewOnly: boolean) {
     return (
-      <>
-        <button
-          className={`move-option move-clear-option ${
-            activeMoveIndex === 0 ? "is-keyboard-active" : ""
-          }`}
-          type="button"
-          role="option"
-          aria-selected={activeMoveIndex === 0}
-          data-option-index={0}
-          onFocus={() => {
-            setActiveMoveIndex(0);
-            setHoveredMove(null);
-          }}
-          onMouseEnter={
-            previewOnly
-              ? undefined
-              : () => {
-                  setActiveMoveIndex(0);
-                  setHoveredMove(null);
-                }
+      <MovePickerOptions
+        moves={visibleMoveOptions}
+        activeIndex={activeMoveIndex}
+        previewOnly={previewOnly}
+        onActiveChange={(index, move) => {
+          setActiveMoveIndex(index);
+          setHoveredMove(move);
+        }}
+        onSelect={(move) => {
+          if (openMoveSlot !== null) {
+            onMoveChange(openMoveSlot, move?.id ?? "");
+            closePicker();
           }
-          onClick={() => {
-            setActiveMoveIndex(0);
-            setHoveredMove(null);
-            if (!previewOnly && openMoveSlot !== null) {
-              onMoveChange(openMoveSlot, "");
-              closePicker();
-            }
-          }}
-        >
-          <span className="move-clear-icon" aria-hidden="true">
-            <FontAwesomeIcon icon={faXmark} />
-          </span>
-          <span>{t("builder.emptyMove")}</span>
-        </button>
-        {visibleMoveOptions.map((move, index) => (
-          <button
-            className={`move-option type-${move.type} ${
-              activeMoveIndex === index + 1 ? "is-keyboard-active" : ""
-            }`}
-            type="button"
-            role="option"
-            aria-selected={activeMoveIndex === index + 1}
-            data-option-index={index + 1}
-            key={move.id}
-            onFocus={() => {
-              setActiveMoveIndex(index + 1);
-              setHoveredMove(move);
-            }}
-            onMouseEnter={
-              previewOnly
-                ? undefined
-                : () => {
-                    setActiveMoveIndex(index + 1);
-                    setHoveredMove(move);
-                  }
-            }
-            onMouseLeave={() => {
-              if (!previewOnly) {
-                setHoveredMove(null);
-              }
-            }}
-            onClick={() => {
-              setActiveMoveIndex(index + 1);
-              setHoveredMove(move);
-              if (!previewOnly && openMoveSlot !== null) {
-                onMoveChange(openMoveSlot, move.id);
-                closePicker();
-              }
-            }}
-          >
-            <MoveSummary move={move} />
-          </button>
-        ))}
-      </>
+        }}
+      />
     );
   }
 
@@ -2941,38 +2438,19 @@ export function CalculatorPokemonEditor({
                 isTouchLayout={isTouchPickerLayout}
                 panelRef={candidateFilterPickerRef}
                 onToggleType={toggleCandidatePokemonType}
-                onClearFilters={() => {
-                  setCandidateFilters(createEmptyCandidateFilters());
-                  closeCandidateFilterPicker();
-                }}
+                onClearFilters={clearCandidateFilters}
                 onOpenPicker={openCandidatePicker}
                 onOpenMovePicker={openCandidateMovePicker}
                 onClosePicker={closeCandidateFilterPicker}
-                onQueryChange={(query) => {
-                  setCandidateFilterQuery(query);
-                  resetCandidateFilterOptions();
-                }}
+                onQueryChange={changeCandidateFilterQuery}
                 onResultsScroll={handleCandidateFilterOptionsScroll}
                 onMoveActiveOption={moveCandidateFilterKeyboardOption}
                 onActiveOptionChange={
                   setActiveCandidateFilterOptionIndex
                 }
                 onSelectOption={selectCandidateFilterOption}
-                onRemoveAbility={() =>
-                  setCandidateFilters((current) => ({
-                    ...current,
-                    ability: null,
-                  }))
-                }
-                onRemoveMove={(moveIndex) => {
-                  setCandidateFilters((current) => ({
-                    ...current,
-                    moves: current.moves.filter(
-                      (_, index) => index !== moveIndex,
-                    ),
-                  }));
-                  closeCandidateFilterPicker();
-                }}
+                onRemoveAbility={removeCandidateAbility}
+                onRemoveMove={removeCandidateMove}
               />
             )}
           </div>

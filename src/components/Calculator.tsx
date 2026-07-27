@@ -3,48 +3,41 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
 } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faAnglesLeft,
-  faAnglesRight,
-  faArrowLeft,
-  faArrowRight,
-  faRightLeft,
-} from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "../api/pokeApi";
 import { itemFromIndexEntry } from "../api/showdownCatalog";
-import { loadShowdownData } from "../api/showdownData";
-import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
-import {
-  getLegalMoves,
-  getPokemonCandidateAbilities,
-  isItemLegal,
-  isPokemonLegal,
-  type ShowdownLegalitySnapshot,
-} from "../api/showdownLegality";
+import { normalizeShowdownId } from "../api/showdownIds";
+import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
 import {
   loadPopularSmogonSet,
-  loadSmogonUsagePokemonIds,
   type SmogonUsageSet,
 } from "../api/smogonUsage";
 import {
   calculateChampionsDamage,
-  type CalculatorBoosts,
   type CalculatorField,
   type CalculatorPokemon,
   type DamageCalculationResult,
 } from "../calculator/damageCalculator";
+import type {
+  CalculatorBuildValues,
+  CalculatorPokemonSelectOptions,
+} from "../calculator/calculatorEditorTypes";
+import {
+  createCalculatorBattleState,
+  createDefaultCalculatorField,
+  getCalculatorMaxHp,
+  getCalculatorMoveSlots,
+  getCalculatorSpeed,
+  type DamageDirection,
+} from "../calculator/calculatorViewModel";
 import {
   createDefaultCalculatorBuild,
   createUsageCalculatorBuild,
 } from "../calculator/calculatorUsageBuild";
-import {
-  calculateChampionsStats,
-  defaultEvs,
-  getNatureById,
-} from "../data/natures";
+import { defaultEvs } from "../data/natures";
+import { useCalculatorCatalog } from "../hooks/useCalculatorCatalog";
+import { useCalculatorMobileNavigation } from "../hooks/useCalculatorMobileNavigation";
+import { usePreMegaMoves } from "../hooks/usePreMegaMoves";
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
 import { useLocalization } from "../i18n/useLocalization";
 import type {
@@ -57,33 +50,17 @@ import type {
 import { getPokemonBuildSnapshot } from "../utils/benchPokemon";
 import { getMegaStoneItemName } from "../utils/megaEvolution";
 import {
-  findMoveByLookup,
   reconcileMoveIds,
 } from "../utils/pokemonMoves";
 import {
   getPreferredPokeApiId,
   shouldKeepSelectedPokemonForUsageTarget,
 } from "../utils/pokemonAliases";
-import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
 import { getIndexAfterSwap, swapArrayItems } from "../utils/reorder";
-import {
-  CalculatorPokemonEditor,
-  type CalculatorBuildValues,
-  type CalculatorPokemonOption,
-  type CalculatorPokemonSelectOptions,
-  type CalculatorSideBattleState,
-} from "./CalculatorPokemonEditor";
-import { TypeBadge } from "./TypeBadge";
+import { CalculatorPokemonEditor } from "./CalculatorPokemonEditor";
+import { CalculatorMobileTabs } from "./CalculatorMobileNavigation";
+import { CalculatorResultPanel } from "./CalculatorResultPanel";
 import type { BattleFormat } from "../battleFormat/battleFormat";
-
-type DamageDirection = "player-to-opponent" | "opponent-to-player";
-type CalculatorMobilePage = "player" | "damage" | "opponent";
-
-const calculatorMobilePageOrder: CalculatorMobilePage[] = [
-  "player",
-  "damage",
-  "opponent",
-];
 
 type OpponentBuild = CalculatorBuildValues & {
   member: TeamMember | null;
@@ -107,144 +84,6 @@ type CalculatorProps = {
   isVisible: boolean;
 };
 
-const emptyBoosts: CalculatorBoosts = {
-  attack: 0,
-  defense: 0,
-  specialAttack: 0,
-  specialDefense: 0,
-  speed: 0,
-};
-
-function createDefaultField(battleFormat: BattleFormat): CalculatorField {
-  return {
-    weather: "none",
-    terrain: "none",
-    room: "none",
-    aura: "none",
-    gameType: battleFormat,
-    isCritical: false,
-    isSpread: battleFormat === "doubles",
-    isHelpingHand: false,
-    isTailwind: false,
-    isFriendGuard: false,
-    isPlusMinus: false,
-    isWall: false,
-  };
-}
-
-function getMaxHp(member: TeamMember | null, build: CalculatorBuildValues) {
-  if (!member?.baseStats) {
-    return 1;
-  }
-
-  return calculateChampionsStats(
-    member.baseStats,
-    build.evs,
-    getNatureById(build.natureId),
-  ).hp;
-}
-
-function getSpeed(
-  member: TeamMember | null,
-  build: CalculatorBuildValues,
-  stage: number,
-) {
-  if (!member?.baseStats) {
-    return null;
-  }
-
-  const speed = calculateChampionsStats(
-    member.baseStats,
-    build.evs,
-    getNatureById(build.natureId),
-  ).speed;
-  const clampedStage = Number.isFinite(stage)
-    ? Math.max(-6, Math.min(6, stage))
-    : 0;
-
-  return Math.floor(
-    speed *
-      (clampedStage >= 0
-        ? (2 + clampedStage) / 2
-        : 2 / (2 - clampedStage)),
-  );
-}
-
-function getMoveById(
-  member: TeamMember | null,
-  moveId: string,
-  fallbackMoves: PokemonMove[] = [],
-) {
-  return findMoveByLookup(
-    [...(member?.moves ?? []), ...fallbackMoves],
-    moveId,
-  );
-}
-
-function getMoveSlots(
-  member: TeamMember | null,
-  moveIds: string[],
-  fallbackMoves: PokemonMove[] = [],
-) {
-  return [0, 1, 2, 3].map((index) =>
-    getMoveById(member, moveIds[index] ?? "", fallbackMoves),
-  );
-}
-
-function createBattleState(currentHp = 1): CalculatorSideBattleState {
-  return {
-    currentHp,
-    status: "healthy",
-    boosts: { ...emptyBoosts },
-  };
-}
-
-function usePreMegaMoves(
-  member: TeamMember | null,
-  preMegaPokemonId: string,
-  pokemonIndex: PokemonIndexEntry[],
-) {
-  const [moves, setMoves] = useState<PokemonMove[]>([]);
-  const isMega =
-    pokemonIndex.find((entry) => entry.name === member?.id)?.formKind ===
-    "mega";
-
-  useEffect(() => {
-    if (!isMega || !preMegaPokemonId) {
-      setMoves([]);
-      return;
-    }
-
-    let isCurrent = true;
-
-    void fetchPokemon(preMegaPokemonId)
-      .then((pokemon) => {
-        if (isCurrent) {
-          setMoves(pokemon.moves ?? []);
-        }
-      })
-      .catch(() => {
-        if (isCurrent) {
-          setMoves([]);
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [isMega, preMegaPokemonId]);
-
-  return moves;
-}
-
-function formatChance(value: number) {
-  if (value === 0 || value === 100) {
-    return `${value}%`;
-  }
-
-  return `${value.toFixed(1)}%`;
-}
-
 export function Calculator({
   battleFormat,
   team,
@@ -258,7 +97,19 @@ export function Calculator({
   onSelectPokemon,
   isVisible,
 }: CalculatorProps) {
-  const { gameName, locale, pokemonName, t } = useLocalization();
+  const { t } = useLocalization();
+  const {
+    candidateMoveIndex,
+    knownMegaStoneNames,
+    pokemonOptions,
+    selectableItems,
+  } = useCalculatorCatalog({
+    battleFormat,
+    pokemonIndex,
+    itemIndex,
+    showdownLegality,
+  });
+  const mobileNavigation = useCalculatorMobileNavigation(isVisible);
   const patchBuildStateSlot = buildState.patchSlot;
   const selectedMember = team[selectedSlot] ?? null;
   const playerBuild = useMemo<CalculatorBuildValues>(() => {
@@ -297,44 +148,31 @@ export function Calculator({
   const [direction, setDirection] =
     useState<DamageDirection>("player-to-opponent");
   const [playerBattle, setPlayerBattle] =
-    useState<CalculatorSideBattleState>(() => createBattleState());
+    useState(() => createCalculatorBattleState());
   const [opponentBattle, setOpponentBattle] =
-    useState<CalculatorSideBattleState>(() => createBattleState());
+    useState(() => createCalculatorBattleState());
   const [field, setField] = useState<CalculatorField>(() =>
-    createDefaultField(battleFormat),
-  );
-  const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(
-    null,
-  );
-  const [candidateMoveIndex, setCandidateMoveIndex] = useState<PokemonMove[]>(
-    [],
+    createDefaultCalculatorField(battleFormat),
   );
   const [isOpponentLoading, setIsOpponentLoading] = useState(false);
   const [opponentError, setOpponentError] = useState<string | null>(null);
   const [opponentPreMegaPokemonId, setOpponentPreMegaPokemonId] = useState("");
-  const [mobilePage, setMobilePage] =
-    useState<CalculatorMobilePage>("player");
-  const calculatorLayoutRef = useRef<HTMLDivElement | null>(null);
-  const mobilePageRef = useRef<CalculatorMobilePage>("player");
-  const mobileScrollTargetRef = useRef<CalculatorMobilePage | null>(null);
-  const mobileScrollFrameRef = useRef<number | null>(null);
   const playerIdentityRef = useRef<string | null>(null);
   const preservePlayerBattleOnNextIdentityRef = useRef(false);
   const opponentIdentityRef = useRef<string | null>(null);
   const opponentSelectionRequestRef = useRef(0);
-  const numberFormatter = useMemo(
-    () => new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US"),
-    [locale],
-  );
 
-  const playerMaxHp = getMaxHp(selectedMember, playerBuild);
-  const opponentMaxHp = getMaxHp(opponentBuild.member, opponentBuild);
-  const playerSpeed = getSpeed(
+  const playerMaxHp = getCalculatorMaxHp(selectedMember, playerBuild);
+  const opponentMaxHp = getCalculatorMaxHp(
+    opponentBuild.member,
+    opponentBuild,
+  );
+  const playerSpeed = getCalculatorSpeed(
     selectedMember,
     playerBuild,
     playerBattle.boosts.speed,
   );
-  const opponentSpeed = getSpeed(
+  const opponentSpeed = getCalculatorSpeed(
     opponentBuild.member,
     opponentBuild,
     opponentBattle.boosts.speed,
@@ -369,7 +207,7 @@ export function Calculator({
   );
   const playerMoves = useMemo(
     () =>
-      getMoveSlots(
+      getCalculatorMoveSlots(
         selectedMember,
         resolvedPlayerMoveIds,
         playerPreMegaMoves,
@@ -378,7 +216,7 @@ export function Calculator({
   );
   const opponentMoves = useMemo(
     () =>
-      getMoveSlots(
+      getCalculatorMoveSlots(
         opponentBuild.member,
         opponentBuild.moveIds,
         opponentPreMegaMoves,
@@ -410,61 +248,6 @@ export function Calculator({
         battleFormat === "doubles" ? current.isPlusMinus : false,
     }));
   }, [battleFormat]);
-
-  useEffect(() => {
-    mobilePageRef.current = mobilePage;
-  }, [mobilePage]);
-
-  useEffect(() => {
-    if (!isVisible) {
-      return;
-    }
-
-    let resizeFrame: number | null = null;
-
-    const alignMobilePage = () => {
-      if (!window.matchMedia("(max-width: 760px)").matches) {
-        return;
-      }
-
-      const layout = calculatorLayoutRef.current;
-      if (!layout) {
-        return;
-      }
-
-      const pageIndex = calculatorMobilePageOrder.indexOf(
-        mobilePageRef.current,
-      );
-      layout.scrollLeft = pageIndex * layout.clientWidth;
-    };
-
-    const scheduleAlignment = () => {
-      if (resizeFrame !== null) {
-        window.cancelAnimationFrame(resizeFrame);
-      }
-
-      resizeFrame = window.requestAnimationFrame(alignMobilePage);
-    };
-
-    scheduleAlignment();
-    window.addEventListener("resize", scheduleAlignment);
-
-    return () => {
-      window.removeEventListener("resize", scheduleAlignment);
-      if (resizeFrame !== null) {
-        window.cancelAnimationFrame(resizeFrame);
-      }
-    };
-  }, [isVisible]);
-
-  useEffect(
-    () => () => {
-      if (mobileScrollFrameRef.current !== null) {
-        window.cancelAnimationFrame(mobileScrollFrameRef.current);
-      }
-    },
-    [],
-  );
 
   useEffect(() => {
     if (canActivatePlusMinus) {
@@ -501,47 +284,6 @@ export function Calculator({
   ]);
 
   useEffect(() => {
-    let isCurrent = true;
-    setUsagePokemonIds(null);
-
-    void loadSmogonUsagePokemonIds(battleFormat)
-      .then((ids) => {
-        if (isCurrent) {
-          setUsagePokemonIds(ids);
-        }
-      })
-      .catch(() => {
-        if (isCurrent) {
-          setUsagePokemonIds([]);
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [battleFormat]);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    void loadShowdownData()
-      .then((snapshot) => {
-        if (isCurrent) {
-          setCandidateMoveIndex(Object.values(snapshot.movesById));
-        }
-      })
-      .catch(() => {
-        if (isCurrent) {
-          setCandidateMoveIndex([]);
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
-
-  useEffect(() => {
     const identity = selectedMember
       ? `${selectedSlot}:${selectedMember.id}`
       : null;
@@ -557,7 +299,7 @@ export function Calculator({
       return;
     }
 
-    setPlayerBattle(createBattleState(playerMaxHp));
+    setPlayerBattle(createCalculatorBattleState(playerMaxHp));
   }, [playerMaxHp, selectedMember, selectedSlot]);
 
   useEffect(() => {
@@ -575,7 +317,7 @@ export function Calculator({
     }
 
     opponentIdentityRef.current = identity;
-    setOpponentBattle(createBattleState(opponentMaxHp));
+    setOpponentBattle(createCalculatorBattleState(opponentMaxHp));
   }, [opponentBuild.member, opponentMaxHp]);
 
   useEffect(() => {
@@ -642,87 +384,6 @@ export function Calculator({
     selectedMember,
   ]);
 
-  const basePokemonOptions = useMemo<CalculatorPokemonOption[]>(
-    () =>
-      pokemonIndex
-        .filter((entry) => entry.isSelectorOption)
-        .filter((entry) =>
-          isPokemonLegal(
-            showdownLegality,
-            entry.showdownId,
-            entry.speciesKey,
-          ),
-        )
-        .map((entry) => {
-          const candidateAbilities = getPokemonCandidateAbilities(
-            showdownLegality,
-            entry,
-            pokemonIndex,
-          );
-          const moveIds = getLegalMoves(
-            showdownLegality,
-            entry.showdownId,
-            entry.speciesKey,
-          );
-          const includeForm =
-            entry.formKind === "gender" ||
-            entry.formKind === "regional" ||
-            entry.displayName !== formatIdLabel(entry.speciesKey);
-
-          return {
-            id: entry.name,
-            label: pokemonName({
-              id: entry.name,
-              speciesId: entry.speciesKey,
-              fallback: entry.displayName,
-              includeForm,
-              formLabel: entry.formLabel,
-              formKind: entry.formKind,
-            }),
-            englishName: entry.displayName,
-            number: entry.sortNumber,
-            types: entry.types,
-            entry,
-            abilityOptions: candidateAbilities.map((ability) => ({
-              id: ability.id,
-              name: gameName(
-                "abilities",
-                ability.id,
-                ability.name,
-              ),
-            })),
-            moveIds: [...(moveIds ?? [])],
-          };
-        }),
-    [gameName, pokemonIndex, pokemonName, showdownLegality],
-  );
-  const pokemonOptions = useMemo(() => {
-    const { orderedOptions, rankByOptionId } = orderPokemonOptionsByUsage(
-      basePokemonOptions,
-      usagePokemonIds,
-    );
-
-    return orderedOptions.map((option) => ({
-      ...option,
-      usageRank: rankByOptionId.get(option.id),
-    }));
-  }, [basePokemonOptions, usagePokemonIds]);
-  const selectableItems = useMemo(
-    () =>
-      itemIndex.filter((entry) =>
-        isItemLegal(showdownLegality, entry.showdownId ?? entry.name),
-      ),
-    [itemIndex, showdownLegality],
-  );
-  const knownMegaStoneNames = useMemo(
-    () =>
-      new Set(
-        selectableItems
-          .filter((entry) => entry.isMegaStone)
-          .map((entry) => entry.name),
-      ),
-    [selectableItems],
-  );
   const playerItemOptions = useMemo(() => {
     const megaStoneName = selectedMember
       ? getMegaStoneItemName(selectedMember.id, knownMegaStoneNames)
@@ -1034,256 +695,24 @@ export function Calculator({
     }
   }
 
-  function getKoSummary(
-    result: Extract<DamageCalculationResult, { status: "ready" }>,
-  ) {
-    if (result.oneHitKoChance === 100) {
-      return t("calculator.guaranteedOhko");
-    }
-
-    if (result.oneHitKoChance > 0) {
-      return t("calculator.chanceOhko", {
-        chance: formatChance(result.oneHitKoChance),
-      });
-    }
-
-    if (result.koHits <= 0) {
-      return t("calculator.noKo");
-    }
-
-    if (result.koChance === 100) {
-      return t("calculator.guaranteedHitsKo", { hits: result.koHits });
-    }
-
-    if (result.koChance !== null && result.koChance > 0) {
-      return t("calculator.chanceHitsKo", {
-        chance: formatChance(result.koChance),
-        hits: result.koHits,
-      });
-    }
-
-    return t("calculator.possibleHitsKo", { hits: result.koHits });
-  }
-
-  function getCalculationLabel(
-    move: PokemonMove | undefined,
-    result: DamageCalculationResult | null,
-  ) {
-    if (!move) {
-      return t("builder.emptyMove");
-    }
-
-    if (!selectedMember || !opponentBuild.member) {
-      return t("calculator.chooseBothPokemon");
-    }
-
-    if (result?.status === "ready") {
-      return getKoSummary(result);
-    }
-
-    return result?.reason === "status-move"
-      ? t("calculator.statusMoveShort")
-      : t("calculator.unsupported");
-  }
-
-  function getEffectivenessPresentation(effectiveness: number) {
-    if (effectiveness === 0) {
-      return {
-        className: "is-immune",
-        label: "x0",
-      };
-    }
-
-    if (effectiveness < 1) {
-      return {
-        className: "is-resisted",
-        label: `x${effectiveness}`,
-      };
-    }
-
-    if (effectiveness > 1) {
-      return {
-        className: "is-weak",
-        label: `x${effectiveness}`,
-      };
-    }
-
-    return {
-      className: "is-neutral",
-      label: "x1",
-    };
-  }
-
-  function showMobilePage(nextPage: CalculatorMobilePage) {
-    const layout = calculatorLayoutRef.current;
-    mobilePageRef.current = nextPage;
-    mobileScrollTargetRef.current = nextPage;
-    setMobilePage(nextPage);
-
-    if (!layout) {
-      return;
-    }
-
-    const pageIndex = calculatorMobilePageOrder.indexOf(nextPage);
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    layout.scrollTo({
-      left: pageIndex * layout.clientWidth,
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-    });
-  }
-
-  function handleMobileLayoutScroll() {
-    if (mobileScrollFrameRef.current !== null) {
-      return;
-    }
-
-    mobileScrollFrameRef.current = window.requestAnimationFrame(() => {
-      mobileScrollFrameRef.current = null;
-
-      const layout = calculatorLayoutRef.current;
-      if (!layout || layout.clientWidth === 0) {
-        return;
-      }
-
-      const nextIndex = Math.max(
-        0,
-        Math.min(
-          calculatorMobilePageOrder.length - 1,
-          Math.round(layout.scrollLeft / layout.clientWidth),
-        ),
-      );
-      const nextPage = calculatorMobilePageOrder[nextIndex];
-      const targetPage = mobileScrollTargetRef.current;
-
-      if (targetPage) {
-        const targetIndex = calculatorMobilePageOrder.indexOf(targetPage);
-        const reachedTarget =
-          Math.abs(layout.scrollLeft - targetIndex * layout.clientWidth) <= 2;
-
-        if (!reachedTarget) {
-          return;
-        }
-
-        mobileScrollTargetRef.current = null;
-      }
-
-      if (mobilePageRef.current !== nextPage) {
-        mobilePageRef.current = nextPage;
-        setMobilePage(nextPage);
-      }
-    });
-  }
-
-  function handleMobileTabKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    currentPage: CalculatorMobilePage,
-  ) {
-    const currentIndex = calculatorMobilePageOrder.indexOf(currentPage);
-    let nextIndex = currentIndex;
-
-    if (event.key === "ArrowLeft") {
-      nextIndex =
-        (currentIndex - 1 + calculatorMobilePageOrder.length) %
-        calculatorMobilePageOrder.length;
-    } else if (event.key === "ArrowRight") {
-      nextIndex = (currentIndex + 1) % calculatorMobilePageOrder.length;
-    } else if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = calculatorMobilePageOrder.length - 1;
-    } else {
-      return;
-    }
-
-    event.preventDefault();
-    showMobilePage(calculatorMobilePageOrder[nextIndex]);
-    window.requestAnimationFrame(() => {
-      document
-        .getElementById(
-          `calculator-mobile-tab-${calculatorMobilePageOrder[nextIndex]}`,
-        )
-        ?.focus();
-    });
-  }
-
   return (
     <section
       className="calculator-workspace"
       aria-label={t("calculator.title")}
       hidden={!isVisible}
     >
-      <div
-        className="calculator-mobile-tabs"
-        role="tablist"
-        aria-label={t("calculator.title")}
-      >
-        {calculatorMobilePageOrder.map((page) => {
-          const label =
-            page === "player"
-              ? t("calculator.yourPokemon")
-              : page === "damage"
-                ? t("calculator.damage")
-                : t("calculator.mobileOpponent");
-          const isPokemonPage = page !== "damage";
-          const isAttackingSide =
-            (page === "player" && direction === "player-to-opponent") ||
-            (page === "opponent" && direction === "opponent-to-player");
-          const roleLabel = isAttackingSide
-            ? t("calculator.attacking")
-            : t("calculator.defending");
-
-          return (
-            <button
-              id={`calculator-mobile-tab-${page}`}
-              className={`${mobilePage === page ? "is-active" : ""}${
-                isPokemonPage
-                  ? isAttackingSide
-                    ? " is-attacking-side"
-                    : " is-defending-side"
-                  : " is-damage-direction"
-              }`}
-              type="button"
-              role="tab"
-              aria-controls={`calculator-mobile-panel-${page}`}
-              aria-selected={mobilePage === page}
-              aria-label={
-                isPokemonPage ? `${label}, ${roleLabel}` : label
-              }
-              tabIndex={mobilePage === page ? 0 : -1}
-              key={page}
-              onClick={() => showMobilePage(page)}
-              onKeyDown={(event) => handleMobileTabKeyDown(event, page)}
-            >
-              <span className="calculator-mobile-tab-label">{label}</span>
-              {isPokemonPage ? (
-                <span className="calculator-mobile-tab-role">
-                  {roleLabel}
-                </span>
-              ) : (
-                <FontAwesomeIcon
-                  className="calculator-mobile-tab-arrow"
-                  icon={
-                    direction === "player-to-opponent"
-                      ? faArrowRight
-                      : faArrowLeft
-                  }
-                  aria-hidden="true"
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      <CalculatorMobileTabs
+        mobilePage={mobileNavigation.mobilePage}
+        direction={direction}
+        onSelectPage={mobileNavigation.showMobilePage}
+        onTabKeyDown={mobileNavigation.handleTabKeyDown}
+      />
 
       <div
         className="calculator-layout"
-        ref={calculatorLayoutRef}
-        onPointerDown={() => {
-          mobileScrollTargetRef.current = null;
-        }}
-        onScroll={handleMobileLayoutScroll}
+        ref={mobileNavigation.layoutRef}
+        onPointerDown={mobileNavigation.cancelScrollTarget}
+        onScroll={mobileNavigation.handleLayoutScroll}
       >
         <CalculatorPokemonEditor
           panelId="calculator-mobile-panel-player"
@@ -1323,301 +752,25 @@ export function Calculator({
           onBattleChange={setPlayerBattle}
         />
 
-        <section
-          id="calculator-mobile-panel-damage"
-          className="calculator-result-panel"
-          role="tabpanel"
-          aria-labelledby="calculator-mobile-tab-damage"
-        >
-          <div className="calculator-direction-control">
-            <span
-              className={`calculator-speed-indicator ${
-                fasterSide === "player" ? "is-active" : ""
-              }`}
-              aria-label={
-                fasterSide === "player"
-                  ? t("calculator.fasterPokemon", {
-                      speed: playerSpeed ?? 0,
-                    })
-                  : undefined
-              }
-              title={
-                fasterSide === "player"
-                  ? t("calculator.fasterPokemon", {
-                      speed: playerSpeed ?? 0,
-                    })
-                  : undefined
-              }
-            >
-              {fasterSide === "player" ? (
-                <FontAwesomeIcon icon={faAnglesLeft} aria-hidden="true" />
-              ) : null}
-            </span>
-
-            <button
-              className="calculator-direction-button"
-              type="button"
-              aria-label={t("calculator.reverseDirection")}
-              onClick={() =>
-                setDirection((current) =>
-                  current === "player-to-opponent"
-                    ? "opponent-to-player"
-                    : "player-to-opponent",
-                )
-              }
-            >
-              <FontAwesomeIcon
-                icon={
-                  direction === "player-to-opponent"
-                    ? faArrowRight
-                    : faArrowLeft
-                }
-                aria-hidden="true"
-              />
-              <FontAwesomeIcon icon={faRightLeft} aria-hidden="true" />
-            </button>
-
-            <span
-              className={`calculator-speed-indicator ${
-                fasterSide === "opponent" ? "is-active" : ""
-              }`}
-              aria-label={
-                fasterSide === "opponent"
-                  ? t("calculator.fasterPokemon", {
-                      speed: opponentSpeed ?? 0,
-                    })
-                  : undefined
-              }
-              title={
-                fasterSide === "opponent"
-                  ? t("calculator.fasterPokemon", {
-                      speed: opponentSpeed ?? 0,
-                    })
-                  : undefined
-              }
-            >
-              {fasterSide === "opponent" ? (
-                <FontAwesomeIcon icon={faAnglesRight} aria-hidden="true" />
-              ) : null}
-            </span>
-          </div>
-
-          <div className="calculator-result">
-            <div
-              className="calculator-move-results-table"
-              role="table"
-              aria-label={t("calculator.moveResults")}
-            >
-              {calculations.map(({ move, result }, moveIndex) => {
-                const readyResult =
-                  result?.status === "ready" ? result : null;
-                const effectiveness =
-                  readyResult?.offensivePower !== null &&
-                  readyResult?.offensivePower !== undefined
-                    ? getEffectivenessPresentation(
-                        readyResult.effectiveness,
-                      )
-                    : null;
-                const percentText = readyResult
-                  ? `${readyResult.minPercent.toFixed(1)}–${readyResult.maxPercent.toFixed(1)}%`
-                  : "-";
-                const damageText = readyResult
-                  ? `${readyResult.minDamage}–${readyResult.maxDamage}`
-                  : "-";
-                const offensivePowerText =
-                  readyResult?.offensivePower === null ||
-                  readyResult?.offensivePower === undefined
-                    ? "-"
-                    : numberFormatter.format(readyResult.offensivePower);
-
-                return (
-                  <div
-                    className={`calculator-move-result-row ${
-                      readyResult ? "" : "is-unavailable"
-                    }`}
-                    role="row"
-                    key={`${moveIndex}-${move?.id ?? "empty"}`}
-                  >
-                    <div
-                      className="calculator-move-result-primary"
-                      role="rowheader"
-                    >
-                      <span className="calculator-result-move-name">
-                        {move ? <TypeBadge type={move.type} /> : null}
-                        <strong>
-                          {move
-                            ? gameName("moves", move.id, move.name)
-                            : t("calculator.moveSlot", {
-                                slot: moveIndex + 1,
-                          })}
-                        </strong>
-                        {effectiveness ? (
-                          <span
-                            className={`calculator-effectiveness ${effectiveness.className}`}
-                          >
-                            {effectiveness.label}
-                          </span>
-                        ) : null}
-                      </span>
-                    </div>
-
-                    <span className="calculator-result-verdict">
-                      {getCalculationLabel(move, result)}
-                    </span>
-
-                    <div className="calculator-damage-summary" role="cell">
-                      <strong
-                        className="calculator-primary-percent"
-                        aria-label={`${t("calculator.percent")} ${percentText}`}
-                      >
-                        {percentText}
-                      </strong>
-                      <span
-                        className="calculator-raw-damage"
-                        aria-label={`${t("calculator.damage")} ${damageText}`}
-                      >
-                        {readyResult ? `(${damageText})` : "-"}
-                      </span>
-                    </div>
-
-                    <div className="calculator-offensive-power" role="cell">
-                      <span>{t("calculator.offensivePower")}</span>
-                      <strong>{offensivePowerText}</strong>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div
-            className={`calculator-field-controls is-${battleFormat}${
-              canActivatePlusMinus ? " has-plus-minus" : ""
-            }`}
-          >
-            <div className="calculator-field-heading">
-              {t("calculator.battleConditions")}
-            </div>
-            <label>
-              <span className="sr-only">{t("calculator.weather")}</span>
-              <select
-                value={field.weather}
-                onChange={(event) =>
-                  setField((current) => ({
-                    ...current,
-                    weather: event.target
-                      .value as CalculatorField["weather"],
-                  }))
-                }
-              >
-                <option value="none">{t("calculator.weather")}</option>
-                <option value="sun">{t("calculator.sun")}</option>
-                <option value="rain">{t("calculator.rain")}</option>
-                <option value="sand">{t("calculator.sand")}</option>
-                <option value="snow">{t("calculator.snow")}</option>
-              </select>
-            </label>
-            <label>
-              <span className="sr-only">{t("calculator.terrain")}</span>
-              <select
-                value={field.terrain}
-                onChange={(event) =>
-                  setField((current) => ({
-                    ...current,
-                    terrain: event.target
-                      .value as CalculatorField["terrain"],
-                  }))
-                }
-              >
-                <option value="none">{t("calculator.terrain")}</option>
-                <option value="electric">
-                  {t("calculator.electricTerrain")}
-                </option>
-                <option value="grassy">
-                  {t("calculator.grassyTerrain")}
-                </option>
-                <option value="psychic">
-                  {t("calculator.psychicTerrain")}
-                </option>
-                <option value="misty">
-                  {t("calculator.mistyTerrain")}
-                </option>
-              </select>
-            </label>
-            <label>
-              <span className="sr-only">{t("calculator.roomGravity")}</span>
-              <select
-                value={field.room}
-                onChange={(event) =>
-                  setField((current) => ({
-                    ...current,
-                    room: event.target.value as CalculatorField["room"],
-                  }))
-                }
-              >
-                <option value="none">
-                  {t("calculator.roomGravity")}
-                </option>
-                <option value="magic">{t("calculator.magicRoom")}</option>
-                <option value="wonder">{t("calculator.wonderRoom")}</option>
-                <option value="gravity">{t("calculator.gravity")}</option>
-              </select>
-            </label>
-            <label>
-              <span className="sr-only">{t("calculator.aura")}</span>
-              <select
-                value={field.aura}
-                onChange={(event) =>
-                  setField((current) => ({
-                    ...current,
-                    aura: event.target.value as CalculatorField["aura"],
-                  }))
-                }
-              >
-                <option value="none">{t("calculator.aura")}</option>
-                <option value="fairy">{t("calculator.fairyAura")}</option>
-              </select>
-            </label>
-            {([
-              ["isCritical", "calculator.critical"],
-              ...(battleFormat === "doubles"
-                ? ([
-                    ["isHelpingHand", "calculator.helpingHand"],
-                    ["isTailwind", "calculator.tailwind"],
-                    ["isFriendGuard", "calculator.friendGuard"],
-                    ["isWall", "calculator.wall"],
-                    ...(canActivatePlusMinus
-                      ? ([
-                          ["isPlusMinus", "calculator.plusMinus"],
-                        ] as const)
-                      : []),
-                  ] as const)
-                : ([
-                    ["isTailwind", "calculator.tailwind"],
-                    ["isWall", "calculator.wall"],
-                  ] as const)),
-            ] as const).map(([fieldKey, labelKey]) => (
-              <label
-                className="calculator-toggle"
-                key={fieldKey}
-              >
-                <input
-                  type="checkbox"
-                  checked={Boolean(
-                    field[fieldKey as keyof CalculatorField],
-                  )}
-                  onChange={(event) =>
-                    setField((current) => ({
-                      ...current,
-                      [fieldKey]: event.target.checked,
-                    }))
-                  }
-                />
-                <span>{t(labelKey as Parameters<typeof t>[0])}</span>
-              </label>
-            ))}
-          </div>
-        </section>
+        <CalculatorResultPanel
+          battleFormat={battleFormat}
+          direction={direction}
+          calculations={calculations}
+          field={field}
+          hasBothPokemon={Boolean(selectedMember && opponentBuild.member)}
+          canActivatePlusMinus={canActivatePlusMinus}
+          playerSpeed={playerSpeed}
+          opponentSpeed={opponentSpeed}
+          fasterSide={fasterSide}
+          onReverseDirection={() =>
+            setDirection((current) =>
+              current === "player-to-opponent"
+                ? "opponent-to-player"
+                : "player-to-opponent",
+            )
+          }
+          onFieldChange={setField}
+        />
 
         <CalculatorPokemonEditor
           panelId="calculator-mobile-panel-opponent"

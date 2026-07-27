@@ -8674,20 +8674,10 @@ select {
   }
 
   .calculator-editor-card .card-main {
-    min-height: 0;
     padding: 16px;
   }
 
-  .calculator-editor-card.is-empty-slot {
-    min-height: 0;
-  }
-
-  .calculator-editor-card.is-empty-slot .card-main {
-    min-height: 0;
-  }
-
-  .pokemon-card.calculator-editor-card,
-  .pokemon-card.calculator-editor-card.is-empty-slot {
+  .pokemon-card.calculator-editor-card {
     min-height: 672px;
   }
 
