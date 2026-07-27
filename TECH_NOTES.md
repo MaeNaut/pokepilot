@@ -245,6 +245,20 @@ claim of affiliation.
   Generation-9 mechanics covered by `@smogon/calc` are available immediately, but
   newly introduced Champions-only move, item, or ability behavior needs a checked
   local override and a focused regression fixture before it is claimed as exact.
+- Keep external calculator checks offline and repeatable in
+  `src/test/fixtures/damageCalculatorFixtures.ts`. The initial suite captures
+  eight Regulation M-B singles matchups with complete builds, combat stats, and
+  damage ranges. It uses the
+  [Pokemon Champions battle-mechanics research](https://www.smogon.com/forums/threads/champions-battle-mechanics-research.3780372/)
+  as the mechanics reference and records live
+  [PkmnChamps](https://pkmnchamps.com/calculator) ranges only as comparison
+  metadata.
+- Do not change modifier ordering merely to match a third-party calculator. The
+  initial comparison exposed three one-point boundary differences, while the
+  mechanics research reports that Champions follows the Scarlet/Violet damage
+  formula and includes the full 0.85-1.00 random range. Keep the standard
+  `@smogon/calc` results unless an in-game capture demonstrates a real
+  Champions-specific exception.
 - Do not persist damage output. It is derived from the two current builds, battle
   state, direction, and field controls and should be recalculated whenever an input
   changes.

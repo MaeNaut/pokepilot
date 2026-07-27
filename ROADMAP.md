@@ -89,6 +89,8 @@ The MVP should prove the core loop:
   Builder module.
 - [x] Reuse builder visual primitives for Pokemon types, items, moves, and the
   searchable Regulation M-B opponent selector.
+- [x] Add an offline external-reference fixture suite for representative
+  Regulation M-B singles damage ranges and the combat stats used by each result.
 - [ ] Verify additional Pokemon Champions-only mechanics against live reference
   cases and add explicit overrides where upstream generation-9 data is incomplete.
 - [ ] Revisit simultaneous two-way results, usage-based opponent defaults,

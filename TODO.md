@@ -22,8 +22,15 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         localized game catalogs.
   - [x] Keep the shared PokePilot panel available in both modes and preserve
         calculator-local matchup state while switching between them.
-- [ ] Compare representative PokePilot results with live Pokemon Champions
-      calculations as official edge cases become available.
+- [x] Establish repeatable external-reference checks for the damage calculator.
+  - [x] Capture eight representative Regulation M-B singles matchups covering
+        physical, special, STAB, resistance, weakness, and sun modifiers.
+  - [x] Store the builds, expected combat stats, damage ranges, source metadata,
+        and observed third-party comparator ranges as offline Vitest fixtures.
+  - [x] Prefer documented Champions mechanics and standard generation-9
+        modifier ordering over blindly matching a comparator's rounding.
+- [ ] Extend the reference suite with real Pokemon Champions battle captures and
+      Champions-exclusive mechanics as reliable examples become available.
 
 ## Team Management
 
