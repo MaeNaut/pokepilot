@@ -134,6 +134,26 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Send structured team, selected Pokemon, diagnostics, and validity summaries rather than raw UI text.
   - [x] Render summary, strengths, weaknesses, priorities, and recommendations as product UI rather than plain chat text.
   - [x] Add regression tests for compact request snapshots and local team/Pokemon analysis.
+- [x] Add an offline Regulation M-B team fixture suite for hosted-model evaluation.
+  - [x] Keep an even split of 10 Singles and 10 Doubles teams.
+  - [x] Attribute 16 published teams and mark four constructed archetype-boundary cases separately.
+  - [x] Store complete Showdown sets, format metadata, critical observations, and forbidden conclusions.
+  - [x] Validate fixture parsing, Stat Point limits, complete sets, unique IDs, and Item Clause with Vitest.
+- [ ] Complete the repeatable GPT-5.6 Luna hosted-model evaluation runner.
+  - [x] Generate identical provider-independent requests from every team fixture through the production Showdown import, diagnostics, validity, and request-building path.
+  - [x] Keep source provenance, raw Showdown text, and evaluator expectations outside the model adapter input.
+  - [x] Define a shared strict output JSON Schema and validate structured output before scoring or saving a result.
+  - [x] Add a Standard-tier Luna Responses API adapter with explicit 24-hour
+        prompt caching, reasoning controls, usage accounting, and estimated cost.
+  - [x] Add JSON/Markdown evaluation reports and a two-fixture smoke CLI.
+  - [x] Run the first low-reasoning Singles/Doubles smoke test and a targeted
+        medium-reasoning retry.
+  - [ ] Add deterministic per-set defensive profiles, ability immunities, and
+        physical/special move-presence summaries to the model request before
+        running the paid 20-team suite.
+  - [ ] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
+  - [ ] Track hard failures separately from aggregate scores, latency, token use, and cost.
+  - [ ] Keep evaluation traffic and budgets separate from the eventual production project.
 - [ ] Add a server-side API route for AI analysis when model integration begins.
   - [ ] Keep API keys out of browser code.
   - [ ] Call analysis explicitly rather than automatically on every team edit.

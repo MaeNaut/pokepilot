@@ -36,11 +36,6 @@ import { SavedTeamRow } from "./components/SavedTeamRow";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
 import {
-  CHAMPIONS_MAX_EV_PER_STAT,
-  CHAMPIONS_MAX_EV_TOTAL,
-  defaultEvs,
-} from "./data/natures";
-import {
   ACTIVE_TEAM_SIZE,
   MAX_SAVED_TEAMS,
   canAddSavedTeam,
@@ -50,10 +45,7 @@ import { useBuilderData } from "./hooks/useBuilderData";
 import { useDismissOnOutsidePointer } from "./hooks/useDismissOnOutsidePointer";
 import { useLongPressReorder } from "./hooks/useLongPressReorder";
 import { useMediaQuery } from "./hooks/useMediaQuery";
-import {
-  getPreferredPokeApiId,
-  shouldKeepSelectedPokemonForUsageTarget,
-} from "./utils/pokemonAliases";
+import { shouldKeepSelectedPokemonForUsageTarget } from "./utils/pokemonAliases";
 import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
 import { swapArrayItems } from "./utils/reorder";
 import {
@@ -61,14 +53,17 @@ import {
   moveTeamPokemonToBench,
   type BenchPokemon,
 } from "./utils/benchPokemon";
-import { analyzeTeam } from "./utils/teamDiagnostics";
-import { validateTeam } from "./utils/teamValidity";
+import { createTeamAnalysisContext } from "./utils/teamAnalysisContext";
 import {
   formatShowdownSlot,
   formatShowdownTeam,
-  parseShowdownTeam,
   toPokemonId,
 } from "./utils/showdownText";
+import {
+  buildImportedShowdownSnapshot,
+  normalizeImportedEvs,
+  resolveImportedPokemonId,
+} from "./utils/showdownImport";
 import {
   SAVED_TEAM_SCHEMA_VERSION,
   clearLastActiveTeamId,
@@ -92,7 +87,6 @@ import type {
   TeamMember,
   TeamSlot,
 } from "./types";
-import type { TeamBuildState } from "./utils/teamBuildState";
 import type { SmogonUsageSet } from "./api/smogonUsage";
 import { useLocalization } from "./i18n/useLocalization";
 import type { Locale } from "./i18n/gameTranslations";
@@ -135,28 +129,6 @@ function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
 
 function hasStaleShowdownIcon(member: TeamMember) {
   return isFullShowdownSpriteUrl(member.iconSpriteUrl);
-}
-
-function normalizeImportedEvs(evs: Partial<TeamBuildState["evsBySlot"][number]>) {
-  const stats = ["hp", "attack", "defense", "specialAttack", "specialDefense", "speed"] as const;
-  let remaining = CHAMPIONS_MAX_EV_TOTAL;
-
-  return stats.reduce(
-    (normalized, stat) => {
-      const value = Math.max(
-        0,
-        Math.min(CHAMPIONS_MAX_EV_PER_STAT, evs[stat] ?? 0, remaining),
-      );
-
-      remaining -= value;
-
-      return {
-        ...normalized,
-        [stat]: value,
-      };
-    },
-    defaultEvs,
-  );
 }
 
 function isMegaPokemonId(value: string) {
@@ -252,56 +224,27 @@ function App() {
       copilotDrawerTransitionTimeoutRef.current = null;
     }, 240);
   }, []);
-  const teamDiagnostics = useMemo(
+  const analysisBuildState = teamBuildState.getBuildStateSnapshot();
+  const {
+    diagnostics: teamDiagnostics,
+    validity: teamValidity,
+  } = useMemo(
     () =>
-      analyzeTeam(
+      createTeamAnalysisContext({
         team,
-        {
-          abilityBySlot: teamBuildState.abilityBySlot,
-          evsBySlot: teamBuildState.evsBySlot,
-          moveIdsBySlot: teamBuildState.moveIdsBySlot,
-          natureBySlot: teamBuildState.natureBySlot,
-        },
-        customPool,
-      ),
-    [
-      customPool,
-      team,
-      teamBuildState.abilityBySlot,
-      teamBuildState.evsBySlot,
-      teamBuildState.moveIdsBySlot,
-      teamBuildState.natureBySlot,
-    ],
-  );
-  const teamValidity = useMemo(
-    () =>
-      validateTeam(
-        team,
-        {
-          abilityBySlot: teamBuildState.abilityBySlot,
-          evsBySlot: teamBuildState.evsBySlot,
-          itemBySlot: teamBuildState.itemBySlot,
-          moveIdsBySlot: teamBuildState.moveIdsBySlot,
-          natureBySlot: teamBuildState.natureBySlot,
-          preMegaPokemonBySlot: teamBuildState.preMegaPokemonBySlot,
-          candidateFiltersBySlot: teamBuildState.candidateFiltersBySlot,
-        },
-        showdownLegality,
+        buildState: analysisBuildState,
+        moveSources: customPool,
+        legality: showdownLegality,
         pokemonIndex,
         itemIndex,
-      ),
+      }),
     [
+      analysisBuildState,
+      customPool,
       itemIndex,
       pokemonIndex,
       showdownLegality,
       team,
-      teamBuildState.abilityBySlot,
-      teamBuildState.evsBySlot,
-      teamBuildState.itemBySlot,
-      teamBuildState.moveIdsBySlot,
-      teamBuildState.natureBySlot,
-      teamBuildState.preMegaPokemonBySlot,
-      teamBuildState.candidateFiltersBySlot,
     ],
   );
   const savedTeamReorder = useLongPressReorder({
@@ -877,41 +820,6 @@ function App() {
     }
   }
 
-  function resolveImportedPokemonId(name: string, gender?: "M" | "F") {
-    const preferredPokeApiId = getPreferredPokeApiId(name);
-
-    if (preferredPokeApiId) {
-      return preferredPokeApiId;
-    }
-
-    const normalized = normalizeShowdownId(name);
-    const genderLabel = gender === "F" ? "female" : gender === "M" ? "male" : null;
-    const genderMatchedEntry = genderLabel
-      ? pokemonIndex.find(
-          (entry) =>
-            normalizeShowdownId(entry.speciesKey) === normalized &&
-            entry.formKind === "gender" &&
-            entry.formLabel?.toLowerCase() === genderLabel,
-        )
-      : undefined;
-
-    if (genderMatchedEntry) {
-      return genderMatchedEntry.name;
-    }
-
-    const matchedEntry = pokemonIndex.find((entry) => {
-      const entryNames = [
-        entry.name,
-        entry.displayName,
-        entry.displayName.replace(/\s+/g, "-"),
-      ].map(normalizeShowdownId);
-
-      return entryNames.includes(normalized);
-    });
-
-    return matchedEntry?.name ?? normalized;
-  }
-
   async function resolvePokemonMember(lookup: string) {
     const localMember = customPool.find((member) => member.id === lookup);
 
@@ -940,7 +848,10 @@ function App() {
     usageSet: SmogonUsageSet,
     selectedMember: TeamMember,
   ) {
-    const usagePokemonId = resolveImportedPokemonId(usageSet.pokemonName);
+    const usagePokemonId = resolveImportedPokemonId(
+      usageSet.pokemonName,
+      pokemonIndex,
+    );
 
     if (
       normalizeShowdownId(usagePokemonId) === normalizeShowdownId(selectedMember.id) ||
@@ -997,76 +908,15 @@ function App() {
     return formatShowdownSlot(team, teamBuildState.getBuildStateSnapshot(), slotIndex);
   }
 
-  async function buildImportedShowdownSnapshot(text: string) {
-    const parsedTeam = parseShowdownTeam(text);
-
-    if (parsedTeam.length === 0) {
-      throw new Error(t("team.pasteAtLeastOne"));
-    }
-
-    const importedMembers: TeamSlot[] = [];
-    const importedBuildState = createEmptyBuildState();
-
-    for (const [slotIndex, parsedPokemon] of parsedTeam.entries()) {
-      if (!parsedPokemon.pokemonName) {
-        importedMembers.push(null);
-        continue;
-      }
-
-      const pokemonId = resolveImportedPokemonId(
-        parsedPokemon.pokemonName,
-        parsedPokemon.gender,
-      );
-      const member = await fetchPokemon(pokemonId);
-
-      importedMembers.push(member);
-
-      if (parsedPokemon.itemName) {
-        try {
-          importedBuildState.itemBySlot[slotIndex] = await fetchItem(
-            normalizeShowdownId(parsedPokemon.itemName),
-          );
-        } catch {
-          importedBuildState.itemBySlot[slotIndex] = null;
-        }
-      }
-
-      if (parsedPokemon.ability) {
-        importedBuildState.abilityBySlot[slotIndex] = parsedPokemon.ability;
-      }
-
-      if (parsedPokemon.nature) {
-        importedBuildState.natureBySlot[slotIndex] = parsedPokemon.nature;
-      }
-
-      if (parsedPokemon.evs) {
-        importedBuildState.evsBySlot[slotIndex] = normalizeImportedEvs(
-          parsedPokemon.evs,
-        );
-      }
-
-      const moveIds = parsedPokemon.moves.map(normalizeShowdownId);
-      importedBuildState.moveIdsBySlot[slotIndex] = [0, 1, 2, 3].map(
-        (moveIndex) => moveIds[moveIndex] ?? "",
-      );
-    }
-
-    while (importedMembers.length < ACTIVE_TEAM_SIZE) {
-      importedMembers.push(null);
-    }
-
-    return {
-      members: importedMembers.slice(0, ACTIVE_TEAM_SIZE),
-      buildState: importedBuildState,
-    };
-  }
-
   async function importShowdownAsNewTeam(text: string) {
     setIsImportingNewTeam(true);
     setNewTeamImportError(null);
 
     try {
-      const importedSnapshot = await buildImportedShowdownSnapshot(text);
+      const importedSnapshot = await buildImportedShowdownSnapshot(text, {
+        pokemonIndex,
+        emptyTeamMessage: t("team.pasteAtLeastOne"),
+      });
       const importedMembers = importedSnapshot.members.filter(
         (member): member is TeamMember => Boolean(member),
       );
@@ -1113,7 +963,10 @@ function App() {
   }
 
   async function handleImportShowdownSlot(slotIndex: number, text: string) {
-    const importedSnapshot = await buildImportedShowdownSnapshot(text);
+    const importedSnapshot = await buildImportedShowdownSnapshot(text, {
+      pokemonIndex,
+      emptyTeamMessage: t("team.pasteAtLeastOne"),
+    });
     const importedMember = importedSnapshot.members[0] ?? null;
 
     setCustomPool((currentPool) =>
@@ -1532,7 +1385,13 @@ function App() {
     setIsImportingSavedTeam(true);
 
     try {
-      const importedSnapshot = await buildImportedShowdownSnapshot(teamShowdownDraft);
+      const importedSnapshot = await buildImportedShowdownSnapshot(
+        teamShowdownDraft,
+        {
+          pokemonIndex,
+          emptyTeamMessage: t("team.pasteAtLeastOne"),
+        },
+      );
       const now = new Date().toISOString();
       const nextSavedTeam: SavedTeamSummary = {
         ...savedTeam,

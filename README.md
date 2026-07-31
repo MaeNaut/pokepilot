@@ -31,6 +31,8 @@ Current slice:
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
 - right-side PokePilot strategy briefs in both Team Builder and Calculator modes
   for the active team and selected Pokemon
+- an offline 20-team Singles/Doubles evaluation suite plus a GPT-5.6 Luna
+  Standard smoke runner with strict output, token, latency, and cost reports
 - persisted English/Korean UI selection with localized game names, forms, and tooltips
 - persisted system/light/dark theme selection with live operating-system preference tracking
 - lazy-loaded damage Calculator mode with fixed My Pokemon / Opponent Pokemon
@@ -63,6 +65,16 @@ npm run test:run
 ```
 
 Use `npm test` while developing to rerun affected Vitest tests on file changes.
+
+Run the optional paid Luna evaluation after placing `OPENAI_API_KEY` in the
+ignored `.env.local` file:
+
+```bash
+npm run eval:ai
+```
+
+See [AI_MODEL_EVALUATION.md](./docs/AI_MODEL_EVALUATION.md) for fixture scope,
+cost measurements, full-suite controls, and evaluation rules.
 
 ## Planned Features
 

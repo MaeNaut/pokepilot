@@ -104,6 +104,12 @@ The MVP should prove the core loop:
   calculations as the factual source of truth.
 - [x] Define provider-independent request and response types so the Copilot UI can be
   built and tested before committing to a hosted model provider.
+- [x] Add an attributed offline evaluation suite with 10 Regulation M-B Singles
+  teams, 10 Regulation M-B Doubles teams, and explicit archetype-boundary cases.
+- [x] Add a GPT-5.6 Luna Standard evaluation adapter, strict output validation,
+  token/cost reporting, and reproducible Singles/Doubles smoke runner.
+- [ ] Enrich hosted-model requests with deterministic per-set defensive profiles
+  and offensive move summaries, then score the complete 20-team fixture suite.
 - [ ] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
 - [ ] Request JSON output with clear summary, strength, weakness, priority, and
