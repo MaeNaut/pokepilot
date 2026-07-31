@@ -148,9 +148,14 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Add JSON/Markdown evaluation reports and a two-fixture smoke CLI.
   - [x] Run the first low-reasoning Singles/Doubles smoke test and a targeted
         medium-reasoning retry.
-  - [ ] Add deterministic per-set defensive profiles, ability immunities, and
+  - [x] Add deterministic per-set defensive profiles, ability immunities, and
         physical/special move-presence summaries to the model request before
         running the paid 20-team suite.
+  - [x] Include normalized move categories, Doubles spread targets, and
+        aggregate physical/special/spread source slots in the request.
+  - [x] Repeat the Singles/Doubles Luna Standard low smoke test with the
+        enriched request and record its token, cost, latency, and residual
+        wording issues.
   - [ ] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
   - [ ] Track hard failures separately from aggregate scores, latency, token use, and cost.
   - [ ] Keep evaluation traffic and budgets separate from the eventual production project.

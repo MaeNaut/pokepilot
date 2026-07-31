@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { PokemonMove, StatBlock, TeamMember } from "../types";
-import { analyzeTeam, getDefensiveMultiplier } from "./teamDiagnostics";
+import {
+  analyzeTeam,
+  createPokemonDefensiveProfile,
+  getDefensiveMultiplier,
+} from "./teamDiagnostics";
 
 const neutralEvs: StatBlock = {
   hp: 0,
@@ -80,6 +84,48 @@ describe("team diagnostics", () => {
     expect(ground).toMatchObject({ weakCount: 0, immuneCount: 1 });
     },
   );
+
+  it("builds explicit defensive profiles without inventing ability immunities", () => {
+    const bellibolt = createPokemonDefensiveProfile(
+      { types: ["electric"] },
+      "Electromorphosis",
+    );
+    const megaGengar = createPokemonDefensiveProfile(
+      { types: ["ghost", "poison"] },
+      "Shadow Tag",
+    );
+    const lightningRod = createPokemonDefensiveProfile(
+      { types: ["water"] },
+      "Lightning Rod",
+    );
+
+    expect(bellibolt.weaknesses).toContainEqual({
+      type: "ground",
+      multiplier: 2,
+    });
+    expect(bellibolt.resistances).toContainEqual({
+      type: "electric",
+      multiplier: 0.5,
+    });
+    expect(bellibolt.immunities).toEqual([]);
+
+    expect(megaGengar.weaknesses).toContainEqual({
+      type: "ground",
+      multiplier: 2,
+    });
+    expect(megaGengar.immunities).toEqual(
+      expect.arrayContaining([
+        { type: "normal", cause: "typing" },
+        { type: "fighting", cause: "typing" },
+      ]),
+    );
+
+    expect(lightningRod.immunities).toContainEqual({
+      type: "electric",
+      cause: "ability",
+      ability: "Lightning Rod",
+    });
+  });
 
   it("warns only when multiple attackers lean into one damage category", () => {
     const physicalMoves = [createMove("body-slam", "physical"), createMove("crunch", "physical")];

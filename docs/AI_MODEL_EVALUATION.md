@@ -55,6 +55,14 @@ three intentionally different representations:
 3. `CopilotAnalysisRequest` stores the compact, provider-independent team,
    diagnostics, candidate filters, and validity data used for analysis.
 
+The current request contract is version 2. Each configured set includes a
+deterministic defensive profile with weakness/resistance multipliers and
+typing-versus-ability immunity causes. It also includes normalized
+physical/special/status move groupings and Doubles spread targets. Team
+diagnostics repeat only the compact physical, special, and spread source
+counts/slots needed to avoid confusing "not a dedicated attacker" with "has
+no attack in that category."
+
 Evaluation cases must follow the same production path as a team imported in the
 web app:
 
@@ -183,13 +191,14 @@ cost.
 
 ## Initial Hosted Smoke Result
 
-The July 31, 2026 prompt-v2 smoke run completed one Singles and one Doubles
-fixture with strict-schema output:
+The July 31, 2026 smoke runs completed one Singles and one Doubles fixture
+with strict-schema output:
 
-| Effort | Cases | Tokens | Estimated Standard cost | Average latency |
-| --- | ---: | ---: | ---: | ---: |
-| Low | 2 | 6,697 | $0.003167 | 7,323 ms |
-| Medium | 1 Singles retry | 3,570 | $0.001862 | 9,256 ms |
+| Prompt | Effort | Cases | Tokens | Estimated Standard cost | Average latency |
+| --- | --- | ---: | ---: | ---: | ---: |
+| v2 | Low | 2 | 6,697 | $0.003167 | 7,323 ms |
+| v2 | Medium | 1 Singles retry | 3,570 | $0.001862 | 9,256 ms |
+| v3 + request v2 | Low | 2 | 9,002 | $0.003643 | 6,780 ms |
 
 The low-effort Doubles response recognized both speed modes, the alternative
 Mega choices, and the team's spread attacks after the general prompt
@@ -198,11 +207,20 @@ weaknesses or immunities to the wrong Pokemon and undercounted available
 special damage. Medium reasoning did not resolve those deterministic factual
 errors.
 
-Do not run the paid 20-case suite yet. First add per-set defensive profiles
-(including ability immunities) and aggregate physical/special move presence to
-`CopilotAnalysisRequest`. The rules engine should supply those facts instead
-of paying a model to reconstruct the type chart. Repeat the two-case smoke run
-after that contract change.
+Prompt v3 and request v2 moved those facts into the deterministic contract.
+The repeated low-effort run no longer called Bellibolt Electric-weak, no
+longer assigned a Ground immunity to Mega Gengar, distinguished available
+special attacks from dedicated special breakers, and named all four Doubles
+spread attacks. It also correctly attributed Corviknight's Ground immunity to
+typing. The Singles response retained one awkwardly contradictory sentence
+that grouped Corviknight with an Electric answer immediately before stating
+its Electric weakness. Treat that as a response-quality scoring issue rather
+than a data-contract failure.
+
+The enriched payload added 2,305 total tokens (+34.4%) versus the first
+two-case low run, while estimated cost rose by $0.000476 (+15.0%) to
+$0.003643. Keep Luna Standard with low reasoning as the working default. Score
+the v3 smoke manually before spending on the complete 20-case suite.
 
 The smoke requests recorded cache writes but no cache hits. The shared static
 prefix is currently too small relative to the differing team payloads to
@@ -210,11 +228,11 @@ assume meaningful savings, even with a stable cache key. Cost planning should
 continue to use uncached or cache-write pricing until a larger run demonstrates
 real hits.
 
-At the measured low-effort average of about $0.001584 per team analysis, 900
-monthly analyses would cost about $1.43 and a $10 budget would cover roughly
-6,300 analyses. This is a baseline for one-shot team analysis only. Follow-up
-chat, retries, larger future payloads, and additional analysis modes need their
-own measurements before they share the same production budget.
+At the enriched low-effort average of about $0.001822 per team analysis, 900
+monthly analyses would cost about $1.64 and a $10 budget would cover roughly
+5,490 analyses. This is a two-case baseline for one-shot team analysis only.
+Follow-up chat, retries, larger future payloads, and additional analysis modes
+need their own measurements before they share the same production budget.
 
 ## Automated Checks
 
@@ -240,6 +258,14 @@ own measurements before they share the same production budget.
   complete run;
 - latency and token/cost metadata can be recorded independently of model
   output.
+
+`teamDiagnostics.test.ts` and `copilotAnalysis.test.ts` additionally verify:
+
+- representative Bellibolt and Mega Gengar profiles do not receive invented
+  ability immunities;
+- full-immunity abilities retain the ability name as the immunity cause;
+- mixed physical/special sets, normalized categories, and spread targets
+  produce matching per-set and aggregate request summaries.
 
 `openAiLunaAdapter.test.ts` verifies:
 

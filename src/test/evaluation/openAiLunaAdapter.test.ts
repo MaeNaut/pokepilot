@@ -7,7 +7,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 1,
+  version: 2,
   scope: "team",
   battleFormat: "doubles",
   teamName: "Test Team",
@@ -27,6 +27,14 @@ const request = {
       "special-wall": 0,
       supporter: 0,
       setter: 0,
+    },
+    offensiveProfile: {
+      physicalMoveCount: 0,
+      specialMoveCount: 0,
+      spreadMoveCount: 0,
+      physicalSetSlots: [],
+      specialSetSlots: [],
+      spreadSetSlots: [],
     },
     concepts: [],
     validity: {
@@ -107,7 +115,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-v2-low",
+        prompt_cache_key: "pokepilot-evaluation-v3-low",
         prompt_cache_retention: "24h",
         reasoning: {
           effort: "low",
@@ -121,7 +129,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 2,
+        promptVersion: 3,
       },
       usage: {
         totalTokens: 150,

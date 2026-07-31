@@ -32,6 +32,22 @@ export type DefensiveMatchup = {
   immuneCount: number;
 };
 
+export type PokemonDefensiveProfile = {
+  weaknesses: Array<{
+    type: PokemonType;
+    multiplier: number;
+  }>;
+  resistances: Array<{
+    type: PokemonType;
+    multiplier: number;
+  }>;
+  immunities: Array<{
+    type: PokemonType;
+    cause: "typing" | "ability";
+    ability?: string;
+  }>;
+};
+
 export type TeamDiagnosticAlert = {
   id: string;
   tone: "danger" | "warning" | "info" | "success";
@@ -147,12 +163,63 @@ export function getDefensiveMultiplier(
   );
 }
 
+function getAbilityImmunity(
+  attackingType: PokemonType,
+  ability: string,
+) {
+  return typeImmunityByAbility[normalizeLookup(ability)] === attackingType;
+}
+
+export function createPokemonDefensiveProfile(
+  member: Pick<TeamMember, "types">,
+  ability = "",
+): PokemonDefensiveProfile {
+  return pokemonTypes.reduce<PokemonDefensiveProfile>(
+    (profile, attackingType) => {
+      const typingMultiplier = getDefensiveMultiplier(
+        attackingType,
+        member.types,
+      );
+
+      if (getAbilityImmunity(attackingType, ability)) {
+        profile.immunities.push({
+          type: attackingType,
+          cause: "ability",
+          ability,
+        });
+      } else if (typingMultiplier === 0) {
+        profile.immunities.push({
+          type: attackingType,
+          cause: "typing",
+        });
+      } else if (typingMultiplier > 1) {
+        profile.weaknesses.push({
+          type: attackingType,
+          multiplier: typingMultiplier,
+        });
+      } else if (typingMultiplier < 1) {
+        profile.resistances.push({
+          type: attackingType,
+          multiplier: typingMultiplier,
+        });
+      }
+
+      return profile;
+    },
+    {
+      weaknesses: [],
+      resistances: [],
+      immunities: [],
+    },
+  );
+}
+
 function getAbilityAwareDefensiveMultiplier(
   attackingType: PokemonType,
   member: TeamMember,
   ability: string,
 ) {
-  if (typeImmunityByAbility[normalizeLookup(ability)] === attackingType) {
+  if (getAbilityImmunity(attackingType, ability)) {
     return 0;
   }
 

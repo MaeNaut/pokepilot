@@ -129,7 +129,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 1,
+      version: 2,
       scope: "pokemon",
       battleFormat: "doubles",
       teamName: "Test Team",
@@ -137,6 +137,14 @@ describe("Copilot analysis", () => {
       diagnostics: {
         filledSlots: 1,
         coverageCount: 5,
+        offensiveProfile: {
+          physicalMoveCount: 1,
+          specialMoveCount: 0,
+          spreadMoveCount: 0,
+          physicalSetSlots: [0],
+          specialSetSlots: [],
+          spreadSetSlots: [],
+        },
         validity: { status: "valid" },
       },
     });
@@ -147,7 +155,122 @@ describe("Copilot analysis", () => {
       nature: "Adamant",
       evTotal: 66,
       roleIds: ["physical-attacker"],
-      moves: [{ id: "close-combat", name: "Close Combat" }],
+      moves: [
+        {
+          id: "close-combat",
+          name: "Close Combat",
+          category: "physical",
+          spreadTarget: null,
+        },
+      ],
+      defensiveProfile: {
+        weaknesses: [
+          { type: "flying", multiplier: 2 },
+          { type: "psychic", multiplier: 2 },
+          { type: "fairy", multiplier: 2 },
+        ],
+        resistances: [
+          { type: "bug", multiplier: 0.5 },
+          { type: "rock", multiplier: 0.5 },
+          { type: "dark", multiplier: 0.5 },
+        ],
+        immunities: [],
+      },
+      offensiveProfile: {
+        physicalMoveIds: ["close-combat"],
+        specialMoveIds: [],
+        statusMoveIds: [],
+        spreadMoveIds: [],
+      },
+    });
+  });
+
+  it("summarizes mixed damage sources, spread moves, and ability immunities", () => {
+    const thunderbolt: PokemonMove = {
+      id: "thunderbolt",
+      name: "Thunderbolt",
+      type: "electric",
+      category: "Special",
+      power: 90,
+      accuracy: 100,
+      pp: 15,
+      description: "",
+    };
+    const rockSlide: PokemonMove = {
+      id: "rock-slide",
+      name: "Rock Slide",
+      type: "rock",
+      category: "Physical",
+      power: 75,
+      accuracy: 90,
+      pp: 10,
+      description: "",
+      tags: ["Spread: Foes"],
+    };
+    const protect: PokemonMove = {
+      id: "protect",
+      name: "Protect",
+      type: "normal",
+      category: "Status",
+      power: null,
+      accuracy: null,
+      pp: 10,
+      description: "",
+    };
+    const mixedMember: TeamMember = {
+      ...member,
+      id: "mixed-pokemon",
+      name: "Mixed Pokemon",
+      types: ["water"],
+      abilities: ["Lightning Rod"],
+      moves: [thunderbolt, rockSlide, protect],
+    };
+    const mixedBuildState: TeamBuildState = {
+      ...buildState,
+      abilityBySlot: { 0: "Lightning Rod" },
+      moveIdsBySlot: {
+        0: ["thunderbolt", "rock-slide", "protect", ""],
+      },
+    };
+    const request = createCopilotAnalysisRequest({
+      scope: "team",
+      teamName: "Mixed Team",
+      team: [mixedMember, null, null, null, null, null],
+      selectedSlot: 0,
+      buildState: mixedBuildState,
+      diagnostics,
+      validity,
+    });
+
+    expect(request.sets[0]).toMatchObject({
+      moves: [
+        { id: "thunderbolt", category: "special", spreadTarget: null },
+        { id: "rock-slide", category: "physical", spreadTarget: "foes" },
+        { id: "protect", category: "status", spreadTarget: null },
+      ],
+      defensiveProfile: {
+        immunities: [
+          {
+            type: "electric",
+            cause: "ability",
+            ability: "Lightning Rod",
+          },
+        ],
+      },
+      offensiveProfile: {
+        physicalMoveIds: ["rock-slide"],
+        specialMoveIds: ["thunderbolt"],
+        statusMoveIds: ["protect"],
+        spreadMoveIds: ["rock-slide"],
+      },
+    });
+    expect(request.diagnostics.offensiveProfile).toEqual({
+      physicalMoveCount: 1,
+      specialMoveCount: 1,
+      spreadMoveCount: 1,
+      physicalSetSlots: [0],
+      specialSetSlots: [0],
+      spreadSetSlots: [0],
     });
   });
 

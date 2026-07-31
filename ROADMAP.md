@@ -108,8 +108,12 @@ The MVP should prove the core loop:
   teams, 10 Regulation M-B Doubles teams, and explicit archetype-boundary cases.
 - [x] Add a GPT-5.6 Luna Standard evaluation adapter, strict output validation,
   token/cost reporting, and reproducible Singles/Doubles smoke runner.
-- [ ] Enrich hosted-model requests with deterministic per-set defensive profiles
-  and offensive move summaries, then score the complete 20-team fixture suite.
+- [x] Enrich hosted-model requests with deterministic per-set defensive
+  profiles, ability-immunity causes, normalized move categories, and
+  physical/special/spread move summaries.
+- [ ] Manually score the enriched Luna Standard low smoke output, then score
+  the complete 20-team fixture suite once its remaining wording quality is
+  acceptable.
 - [ ] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
 - [ ] Request JSON output with clear summary, strength, weakness, priority, and
