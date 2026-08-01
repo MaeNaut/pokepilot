@@ -157,25 +157,34 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         enriched request and record its token, cost, latency, and residual
         wording issues.
   - [x] Add localized display labels, pre/post-Mega projections, complete Mega
-        options, move-owner maps, and invalid-lineup guards before the final run.
+        options, final stats, move-owner maps, and invalid-lineup guards before
+        the final run.
   - [x] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
   - [x] Track hard failures separately from aggregate scores, latency, token use, and cost.
   - [x] Keep the ignored local evaluation key, reports, and capped test budget
         separate from future browser and production credentials.
-- [ ] Add a server-side API route for AI analysis when model integration begins.
-  - [ ] Keep API keys out of browser code.
-  - [ ] Move the Luna adapter behind a server-only `POST` endpoint that accepts
-        request-contract v5 and keeps Standard-tier low reasoning explicit.
-  - [ ] Validate both the incoming analysis request and the strict model response
+- [x] Add a server-side API route for AI analysis.
+  - [x] Keep API keys out of browser code.
+  - [x] Move the Luna adapter behind a server-only `POST` endpoint that accepts
+        request-contract v6 and keeps Standard-tier low reasoning explicit.
+  - [x] Validate both the incoming analysis request and the strict model response
         at the server boundary before returning product data.
-  - [ ] Call analysis explicitly rather than automatically on every team edit.
-  - [ ] Connect the PokePilot Analyze action to the hosted route while retaining
+  - [x] Call analysis explicitly rather than automatically on every team edit.
+  - [x] Connect the PokePilot Analyze action to the hosted route while retaining
         deterministic local analysis as the offline/error fallback.
 - [ ] Validate AI output before rendering it.
   - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
   - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
 - [x] Add local error, refresh, and stale-analysis states for Copilot.
-- [ ] Add a remote API-unavailable state when hosted model integration begins.
+- [x] Add a remote API-unavailable state with deterministic fallback.
+- [x] Persist a bounded local PokePilot analysis history.
+  - [x] Restore an exact team, scope, locale, and request-state match after reload.
+  - [x] Preserve the visible result across language changes and recover the prior
+        language's exact result when available.
+  - [x] Let users browse or delete the current team's recent analyses without
+        adding unbounded history to saved-team data.
+  - [x] Keep the history menu outside the clipped PokePilot panel and reuse the
+        shared destructive-action confirmation UI before deletion.
 - [ ] Add deployment-stage cost controls such as request limits, response caps, and team-analysis caching.
   - [ ] Cache identical one-shot analyses by canonical team, format, regulation,
         locale, prompt version, and request-contract version.

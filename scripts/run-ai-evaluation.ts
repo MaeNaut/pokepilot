@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchPokemon } from "../src/api/pokeApi";
@@ -20,6 +20,7 @@ import {
   createOpenAiLunaAdapter,
   type LunaReasoningEffort,
 } from "../src/test/evaluation/openAiLunaAdapter";
+import { resolveOpenAiApiKey } from "../server/openAiEnvironment";
 import {
   aiTeamDoublesFixtures,
   aiTeamFixtures,
@@ -37,71 +38,11 @@ type CliOptions = {
   outputDirectory: string;
 };
 
-function isUsableApiKey(value: string | undefined): value is string {
-  if (!value) {
-    return false;
-  }
-
-  const normalizedValue = value.trim().toLowerCase();
-  return (
-    normalizedValue.length >= 20 &&
-    !normalizedValue.includes("your-key") &&
-    !normalizedValue.includes("replace-me")
-  );
-}
-
-function parseEnvValue(source: string, key: string) {
-  for (const line of source.split(/\r?\n/)) {
-    const trimmedLine = line.trim();
-
-    if (!trimmedLine || trimmedLine.startsWith("#")) {
-      continue;
-    }
-
-    const separatorIndex = trimmedLine.indexOf("=");
-
-    if (separatorIndex < 0 || trimmedLine.slice(0, separatorIndex).trim() !== key) {
-      continue;
-    }
-
-    const value = trimmedLine.slice(separatorIndex + 1).trim();
-    const hasMatchingQuotes =
-      value.length >= 2 &&
-      ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'")));
-
-    return hasMatchingQuotes ? value.slice(1, -1) : value;
-  }
-
-  return undefined;
-}
-
 async function loadOpenAiApiKey() {
-  const processApiKey = process.env.OPENAI_API_KEY?.trim();
+  const apiKey = resolveOpenAiApiKey(projectRoot);
 
-  if (isUsableApiKey(processApiKey)) {
-    return processApiKey;
-  }
-
-  try {
-    const localEnvironment = await readFile(
-      resolve(projectRoot, ".env.local"),
-      "utf8",
-    );
-    const localApiKey = parseEnvValue(localEnvironment, "OPENAI_API_KEY")?.trim();
-
-    if (isUsableApiKey(localApiKey)) {
-      return localApiKey;
-    }
-  } catch (error) {
-    const errorCode =
-      typeof error === "object" && error !== null && "code" in error
-        ? error.code
-        : undefined;
-
-    if (errorCode !== "ENOENT") {
-      throw error;
-    }
+  if (apiKey) {
+    return apiKey;
   }
 
   throw new Error(

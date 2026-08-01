@@ -7,7 +7,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 5,
+  version: 6,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -127,7 +127,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-v9-low",
+        prompt_cache_key: "pokepilot-evaluation-v13-low",
         prompt_cache_retention: "24h",
         reasoning: {
           effort: "low",
@@ -141,7 +141,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 9,
+        promptVersion: 13,
       },
       usage: {
         totalTokens: 150,
@@ -169,10 +169,37 @@ describe("OpenAI Luna evaluation adapter", () => {
       "Trick Room reverses move order within priority brackets",
     );
     expect(create.mock.calls[0]![0].instructions).toContain(
+      "Do not frame multiple Mega options as an inherent flaw",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "compare exact speed values",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "differ by exactly one speed point",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "medium to a matchup-dependent branch",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
       "unless that move appears under the Pokemon in diagnostics.moveSources",
     );
     expect(create.mock.calls[0]![0].instructions).toContain(
       "validityStatus is not valid must not appear in a recommended lineup",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "A matchup-dependent Mega selection is not automatically a different field or speed-control plan",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "Do not infer a separate fast opening mode from one fast Choice Scarf attacker",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "reserve a fast cleaner for after that temporary field effect expires",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "provide at least one legal lineup that actually includes it",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "Preserve flexible final-slot branches",
     );
   });
 });

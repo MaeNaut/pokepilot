@@ -27,6 +27,14 @@ const member: TeamMember = {
   roles: [],
   abilities: ["Intimidate"],
   moves: [closeCombat],
+  baseStats: {
+    hp: 65,
+    attack: 90,
+    defense: 115,
+    specialAttack: 45,
+    specialDefense: 115,
+    speed: 58,
+  },
 };
 
 const buildState: TeamBuildState = {
@@ -129,7 +137,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 5,
+      version: 6,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -178,6 +186,15 @@ describe("Copilot analysis", () => {
       abilityDisplayName: "Intimidate",
       nature: "Adamant",
       natureDisplayName: "Adamant",
+      baseStats: member.baseStats,
+      stats: {
+        hp: 172,
+        attack: 156,
+        defense: 137,
+        specialAttack: 58,
+        specialDefense: 135,
+        speed: 78,
+      },
       evTotal: 66,
       roleIds: ["physical-attacker"],
       moves: [

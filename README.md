@@ -29,8 +29,12 @@ Current slice:
 - live team diagnostics for defensive matchups, offensive coverage, six multi-label set roles, and setup alerts
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
-- right-side PokePilot strategy briefs in both Team Builder and Calculator modes
-  for the active team and selected Pokemon
+- server-hosted GPT-5.6 Luna strategy briefs in both Team Builder and
+  Calculator modes, with deterministic local analysis as the offline/error
+  fallback
+- versioned local PokePilot analysis history with reload restoration,
+  language-aware result recovery, bounded per-team retention, and a panel-safe
+  history menu with confirmed deletion
 - an offline 20-team Singles/Doubles evaluation suite plus a GPT-5.6 Luna
   Standard smoke runner with strict output, token, latency, and cost reports
 - persisted English/Korean UI selection with localized game names, forms, and tooltips
@@ -73,13 +77,19 @@ ignored `.env.local` file:
 npm run eval:ai
 ```
 
+The same ignored variable enables hosted PokePilot analysis through the local
+`POST /api/pokepilot/analyze` development route. Without it, the app remains
+usable and shows deterministic rules-based analysis instead. In production,
+configure `OPENAI_API_KEY` as a server secret and never expose it through a
+`VITE_` variable.
+
 See [AI_MODEL_EVALUATION.md](./docs/AI_MODEL_EVALUATION.md) for fixture scope,
 cost measurements, full-suite controls, and evaluation rules.
 
 ## Planned Features
 
-- AI-assisted team analysis through a server-side API route
 - team-aware PokePilot chat/follow-up panel
+- deployment-stage AI rate limiting and canonical request caching
 - account-backed Supabase/Postgres persistence after the local MVP is stable
 - additional Pokemon Champions-only calculator mechanic overrides and matchup presets
 - Japanese localization under consideration
@@ -108,8 +118,10 @@ cost measurements, full-suite controls, and evaluation rules.
 - deterministic Trick Room, Tailwind, Gravity, rain, sun, sand, and snow core analysis
 - compact validity popover with per-slot markers and structured legality issues
 - shared pointer, touch-hold, and keyboard reordering for moves, team slots, bench Pokemon, and saved teams
-- explicit local PokePilot analysis with structured summary, strengths, focus areas, and next steps
-- versioned Copilot request/response data contracts ready for a future server-side model provider
+- explicit server-hosted PokePilot analysis with structured summary, strengths,
+  focus areas, and next steps, plus deterministic local fallback
+- versioned Copilot request/response contracts validated at both browser and
+  server boundaries
 - typed English/Korean interface copy, a persisted language setting, and checked-in
   PokeAPI-derived Korean game names and descriptions
 - system, light, and dark app theme preferences with stable light share-image exports

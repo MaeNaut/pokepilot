@@ -1933,6 +1933,7 @@ function App() {
           tabIndex={isCompactDrawerLayout ? -1 : undefined}
         >
           <CopilotPanel
+            savedTeamId={activeSavedTeamId}
             teamName={teamNameDraft}
             battleFormat={battleFormat}
             team={team}

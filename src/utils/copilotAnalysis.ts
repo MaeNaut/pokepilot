@@ -1,4 +1,10 @@
-import { CHAMPIONS_MAX_EV_TOTAL, defaultEvs, getNatureById, statKeys } from "../data/natures";
+import {
+  calculateChampionsStats,
+  CHAMPIONS_MAX_EV_TOTAL,
+  defaultEvs,
+  getNatureById,
+  statKeys,
+} from "../data/natures";
 import type { TeamConceptId } from "../data/teamConcepts";
 import {
   conceptCopilotTextKeys,
@@ -119,6 +125,8 @@ export type CopilotSetSnapshot = {
   abilityDisplayName: string | null;
   nature: string;
   natureDisplayName: string;
+  baseStats: StatBlock | null;
+  stats: StatBlock | null;
   evs: StatBlock;
   evTotal: number;
   moves: CopilotMoveSnapshot[];
@@ -157,7 +165,7 @@ export type CopilotCandidateFilterSnapshot = {
 };
 
 export type CopilotAnalysisRequest = {
-  version: 5;
+  version: 6;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -178,7 +186,7 @@ export type CopilotRecommendation = {
 
 export type CopilotAnalysisResponse = {
   version: 1;
-  source: "local";
+  source: "local" | "hosted";
   scope: CopilotAnalysisScope;
   title: string;
   summary: string;
@@ -624,7 +632,12 @@ export function createCopilotAnalysisRequest({
       buildState.abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? null;
     const item = buildState.itemBySlot[slotIndex];
     const natureId = buildState.natureBySlot[slotIndex] ?? "hardy";
-    const nature = getNatureById(natureId).label;
+    const selectedNature = getNatureById(natureId);
+    const nature = selectedNature.label;
+    const baseStats = member.baseStats ? { ...member.baseStats } : null;
+    const stats = member.baseStats
+      ? calculateChampionsStats(member.baseStats, evs, selectedNature)
+      : null;
     const moves = getSelectedMoves(
       member.moves,
       buildState.moveIdsBySlot[slotIndex],
@@ -660,6 +673,8 @@ export function createCopilotAnalysisRequest({
           natureId,
           nature,
         ),
+        baseStats,
+        stats,
         evs,
         evTotal: statKeys.reduce((total, stat) => total + evs[stat], 0),
         moves,
@@ -705,7 +720,7 @@ export function createCopilotAnalysisRequest({
   );
 
   return {
-    version: 5,
+    version: 6,
     locale,
     scope,
     battleFormat,

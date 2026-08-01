@@ -339,11 +339,47 @@ current Regulation M-B data even if a future supported training option becomes
 available. See the [Luna model page](https://developers.openai.com/api/docs/models/gpt-5.6-luna)
 and [model optimization guide](https://developers.openai.com/api/docs/guides/model-optimization).
 
-The next implementation milestone is a server-only analysis endpoint that
-accepts request-contract v5, calls Luna Standard with low reasoning, validates
-the strict response, and connects the existing explicit Analyze Team action.
-The browser must retain deterministic local analysis as its offline and remote-
-error fallback.
+## Hosted Analysis Integration
+
+The first production-shaped analysis path now uses
+`POST /api/pokepilot/analyze`. The browser sends request-contract v6 and never
+imports the OpenAI SDK or reads an API key. The route:
+
+- rejects methods other than `POST` and bodies larger than 256 KB;
+- validates the complete incoming request before any paid call;
+- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v13;
+- disables response storage and retains the versioned 24-hour prompt-cache key;
+- validates the strict structured output and requested analysis scope before
+  returning product data;
+- maps configuration, rate-limit, invalid-output, and upstream failures to
+  stable API error codes without exposing provider details to the browser.
+
+Vite installs the handler as local development middleware. The matching
+`api/pokepilot/analyze.ts` entry point provides the deployment-shaped Node
+handler. Local development reads the ignored `OPENAI_API_KEY` from
+`.env.local`; deployment must provide the same name as a server secret, never
+as a `VITE_` variable.
+
+Request v6 adds species and final displayed stats to each set. Prompt v13 uses
+those values for exact speed-order checks, treats distinct dual-Mega rosters as
+normal matchup branches rather than an inherent flaw, and explicitly checks
+one-point support-to-attacker sequencing under Trick Room. It also separates
+matchup-dependent roster selection from the team's shared opening plan and
+keeps a lone fast Choice Scarf cleaner from being mistaken for a complete
+alternate speed mode without supporting leads or enablers. Any cleaner or
+contingency that appears in a recommendation must also appear in a complete
+proposed lineup with an explicit replacement branch.
+
+The PokePilot panel calls the hosted route only when the user explicitly asks
+for analysis. If the route is unavailable or rejects a response, the panel
+keeps the product usable by showing deterministic local analysis with a clear
+fallback notice. Successful results enter a bounded, versioned local history
+that restores exact team, scope, locale, and request-state matches. Its menu is
+rendered outside the scroll-clipped panel, and deleting a team's history
+requires the shared destructive-action confirmation flow. Public deployment
+still requires canonical request caching,
+per-client cooldown/rate limiting, and budget monitoring before unrestricted
+traffic is enabled.
 
 ## Automated Checks
 
@@ -377,6 +413,8 @@ error fallback.
 - full-immunity abilities retain the ability name as the immunity cause;
 - mixed physical/special sets, normalized categories, and spread targets
   produce matching per-set and aggregate request summaries;
+- base stats and final displayed stats are supplied for exact speed-order and
+  support-sequencing analysis;
 - localized move ownership, complete Mega options, and held-stone post-Mega
   projections produce matching deterministic request summaries.
 

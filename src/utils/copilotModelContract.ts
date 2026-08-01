@@ -35,6 +35,8 @@ export const copilotModelOutputJsonSchema = {
     },
     recommendations: {
       type: "array",
+      description:
+        "Strategic guidance that may describe core plans, matchup branches, or optional refinements; it is not limited to edits the user must make.",
       items: {
         type: "object",
         additionalProperties: false,
@@ -46,6 +48,8 @@ export const copilotModelOutputJsonSchema = {
           priority: {
             type: "string",
             enum: ["high", "medium", "low"],
+            description:
+              "high for the central plan or a broadly important issue, medium for matchup-dependent guidance, and low for optional refinement.",
           },
         },
       },
