@@ -107,6 +107,7 @@ export type TeamMember = {
   roles: string[];
   spriteUrl?: string;
   iconSpriteUrl?: string;
+  iconFallbackSpriteUrls?: string[];
   baseStats?: StatBlock;
   abilities?: string[];
   moves?: PokemonMove[];

@@ -57,6 +57,23 @@ const pokeApiRotomFixture = {
   types: [{ slot: 1, type: { name: "normal" } }],
 };
 
+const pokeApiMegaScraftyFixture = {
+  ...pokeApiRotomFixture,
+  id: 10289,
+  name: "scrafty-mega",
+  sprites: {
+    front_default: "mega-scrafty-default.png",
+    other: {
+      "official-artwork": { front_default: "mega-scrafty-artwork.png" },
+    },
+    versions: {
+      "generation-ix": {
+        "scarlet-violet": { front_default: null },
+      },
+    },
+  },
+};
+
 describe("Showdown-primary Pokemon battle data", () => {
   beforeEach(() => {
     vi.stubGlobal("localStorage", createMemoryStorage());
@@ -67,6 +84,10 @@ describe("Showdown-primary Pokemon battle data", () => {
 
         if (url.endsWith("/api/v2/pokemon/rotom-wash")) {
           return createResponse(pokeApiRotomFixture);
+        }
+
+        if (url.endsWith("/api/v2/pokemon/scrafty-mega")) {
+          return createResponse(pokeApiMegaScraftyFixture);
         }
 
         if (url.endsWith("/pokedex.json")) {
@@ -124,7 +145,13 @@ describe("Showdown-primary Pokemon battle data", () => {
       description: "No additional effect.",
     });
     expect(pokemon.spriteUrl).toBe("rotom-artwork.png");
-    expect(pokemon.iconSpriteUrl).toBe("rotom-icon.png");
+    expect(pokemon.iconSpriteUrl).toBe(
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/champions/10009.png",
+    );
+    expect(pokemon.iconFallbackSpriteUrls).toEqual([
+      "rotom-icon.png",
+      "rotom-default.png",
+    ]);
     expect(requestedUrls.some((url) => url.includes("/api/v2/move/"))).toBe(false);
     expect(
       requestedUrls.filter((url) => url.endsWith("/api/v2/pokemon/rotom-wash")),
@@ -139,5 +166,17 @@ describe("Showdown-primary Pokemon battle data", () => {
     expect(
       requestedUrls.some((url) => url.endsWith("/teambuilder-tables.js")),
     ).toBe(false);
+  });
+
+  it("uses a Champions icon before the generic sprite when Scarlet/Violet has none", async () => {
+    const pokemon = await fetchPokemon("scrafty-mega");
+
+    expect(pokemon.spriteUrl).toBe("mega-scrafty-artwork.png");
+    expect(pokemon.iconSpriteUrl).toBe(
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/champions/10289.png",
+    );
+    expect(pokemon.iconFallbackSpriteUrls).toEqual([
+      "mega-scrafty-default.png",
+    ]);
   });
 });

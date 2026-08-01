@@ -68,6 +68,7 @@ describe("saved-team helpers", () => {
       roles: [],
       spriteUrl: "art.png",
       iconSpriteUrl: "icon.png",
+      iconFallbackSpriteUrls: ["fallback-icon.png"],
     };
     const slot = createSavedSlot(member);
 
@@ -77,6 +78,7 @@ describe("saved-team helpers", () => {
       name: "Charizard",
       spriteUrl: "art.png",
       iconSpriteUrl: "icon.png",
+      iconFallbackSpriteUrls: ["fallback-icon.png"],
       source: "local",
     });
   });

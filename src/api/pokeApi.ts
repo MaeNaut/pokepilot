@@ -25,10 +25,12 @@ import {
   POKEMON_CACHE_PREFIX,
 } from "./legacyDataCache";
 import { formatIdLabel, normalizeShowdownId } from "./showdownIds";
+import { getPokeApiChampionsSpriteUrl } from "../utils/pokemonSprites";
 
 const POKEAPI_BASE_URL = "https://pokeapi.co/api/v2";
 const SHOWDOWN_FORMAT_ID = "gen9-regulation-mb";
 type PokeApiPokemon = {
+  id: number;
   name: string;
   sprites: {
     front_default: string | null;
@@ -204,6 +206,17 @@ function getPokeApiCurrentIconSpriteUrl(
   );
 }
 
+function getPokeApiChampionsIconSpriteUrl(
+  data: PokeApiPokemon,
+  spriteGender?: "female",
+) {
+  if (spriteGender === "female") {
+    return undefined;
+  }
+
+  return getPokeApiChampionsSpriteUrl(data.id);
+}
+
 function getPokeApiDefaultSpriteUrl(
   data: PokeApiPokemon,
   spriteGender?: "female",
@@ -257,17 +270,22 @@ function getPokemonSpriteUrl(
   );
 }
 
-function getPokemonIconSpriteUrl(
+function getPokemonIconSpriteUrls(
   data: PokeApiPokemon,
   spriteGender?: "female",
 ) {
-  const defaultSpriteUrl = getPokeApiDefaultSpriteUrl(data, spriteGender);
+  const urls = [
+    getPokeApiChampionsIconSpriteUrl(data, spriteGender),
+    getPokeApiCurrentIconSpriteUrl(data, spriteGender),
+    getPokeApiDefaultSpriteUrl(data, spriteGender),
+    getPokeApiLegacyIconSpriteUrl(data, spriteGender),
+  ].filter((url): url is string => Boolean(url));
+  const uniqueUrls = Array.from(new Set(urls));
 
-  return (
-    getPokeApiCurrentIconSpriteUrl(data, spriteGender) ??
-    defaultSpriteUrl ??
-    getPokeApiLegacyIconSpriteUrl(data, spriteGender)
-  );
+  return {
+    iconSpriteUrl: uniqueUrls[0],
+    iconFallbackSpriteUrls: uniqueUrls.slice(1),
+  };
 }
 
 function normalizePokemon(
@@ -298,6 +316,7 @@ function normalizePokemon(
     .map((moveId) => showdownData?.movesById[normalizeShowdownId(moveId)])
     .filter((move): move is PokemonMove => Boolean(move))
     .sort(compareMovesByTypeThenName);
+  const iconSprites = getPokemonIconSpriteUrls(data, options.spriteGender);
 
   return {
     id: pokemonId,
@@ -322,7 +341,7 @@ function normalizePokemon(
         : data.abilities.map((entry) => formatIdLabel(entry.ability.name)),
     moves,
     spriteUrl: getPokemonSpriteUrl(data, options.spriteGender),
-    iconSpriteUrl: getPokemonIconSpriteUrl(data, options.spriteGender),
+    ...iconSprites,
     source: showdownSpecies ? "showdown" : "pokeapi",
   };
 }

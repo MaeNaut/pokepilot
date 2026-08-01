@@ -155,7 +155,8 @@ snapshot regeneration.
 Item names, descriptions, Mega Stone metadata, and ability descriptions come from
 compact checked-in catalogs generated from Showdown data. Item images still use
 the [PokeAPI sprites repository](https://github.com/PokeAPI/sprites), with current
-generation assets preferred before the general item-sprite fallback.
+generation assets, including the added Z-A Mega Stones, preferred before the
+general item-sprite fallback.
 Regulation filtering is hydrated once per browser session from a roughly 200KB
 checked-in M-B snapshot, so browsers no longer download or parse Showdown's
 multi-megabyte teambuilder table and raw learnset/mod files at runtime.
@@ -166,10 +167,11 @@ Damage calculation is provided through a typed Pokemon Champions adapter around
 the MIT-licensed [Smogon damage calculator](https://github.com/smogon/damage-calc).
 PokePilot supplies current local species and move data to the engine, while
 new Champions-only mechanics remain subject to explicit fixtures and overrides.
-When PokeAPI's generation-specific icon path is missing, the app falls back to
-PokeAPI's `front_default` sprite before older icon paths so Pokemon without
-current icons can still show the more detailed 96x96 sprite in the Team Rail and
-previews.
+Pokemon icons prefer PokeAPI's Pokemon Champions sprite set, then fall back to
+the current generation icon, `front_default`, and older generation icon paths.
+Saved-team previews derive the current Champions candidate from existing PokeAPI
+asset URLs, so previously saved teams receive the newer icon priority without
+requiring a manual load and resave.
 
 ## Third-Party Assets
 
@@ -177,6 +179,10 @@ Type icons are from
 [partywhale/pokemon-type-icons](https://github.com/partywhale/pokemon-type-icons),
 licensed under the MIT License. Move category symbols use the non-commercial
 EssentiarumVG font from [Pokemon Aaah!](https://www.pokemonaaah.net/art/fonts/).
+The local SVG type set remains intentional: the currently available PokeAPI and
+Pokemon Showdown type symbols are raster PNG assets and do not provide the same
+scalable `currentColor` workflow. No newer PokeAPI or Showdown move-category set
+currently replaces the EssentiarumVG physical, special, and status glyphs.
 See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for full notices and usage
 restrictions.
 

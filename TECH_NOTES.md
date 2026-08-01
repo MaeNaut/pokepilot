@@ -97,7 +97,9 @@ Current direction:
   and legality keys are removed.
 - Construct item image URLs from the `PokeAPI/sprites` generation-9 item directory
   and fall back to the general item directory when an image is missing. PokeAPI
-  remains an asset source here, not the item metadata source.
+  remains an asset source here, not the item metadata source. The generation-9
+  directory already includes the added Z-A Mega Stones; Pokemon Showdown's small
+  legacy item PNGs are not a higher-quality or more complete replacement.
 - Normalize the Showdown Pokemon index into UI metadata:
   - regional forms stay in the main Pokemon picker but sort under the original
     species dex number
@@ -121,11 +123,12 @@ Current direction:
 - Keep PokeAPI as the current selected-Pokemon sprite/artwork source and as the
   item-image repository. Item metadata and ability descriptions now come from
   the generated Showdown catalogs.
-- Use PokeAPI generation-specific icon sprites first. If that path is missing,
-  fall back to PokeAPI `front_default` before older generation icon paths so
-  Pokemon without current icons can still use the more detailed 96x96 sprite in
-  the Team Rail and previews. Keep the large card artwork on PokeAPI artwork/front
-  sprite URLs.
+- Use PokeAPI's Pokemon Champions icon sprites first, followed by the current
+  generation icon, `front_default`, and older generation icon paths. Retain the
+  ordered fallback list on hydrated and saved Pokemon. At render time, derive a
+  Champions candidate from known PokeAPI sprite URLs so legacy saved-team previews
+  adopt the new priority without requiring a load-and-resave migration. Keep the
+  large card artwork on PokeAPI artwork/front sprite URLs.
 - Use Pokemon Showdown as the current battle-data and Regulation M-B legality
   source for:
   - Pokemon types, base stats, and abilities
@@ -351,6 +354,11 @@ Desktop UX decisions after the wide-builder layout change:
 - Move category icons use the EssentiarumVG Gen 8 glyph mapping: `J` for physical,
   `T` for special, and `U` for status. The font is restricted to personal,
   non-commercial use unless the creator grants additional permission.
+- Keep the MIT-licensed local SVG type symbols instead of PokeAPI's current
+  Scarlet/Violet or Pokemon Showdown raster PNG symbols. The local assets scale
+  cleanly and support CSS color control; the available upstream PNG sets do not
+  improve that workflow. PokeAPI and Showdown also do not currently expose a
+  newer modern move-category set that warrants replacing EssentiarumVG.
 - Pokemon, item, ability, nature, and move pickers support keyboard navigation
   with hover-to-keyboard active selection continuity.
 - Pokemon, item, ability, and move result surfaces hide their visual scrollbars

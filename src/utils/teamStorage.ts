@@ -20,6 +20,7 @@ export type SavedPokemon = {
   showdownGender?: "M" | "F";
   spriteUrl?: string;
   iconSpriteUrl?: string;
+  iconFallbackSpriteUrls?: string[];
 };
 
 export type SavedTeamSlot = SavedPokemon | null;
@@ -135,6 +136,7 @@ export function createSavedPokemon(member: TeamMember): SavedPokemon {
     showdownGender: member.showdownGender,
     spriteUrl: member.spriteUrl,
     iconSpriteUrl: member.iconSpriteUrl,
+    iconFallbackSpriteUrls: member.iconFallbackSpriteUrls,
   };
 }
 
@@ -165,6 +167,7 @@ export function createFallbackMember(slot: SavedPokemon): TeamMember {
     roles: [],
     spriteUrl: slot.spriteUrl,
     iconSpriteUrl: slot.iconSpriteUrl,
+    iconFallbackSpriteUrls: slot.iconFallbackSpriteUrls,
     source: "local",
   };
 }

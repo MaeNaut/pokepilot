@@ -1,31 +1,61 @@
 import type { TeamMember } from "../types";
-import { isFullShowdownSpriteUrl } from "../utils/pokemonSprites";
+import {
+  getPokeApiChampionsSpriteUrlFromKnownSprites,
+  isFullShowdownSpriteUrl,
+} from "../utils/pokemonSprites";
 
 type PokemonIconProps = {
-  pokemon: Pick<TeamMember, "name" | "spriteUrl" | "iconSpriteUrl">;
+  pokemon: Pick<
+    TeamMember,
+    | "name"
+    | "spriteUrl"
+    | "iconSpriteUrl"
+    | "iconFallbackSpriteUrls"
+    | "showdownGender"
+  >;
 };
 
 export function PokemonIcon({ pokemon }: PokemonIconProps) {
-  const iconSpriteUrl = isFullShowdownSpriteUrl(pokemon.iconSpriteUrl)
-    ? undefined
-    : pokemon.iconSpriteUrl;
-  const fallbackUrl = pokemon.spriteUrl;
+  const savedIconUrls = [
+    pokemon.iconSpriteUrl,
+    ...(pokemon.iconFallbackSpriteUrls ?? []),
+  ];
+  const championsIconUrl =
+    pokemon.showdownGender === "F"
+      ? undefined
+      : getPokeApiChampionsSpriteUrlFromKnownSprites([
+          ...savedIconUrls,
+          pokemon.spriteUrl,
+        ]);
+  const iconUrls = [championsIconUrl, ...savedIconUrls].filter(
+    (url): url is string => Boolean(url) && !isFullShowdownSpriteUrl(url),
+  );
+  const spriteUrls = Array.from(
+    new Set(
+      [...iconUrls, pokemon.spriteUrl].filter(
+        (url): url is string => Boolean(url),
+      ),
+    ),
+  );
 
-  if (!iconSpriteUrl && !fallbackUrl) {
+  if (spriteUrls.length === 0) {
     return null;
   }
 
   return (
     <img
-      src={iconSpriteUrl ?? fallbackUrl}
+      key={spriteUrls.join("|")}
+      src={spriteUrls[0]}
       alt=""
       draggable={false}
       onError={(event) => {
         const image = event.currentTarget;
+        const currentIndex = Number(image.dataset.spriteIndex ?? "0");
+        const nextIndex = currentIndex + 1;
 
-        if (fallbackUrl && image.src !== fallbackUrl && !image.dataset.fallbackApplied) {
-          image.dataset.fallbackApplied = "true";
-          image.src = fallbackUrl;
+        if (nextIndex < spriteUrls.length) {
+          image.dataset.spriteIndex = String(nextIndex);
+          image.src = spriteUrls[nextIndex];
           return;
         }
 
