@@ -55,13 +55,21 @@ three intentionally different representations:
 3. `CopilotAnalysisRequest` stores the compact, provider-independent team,
    diagnostics, candidate filters, and validity data used for analysis.
 
-The current request contract is version 2. Each configured set includes a
-deterministic defensive profile with weakness/resistance multipliers and
-typing-versus-ability immunity causes. It also includes normalized
-physical/special/status move groupings and Doubles spread targets. Team
-diagnostics repeat only the compact physical, special, and spread source
-counts/slots needed to avoid confusing "not a dedicated attacker" with "has
-no attack in that category."
+The current request contract is version 5. Each configured set includes
+canonical IDs, localized display names, a deterministic defensive profile with
+weakness/resistance multipliers and typing-versus-ability immunity causes, and
+normalized physical/special/status move groupings with Doubles spread targets.
+When a held Mega Stone matches a rostered Mega form, the request carries both
+the pre-Mega set and its deterministic post-Mega typing, ability, and defensive
+profile. A complete `megaOptions` list also includes Pokemon already represented
+in Mega form so the model cannot mistake one option for the only option.
+
+Team diagnostics include display-name-keyed maps for every configured move,
+physical/special/spread attack sources, and team defensive matchups. These maps
+reduce move-owner, damage-category, and type-relation guesses without exposing
+fixture expectations to the model. Evaluation requests use the Korean locale so
+the same generated game-name catalog used by the app supplies Pokemon, item,
+ability, nature, type, and move labels.
 
 Evaluation cases must follow the same production path as a team imported in the
 web app:
@@ -219,8 +227,8 @@ than a data-contract failure.
 
 The enriched payload added 2,305 total tokens (+34.4%) versus the first
 two-case low run, while estimated cost rose by $0.000476 (+15.0%) to
-$0.003643. Keep Luna Standard with low reasoning as the working default. Score
-the v3 smoke manually before spending on the complete 20-case suite.
+$0.003643. This historical smoke established Luna Standard with low reasoning
+as the working default before the complete-suite iterations below.
 
 The smoke requests recorded cache writes but no cache hits. The shared static
 prefix is currently too small relative to the differing team payloads to
@@ -233,6 +241,109 @@ monthly analyses would cost about $1.64 and a $10 budget would cover roughly
 5,490 analyses. This is a two-case baseline for one-shot team analysis only.
 Follow-up chat, retries, larger future payloads, and additional analysis modes
 need their own measurements before they share the same production budget.
+
+## Final Luna Low Baseline
+
+Prompt v9 and request v5 completed all 20 fixtures on August 1, 2026. Prompt
+iterations before the final run added deterministic localized labels, pre/post
+Mega projections, the complete rostered Mega-option list, all-move ownership,
+defensive and offensive source maps, exact three-of-six/four-of-six lineup
+rules, and a guard that excludes invalid sets unless the same recommendation
+explicitly conditions their use on correcting every validity issue.
+
+| Metric | Result |
+| --- | ---: |
+| Strict-schema completions | 20 / 20 |
+| Invalid outputs | 0 |
+| Request errors | 0 |
+| Input tokens | 113,711 |
+| Cached input tokens | 40,768 |
+| Cache-write tokens | 72,883 |
+| Output tokens | 17,753 |
+| Reasoning tokens | 2,534 |
+| Total tokens | 131,464 |
+| Average latency | 8,231 ms |
+| Estimated Standard cost | $0.040352 |
+
+The average measured cost was about $0.002018 per one-shot team analysis. At
+that exact mix, 900 analyses would cost about $1.82 and $10 would cover about
+4,956 analyses. Cache reuse and response length vary, so production budgeting
+must retain headroom for retries, follow-up turns, and future payload growth.
+
+### Manual Scores
+
+Each category uses the 0-2 rubric above. `F`, `Fmt`, `S`, `P`, `C`, and `K`
+mean factual fidelity, format awareness, strategic synthesis, prioritization,
+calibration, and Korean response quality.
+
+| Fixture | F | Fmt | S | P | C | K | Total | Hard failure |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `singles-m3-01-gengar-starmie` | 2 | 2 | 1 | 2 | 2 | 2 | 11 | No |
+| `singles-m3-02-sand-dual-mega` | 2 | 2 | 1 | 2 | 2 | 1 | 10 | No |
+| `singles-m3-03-delphox-floette` | 1 | 2 | 2 | 2 | 2 | 2 | 11 | No |
+| `singles-m3-06-metagross-gyarados` | 2 | 2 | 1 | 2 | 2 | 2 | 11 | No |
+| `singles-m3-08-lucario-screens` | 2 | 2 | 1 | 2 | 2 | 1 | 10 | No |
+| `singles-m3-09-lopunny-starmie` | 2 | 2 | 2 | 2 | 2 | 2 | 12 | No |
+| `singles-m3-10-floette-baton-pass` | 1 | 2 | 1 | 2 | 1 | 2 | 9 | No |
+| `singles-m3-11-starmie-floette` | 2 | 2 | 1 | 2 | 2 | 2 | 11 | No |
+| `singles-boundary-incidental-sun` | 1 | 2 | 2 | 2 | 2 | 2 | 11 | No |
+| `singles-boundary-imprison-trick-room` | 2 | 2 | 2 | 2 | 2 | 2 | 12 | No |
+| `doubles-pokefeed-zardwile-tailroom` | 2 | 2 | 1 | 2 | 2 | 2 | 11 | No |
+| `doubles-pokefeed-charizard-rain` | 2 | 2 | 1 | 2 | 1 | 1 | 9 | No |
+| `doubles-pokefeed-snow-trickroom` | 2 | 2 | 1 | 2 | 2 | 2 | 11 | No |
+| `doubles-pokefeed-maus-ape` | 1 | 2 | 2 | 1 | 1 | 2 | 9 | No |
+| `doubles-pokefeed-hall-of-walls` | 2 | 2 | 1 | 2 | 2 | 2 | 11 | No |
+| `doubles-pokefeed-swampert-rain` | 2 | 2 | 2 | 2 | 2 | 2 | 12 | No |
+| `doubles-pokefeed-tailwind-offense` | 2 | 2 | 2 | 2 | 2 | 2 | 12 | No |
+| `doubles-pokefeed-light-snow` | 2 | 2 | 1 | 2 | 2 | 1 | 10 | No |
+| `doubles-boundary-self-weather` | 1 | 2 | 2 | 2 | 1 | 1 | 9 | No |
+| `doubles-boundary-perish-trap` | 2 | 2 | 2 | 2 | 2 | 2 | 12 | No |
+
+Singles scored 108/120, Doubles scored 106/120, and the complete suite scored
+214/240 (89.2%, mean 10.7/12). No response triggered a hard-failure rule.
+Luna Standard at low reasoning therefore remains the selected baseline for
+human-facing advisory analysis; these results do not justify automatically
+applying model suggestions without deterministic validation.
+
+Residual issues were omissions of some important Choice Scarf and pre-Mega
+Intimidate details, two poorly calibrated matchup alternatives, occasional
+resistance-versus-immunity wording, and a few raw English strategy terms in
+otherwise Korean responses. Prompt v9 removed the previously observed wrong
+move-owner claim and prevented an invalid Incineroar set from entering a
+recommended lineup. The remaining factual risks should be handled by narrower
+deterministic facts and output post-validation rather than an ever-growing
+prompt checklist.
+
+### Cost Delta And Optimization Decision
+
+Compared with the immediately preceding prompt v8 full-suite run, prompt v9
+used 4,510 more tokens (+3.55%) but cost $0.002487 less (-5.80%). Cached input
+rose from 25,116 to 40,768 tokens while cache writes fell from 84,010 to 72,883
+tokens, offsetting the larger deterministic payload. Compared with the earlier
+request-v2/prompt-v3 smoke baseline, average tokens per analysis rose from
+4,501 to 6,573 (+46.0%) while measured cost rose from about $0.001822 to
+$0.002018 (+10.8%). The added request data therefore has a modest billing cost
+relative to the factual errors it prevents.
+
+These estimates use the August 2026 GPT-5.6 Luna Standard short-context rates:
+$0.20 per million uncached input tokens, $0.02 per million cached input tokens,
+$0.25 per million cache-write tokens, and $1.20 per million output tokens. See
+the [official pricing table](https://developers.openai.com/api/docs/pricing?latest-pricing=standard).
+
+GPT-5.6 Luna does not support fine-tuning, and OpenAI's current model-
+optimization documentation says the fine-tuning platform is being wound down
+and is unavailable to new users. PokePilot will therefore keep Luna Low plus
+deterministic context, strict schemas, post-validation, and repeatable evals as
+its optimization path. Fine-tuning should not be treated as a substitute for
+current Regulation M-B data even if a future supported training option becomes
+available. See the [Luna model page](https://developers.openai.com/api/docs/models/gpt-5.6-luna)
+and [model optimization guide](https://developers.openai.com/api/docs/guides/model-optimization).
+
+The next implementation milestone is a server-only analysis endpoint that
+accepts request-contract v5, calls Luna Standard with low reasoning, validates
+the strict response, and connects the existing explicit Analyze Team action.
+The browser must retain deterministic local analysis as its offline and remote-
+error fallback.
 
 ## Automated Checks
 
@@ -265,7 +376,9 @@ need their own measurements before they share the same production budget.
   ability immunities;
 - full-immunity abilities retain the ability name as the immunity cause;
 - mixed physical/special sets, normalized categories, and spread targets
-  produce matching per-set and aggregate request summaries.
+  produce matching per-set and aggregate request summaries;
+- localized move ownership, complete Mega options, and held-stone post-Mega
+  projections produce matching deterministic request summaries.
 
 `openAiLunaAdapter.test.ts` verifies:
 

@@ -117,6 +117,7 @@ export async function createAiTeamEvaluationCase(
   );
   const request = createCopilotAnalysisRequest({
     scope: "team",
+    locale: "ko",
     battleFormat: fixture.battleFormat,
     teamName: fixture.title,
     team: imported.members,

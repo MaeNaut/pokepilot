@@ -74,6 +74,7 @@ export function CopilotPanel({
     () =>
       createCopilotAnalysisRequest({
         scope,
+        locale,
         battleFormat,
         teamName,
         team,
@@ -87,6 +88,7 @@ export function CopilotPanel({
       battleFormat,
       buildState,
       diagnostics,
+      locale,
       pokemonIndex,
       scope,
       selectedSlot,

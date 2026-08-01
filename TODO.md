@@ -139,7 +139,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Attribute 16 published teams and mark four constructed archetype-boundary cases separately.
   - [x] Store complete Showdown sets, format metadata, critical observations, and forbidden conclusions.
   - [x] Validate fixture parsing, Stat Point limits, complete sets, unique IDs, and Item Clause with Vitest.
-- [ ] Complete the repeatable GPT-5.6 Luna hosted-model evaluation runner.
+- [x] Complete the repeatable GPT-5.6 Luna hosted-model evaluation runner.
   - [x] Generate identical provider-independent requests from every team fixture through the production Showdown import, diagnostics, validity, and request-building path.
   - [x] Keep source provenance, raw Showdown text, and evaluator expectations outside the model adapter input.
   - [x] Define a shared strict output JSON Schema and validate structured output before scoring or saving a result.
@@ -156,18 +156,30 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Repeat the Singles/Doubles Luna Standard low smoke test with the
         enriched request and record its token, cost, latency, and residual
         wording issues.
-  - [ ] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
-  - [ ] Track hard failures separately from aggregate scores, latency, token use, and cost.
-  - [ ] Keep evaluation traffic and budgets separate from the eventual production project.
+  - [x] Add localized display labels, pre/post-Mega projections, complete Mega
+        options, move-owner maps, and invalid-lineup guards before the final run.
+  - [x] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
+  - [x] Track hard failures separately from aggregate scores, latency, token use, and cost.
+  - [x] Keep the ignored local evaluation key, reports, and capped test budget
+        separate from future browser and production credentials.
 - [ ] Add a server-side API route for AI analysis when model integration begins.
   - [ ] Keep API keys out of browser code.
+  - [ ] Move the Luna adapter behind a server-only `POST` endpoint that accepts
+        request-contract v5 and keeps Standard-tier low reasoning explicit.
+  - [ ] Validate both the incoming analysis request and the strict model response
+        at the server boundary before returning product data.
   - [ ] Call analysis explicitly rather than automatically on every team edit.
+  - [ ] Connect the PokePilot Analyze action to the hosted route while retaining
+        deterministic local analysis as the offline/error fallback.
 - [ ] Validate AI output before rendering it.
   - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
   - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
 - [x] Add local error, refresh, and stale-analysis states for Copilot.
 - [ ] Add a remote API-unavailable state when hosted model integration begins.
 - [ ] Add deployment-stage cost controls such as request limits, response caps, and team-analysis caching.
+  - [ ] Cache identical one-shot analyses by canonical team, format, regulation,
+        locale, prompt version, and request-contract version.
+  - [ ] Add per-client cooldown/rate limiting and cap model output before public access.
   - [ ] Avoid unbounded AI analysis or chat history in the primary team database.
   - [ ] Keep calculator history local or capped unless users explicitly need cloud history.
 

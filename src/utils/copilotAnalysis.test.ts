@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TeamBuildState } from "./teamBuildState";
-import type { PokemonMove, TeamMember } from "../types";
+import type { PokemonIndexEntry, PokemonMove, TeamMember } from "../types";
 import type { TeamDiagnosticsResult } from "./teamDiagnostics";
 import type { TeamValidityResult } from "./teamValidity";
 import {
@@ -129,7 +129,8 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 2,
+      version: 5,
+      locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
       teamName: "Test Team",
@@ -137,28 +138,53 @@ describe("Copilot analysis", () => {
       diagnostics: {
         filledSlots: 1,
         coverageCount: 5,
+        moveSources: {
+          "Test Pokemon": ["Close Combat"],
+        },
+        defensiveProfile: {
+          weakTo: {
+            flying: ["Test Pokemon"],
+            psychic: ["Test Pokemon"],
+            fairy: ["Test Pokemon"],
+          },
+          resists: {
+            bug: ["Test Pokemon"],
+            rock: ["Test Pokemon"],
+            dark: ["Test Pokemon"],
+          },
+          immuneTo: {},
+        },
         offensiveProfile: {
           physicalMoveCount: 1,
           specialMoveCount: 0,
           spreadMoveCount: 0,
-          physicalSetSlots: [0],
-          specialSetSlots: [],
-          spreadSetSlots: [],
+          physicalSources: {
+            "Test Pokemon": ["Close Combat"],
+          },
+          specialSources: {},
+          spreadSources: {},
         },
         validity: { status: "valid" },
       },
     });
     expect(request.sets[0]).toMatchObject({
       pokemonId: "test-pokemon",
+      displayName: "Test Pokemon",
+      isMegaForm: false,
+      typeDisplayNames: ["Fighting"],
       item: "Sitrus Berry",
+      itemDisplayName: "Sitrus Berry",
       ability: "Intimidate",
+      abilityDisplayName: "Intimidate",
       nature: "Adamant",
+      natureDisplayName: "Adamant",
       evTotal: 66,
       roleIds: ["physical-attacker"],
       moves: [
         {
           id: "close-combat",
           name: "Close Combat",
+          displayName: "Close Combat",
           category: "physical",
           spreadTarget: null,
         },
@@ -176,6 +202,7 @@ describe("Copilot analysis", () => {
         ],
         immunities: [],
       },
+      megaEvolution: null,
       offensiveProfile: {
         physicalMoveIds: ["close-combat"],
         specialMoveIds: [],
@@ -183,6 +210,153 @@ describe("Copilot analysis", () => {
         spreadMoveIds: [],
       },
     });
+  });
+
+  it("projects the post-Mega state from the held Mega Stone", () => {
+    const charizard: TeamMember = {
+      ...member,
+      id: "charizard",
+      name: "Charizard",
+      types: ["fire", "flying"],
+      abilities: ["Blaze"],
+    };
+    const charizardIndex: PokemonIndexEntry[] = [
+      {
+        name: "charizard",
+        showdownId: "charizard",
+        displayName: "Charizard",
+        speciesKey: "charizard",
+        sortNumber: 6,
+        types: ["fire", "flying"],
+        abilities: ["Blaze"],
+        formKind: "base",
+        isSelectorOption: true,
+      },
+      {
+        name: "charizard-mega-y",
+        showdownId: "charizardmegay",
+        displayName: "Charizard Mega Y",
+        speciesKey: "charizard",
+        sortNumber: 6,
+        types: ["fire", "flying"],
+        abilities: ["Drought"],
+        formKind: "mega",
+        formLabel: "Mega Y",
+        isSelectorOption: false,
+      },
+    ];
+    const megaBuildState: TeamBuildState = {
+      ...buildState,
+      itemBySlot: {
+        0: {
+          id: "charizardite-y",
+          showdownId: "charizarditey",
+          name: "Charizardite Y",
+          category: "Mega Stones",
+        },
+      },
+      abilityBySlot: { 0: "Blaze" },
+    };
+    const request = createCopilotAnalysisRequest({
+      scope: "team",
+      teamName: "Sun Projection",
+      team: [charizard, null, null, null, null, null],
+      pokemonIndex: charizardIndex,
+      selectedSlot: 0,
+      buildState: megaBuildState,
+      diagnostics,
+      validity,
+    });
+
+    expect(request.sets[0]).toMatchObject({
+      pokemonName: "Charizard",
+      item: "Charizardite Y",
+      ability: "Blaze",
+      megaEvolution: {
+        pokemonId: "charizard-mega-y",
+        pokemonName: "Charizard Mega Y",
+        displayName: "Charizard Mega Y",
+        types: ["fire", "flying"],
+        typeDisplayNames: ["Fire", "Flying"],
+        ability: "Drought",
+        abilityDisplayName: "Drought",
+        defensiveProfile: {
+          weaknesses: [
+            { type: "water", multiplier: 2 },
+            { type: "electric", multiplier: 2 },
+            { type: "rock", multiplier: 4 },
+          ],
+          immunities: [{ type: "ground", cause: "typing" }],
+        },
+      },
+    });
+    expect(request.megaOptions).toEqual([
+      {
+        slotIndex: 0,
+        pokemonId: "charizard-mega-y",
+        pokemonName: "Charizard Mega Y",
+        displayName: "Charizard Mega Y",
+        types: ["fire", "flying"],
+        typeDisplayNames: ["Fire", "Flying"],
+        ability: "Drought",
+        abilityDisplayName: "Drought",
+      },
+    ]);
+  });
+
+  it("includes an already active Mega form in the complete option list", () => {
+    const megaMember: TeamMember = {
+      ...member,
+      id: "starmie-mega",
+      name: "Starmie Mega",
+      types: ["water", "psychic"],
+      abilities: ["Huge Power"],
+    };
+    const megaIndex: PokemonIndexEntry[] = [
+      {
+        name: "starmie-mega",
+        showdownId: "starmiemega",
+        displayName: "Starmie Mega",
+        speciesKey: "starmie",
+        sortNumber: 121,
+        types: ["water", "psychic"],
+        abilities: ["Huge Power"],
+        formKind: "mega",
+        formLabel: "Mega",
+        isSelectorOption: false,
+      },
+    ];
+    const request = createCopilotAnalysisRequest({
+      scope: "team",
+      teamName: "Active Mega",
+      team: [megaMember, null, null, null, null, null],
+      pokemonIndex: megaIndex,
+      selectedSlot: 0,
+      buildState: {
+        ...buildState,
+        abilityBySlot: { 0: "Huge Power" },
+      },
+      diagnostics,
+      validity,
+    });
+
+    expect(request.sets[0]).toMatchObject({
+      pokemonId: "starmie-mega",
+      isMegaForm: true,
+      megaEvolution: null,
+    });
+    expect(request.megaOptions).toEqual([
+      {
+        slotIndex: 0,
+        pokemonId: "starmie-mega",
+        pokemonName: "Starmie Mega",
+        displayName: "Starmie Mega",
+        types: ["water", "psychic"],
+        typeDisplayNames: ["Water", "Psychic"],
+        ability: "Huge Power",
+        abilityDisplayName: "Huge Power",
+      },
+    ]);
   });
 
   it("summarizes mixed damage sources, spread moves, and ability immunities", () => {
@@ -268,9 +442,26 @@ describe("Copilot analysis", () => {
       physicalMoveCount: 1,
       specialMoveCount: 1,
       spreadMoveCount: 1,
-      physicalSetSlots: [0],
-      specialSetSlots: [0],
-      spreadSetSlots: [0],
+      physicalSources: {
+        "Mixed Pokemon": ["Rock Slide"],
+      },
+      specialSources: {
+        "Mixed Pokemon": ["Thunderbolt"],
+      },
+      spreadSources: {
+        "Mixed Pokemon": ["Rock Slide"],
+      },
+    });
+    expect(request.diagnostics.moveSources).toEqual({
+      "Mixed Pokemon": ["Thunderbolt", "Rock Slide", "Protect"],
+    });
+    expect(request.diagnostics.defensiveProfile).toMatchObject({
+      weakTo: {
+        grass: ["Mixed Pokemon"],
+      },
+      immuneTo: {
+        electric: ["Mixed Pokemon"],
+      },
     });
   });
 

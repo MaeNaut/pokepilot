@@ -108,14 +108,20 @@ The MVP should prove the core loop:
   teams, 10 Regulation M-B Doubles teams, and explicit archetype-boundary cases.
 - [x] Add a GPT-5.6 Luna Standard evaluation adapter, strict output validation,
   token/cost reporting, and reproducible Singles/Doubles smoke runner.
-- [x] Enrich hosted-model requests with deterministic per-set defensive
+- [x] Enrich hosted-model requests with deterministic localized labels,
+  pre/post-Mega states, complete Mega options, move ownership, defensive
   profiles, ability-immunity causes, normalized move categories, and
   physical/special/spread move summaries.
-- [ ] Manually score the enriched Luna Standard low smoke output, then score
-  the complete 20-team fixture suite once its remaining wording quality is
-  acceptable.
+- [x] Select GPT-5.6 Luna Standard with low reasoning as the hosted-analysis
+  baseline after a 20-team strict-schema run, manual six-category scoring, and
+  separate hard-failure review.
 - [ ] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
+  - [ ] Keep the API key and Luna adapter server-only.
+  - [ ] Accept request-contract v5, call GPT-5.6 Luna Standard at low reasoning,
+        and validate the strict response schema at the route boundary.
+  - [ ] Connect the explicit Analyze Team action while preserving deterministic
+        local analysis as the offline/error fallback.
 - [ ] Request JSON output with clear summary, strength, weakness, priority, and
   recommendation fields, then validate it before rendering.
 - [x] Display local analysis as structured product UI in the right-side Copilot panel rather
@@ -126,6 +132,8 @@ The MVP should prove the core loop:
   first analysis flow is stable.
 - [ ] Add request limits, response caps, caching, and graceful API-unavailable behavior
   before public deployment.
+  - [ ] Key cached analyses by canonical team state, format, regulation, locale,
+        prompt version, and request-contract version.
 
 ## Phase 6 - Persistence and Polish
 
