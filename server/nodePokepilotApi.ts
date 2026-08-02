@@ -2,11 +2,30 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   handlePokePilotAnalysis,
   POKEPILOT_API_MAX_BODY_BYTES,
+  type PokePilotOperationalEvent,
   type PokePilotApiResponse,
 } from "./pokepilotApi";
+import {
+  resolvePokePilotClientSecret,
+  resolvePokePilotRequester,
+} from "./pokepilotIdentity";
+import {
+  type PokePilotOperations,
+  type PokePilotSafeguardMode,
+} from "./pokepilotOperations";
+import { getDefaultPokePilotOperationsRuntime } from "./pokepilotOperationsRuntime";
 
 type ParsedRequest = IncomingMessage & {
   body?: unknown;
+};
+
+type NodePokePilotApiOptions = {
+  apiKey?: string;
+  clientSecret?: string;
+  clock?: () => number;
+  onOperationalEvent?: (event: PokePilotOperationalEvent) => void;
+  operations?: PokePilotOperations;
+  safeguardMode?: PokePilotSafeguardMode;
 };
 
 function summarizeUpstreamError(error: unknown) {
@@ -49,7 +68,19 @@ function sendJson(
   response.statusCode = status;
   response.setHeader("Content-Type", "application/json; charset=utf-8");
   response.setHeader("Cache-Control", "no-store");
+  if (!body.ok && body.error.retryAfterSeconds) {
+    response.setHeader("Retry-After", String(body.error.retryAfterSeconds));
+  }
   response.end(JSON.stringify(body));
+}
+
+function logOperationalEvent(event: PokePilotOperationalEvent) {
+  if (event.type === "cooldown") {
+    console.info("[PokePilot API] Analysis cooldown.", event);
+    return;
+  }
+
+  console.info("[PokePilot API] Analysis completed.", event);
 }
 
 async function readRequestBody(request: ParsedRequest) {
@@ -95,7 +126,7 @@ async function readRequestBody(request: ParsedRequest) {
 export async function handleNodePokePilotApi(
   request: ParsedRequest,
   response: ServerResponse,
-  apiKey = process.env.OPENAI_API_KEY,
+  options: NodePokePilotApiOptions = {},
 ) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -109,18 +140,10 @@ export async function handleNodePokePilotApi(
     return;
   }
 
+  let body: unknown;
+
   try {
-    const body = await readRequestBody(request);
-    const result = await handlePokePilotAnalysis(body, {
-      apiKey,
-      onUpstreamError: (error) => {
-        console.error(
-          "[PokePilot API] Hosted analysis failed.",
-          summarizeUpstreamError(error),
-        );
-      },
-    });
-    sendJson(response, result.status, result.body);
+    body = await readRequestBody(request);
   } catch (error) {
     const isTooLarge =
       error instanceof RangeError && error.message === "PAYLOAD_TOO_LARGE";
@@ -131,6 +154,50 @@ export async function handleNodePokePilotApi(
         message: isTooLarge
           ? "Analysis request is too large."
           : "Request body must be valid JSON.",
+      },
+    });
+    return;
+  }
+
+  try {
+    const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY;
+    const clientSecret = resolvePokePilotClientSecret(
+      options.clientSecret,
+      apiKey,
+    );
+    const requester = resolvePokePilotRequester(
+      request,
+      response,
+      clientSecret,
+    );
+    const operations =
+      options.operations ?? getDefaultPokePilotOperationsRuntime().operations;
+    const result = await handlePokePilotAnalysis(body, {
+      apiKey,
+      clock: options.clock,
+      onOperationalEvent:
+        options.onOperationalEvent ?? logOperationalEvent,
+      onUpstreamError: (error) => {
+        console.error(
+          "[PokePilot API] Hosted analysis failed.",
+          summarizeUpstreamError(error),
+        );
+      },
+      operations,
+      requester,
+      safeguardMode: options.safeguardMode,
+    });
+    sendJson(response, result.status, result.body);
+  } catch (error) {
+    console.error(
+      "[PokePilot API] Operations layer failed.",
+      summarizeUpstreamError(error),
+    );
+    sendJson(response, 503, {
+      ok: false,
+      error: {
+        code: "AI_UPSTREAM_ERROR",
+        message: "Hosted analysis is temporarily unavailable.",
       },
     });
   }

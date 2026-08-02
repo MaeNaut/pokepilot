@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis";
 import type { LunaAnalysisResult } from "./openAiLuna";
 import { handlePokePilotAnalysis } from "./pokepilotApi";
+import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
   version: 9,
@@ -123,6 +124,27 @@ describe("PokePilot server API", () => {
     });
   });
 
+  it("fails closed when shared operational storage is unavailable", async () => {
+    const onUpstreamError = vi.fn();
+    const operations = new InMemoryPokePilotOperations();
+    vi.spyOn(operations, "getCached").mockRejectedValue(
+      new Error("Redis unavailable"),
+    );
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze: vi.fn(async () => createModelResult(groundedModelOutput)),
+      onUpstreamError,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    });
+
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({
+      ok: false,
+      error: { code: "AI_UPSTREAM_ERROR" },
+    });
+    expect(onUpstreamError).toHaveBeenCalledOnce();
+  });
+
   it("returns only validated structured model output", async () => {
     const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const result = await handlePokePilotAnalysis(validRequest, { analyze });
@@ -132,6 +154,7 @@ describe("PokePilot server API", () => {
       ok: true,
       analysis: modelOutput,
       metadata: {
+        cacheStatus: "miss",
         model: "gpt-5.6-luna",
         promptVersion: 25,
       },
@@ -198,5 +221,199 @@ describe("PokePilot server API", () => {
       error: { code: "AI_RATE_LIMITED" },
     });
     expect(onUpstreamError).toHaveBeenCalledOnce();
+  });
+
+  it("reuses an identical validated analysis without another model call", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 1_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+
+    const first = await handlePokePilotAnalysis(validRequest, options);
+    const second = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(analyze).toHaveBeenCalledOnce();
+    expect(first.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "miss" },
+    });
+    expect(second.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "hit" },
+    });
+  });
+
+  it("keeps team-scope cache identity stable when only the selected slot changes", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 1_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+
+    await handlePokePilotAnalysis(validRequest, options);
+    const second = await handlePokePilotAnalysis(
+      { ...validRequest, selectedSlot: 1 },
+      options,
+    );
+
+    expect(analyze).toHaveBeenCalledOnce();
+    expect(second.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "hit" },
+    });
+  });
+
+  it("shares an in-flight identical analysis without consuming another call", async () => {
+    let completeAnalysis: ((result: LunaAnalysisResult) => void) | undefined;
+    const analyze = vi.fn(
+      () =>
+        new Promise<LunaAnalysisResult>((resolve) => {
+          completeAnalysis = resolve;
+        }),
+    );
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 1_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+
+    const first = handlePokePilotAnalysis(validRequest, options);
+    const second = handlePokePilotAnalysis(validRequest, options);
+    await vi.waitFor(() => expect(analyze).toHaveBeenCalledOnce());
+    completeAnalysis?.(createModelResult(groundedModelOutput));
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+    expect(analyze).toHaveBeenCalledOnce();
+    expect(firstResult.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "miss" },
+    });
+    expect(secondResult.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "shared" },
+    });
+  });
+
+  it("starts a progressive client cooldown after five uncached analyses", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 10_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+
+    for (let index = 0; index < 5; index += 1) {
+      const result = await handlePokePilotAnalysis(
+        { ...validRequest, teamName: `Team ${index}` },
+        options,
+      );
+      expect(result.status).toBe(200);
+    }
+
+    const limited = await handlePokePilotAnalysis(
+      { ...validRequest, teamName: "Team 6" },
+      options,
+    );
+
+    expect(analyze).toHaveBeenCalledTimes(5);
+    expect(limited.status).toBe(429);
+    expect(limited.body).toMatchObject({
+      ok: false,
+      error: {
+        code: "ANALYSIS_COOLDOWN",
+        retryAfterSeconds: 60,
+      },
+    });
+  });
+
+  it("keeps cache enabled while disabling cooldown in AI test mode", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 10_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+      safeguardMode: "ai-test" as const,
+    };
+
+    for (let index = 0; index < 6; index += 1) {
+      const result = await handlePokePilotAnalysis(
+        { ...validRequest, teamName: `Team ${index}` },
+        options,
+      );
+      expect(result.status).toBe(200);
+    }
+
+    const cached = await handlePokePilotAnalysis(
+      { ...validRequest, teamName: "Team 0" },
+      options,
+    );
+    expect(cached.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "hit" },
+    });
+    expect(analyze).toHaveBeenCalledTimes(6);
+  });
+
+  it("requests a fresh analysis without cooldown in fresh AI test mode", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 10_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+      safeguardMode: "ai-fresh" as const,
+    };
+
+    const first = await handlePokePilotAnalysis(validRequest, options);
+    const second = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(first.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "miss" },
+    });
+    expect(second.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "miss" },
+    });
+    expect(analyze).toHaveBeenCalledTimes(2);
+  });
+
+  it("reproduces cooldown after one uncached analysis in cooldown test mode", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 10_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+      safeguardMode: "cooldown-test" as const,
+    };
+
+    const first = await handlePokePilotAnalysis(validRequest, options);
+    const limited = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(first.status).toBe(200);
+    expect(limited.body).toMatchObject({
+      ok: false,
+      error: {
+        code: "ANALYSIS_COOLDOWN",
+        retryAfterSeconds: 10,
+      },
+    });
+    expect(analyze).toHaveBeenCalledOnce();
   });
 });

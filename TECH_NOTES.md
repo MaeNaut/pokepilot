@@ -675,7 +675,32 @@ Validate and handle bad AI responses gracefully.
 - Keep API keys in `.env.local`.
 - Do not call paid AI APIs directly from browser code.
 - Keep prompts and model calls server-side.
-- Add basic rate limiting or request guards later if the app becomes public.
+- Sign the anonymous analysis cookie on the server and hash IP addresses before
+  they enter limiter state. Never log raw IP addresses, cookie IDs, or team
+  request contents.
+- Serve an identical validated analysis from the 24-hour canonical cache before
+  consuming rate-limit capacity. The first five uncached calls in a rolling day
+  have no client cooldown; later calls progress through one-minute, five-minute,
+  fifteen-minute, and one-hour waits. A more generous IP policy limits browser-ID
+  resets and bursts.
+- Keep the in-memory implementation for local development. When both Upstash
+  REST credentials exist, select the shared adapter automatically. It stores
+  canonical responses with a 24-hour TTL, evaluates client/IP rolling limits in
+  one Redis Lua script, and coordinates identical requests with a token-owned
+  distributed lease and short-lived shared result.
+- Set `POKEPILOT_SHARED_STORE_REQUIRED=true` for public deployment so missing or
+  partial Redis configuration fails closed. Use distinct
+  `POKEPILOT_REDIS_PREFIX` values for preview and production. Redis outages
+  should return the existing rules-based fallback rather than bypass shared
+  controls and issue unbounded model calls.
+- Keep the OpenAI project hard budget as the final cost ceiling and complete a
+  live multi-instance Redis test before treating the adapter as production-
+  verified.
+- Select local safeguard test behavior only through server-start Vite modes:
+  production-like `dev`, cached/unlimited `dev:ai`, uncached/unlimited
+  `dev:ai:fresh`, and one-call/10-second `dev:cooldown`. Unknown and production
+  modes always fall back to enforced safeguards; never accept a browser query,
+  cookie, or localStorage override for this setting.
 
 ## Resume Angle
 

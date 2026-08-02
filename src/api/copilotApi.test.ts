@@ -78,6 +78,31 @@ describe("hosted PokePilot client", () => {
     } satisfies Partial<CopilotApiError>);
   });
 
+  it("preserves server cooldown duration for the analysis UI", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            ok: false,
+            error: {
+              code: "ANALYSIS_COOLDOWN",
+              message: "Analysis cooldown is active.",
+              retryAfterSeconds: 75,
+            },
+          }),
+          { status: 429 },
+        ),
+      ),
+    );
+
+    await expect(requestHostedCopilotAnalysis(request)).rejects.toMatchObject({
+      code: "ANALYSIS_COOLDOWN",
+      retryAfterSeconds: 75,
+      status: 429,
+    } satisfies Partial<CopilotApiError>);
+  });
+
   it("rejects malformed success payloads", async () => {
     vi.stubGlobal(
       "fetch",

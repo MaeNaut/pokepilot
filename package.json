@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:ai": "vite --mode ai-test",
+    "dev:ai:fresh": "vite --mode ai-fresh",
+    "dev:cooldown": "vite --mode cooldown-test",
     "data:locales": "node scripts/generate-pokeapi-locales.mjs",
     "data:showdown": "node scripts/generate-showdown-catalogs.mjs",
     "eval:ai": "tsx scripts/run-ai-evaluation.ts",
@@ -18,6 +21,7 @@
     "@fortawesome/free-solid-svg-icons": "^7.3.0",
     "@fortawesome/react-fontawesome": "^3.4.0",
     "@smogon/calc": "^0.11.0",
+    "@upstash/redis": "^1.38.1",
     "@vitejs/plugin-react": "^4.3.4",
     "html-to-image": "^1.11.13",
     "openai": "^7.3.0",

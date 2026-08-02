@@ -10,18 +10,26 @@ type HostedAnalysisEnvelope = {
   error?: {
     code?: unknown;
     message?: unknown;
+    retryAfterSeconds?: unknown;
   };
 };
 
 export class CopilotApiError extends Error {
   readonly code: string;
+  readonly retryAfterSeconds?: number;
   readonly status: number;
 
-  constructor(message: string, code: string, status: number) {
+  constructor(
+    message: string,
+    code: string,
+    status: number,
+    retryAfterSeconds?: number,
+  ) {
     super(message);
     this.name = "CopilotApiError";
     this.code = code;
     this.status = status;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -60,6 +68,9 @@ export async function requestHostedCopilotAnalysis(
         ? envelope.error.code
         : "REQUEST_FAILED",
       response.status,
+      typeof envelope.error?.retryAfterSeconds === "number"
+        ? Math.max(1, Math.ceil(envelope.error.retryAfterSeconds))
+        : undefined,
     );
   }
 

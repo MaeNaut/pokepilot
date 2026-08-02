@@ -329,6 +329,9 @@ export const en = {
   "copilot.failed": "Analysis failed.",
   "copilot.hostedUnavailableFallback":
     "Hosted analysis unavailable. Showing the rules-based fallback.",
+  "copilot.cooldownFallback":
+    "AI cooldown active. Showing the rules-based analysis. Try again in {time}.",
+  "copilot.cooldownButton": "Wait {time}",
   "copilot.hostedAnalysis": "Luna analysis",
   "copilot.rulesFallback": "Rules-based fallback",
   "copilot.aiReady": "AI analysis ready",
@@ -723,6 +726,9 @@ export const ko = {
   "copilot.failed": "분석 실패",
   "copilot.hostedUnavailableFallback":
     "AI 분석 연결 실패 · 규칙 기반 분석 표시",
+  "copilot.cooldownFallback":
+    "AI 분석 대기 중 · 규칙 기반 분석 표시 · {time} 후 재시도",
+  "copilot.cooldownButton": "대기 {time}",
   "copilot.hostedAnalysis": "Luna 분석",
   "copilot.rulesFallback": "규칙 기반 대체 분석",
   "copilot.aiReady": "AI 분석 준비됨",

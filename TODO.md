@@ -240,11 +240,26 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         adding unbounded history to saved-team data.
   - [x] Keep the history menu outside the clipped PokePilot panel and reuse the
         shared destructive-action confirmation UI before deletion.
-- [ ] Add deployment-stage cost controls such as request limits, response caps, and team-analysis caching.
-  - [ ] Cache identical one-shot analyses by canonical team, format, regulation,
+- [ ] Finish deployment-stage cost controls for a multi-instance public launch.
+  - [x] Cache identical one-shot analyses by canonical team, format, regulation,
         locale, prompt version, and request-contract version.
-  - [ ] Add per-client cooldown/rate limiting and cap model output before public access.
-  - [ ] Avoid unbounded AI analysis or chat history in the primary team database.
+  - [x] Add a signed anonymous-client cookie, hashed-IP backstop, progressive
+        rolling cooldowns, in-flight request deduplication, and `Retry-After`
+        responses without storing raw IP addresses.
+  - [x] Keep the model request at a 60-second timeout and 3,500 combined
+        reasoning/response token ceiling.
+  - [x] Log cache status, latency, token use, and estimated cost without logging
+        team contents or requester identifiers.
+  - [x] Add server-start-only local modes for production-like safeguards,
+        cached AI QA without cooldown, fresh AI QA without cache/cooldown, and
+        an accelerated one-call/10-second cooldown test.
+  - [x] Add an optional Upstash Redis adapter for shared canonical responses,
+        atomic client/IP rate decisions, and distributed identical-request
+        deduplication while retaining the in-memory local adapter.
+  - [ ] Provision separate preview/production Redis namespaces, require the
+        shared store in public deployment, and verify it under multi-instance
+        concurrency and provider-failure tests.
+  - [x] Avoid unbounded AI analysis or chat history in the primary team database.
   - [ ] Keep calculator history local or capped unless users explicitly need cloud history.
 
 ## Calculator

@@ -32,6 +32,8 @@ Current slice:
 - server-hosted GPT-5.6 Luna Standard Low strategy briefs in both Team Builder
   and Calculator modes, with private plan, interaction, fact, and recommendation
   evidence audited against the submitted team before prose reaches the browser
+- process-local 24-hour AI response caching, in-flight request deduplication,
+  signed anonymous-client cooldowns, and privacy-safe token/cost telemetry
 - versioned local PokePilot analysis history with reload restoration,
   language-aware result recovery, bounded per-team retention, and a panel-safe
   history menu with confirmed deletion
@@ -90,13 +92,55 @@ usable and shows deterministic rules-based analysis instead. In production,
 configure `OPENAI_API_KEY` as a server secret and never expose it through a
 `VITE_` variable.
 
+Local PokePilot safeguard modes are selected only when the development server
+starts, so browser state cannot disable production controls:
+
+```bash
+# Production-like: completed cache on, progressive cooldown on
+npm run dev
+
+# Routine AI/UI QA: completed cache on, cooldown off
+npm run dev:ai
+
+# Prompt-quality QA: completed cache off, cooldown off
+npm run dev:ai:fresh
+
+# Cooldown UI QA: completed cache off, 10-second cooldown after one analysis
+npm run dev:cooldown
+```
+
+All modes retain in-flight deduplication. Without shared-store credentials,
+restarting the local server clears its process-local cache and usage counters.
+
+The analysis route protects paid calls with a signed anonymous browser cookie,
+a hashed-IP backstop, progressive cooldowns, in-flight deduplication, and a
+canonical 24-hour response cache. Cached requests do not consume another model
+call. Operational logs contain cache status, latency, token counts, and estimated
+cost, but not raw IP addresses or team contents. Set a separate
+`POKEPILOT_CLIENT_SECRET` in production so anonymous identities remain stable
+when the OpenAI key is rotated.
+
+The server automatically switches from the process-local adapter to the official
+`@upstash/redis` REST adapter when both `UPSTASH_REDIS_REST_URL` and
+`UPSTASH_REDIS_REST_TOKEN` are configured. The shared adapter stores canonical
+responses and rate events across instances, evaluates client/IP limits atomically,
+and uses a short distributed lease so simultaneous identical requests produce
+only one model call. Set `POKEPILOT_SHARED_STORE_REQUIRED=true` on a public
+deployment to fail closed if Redis is misconfigured. `POKEPILOT_REDIS_PREFIX`
+can isolate preview and production environments that share one database.
+
+Redis credentials and `POKEPILOT_CLIENT_SECRET` are server-only secrets. The
+OpenAI project hard budget remains the final spending backstop. A live
+multi-instance deployment test is still required before treating the shared
+controls as production-verified.
+
 See [AI_MODEL_EVALUATION.md](./docs/AI_MODEL_EVALUATION.md) for fixture scope,
 cost measurements, full-suite controls, and evaluation rules.
 
 ## Planned Features
 
 - team-aware PokePilot chat/follow-up panel
-- deployment-stage AI rate limiting and canonical request caching
+- provision and load-test shared AI operations storage in the deployment environment
 - account-backed Supabase/Postgres persistence after the local MVP is stable
 - additional Pokemon Champions-only calculator mechanic overrides and matchup presets
 - Japanese localization under consideration

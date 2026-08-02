@@ -32,7 +32,10 @@ import type { TeamValidityResult } from "../utils/teamValidity";
 import { useLocalization } from "../i18n/useLocalization";
 import type { TranslationKey } from "../i18n/translations";
 import type { BattleFormat } from "../battleFormat/battleFormat";
-import { requestHostedCopilotAnalysis } from "../api/copilotApi";
+import {
+  CopilotApiError,
+  requestHostedCopilotAnalysis,
+} from "../api/copilotApi";
 import type { Locale } from "../i18n/gameTranslations";
 import {
   addCopilotHistoryEntry,
@@ -65,6 +68,7 @@ type AnalysisState = {
   fingerprint?: string;
   response?: CopilotAnalysisResponse;
   error?: string;
+  fallbackReason?: "cooldown" | "unavailable";
   usedFallback?: boolean;
   historyEntryId?: string;
   locale?: Locale;
@@ -82,6 +86,17 @@ const idleAnalysisState: AnalysisState = { status: "idle" };
 const historyMenuWidth = 340;
 const historyMenuViewportMargin = 12;
 const historyMenuAnchorGap = 9;
+
+function formatCooldown(seconds: number) {
+  const safeSeconds = Math.max(0, Math.ceil(seconds));
+  const hours = Math.floor(safeSeconds / 3_600);
+  const minutes = Math.floor((safeSeconds % 3_600) / 60);
+  const remainingSeconds = safeSeconds % 60;
+
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+    : `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
 
 function getHistoryMenuPosition(anchor: HTMLElement): HistoryMenuPosition {
   const anchorRect = anchor.getBoundingClientRect();
@@ -142,6 +157,8 @@ export function CopilotPanel({
   );
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHistoryDeletePending, setIsHistoryDeletePending] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [cooldownClock, setCooldownClock] = useState(Date.now);
   const [historyMenuPosition, setHistoryMenuPosition] =
     useState<HistoryMenuPosition | null>(null);
   const historyControlRef = useRef<HTMLDivElement | null>(null);
@@ -207,16 +224,42 @@ export function CopilotPanel({
       }),
     [locale],
   );
+  const cooldownRemainingSeconds = cooldownUntil
+    ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
+    : 0;
+  const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
   const analyzeLabel =
     analysisState.status === "loading"
       ? t("copilot.analyzing")
-      : response
-        ? t("copilot.refresh")
-        : scope === "team"
-          ? t("copilot.analyze")
-          : t("copilot.analyzePokemon");
+      : cooldownRemainingSeconds > 0
+        ? t("copilot.cooldownButton", { time: cooldownLabel })
+        : response
+          ? t("copilot.refresh")
+          : scope === "team"
+            ? t("copilot.analyze")
+            : t("copilot.analyzePokemon");
   const isAnalyzeDisabled =
-    analysisState.status === "loading" || abilityIndexStatus === "loading";
+    analysisState.status === "loading" ||
+    abilityIndexStatus === "loading" ||
+    cooldownRemainingSeconds > 0;
+
+  useEffect(() => {
+    if (!cooldownUntil) {
+      return;
+    }
+
+    setCooldownClock(Date.now());
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      setCooldownClock(now);
+      if (now >= cooldownUntil) {
+        setCooldownUntil(null);
+        window.clearInterval(interval);
+      }
+    }, 1_000);
+
+    return () => window.clearInterval(interval);
+  }, [cooldownUntil]);
 
   useEffect(() => {
     const matchingEntry = findMatchingCopilotHistoryEntry(
@@ -337,10 +380,21 @@ export function CopilotPanel({
     try {
       let nextResponse: CopilotAnalysisResponse;
       let usedFallback = false;
+      let fallbackReason: AnalysisState["fallbackReason"];
 
       try {
         nextResponse = await requestHostedCopilotAnalysis(request);
-      } catch {
+      } catch (error) {
+        if (
+          error instanceof CopilotApiError &&
+          error.code === "ANALYSIS_COOLDOWN" &&
+          error.retryAfterSeconds
+        ) {
+          setCooldownUntil(Date.now() + error.retryAfterSeconds * 1_000);
+          fallbackReason = "cooldown";
+        } else {
+          fallbackReason = "unavailable";
+        }
         nextResponse = createLocalCopilotAnalysis(request, locale);
         usedFallback = true;
       }
@@ -366,6 +420,7 @@ export function CopilotPanel({
           status: "ready",
           fingerprint: requestFingerprint,
           response: nextResponse,
+          fallbackReason,
           usedFallback,
           historyEntryId: historyEntry.id,
           locale,
@@ -394,6 +449,7 @@ export function CopilotPanel({
         status: "ready",
         fingerprint: entry.requestFingerprint,
         response: entry.response,
+        fallbackReason: undefined,
         usedFallback: entry.usedFallback,
         historyEntryId: entry.id,
         locale: entry.locale,
@@ -608,7 +664,14 @@ export function CopilotPanel({
                   icon={faTriangleExclamation}
                   aria-hidden="true"
                 />
-                <span>{t("copilot.hostedUnavailableFallback")}</span>
+                <span>
+                  {analysisState.fallbackReason === "cooldown" &&
+                  cooldownRemainingSeconds > 0
+                    ? t("copilot.cooldownFallback", {
+                        time: cooldownLabel,
+                      })
+                    : t("copilot.hostedUnavailableFallback")}
+                </span>
               </div>
             ) : null}
 

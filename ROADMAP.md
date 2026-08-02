@@ -162,10 +162,21 @@ The MVP should prove the core loop:
   can be applied to a set or team.
 - [ ] Add constrained follow-up chat tied to the current team state only after the
   first analysis flow is stable.
-- [ ] Add request limits, response caps, caching, and graceful API-unavailable behavior
-  before public deployment.
-  - [ ] Key cached analyses by canonical team state, format, regulation, locale,
+- [ ] Finish request controls for multi-instance public deployment.
+  - [x] Key process-local cached analyses by canonical team state, format,
+        regulation, locale,
         prompt version, and request-contract version.
+  - [x] Add signed anonymous-browser identity, a hashed-IP abuse backstop,
+        progressive cooldowns, in-flight deduplication, bounded model output,
+        and graceful rules-based fallback UI.
+  - [x] Record privacy-safe cache, latency, token, and estimated-cost telemetry.
+  - [x] Provide server-start-only cached, fresh-response, and accelerated
+        cooldown QA modes while keeping production safeguards as the default.
+  - [x] Add an Upstash Redis operations adapter with atomic cross-instance
+        limiter decisions, canonical response storage, and distributed request
+        leases; retain memory storage for local development.
+  - [ ] Provision and require the shared store in public deployment, then verify
+        cross-instance concurrency, cold starts, and Redis failure behavior.
 
 ## Phase 6 - Persistence and Polish
 
