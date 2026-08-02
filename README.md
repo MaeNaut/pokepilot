@@ -37,6 +37,8 @@ Current slice:
 - versioned local PokePilot analysis history with reload restoration,
   language-aware result recovery, bounded per-team retention, and a panel-safe
   history menu with confirmed deletion
+- reduced-motion-safe staged reveals for newly completed PokePilot analyses,
+  while restored and history-selected results remain immediate
 - an offline 20-team Singles/Doubles baseline plus four focused strategy
   regressions and a GPT-5.6 Luna Standard runner with strict output, token,
   latency, and cost reports

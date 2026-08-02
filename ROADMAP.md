@@ -154,6 +154,8 @@ The MVP should prove the core loop:
   recommendation fields, then validate it before rendering.
 - [x] Display local analysis as structured product UI in the right-side Copilot panel rather
   than as an unrestricted chat transcript.
+- [x] Reveal newly completed analyses with a short, reduced-motion-safe sequence
+  while keeping reload restoration and history selection immediate.
 - [x] Persist a versioned, bounded local analysis history and restore exact
   team/scope/locale/request matches across reloads and language changes.
   - [x] Render history outside the clipped PokePilot panel and require explicit

@@ -6414,6 +6414,89 @@ select {
   outline: none;
 }
 
+.copilot-result {
+  min-height: 0;
+}
+
+@keyframes copilot-result-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes copilot-summary-copy-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.35;
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+.copilot-result.is-revealing .copilot-reveal {
+  animation: copilot-result-reveal 380ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.copilot-result.is-revealing .copilot-reveal.is-summary {
+  animation-delay: 30ms;
+}
+
+.copilot-result.is-revealing .copilot-summary p {
+  animation: copilot-summary-copy-reveal 460ms ease-out 80ms both;
+}
+
+.copilot-result.is-revealing .copilot-reveal.is-strengths {
+  animation-delay: 150ms;
+}
+
+.copilot-result.is-revealing .copilot-reveal.is-focus {
+  animation-delay: 260ms;
+}
+
+.copilot-result.is-revealing .copilot-reveal.is-recommendations-heading {
+  animation-delay: 370ms;
+}
+
+.copilot-result.is-revealing
+  .copilot-recommendations
+  li.is-recommendation:nth-child(1) {
+  animation-delay: 450ms;
+}
+
+.copilot-result.is-revealing
+  .copilot-recommendations
+  li.is-recommendation:nth-child(2) {
+  animation-delay: 540ms;
+}
+
+.copilot-result.is-revealing
+  .copilot-recommendations
+  li.is-recommendation:nth-child(3) {
+  animation-delay: 630ms;
+}
+
+.copilot-result.is-revealing
+  .copilot-recommendations
+  li.is-recommendation:nth-child(n + 4) {
+  animation-delay: 700ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copilot-result.is-revealing .copilot-reveal,
+  .copilot-result.is-revealing .copilot-summary p {
+    animation: none;
+  }
+}
+
 .copilot-summary {
   padding: 13px 0 14px;
   border-bottom: 1px solid var(--copilot-border);

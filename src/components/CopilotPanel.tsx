@@ -77,6 +77,7 @@ type AnalysisState = {
   historyEntryId?: string;
   locale?: Locale;
   isHistorySelection?: boolean;
+  shouldReveal?: boolean;
 };
 
 type HistoryMenuPosition = {
@@ -347,6 +348,7 @@ export function CopilotPanel({
           historyEntryId: matchingEntry.id,
           locale: matchingEntry.locale,
           isHistorySelection: false,
+          shouldReveal: false,
         },
       };
     });
@@ -478,6 +480,7 @@ export function CopilotPanel({
           historyEntryId: historyEntry.id,
           locale,
           isHistorySelection: false,
+          shouldReveal: true,
         },
       }));
     } catch (error) {
@@ -507,6 +510,7 @@ export function CopilotPanel({
         historyEntryId: entry.id,
         locale: entry.locale,
         isHistorySelection: true,
+        shouldReveal: false,
       },
     }));
     setIsHistoryOpen(false);
@@ -710,7 +714,15 @@ export function CopilotPanel({
             <span>{analysisState.error}</span>
           </div>
         ) : response ? (
-          <>
+          <div
+            className={`copilot-result${
+              analysisState.shouldReveal ? " is-revealing" : ""
+            }`}
+            key={
+              analysisState.historyEntryId ??
+              `${analysisContextKey}:${analysisState.fingerprint ?? "analysis"}`
+            }
+          >
             {analysisState.usedFallback ? (
               <div className="copilot-fallback-notice" role="status">
                 <FontAwesomeIcon
@@ -740,7 +752,7 @@ export function CopilotPanel({
               </div>
             ) : null}
 
-            <section className="copilot-summary">
+            <section className="copilot-summary copilot-reveal is-summary">
               <div className="copilot-summary-heading">
                 <h3>{response.title}</h3>
                 <span>{response.playstyle}</span>
@@ -749,7 +761,7 @@ export function CopilotPanel({
             </section>
 
             {response.strengths.length > 0 ? (
-              <section className="copilot-section">
+              <section className="copilot-section copilot-reveal is-strengths">
                 <div className="copilot-section-heading">
                   <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
                   <h3>{t("copilot.strengths")}</h3>
@@ -762,7 +774,7 @@ export function CopilotPanel({
               </section>
             ) : null}
 
-            <section className="copilot-section">
+            <section className="copilot-section copilot-reveal is-focus">
               <div className="copilot-section-heading">
                 <FontAwesomeIcon
                   icon={response.weaknesses.length > 0 ? faTriangleExclamation : faCheck}
@@ -782,13 +794,16 @@ export function CopilotPanel({
             </section>
 
             <section className="copilot-section copilot-recommendations">
-              <div className="copilot-section-heading">
+              <div className="copilot-section-heading copilot-reveal is-recommendations-heading">
                 <FontAwesomeIcon icon={faLightbulb} aria-hidden="true" />
                 <h3>{t("copilot.nextSteps")}</h3>
               </div>
               <ol>
                 {response.recommendations.map((recommendation) => (
-                  <li className={`is-${recommendation.priority}`} key={recommendation.id}>
+                  <li
+                    className={`is-${recommendation.priority} copilot-reveal is-recommendation`}
+                    key={recommendation.id}
+                  >
                     <div>
                       <strong>{recommendation.title}</strong>
                       <span>{t(priorityTranslationKeys[recommendation.priority])}</span>
@@ -798,7 +813,7 @@ export function CopilotPanel({
                 ))}
               </ol>
             </section>
-          </>
+          </div>
         ) : (
           <div className="copilot-empty-state">
             <FontAwesomeIcon icon={faWandMagicSparkles} aria-hidden="true" />
