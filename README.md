@@ -124,6 +124,11 @@ Copy-Item .env.shared.example .env.shared.local
 npm run dev:shared
 ```
 
+The shared development server uses the fixed URL
+`http://127.0.0.1:5198/`. It fails instead of silently selecting another
+port, which prevents an already-running memory server from being mistaken for
+the Upstash-backed QA environment.
+
 `.env.shared.local` is ignored by Git and is loaded only by Vite's `shared`
 mode. The base `.env.local` still supplies `OPENAI_API_KEY`, so the secret does
 not need to be duplicated. `dev:shared` uses enforced cache and cooldown rules
