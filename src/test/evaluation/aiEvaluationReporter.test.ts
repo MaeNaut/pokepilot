@@ -45,6 +45,7 @@ const result = {
     weaknesses: ["Weakness"],
     recommendations: [],
   },
+  debugOutput: null,
   validationErrors: [],
   error: null,
   latencyMs: 1_000,

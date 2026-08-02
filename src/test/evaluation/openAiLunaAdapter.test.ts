@@ -71,7 +71,12 @@ const modelOutput = {
 
 const groundedModelOutput = {
   analysis: modelOutput,
-  strategyAudit: { plans: [] },
+  strategyAudit: {
+    plans: [],
+    interactions: [],
+    facts: [],
+    recommendationEvidence: [],
+  },
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
@@ -136,7 +141,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-v18-low",
+        prompt_cache_key: "pokepilot-evaluation-v25-low",
         prompt_cache_retention: "24h",
         reasoning: {
           effort: "low",
@@ -147,11 +152,12 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(result).toMatchObject({
       output: modelOutput,
+      debugOutput: groundedModelOutput,
       responseMetadata: {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 18,
+        promptVersion: 25,
       },
       usage: {
         totalTokens: 150,
@@ -221,6 +227,39 @@ describe("OpenAI Luna evaluation adapter", () => {
       "Derive relationships from the current request",
     );
     expect(create.mock.calls[0]![0].instructions).toContain(
+      "Complete two mandatory cross-set passes before assigning the team an archetype",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "Do not assume that a stat-lowering or hostile-looking move must target an opponent",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "Group all filled sets by canonical selected move id",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "enumerate every ordered active pair",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "treat that pair as a candidate default opening rather than optional cleanup",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "calculate each owner's effective Speed",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "rank that transformed response rather than treating every owner as interchangeable",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "do not prefer the next-fastest responder merely because it would otherwise move sooner",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "changes a Pokemon's apparent identity or conceals its set",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "never from the other currently active lead",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "evaluate denial as the first interpretation",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
       "explicitly distinguish the two-Pokemon lead pair from the two backline members",
     );
     expect(create.mock.calls[0]![0].instructions).toContain(
@@ -237,6 +276,18 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(create.mock.calls[0]![0].instructions).toContain(
       "actorSlotIndex must be one of those active slots",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "Record every concrete cross-set interaction used by analysis",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "Every bound move must have a matching action",
+    );
+    expect(create.mock.calls[0]![0].instructions).toContain(
+      "Create exactly one recommendationEvidence entry per user-facing recommendation",
+    );
+    expect(create.mock.calls[0]![0].instructions).not.toMatch(
+      /Charm|Contrary|Staraptor|Zoroark|Gardevoir|Round/,
     );
   });
 

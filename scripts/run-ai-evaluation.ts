@@ -27,6 +27,7 @@ import {
   aiTeamDoublesFixtures,
   aiTeamFixtures,
   aiTeamSinglesFixtures,
+  aiTeamStrategyFixtures,
 } from "../src/test/fixtures/aiTeamFixtures";
 import type { AiTeamFixture } from "../src/test/fixtures/aiTeamFixtureTypes";
 import { installAiEvaluationRuntime } from "./aiEvaluationRuntime";
@@ -67,6 +68,10 @@ function readOptionValue(args: string[], option: string) {
 function getFixtureSelection(args: string[]) {
   if (args.includes("--all")) {
     return aiTeamFixtures;
+  }
+
+  if (args.includes("--strategy")) {
+    return aiTeamStrategyFixtures;
   }
 
   const fixtureIds = args
@@ -125,12 +130,13 @@ function printHelp() {
 Usage:
   npm run eval:ai
   npm run eval:ai -- --all
+  npm run eval:ai -- --strategy
   npm run eval:ai -- --fixture <fixture-id>
   npm run eval:ai -- --effort none|low|medium
 
 The default run is a two-case smoke test with one Singles and one Doubles
-fixture at low reasoning. Calls always use GPT-5.6 Luna with Standard
-service tier.`);
+fixture at low reasoning. --strategy runs the focused interaction and ace-funnel
+regressions. Calls always use GPT-5.6 Luna with Standard service tier.`);
 }
 
 function createReportFileStem(

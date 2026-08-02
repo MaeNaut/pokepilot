@@ -68,7 +68,12 @@ const modelOutput = {
 
 const groundedModelOutput = {
   analysis: modelOutput,
-  strategyAudit: { plans: [] },
+  strategyAudit: {
+    plans: [],
+    interactions: [],
+    facts: [],
+    recommendationEvidence: [],
+  },
 };
 
 function createModelResult(output: unknown): LunaAnalysisResult {
@@ -87,7 +92,7 @@ function createModelResult(output: unknown): LunaAnalysisResult {
       responseId: "resp_test",
       serviceTier: "default",
       reasoningEffort: "low",
-      promptVersion: 18,
+      promptVersion: 25,
     },
   };
 }
@@ -128,7 +133,7 @@ describe("PokePilot server API", () => {
       analysis: modelOutput,
       metadata: {
         model: "gpt-5.6-luna",
-        promptVersion: 18,
+        promptVersion: 25,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);
@@ -153,6 +158,22 @@ describe("PokePilot server API", () => {
   it("rejects a response without the private strategy audit", async () => {
     const result = await handlePokePilotAnalysis(validRequest, {
       analyze: async () => createModelResult(modelOutput),
+    });
+
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({
+      ok: false,
+      error: { code: "AI_INVALID_RESPONSE" },
+    });
+  });
+
+  it("rejects the legacy plans-only strategy audit contract", async () => {
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze: async () =>
+        createModelResult({
+          analysis: modelOutput,
+          strategyAudit: { plans: [] },
+        }),
     });
 
     expect(result.status).toBe(502);

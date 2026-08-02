@@ -1,5 +1,6 @@
 import { aiTeamDoublesFixtures } from "./aiTeamDoublesFixtures";
 import { aiTeamSinglesFixtures } from "./aiTeamSinglesFixtures";
+import { aiTeamStrategyFixtures } from "./aiTeamStrategyFixtures";
 
 export type {
   AiTeamFixture,
@@ -8,9 +9,18 @@ export type {
   AiTeamFixtureSource,
 } from "./aiTeamFixtureTypes";
 
-export { aiTeamDoublesFixtures, aiTeamSinglesFixtures };
+export {
+  aiTeamDoublesFixtures,
+  aiTeamSinglesFixtures,
+  aiTeamStrategyFixtures,
+};
 
-export const aiTeamFixtures = [
+export const aiTeamBaselineFixtures = [
   ...aiTeamSinglesFixtures,
   ...aiTeamDoublesFixtures,
+];
+
+export const aiTeamFixtures = [
+  ...aiTeamBaselineFixtures,
+  ...aiTeamStrategyFixtures,
 ];

@@ -3,32 +3,36 @@ import { CHAMPIONS_MAX_EV_PER_STAT, CHAMPIONS_MAX_EV_TOTAL } from "../../data/na
 import { parseShowdownTeam } from "../../utils/showdownText";
 import {
   aiTeamDoublesFixtures,
+  aiTeamBaselineFixtures,
   aiTeamFixtures,
   aiTeamSinglesFixtures,
+  aiTeamStrategyFixtures,
 } from "./aiTeamFixtures";
 
 describe("AI Regulation M-B team fixtures", () => {
-  it("keeps an even 10-team split between Singles and Doubles", () => {
-    expect(aiTeamFixtures).toHaveLength(20);
+  it("keeps the balanced baseline separate from deep strategy regressions", () => {
+    expect(aiTeamBaselineFixtures).toHaveLength(20);
     expect(aiTeamSinglesFixtures).toHaveLength(10);
     expect(aiTeamDoublesFixtures).toHaveLength(10);
+    expect(aiTeamStrategyFixtures).toHaveLength(4);
+    expect(aiTeamFixtures).toHaveLength(24);
     expect(
       aiTeamFixtures.filter((fixture) => fixture.battleFormat === "singles"),
     ).toHaveLength(10);
     expect(
       aiTeamFixtures.filter((fixture) => fixture.battleFormat === "doubles"),
-    ).toHaveLength(10);
+    ).toHaveLength(14);
   });
 
   it("keeps published evidence separate from constructed boundary cases", () => {
     expect(
       aiTeamFixtures.filter((fixture) => fixture.source.origin === "published"),
-    ).toHaveLength(16);
+    ).toHaveLength(19);
     expect(
       aiTeamFixtures.filter(
         (fixture) => fixture.source.origin === "constructed",
       ),
-    ).toHaveLength(4);
+    ).toHaveLength(5);
 
     for (const fixture of aiTeamFixtures) {
       if (fixture.source.origin === "published") {

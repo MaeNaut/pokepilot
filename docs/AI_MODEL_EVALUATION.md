@@ -11,20 +11,35 @@ The initial suite lives in:
 
 - `src/test/fixtures/aiTeamSinglesFixtures.ts`
 - `src/test/fixtures/aiTeamDoublesFixtures.ts`
+- `src/test/fixtures/aiTeamStrategyFixtures.ts`
 - `src/test/fixtures/aiTeamFixtures.ts`
 
-It contains 20 Regulation M-B teams:
+It contains a balanced 20-team baseline plus four focused strategy regressions:
 
-| Format | Published teams | Constructed boundary cases | Total |
+| Format | Baseline | Focused strategy | Total |
 | --- | ---: | ---: | ---: |
-| Singles | 8 | 2 | 10 |
-| Doubles | 8 | 2 | 10 |
+| Singles | 10 | 0 | 10 |
+| Doubles | 10 | 4 | 14 |
+| Total | 20 | 4 | 24 |
 
 Published Singles fixtures come from Season M-3 high-placement Pokepastes.
-Published Doubles fixtures come from public Regulation M-B team pages.
+Published Doubles baseline fixtures come from public Regulation M-B team
+pages. Focused strategy regressions may retain an earlier published
+Regulation M-A roster when the same legal structure is intentionally evaluated
+through PokePilot's current M-B contract; those cross-regulation sources are
+called out in fixture notes rather than silently relabeled.
 Constructed fixtures are clearly marked and target known failure modes such as
 forcing a weather archetype or mistaking Imprison + Trick Room for a friendly
 Trick Room mode.
+
+The focused strategy group targets reasoning that requires connecting multiple
+sets or battle phases: allied Charm into Contrary Mega Staraptor, a
+support-heavy Mega Floette/Mega Delphox ace funnel, Choice Scarf Hisuian
+Zoroark triggering a same-turn Round chain through Illusion, and Mega
+Froslass manually replacing Mega Charizard Y's sun with Rain Dance. Three use
+published complete teams. The Mega Froslass case is explicitly constructed
+from a published snow roster and a documented, usage-supported anti-sun move
+choice so it cannot be mistaken for an attributed tournament paste.
 
 Every published fixture retains its source URL, author where available,
 placement or replica-code notes where available, and retrieval date.
@@ -55,7 +70,7 @@ three intentionally different representations:
 3. `CopilotAnalysisRequest` stores the compact, provider-independent team,
    diagnostics, candidate filters, and validity data used for analysis.
 
-The current request contract is version 5. Each configured set includes
+The current request contract is version 9. Each configured set includes
 canonical IDs, localized display names, a deterministic defensive profile with
 weakness/resistance multipliers and typing-versus-ability immunity causes, and
 normalized physical/special/status move groupings with Doubles spread targets.
@@ -90,7 +105,7 @@ second fixture-specific mapping.
 model adapter receives only a cloned `CopilotAnalysisRequest`, preventing
 source metadata or expected conclusions from leaking into the prompt.
 
-The 20 complete-team fixtures cover the first team-analysis flow. Partial
+The 24 complete-team fixtures cover the first team-analysis flow. Partial
 teams, empty-slot candidate filters, bench-aware analysis, and future
 single-Pokemon analysis need separate state fixtures if those hosted features
 are evaluated later.
@@ -128,7 +143,7 @@ not reuse stale prefixes. Luna requires the `24h` extended-cache retention
 mode.
 
 Run one Singles and one Doubles fixture as a smoke test before paying for the
-full 20-team suite. Add another hosted model only if Luna fails the product
+full 24-team suite. Add another hosted model only if Luna fails the product
 quality threshold; do not spend tokens on a model comparison that cannot
 change the selection decision. Keep evaluation traffic in a separate OpenAI
 project from production traffic.
@@ -146,6 +161,13 @@ Run the complete suite after the smoke report is acceptable:
 
 ```bash
 npm run eval:ai -- --all
+```
+
+Run only the four focused strategy regressions when changing interaction or
+pairwise-reasoning prompts:
+
+```bash
+npm run eval:ai -- --strategy
 ```
 
 Other useful options:
@@ -355,7 +377,7 @@ imports the OpenAI SDK or reads an API key. The route:
 
 - rejects methods other than `POST` and bodies larger than 256 KB;
 - validates the complete incoming request before any paid call;
-- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v18;
+- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v25;
 - allows up to 3,500 combined reasoning and response tokens so a valid
   structured response is not truncated by the output budget;
 - disables response storage and retains the versioned 24-hour prompt-cache key;
@@ -380,13 +402,14 @@ the canonical effects back to their owning sets, audits every possible active
 pair in a Doubles roster, checks exact Speed and simultaneous-field constraints,
 and then infers openings, branches, and later phases. Existing dual-Mega,
 complete-lineup, defensive-profile, opening-turn, and validity guards remain in
-force. The model also returns a private strategy audit containing complete
-lineups, leads, backline members, active slots, actors, and canonical selected
-move IDs. The server strips this audit from the public response after checking
-that every recorded actor is active and owns the move, and that Singles and
-Doubles selections have valid lead/backline structure. This prevents known
-classes of impossible prose from silently reaching the UI without reintroducing
-Pokemon- or archetype-specific interaction rules.
+force. The model also returns a private strategy audit. Prompts v23-v25 expand the
+original lineup/action contract with plan-linked interactions,
+participant-bound selected moves, current or projected-Mega abilities, held
+items, deterministic facts, and recommendation-to-evidence links. The server
+strips this audit from the public response after checking it against the
+submitted request. This prevents known classes of impossible prose from
+silently reaching the UI without reintroducing Pokemon- or archetype-specific
+interaction rules.
 
 Prompt v16 live tests exposed two concrete low-reasoning failures: a Round plan
 assigned a same-turn action to a Pokemon outside the stated lead pair, and a
@@ -427,6 +450,146 @@ still preferred Snarl disruption and missed the stronger Illusion-assisted
 two-user Round chain. That remaining synthesis gap stays explicit rather than
 being hidden behind a species-specific hardcoded plan.
 
+## Focused Strategy Repeat Stability
+
+The four opt-in strategy regressions were each run three consecutive times on
+August 2, 2026 with GPT-5.6 Luna, Standard service, low reasoning, prompt v18,
+and request v9. All 12 responses completed and passed the strict output schema;
+there were no invalid outputs or request errors.
+
+| Run | Complete | Average case latency | Cached input | Total tokens | Estimated cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | 4/4 | 11.064 s | 8,196 | 42,725 | $0.014620 |
+| 2 | 4/4 | 9.914 s | 36,582 | 42,205 | $0.007467 |
+| 3 | 4/4 | 10.304 s | 36,582 | 41,980 | $0.007197 |
+
+The 12 calls used 126,910 total tokens and cost an estimated $0.029285. Mean
+case latency was 10.427 seconds. After the first run wrote the new prompt
+prefix, 36,582 of 36,594 input tokens were cached in both warm runs; their mean
+four-case cost was $0.007332.
+
+Structural reliability did not imply semantic reliability. Manual comparison
+against the evaluator-only expectations found stable, case-specific behavior:
+
+| Fixture | Stable recognition | Repeated miss | Hard-failure result |
+| --- | --- | --- | ---: |
+| Mega Staraptor Charm funnel | Tailwind offense and the alternative Mega branch in 3/3 | Allied Charm plus Contrary and Sylveon's anti-Trick-Room Roar in 0/3 | 3/3 |
+| Mega Floette / Mega Delphox ace funnel | Dual-Mega choice, redirection, and support-heavy protection in 3/3 | Calm Mind / Nasty Plot as the protected setup win condition in 0/3 | 0/3 |
+| Hisuian Zoroark Round chain | General Illusion and status utility only | Same-turn two-user Round chain and the disguised Scarf lead in 0/3; forced a conventional Trick Room identity in 3/3 | 3/3 |
+| Mega Froslass anti-sun Rain Dance | Matchup-specific anti-Fire or anti-sun weather and Basculegion synergy in 3/3 | Exact post-Drought timing in 0/3; the Snow tradeoff appeared in 2/3 | 0/3 |
+
+The run is therefore stable in transport, schema, latency, caching, and broad
+team labels, but not yet product-acceptable for surprising ally-triggered move
+interactions. The Staraptor and Zoroark cases fail deterministically rather
+than intermittently. Future prompt work should strengthen generic enumeration
+of ally-targetable stat changes and same-turn shared-move chains, then rerun
+these same fixtures before adding team-specific mechanics hints or paying for
+the full 24-team suite.
+
+## Prompt v22 Generic Interaction Audit
+
+Prompt v19 turned the two recurring interaction gaps into mandatory private
+reasoning passes before archetype selection. The first pass tests legal allied
+recipients of single-target effects against current and projected Mega
+abilities, including effects that reverse or amplify stat changes. The second
+groups sets by canonical selected move ID and enumerates ordered same-turn
+pairs. Prompts v20-v22 then generalized candidate-opening priority, effective
+Speed modifiers, forced responder order, transformed follow-up moves,
+position-dependent deception, and Imprison-based denial. The static prompt
+contains no fixture Pokemon, move, or ability names, and a regression assertion
+guards that boundary.
+
+The paid development calls were deliberately limited to the two failing cases
+and one final four-case sweep:
+
+| Prompt | Scope | Complete | Average case latency | Total tokens | Estimated cost |
+| --- | --- | ---: | ---: | ---: | ---: |
+| v19 | Staraptor + Zoroark | 2/2 | 12.146 s | 21,855 | $0.007512 |
+| v20 | Zoroark | 1/1 | 10.641 s | 11,180 | $0.004221 |
+| v21 | Zoroark | 1/1 | 15.133 s | 11,478 | $0.004457 |
+| v22 | Zoroark | 1/1 | 13.388 s | 11,466 | $0.004321 |
+| v22 | All focused strategy cases | 4/4 | 12.704 s | 45,718 | $0.011832 |
+
+The nine calls used 101,697 total tokens and cost an estimated $0.032342.
+Prompt v22 kept strict-schema reliability and produced no request errors.
+
+The ally-target pass resolved the Staraptor regression immediately and the
+final v22 sweep again identified allied Charm becoming a Mega Staraptor Attack
+boost through Contrary, with Tailwind and Mega Skarmory retained as legitimate
+branches. The Floette/Delphox and Froslass outputs did not regress, although the
+former still omitted Calm Mind and Nasty Plot setup and the latter still
+described anti-sun Rain Dance more generally than the exact post-Drought line.
+
+The shared-move pass improved the Zoroark case from no Round recognition to a
+Choice Scarf lead and same-turn Round opening. It did not reliably choose the
+strongest responder: both v22 responses paired Zoroark with Dragapult instead
+of Mega Gardevoir's transformed Round, one response again inverted the first
+user, and neither connected a legal Farigiraf disguise to the opening. This is
+now a narrower responder-ranking and deception-synthesis regression rather
+than the earlier total archetype failure. Additional strategy-prompt tuning is
+paused with the residual case kept explicit.
+
+## Prompt v23-v25 Evidence Audit
+
+Prompt v23 changes the private output contract rather than adding another
+Pokemon-specific or archetype-specific mechanics hint. Each hosted team result
+now carries four machine-readable layers:
+
+- complete legal lineup plans and concrete move actions;
+- cross-set interactions tied to one plan, phase, active state, and owning
+  participants;
+- compact facts for selected move, ability, item, Mega-option, defensive type,
+  and unmodified final-Speed claims;
+- one evidence record per recommendation, referencing existing plan,
+  interaction, or fact IDs, except for a completely empty team where no such
+  evidence can exist.
+
+The deterministic validator now rejects an interaction when a participant is
+inactive, does not own a bound move/ability/item, records an unavailable Mega
+state, activates two Mega states together, or binds a move without the matching
+plan action. It also rejects contradicted weakness/resistance/immunity claims,
+incorrect final-Speed comparisons, dangling evidence references, and
+recommendations with no private evidence. The production route and evaluation
+adapter share the same validator, while the browser still receives only the
+public analysis object.
+
+This does not make strategic synthesis deterministic. The server cannot prove
+that the model discovered every useful interaction, that every sentence is a
+complete paraphrase of its audit, or that a field-modified turn-order inference
+is strategically optimal. It verifies the canonical facts the request can
+decide exactly and leaves inferred intent, modified sequencing, and matchup
+quality to fixtures and semantic evaluation.
+
+The first two-case live smoke exposed contract ambiguity rather than request
+failures. v23 rejected both responses because already-Mega sets, Singles
+backline participants, and neutral-state ordering were interpreted too
+narrowly. v24 clarified those states, preserved failed private outputs in the
+ignored evaluation report, and revealed three remaining issues: a Mega option
+was treated as a projected state rather than an option attached to the current
+slot, sequential move interactions were forced into one phase, and the model
+occasionally added an unnecessary false defensive fact. v25 therefore makes a
+Mega-option fact current-state metadata, permits non-simultaneous interactions
+to bind documented actions across one plan, keeps ally-target/shared-move
+checks strictly simultaneous, and asks for only the smallest fact set directly
+used by each recommendation. Exact weakness, resistance, immunity, ownership,
+Mega-state, and raw-Speed contradictions remain blocking errors.
+
+| Prompt | Complete | Average case latency | Total tokens | Output tokens | Estimated cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| v23 | 0/2 | 13.474 s | 25,234 | 4,210 | $0.009333 |
+| v24 | 0/2 | 12.962 s | 25,511 | 4,025 | $0.009173 |
+| v25 | 2/2 | 12.496 s | 25,530 | 3,698 | $0.008827 |
+
+The v25 smoke used the published M-3 Singles Gengar/Mega Starmie team and the
+focused Doubles Mega Staraptor Charm funnel. The Singles response separated
+Tailwind physical pressure from Mega Gengar's Shadow Tag plus Perish Song
+branch. The Doubles response promoted allied Prankster Charm into Contrary
+Mega Staraptor's immediate Attack boost ahead of a generic first-turn Tailwind
+line, while retaining Mega Skarmory as the exclusive matchup branch. Both
+responses passed the shared production validator with no request errors. Future
+evaluation reports retain the complete private grounded object locally for
+both valid and invalid calls; production still returns only public analysis.
+
 The PokePilot panel calls the hosted route only when the user explicitly asks
 for analysis. If the route is unavailable or rejects a response, the panel
 keeps the product usable by showing deterministic local analysis with a clear
@@ -442,8 +605,9 @@ traffic is enabled.
 
 `aiTeamFixtures.test.ts` verifies:
 
-- exactly 10 Singles and 10 Doubles fixtures;
-- 16 published teams and 4 constructed boundary cases;
+- a balanced baseline of exactly 10 Singles and 10 Doubles fixtures;
+- four separate Doubles strategy regressions and 24 fixtures in total;
+- 19 published teams and 5 explicitly constructed cases;
 - unique IDs and complete source metadata;
 - six parseable Pokemon sets per fixture;
 - item, ability, nature, and four moves per set;
@@ -452,7 +616,7 @@ traffic is enabled.
 
 `aiModelEvaluation.test.ts` additionally verifies:
 
-- all 20 fixtures pass through the production Showdown importer, deterministic
+- all 24 fixtures pass through the production Showdown importer, deterministic
   diagnostics/validity context, and Copilot request builder;
 - every model input contains six sets with the fixture's Singles/Doubles
   format;

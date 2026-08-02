@@ -56,6 +56,7 @@ export type AiEvaluationResponseMetadata = {
 
 export type AiEvaluationAdapterResult = {
   output: unknown;
+  debugOutput?: unknown;
   validationErrors?: string[];
   usage?: Partial<AiEvaluationUsage>;
   responseMetadata?: AiEvaluationResponseMetadata;
@@ -75,6 +76,7 @@ export type AiEvaluationRunResult = {
   requestFingerprint: string;
   status: "complete" | "invalid-output" | "request-error";
   output: CopilotModelOutput | null;
+  debugOutput: unknown | null;
   validationErrors: string[];
   error: string | null;
   latencyMs: number;
@@ -198,6 +200,7 @@ export async function runAiTeamEvaluationCase(
       requestFingerprint: evaluationCase.requestFingerprint,
       status: validation?.success ? "complete" : "invalid-output",
       output: validation?.data ?? null,
+      debugOutput: adapterResult.debugOutput ?? null,
       validationErrors,
       error: null,
       latencyMs: performance.now() - startedAt,
@@ -212,6 +215,7 @@ export async function runAiTeamEvaluationCase(
       requestFingerprint: evaluationCase.requestFingerprint,
       status: "request-error",
       output: null,
+      debugOutput: null,
       validationErrors: [],
       error: error instanceof Error ? error.message : "Unknown model request error.",
       latencyMs: performance.now() - startedAt,

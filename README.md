@@ -30,13 +30,14 @@ Current slice:
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
 - server-hosted GPT-5.6 Luna Standard Low strategy briefs in both Team Builder
-  and Calculator modes, with a private legality/turn-order strategy audit and
-  deterministic local analysis as the offline/error fallback
+  and Calculator modes, with private plan, interaction, fact, and recommendation
+  evidence audited against the submitted team before prose reaches the browser
 - versioned local PokePilot analysis history with reload restoration,
   language-aware result recovery, bounded per-team retention, and a panel-safe
   history menu with confirmed deletion
-- an offline 20-team Singles/Doubles evaluation suite plus a GPT-5.6 Luna
-  Standard smoke runner with strict output, token, latency, and cost reports
+- an offline 20-team Singles/Doubles baseline plus four focused strategy
+  regressions and a GPT-5.6 Luna Standard runner with strict output, token,
+  latency, and cost reports
 - persisted English/Korean UI selection with localized game names, forms, and tooltips
 - persisted system/light/dark theme selection with live operating-system preference tracking
 - lazy-loaded damage Calculator mode with fixed My Pokemon / Opponent Pokemon
@@ -75,6 +76,12 @@ Run the optional paid Luna Standard Low evaluation after placing
 
 ```bash
 npm run eval:ai
+```
+
+Run only the focused ace-funnel and interaction regressions with:
+
+```bash
+npm run eval:ai -- --strategy
 ```
 
 The same ignored variable enables hosted PokePilot analysis through the local

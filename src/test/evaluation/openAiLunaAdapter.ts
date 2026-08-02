@@ -62,6 +62,7 @@ export function createOpenAiLunaAdapter({
         return {
           ...result,
           output: null,
+          debugOutput: result.output,
           validationErrors: outputValidation.errors,
         };
       }
@@ -75,6 +76,7 @@ export function createOpenAiLunaAdapter({
         return {
           ...result,
           output: null,
+          debugOutput: outputValidation.data,
           validationErrors: strategyAuditErrors,
         };
       }
@@ -82,6 +84,7 @@ export function createOpenAiLunaAdapter({
       return {
         ...result,
         output: outputValidation.data.analysis,
+        debugOutput: outputValidation.data,
       };
     },
   };

@@ -106,6 +106,9 @@ The MVP should prove the core loop:
   built and tested before committing to a hosted model provider.
 - [x] Add an attributed offline evaluation suite with 10 Regulation M-B Singles
   teams, 10 Regulation M-B Doubles teams, and explicit archetype-boundary cases.
+- [x] Add a separate four-team deep-strategy regression group for ace funnels,
+  ally-triggered stat reversal, same-turn Round sequencing, and manual weather
+  counterplay, with a targeted paid-run command.
 - [x] Add a GPT-5.6 Luna Standard evaluation adapter, strict output validation,
   token/cost reporting, and reproducible Singles/Doubles smoke runner.
 - [x] Enrich hosted-model requests with deterministic localized labels,
@@ -117,6 +120,16 @@ The MVP should prove the core loop:
   baseline, trial medium after live interaction failures, and return production
   to low after a six-case Prompt v17 A/B found no dependable quality gain for
   medium's higher cost and latency.
+- [x] Repeat the four deep-strategy cases three times at Luna Standard low to
+  separate schema and cache stability from semantic stability; retain Contrary
+  ally targeting and same-turn Round sequencing as explicit prompt regressions.
+- [x] Add prompt v22's provider-neutral ally-target, shared-move sequencing,
+  effective-Speed, deception, and Imprison-denial audits; resolve the Contrary
+  regression and narrow Round to a remaining responder-ranking regression.
+- [x] Add prompts v23-v25's private evidence contract: bind interactions to
+  legal plans and element owners, validate deterministic ownership/Mega/type/
+  Speed facts, require every recommendation to cite verified audit evidence,
+  and confirm the clarified contract with a 2/2 live Low smoke test.
 - [x] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
   - [x] Keep the API key and Luna adapter server-only.
@@ -132,6 +145,9 @@ The MVP should prove the core loop:
   - [x] Return a private strategy audit with every hosted response and reject
         unowned moves, inactive actors, and malformed selection plans before
         user-facing analysis reaches the browser.
+  - [x] Expand the private audit to reject unsupported ability/item/Mega-state
+        bindings, impossible simultaneous Mega activations, contradicted
+        defensive or final-Speed facts, and ungrounded recommendations.
   - [x] Connect the explicit Analyze Team action while preserving deterministic
         local analysis as the offline/error fallback.
 - [x] Request JSON output with clear summary, strength, weakness, priority, and

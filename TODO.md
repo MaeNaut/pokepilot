@@ -135,10 +135,16 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Render summary, strengths, weaknesses, priorities, and recommendations as product UI rather than plain chat text.
   - [x] Add regression tests for compact request snapshots and local team/Pokemon analysis.
 - [x] Add an offline Regulation M-B team fixture suite for hosted-model evaluation.
-  - [x] Keep an even split of 10 Singles and 10 Doubles teams.
+  - [x] Keep an even baseline split of 10 Singles and 10 Doubles teams.
   - [x] Attribute 16 published teams and mark four constructed archetype-boundary cases separately.
   - [x] Store complete Showdown sets, format metadata, critical observations, and forbidden conclusions.
   - [x] Validate fixture parsing, Stat Point limits, complete sets, unique IDs, and Item Clause with Vitest.
+  - [x] Add four opt-in deep-strategy regressions for Contrary ally debuffs,
+        protect-the-ace support, Illusion-assisted Round, and manual anti-sun
+        weather replacement without leaking their intended plans into prompts.
+  - [ ] Add 4-6 more known-intent teams for fast hard-Trick-Room leads,
+        switch-dependent control, difficult select-four branches, and atypical
+        Singles plans before treating the expanded suite as stable.
 - [x] Complete the repeatable GPT-5.6 Luna hosted-model evaluation runner.
   - [x] Generate identical provider-independent requests from every team fixture through the production Showdown import, diagnostics, validity, and request-building path.
   - [x] Keep source provenance, raw Showdown text, and evaluator expectations outside the model adapter input.
@@ -183,9 +189,22 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         backline-only cleaner role.
   - [x] Confirm with a paid Low regression call that v18 recognizes Scarf Hisuian
         Zoroark as a possible pre-Trick-Room lead without encoding a species rule.
-  - [ ] Improve generic synthesis of ally-triggered shared moves: the same v18
-        call still missed the Illusion-assisted two-user Round opening even
-        though both neutral mechanic effects were present.
+  - [x] Run the four focused strategy fixtures three consecutive times at Luna
+        Standard low and record 12/12 schema completion, warm-cache cost, and
+        semantic repeatability. The ace-protection and anti-sun cases remained
+        broadly useful, while Contrary Charm and the Round chain failed 3/3.
+  - [x] Add Prompt v19-v22 mandatory ally-target and shared-move passes without
+        naming fixture Pokemon, moves, abilities, or expected plans.
+  - [x] Improve generic synthesis of ally-targeted stat changes: both targeted
+        v19 and full v22 runs recognized Prankster Charm becoming an Attack
+        boost through Mega Staraptor's Contrary.
+  - [x] Add Prompt v23-v25 plan, interaction, deterministic-fact, and
+        recommendation-evidence validation; preserve private output in ignored
+        evaluation reports and finish with a 2/2 Luna Standard low smoke pass.
+  - [ ] Finish generic shared-move responder ranking and deception synthesis.
+        v22 promotes Choice Scarf Hisuian Zoroark and same-turn Round to an
+        opening, but still favors Dragapult over Mega Gardevoir's transformed
+        response and does not connect a legal Farigiraf disguise to that line.
   - [x] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
   - [x] Track hard failures separately from aggregate scores, latency, token use, and cost.
   - [x] Keep the ignored local evaluation key, reports, and capped test budget
@@ -203,6 +222,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Validate private strategy plans against selected move ownership, active
         slots, complete Singles/Doubles selections, and lead/backline structure
         before returning hosted prose to the browser.
+  - [x] Expand the private audit with plan-linked interactions, participant-bound
+        moves/abilities/items/Mega states, deterministic facts, and evidence for
+        every recommendation.
+  - [x] Reject unsupported interaction ownership, inactive participants,
+        simultaneous Mega activations, unavailable Mega states, incorrect
+        defensive-profile or final-Speed facts, and dangling evidence IDs.
   - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
   - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
 - [x] Add local error, refresh, and stale-analysis states for Copilot.
