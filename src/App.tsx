@@ -153,9 +153,11 @@ function App() {
   const {
     pokemonIndex,
     itemIndex,
+    abilityIndex,
     showdownLegality,
     pokemonIndexStatus: indexStatus,
     itemIndexStatus,
+    abilityIndexStatus,
     showdownLegalityStatus,
     showdownLegalityError,
     retryPokemonIndex,
@@ -1938,6 +1940,8 @@ function App() {
             battleFormat={battleFormat}
             team={team}
             pokemonIndex={pokemonIndex}
+            abilityIndex={abilityIndex}
+            abilityIndexStatus={abilityIndexStatus}
             selectedSlot={selectedTeamSlot}
             buildState={teamBuildState}
             diagnostics={teamDiagnostics}

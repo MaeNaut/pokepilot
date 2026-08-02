@@ -14,7 +14,12 @@ import {
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import type { TeamBuildState } from "../utils/teamBuildState";
-import type { PokemonIndexEntry, TeamSlot } from "../types";
+import type {
+  DataLoadStatus,
+  PokemonAbility,
+  PokemonIndexEntry,
+  TeamSlot,
+} from "../types";
 import {
   createCopilotAnalysisRequest,
   createLocalCopilotAnalysis,
@@ -47,6 +52,8 @@ type CopilotPanelProps = {
   battleFormat: BattleFormat;
   team: TeamSlot[];
   pokemonIndex: PokemonIndexEntry[];
+  abilityIndex: PokemonAbility[];
+  abilityIndexStatus: DataLoadStatus;
   selectedSlot: number;
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;
@@ -118,6 +125,8 @@ export function CopilotPanel({
   battleFormat,
   team,
   pokemonIndex,
+  abilityIndex,
+  abilityIndexStatus,
   selectedSlot,
   buildState,
   diagnostics,
@@ -146,6 +155,7 @@ export function CopilotPanel({
         teamName,
         team,
         pokemonIndex,
+        abilityIndex,
         selectedSlot,
         buildState,
         diagnostics,
@@ -153,6 +163,7 @@ export function CopilotPanel({
       }),
     [
       battleFormat,
+      abilityIndex,
       buildState,
       diagnostics,
       locale,
@@ -204,6 +215,8 @@ export function CopilotPanel({
         : scope === "team"
           ? t("copilot.analyze")
           : t("copilot.analyzePokemon");
+  const isAnalyzeDisabled =
+    analysisState.status === "loading" || abilityIndexStatus === "loading";
 
   useEffect(() => {
     const matchingEntry = findMatchingCopilotHistoryEntry(
@@ -534,7 +547,7 @@ export function CopilotPanel({
           <button
             className="copilot-analyze-button"
             type="button"
-            disabled={analysisState.status === "loading"}
+            disabled={isAnalyzeDisabled}
             onClick={() => void handleAnalyze()}
           >
             <FontAwesomeIcon
@@ -608,7 +621,11 @@ export function CopilotPanel({
                       ? t("copilot.teamChanged")
                       : t("copilot.setChanged")}
                 </span>
-                <button type="button" onClick={() => void handleAnalyze()}>
+                <button
+                  type="button"
+                  disabled={isAnalyzeDisabled}
+                  onClick={() => void handleAnalyze()}
+                >
                   {t("copilot.refreshAnalysis")}
                 </button>
               </div>

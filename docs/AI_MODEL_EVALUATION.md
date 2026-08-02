@@ -113,9 +113,14 @@ Use the same:
 - fixture order;
 - deterministic diagnostics and legality inputs.
 
-Start with Luna at `low` reasoning effort. Compare `medium` only on fixtures
-where `low` misses strategically important observations or produces unstable
-advice. Keep every request on Standard processing during baseline evaluation;
+The initial 20-team baseline used Luna at `low` reasoning effort. Production
+briefly moved to `medium` after live neutral-mechanics tests showed missed move
+ownership and simultaneous-active constraints. Prompt v17 then moved those
+hard constraints into a private, deterministic strategy audit. A controlled
+six-case Prompt v17 comparison found no reliable quality gain from `medium`, so
+production and the evaluation CLI now default to `low`; use `medium` only for
+explicit comparison runs. Keep every request on Standard processing during
+evaluation;
 the CLI explicitly sends `service_tier: "default"`, independently of the
 Fast-mode setting used by Codex. A versioned prompt-cache key keeps equivalent
 evaluation requests on the same cache route while ensuring prompt revisions do
@@ -130,8 +135,8 @@ project from production traffic.
 
 ## Running The Evaluation
 
-The default command makes two paid Standard API calls: the first Singles
-fixture and the first Doubles fixture.
+The default command makes two paid Standard API calls at low reasoning: the
+first Singles fixture and the first Doubles fixture.
 
 ```bash
 npm run eval:ai
@@ -301,9 +306,12 @@ calibration, and Korean response quality.
 
 Singles scored 108/120, Doubles scored 106/120, and the complete suite scored
 214/240 (89.2%, mean 10.7/12). No response triggered a hard-failure rule.
-Luna Standard at low reasoning therefore remains the selected baseline for
-human-facing advisory analysis; these results do not justify automatically
-applying model suggestions without deterministic validation.
+Luna Standard at low reasoning therefore established the historical baseline
+for human-facing advisory analysis. Later live neutral-mechanics regressions,
+documented under Hosted Analysis Integration, superseded its production
+reasoning setting without invalidating this measured comparison. These results
+do not justify automatically applying model suggestions without deterministic
+validation.
 
 Residual issues were omissions of some important Choice Scarf and pre-Mega
 Intimidate details, two poorly calibrated matchup alternatives, occasional
@@ -332,9 +340,9 @@ the [official pricing table](https://developers.openai.com/api/docs/pricing?late
 
 GPT-5.6 Luna does not support fine-tuning, and OpenAI's current model-
 optimization documentation says the fine-tuning platform is being wound down
-and is unavailable to new users. PokePilot will therefore keep Luna Low plus
-deterministic context, strict schemas, post-validation, and repeatable evals as
-its optimization path. Fine-tuning should not be treated as a substitute for
+and is unavailable to new users. PokePilot will therefore keep Luna plus
+deterministic context, strict schemas, grounded post-validation, and repeatable
+evals as its optimization path. Fine-tuning should not be treated as a substitute for
 current Regulation M-B data even if a future supported training option becomes
 available. See the [Luna model page](https://developers.openai.com/api/docs/models/gpt-5.6-luna)
 and [model optimization guide](https://developers.openai.com/api/docs/guides/model-optimization).
@@ -342,12 +350,14 @@ and [model optimization guide](https://developers.openai.com/api/docs/guides/mod
 ## Hosted Analysis Integration
 
 The first production-shaped analysis path now uses
-`POST /api/pokepilot/analyze`. The browser sends request-contract v6 and never
+`POST /api/pokepilot/analyze`. The browser sends request-contract v9 and never
 imports the OpenAI SDK or reads an API key. The route:
 
 - rejects methods other than `POST` and bodies larger than 256 KB;
 - validates the complete incoming request before any paid call;
-- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v13;
+- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v18;
+- allows up to 3,500 combined reasoning and response tokens so a valid
+  structured response is not truncated by the output budget;
 - disables response storage and retains the versioned 24-hour prompt-cache key;
 - validates the strict structured output and requested analysis scope before
   returning product data;
@@ -360,15 +370,62 @@ handler. Local development reads the ignored `OPENAI_API_KEY` from
 `.env.local`; deployment must provide the same name as a server secret, never
 as a `VITE_` variable.
 
-Request v6 adds species and final displayed stats to each set. Prompt v13 uses
-those values for exact speed-order checks, treats distinct dual-Mega rosters as
-normal matchup branches rather than an inherent flaw, and explicitly checks
-one-point support-to-attacker sequencing under Trick Room. It also separates
-matchup-dependent roster selection from the team's shared opening plan and
-keeps a lone fast Choice Scarf cleaner from being mistaken for a complete
-alternate speed mode without supporting leads or enablers. Any cleaner or
-contingency that appears in a recommendation must also appear in a complete
-proposed lineup with an explicit replacement branch.
+Request v9 sends a deduplicated neutral mechanics dictionary for every selected
+move, item, current ability, and projected Mega ability. Effects come from the
+same local Showdown snapshots and catalogs used by the product UI; move tags are
+preserved without a hand-maintained strategic allowlist. The request builder no
+longer derives partner combinations, leads, or field phases from fixture-specific
+patterns such as Choice Scarf plus Illusion plus Round. Prompt v17 instead maps
+the canonical effects back to their owning sets, audits every possible active
+pair in a Doubles roster, checks exact Speed and simultaneous-field constraints,
+and then infers openings, branches, and later phases. Existing dual-Mega,
+complete-lineup, defensive-profile, opening-turn, and validity guards remain in
+force. The model also returns a private strategy audit containing complete
+lineups, leads, backline members, active slots, actors, and canonical selected
+move IDs. The server strips this audit from the public response after checking
+that every recorded actor is active and owns the move, and that Singles and
+Doubles selections have valid lead/backline structure. This prevents known
+classes of impossible prose from silently reaching the UI without reintroducing
+Pokemon- or archetype-specific interaction rules.
+
+Prompt v16 live tests exposed two concrete low-reasoning failures: a Round plan
+assigned a same-turn action to a Pokemon outside the stated lead pair, and a
+Trick Room plan assigned the move to a Pokemon that had not selected it. Those
+failures triggered the v17 grounded-output change and a temporary move to
+medium reasoning.
+
+A paid six-case Prompt v17 A/B run compared the user's Coach Scrafty and Round
+transition teams with Perish Trap, self-contained weather, anti-Trick Room, and
+Baton Pass boundary fixtures. Low completed 6/6 calls at an 11.145-second mean,
+59,876 total tokens, and $0.017525 estimated Standard cost. Medium initially
+completed 5/6 at a 17.693-second mean, 64,962 total tokens, and $0.023628; the
+remaining response exhausted the former 2,500-token output cap. Medium was
+58.8% slower and 34.8% more expensive in that run. Raising the cap to 3,500
+allowed the failed Round response to complete in 18.593 seconds for $0.003194,
+but it still missed the intended Scarf Hisuian Zoroark plus Round-user opening,
+as did Low. The other cases showed comparable core synthesis, while Medium also
+introduced a false Fire weakness for Dragonite. Because the difficult residual
+error was shared rather than solved by extra reasoning, Low is the production
+default and the Round opener remains a model-quality regression case rather
+than a reason to pay the Medium premium globally.
+
+Prompt v18 adds a generic hard-Trick-Room opening guard without encoding any
+Pokemon-specific strategy. Before treating a faster set only as a cleaner, the
+model must test whether its selected moves or neutral mechanics support an
+opening role through Fake Out, redirection, disruption, pivoting, immediate
+pressure, same-turn move interactions, or positioning and deception abilities.
+It must also compare setter-plus-slowest-attacker lines with credible fast
+enablers and inspect ally-triggered moves shared by two possible leads. The
+mechanics dictionary already supplies canonical Illusion and Round effects, so
+no `Zoroark -> lead` or team-specific interaction fact was added.
+
+A paid Low regression call on the same Round transition request completed in
+11.629 seconds, used 9,867 total tokens, and cost $0.003756 with a cold v18
+cache. It correctly promoted Hisuian Zoroark from a backline-only cleaner to a
+possible lead before Trick Room, confirming the general fast-lead guard. It
+still preferred Snarl disruption and missed the stronger Illusion-assisted
+two-user Round chain. That remaining synthesis gap stays explicit rather than
+being hidden behind a species-specific hardcoded plan.
 
 The PokePilot panel calls the hosted route only when the user explicitly asks
 for analysis. If the route is unavailable or rejects a response, the panel
@@ -424,6 +481,10 @@ traffic is enabled.
 - the production output JSON Schema is sent as a strict Structured Output;
 - cached input, cache writes, output, and reasoning usage are recorded;
 - reasoning tokens are not charged twice when estimating cost.
+
+`copilotStrategyAudit.test.ts` verifies that grounded plans accept legal owned
+moves while rejecting both a move assigned to the wrong Pokemon and an opening
+action assigned to a Pokemon still in the backline.
 
 `aiEvaluationReporter.test.ts` verifies aggregate usage and cost reporting,
 manual-review placeholders, and separation between model output and

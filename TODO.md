@@ -159,6 +159,33 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Add localized display labels, pre/post-Mega projections, complete Mega
         options, final stats, move-owner maps, and invalid-lineup guards before
         the final run.
+  - [x] Add compact Showdown-backed effects and tags for all selected moves,
+        abilities, and items without pre-classifying team combinations.
+  - [x] Remove fixture-derived Round, partner, and phase rules from the request
+        builder; make the model audit every possible Doubles pair and infer
+        supported interactions from the current team instead.
+  - [x] Temporarily move the production and default evaluation path to Luna
+        Standard medium after neutral-mechanics live tests exposed missed move
+        ownership and simultaneous-active constraints at low reasoning.
+  - [x] Require a private structured strategy audit and deterministically reject
+        plans that assign an unselected move, an inactive actor, an incomplete
+        lineup, or an inconsistent lead/backline split.
+  - [x] Re-run targeted paid Round and Trick Room regression cases against
+        prompt v17, then compare six representative cases at low and medium.
+  - [x] Return production and evaluation defaults to Luna Standard low after the
+        six-case A/B showed no dependable quality gain from medium despite 34.8%
+        higher cost and 58.8% higher latency.
+  - [x] Raise the combined reasoning/response ceiling from 2,500 to 3,500 tokens
+        after a medium response exhausted the old cap; billing remains based on
+        tokens actually generated rather than the configured ceiling.
+  - [x] Add a Prompt v18 hard-Trick-Room guard that evaluates fast attackers and
+        disruptive sets as possible leads instead of forcing them into a
+        backline-only cleaner role.
+  - [x] Confirm with a paid Low regression call that v18 recognizes Scarf Hisuian
+        Zoroark as a possible pre-Trick-Room lead without encoding a species rule.
+  - [ ] Improve generic synthesis of ally-triggered shared moves: the same v18
+        call still missed the Illusion-assisted two-user Round opening even
+        though both neutral mechanic effects were present.
   - [x] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
   - [x] Track hard failures separately from aggregate scores, latency, token use, and cost.
   - [x] Keep the ignored local evaluation key, reports, and capped test budget
@@ -166,13 +193,16 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Add a server-side API route for AI analysis.
   - [x] Keep API keys out of browser code.
   - [x] Move the Luna adapter behind a server-only `POST` endpoint that accepts
-        request-contract v6 and keeps Standard-tier low reasoning explicit.
+        request-contract v9 and keeps Standard-tier low reasoning explicit.
   - [x] Validate both the incoming analysis request and the strict model response
         at the server boundary before returning product data.
   - [x] Call analysis explicitly rather than automatically on every team edit.
   - [x] Connect the PokePilot Analyze action to the hosted route while retaining
         deterministic local analysis as the offline/error fallback.
 - [ ] Validate AI output before rendering it.
+  - [x] Validate private strategy plans against selected move ownership, active
+        slots, complete Singles/Doubles selections, and lead/backline structure
+        before returning hosted prose to the browser.
   - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
   - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
 - [x] Add local error, refresh, and stale-analysis states for Copilot.

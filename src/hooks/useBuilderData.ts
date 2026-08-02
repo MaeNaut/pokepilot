@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchPokemonIndex } from "../api/pokemonIndex";
-import { fetchItemIndex } from "../api/showdownCatalog";
+import { fetchAbilityIndex, fetchItemIndex } from "../api/showdownCatalog";
 import {
   loadShowdownLegality,
   type ShowdownLegalitySnapshot,
@@ -8,6 +8,7 @@ import {
 import type {
   DataLoadStatus,
   ItemIndexEntry,
+  PokemonAbility,
   PokemonIndexEntry,
 } from "../types";
 
@@ -16,11 +17,14 @@ const regulationFormat = "gen9-regulation-mb";
 export function useBuilderData() {
   const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([]);
   const [itemIndex, setItemIndex] = useState<ItemIndexEntry[]>([]);
+  const [abilityIndex, setAbilityIndex] = useState<PokemonAbility[]>([]);
   const [showdownLegality, setShowdownLegality] =
     useState<ShowdownLegalitySnapshot | null>(null);
   const [pokemonIndexStatus, setPokemonIndexStatus] =
     useState<DataLoadStatus>("idle");
   const [itemIndexStatus, setItemIndexStatus] =
+    useState<DataLoadStatus>("idle");
+  const [abilityIndexStatus, setAbilityIndexStatus] =
     useState<DataLoadStatus>("idle");
   const [showdownLegalityStatus, setShowdownLegalityStatus] =
     useState<DataLoadStatus>("idle");
@@ -88,6 +92,33 @@ export function useBuilderData() {
   useEffect(() => {
     let isCurrent = true;
 
+    async function loadAbilityIndex() {
+      setAbilityIndexStatus("loading");
+
+      try {
+        const index = await fetchAbilityIndex();
+
+        if (isCurrent) {
+          setAbilityIndex(index);
+          setAbilityIndexStatus("ready");
+        }
+      } catch {
+        if (isCurrent) {
+          setAbilityIndexStatus("error");
+        }
+      }
+    }
+
+    void loadAbilityIndex();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+
     async function loadLegality() {
       setShowdownLegalityStatus("loading");
       setShowdownLegalityError(null);
@@ -139,9 +170,11 @@ export function useBuilderData() {
   return {
     pokemonIndex,
     itemIndex,
+    abilityIndex,
     showdownLegality,
     pokemonIndexStatus,
     itemIndexStatus,
+    abilityIndexStatus,
     showdownLegalityStatus,
     showdownLegalityError,
     retryPokemonIndex,

@@ -1,6 +1,7 @@
 import type { ShowdownLegalitySnapshot } from "../../api/showdownLegality";
 import type {
   ItemIndexEntry,
+  PokemonAbility,
   PokemonIndexEntry,
   TeamMember,
 } from "../../types";
@@ -55,6 +56,7 @@ export type AiEvaluationResponseMetadata = {
 
 export type AiEvaluationAdapterResult = {
   output: unknown;
+  validationErrors?: string[];
   usage?: Partial<AiEvaluationUsage>;
   responseMetadata?: AiEvaluationResponseMetadata;
 };
@@ -83,6 +85,7 @@ export type AiEvaluationRunResult = {
 type CreateAiTeamEvaluationCaseOptions = {
   pokemonIndex: PokemonIndexEntry[];
   itemIndex: ItemIndexEntry[];
+  abilityIndex?: PokemonAbility[];
   legality: ShowdownLegalitySnapshot | null;
   services?: ShowdownImportServices;
 };
@@ -92,6 +95,7 @@ export async function createAiTeamEvaluationCase(
   {
     pokemonIndex,
     itemIndex,
+    abilityIndex = [],
     legality,
     services,
   }: CreateAiTeamEvaluationCaseOptions,
@@ -122,6 +126,7 @@ export async function createAiTeamEvaluationCase(
     teamName: fixture.title,
     team: imported.members,
     pokemonIndex,
+    abilityIndex,
     selectedSlot,
     buildState: imported.buildState,
     diagnostics,
@@ -177,16 +182,23 @@ export async function runAiTeamEvaluationCase(
     const adapterResult = await adapter.analyze(
       createAiEvaluationModelInput(evaluationCase),
     );
-    const validation = validateCopilotModelOutput(adapterResult.output);
+    const adapterValidationErrors = adapterResult.validationErrors ?? [];
+    const validation =
+      adapterValidationErrors.length > 0
+        ? null
+        : validateCopilotModelOutput(adapterResult.output);
+    const validationErrors = validation
+      ? validation.errors
+      : adapterValidationErrors;
 
     return {
       schemaVersion: 1,
       fixtureId: evaluationCase.fixtureId,
       modelId: adapter.modelId,
       requestFingerprint: evaluationCase.requestFingerprint,
-      status: validation.success ? "complete" : "invalid-output",
-      output: validation.data,
-      validationErrors: validation.errors,
+      status: validation?.success ? "complete" : "invalid-output",
+      output: validation?.data ?? null,
+      validationErrors,
       error: null,
       latencyMs: performance.now() - startedAt,
       usage: normalizeUsage(adapterResult.usage),

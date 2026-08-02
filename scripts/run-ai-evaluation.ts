@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { fetchPokemon } from "../src/api/pokeApi";
 import { fetchPokemonIndex } from "../src/api/pokemonIndex";
 import {
+  fetchAbilityIndex,
   fetchItem,
   fetchItemIndex,
 } from "../src/api/showdownCatalog";
@@ -21,6 +22,7 @@ import {
   type LunaReasoningEffort,
 } from "../src/test/evaluation/openAiLunaAdapter";
 import { resolveOpenAiApiKey } from "../server/openAiEnvironment";
+import { POKEPILOT_AI_DEFAULT_REASONING_EFFORT } from "../server/openAiLuna";
 import {
   aiTeamDoublesFixtures,
   aiTeamFixtures,
@@ -95,7 +97,9 @@ function getFixtureSelection(args: string[]) {
 }
 
 function parseCliOptions(args: string[]): CliOptions {
-  const effortValue = readOptionValue(args, "--effort") ?? "low";
+  const effortValue =
+    readOptionValue(args, "--effort") ??
+    POKEPILOT_AI_DEFAULT_REASONING_EFFORT;
 
   if (
     effortValue !== "none" &&
@@ -125,7 +129,8 @@ Usage:
   npm run eval:ai -- --effort none|low|medium
 
 The default run is a two-case smoke test with one Singles and one Doubles
-fixture. Calls always use GPT-5.6 Luna with Standard service tier.`);
+fixture at low reasoning. Calls always use GPT-5.6 Luna with Standard
+service tier.`);
 }
 
 function createReportFileStem(
@@ -154,9 +159,10 @@ async function main() {
 
   try {
     console.log("Loading production Pokemon, item, and Regulation M-B data...");
-    const [pokemonIndex, itemIndex, legality] = await Promise.all([
+    const [pokemonIndex, itemIndex, abilityIndex, legality] = await Promise.all([
       fetchPokemonIndex(),
       fetchItemIndex(),
+      fetchAbilityIndex(),
       loadShowdownLegality(),
     ]);
     const evaluationCases = [];
@@ -169,6 +175,7 @@ async function main() {
         await createAiTeamEvaluationCase(fixture, {
           pokemonIndex,
           itemIndex,
+          abilityIndex,
           legality,
           services: {
             fetchPokemon,

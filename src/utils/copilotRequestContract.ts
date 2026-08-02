@@ -14,6 +14,7 @@ const requestKeys = new Set([
   "sets",
   "megaOptions",
   "candidateFilters",
+  "mechanics",
   "diagnostics",
 ]);
 
@@ -89,6 +90,34 @@ function isStatBlock(value: unknown) {
   );
 }
 
+function hasValidMechanicEntry(value: unknown) {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.displayName === "string" &&
+    (!("effect" in value) || typeof value.effect === "string") &&
+    (!("tags" in value) ||
+      (Array.isArray(value.tags) &&
+        value.tags.length <= 32 &&
+        value.tags.every((tag) => typeof tag === "string")))
+  );
+}
+
+function hasValidMechanicsShape(value: unknown) {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.moves) &&
+    value.moves.length <= 24 &&
+    value.moves.every(hasValidMechanicEntry) &&
+    Array.isArray(value.abilities) &&
+    value.abilities.length <= 12 &&
+    value.abilities.every(hasValidMechanicEntry) &&
+    Array.isArray(value.items) &&
+    value.items.length <= 6 &&
+    value.items.every(hasValidMechanicEntry)
+  );
+}
+
 export function validateCopilotAnalysisRequest(
   value: unknown,
 ): CopilotRequestValidation {
@@ -107,8 +136,8 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 6) {
-    errors.push("version must be 6.");
+  if (value.version !== 9) {
+    errors.push("version must be 9.");
   }
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
@@ -148,6 +177,9 @@ export function validateCopilotAnalysisRequest(
     value.candidateFilters.length > 6
   ) {
     errors.push("candidateFilters must contain at most six entries.");
+  }
+  if (!hasValidMechanicsShape(value.mechanics)) {
+    errors.push("mechanics must contain bounded move, ability, and item arrays.");
   }
   if (!isRecord(value.diagnostics)) {
     errors.push("diagnostics must be an object.");

@@ -22,6 +22,7 @@ import { localizeValidityIssue } from "../i18n/validityTranslations";
 import type { TeamBuildState } from "./teamBuildState";
 import type {
   PokemonCandidateFilterValue,
+  PokemonAbility,
   PokemonIndexEntry,
   PokemonItem,
   PokemonMove,
@@ -46,6 +47,11 @@ import type {
 import { hasPokemonCandidateFilters } from "./pokemonCandidateFilters";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { getMegaStoneItemName } from "./megaEvolution";
+import {
+  createCopilotMechanicsSnapshot,
+  type CopilotMechanicsSetInput,
+  type CopilotMechanicsSnapshot,
+} from "./copilotMechanics";
 
 export type CopilotAnalysisScope = "team" | "pokemon";
 export type CopilotPriority = "high" | "medium" | "low";
@@ -165,7 +171,7 @@ export type CopilotCandidateFilterSnapshot = {
 };
 
 export type CopilotAnalysisRequest = {
-  version: 6;
+  version: 9;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -174,6 +180,7 @@ export type CopilotAnalysisRequest = {
   sets: CopilotSetSnapshot[];
   megaOptions: CopilotMegaOptionSnapshot[];
   candidateFilters: CopilotCandidateFilterSnapshot[];
+  mechanics: CopilotMechanicsSnapshot;
   diagnostics: CopilotDiagnosticsSnapshot;
 };
 
@@ -203,6 +210,7 @@ type CreateCopilotRequestInput = {
   teamName: string;
   team: TeamSlot[];
   pokemonIndex?: PokemonIndexEntry[];
+  abilityIndex?: PokemonAbility[];
   selectedSlot: number;
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;
@@ -300,16 +308,15 @@ function getSelectedMoves(
     ? configuredMoveIds
     : (memberMoves ?? []).slice(0, 4).map((move) => move.id);
 
-  return moveIds.flatMap((moveId) => {
+  const selectedMoves = moveIds.flatMap((moveId) => {
     if (!moveId) {
       return [];
     }
 
     const move = moveLookup.get(normalizeLookup(moveId));
 
-    return [
-      move
-        ? {
+    const snapshot = move
+      ? {
             id: move.id,
             name: move.name,
             displayName: translateGameName(
@@ -323,7 +330,7 @@ function getSelectedMoves(
             power: move.power,
             spreadTarget: getMoveSpreadTarget(move),
           }
-        : {
+      : {
             id: moveId,
             name: formatLookup(moveId),
             displayName: translateGameName(
@@ -336,9 +343,20 @@ function getSelectedMoves(
             category: "unknown" as const,
             power: null,
             spreadTarget: null,
-          },
-    ];
+          };
+
+    return [{ snapshot, source: move }];
   });
+
+  return {
+    snapshots: selectedMoves.map(({ snapshot }) => snapshot),
+    mechanics: selectedMoves.map(({ snapshot, source }) => ({
+      id: snapshot.id,
+      displayName: snapshot.displayName,
+      description: source?.description,
+      tags: source?.tags,
+    })),
+  };
 }
 
 function normalizeMoveCategory(
@@ -603,11 +621,16 @@ export function createCopilotAnalysisRequest({
   teamName,
   team,
   pokemonIndex = [],
+  abilityIndex = [],
   selectedSlot,
   buildState,
   diagnostics,
   validity,
 }: CreateCopilotRequestInput): CopilotAnalysisRequest {
+  const mechanicsSets: CopilotMechanicsSetInput[] = [];
+  const abilityById = new Map(
+    abilityIndex.map((ability) => [normalizeLookup(ability.id), ability]),
+  );
   const sets = team.flatMap((member, slotIndex) => {
     if (!member) {
       return [];
@@ -638,11 +661,58 @@ export function createCopilotAnalysisRequest({
     const stats = member.baseStats
       ? calculateChampionsStats(member.baseStats, evs, selectedNature)
       : null;
-    const moves = getSelectedMoves(
+    const selectedMoves = getSelectedMoves(
       member.moves,
       buildState.moveIdsBySlot[slotIndex],
       locale,
     );
+    const moves = selectedMoves.snapshots;
+    const itemDisplayName = item
+      ? translateGameName(
+          locale,
+          "items",
+          item.showdownId ?? item.id,
+          item.name,
+        )
+      : null;
+    const abilityDisplayName = ability
+      ? translateGameName(locale, "abilities", ability, ability)
+      : null;
+    const megaEvolution = createMegaEvolutionSnapshot(
+      member,
+      item,
+      pokemonIndex,
+      locale,
+    );
+
+    mechanicsSets.push({
+      abilities: [
+        ...(ability && abilityDisplayName
+          ? [
+              {
+                id: ability,
+                displayName: abilityDisplayName,
+                effect: abilityById.get(normalizeLookup(ability))?.effect,
+              },
+            ]
+          : []),
+        ...(megaEvolution?.ability && megaEvolution.abilityDisplayName
+          ? [
+              {
+                id: megaEvolution.ability,
+                displayName: megaEvolution.abilityDisplayName,
+                effect: abilityById.get(
+                  normalizeLookup(megaEvolution.ability),
+                )?.effect,
+              },
+            ]
+          : []),
+      ],
+      itemId: item?.showdownId ?? item?.id ?? null,
+      itemDisplayName,
+      itemEffect: item?.effect,
+      moves: selectedMoves.mechanics,
+    });
 
     return [
       {
@@ -654,18 +724,9 @@ export function createCopilotAnalysisRequest({
         types: member.types,
         typeDisplayNames: member.types.map((type) => localizeType(locale, type)),
         item: item?.name ?? null,
-        itemDisplayName: item
-          ? translateGameName(
-              locale,
-              "items",
-              item.showdownId ?? item.id,
-              item.name,
-            )
-          : null,
+        itemDisplayName,
         ability,
-        abilityDisplayName: ability
-          ? translateGameName(locale, "abilities", ability, ability)
-          : null,
+        abilityDisplayName,
         nature,
         natureDisplayName: translateGameName(
           locale,
@@ -679,12 +740,7 @@ export function createCopilotAnalysisRequest({
         evTotal: statKeys.reduce((total, stat) => total + evs[stat], 0),
         moves,
         defensiveProfile: createPokemonDefensiveProfile(member, ability ?? ""),
-        megaEvolution: createMegaEvolutionSnapshot(
-          member,
-          item,
-          pokemonIndex,
-          locale,
-        ),
+        megaEvolution,
         offensiveProfile: createSetOffensiveProfile(moves),
         roleIds: diagnostics.roles
           .filter((role) => role.slotIndexes.includes(slotIndex))
@@ -720,7 +776,7 @@ export function createCopilotAnalysisRequest({
   );
 
   return {
-    version: 6,
+    version: 9,
     locale,
     scope,
     battleFormat,
@@ -729,6 +785,7 @@ export function createCopilotAnalysisRequest({
     sets,
     megaOptions: createMegaOptions(sets),
     candidateFilters,
+    mechanics: createCopilotMechanicsSnapshot(mechanicsSets),
     diagnostics: {
       filledSlots: diagnostics.filledSlots,
       coverageCount: diagnostics.coveredDefendingTypes.length,

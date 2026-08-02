@@ -130,6 +130,13 @@ describe("Copilot analysis", () => {
       scope: "pokemon",
       teamName: "Test Team",
       team: [member, null, null, null, null, null],
+      abilityIndex: [
+        {
+          id: "intimidate",
+          name: "Intimidate",
+          effect: "Lowers the opposing Pokemon's Attack on switch-in.",
+        },
+      ],
       selectedSlot: 0,
       buildState,
       diagnostics,
@@ -137,12 +144,33 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 6,
+      version: 9,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
       teamName: "Test Team",
       selectedSlot: 0,
+      mechanics: {
+        moves: [
+          {
+            id: "closecombat",
+            displayName: "Close Combat",
+          },
+        ],
+        abilities: [
+          {
+            id: "intimidate",
+            displayName: "Intimidate",
+            effect: "Lowers the opposing Pokemon's Attack on switch-in.",
+          },
+        ],
+        items: [
+          {
+            id: "sitrusberry",
+            displayName: "Sitrus Berry",
+          },
+        ],
+      },
       diagnostics: {
         filledSlots: 1,
         coverageCount: 5,

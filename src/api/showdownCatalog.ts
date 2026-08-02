@@ -185,6 +185,10 @@ export async function fetchItemIndex() {
   return (await loadItemCatalog()).index;
 }
 
+export async function fetchAbilityIndex() {
+  return [...(await loadAbilityCatalog()).values()];
+}
+
 export async function fetchItem(nameOrId: string) {
   const lookup = normalizeShowdownId(nameOrId);
 

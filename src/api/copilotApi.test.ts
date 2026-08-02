@@ -31,7 +31,7 @@ describe("hosted PokePilot client", () => {
         JSON.stringify({
           ok: true,
           analysis: modelOutput,
-          metadata: { model: "gpt-5.6-luna", promptVersion: 13 },
+          metadata: { model: "gpt-5.6-luna", promptVersion: 18 },
         }),
         {
           status: 200,

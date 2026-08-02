@@ -1,9 +1,11 @@
 import type { CopilotModelOutput } from "../src/utils/copilotModelContract";
-import { validateCopilotModelOutput } from "../src/utils/copilotModelContract";
+import { validateCopilotGroundedModelOutput } from "../src/utils/copilotModelContract";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract";
+import { validateCopilotStrategyAuditForRequest } from "../src/utils/copilotStrategyAudit";
 import {
   analyzeWithOpenAiLuna,
   OPENAI_LUNA_MODEL_ID,
+  POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
   POKEPILOT_AI_PROMPT_VERSION,
   type LunaAnalysisResult,
 } from "./openAiLuna";
@@ -106,14 +108,27 @@ export async function handlePokePilotAnalysis(
       : await analyzeWithOpenAiLuna(requestValidation.data, {
           apiKey,
           cacheNamespace: "production",
-          reasoningEffort: "low",
+          reasoningEffort: POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
         });
-    const outputValidation = validateCopilotModelOutput(result.output);
+    const outputValidation = validateCopilotGroundedModelOutput(result.output);
 
     if (
       !outputValidation.success ||
-      outputValidation.data.scope !== requestValidation.data.scope
+      outputValidation.data.analysis.scope !== requestValidation.data.scope
     ) {
+      return errorResult(
+        502,
+        "AI_INVALID_RESPONSE",
+        "Hosted analysis returned an invalid response.",
+      );
+    }
+
+    const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
+      outputValidation.data,
+      requestValidation.data,
+    );
+
+    if (strategyAuditErrors.length > 0) {
       return errorResult(
         502,
         "AI_INVALID_RESPONSE",
@@ -125,7 +140,7 @@ export async function handlePokePilotAnalysis(
       status: 200,
       body: {
         ok: true,
-        analysis: outputValidation.data,
+        analysis: outputValidation.data.analysis,
         metadata: {
           model: OPENAI_LUNA_MODEL_ID,
           promptVersion: POKEPILOT_AI_PROMPT_VERSION,

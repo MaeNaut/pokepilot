@@ -111,15 +111,27 @@ The MVP should prove the core loop:
 - [x] Enrich hosted-model requests with deterministic localized labels,
   pre/post-Mega states, complete Mega options, move ownership, defensive
   profiles, final stats, ability-immunity causes, normalized move categories,
-  and physical/special/spread move summaries.
-- [x] Select GPT-5.6 Luna Standard with low reasoning as the hosted-analysis
-  baseline after a 20-team strict-schema run, manual six-category scoring, and
-  separate hard-failure review.
+  physical/special/spread move summaries, and neutral Showdown-backed effects
+  and tags for every selected move, ability, and item.
+- [x] Establish GPT-5.6 Luna Standard low reasoning as the historical 20-team
+  baseline, trial medium after live interaction failures, and return production
+  to low after a six-case Prompt v17 A/B found no dependable quality gain for
+  medium's higher cost and latency.
 - [x] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
   - [x] Keep the API key and Luna adapter server-only.
-  - [x] Accept request-contract v6, call GPT-5.6 Luna Standard at low reasoning,
+  - [x] Accept request-contract v9, call GPT-5.6 Luna Standard at low reasoning,
         and validate the strict response schema at the route boundary.
+  - [x] Keep team-combination and phase inference in the model rather than
+        encoding fixture-derived partner strategies in the request builder.
+  - [x] Require a generic pairwise mechanics audit and opening-turn feasibility
+        check before the model commits to a Doubles game plan.
+  - [x] Evaluate fast sets as possible hard-Trick-Room leads when their selected
+        moves or abilities can secure or exploit the opening turn, without
+        treating their lead use as a separate non-Trick-Room mode.
+  - [x] Return a private strategy audit with every hosted response and reject
+        unowned moves, inactive actors, and malformed selection plans before
+        user-facing analysis reaches the browser.
   - [x] Connect the explicit Analyze Team action while preserving deterministic
         local analysis as the offline/error fallback.
 - [x] Request JSON output with clear summary, strength, weakness, priority, and

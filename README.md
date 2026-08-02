@@ -29,9 +29,9 @@ Current slice:
 - live team diagnostics for defensive matchups, offensive coverage, six multi-label set roles, and setup alerts
 - Setter and team-concept analysis for field modes and weather cores, including ace and off-mode checks
 - Regulation M-B validity status for configured sets, Mega Stones, EV limits, and team clauses
-- server-hosted GPT-5.6 Luna strategy briefs in both Team Builder and
-  Calculator modes, with deterministic local analysis as the offline/error
-  fallback
+- server-hosted GPT-5.6 Luna Standard Low strategy briefs in both Team Builder
+  and Calculator modes, with a private legality/turn-order strategy audit and
+  deterministic local analysis as the offline/error fallback
 - versioned local PokePilot analysis history with reload restoration,
   language-aware result recovery, bounded per-team retention, and a panel-safe
   history menu with confirmed deletion
@@ -70,8 +70,8 @@ npm run test:run
 
 Use `npm test` while developing to rerun affected Vitest tests on file changes.
 
-Run the optional paid Luna evaluation after placing `OPENAI_API_KEY` in the
-ignored `.env.local` file:
+Run the optional paid Luna Standard Low evaluation after placing
+`OPENAI_API_KEY` in the ignored `.env.local` file:
 
 ```bash
 npm run eval:ai

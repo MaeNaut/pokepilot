@@ -4,7 +4,7 @@ import type { LunaAnalysisResult } from "./openAiLuna";
 import { handlePokePilotAnalysis } from "./pokepilotApi";
 
 const validRequest = {
-  version: 6,
+  version: 9,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -13,6 +13,11 @@ const validRequest = {
   sets: [],
   megaOptions: [],
   candidateFilters: [],
+  mechanics: {
+    moves: [],
+    abilities: [],
+    items: [],
+  },
   diagnostics: {
     filledSlots: 0,
     coverageCount: 0,
@@ -61,6 +66,11 @@ const modelOutput = {
   recommendations: [],
 };
 
+const groundedModelOutput = {
+  analysis: modelOutput,
+  strategyAudit: { plans: [] },
+};
+
 function createModelResult(output: unknown): LunaAnalysisResult {
   return {
     output,
@@ -77,7 +87,7 @@ function createModelResult(output: unknown): LunaAnalysisResult {
       responseId: "resp_test",
       serviceTier: "default",
       reasoningEffort: "low",
-      promptVersion: 13,
+      promptVersion: 18,
     },
   };
 }
@@ -109,7 +119,7 @@ describe("PokePilot server API", () => {
   });
 
   it("returns only validated structured model output", async () => {
-    const analyze = vi.fn(async () => createModelResult(modelOutput));
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const result = await handlePokePilotAnalysis(validRequest, { analyze });
 
     expect(result.status).toBe(200);
@@ -118,7 +128,7 @@ describe("PokePilot server API", () => {
       analysis: modelOutput,
       metadata: {
         model: "gpt-5.6-luna",
-        promptVersion: 13,
+        promptVersion: 18,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);
@@ -127,7 +137,22 @@ describe("PokePilot server API", () => {
   it("rejects a structured response for the wrong analysis scope", async () => {
     const result = await handlePokePilotAnalysis(validRequest, {
       analyze: async () =>
-        createModelResult({ ...modelOutput, scope: "pokemon" }),
+        createModelResult({
+          ...groundedModelOutput,
+          analysis: { ...modelOutput, scope: "pokemon" },
+        }),
+    });
+
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({
+      ok: false,
+      error: { code: "AI_INVALID_RESPONSE" },
+    });
+  });
+
+  it("rejects a response without the private strategy audit", async () => {
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze: async () => createModelResult(modelOutput),
     });
 
     expect(result.status).toBe(502);
