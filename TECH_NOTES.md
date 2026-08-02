@@ -693,6 +693,13 @@ Validate and handle bad AI responses gracefully.
   `POKEPILOT_REDIS_PREFIX` values for preview and production. Redis outages
   should return the existing rules-based fallback rather than bypass shared
   controls and issue unbounded model calls.
+- Keep routine `npm run dev` isolated on process-local memory. Load real Redis
+  credentials only from ignored `.env.shared.local` through
+  `npm run dev:shared`; this mode retains production-like safeguards, forces the
+  shared-store requirement, and uses a development-only key prefix. Vite modes
+  other than `shared` deliberately discard Redis environment values before
+  selecting the operations adapter; the deployed server runtime still selects
+  Upstash automatically from its server-side secrets.
 - Keep the OpenAI project hard budget as the final cost ceiling and complete a
   live multi-instance Redis test before treating the adapter as production-
   verified.

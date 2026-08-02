@@ -99,6 +99,9 @@ starts, so browser state cannot disable production controls:
 # Production-like: completed cache on, progressive cooldown on
 npm run dev
 
+# Production-like safeguards with the real shared Upstash adapter
+npm run dev:shared
+
 # Routine AI/UI QA: completed cache on, cooldown off
 npm run dev:ai
 
@@ -112,6 +115,24 @@ npm run dev:cooldown
 All modes retain in-flight deduplication. Without shared-store credentials,
 restarting the local server clears its process-local cache and usage counters.
 
+Routine development intentionally stays on process-local memory. To test the
+shared adapter without mixing development and production state, copy the
+checked-in template and add the Upstash REST credentials locally:
+
+```powershell
+Copy-Item .env.shared.example .env.shared.local
+npm run dev:shared
+```
+
+`.env.shared.local` is ignored by Git and is loaded only by Vite's `shared`
+mode. The base `.env.local` still supplies `OPENAI_API_KEY`, so the secret does
+not need to be duplicated. `dev:shared` uses enforced cache and cooldown rules
+and refuses to start when the Redis credentials are absent or incomplete. Its
+default `pokepilot:operations:dev` prefix keeps local state separate from the
+future preview and production namespaces. Other Vite development modes always
+select process-local memory, even if Redis variables happen to exist in the
+shell or base environment.
+
 The analysis route protects paid calls with a signed anonymous browser cookie,
 a hashed-IP backstop, progressive cooldowns, in-flight deduplication, and a
 canonical 24-hour response cache. Cached requests do not consume another model
@@ -120,8 +141,9 @@ cost, but not raw IP addresses or team contents. Set a separate
 `POKEPILOT_CLIENT_SECRET` in production so anonymous identities remain stable
 when the OpenAI key is rotated.
 
-The server automatically switches from the process-local adapter to the official
-`@upstash/redis` REST adapter when both `UPSTASH_REDIS_REST_URL` and
+The deployed server runtime and the explicit `dev:shared` mode automatically
+switch from the process-local adapter to the official `@upstash/redis` REST
+adapter when both `UPSTASH_REDIS_REST_URL` and
 `UPSTASH_REDIS_REST_TOKEN` are configured. The shared adapter stores canonical
 responses and rate events across instances, evaluates client/IP limits atomically,
 and uses a short distributed lease so simultaneous identical requests produce

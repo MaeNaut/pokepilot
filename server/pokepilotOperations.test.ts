@@ -80,6 +80,7 @@ describe("PokePilot operational safeguards", () => {
       rateLimitMode: "cooldown-test",
     });
     expect(resolvePokePilotSafeguardMode("production")).toBe("enforced");
+    expect(resolvePokePilotSafeguardMode("shared")).toBe("enforced");
     expect(resolvePokePilotSafeguardMode("unexpected-mode")).toBe(
       "enforced",
     );

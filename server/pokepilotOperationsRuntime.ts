@@ -8,7 +8,7 @@ import {
   type PokePilotRedisClient,
 } from "./upstashPokePilotOperations";
 
-type PokePilotOperationsEnvironment = {
+export type PokePilotOperationsEnvironment = {
   POKEPILOT_REDIS_PREFIX?: string;
   POKEPILOT_SHARED_STORE_REQUIRED?: string;
   UPSTASH_REDIS_REST_TOKEN?: string;
@@ -67,6 +67,22 @@ export function createPokePilotOperationsRuntime(
     kind: "memory",
     operations: new InMemoryPokePilotOperations(),
   };
+}
+
+export function createPokePilotViteOperationsRuntime(
+  mode: string,
+  environment: PokePilotOperationsEnvironment,
+  createRedis?: RedisFactory,
+) {
+  return createPokePilotOperationsRuntime(
+    mode === "shared"
+      ? {
+          ...environment,
+          POKEPILOT_SHARED_STORE_REQUIRED: "true",
+        }
+      : {},
+    createRedis,
+  );
 }
 
 let defaultRuntime: PokePilotOperationsRuntime | undefined;

@@ -4,6 +4,7 @@ dist/
 build/
 .env
 .env.local
+.env.*.local
 .vercel/
 coverage/
 artifacts/ai-evaluation/

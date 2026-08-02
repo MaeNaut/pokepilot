@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolveOpenAiApiKey } from "./server/openAiEnvironment";
 import { resolvePokePilotSafeguardMode } from "./server/pokepilotOperations";
-import { createPokePilotOperationsRuntime } from "./server/pokepilotOperationsRuntime";
+import { createPokePilotViteOperationsRuntime } from "./server/pokepilotOperationsRuntime";
 import { vitePokePilotApiPlugin } from "./server/vitePokePilotApiPlugin";
 
 export default defineConfig(({ mode }) => {
@@ -13,8 +13,10 @@ export default defineConfig(({ mode }) => {
     ...process.env,
     ...loadEnv(mode, projectRoot, ""),
   };
-  const operationsRuntime =
-    createPokePilotOperationsRuntime(serverEnvironment);
+  const operationsRuntime = createPokePilotViteOperationsRuntime(
+    mode,
+    serverEnvironment,
+  );
 
   return {
     plugins: [

@@ -175,6 +175,9 @@ The MVP should prove the core loop:
   - [x] Add an Upstash Redis operations adapter with atomic cross-instance
         limiter decisions, canonical response storage, and distributed request
         leases; retain memory storage for local development.
+  - [x] Connect a real development Upstash database and smoke-test shared cache,
+        distributed single execution, atomic limiter state, and cleanup without
+        issuing a paid model request.
   - [ ] Provision and require the shared store in public deployment, then verify
         cross-instance concurrency, cold starts, and Redis failure behavior.
 

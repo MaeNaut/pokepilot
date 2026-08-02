@@ -256,6 +256,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Add an optional Upstash Redis adapter for shared canonical responses,
         atomic client/IP rate decisions, and distributed identical-request
         deduplication while retaining the in-memory local adapter.
+  - [x] Add an opt-in `dev:shared` mode with ignored mode-specific credentials,
+        enforced safeguards, and a development-only Redis namespace while
+        keeping routine local development in memory.
+  - [x] Verify the real Upstash development database with a temporary
+        read/write/delete round trip, cross-adapter canonical cache, distributed
+        single execution, and atomic rate-limit smoke test.
   - [ ] Provision separate preview/production Redis namespaces, require the
         shared store in public deployment, and verify it under multi-instance
         concurrency and provider-failure tests.

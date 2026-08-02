@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:shared": "vite --mode shared",
     "dev:ai": "vite --mode ai-test",
     "dev:ai:fresh": "vite --mode ai-fresh",
     "dev:cooldown": "vite --mode cooldown-test",
