@@ -6,6 +6,11 @@ import {
 } from "./upstashPokePilotOperations";
 
 class FakeRedisClient {
+  readonly evalCalls: Array<{
+    args: unknown[];
+    keys: string[];
+    script: string;
+  }> = [];
   readonly values = new Map<string, unknown>();
   readonly setCalls: Array<{
     key: string;
@@ -25,10 +30,11 @@ class FakeRedisClient {
   }
 
   async eval<TArgs extends unknown[], TData>(
-    _script: string,
+    script: string,
     keys: string[],
     args: TArgs,
   ): Promise<TData> {
+    this.evalCalls.push({ args, keys, script });
     if (keys.length === 1) {
       if (this.values.get(keys[0]) === args[0]) {
         this.values.delete(keys[0]);
@@ -37,7 +43,9 @@ class FakeRedisClient {
       return 0 as TData;
     }
 
-    return this.rateResult as TData;
+    return (script.includes("ZREMRANGEBYSCORE")
+      ? this.rateResult
+      : [1, 1]) as TData;
   }
 
   async get<T>(key: string) {
@@ -97,7 +105,7 @@ describe("Upstash PokePilot operations", () => {
     redis.rateResult = [0, 5_000, 2];
 
     await expect(
-      operations.consume(
+      operations.reserve(
         { clientId: "client-a", ipHash: "hashed-ip" },
         10_000,
       ),
@@ -105,6 +113,44 @@ describe("Upstash PokePilot operations", () => {
       allowed: false,
       retryAfterMs: 5_000,
       scope: "ip",
+    });
+  });
+
+  it("moves successful reservations to completion time and removes failures", async () => {
+    const redis = new FakeRedisClient();
+    const operations = createOperations(redis);
+    const decision = await operations.reserve(
+      { clientId: "client-a", ipHash: "hashed-ip" },
+      10_000,
+    );
+
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) {
+      throw new Error("Expected a shared rate-limit reservation.");
+    }
+
+    await operations.completeReservation(decision.reservation, 18_000);
+    await operations.cancelReservation(decision.reservation);
+
+    const completeCall = redis.evalCalls.find((call) =>
+      call.script.includes("local completedAt"),
+    );
+    const cancelCall = redis.evalCalls.find((call) =>
+      call.script.includes('"ZREM"'),
+    );
+    expect(completeCall).toMatchObject({
+      args: [
+        "18000",
+        decision.reservation.id,
+        String(24 * 60 * 60 * 1_000),
+      ],
+      keys: [
+        "test:pokepilot:usage:enforced:client:client-a",
+        "test:pokepilot:usage:enforced:ip:hashed-ip",
+      ],
+    });
+    expect(cancelCall).toMatchObject({
+      args: [decision.reservation.id],
     });
   });
 

@@ -14,6 +14,7 @@ import {
   createPokePilotAnalysisCacheKey,
   getPokePilotSafeguardConfig,
   type PokePilotOperations,
+  type PokePilotRateLimitReservation,
   type PokePilotRequester,
   type PokePilotSafeguardMode,
 } from "./pokepilotOperations";
@@ -101,7 +102,7 @@ type HostedAnalysisExecution =
   | {
       kind: "cooldown";
       decision: Extract<
-        Awaited<ReturnType<NonNullable<PokePilotOperations["consume"]>>>,
+        Awaited<ReturnType<NonNullable<PokePilotOperations["reserve"]>>>,
         { allowed: false }
       >;
     };
@@ -230,57 +231,82 @@ export async function handlePokePilotAnalysis(
     }
 
     const runAnalysis = async (): Promise<HostedAnalysisExecution> => {
-      if (operations && requester && safeguardConfig.rateLimitMode) {
-        const decision = await operations.consume(
-          requester,
-          startedAt,
-          safeguardConfig.rateLimitMode,
-        );
-        if (!decision.allowed) {
-          return { kind: "cooldown", decision };
+      let reservation: PokePilotRateLimitReservation | undefined;
+
+      try {
+        if (operations && requester && safeguardConfig.rateLimitMode) {
+          const decision = await operations.reserve(
+            requester,
+            clock(),
+            safeguardConfig.rateLimitMode,
+          );
+          if (!decision.allowed) {
+            return { kind: "cooldown", decision };
+          }
+          reservation = decision.reservation;
         }
-      }
 
-      const result = analyze
-        ? await analyze(requestValidation.data)
-        : await analyzeWithOpenAiLuna(requestValidation.data, {
-            apiKey,
-            cacheNamespace: "production",
-            reasoningEffort: POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
-          });
-      const outputValidation = validateCopilotGroundedModelOutput(result.output);
-
-      if (
-        !outputValidation.success ||
-        outputValidation.data.analysis.scope !== requestValidation.data.scope
-      ) {
-        throw Object.assign(
-          new Error("Hosted analysis returned an invalid response."),
-          { code: "AI_INVALID_RESPONSE" },
+        const result = analyze
+          ? await analyze(requestValidation.data)
+          : await analyzeWithOpenAiLuna(requestValidation.data, {
+              apiKey,
+              cacheNamespace: "production",
+              reasoningEffort: POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
+            });
+        const outputValidation = validateCopilotGroundedModelOutput(
+          result.output,
         );
-      }
 
-      const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
-        outputValidation.data,
-        requestValidation.data,
-      );
+        if (
+          !outputValidation.success ||
+          outputValidation.data.analysis.scope !== requestValidation.data.scope
+        ) {
+          throw Object.assign(
+            new Error("Hosted analysis returned an invalid response."),
+            { code: "AI_INVALID_RESPONSE" },
+          );
+        }
 
-      if (strategyAuditErrors.length > 0) {
-        throw Object.assign(
-          new Error("Hosted analysis returned an invalid response."),
-          { code: "AI_INVALID_RESPONSE" },
+        const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
+          outputValidation.data,
+          requestValidation.data,
         );
-      }
 
-      const completed = {
-        kind: "completed" as const,
-        analysis: outputValidation.data.analysis,
-        result,
-      };
-      if (safeguardConfig.cacheEnabled) {
-        await operations?.setCached(operationsKey, completed.analysis, clock());
+        if (strategyAuditErrors.length > 0) {
+          throw Object.assign(
+            new Error("Hosted analysis returned an invalid response."),
+            { code: "AI_INVALID_RESPONSE" },
+          );
+        }
+
+        const completed = {
+          kind: "completed" as const,
+          analysis: outputValidation.data.analysis,
+          result,
+        };
+        if (safeguardConfig.cacheEnabled) {
+          await operations?.setCached(
+            operationsKey,
+            completed.analysis,
+            clock(),
+          );
+        }
+        if (reservation && operations) {
+          await operations.completeReservation(reservation, clock());
+          reservation = undefined;
+        }
+        return completed;
+      } catch (error) {
+        if (reservation && operations) {
+          try {
+            await operations.cancelReservation(reservation);
+          } catch (cleanupError) {
+            onUpstreamError?.(cleanupError);
+          }
+        }
+
+        throw error;
       }
-      return completed;
     };
     const execution = operations
       ? await operations.runOnce(operationsKey, runAnalysis, {

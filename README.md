@@ -141,8 +141,11 @@ shell or base environment.
 The analysis route protects paid calls with a signed anonymous browser cookie,
 a hashed-IP backstop, progressive cooldowns, in-flight deduplication, and a
 canonical 24-hour response cache. Cached requests do not consume another model
-call. Operational logs contain cache status, latency, token counts, and estimated
-cost, but not raw IP addresses or team contents. Set a separate
+call. An uncached request reserves limiter capacity while it runs, but its
+cooldown starts only after the response passes validation and is cached; failed
+analyses release the reservation. Operational logs contain cache status,
+latency, token counts, and estimated cost, but not raw IP addresses or team
+contents. Set a separate
 `POKEPILOT_CLIENT_SECRET` in production so anonymous identities remain stable
 when the OpenAI key is rotated.
 

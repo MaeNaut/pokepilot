@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 export const POKEPILOT_ANALYSIS_CACHE_TTL_MS = 24 * 60 * 60 * 1_000;
 export const POKEPILOT_RATE_WINDOW_MS = 24 * 60 * 60 * 1_000;
@@ -126,8 +126,17 @@ export type PokePilotRequester = {
   ipHash: string;
 };
 
+export type PokePilotRateLimitReservation = {
+  id: string;
+  mode: PokePilotRateLimitMode;
+  requester: PokePilotRequester;
+};
+
 export type PokePilotRateLimitDecision =
-  | { allowed: true }
+  | {
+      allowed: true;
+      reservation: PokePilotRateLimitReservation;
+    }
   | {
       allowed: false;
       retryAfterMs: number;
@@ -147,11 +156,18 @@ export type PokePilotRunOnceOptions<T> = {
 type MaybePromise<T> = T | Promise<T>;
 
 export interface PokePilotOperations {
-  consume(
+  reserve(
     requester: PokePilotRequester,
     now: number,
     mode?: PokePilotRateLimitMode,
   ): MaybePromise<PokePilotRateLimitDecision>;
+  completeReservation(
+    reservation: PokePilotRateLimitReservation,
+    completedAt: number,
+  ): MaybePromise<void>;
+  cancelReservation(
+    reservation: PokePilotRateLimitReservation,
+  ): MaybePromise<void>;
   getCached<T>(key: string, now: number): MaybePromise<T | null>;
   runOnce<T>(
     key: string,
@@ -165,6 +181,11 @@ type CacheEntry = {
   expiresAt: number;
   lastAccessedAt: number;
   value: unknown;
+};
+
+type RateLimitEvent = {
+  id: string;
+  timestamp: number;
 };
 
 function stableSerialize(value: unknown): string {
@@ -210,24 +231,26 @@ function getCooldownMs(useCount: number, policy: PokePilotRatePolicy) {
 }
 
 function evaluateRatePolicy(
-  events: number[],
+  events: RateLimitEvent[],
   now: number,
   policy: PokePilotRatePolicy,
 ) {
   const lastEvent = events.at(-1);
   const cooldownMs = getCooldownMs(events.length, policy);
   let retryAfterMs =
-    lastEvent === undefined ? 0 : Math.max(0, lastEvent + cooldownMs - now);
+    lastEvent === undefined
+      ? 0
+      : Math.max(0, lastEvent.timestamp + cooldownMs - now);
 
   if (policy.burst) {
     const burstEvents = events.filter(
-      (timestamp) => timestamp > now - policy.burst!.windowMs,
+      (event) => event.timestamp > now - policy.burst!.windowMs,
     );
 
     if (burstEvents.length >= policy.burst.maxUses) {
       retryAfterMs = Math.max(
         retryAfterMs,
-        burstEvents[0] + policy.burst.windowMs - now,
+        burstEvents[0].timestamp + policy.burst.windowMs - now,
       );
     }
   }
@@ -241,7 +264,7 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
     string,
     Promise<PokePilotRunOnceResult<unknown>>
   >();
-  private readonly usage = new Map<string, number[]>();
+  private readonly usage = new Map<string, RateLimitEvent[]>();
 
   getCached<T>(key: string, now: number): T | null {
     const entry = this.cache.get(key);
@@ -302,7 +325,7 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
     }
   }
 
-  consume(
+  reserve(
     requester: PokePilotRequester,
     now: number,
     mode: PokePilotRateLimitMode = "enforced",
@@ -310,8 +333,7 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
     this.pruneUsage(now);
 
     const policies = ratePolicies[mode];
-    const clientKey = `${mode}:client:${requester.clientId}`;
-    const ipKey = `${mode}:ip:${requester.ipHash}`;
+    const { clientKey, ipKey } = this.getUsageKeys(requester, mode);
     const clientEvents = this.usage.get(clientKey) ?? [];
     const ipEvents = this.usage.get(ipKey) ?? [];
     const clientRetryAfterMs = evaluateRatePolicy(
@@ -335,10 +357,30 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
           };
     }
 
-    this.usage.set(clientKey, [...clientEvents, now]);
-    this.usage.set(ipKey, [...ipEvents, now]);
+    const reservation: PokePilotRateLimitReservation = {
+      id: randomUUID(),
+      mode,
+      requester: { ...requester },
+    };
+    const event = { id: reservation.id, timestamp: now };
+    this.usage.set(clientKey, [...clientEvents, event]);
+    this.usage.set(ipKey, [...ipEvents, event]);
     this.enforceUsageCapacity();
-    return { allowed: true };
+    return { allowed: true, reservation };
+  }
+
+  completeReservation(
+    reservation: PokePilotRateLimitReservation,
+    completedAt: number,
+  ) {
+    this.updateReservation(reservation, (event) => ({
+      ...event,
+      timestamp: completedAt,
+    }));
+  }
+
+  cancelReservation(reservation: PokePilotRateLimitReservation) {
+    this.updateReservation(reservation, () => null);
   }
 
   private pruneCache(now: number) {
@@ -353,7 +395,7 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
     const cutoff = now - POKEPILOT_RATE_WINDOW_MS;
 
     for (const [key, events] of this.usage) {
-      const retained = events.filter((timestamp) => timestamp > cutoff);
+      const retained = events.filter((event) => event.timestamp > cutoff);
       if (retained.length > 0) {
         this.usage.set(key, retained);
       } else {
@@ -369,6 +411,47 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
         return;
       }
       this.usage.delete(oldestKey);
+    }
+  }
+
+  private getUsageKeys(
+    requester: PokePilotRequester,
+    mode: PokePilotRateLimitMode,
+  ) {
+    return {
+      clientKey: `${mode}:client:${requester.clientId}`,
+      ipKey: `${mode}:ip:${requester.ipHash}`,
+    };
+  }
+
+  private updateReservation(
+    reservation: PokePilotRateLimitReservation,
+    update: (event: RateLimitEvent) => RateLimitEvent | null,
+  ) {
+    const { clientKey, ipKey } = this.getUsageKeys(
+      reservation.requester,
+      reservation.mode,
+    );
+
+    for (const key of [clientKey, ipKey]) {
+      const events = this.usage.get(key);
+      if (!events) {
+        continue;
+      }
+
+      const updated = events.flatMap((event) => {
+        if (event.id !== reservation.id) {
+          return [event];
+        }
+        const next = update(event);
+        return next ? [next] : [];
+      }).sort((left, right) => left.timestamp - right.timestamp);
+
+      if (updated.length > 0) {
+        this.usage.set(key, updated);
+      } else {
+        this.usage.delete(key);
+      }
     }
   }
 }

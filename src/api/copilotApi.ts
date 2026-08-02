@@ -49,14 +49,24 @@ export async function requestHostedCopilotAnalysis(
   request: CopilotAnalysisRequest,
   signal?: AbortSignal,
 ): Promise<CopilotAnalysisResponse> {
-  const response = await fetch("/api/pokepilot/analyze", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-    signal,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch("/api/pokepilot/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+      signal,
+    });
+  } catch {
+    throw new CopilotApiError(
+      "Unable to reach the hosted analysis server.",
+      "NETWORK_ERROR",
+      0,
+    );
+  }
   const envelope = await readEnvelope(response);
 
   if (!response.ok || envelope.ok !== true) {

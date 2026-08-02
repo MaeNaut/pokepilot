@@ -7,6 +7,7 @@ import {
   type PokePilotOperations,
   type PokePilotRateLimitDecision,
   type PokePilotRateLimitMode,
+  type PokePilotRateLimitReservation,
   type PokePilotRequester,
   type PokePilotRunOnceOptions,
   type PokePilotRunOnceResult,
@@ -17,7 +18,7 @@ const defaultLockTtlMs = 75_000;
 const defaultSharedResultTtlMs = 90_000;
 const defaultWaitTimeoutMs = 78_000;
 
-const consumeRateLimitScript = `
+const reserveRateLimitScript = `
 local now = tonumber(ARGV[1])
 local windowMs = tonumber(ARGV[2])
 local eventId = ARGV[3]
@@ -81,6 +82,45 @@ redis.call("ZADD", KEYS[2], now, eventId)
 redis.call("PEXPIRE", KEYS[1], windowMs)
 redis.call("PEXPIRE", KEYS[2], windowMs)
 return { 1, 0, 0 }
+`;
+
+const completeRateLimitReservationScript = `
+local completedAt = tonumber(ARGV[1])
+local eventId = ARGV[2]
+local windowMs = tonumber(ARGV[3])
+
+local clientUpdated = redis.call(
+  "ZADD",
+  KEYS[1],
+  "XX",
+  "CH",
+  completedAt,
+  eventId
+)
+local ipUpdated = redis.call(
+  "ZADD",
+  KEYS[2],
+  "XX",
+  "CH",
+  completedAt,
+  eventId
+)
+
+if clientUpdated > 0 then
+  redis.call("PEXPIRE", KEYS[1], windowMs)
+end
+if ipUpdated > 0 then
+  redis.call("PEXPIRE", KEYS[2], windowMs)
+end
+
+return { clientUpdated, ipUpdated }
+`;
+
+const cancelRateLimitReservationScript = `
+return {
+  redis.call("ZREM", KEYS[1], ARGV[1]),
+  redis.call("ZREM", KEYS[2], ARGV[1])
+}
 `;
 
 const releaseLockScript = `
@@ -173,25 +213,23 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
     this.waitTimeoutMs = waitTimeoutMs;
   }
 
-  async consume(
+  async reserve(
     requester: PokePilotRequester,
     now: number,
     mode: PokePilotRateLimitMode = "enforced",
   ): Promise<PokePilotRateLimitDecision> {
     const policies = getPokePilotRatePolicies(mode);
+    const reservationId = `${now}:${randomUUID()}`;
     const result = await this.redis.eval<
       [string, string, string, string, string],
       [number, number, number]
     >(
-      consumeRateLimitScript,
-      [
-        this.key(`usage:${mode}:client:${requester.clientId}`),
-        this.key(`usage:${mode}:ip:${requester.ipHash}`),
-      ],
+      reserveRateLimitScript,
+      this.usageKeys(requester, mode),
       [
         String(now),
         String(POKEPILOT_RATE_WINDOW_MS),
-        `${now}:${randomUUID()}`,
+        reservationId,
         JSON.stringify(policies.client),
         JSON.stringify(policies.ip),
       ],
@@ -199,7 +237,14 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
     const allowed = Number(result[0]) === 1;
 
     if (allowed) {
-      return { allowed: true };
+      return {
+        allowed: true,
+        reservation: {
+          id: reservationId,
+          mode,
+          requester: { ...requester },
+        },
+      };
     }
 
     return {
@@ -207,6 +252,29 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
       retryAfterMs: Math.max(1, Number(result[1]) || 1),
       scope: Number(result[2]) === 2 ? "ip" : "client",
     };
+  }
+
+  async completeReservation(
+    reservation: PokePilotRateLimitReservation,
+    completedAt: number,
+  ) {
+    await this.redis.eval<[string, string, string], [number, number]>(
+      completeRateLimitReservationScript,
+      this.usageKeys(reservation.requester, reservation.mode),
+      [
+        String(completedAt),
+        reservation.id,
+        String(POKEPILOT_RATE_WINDOW_MS),
+      ],
+    );
+  }
+
+  async cancelReservation(reservation: PokePilotRateLimitReservation) {
+    await this.redis.eval<[string], [number, number]>(
+      cancelRateLimitReservationScript,
+      this.usageKeys(reservation.requester, reservation.mode),
+      [reservation.id],
+    );
   }
 
   getCached<T>(key: string, _now: number) {
@@ -259,6 +327,16 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
 
   private key(value: string) {
     return `${this.keyPrefix}:${value}`;
+  }
+
+  private usageKeys(
+    requester: PokePilotRequester,
+    mode: PokePilotRateLimitMode,
+  ): [string, string] {
+    return [
+      this.key(`usage:${mode}:client:${requester.clientId}`),
+      this.key(`usage:${mode}:ip:${requester.ipHash}`),
+    ];
   }
 
   private async readSharedResult<T>(resultKey: string) {

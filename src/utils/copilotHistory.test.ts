@@ -58,7 +58,11 @@ afterEach(() => {
 describe("PokePilot analysis history", () => {
   it("persists validated analysis records and restores an exact locale match", () => {
     vi.stubGlobal("localStorage", createMemoryStorage());
-    const koreanEntry = createEntry(2);
+    const koreanEntry = {
+      ...createEntry(2),
+      usedFallback: true,
+      fallbackReason: "invalid-response" as const,
+    };
     const englishEntry = createEntry(1);
 
     storeCopilotHistory([koreanEntry, englishEntry]);

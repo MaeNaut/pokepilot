@@ -78,6 +78,21 @@ describe("hosted PokePilot client", () => {
     } satisfies Partial<CopilotApiError>);
   });
 
+  it("distinguishes an unreachable analysis server from an API response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+
+    await expect(requestHostedCopilotAnalysis(request)).rejects.toMatchObject({
+      name: "CopilotApiError",
+      code: "NETWORK_ERROR",
+      status: 0,
+    } satisfies Partial<CopilotApiError>);
+  });
+
   it("preserves server cooldown duration for the analysis UI", async () => {
     vi.stubGlobal(
       "fetch",

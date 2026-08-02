@@ -683,6 +683,10 @@ Validate and handle bad AI responses gracefully.
   have no client cooldown; later calls progress through one-minute, five-minute,
   fifteen-minute, and one-hour waits. A more generous IP policy limits browser-ID
   resets and bursts.
+- Reserve rate-limit capacity before an uncached model call to prevent concurrent
+  bypasses, then move the event timestamp to validated completion so the user
+  receives the full cooldown after the result arrives. Cancel the reservation on
+  upstream, validation, or cache-write failure so failed attempts do not count.
 - Keep the in-memory implementation for local development. When both Upstash
   REST credentials exist, select the shared adapter automatically. It stores
   canonical responses with a 24-hour TTL, evaluates client/IP rolling limits in

@@ -329,8 +329,20 @@ export const en = {
   "copilot.failed": "Analysis failed.",
   "copilot.hostedUnavailableFallback":
     "Hosted analysis unavailable. Showing the rules-based fallback.",
+  "copilot.connectionFallback":
+    "AI server unreachable. Showing the rules-based fallback.",
+  "copilot.notConfiguredFallback":
+    "AI analysis is not configured. Showing the rules-based fallback.",
+  "copilot.invalidResponseFallback":
+    "AI response failed validation. Showing the rules-based fallback.",
+  "copilot.rateLimitedFallback":
+    "AI request limit reached. Showing the rules-based fallback.",
+  "copilot.serviceUnavailableFallback":
+    "AI service temporarily unavailable. Showing the rules-based fallback.",
   "copilot.cooldownFallback":
     "AI cooldown active. Showing the rules-based analysis. Try again in {time}.",
+  "copilot.cooldownReadyFallback":
+    "AI cooldown ended. Showing the rules-based analysis; refresh to retry.",
   "copilot.cooldownButton": "Wait {time}",
   "copilot.hostedAnalysis": "Luna analysis",
   "copilot.rulesFallback": "Rules-based fallback",
@@ -726,8 +738,20 @@ export const ko = {
   "copilot.failed": "분석 실패",
   "copilot.hostedUnavailableFallback":
     "AI 분석 연결 실패 · 규칙 기반 분석 표시",
+  "copilot.connectionFallback":
+    "AI 서버 연결 실패 · 규칙 기반 분석 표시",
+  "copilot.notConfiguredFallback":
+    "AI 분석 미설정 · 규칙 기반 분석 표시",
+  "copilot.invalidResponseFallback":
+    "AI 응답 검증 실패 · 규칙 기반 분석 표시",
+  "copilot.rateLimitedFallback":
+    "AI 요청 한도 도달 · 규칙 기반 분석 표시",
+  "copilot.serviceUnavailableFallback":
+    "AI 서비스 일시 오류 · 규칙 기반 분석 표시",
   "copilot.cooldownFallback":
     "AI 분석 대기 중 · 규칙 기반 분석 표시 · {time} 후 재시도",
+  "copilot.cooldownReadyFallback":
+    "AI 분석 대기 종료 · 규칙 기반 분석 표시 · 재시도 가능",
   "copilot.cooldownButton": "대기 {time}",
   "copilot.hostedAnalysis": "Luna 분석",
   "copilot.rulesFallback": "규칙 기반 대체 분석",

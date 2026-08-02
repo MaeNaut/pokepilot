@@ -112,7 +112,11 @@ describe("PokePilot Node HTTP boundary", () => {
     const secret = "test-secret";
     const requester = { clientId, ipHash: "preload-ip" };
     for (let index = 0; index < 5; index += 1) {
-      operations.consume(requester, 0);
+      const decision = operations.reserve(requester, 0);
+      if (!decision.allowed) {
+        throw new Error("Expected a rate-limit reservation.");
+      }
+      operations.completeReservation(decision.reservation, 0);
     }
     const token = createSignedPokePilotClientToken(clientId, secret);
     const target = createResponse();

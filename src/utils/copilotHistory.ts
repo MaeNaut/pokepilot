@@ -1,4 +1,8 @@
 import type { BattleFormat } from "../battleFormat/battleFormat";
+import {
+  isHostedAnalysisFailureReason,
+  type HostedAnalysisFailureReason,
+} from "../api/copilotFailure";
 import type { Locale } from "../i18n/gameTranslations";
 import type {
   CopilotAnalysisRequest,
@@ -22,6 +26,7 @@ export type CopilotHistoryEntry = {
   createdAt: string;
   response: CopilotAnalysisResponse;
   usedFallback: boolean;
+  fallbackReason?: HostedAnalysisFailureReason;
 };
 
 type CopilotHistoryPayload = {
@@ -58,6 +63,9 @@ function normalizeHistoryEntry(value: unknown): CopilotHistoryEntry | null {
   }
 
   const response = normalizeResponse(value.response);
+  const fallbackReason = isHostedAnalysisFailureReason(value.fallbackReason)
+    ? value.fallbackReason
+    : undefined;
   const hasValidMetadata =
     typeof value.id === "string" &&
     typeof value.teamKey === "string" &&
@@ -85,6 +93,7 @@ function normalizeHistoryEntry(value: unknown): CopilotHistoryEntry | null {
     createdAt: value.createdAt as string,
     response,
     usedFallback: value.usedFallback as boolean,
+    ...(fallbackReason ? { fallbackReason } : {}),
   };
 }
 

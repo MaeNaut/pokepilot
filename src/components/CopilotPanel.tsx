@@ -36,6 +36,10 @@ import {
   CopilotApiError,
   requestHostedCopilotAnalysis,
 } from "../api/copilotApi";
+import {
+  classifyHostedAnalysisFailure,
+  type HostedAnalysisFailureReason,
+} from "../api/copilotFailure";
 import type { Locale } from "../i18n/gameTranslations";
 import {
   addCopilotHistoryEntry,
@@ -68,7 +72,7 @@ type AnalysisState = {
   fingerprint?: string;
   response?: CopilotAnalysisResponse;
   error?: string;
-  fallbackReason?: "cooldown" | "unavailable";
+  fallbackReason?: HostedAnalysisFailureReason;
   usedFallback?: boolean;
   historyEntryId?: string;
   locale?: Locale;
@@ -133,6 +137,43 @@ const priorityTranslationKeys: Record<
   medium: "copilot.priorityMedium",
   low: "copilot.priorityLow",
 };
+
+const fallbackTranslationKeys: Record<
+  Exclude<HostedAnalysisFailureReason, "cooldown">,
+  TranslationKey
+> = {
+  connection: "copilot.connectionFallback",
+  "not-configured": "copilot.notConfiguredFallback",
+  "invalid-response": "copilot.invalidResponseFallback",
+  "rate-limited": "copilot.rateLimitedFallback",
+  "service-unavailable": "copilot.serviceUnavailableFallback",
+  unavailable: "copilot.hostedUnavailableFallback",
+};
+
+function logHostedAnalysisFallback(
+  error: unknown,
+  reason: HostedAnalysisFailureReason,
+) {
+  if (
+    typeof window === "undefined" ||
+    !["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ) {
+    return;
+  }
+
+  console.warn("[PokePilot] Hosted analysis fallback.", {
+    reason,
+    ...(error instanceof CopilotApiError
+      ? {
+          code: error.code,
+          status: error.status,
+          retryAfterSeconds: error.retryAfterSeconds,
+        }
+      : {
+          errorName: error instanceof Error ? error.name : typeof error,
+        }),
+  });
+}
 
 export function CopilotPanel({
   savedTeamId,
@@ -228,6 +269,16 @@ export function CopilotPanel({
     ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
     : 0;
   const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
+  const fallbackMessage =
+    analysisState.fallbackReason === "cooldown"
+      ? cooldownRemainingSeconds > 0
+        ? t("copilot.cooldownFallback", { time: cooldownLabel })
+        : t("copilot.cooldownReadyFallback")
+      : t(
+          fallbackTranslationKeys[
+            analysisState.fallbackReason ?? "unavailable"
+          ],
+        );
   const analyzeLabel =
     analysisState.status === "loading"
       ? t("copilot.analyzing")
@@ -292,6 +343,7 @@ export function CopilotPanel({
           fingerprint: matchingEntry.requestFingerprint,
           response: matchingEntry.response,
           usedFallback: matchingEntry.usedFallback,
+          fallbackReason: matchingEntry.fallbackReason,
           historyEntryId: matchingEntry.id,
           locale: matchingEntry.locale,
           isHistorySelection: false,
@@ -385,15 +437,15 @@ export function CopilotPanel({
       try {
         nextResponse = await requestHostedCopilotAnalysis(request);
       } catch (error) {
+        fallbackReason = classifyHostedAnalysisFailure(error);
+        logHostedAnalysisFallback(error, fallbackReason);
+
         if (
+          fallbackReason === "cooldown" &&
           error instanceof CopilotApiError &&
-          error.code === "ANALYSIS_COOLDOWN" &&
           error.retryAfterSeconds
         ) {
           setCooldownUntil(Date.now() + error.retryAfterSeconds * 1_000);
-          fallbackReason = "cooldown";
-        } else {
-          fallbackReason = "unavailable";
         }
         nextResponse = createLocalCopilotAnalysis(request, locale);
         usedFallback = true;
@@ -407,6 +459,7 @@ export function CopilotPanel({
         requestFingerprint,
         response: nextResponse,
         usedFallback,
+        fallbackReason,
       });
 
       setAnalysisHistory((current) => {
@@ -449,7 +502,7 @@ export function CopilotPanel({
         status: "ready",
         fingerprint: entry.requestFingerprint,
         response: entry.response,
-        fallbackReason: undefined,
+        fallbackReason: entry.fallbackReason,
         usedFallback: entry.usedFallback,
         historyEntryId: entry.id,
         locale: entry.locale,
@@ -664,14 +717,7 @@ export function CopilotPanel({
                   icon={faTriangleExclamation}
                   aria-hidden="true"
                 />
-                <span>
-                  {analysisState.fallbackReason === "cooldown" &&
-                  cooldownRemainingSeconds > 0
-                    ? t("copilot.cooldownFallback", {
-                        time: cooldownLabel,
-                      })
-                    : t("copilot.hostedUnavailableFallback")}
-                </span>
+                <span>{fallbackMessage}</span>
               </div>
             ) : null}
 

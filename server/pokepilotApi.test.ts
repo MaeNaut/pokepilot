@@ -393,11 +393,15 @@ describe("PokePilot server API", () => {
   });
 
   it("reproduces cooldown after one uncached analysis in cooldown test mode", async () => {
-    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    let now = 10_000;
+    const analyze = vi.fn(async () => {
+      now = 18_000;
+      return createModelResult(groundedModelOutput);
+    });
     const operations = new InMemoryPokePilotOperations();
     const options = {
       analyze,
-      clock: () => 10_000,
+      clock: () => now,
       operations,
       requester: { clientId: "client-a", ipHash: "ip-a" },
       safeguardMode: "cooldown-test" as const,
@@ -415,5 +419,35 @@ describe("PokePilot server API", () => {
       },
     });
     expect(analyze).toHaveBeenCalledOnce();
+  });
+
+  it("does not consume cooldown capacity when hosted analysis fails", async () => {
+    const analyze = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Temporary upstream failure"))
+      .mockResolvedValue(createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 10_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+      safeguardMode: "cooldown-test" as const,
+    };
+
+    const failed = await handlePokePilotAnalysis(validRequest, options);
+    const successful = await handlePokePilotAnalysis(validRequest, options);
+    const limited = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(failed.status).toBe(502);
+    expect(successful.status).toBe(200);
+    expect(limited.body).toMatchObject({
+      ok: false,
+      error: {
+        code: "ANALYSIS_COOLDOWN",
+        retryAfterSeconds: 10,
+      },
+    });
+    expect(analyze).toHaveBeenCalledTimes(2);
   });
 });
