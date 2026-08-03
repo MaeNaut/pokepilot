@@ -6269,7 +6269,7 @@ select {
 
 .copilot-scope-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 16px;
   border: 1px solid var(--copilot-border);
   border-radius: var(--radius-sm);
@@ -6651,6 +6651,75 @@ select {
   color: #9fa6ab;
   font-size: 0.75rem;
   line-height: 1.52;
+}
+
+.copilot-recommendations.is-candidates li {
+  --recommendation-accent: var(--copilot-accent);
+  display: grid;
+  gap: 7px;
+}
+
+.copilot-recommendations.is-candidates p {
+  margin: 0;
+}
+
+.copilot-candidate-heading,
+.copilot-candidate-heading > div,
+.copilot-candidate-types,
+.copilot-candidate-select {
+  display: flex;
+  align-items: center;
+}
+
+.copilot-candidate-heading {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.copilot-candidate-heading > div {
+  min-width: 0;
+  gap: 8px;
+}
+
+.copilot-candidate-types {
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.copilot-candidate-types .type-badge {
+  width: 18px;
+  height: 18px;
+}
+
+.copilot-candidate-types .type-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.copilot-candidate-select {
+  justify-self: end;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  border: 1px solid #64716d;
+  border-radius: 4px;
+  padding: 4px 9px;
+  background: #e8f3ef;
+  color: #17201d;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: var(--font-medium);
+  cursor: pointer;
+}
+
+.copilot-candidate-select:hover:not(:disabled) {
+  border-color: var(--copilot-accent);
+  background: #f4faf7;
+}
+
+.copilot-candidate-select:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .copilot-footer {

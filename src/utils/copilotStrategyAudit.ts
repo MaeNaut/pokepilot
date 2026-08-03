@@ -174,16 +174,16 @@ export function validateCopilotStrategyAuditForRequest(
   const { plans, interactions, facts, recommendationEvidence } =
     output.strategyAudit;
 
-  if (request.scope === "pokemon") {
+  if (request.scope !== "team") {
     if (plans.length > 0) {
-      errors.push("Pokemon-scope analysis must not include team strategy plans.");
+      errors.push("Non-team analysis must not include team strategy plans.");
     }
     if (interactions.length > 0 || facts.length > 0) {
-      errors.push("Pokemon-scope analysis must not include team audit evidence.");
+      errors.push("Non-team analysis must not include team audit evidence.");
     }
     if (recommendationEvidence.length > 0) {
       errors.push(
-        "Pokemon-scope analysis must not include team recommendation evidence.",
+        "Non-team analysis must not include team recommendation evidence.",
       );
     }
 

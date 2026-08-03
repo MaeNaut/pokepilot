@@ -388,3 +388,15 @@ export async function loadSmogonUsagePokemonIds(
 
   return snapshot.sets.map((set) => set.pokemonId);
 }
+
+export async function loadSmogonUsageSets(
+  battleFormat: BattleFormat = "doubles",
+) {
+  const snapshot = await loadSmogonUsageSnapshot(battleFormat);
+
+  if (!snapshot) {
+    throw new Error("Smogon usage data is unavailable.");
+  }
+
+  return snapshot.sets;
+}

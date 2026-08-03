@@ -71,7 +71,9 @@ function normalizeHistoryEntry(value: unknown): CopilotHistoryEntry | null {
     typeof value.teamKey === "string" &&
     value.teamKey.length > 0 &&
     (value.locale === "en" || value.locale === "ko") &&
-    (value.scope === "team" || value.scope === "pokemon") &&
+    (value.scope === "team" ||
+      value.scope === "pokemon" ||
+      value.scope === "recommendation") &&
     (value.battleFormat === "singles" || value.battleFormat === "doubles") &&
     typeof value.requestFingerprint === "string" &&
     value.requestFingerprint.length > 0 &&

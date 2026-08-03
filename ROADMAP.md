@@ -99,6 +99,10 @@ The MVP should prove the core loop:
 ## Phase 5 - AI Assistant
 
 - [x] Start with structured analysis of the active team and selected Pokemon.
+- [x] Add empty-slot Pokemon recommendations that combine deterministic M-B
+  legality, saved candidate filters, Species Clause, usage, defensive fit,
+  strategy, roles, and coverage into a diversified 28-candidate pool before
+  Luna ranks it from compact common-set and team-impact facts.
 - [x] Feed deterministic field/weather concept summaries into local team analysis and recommendations.
 - [x] Keep deterministic diagnostics, legality, stat calculations, and future damage
   calculations as the factual source of truth.
@@ -133,7 +137,7 @@ The MVP should prove the core loop:
 - [x] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
   - [x] Keep the API key and Luna adapter server-only.
-  - [x] Accept request-contract v9, call GPT-5.6 Luna Standard at low reasoning,
+  - [x] Accept request-contract v11, call GPT-5.6 Luna Standard at low reasoning,
         and validate the strict response schema at the route boundary.
   - [x] Keep team-combination and phase inference in the model rather than
         encoding fixture-derived partner strategies in the request builder.

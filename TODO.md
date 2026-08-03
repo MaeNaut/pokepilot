@@ -129,7 +129,17 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Start with structured analysis of the active team and selected Pokemon.
   - [x] Keep deterministic diagnostics and legality as the factual source of truth.
 - [ ] Add limited follow-up chat after hosted analysis is stable.
-- [ ] Add recommendation generation from locked team slots later.
+- [x] Add recommendation generation for saved empty-slot requirements.
+  - [x] Build a diversified 28-Pokemon pool from Regulation M-B legality,
+        Species Clause, type/ability/move filters, format usage, defensive
+        pressure, strategy fit, missing roles, and offensive coverage.
+  - [x] Send compact common-set, base-stat, Speed-tier, role, concept, defensive
+        delta, and Mega-branch facts so Luna can compare the full pool without
+        treating shortlist order or usage rank as the answer.
+  - [x] Let hosted AI rank only supplied candidates and reject invented,
+        duplicate, or out-of-pool recommendation IDs at the server boundary.
+  - [x] Add a Team / Pokemon / Recommend scope and require an explicit Select
+        Pokemon action before applying the popular set to the empty slot.
 - [x] Define a provider-independent Copilot request and response contract.
   - [x] Send structured team, selected Pokemon, diagnostics, and validity summaries rather than raw UI text.
   - [x] Render summary, strengths, weaknesses, priorities, and recommendations as product UI rather than plain chat text.
@@ -149,8 +159,9 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Generate identical provider-independent requests from every team fixture through the production Showdown import, diagnostics, validity, and request-building path.
   - [x] Keep source provenance, raw Showdown text, and evaluator expectations outside the model adapter input.
   - [x] Define a shared strict output JSON Schema and validate structured output before scoring or saving a result.
-  - [x] Add a Standard-tier Luna Responses API adapter with explicit 24-hour
-        prompt caching, reasoning controls, usage accounting, and estimated cost.
+  - [x] Add a Standard-tier Luna Responses API adapter with an explicitly cached
+        static-instruction prefix, reasoning controls, usage accounting, and
+        estimated cost.
   - [x] Add JSON/Markdown evaluation reports and a two-fixture smoke CLI.
   - [x] Run the first low-reasoning Singles/Doubles smoke test and a targeted
         medium-reasoning retry.
@@ -212,7 +223,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Add a server-side API route for AI analysis.
   - [x] Keep API keys out of browser code.
   - [x] Move the Luna adapter behind a server-only `POST` endpoint that accepts
-        request-contract v9 and keeps Standard-tier low reasoning explicit.
+        request-contract v11 and keeps Standard-tier low reasoning explicit.
   - [x] Validate both the incoming analysis request and the strict model response
         at the server boundary before returning product data.
   - [x] Call analysis explicitly rather than automatically on every team edit.

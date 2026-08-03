@@ -139,8 +139,11 @@ evaluation;
 the CLI explicitly sends `service_tier: "default"`, independently of the
 Fast-mode setting used by Codex. A versioned prompt-cache key keeps equivalent
 evaluation requests on the same cache route while ensuring prompt revisions do
-not reuse stale prefixes. Luna requires the `24h` extended-cache retention
-mode.
+not reuse stale prefixes. The adapter marks the end of the stable PokePilot
+instructions as an explicit cache breakpoint. Variable team and recommendation
+payloads remain after that breakpoint and are not written to the prompt cache.
+GPT-5.6 uses the explicit `30m` minimum TTL instead of the deprecated extended
+retention option used by earlier models.
 
 Run one Singles and one Doubles fixture as a smoke test before paying for the
 full 24-team suite. Add another hosted model only if Luna fails the product
@@ -257,11 +260,28 @@ two-case low run, while estimated cost rose by $0.000476 (+15.0%) to
 $0.003643. This historical smoke established Luna Standard with low reasoning
 as the working default before the complete-suite iterations below.
 
-The smoke requests recorded cache writes but no cache hits. The shared static
-prefix is currently too small relative to the differing team payloads to
-assume meaningful savings, even with a stable cache key. Cost planning should
-continue to use uncached or cache-write pricing until a larger run demonstrates
-real hits.
+These early smoke requests recorded cache writes but no cache hits. At that
+stage, cost planning therefore used uncached or cache-write pricing until a
+later run could demonstrate real reuse.
+
+### Explicit Prefix Cache Verification
+
+An August 2, 2026 two-case Prompt v28 smoke verified the GPT-5.6 explicit
+breakpoint with two different team payloads:
+
+| Request | Input | Cached input | Cache write | Output | Estimated cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cold Singles | 11,277 | 0 | 5,123 | 1,489 | $0.004298 |
+| Warm Doubles | 11,454 | 5,123 | 0 | 2,040 | $0.003817 |
+
+The first request wrote only the stable 5,123-token instruction prefix. The
+second request reused that exact prefix despite receiving different team data,
+while its variable suffix remained ordinary uncached input. The two calls cost
+$0.008115 in total. At the same token counts and outputs, writing each complete
+changing prompt would have cost about $0.009918, so the explicit boundary saved
+about 18.2% across the cold-plus-warm pair. Production response caching remains
+a separate layer and can avoid the model call entirely for an identical
+request.
 
 At the enriched low-effort average of about $0.001822 per team analysis, 900
 monthly analyses would cost about $1.64 and a $10 budget would cover roughly
@@ -380,7 +400,8 @@ imports the OpenAI SDK or reads an API key. The route:
 - calls GPT-5.6 Luna on Standard service at low reasoning with prompt v25;
 - allows up to 3,500 combined reasoning and response tokens so a valid
   structured response is not truncated by the output budget;
-- disables response storage and retains the versioned 24-hour prompt-cache key;
+- disables response storage and uses a versioned explicit prompt-cache key and
+  a 30-minute minimum TTL for the stable instruction prefix;
 - validates the strict structured output and requested analysis scope before
   returning product data;
 - maps configuration, rate-limit, invalid-output, and upstream failures to

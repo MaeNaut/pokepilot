@@ -1,6 +1,7 @@
 import type { CopilotModelOutput } from "../src/utils/copilotModelContract";
 import { validateCopilotGroundedModelOutput } from "../src/utils/copilotModelContract";
 import { getCopilotRequestFingerprint } from "../src/utils/copilotAnalysis";
+import type { CopilotAnalysisScope } from "../src/utils/copilotAnalysis";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract";
 import { validateCopilotStrategyAuditForRequest } from "../src/utils/copilotStrategyAudit";
 import {
@@ -75,13 +76,15 @@ export type PokePilotOperationalEvent =
   | {
       type: "analysis";
       cacheStatus: "hit" | "miss" | "shared";
+      cachedInputTokens?: number;
+      cacheWriteTokens?: number;
       costUsd?: number;
       durationMs: number;
       inputTokens?: number;
       outputTokens?: number;
       requestKey: string;
       safeguardMode: PokePilotSafeguardMode;
-      scope: "team" | "pokemon";
+      scope: CopilotAnalysisScope;
       totalTokens?: number;
     }
   | {
@@ -89,7 +92,7 @@ export type PokePilotOperationalEvent =
       requestKey: string;
       retryAfterSeconds: number;
       safeguardMode: PokePilotSafeguardMode;
-      scope: "team" | "pokemon";
+      scope: CopilotAnalysisScope;
       limiter: "client" | "ip";
     };
 
@@ -267,6 +270,31 @@ export async function handlePokePilotAnalysis(
           );
         }
 
+        if (requestValidation.data.scope === "recommendation") {
+          const candidateIds = new Set(
+            requestValidation.data.recommendationCandidates.map(
+              (candidate) => candidate.pokemonId,
+            ),
+          );
+          const recommendationIds =
+            outputValidation.data.analysis.recommendations.map(
+              (recommendation) => recommendation.id,
+            );
+          const expectedMinimum = Math.min(3, candidateIds.size);
+
+          if (
+            recommendationIds.length < expectedMinimum ||
+            recommendationIds.length > 5 ||
+            new Set(recommendationIds).size !== recommendationIds.length ||
+            recommendationIds.some((id) => !candidateIds.has(id))
+          ) {
+            throw Object.assign(
+              new Error("Hosted recommendation returned an invalid candidate list."),
+              { code: "AI_INVALID_RESPONSE" },
+            );
+          }
+        }
+
         const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
           outputValidation.data,
           requestValidation.data,
@@ -353,6 +381,8 @@ export async function handlePokePilotAnalysis(
     onOperationalEvent?.({
       type: "analysis",
       cacheStatus: "miss",
+      cachedInputTokens: completed.result.usage.cachedInputTokens,
+      cacheWriteTokens: completed.result.usage.cacheWriteTokens,
       costUsd: completed.result.usage.costUsd,
       durationMs: Math.max(0, clock() - startedAt),
       inputTokens: completed.result.usage.inputTokens,

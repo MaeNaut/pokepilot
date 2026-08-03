@@ -1942,10 +1942,17 @@ function App() {
             pokemonIndex={pokemonIndex}
             abilityIndex={abilityIndex}
             abilityIndexStatus={abilityIndexStatus}
+            showdownLegality={showdownLegality}
+            showdownLegalityStatus={showdownLegalityStatus}
             selectedSlot={selectedTeamSlot}
             buildState={teamBuildState}
             diagnostics={teamDiagnostics}
             validity={teamValidity}
+            onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
+              await handleSelectPokemon(slotIndex, pokemonId, {
+                applyUsageStats: true,
+              });
+            }}
           />
         </div>
         <button

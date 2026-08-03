@@ -14,6 +14,7 @@ const requestKeys = new Set([
   "sets",
   "megaOptions",
   "candidateFilters",
+  "recommendationCandidates",
   "mechanics",
   "diagnostics",
 ]);
@@ -118,6 +119,69 @@ function hasValidMechanicsShape(value: unknown) {
   );
 }
 
+function hasValidRecommendationCandidateShape(value: unknown) {
+  const stringArray = (entry: unknown, maxLength = 18) =>
+    Array.isArray(entry) &&
+    entry.length <= maxLength &&
+    entry.every((item) => typeof item === "string");
+
+  return (
+    isRecord(value) &&
+    typeof value.pokemonId === "string" &&
+    typeof value.displayName === "string" &&
+    Array.isArray(value.types) &&
+    value.types.length >= 1 &&
+    value.types.length <= 2 &&
+    Array.isArray(value.typeDisplayNames) &&
+    value.typeDisplayNames.length === value.types.length &&
+    Array.isArray(value.abilities) &&
+    value.abilities.length <= 6 &&
+    value.abilities.every(
+      (ability) =>
+        isRecord(ability) &&
+        typeof ability.id === "string" &&
+        typeof ability.displayName === "string" &&
+        (!("effect" in ability) || typeof ability.effect === "string"),
+    ) &&
+    (value.baseStats === null || isStatBlock(value.baseStats)) &&
+    typeof value.speedTier === "string" &&
+    ["very-slow", "slow", "mid", "fast", "very-fast", "unknown"].includes(
+      value.speedTier,
+    ) &&
+    typeof value.requiresMegaStone === "boolean" &&
+    (value.usageRank === null ||
+      (Number.isInteger(value.usageRank) && Number(value.usageRank) > 0)) &&
+    (value.commonSet === null ||
+      (isRecord(value.commonSet) &&
+        (value.commonSet.ability === null ||
+          typeof value.commonSet.ability === "string") &&
+        (value.commonSet.item === null || typeof value.commonSet.item === "string") &&
+        (value.commonSet.nature === null ||
+          typeof value.commonSet.nature === "string") &&
+        Array.isArray(value.commonSet.moves) &&
+        value.commonSet.moves.length <= 4 &&
+        value.commonSet.moves.every(
+          (move) =>
+            isRecord(move) &&
+            typeof move.id === "string" &&
+            typeof move.displayName === "string" &&
+            typeof move.type === "string" &&
+            typeof move.category === "string" &&
+            (move.power === null ||
+              (typeof move.power === "number" && Number.isFinite(move.power))),
+        ))) &&
+    isRecord(value.fit) &&
+    stringArray(value.fit.resistsTeamThreats) &&
+    stringArray(value.fit.amplifiesTeamThreats) &&
+    stringArray(value.fit.addsUnansweredWeaknesses) &&
+    stringArray(value.fit.coversTypes) &&
+    stringArray(value.fit.roleContributions, 6) &&
+    stringArray(value.fit.roleRedundancies, 6) &&
+    stringArray(value.fit.conceptSynergies, 7) &&
+    stringArray(value.fit.conflicts, 6)
+  );
+}
+
 export function validateCopilotAnalysisRequest(
   value: unknown,
 ): CopilotRequestValidation {
@@ -136,14 +200,18 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 9) {
-    errors.push("version must be 9.");
+  if (value.version !== 11) {
+    errors.push("version must be 11.");
   }
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
-  if (value.scope !== "team" && value.scope !== "pokemon") {
-    errors.push("scope must be team or pokemon.");
+  if (
+    value.scope !== "team" &&
+    value.scope !== "pokemon" &&
+    value.scope !== "recommendation"
+  ) {
+    errors.push("scope must be team, pokemon, or recommendation.");
   }
   if (value.battleFormat !== "singles" && value.battleFormat !== "doubles") {
     errors.push("battleFormat must be singles or doubles.");
@@ -177,6 +245,24 @@ export function validateCopilotAnalysisRequest(
     value.candidateFilters.length > 6
   ) {
     errors.push("candidateFilters must contain at most six entries.");
+  }
+  if (
+    !Array.isArray(value.recommendationCandidates) ||
+    value.recommendationCandidates.length > 30 ||
+    !value.recommendationCandidates.every(hasValidRecommendationCandidateShape)
+  ) {
+    errors.push(
+      "recommendationCandidates must contain at most thirty valid candidates.",
+    );
+  }
+  if (
+    value.scope !== "recommendation" &&
+    Array.isArray(value.recommendationCandidates) &&
+    value.recommendationCandidates.length > 0
+  ) {
+    errors.push(
+      "recommendationCandidates must be empty outside recommendation scope.",
+    );
   }
   if (!hasValidMechanicsShape(value.mechanics)) {
     errors.push("mechanics must contain bounded move, ability, and item arrays.");

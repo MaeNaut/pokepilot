@@ -37,6 +37,10 @@ Current slice:
 - versioned local PokePilot analysis history with reload restoration,
   language-aware result recovery, bounded per-team retention, and a panel-safe
   history menu with confirmed deletion
+- bounded empty-slot Pokemon recommendations: a diversified 28-candidate pool
+  spanning Regulation M-B legality, saved filters, usage, defensive fit,
+  strategy, roles, and coverage, followed by AI ranking that cannot return
+  candidates outside the supplied pool
 - reduced-motion-safe staged reveals for newly completed PokePilot analyses,
   while restored and history-selected results remain immediate
 - an offline 20-team Singles/Doubles baseline plus four focused strategy

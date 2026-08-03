@@ -9,7 +9,7 @@ import {
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 9,
+  version: 11,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -18,6 +18,7 @@ const validRequest = {
   sets: [],
   megaOptions: [],
   candidateFilters: [],
+  recommendationCandidates: [],
   mechanics: { moves: [], abilities: [], items: [] },
   diagnostics: {
     filledSlots: 0,

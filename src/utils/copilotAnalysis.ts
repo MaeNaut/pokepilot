@@ -52,8 +52,9 @@ import {
   type CopilotMechanicsSetInput,
   type CopilotMechanicsSnapshot,
 } from "./copilotMechanics";
+import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
 
-export type CopilotAnalysisScope = "team" | "pokemon";
+export type CopilotAnalysisScope = "team" | "pokemon" | "recommendation";
 export type CopilotPriority = "high" | "medium" | "low";
 
 export type CopilotMoveCategory =
@@ -171,7 +172,7 @@ export type CopilotCandidateFilterSnapshot = {
 };
 
 export type CopilotAnalysisRequest = {
-  version: 9;
+  version: 11;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -180,6 +181,7 @@ export type CopilotAnalysisRequest = {
   sets: CopilotSetSnapshot[];
   megaOptions: CopilotMegaOptionSnapshot[];
   candidateFilters: CopilotCandidateFilterSnapshot[];
+  recommendationCandidates: CopilotRecommendationCandidateSnapshot[];
   mechanics: CopilotMechanicsSnapshot;
   diagnostics: CopilotDiagnosticsSnapshot;
 };
@@ -215,6 +217,7 @@ type CreateCopilotRequestInput = {
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;
   validity: TeamValidityResult;
+  recommendationCandidates?: CopilotRecommendationCandidateSnapshot[];
 };
 
 function normalizeLookup(value: string) {
@@ -626,6 +629,7 @@ export function createCopilotAnalysisRequest({
   buildState,
   diagnostics,
   validity,
+  recommendationCandidates = [],
 }: CreateCopilotRequestInput): CopilotAnalysisRequest {
   const mechanicsSets: CopilotMechanicsSetInput[] = [];
   const abilityById = new Map(
@@ -776,7 +780,7 @@ export function createCopilotAnalysisRequest({
   );
 
   return {
-    version: 9,
+    version: 11,
     locale,
     scope,
     battleFormat,
@@ -785,6 +789,8 @@ export function createCopilotAnalysisRequest({
     sets,
     megaOptions: createMegaOptions(sets),
     candidateFilters,
+    recommendationCandidates:
+      scope === "recommendation" ? recommendationCandidates : [],
     mechanics: createCopilotMechanicsSnapshot(mechanicsSets),
     diagnostics: {
       filledSlots: diagnostics.filledSlots,
@@ -809,6 +815,10 @@ export function createCopilotAnalysisRequest({
 export function getCopilotRequestFingerprint(request: CopilotAnalysisRequest) {
   if (request.scope === "team") {
     return JSON.stringify({ ...request, selectedSlot: -1 });
+  }
+
+  if (request.scope === "recommendation") {
+    return JSON.stringify(request);
   }
 
   return JSON.stringify({
@@ -1422,11 +1432,69 @@ function analyzePokemonRequest(
   };
 }
 
+function analyzeRecommendationRequest(
+  request: CopilotAnalysisRequest,
+  locale: Locale,
+): CopilotAnalysisResponse {
+  const candidates = request.recommendationCandidates.slice(0, 5);
+  const isKorean = locale === "ko";
+
+  if (request.sets.some((set) => set.slotIndex === request.selectedSlot)) {
+    return {
+      version: 1,
+      source: "local",
+      scope: "recommendation",
+      title: isKorean ? "빈 슬롯 선택 필요" : "Choose an empty slot",
+      summary: isKorean
+        ? "포켓몬 추천은 현재 선택한 빈 슬롯의 필터와 팀 구성을 기준으로 작동함"
+        : "Pokemon recommendations use the selected empty slot, its filters, and the current team.",
+      playstyle: isKorean ? "추천 준비" : "Recommendation setup",
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+    };
+  }
+
+  return {
+    version: 1,
+    source: "local",
+    scope: "recommendation",
+    title: isKorean ? "추천 후보" : "Recommended candidates",
+    summary:
+      candidates.length > 0
+        ? isKorean
+          ? "M-B 적법성, 선택 필터, 사용률과 현재 팀의 타입 구조를 반영한 후보"
+          : "Candidates filtered by M-B legality, slot requirements, usage, and the current team's type profile."
+        : isKorean
+          ? "현재 조건을 모두 만족하는 후보 없음"
+          : "No candidate satisfies every current requirement.",
+    playstyle: isKorean ? "후보 비교" : "Candidate comparison",
+    strengths: [],
+    weaknesses: [],
+    recommendations: candidates.map((candidate, index) => ({
+      id: candidate.pokemonId,
+      title: candidate.displayName,
+      reason: isKorean
+        ? index === 0
+          ? "현재 조건에서 가장 높은 우선순위의 합법 후보"
+          : "현재 필터와 팀 구조를 만족하는 합법 후보"
+        : index === 0
+          ? "The highest-priority legal candidate under the current requirements."
+          : "A legal candidate that fits the current filters and team structure.",
+      priority: index === 0 ? "high" : "medium",
+    })),
+  };
+}
+
 export function createLocalCopilotAnalysis(
   request: CopilotAnalysisRequest,
   locale: Locale = "en",
 ): CopilotAnalysisResponse {
-  return request.scope === "team"
-    ? analyzeTeamRequest(request, locale)
-    : analyzePokemonRequest(request, locale);
+  if (request.scope === "team") {
+    return analyzeTeamRequest(request, locale);
+  }
+
+  return request.scope === "pokemon"
+    ? analyzePokemonRequest(request, locale)
+    : analyzeRecommendationRequest(request, locale);
 }

@@ -5,7 +5,7 @@ import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 9,
+  version: 11,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -14,6 +14,7 @@ const validRequest = {
   sets: [],
   megaOptions: [],
   candidateFilters: [],
+  recommendationCandidates: [],
   mechanics: {
     moves: [],
     abilities: [],
@@ -77,6 +78,35 @@ const groundedModelOutput = {
   },
 };
 
+const recommendationRequest = {
+  ...validRequest,
+  scope: "recommendation",
+  recommendationCandidates: ["rotom-wash", "gastrodon", "pelipper"].map(
+    (pokemonId, index) => ({
+      pokemonId,
+      displayName: pokemonId,
+      types: [index === 2 ? "flying" : "water"],
+      typeDisplayNames: [index === 2 ? "Flying" : "Water"],
+      abilities: [],
+      baseStats: null,
+      speedTier: "unknown",
+      requiresMegaStone: false,
+      usageRank: index + 1,
+      commonSet: null,
+      fit: {
+        resistsTeamThreats: [],
+        amplifiesTeamThreats: [],
+        addsUnansweredWeaknesses: [],
+        coversTypes: [],
+        roleContributions: [],
+        roleRedundancies: [],
+        conceptSynergies: [],
+        conflicts: [],
+      },
+    }),
+  ),
+} satisfies CopilotAnalysisRequest;
+
 function createModelResult(output: unknown): LunaAnalysisResult {
   return {
     output,
@@ -93,7 +123,7 @@ function createModelResult(output: unknown): LunaAnalysisResult {
       responseId: "resp_test",
       serviceTier: "default",
       reasoningEffort: "low",
-      promptVersion: 25,
+      promptVersion: 28,
     },
   };
 }
@@ -156,7 +186,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 25,
+        promptVersion: 28,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);
@@ -169,6 +199,33 @@ describe("PokePilot server API", () => {
           ...groundedModelOutput,
           analysis: { ...modelOutput, scope: "pokemon" },
         }),
+    });
+
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({
+      ok: false,
+      error: { code: "AI_INVALID_RESPONSE" },
+    });
+  });
+
+  it("rejects recommendation candidates that were not supplied by the client", async () => {
+    const recommendationOutput = {
+      ...groundedModelOutput,
+      analysis: {
+        ...modelOutput,
+        scope: "recommendation",
+        recommendations: ["rotom-wash", "gastrodon", "invented"].map(
+          (id) => ({
+            id,
+            title: id,
+            reason: "Fit",
+            priority: "medium",
+          }),
+        ),
+      },
+    };
+    const result = await handlePokePilotAnalysis(recommendationRequest, {
+      analyze: async () => createModelResult(recommendationOutput),
     });
 
     expect(result.status).toBe(502);

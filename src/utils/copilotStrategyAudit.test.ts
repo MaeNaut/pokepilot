@@ -74,7 +74,7 @@ function createRequest(
   overrides: Partial<CopilotAnalysisRequest> = {},
 ): CopilotAnalysisRequest {
   return {
-    version: 9,
+    version: 11,
     locale: "en",
     scope: "team",
     battleFormat: "doubles",
@@ -83,6 +83,7 @@ function createRequest(
     sets,
     megaOptions: [],
     candidateFilters: [],
+    recommendationCandidates: [],
     mechanics: { moves: [], abilities: [], items: [] },
     diagnostics: {
       filledSlots: sets.length,

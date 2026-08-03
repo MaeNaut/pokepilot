@@ -4,7 +4,7 @@ import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis";
 import { copilotGroundedModelOutputJsonSchema } from "../src/utils/copilotModelContract";
 
 export const OPENAI_LUNA_MODEL_ID = "gpt-5.6-luna";
-export const POKEPILOT_AI_PROMPT_VERSION = 25;
+export const POKEPILOT_AI_PROMPT_VERSION = 28;
 export const POKEPILOT_AI_MAX_OUTPUT_TOKENS = 3_500;
 
 export type LunaReasoningEffort = "none" | "low" | "medium";
@@ -87,11 +87,13 @@ Return a top-level object with analysis and strategyAudit. analysis is the user-
 
 Record every concrete cross-set interaction used by analysis in strategyAudit.interactions. Link it to one plan, use the same phase and active slots as the interaction's focal action, and bind each participating slot to only the canonical selected move, current or projected-Mega ability, and held-item IDs that materially support the interaction. Every bound move must have a matching action by the same owner somewhere in that plan. For the simultaneous ally-target and shared-move kinds, every bound move must instead match the interaction's exact phase and active slots. This allows a move-ability, move-item, field-control, positioning, deception, or other interaction to bind a documented multi-turn sequence without pretending all moves occur together. current means the set exactly as supplied, including a set already represented in Mega form; mega means only the projected megaEvolution of a supplied non-Mega set after activation. Interaction participants must belong to the referenced lineup. Participants in ally-target and shared-move interactions must all be simultaneously active; a positioning, field-transition, or deception interaction may also name a lineup member that enters or is presented from the backline. shared-move means the participants selected the exact same canonical move ID and can use it in the same Doubles active state; never use it for functionally similar moves, alternate Singles users, or moves that merely share a category.
 
-Record only the smallest set of move, ability, item, Mega-option, defensive type relation, or unmodified final-Speed facts directly asserted by and necessary to support a user-facing recommendation. strategyAudit.facts is not an inventory or a test: omit background facts, redundant facts, and facts that are not literally used by the cited recommendation. For mega-option, use the canonical pokemonId from request.megaOptions as valueId and always use current state because the fact binds the supplied roster slot to its available option; use mega only when binding a projected Mega ability or defensive profile elsewhere. For defensive facts, inspect the exact subject slot and state: use weak-to only for weaknesses, resists only for a nonzero resistance, and immune-to only for an immunity. Never add a second type relation merely because it is nearby in a source map. Use objectSlotIndex -1 for facts about one set; for final-Speed comparisons, reference the other slot, use current state, and leave valueId empty. Do not record field-modified or otherwise inferred order as a final-Speed fact. Create exactly one recommendationEvidence entry per user-facing recommendation and link it only to the minimal plans, interactions, and facts that directly support that recommendation. Do not invent audit entries merely to fill an array. For Pokemon-scope analysis or a team with no filled sets, return empty plans, interactions, facts, and recommendationEvidence arrays. Ensure the user-facing analysis never contradicts strategyAudit.
+Record only the smallest set of move, ability, item, Mega-option, defensive type relation, or unmodified final-Speed facts directly asserted by and necessary to support a user-facing recommendation. strategyAudit.facts is not an inventory or a test: omit background facts, redundant facts, and facts that are not literally used by the cited recommendation. For mega-option, use the canonical pokemonId from request.megaOptions as valueId and always use current state because the fact binds the supplied roster slot to its available option; use mega only when binding a projected Mega ability or defensive profile elsewhere. For defensive facts, inspect the exact subject slot and state: use weak-to only for weaknesses, resists only for a nonzero resistance, and immune-to only for an immunity. Never add a second type relation merely because it is nearby in a source map. Use objectSlotIndex -1 for facts about one set; for final-Speed comparisons, reference the other slot, use current state, and leave valueId empty. Do not record field-modified or otherwise inferred order as a final-Speed fact. Create exactly one recommendationEvidence entry per user-facing recommendation and link it only to the minimal plans, interactions, and facts that directly support that recommendation. Do not invent audit entries merely to fill an array. For any non-team scope or a team with no filled sets, return empty plans, interactions, facts, and recommendationEvidence arrays. Ensure the user-facing analysis never contradicts strategyAudit.
+
+When request.scope is recommendation, evaluate only request.recommendationCandidates. Those candidates have already passed Regulation M-B legality, Species Clause, and every saved empty-slot filter. Never name or recommend a Pokemon outside that array. The shortlist is deliberately diversified across usage, defense, coverage, missing responsibilities, and current team concepts; its order is not a ranking. Rank three to five unique candidates, or every candidate when fewer than three are supplied. Set each recommendation id to the candidate pokemonId exactly as supplied. Use the candidate displayName in user-facing prose. Compare baseStats, speedTier, commonSet, typing, supplied ability effects, usageRank, and every fit delta against the current sets, diagnostics, battleFormat, and candidateFilters. Treat commonSet as observed usage evidence rather than a mandatory build. A legal movepool coversTypes signal means the candidate can be built for that coverage; do not claim the move is already selected. Explicitly weigh resistsTeamThreats against amplifiesTeamThreats and addsUnansweredWeaknesses instead of counting only positive type matches. Use roleContributions, roleRedundancies, and conceptSynergies as heuristic responsibilities, then verify them against commonSet and baseStats. conceptSynergies is the exhaustive supplied list of active team modes that the candidate can support: never claim support for an active weather, terrain, or speed mode absent from that list. Read generic conflict strings literally; for example, common-ability-benefits-from-sun-not-active-sand means the common ability depends on sun and does not support the team's sand mode. Never merge distinct weather names or claim that an ability tied to one weather benefits another weather. A fast Pokemon on a Trick Room roster is not automatically invalid: require a distinct lead, support, matchup, or post-room responsibility. A slow Pokemon is not automatically a good Trick Room fit. If requiresMegaStone is true, compare it with request.megaOptions; a second Mega branch is normal, while a would-be third Mega option needs a concrete replacement branch and must not be presented as a free addition. Explain a concrete team fit and a concrete tradeoff for every candidate, avoid treating usage rank alone as strategic proof, and keep strengths and weaknesses focused on the shortlist rather than repeating the full team analysis.
 
 Do not invent moves, items, abilities, legality, damage calculations, matchup data, or usage statistics that are absent from the request. When evidence is incomplete, state the uncertainty instead of guessing. Recommendations are strategic guidance, not necessarily edits: preserve deliberate, legal roster branches and explain how to use them. Assign high priority only to the team's central game plan or an issue that affects most matchups, medium to a matchup-dependent branch or adjustment, and low to an optional refinement. Recommendations must be concrete, legal within the supplied Regulation M-B context, and prioritized by likely impact.
 
-Write analysis in request.locale: use concise, natural Korean for ko and concise, natural English for en. Treat fact-map and strategyAudit structure as private implementation detail: never print raw IDs or words such as ID, key, source map, diagnostics, or strategy audit in analysis. Convert evidence into ordinary Pokemon displayName values and natural strategic prose. Keep recommendation titles and reasons logically consistent. In Korean, prefer short declarative phrases over honorific full-sentence prose. Return one to three strengths, weaknesses, and recommendations in analysis. Use the supplied team name for the title and keep recommendation identifiers and plan identifiers stable, short, and ASCII-safe.`;
+Write analysis in request.locale: use concise, natural Korean for ko and concise, natural English for en. Treat fact-map and strategyAudit structure as private implementation detail: never print raw IDs or words such as ID, key, source map, diagnostics, or strategy audit in analysis. Convert evidence into ordinary Pokemon displayName values and natural strategic prose. Keep recommendation titles and reasons logically consistent. In Korean, prefer short declarative phrases over honorific full-sentence prose. Return one to three strengths and weaknesses. Return one to three recommendations for team and Pokemon scopes, and three to five for recommendation scope unless fewer candidates exist. Use the supplied team name for the title and keep recommendation identifiers and plan identifiers stable, short, and ASCII-safe.`;
 
 function getUncachedInputTokens(usage: ResponseUsage) {
   return Math.max(
@@ -170,9 +172,33 @@ export async function analyzeWithOpenAiLuna(
     service_tier: "default",
     store: false,
     prompt_cache_key: `pokepilot-${cacheNamespace}-v${POKEPILOT_AI_PROMPT_VERSION}-${reasoningEffort}`,
-    prompt_cache_retention: "24h",
-    instructions: pokepilotInstructions,
-    input: JSON.stringify(request),
+    prompt_cache_options: {
+      mode: "explicit",
+      ttl: "30m",
+    },
+    input: [
+      {
+        type: "message",
+        role: "developer",
+        content: [
+          {
+            type: "input_text",
+            text: pokepilotInstructions,
+            prompt_cache_breakpoint: { mode: "explicit" },
+          },
+        ],
+      },
+      {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: JSON.stringify(request),
+          },
+        ],
+      },
+    ],
     reasoning: {
       effort: reasoningEffort,
       context: "current_turn",

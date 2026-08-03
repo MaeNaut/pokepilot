@@ -5,6 +5,7 @@ import {
   faCheck,
   faClockRotateLeft,
   faLightbulb,
+  faMagnifyingGlass,
   faRotateRight,
   faSpinner,
   faTrash,
@@ -20,6 +21,13 @@ import type {
   PokemonIndexEntry,
   TeamSlot,
 } from "../types";
+import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
+import {
+  getLegalMoves,
+  getPokemonCandidateAbilities,
+  isPokemonLegal,
+} from "../api/showdownLegality";
+import { normalizeShowdownId } from "../api/showdownIds";
 import {
   createCopilotAnalysisRequest,
   createLocalCopilotAnalysis,
@@ -52,6 +60,14 @@ import {
   storeCopilotHistory,
   type CopilotHistoryEntry,
 } from "../utils/copilotHistory";
+import { emptyPokemonCandidateFilters } from "../utils/pokemonCandidateFilters";
+import {
+  createPokemonRecommendationCandidates,
+  type CopilotRecommendationCandidateSnapshot,
+  type PokemonRecommendationOption,
+} from "../utils/pokemonRecommendations";
+import { formatIdLabel } from "../api/showdownIds";
+import { TypeBadge } from "./TypeBadge";
 
 type CopilotPanelProps = {
   savedTeamId: string | null;
@@ -61,10 +77,21 @@ type CopilotPanelProps = {
   pokemonIndex: PokemonIndexEntry[];
   abilityIndex: PokemonAbility[];
   abilityIndexStatus: DataLoadStatus;
+  showdownLegality: ShowdownLegalitySnapshot | null;
+  showdownLegalityStatus: DataLoadStatus;
   selectedSlot: number;
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;
   validity: TeamValidityResult;
+  onSelectRecommendedPokemon: (
+    slotIndex: number,
+    pokemonId: string,
+  ) => Promise<void>;
+};
+
+type RecommendationCandidateState = {
+  status: "idle" | "loading" | "ready" | "error";
+  candidates: CopilotRecommendationCandidateSnapshot[];
 };
 
 type AnalysisState = {
@@ -162,18 +189,22 @@ function logHostedAnalysisFallback(
     return;
   }
 
-  console.warn("[PokePilot] Hosted analysis fallback.", {
-    reason,
-    ...(error instanceof CopilotApiError
-      ? {
-          code: error.code,
-          status: error.status,
-          retryAfterSeconds: error.retryAfterSeconds,
-        }
-      : {
-          errorName: error instanceof Error ? error.name : typeof error,
-        }),
-  });
+  const details = error instanceof CopilotApiError
+    ? [
+        `reason=${reason}`,
+        `code=${error.code}`,
+        `status=${error.status}`,
+        `message=${JSON.stringify(error.message)}`,
+        ...(error.retryAfterSeconds
+          ? [`retryAfterSeconds=${error.retryAfterSeconds}`]
+          : []),
+      ]
+    : [
+        `reason=${reason}`,
+        `error=${error instanceof Error ? error.name : typeof error}`,
+      ];
+
+  console.warn(`[PokePilot] Hosted analysis fallback: ${details.join(" ")}`);
 }
 
 export function CopilotPanel({
@@ -184,12 +215,15 @@ export function CopilotPanel({
   pokemonIndex,
   abilityIndex,
   abilityIndexStatus,
+  showdownLegality,
+  showdownLegalityStatus,
   selectedSlot,
   buildState,
   diagnostics,
   validity,
+  onSelectRecommendedPokemon,
 }: CopilotPanelProps) {
-  const { locale, pokemonName, t } = useLocalization();
+  const { gameName, locale, pokemonName, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [analysisByContext, setAnalysisByContext] = useState<
     Record<string, AnalysisState>
@@ -200,11 +234,163 @@ export function CopilotPanel({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHistoryDeletePending, setIsHistoryDeletePending] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [recommendationState, setRecommendationState] =
+    useState<RecommendationCandidateState>({
+      status: "idle",
+      candidates: [],
+    });
+  const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
+    null,
+  );
   const [cooldownClock, setCooldownClock] = useState(Date.now);
   const [historyMenuPosition, setHistoryMenuPosition] =
     useState<HistoryMenuPosition | null>(null);
   const historyControlRef = useRef<HTMLDivElement | null>(null);
   const historyMenuRef = useRef<HTMLDivElement | null>(null);
+  const selectedMember = team[selectedSlot];
+  const activeCandidateFilters =
+    buildState.candidateFiltersBySlot[selectedSlot] ??
+    emptyPokemonCandidateFilters;
+  const recommendationOptions = useMemo<PokemonRecommendationOption[]>(() => {
+    const abilityById = new Map(
+      abilityIndex.map((ability) => [normalizeShowdownId(ability.id), ability]),
+    );
+
+    return pokemonIndex
+      .filter((entry) => entry.isSelectorOption)
+      .filter((entry) =>
+        isPokemonLegal(
+          showdownLegality,
+          entry.showdownId,
+          entry.speciesKey,
+        ),
+      )
+      .map((entry) => {
+        const includeForm =
+          entry.formKind === "gender" ||
+          entry.formKind === "regional" ||
+          entry.displayName !== formatIdLabel(entry.speciesKey);
+
+        return {
+          id: entry.name,
+          speciesKey: entry.speciesKey,
+          displayName: pokemonName({
+            id: entry.name,
+            speciesId: entry.speciesKey,
+            fallback: entry.displayName,
+            includeForm,
+            formLabel: entry.formLabel,
+            formKind: entry.formKind,
+          }),
+          types: entry.types,
+          typeDisplayNames: entry.types.map((type) =>
+            gameName("types", type, formatIdLabel(type)),
+          ),
+          abilities: getPokemonCandidateAbilities(
+            showdownLegality,
+            entry,
+            pokemonIndex,
+          ).map((ability) => {
+            const abilityData = abilityById.get(normalizeShowdownId(ability.id));
+
+            return {
+              id: ability.id,
+              displayName: gameName("abilities", ability.id, ability.name),
+              ...(abilityData?.effect ? { effect: abilityData.effect } : {}),
+            };
+          }),
+          legalMoveIds: [
+            ...(getLegalMoves(
+              showdownLegality,
+              entry.showdownId,
+              entry.speciesKey,
+            ) ?? []),
+          ],
+          isMegaForm: entry.formKind === "mega",
+        };
+      });
+  }, [abilityIndex, gameName, pokemonIndex, pokemonName, showdownLegality]);
+  const occupiedSpeciesKeys = useMemo(
+    () =>
+      new Set(
+        team.flatMap((member) => {
+          if (!member) {
+            return [];
+          }
+
+          return [
+            pokemonIndex.find((entry) => entry.name === member.id)?.speciesKey ??
+              member.id,
+          ];
+        }),
+      ),
+    [pokemonIndex, team],
+  );
+  const existingMegaOptionCount = useMemo(
+    () =>
+      team.reduce((count, member, slotIndex) => {
+        if (!member) return count;
+
+        const item = buildState.itemBySlot[slotIndex];
+        const isMegaForm =
+          pokemonIndex.find((entry) => entry.name === member.id)?.formKind ===
+          "mega";
+        const hasMegaStone = item?.category === "Mega Stones";
+        return count + Number(isMegaForm || hasMegaStone);
+      }, 0),
+    [buildState.itemBySlot, pokemonIndex, team],
+  );
+
+  useEffect(() => {
+    if (scope !== "recommendation" || selectedMember) {
+      setRecommendationState({ status: "idle", candidates: [] });
+      return;
+    }
+    if (
+      abilityIndexStatus === "loading" ||
+      showdownLegalityStatus === "loading"
+    ) {
+      setRecommendationState({ status: "loading", candidates: [] });
+      return;
+    }
+
+    let isCancelled = false;
+    setRecommendationState({ status: "loading", candidates: [] });
+    void createPokemonRecommendationCandidates({
+      options: recommendationOptions,
+      filters: activeCandidateFilters,
+      occupiedSpeciesKeys,
+      diagnostics,
+      battleFormat,
+      existingMegaOptionCount,
+    })
+      .then((candidates) => {
+        if (!isCancelled) {
+          setRecommendationState({ status: "ready", candidates });
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setRecommendationState({ status: "error", candidates: [] });
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    abilityIndexStatus,
+    activeCandidateFilters,
+    battleFormat,
+    diagnostics,
+    existingMegaOptionCount,
+    occupiedSpeciesKeys,
+    recommendationOptions,
+    scope,
+    selectedMember,
+    showdownLegalityStatus,
+  ]);
+
   const request = useMemo(
     () =>
       createCopilotAnalysisRequest({
@@ -219,6 +405,7 @@ export function CopilotPanel({
         buildState,
         diagnostics,
         validity,
+        recommendationCandidates: recommendationState.candidates,
       }),
     [
       battleFormat,
@@ -232,6 +419,7 @@ export function CopilotPanel({
       team,
       teamName,
       validity,
+      recommendationState.candidates,
     ],
   );
   const requestFingerprint = useMemo(
@@ -289,11 +477,17 @@ export function CopilotPanel({
           ? t("copilot.refresh")
           : scope === "team"
             ? t("copilot.analyze")
-            : t("copilot.analyzePokemon");
+            : scope === "pokemon"
+              ? t("copilot.analyzePokemon")
+              : t("copilot.findRecommendations");
   const isAnalyzeDisabled =
     analysisState.status === "loading" ||
     abilityIndexStatus === "loading" ||
-    cooldownRemainingSeconds > 0;
+    cooldownRemainingSeconds > 0 ||
+    (scope === "recommendation" &&
+      (Boolean(selectedMember) ||
+        recommendationState.status !== "ready" ||
+        recommendationState.candidates.length === 0));
 
   useEffect(() => {
     if (!cooldownUntil) {
@@ -495,6 +689,20 @@ export function CopilotPanel({
     }
   }
 
+  async function handleSelectCandidate(pokemonId: string) {
+    if (selectingCandidateId) {
+      return;
+    }
+
+    setSelectingCandidateId(pokemonId);
+    try {
+      await onSelectRecommendedPokemon(selectedSlot, pokemonId);
+      setScope("pokemon");
+    } finally {
+      setSelectingCandidateId(null);
+    }
+  }
+
   function handleSelectHistory(entry: CopilotHistoryEntry) {
     const entryContextKey = getAnalysisContextKey(historyTeamKey, entry.scope);
 
@@ -626,7 +834,9 @@ export function CopilotPanel({
                               {t(
                                 entry.scope === "team"
                                   ? "copilot.team"
-                                  : "copilot.pokemon",
+                                  : entry.scope === "pokemon"
+                                    ? "copilot.pokemon"
+                                    : "copilot.recommend",
                               )}
                               {" · "}
                               {t(
@@ -704,6 +914,16 @@ export function CopilotPanel({
           <FontAwesomeIcon icon={faUser} aria-hidden="true" />
           {t("copilot.pokemon")}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={scope === "recommendation"}
+          className={scope === "recommendation" ? "is-active" : ""}
+          onClick={() => setScope("recommendation")}
+        >
+          <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
+          {t("copilot.recommend")}
+        </button>
       </div>
 
       <div className="copilot-content" aria-live="polite">
@@ -740,7 +960,9 @@ export function CopilotPanel({
                     ? t("copilot.languageChanged")
                     : scope === "team"
                       ? t("copilot.teamChanged")
-                      : t("copilot.setChanged")}
+                      : scope === "pokemon"
+                        ? t("copilot.setChanged")
+                        : t("copilot.recommendationChanged")}
                 </span>
                 <button
                   type="button"
@@ -774,43 +996,109 @@ export function CopilotPanel({
               </section>
             ) : null}
 
-            <section className="copilot-section copilot-reveal is-focus">
-              <div className="copilot-section-heading">
-                <FontAwesomeIcon
-                  icon={response.weaknesses.length > 0 ? faTriangleExclamation : faCheck}
-                  aria-hidden="true"
-                />
-                <h3>{t("copilot.focus")}</h3>
-              </div>
-              {response.weaknesses.length > 0 ? (
-                <ul className="copilot-insight-list is-focus">
-                  {response.weaknesses.map((weakness) => (
-                    <li key={weakness}>{weakness}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="copilot-clear-message">{t("copilot.noConcerns")}</p>
-              )}
-            </section>
+            {scope !== "recommendation" || response.weaknesses.length > 0 ? (
+              <section className="copilot-section copilot-reveal is-focus">
+                <div className="copilot-section-heading">
+                  <FontAwesomeIcon
+                    icon={
+                      response.weaknesses.length > 0
+                        ? faTriangleExclamation
+                        : faCheck
+                    }
+                    aria-hidden="true"
+                  />
+                  <h3>{t("copilot.focus")}</h3>
+                </div>
+                {response.weaknesses.length > 0 ? (
+                  <ul className="copilot-insight-list is-focus">
+                    {response.weaknesses.map((weakness) => (
+                      <li key={weakness}>{weakness}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="copilot-clear-message">
+                    {t("copilot.noConcerns")}
+                  </p>
+                )}
+              </section>
+            ) : null}
 
-            <section className="copilot-section copilot-recommendations">
+            <section
+              className={`copilot-section copilot-recommendations${
+                scope === "recommendation" ? " is-candidates" : ""
+              }`}
+            >
               <div className="copilot-section-heading copilot-reveal is-recommendations-heading">
                 <FontAwesomeIcon icon={faLightbulb} aria-hidden="true" />
-                <h3>{t("copilot.nextSteps")}</h3>
+                <h3>
+                  {scope === "recommendation"
+                    ? t("copilot.candidates")
+                    : t("copilot.nextSteps")}
+                </h3>
               </div>
               <ol>
-                {response.recommendations.map((recommendation) => (
-                  <li
-                    className={`is-${recommendation.priority} copilot-reveal is-recommendation`}
-                    key={recommendation.id}
-                  >
-                    <div>
-                      <strong>{recommendation.title}</strong>
-                      <span>{t(priorityTranslationKeys[recommendation.priority])}</span>
-                    </div>
-                    <p>{recommendation.reason}</p>
-                  </li>
-                ))}
+                {response.recommendations.map((recommendation) => {
+                  const candidate =
+                    scope === "recommendation"
+                      ? request.recommendationCandidates.find(
+                          (entry) => entry.pokemonId === recommendation.id,
+                        )
+                      : undefined;
+
+                  return (
+                    <li
+                      className={`is-${recommendation.priority} copilot-reveal is-recommendation`}
+                      key={recommendation.id}
+                    >
+                      {candidate ? (
+                        <div className="copilot-candidate-heading">
+                          <div>
+                            <strong>{candidate.displayName}</strong>
+                            <span className="copilot-candidate-types">
+                              {candidate.types.map((type) => (
+                                <TypeBadge type={type} key={type} />
+                              ))}
+                            </span>
+                          </div>
+                          <span>
+                            {candidate.usageRank
+                              ? t("copilot.usageRank", {
+                                  rank: candidate.usageRank,
+                                })
+                              : t("copilot.unranked")}
+                          </span>
+                        </div>
+                      ) : (
+                        <div>
+                          <strong>{recommendation.title}</strong>
+                          <span>
+                            {t(priorityTranslationKeys[recommendation.priority])}
+                          </span>
+                        </div>
+                      )}
+                      <p>{recommendation.reason}</p>
+                      {candidate ? (
+                        <button
+                          className="copilot-candidate-select"
+                          type="button"
+                          disabled={Boolean(selectingCandidateId)}
+                          onClick={() =>
+                            void handleSelectCandidate(candidate.pokemonId)
+                          }
+                        >
+                          {selectingCandidateId === candidate.pokemonId ? (
+                            <FontAwesomeIcon
+                              icon={faSpinner}
+                              spin
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          {t("copilot.selectCandidate")}
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ol>
             </section>
           </div>
@@ -821,13 +1109,25 @@ export function CopilotPanel({
             <span>
               {scope === "team"
                 ? t("copilot.activeSets", { count: diagnostics.filledSlots })
-                : selectedSet
+                : scope === "pokemon" && selectedSet
                   ? pokemonName({
                       id: selectedSet.pokemonId,
                       fallback: selectedSet.pokemonName,
                       includeForm: false,
                     })
-                  : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
+                  : scope === "recommendation"
+                    ? selectedMember
+                      ? t("copilot.chooseEmptySlot")
+                      : recommendationState.status === "loading"
+                        ? t("copilot.loadingCandidates")
+                        : recommendationState.status === "error"
+                          ? t("copilot.candidateLoadFailed")
+                          : recommendationState.candidates.length > 0
+                            ? t("copilot.candidatePoolReady", {
+                                count: recommendationState.candidates.length,
+                              })
+                            : t("copilot.noCandidates")
+                    : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
             </span>
           </div>
         )}
