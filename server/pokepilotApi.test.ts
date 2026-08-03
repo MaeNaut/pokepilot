@@ -123,7 +123,7 @@ function createModelResult(output: unknown): LunaAnalysisResult {
       responseId: "resp_test",
       serviceTier: "default",
       reasoningEffort: "low",
-      promptVersion: 28,
+      promptVersion: 29,
     },
   };
 }
@@ -186,7 +186,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 28,
+        promptVersion: 29,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

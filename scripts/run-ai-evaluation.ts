@@ -14,6 +14,7 @@ import {
   formatAiEvaluationReportMarkdown,
 } from "../src/test/evaluation/aiEvaluationReporter";
 import {
+  createAiPokemonEvaluationCase,
   createAiTeamEvaluationCase,
   runAiTeamEvaluationSuite,
 } from "../src/test/evaluation/aiModelEvaluation";
@@ -30,6 +31,7 @@ import {
   aiTeamStrategyFixtures,
 } from "../src/test/fixtures/aiTeamFixtures";
 import type { AiTeamFixture } from "../src/test/fixtures/aiTeamFixtureTypes";
+import { aiPokemonAnalysisFixtures } from "../src/test/fixtures/aiPokemonAnalysisFixtures";
 import { installAiEvaluationRuntime } from "./aiEvaluationRuntime";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
@@ -39,6 +41,9 @@ type CliOptions = {
   fixtures: AiTeamFixture[];
   reasoningEffort: LunaReasoningEffort;
   outputDirectory: string;
+  scope: "team" | "pokemon";
+  selectedSlot: number;
+  pokemonRegressions: boolean;
 };
 
 async function loadOpenAiApiKey() {
@@ -114,9 +119,28 @@ function parseCliOptions(args: string[]): CliOptions {
     throw new Error("--effort must be none, low, or medium.");
   }
 
+  const pokemonRegressions = args.includes("--pokemon-regressions");
+  const requestedScope = readOptionValue(args, "--scope");
+  const scope = requestedScope ?? (pokemonRegressions ? "pokemon" : "team");
+  if (scope !== "team" && scope !== "pokemon") {
+    throw new Error("--scope must be team or pokemon.");
+  }
+
+  const selectedSlot = Number(readOptionValue(args, "--slot") ?? 0);
+  if (!Number.isInteger(selectedSlot) || selectedSlot < 0 || selectedSlot > 5) {
+    throw new Error("--slot must be an integer from 0 through 5.");
+  }
+
+  if (pokemonRegressions && scope !== "pokemon") {
+    throw new Error("--pokemon-regressions requires Pokemon scope.");
+  }
+
   return {
     fixtures: getFixtureSelection(args),
     reasoningEffort: effortValue,
+    scope,
+    selectedSlot,
+    pokemonRegressions,
     outputDirectory: resolve(
       projectRoot,
       readOptionValue(args, "--output") ?? "artifacts/ai-evaluation",
@@ -131,7 +155,9 @@ Usage:
   npm run eval:ai
   npm run eval:ai -- --all
   npm run eval:ai -- --strategy
+  npm run eval:ai -- --pokemon-regressions
   npm run eval:ai -- --fixture <fixture-id>
+  npm run eval:ai -- --fixture <fixture-id> --scope pokemon --slot 0
   npm run eval:ai -- --effort none|low|medium
 
 The default run is a two-case smoke test with one Singles and one Doubles
@@ -172,22 +198,58 @@ async function main() {
       loadShowdownLegality(),
     ]);
     const evaluationCases = [];
+    const evaluationTargets = options.pokemonRegressions
+      ? aiPokemonAnalysisFixtures.map((pokemonFixture) => {
+          const fixture = aiTeamFixtures.find(
+            (candidate) => candidate.id === pokemonFixture.teamFixtureId,
+          );
 
-    for (const [index, fixture] of options.fixtures.entries()) {
+          if (!fixture) {
+            throw new Error(
+              `Unknown team fixture "${pokemonFixture.teamFixtureId}" for ${pokemonFixture.id}.`,
+            );
+          }
+
+          return {
+            fixture,
+            selectedSlot: pokemonFixture.selectedSlot,
+            metadata: {
+              fixtureId: pokemonFixture.id,
+              title: `${fixture.title} - ${pokemonFixture.expectedPokemonName}`,
+              expectations: pokemonFixture.expectations,
+            },
+          };
+        })
+      : options.fixtures.map((fixture) => ({
+          fixture,
+          selectedSlot: options.selectedSlot,
+          metadata: undefined,
+        }));
+
+    for (const [index, target] of evaluationTargets.entries()) {
+      const { fixture } = target;
       console.log(
-        `Preparing ${index + 1}/${options.fixtures.length}: ${fixture.id}`,
+        `Preparing ${index + 1}/${evaluationTargets.length}: ${fixture.id}`,
       );
+      const caseOptions = {
+        pokemonIndex,
+        itemIndex,
+        abilityIndex,
+        legality,
+        services: {
+          fetchPokemon,
+          fetchItem,
+        },
+      };
       evaluationCases.push(
-        await createAiTeamEvaluationCase(fixture, {
-          pokemonIndex,
-          itemIndex,
-          abilityIndex,
-          legality,
-          services: {
-            fetchPokemon,
-            fetchItem,
-          },
-        }),
+        options.scope === "pokemon"
+          ? await createAiPokemonEvaluationCase(
+              fixture,
+              target.selectedSlot,
+              caseOptions,
+              target.metadata,
+            )
+          : await createAiTeamEvaluationCase(fixture, caseOptions),
       );
     }
 
@@ -219,7 +281,7 @@ async function main() {
     const fileStem = createReportFileStem(
       startedAt,
       options.reasoningEffort,
-      options.fixtures.length,
+      evaluationTargets.length,
     );
     const jsonPath = resolve(options.outputDirectory, `${fileStem}.json`);
     const markdownPath = resolve(options.outputDirectory, `${fileStem}.md`);

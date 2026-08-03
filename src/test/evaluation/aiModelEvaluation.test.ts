@@ -19,6 +19,7 @@ import { aiTeamFixtures } from "../fixtures/aiTeamFixtures";
 import type { AiTeamFixture } from "../fixtures/aiTeamFixtureTypes";
 import {
   createAiEvaluationModelInput,
+  createAiPokemonEvaluationCase,
   createAiTeamEvaluationCase,
   runAiTeamEvaluationCase,
   type AiEvaluationModelAdapter,
@@ -236,6 +237,49 @@ describe("AI model evaluation request parity", () => {
         costUsd: 0.001,
       },
     });
+  });
+
+  it("derives a Pokemon-scope case from the same production team fixture", async () => {
+    const fixture = aiTeamFixtures[0];
+    const evaluationCase = await createAiPokemonEvaluationCase(
+      fixture,
+      2,
+      createFixtureDependencies(fixture),
+    );
+
+    expect(evaluationCase.request.scope).toBe("pokemon");
+    expect(evaluationCase.request.selectedSlot).toBe(2);
+    expect(evaluationCase.request.sets).toHaveLength(6);
+    expect(evaluationCase.fixtureId).toBe(`${fixture.id}-pokemon-2`);
+    expect(evaluationCase.requestFingerprint).not.toContain(
+      evaluationCase.request.teamName,
+    );
+  });
+
+  it("keeps Pokemon regression expectations outside the model request", async () => {
+    const fixture = aiTeamFixtures[0];
+    const expectations = {
+      teamIdentities: ["Selected-set focus"],
+      criticalObservations: ["Exact configured interaction"],
+      forbiddenConclusions: ["Invented interaction"],
+    };
+    const evaluationCase = await createAiPokemonEvaluationCase(
+      fixture,
+      2,
+      createFixtureDependencies(fixture),
+      {
+        fixtureId: "pokemon-regression",
+        title: "Pokemon Regression",
+        expectations,
+      },
+    );
+
+    expect(evaluationCase.fixtureId).toBe("pokemon-regression");
+    expect(evaluationCase.title).toBe("Pokemon Regression");
+    expect(evaluationCase.evaluatorContext.expectations).toEqual(expectations);
+    expect(collectObjectKeys(evaluationCase.request)).not.toContain(
+      "criticalObservations",
+    );
   });
 });
 

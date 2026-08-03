@@ -14,6 +14,7 @@ const evaluationCase = {
   title: "Fixture One",
   request: {
     battleFormat: "singles",
+    scope: "team",
   },
   evaluatorContext: {
     source: {
@@ -86,6 +87,34 @@ describe("AI evaluation reporter", () => {
     expect(report.cases[0].manualReview.status).toBe("pending");
     expect(markdown).toContain("Estimated Standard API cost: $0.001000");
     expect(markdown).toContain("### Evaluator Expectations");
+    expect(markdown).toContain("**Team identities**");
     expect(markdown).toContain("- Forbidden");
+  });
+
+  it("labels Pokemon fixture expectations as analysis focus", () => {
+    const pokemonCase = {
+      ...evaluationCase,
+      request: {
+        ...evaluationCase.request,
+        scope: "pokemon",
+      },
+    } as AiTeamEvaluationCase;
+    const pokemonResult = {
+      ...result,
+      output: {
+        ...result.output,
+        scope: "pokemon" as const,
+      },
+    };
+    const report = createAiEvaluationReport({
+      startedAt: "2026-07-30T00:00:00.000Z",
+      completedAt: "2026-07-30T00:00:01.000Z",
+      evaluationCases: [pokemonCase],
+      results: [pokemonResult],
+    });
+
+    expect(formatAiEvaluationReportMarkdown(report)).toContain(
+      "**Analysis focus**",
+    );
   });
 });

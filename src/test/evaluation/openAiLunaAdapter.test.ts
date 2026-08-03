@@ -1,6 +1,9 @@
 ﻿import { describe, expect, it, vi } from "vitest";
 import type { ResponseUsage } from "openai/resources/responses/responses";
-import { pokepilotInstructions } from "../../../server/openAiLuna";
+import {
+  getPokePilotScopeInstructions,
+  pokepilotCommonInstructions,
+} from "../../../server/openAiLuna";
 import type { CopilotAnalysisRequest } from "../../utils/copilotAnalysis";
 import {
   createLunaStandardUsage,
@@ -59,6 +62,10 @@ const request = {
     },
   },
 } satisfies CopilotAnalysisRequest;
+
+const teamInstructions = `${pokepilotCommonInstructions}
+
+${getPokePilotScopeInstructions("team")}`;
 
 const modelOutput = {
   version: 1,
@@ -143,7 +150,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-v28-low",
+        prompt_cache_key: "pokepilot-evaluation-core-v1-low",
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -155,7 +162,18 @@ describe("OpenAI Luna evaluation adapter", () => {
             content: [
               {
                 type: "input_text",
-                text: pokepilotInstructions,
+                text: pokepilotCommonInstructions,
+                prompt_cache_breakpoint: { mode: "explicit" },
+              },
+            ],
+          },
+          {
+            type: "message",
+            role: "developer",
+            content: [
+              {
+                type: "input_text",
+                text: getPokePilotScopeInstructions("team"),
                 prompt_cache_breakpoint: { mode: "explicit" },
               },
             ],
@@ -185,140 +203,115 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 28,
+        promptVersion: 29,
       },
       usage: {
         totalTokens: 150,
       },
     });
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "Every proposed Singles lineup must contain exactly three Pokemon",
     );
-    expect(pokepilotInstructions).toContain(
-      "verify the relevant Pokemon names in diagnostics.defensiveProfile",
-    );
-    expect(pokepilotInstructions).toContain(
-      "never print raw IDs or words such as ID, key, source map, diagnostics, or strategy audit",
-    );
-    expect(pokepilotInstructions).toContain(
-      "megaEvolution is the deterministic post-Mega name",
-    );
-    expect(pokepilotInstructions).toContain(
-      "always use the supplied displayName, typeDisplayNames",
-    );
-    expect(pokepilotInstructions).toContain(
-      "request.megaOptions is the complete deterministic list",
-    );
-    expect(pokepilotInstructions).toContain(
-      "Trick Room reverses move order within priority brackets",
-    );
-    expect(pokepilotInstructions).toContain(
-      "Do not frame multiple Mega options as an inherent flaw",
-    );
-    expect(pokepilotInstructions).toContain(
-      "combine exact speed values with supplied mechanics",
-    );
-    expect(pokepilotInstructions).toContain(
-      "differ by exactly one speed point",
-    );
-    expect(pokepilotInstructions).toContain(
-      "medium to a matchup-dependent branch",
-    );
-    expect(pokepilotInstructions).toContain(
-      "unless that move appears under the Pokemon in diagnostics.moveSources",
-    );
-    expect(pokepilotInstructions).toContain(
-      "validityStatus is not valid must not appear in a recommended lineup",
-    );
-    expect(pokepilotInstructions).toContain(
-      "A matchup-dependent Mega selection is not automatically a different field or speed-control plan",
-    );
-    expect(pokepilotInstructions).toContain(
-      "do not force that set into a late-game-only role",
-    );
-    expect(pokepilotInstructions).toContain(
-      "explicitly test each faster set as a possible opening partner",
-    );
-    expect(pokepilotInstructions).toContain(
-      "Do not default to the Trick Room setter plus the slowest attacker",
-    );
-    expect(pokepilotInstructions).toContain(
-      "share a move whose effect changes when an ally uses it during the same turn",
-    );
-    expect(pokepilotInstructions).toContain(
-      "mechanics.items are a neutral reference dictionary",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "inspect every unordered pair of filled sets",
     );
-    expect(pokepilotInstructions).toContain(
-      "Derive relationships from the current request",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "Complete two mandatory cross-set passes before assigning the team an archetype",
     );
-    expect(pokepilotInstructions).toContain(
-      "Do not assume that a stat-lowering or hostile-looking move must target an opponent",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "Group all filled sets by canonical selected move id",
     );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "enumerate every ordered active pair",
     );
-    expect(pokepilotInstructions).toContain(
-      "treat that pair as a candidate default opening rather than optional cleanup",
-    );
-    expect(pokepilotInstructions).toContain(
-      "calculate each owner's effective Speed",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "rank that transformed response rather than treating every owner as interchangeable",
     );
-    expect(pokepilotInstructions).toContain(
-      "do not prefer the next-fastest responder merely because it would otherwise move sooner",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "changes a Pokemon's apparent identity or conceals its set",
     );
-    expect(pokepilotInstructions).toContain(
-      "never from the other currently active lead",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "evaluate denial as the first interpretation",
     );
-    expect(pokepilotInstructions).toContain(
-      "explicitly distinguish the two-Pokemon lead pair from the two backline members",
+    expect(teamInstructions).toContain(
+      "Trick Room reverses move order within priority brackets",
     );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
+      "validityStatus is not valid must not appear in a recommended lineup",
+    );
+    expect(teamInstructions).toContain(
       "silently simulate the opening turn",
     );
-    expect(pokepilotInstructions).toContain(
-      "provide at least one legal lineup that actually includes it",
-    );
-    expect(pokepilotInstructions).toContain(
-      "Preserve flexible final-slot branches",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "Return a top-level object with analysis and strategyAudit",
     );
-    expect(pokepilotInstructions).toContain(
-      "actorSlotIndex must be one of those active slots",
-    );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "Record every concrete cross-set interaction used by analysis",
     );
-    expect(pokepilotInstructions).toContain(
+    expect(teamInstructions).toContain(
       "Every bound move must have a matching action",
     );
-    expect(pokepilotInstructions).toContain(
-      "Create exactly one recommendationEvidence entry per user-facing recommendation",
+    expect(teamInstructions).toContain(
+      "Create exactly one recommendationEvidence entry per recommendation",
     );
-    expect(pokepilotInstructions).toContain(
-      "Never merge distinct weather names",
+    expect(teamInstructions).toContain(
+      "Resistance is not immunity",
     );
-    expect(pokepilotInstructions).not.toMatch(
+    expect(teamInstructions).not.toMatch(
       /Charm|Contrary|Staraptor|Zoroark|Gardevoir|Round/,
+    );
+  });
+
+  it("keeps common cache content stable while selecting a scope prompt", async () => {
+    const create = vi.fn(
+      async (requestOptions: {
+        prompt_cache_key: string;
+        input: Array<{ content: Array<{ text: string }> }>;
+      }) => {
+        void requestOptions;
+        return {
+          id: "resp_pokemon",
+          service_tier: "default",
+          output_text: JSON.stringify({
+            ...groundedModelOutput,
+            analysis: { ...modelOutput, scope: "pokemon" },
+          }),
+          usage: null,
+        };
+      },
+    );
+    const adapter = createOpenAiLunaAdapter({
+      client: { responses: { create } } as never,
+    });
+    const pokemonRequest = {
+      ...request,
+      scope: "pokemon",
+    } satisfies CopilotAnalysisRequest;
+
+    await adapter.analyze(pokemonRequest);
+
+    expect(create).toHaveBeenCalledOnce();
+    const modelRequest = create.mock.calls[0]![0];
+    expect(modelRequest.prompt_cache_key).toBe(
+      "pokepilot-evaluation-core-v1-low",
+    );
+    expect(modelRequest.input[0].content[0].text).toBe(
+      pokepilotCommonInstructions,
+    );
+    expect(modelRequest.input[1].content[0].text).toBe(
+      getPokePilotScopeInstructions("pokemon"),
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "resistance still takes damage",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "Create exactly one recommendationEvidence entry per recommendation",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "Never name or recommend a Pokemon outside that array",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).not.toContain(
+      "inspect every unordered pair of filled sets",
     );
   });
 

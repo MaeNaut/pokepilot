@@ -1,4 +1,5 @@
 import type { BattleFormat } from "../../battleFormat/battleFormat";
+import type { CopilotAnalysisScope } from "../../utils/copilotAnalysis";
 import type {
   AiEvaluationRunResult,
   AiEvaluationUsage,
@@ -9,6 +10,7 @@ export type AiEvaluationReportCase = {
   fixtureId: string;
   title: string;
   battleFormat: BattleFormat;
+  scope: CopilotAnalysisScope;
   evaluatorContext: AiTeamEvaluationCase["evaluatorContext"];
   result: AiEvaluationRunResult;
   manualReview: {
@@ -93,6 +95,7 @@ export function createAiEvaluationReport({
       fixtureId: evaluationCase.fixtureId,
       title: evaluationCase.title,
       battleFormat: evaluationCase.request.battleFormat,
+      scope: evaluationCase.request.scope,
       evaluatorContext: evaluationCase.evaluatorContext,
       result,
       manualReview: {
@@ -209,6 +212,7 @@ export function formatAiEvaluationReportMarkdown(report: AiEvaluationReport) {
       "",
       `- Fixture: \`${evaluationCase.fixtureId}\``,
       `- Format: ${evaluationCase.battleFormat}`,
+      `- Scope: ${evaluationCase.scope}`,
       `- Status: ${result.status}`,
       `- Service tier: ${result.responseMetadata.serviceTier ?? "unknown"}`,
       `- Reasoning effort: ${result.responseMetadata.reasoningEffort ?? "unknown"}`,
@@ -222,7 +226,9 @@ export function formatAiEvaluationReportMarkdown(report: AiEvaluationReport) {
       "",
       "### Evaluator Expectations",
       "",
-      "**Team identities**",
+      evaluationCase.scope === "pokemon"
+        ? "**Analysis focus**"
+        : "**Team identities**",
       markdownList(evaluatorContext.expectations.teamIdentities),
       "",
       "**Critical observations**",

@@ -166,6 +166,400 @@ function getFactProfileValues(
   return null;
 }
 
+function getUnconditionalItemSpeedMultiplier(
+  set: CopilotAnalysisRequest["sets"][number],
+  request: CopilotAnalysisRequest,
+) {
+  const itemId = normalizeId(set.item ?? "");
+  if (!itemId) {
+    return 1;
+  }
+
+  const effect = request.mechanics.items
+    .find((item) => normalizeId(item.id) === itemId)
+    ?.effect?.toLowerCase();
+  if (!effect) {
+    return 1;
+  }
+
+  const numericMatch = effect.match(
+    /holder(?:'s|’s) speed is (\d+(?:\.\d+)?)x\b/,
+  );
+  if (numericMatch) {
+    const multiplier = Number(numericMatch[1]);
+    return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
+  }
+
+  return /holder(?:'s|’s) speed is halved\b/.test(effect) ? 0.5 : 1;
+}
+
+function getComparableSpeed(
+  set: CopilotAnalysisRequest["sets"][number],
+  request: CopilotAnalysisRequest,
+) {
+  return (
+    (set.stats?.speed ?? 0) * getUnconditionalItemSpeedMultiplier(set, request)
+  );
+}
+
+function validateFactsForRequest(
+  facts: CopilotGroundedModelOutput["strategyAudit"]["facts"],
+  request: CopilotAnalysisRequest,
+  setBySlot: Map<number, CopilotAnalysisRequest["sets"][number]>,
+  errors: string[],
+) {
+  if (facts.length > 24) {
+    errors.push("strategyAudit.facts must contain at most 24 entries.");
+  }
+
+  const factIds = new Set<string>();
+  const unaryFactKinds = new Set([
+    "move-owner",
+    "ability-owner",
+    "item-owner",
+    "mega-option",
+    "weak-to",
+    "resists",
+    "immune-to",
+  ]);
+  const speedFactKinds = new Set(["faster-than", "slower-than", "speed-tie"]);
+
+  facts.forEach((fact, factIndex) => {
+    const factPath = `strategyAudit.facts[${factIndex}]`;
+    if (factIds.has(fact.id)) {
+      errors.push(`${factPath}.id must be unique.`);
+    }
+    factIds.add(fact.id);
+
+    const subject = setBySlot.get(fact.subjectSlotIndex);
+    if (!subject) {
+      errors.push(`${factPath}.subjectSlotIndex references an unknown set.`);
+      return;
+    }
+
+    const state = getSetState(subject, fact.state);
+    if (!state) {
+      errors.push(`${factPath}.state records an unavailable Mega form.`);
+      return;
+    }
+
+    if (unaryFactKinds.has(fact.kind) && fact.objectSlotIndex !== -1) {
+      errors.push(`${factPath}.objectSlotIndex must be -1 for a unary fact.`);
+    }
+
+    if (fact.kind === "move-owner") {
+      validateBoundIds(
+        [fact.valueId],
+        `${factPath}.valueId`,
+        subject.moves.map((move) => move.id),
+        errors,
+      );
+    } else if (fact.kind === "ability-owner") {
+      validateBoundIds(
+        [fact.valueId],
+        `${factPath}.valueId`,
+        [state.ability],
+        errors,
+      );
+    } else if (fact.kind === "item-owner") {
+      validateBoundIds(
+        [fact.valueId],
+        `${factPath}.valueId`,
+        [subject.item],
+        errors,
+      );
+    } else if (fact.kind === "mega-option") {
+      const megaOptionIds = request.megaOptions
+        .filter((option) => option.slotIndex === fact.subjectSlotIndex)
+        .map((option) => option.pokemonId);
+      if (
+        fact.state !== "current" ||
+        !megaOptionIds.some(
+          (value) => normalizeId(value) === normalizeId(fact.valueId),
+        )
+      ) {
+        errors.push(`${factPath} does not match a supplied Mega option.`);
+      }
+    } else if (
+      fact.kind === "weak-to" ||
+      fact.kind === "resists" ||
+      fact.kind === "immune-to"
+    ) {
+      const profileValues = getFactProfileValues(fact, request) ?? [];
+      if (
+        !profileValues.some(
+          (type) => normalizeId(type) === normalizeId(fact.valueId),
+        )
+      ) {
+        errors.push(`${factPath} contradicts the supplied defensive profile.`);
+      }
+    } else if (speedFactKinds.has(fact.kind)) {
+      const object = setBySlot.get(fact.objectSlotIndex);
+      if (!object || fact.objectSlotIndex === fact.subjectSlotIndex) {
+        errors.push(`${factPath}.objectSlotIndex must reference another set.`);
+        return;
+      }
+      if (fact.state !== "current") {
+        errors.push(
+          `${factPath}.state must match the supplied form for a final-Speed fact.`,
+        );
+      }
+      if (fact.valueId !== "") {
+        errors.push(`${factPath}.valueId must be empty for a final-Speed fact.`);
+      }
+      if (!subject.stats || !object.stats) {
+        errors.push(`${factPath} requires final stats for both sets.`);
+        return;
+      }
+
+      const subjectSpeed = getComparableSpeed(subject, request);
+      const objectSpeed = getComparableSpeed(object, request);
+      const isCorrect =
+        (fact.kind === "faster-than" && subjectSpeed > objectSpeed) ||
+        (fact.kind === "slower-than" && subjectSpeed < objectSpeed) ||
+        (fact.kind === "speed-tie" && subjectSpeed === objectSpeed);
+      if (!isCorrect) {
+        errors.push(
+          `${factPath} contradicts the supplied final Speed values and unconditional held-item modifiers.`,
+        );
+      }
+    }
+  });
+
+  return factIds;
+}
+
+function validateRecommendationEvidenceForRequest(
+  output: CopilotGroundedModelOutput,
+  knownIds: {
+    planIds: Set<string>;
+    interactionIds: Set<string>;
+    factIds: Set<string>;
+  },
+  errors: string[],
+) {
+  const { recommendationEvidence } = output.strategyAudit;
+
+  if (recommendationEvidence.length > 3) {
+    errors.push(
+      "strategyAudit.recommendationEvidence must contain at most 3 entries.",
+    );
+  }
+
+  const recommendationIds = new Set<string>();
+  output.analysis.recommendations.forEach((recommendation, index) => {
+    if (recommendationIds.has(recommendation.id)) {
+      errors.push(`analysis.recommendations[${index}].id must be unique.`);
+    }
+    recommendationIds.add(recommendation.id);
+  });
+
+  const evidencedRecommendationIds = new Set<string>();
+  recommendationEvidence.forEach((evidence, evidenceIndex) => {
+    const evidencePath =
+      `strategyAudit.recommendationEvidence[${evidenceIndex}]`;
+    if (evidencedRecommendationIds.has(evidence.recommendationId)) {
+      errors.push(`${evidencePath}.recommendationId must be unique.`);
+    }
+    evidencedRecommendationIds.add(evidence.recommendationId);
+
+    if (!recommendationIds.has(evidence.recommendationId)) {
+      errors.push(`${evidencePath}.recommendationId is not present in analysis.`);
+    }
+
+    for (const [key, values, validIds] of [
+      ["planIds", evidence.planIds, knownIds.planIds],
+      ["interactionIds", evidence.interactionIds, knownIds.interactionIds],
+      ["factIds", evidence.factIds, knownIds.factIds],
+    ] as const) {
+      if (hasDuplicateIds(values)) {
+        errors.push(`${evidencePath}.${key} must not contain duplicate IDs.`);
+      }
+      const unknownIds = values.filter((id) => !validIds.has(id));
+      if (unknownIds.length > 0) {
+        errors.push(`${evidencePath}.${key} references unknown IDs.`);
+      }
+    }
+
+    if (
+      evidence.planIds.length === 0 &&
+      evidence.interactionIds.length === 0 &&
+      evidence.factIds.length === 0
+    ) {
+      errors.push(`${evidencePath} must reference at least one audit entry.`);
+    }
+  });
+
+  recommendationIds.forEach((recommendationId) => {
+    if (!evidencedRecommendationIds.has(recommendationId)) {
+      errors.push(
+        `Recommendation ${recommendationId} must have private audit evidence.`,
+      );
+    }
+  });
+}
+
+function textMentionsDisplayName(text: string, displayName: string) {
+  const label = displayName.trim();
+  if (label.length < 2) {
+    return false;
+  }
+
+  const isAscii = Array.from(label).every(
+    (character) => (character.codePointAt(0) ?? 0) <= 0x7f,
+  );
+
+  if (isAscii) {
+    const normalizedText = text.toLowerCase();
+    const normalizedLabel = label.toLowerCase();
+    let matchIndex = normalizedText.indexOf(normalizedLabel);
+
+    while (matchIndex >= 0) {
+      const before = normalizedText[matchIndex - 1] ?? "";
+      const after = normalizedText[matchIndex + normalizedLabel.length] ?? "";
+      if (!/[A-Za-z0-9]/.test(before) && !/[A-Za-z0-9]/.test(after)) {
+        return true;
+      }
+      matchIndex = normalizedText.indexOf(
+        normalizedLabel,
+        matchIndex + normalizedLabel.length,
+      );
+    }
+
+    return false;
+  }
+
+  return text.normalize("NFKC").includes(label.normalize("NFKC"));
+}
+
+function hasMatchingFact(
+  facts: CopilotStrategyFact[],
+  expected: Pick<
+    CopilotStrategyFact,
+    "kind" | "subjectSlotIndex" | "state" | "valueId"
+  >,
+) {
+  return facts.some(
+    (fact) =>
+      fact.kind === expected.kind &&
+      fact.subjectSlotIndex === expected.subjectSlotIndex &&
+      fact.state === expected.state &&
+      normalizeId(fact.valueId) === normalizeId(expected.valueId),
+  );
+}
+
+function hasAllySequencingEffect(
+  request: CopilotAnalysisRequest,
+  moveId: string,
+) {
+  const mechanic = request.mechanics.moves.find(
+    (entry) => normalizeId(entry.id) === normalizeId(moveId),
+  );
+  const effect = mechanic?.effect?.toLowerCase() ?? "";
+
+  return (
+    (/\bally\b/.test(effect) && /\bused\b/.test(effect) && /\bturn\b/.test(effect)) ||
+    (effect.includes("함께") && effect.includes("계속"))
+  );
+}
+
+function validatePokemonRecommendationEvidenceCoverage(
+  output: CopilotGroundedModelOutput,
+  request: CopilotAnalysisRequest,
+  errors: string[],
+) {
+  const factById = new Map(
+    output.strategyAudit.facts.map((fact) => [fact.id, fact]),
+  );
+  const evidenceByRecommendation = new Map(
+    output.strategyAudit.recommendationEvidence.map((evidence) => [
+      evidence.recommendationId,
+      evidence,
+    ]),
+  );
+
+  output.analysis.recommendations.forEach((recommendation) => {
+    const evidence = evidenceByRecommendation.get(recommendation.id);
+    if (!evidence) {
+      return;
+    }
+
+    const evidenceFacts = evidence.factIds.flatMap((factId) => {
+      const fact = factById.get(factId);
+      return fact ? [fact] : [];
+    });
+    const recommendationText = `${recommendation.title}\n${recommendation.reason}`;
+    const mentionedSets = request.sets.filter((set) => {
+      const mentionsCurrent = textMentionsDisplayName(
+        recommendationText,
+        set.displayName,
+      );
+      const mentionsMega = Boolean(
+        set.megaEvolution &&
+          textMentionsDisplayName(
+            recommendationText,
+            set.megaEvolution.displayName,
+          ),
+      );
+
+      return mentionsCurrent || mentionsMega;
+    });
+    const mentionedSlots = new Set(mentionedSets.map((set) => set.slotIndex));
+
+    mentionedSets.forEach((set) => {
+      if (
+        !evidenceFacts.some(
+          (fact) =>
+            fact.subjectSlotIndex === set.slotIndex ||
+            fact.objectSlotIndex === set.slotIndex,
+        )
+      ) {
+        errors.push(
+          `Recommendation ${recommendation.id} names ${set.displayName} without fact evidence for slot ${set.slotIndex}.`,
+        );
+      }
+    });
+
+    const checkedMoveIds = new Set<string>();
+    request.sets.forEach((set) => {
+      set.moves.forEach((move) => {
+        const moveId = normalizeId(move.id);
+        if (
+          checkedMoveIds.has(moveId) ||
+          !textMentionsDisplayName(recommendationText, move.displayName)
+        ) {
+          return;
+        }
+        checkedMoveIds.add(moveId);
+
+        const namedOwners = request.sets.filter(
+          (candidate) =>
+            mentionedSlots.has(candidate.slotIndex) &&
+            candidate.moves.some(
+              (candidateMove) => normalizeId(candidateMove.id) === moveId,
+            ),
+        );
+        const requiresSharedMoveEvidence =
+          namedOwners.length >= 2 && hasAllySequencingEffect(request, move.id);
+        const hasSharedMoveEvidence = namedOwners.some((owner) =>
+          hasMatchingFact(evidenceFacts, {
+            kind: "move-owner",
+            subjectSlotIndex: owner.slotIndex,
+            state: "current",
+            valueId: move.id,
+          }),
+        );
+
+        if (requiresSharedMoveEvidence && !hasSharedMoveEvidence) {
+          errors.push(
+            `Recommendation ${recommendation.id} names shared move ${move.displayName} without matching owner fact evidence.`,
+          );
+        }
+      });
+    });
+  });
+}
+
 export function validateCopilotStrategyAuditForRequest(
   output: CopilotGroundedModelOutput,
   request: CopilotAnalysisRequest,
@@ -174,18 +568,59 @@ export function validateCopilotStrategyAuditForRequest(
   const { plans, interactions, facts, recommendationEvidence } =
     output.strategyAudit;
 
-  if (request.scope !== "team") {
+  if (request.scope === "recommendation") {
     if (plans.length > 0) {
-      errors.push("Non-team analysis must not include team strategy plans.");
+      errors.push("Recommendation analysis must not include strategy plans.");
     }
     if (interactions.length > 0 || facts.length > 0) {
-      errors.push("Non-team analysis must not include team audit evidence.");
+      errors.push("Recommendation analysis must not include audit evidence.");
     }
     if (recommendationEvidence.length > 0) {
       errors.push(
-        "Non-team analysis must not include team recommendation evidence.",
+        "Recommendation analysis must not include recommendation evidence.",
       );
     }
+
+    return errors;
+  }
+
+  const setBySlot = new Map(request.sets.map((set) => [set.slotIndex, set]));
+
+  if (request.scope === "pokemon") {
+    if (plans.length > 0) {
+      errors.push("Pokemon analysis must not include team strategy plans.");
+    }
+    if (interactions.length > 0) {
+      errors.push("Pokemon analysis must not include team interactions.");
+    }
+
+    const selectedSet = setBySlot.get(request.selectedSlot);
+    if (!selectedSet) {
+      if (facts.length > 0 || recommendationEvidence.length > 0) {
+        errors.push(
+          "An empty Pokemon slot must use an empty private strategy audit.",
+        );
+      }
+
+      return errors;
+    }
+
+    const factIds = validateFactsForRequest(
+      facts,
+      request,
+      setBySlot,
+      errors,
+    );
+    validateRecommendationEvidenceForRequest(
+      output,
+      {
+        planIds: new Set(),
+        interactionIds: new Set(),
+        factIds,
+      },
+      errors,
+    );
+    validatePokemonRecommendationEvidenceCoverage(output, request, errors);
 
     return errors;
   }
@@ -203,7 +638,6 @@ export function validateCopilotStrategyAuditForRequest(
     return errors;
   }
 
-  const setBySlot = new Map(request.sets.map((set) => [set.slotIndex, set]));
   const knownSlots = new Set(setBySlot.keys());
   const selectionSize = request.battleFormat === "doubles" ? 4 : 3;
   const activeSize = request.battleFormat === "doubles" ? 2 : 1;
@@ -512,179 +946,12 @@ export function validateCopilotStrategyAuditForRequest(
     validateInteractionKind(interaction, interactionPath, errors);
   });
 
-  if (facts.length > 24) {
-    errors.push("strategyAudit.facts must contain at most 24 entries.");
-  }
-
-  const factIds = new Set<string>();
-  const unaryFactKinds = new Set([
-    "move-owner",
-    "ability-owner",
-    "item-owner",
-    "mega-option",
-    "weak-to",
-    "resists",
-    "immune-to",
-  ]);
-  const speedFactKinds = new Set(["faster-than", "slower-than", "speed-tie"]);
-
-  facts.forEach((fact, factIndex) => {
-    const factPath = `strategyAudit.facts[${factIndex}]`;
-    if (factIds.has(fact.id)) {
-      errors.push(`${factPath}.id must be unique.`);
-    }
-    factIds.add(fact.id);
-
-    const subject = setBySlot.get(fact.subjectSlotIndex);
-    if (!subject) {
-      errors.push(`${factPath}.subjectSlotIndex references an unknown set.`);
-      return;
-    }
-
-    const state = getSetState(subject, fact.state);
-    if (!state) {
-      errors.push(`${factPath}.state records an unavailable Mega form.`);
-      return;
-    }
-
-    if (unaryFactKinds.has(fact.kind) && fact.objectSlotIndex !== -1) {
-      errors.push(`${factPath}.objectSlotIndex must be -1 for a unary fact.`);
-    }
-
-    if (fact.kind === "move-owner") {
-      validateBoundIds(
-        [fact.valueId],
-        `${factPath}.valueId`,
-        subject.moves.map((move) => move.id),
-        errors,
-      );
-    } else if (fact.kind === "ability-owner") {
-      validateBoundIds(
-        [fact.valueId],
-        `${factPath}.valueId`,
-        [state.ability],
-        errors,
-      );
-    } else if (fact.kind === "item-owner") {
-      validateBoundIds(
-        [fact.valueId],
-        `${factPath}.valueId`,
-        [subject.item],
-        errors,
-      );
-    } else if (fact.kind === "mega-option") {
-      const megaOptionIds = request.megaOptions
-        .filter((option) => option.slotIndex === fact.subjectSlotIndex)
-        .map((option) => option.pokemonId);
-      if (
-        fact.state !== "current" ||
-        !megaOptionIds.some(
-          (value) => normalizeId(value) === normalizeId(fact.valueId),
-        )
-      ) {
-        errors.push(`${factPath} does not match a supplied Mega option.`);
-      }
-    } else if (
-      fact.kind === "weak-to" ||
-      fact.kind === "resists" ||
-      fact.kind === "immune-to"
-    ) {
-      const profileValues = getFactProfileValues(fact, request) ?? [];
-      if (
-        !profileValues.some(
-          (type) => normalizeId(type) === normalizeId(fact.valueId),
-        )
-      ) {
-        errors.push(`${factPath} contradicts the supplied defensive profile.`);
-      }
-    } else if (speedFactKinds.has(fact.kind)) {
-      const object = setBySlot.get(fact.objectSlotIndex);
-      if (!object || fact.objectSlotIndex === fact.subjectSlotIndex) {
-        errors.push(`${factPath}.objectSlotIndex must reference another set.`);
-        return;
-      }
-      if (fact.state !== "current") {
-        errors.push(
-          `${factPath}.state must match the supplied form for a final-Speed fact.`,
-        );
-      }
-      if (fact.valueId !== "") {
-        errors.push(`${factPath}.valueId must be empty for a final-Speed fact.`);
-      }
-      if (!subject.stats || !object.stats) {
-        errors.push(`${factPath} requires final stats for both sets.`);
-        return;
-      }
-
-      const subjectSpeed = subject.stats.speed;
-      const objectSpeed = object.stats.speed;
-      const isCorrect =
-        (fact.kind === "faster-than" && subjectSpeed > objectSpeed) ||
-        (fact.kind === "slower-than" && subjectSpeed < objectSpeed) ||
-        (fact.kind === "speed-tie" && subjectSpeed === objectSpeed);
-      if (!isCorrect) {
-        errors.push(`${factPath} contradicts the supplied final Speed values.`);
-      }
-    }
-  });
-
-  if (recommendationEvidence.length > 3) {
-    errors.push(
-      "strategyAudit.recommendationEvidence must contain at most 3 entries.",
-    );
-  }
-
-  const recommendationIds = new Set<string>();
-  output.analysis.recommendations.forEach((recommendation, index) => {
-    if (recommendationIds.has(recommendation.id)) {
-      errors.push(`analysis.recommendations[${index}].id must be unique.`);
-    }
-    recommendationIds.add(recommendation.id);
-  });
-
-  const evidencedRecommendationIds = new Set<string>();
-  recommendationEvidence.forEach((evidence, evidenceIndex) => {
-    const evidencePath =
-      `strategyAudit.recommendationEvidence[${evidenceIndex}]`;
-    if (evidencedRecommendationIds.has(evidence.recommendationId)) {
-      errors.push(`${evidencePath}.recommendationId must be unique.`);
-    }
-    evidencedRecommendationIds.add(evidence.recommendationId);
-
-    if (!recommendationIds.has(evidence.recommendationId)) {
-      errors.push(`${evidencePath}.recommendationId is not present in analysis.`);
-    }
-
-    for (const [key, values, knownIds] of [
-      ["planIds", evidence.planIds, planIds],
-      ["interactionIds", evidence.interactionIds, interactionIds],
-      ["factIds", evidence.factIds, factIds],
-    ] as const) {
-      if (hasDuplicateIds(values)) {
-        errors.push(`${evidencePath}.${key} must not contain duplicate IDs.`);
-      }
-      const unknownIds = values.filter((id) => !knownIds.has(id));
-      if (unknownIds.length > 0) {
-        errors.push(`${evidencePath}.${key} references unknown IDs.`);
-      }
-    }
-
-    if (
-      evidence.planIds.length === 0 &&
-      evidence.interactionIds.length === 0 &&
-      evidence.factIds.length === 0
-    ) {
-      errors.push(`${evidencePath} must reference at least one audit entry.`);
-    }
-  });
-
-  recommendationIds.forEach((recommendationId) => {
-    if (!evidencedRecommendationIds.has(recommendationId)) {
-      errors.push(
-        `Recommendation ${recommendationId} must have private audit evidence.`,
-      );
-    }
-  });
+  const factIds = validateFactsForRequest(facts, request, setBySlot, errors);
+  validateRecommendationEvidenceForRequest(
+    output,
+    { planIds, interactionIds, factIds },
+    errors,
+  );
 
   return errors;
 }

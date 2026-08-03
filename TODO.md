@@ -212,10 +212,25 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Add Prompt v23-v25 plan, interaction, deterministic-fact, and
         recommendation-evidence validation; preserve private output in ignored
         evaluation reports and finish with a 2/2 Luna Standard low smoke pass.
-  - [ ] Finish generic shared-move responder ranking and deception synthesis.
-        v22 promotes Choice Scarf Hisuian Zoroark and same-turn Round to an
-        opening, but still favors Dragapult over Mega Gardevoir's transformed
-        response and does not connect a legal Farigiraf disguise to that line.
+  - [x] Split Prompt v29 into a reusable common prefix and analysis-scope
+        prefixes so Team, Pokemon, and Recommend calls share stable core cache
+        tokens without forcing scope-specific instructions into every request.
+  - [x] Add production-hydrated selected-Pokemon fixtures, `--scope pokemon`,
+        `--slot`, and `--pokemon-regressions` evaluation paths without leaking
+        evaluator expectations into model input.
+  - [x] Finish selected-Pokemon shared-move responder ranking: the live v29
+        regression identifies Scarf Hisuian Zoroark as the Round trigger and
+        Mega Gardevoir as the stronger Pixilate responder.
+  - [ ] Continue generic deception ranking without encoding fixture answers.
+        The live v29 Pokemon result chooses a legal Mega Gengar / Shadow Tag
+        bluff, while evaluator context prefers Farigiraf's Armor Tail and Fake
+        Out expectation; keep this as manual semantic review.
+  - [x] Validate selected-Pokemon recommendation evidence, named teammate
+        coverage, shared-move ownership, defensive relations, and exact Speed
+        comparisons including unconditional numeric held-item modifiers.
+  - [ ] Re-run the complete focused team-strategy sweep on Prompt v29 before a
+        public hosted-AI release; scoped smoke tests pass, while complex semantic
+        synthesis remains a manual-review responsibility.
   - [x] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
   - [x] Track hard failures separately from aggregate scores, latency, token use, and cost.
   - [x] Keep the ignored local evaluation key, reports, and capped test budget
@@ -239,6 +254,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Reject unsupported interaction ownership, inactive participants,
         simultaneous Mega activations, unavailable Mega states, incorrect
         defensive-profile or final-Speed facts, and dangling evidence IDs.
+  - [x] Apply the same deterministic fact and recommendation-evidence audit to
+        hosted selected-Pokemon analysis rather than validating only Team scope.
   - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
   - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
 - [x] Add local error, refresh, and stale-analysis states for Copilot.

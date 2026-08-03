@@ -612,20 +612,29 @@ Still needed:
 The preferred AI shape is a team-aware Copilot, not a generic ChatGPT clone. Keep
 the Copilot constrained to the current team data and deterministic builder analysis.
 
-The current first slice is a provider-independent local preview:
+The current implementation keeps one provider-independent product contract
+across deterministic fallback and hosted analysis:
 
 - `src/utils/copilotAnalysis.ts` creates a versioned, compact request containing
   active sets, the selected slot, deterministic diagnostics, field/weather concept
   summaries, and validity summaries.
 - The same module returns structured summary, strength, focus, playstyle, and
-  recommendation fields from local rules. The panel footer identifies this as a
-  `Rules-based preview` rather than claiming it is a hosted AI response.
+  recommendation fields from local rules when the hosted route is unavailable.
+- `POST /api/pokepilot/analyze` sends the same validated request to Luna at
+  Standard low reasoning. Prompt v29 places stable common instructions at the
+  first explicit cache breakpoint, stable Team/Pokemon/Recommend instructions
+  at a second breakpoint, and variable request JSON after both. The cache key is
+  versioned by the shared core so different scopes and users can reuse the
+  common prefix while scope revisions invalidate only their later segment.
+- Hosted Team and Pokemon output includes a private strategy audit. The server
+  validates selected-element ownership, legal active states, Mega states,
+  defensive facts, supported Speed comparisons, and recommendation evidence,
+  then strips the audit before returning the public analysis.
 - Team and selected-Pokemon scopes keep separate results. A request fingerprint marks
   an existing result stale after relevant edits without rerunning analysis on every
   keystroke; changing only the displayed slot does not stale team-scope analysis.
-- `CopilotPanel.tsx` renders the structured response and owns idle, loading, local
-  error, refresh, and stale states. A future server route should replace only the
-  response provider, not the product UI contract.
+- `CopilotPanel.tsx` renders the structured response and owns idle, loading,
+  hosted/fallback error, refresh, stale, cooldown, and persisted-history states.
 - On the desktop workspace, cap the content shell at 1920px. Stack a wider,
   shorter builder and compact diagnostics in the left column, and keep the
   full-height PokePilot panel visible in the right column. The Pokemon editor

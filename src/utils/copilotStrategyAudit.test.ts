@@ -849,7 +849,7 @@ describe("Copilot strategy audit", () => {
       "strategyAudit.facts[0] contradicts the supplied defensive profile.",
     );
     expect(errors).toContain(
-      "strategyAudit.facts[1] contradicts the supplied final Speed values.",
+      "strategyAudit.facts[1] contradicts the supplied final Speed values and unconditional held-item modifiers.",
     );
   });
 
@@ -885,6 +885,299 @@ describe("Copilot strategy audit", () => {
       validateCopilotStrategyAuditForRequest(output, createRequest(sets)),
     ).toContain(
       "Recommendation missing-grounding must have private audit evidence.",
+    );
+  });
+
+  it("accepts fact-grounded recommendations for a selected Pokemon", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", ["round", "icywind"], {
+        ability: "illusion",
+        item: "choice-scarf",
+        stats: { ...zeroStats, speed: 80 },
+      }),
+      createSet(1, "Gardevoir Mega", ["round"], {
+        ability: "pixilate",
+        stats: { ...zeroStats, speed: 100 },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "zoroark-round",
+          kind: "move-owner",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "round",
+        },
+        {
+          id: "zoroark-scarf",
+          kind: "item-owner",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "choice-scarf",
+        },
+        {
+          id: "zoroark-faster",
+          kind: "faster-than",
+          subjectSlotIndex: 0,
+          objectSlotIndex: 1,
+          state: "current",
+          valueId: "",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "round-opening",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["zoroark-round", "zoroark-scarf", "zoroark-faster"],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "round-opening",
+        title: "Use the fast Round opener",
+        reason: "The selected set owns the required move and item.",
+        priority: "high",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          scope: "pokemon",
+          selectedSlot: 0,
+          mechanics: {
+            moves: [],
+            abilities: [],
+            items: [
+              {
+                id: "choice-scarf",
+                displayName: "Choice Scarf",
+                effect:
+                  "Holder's Speed is 1.5x, but it can only select the first move it executes.",
+              },
+            ],
+          },
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("counts a Speed comparison object as named Pokemon evidence", () => {
+    const pokemonSets = [
+      createSet(0, "Swampert", ["tailwind"], {
+        stats: { ...zeroStats, speed: 110 },
+      }),
+      createSet(1, "Sneasler", ["closecombat"], {
+        stats: { ...zeroStats, speed: 143 },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "swampert-slower",
+          kind: "slower-than",
+          subjectSlotIndex: 0,
+          objectSlotIndex: 1,
+          state: "current",
+          valueId: "",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "speed-order",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["swampert-slower"],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "speed-order",
+        title: "Compare Swampert and Sneasler",
+        reason: "Swampert is slower than Sneasler before other modifiers.",
+        priority: "medium",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          scope: "pokemon",
+          selectedSlot: 0,
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects a resistance recorded as an immunity in Pokemon analysis", () => {
+    const pokemonSet = createSet(0, "Sinistcha", ["matchagotcha"], {
+      defensiveProfile: {
+        weaknesses: [],
+        resistances: [{ type: "ground", multiplier: 0.5 }],
+        immunities: [],
+      },
+    });
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "false-ground-immunity",
+          kind: "immune-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "ground",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "earthquake-partner",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["false-ground-immunity"],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "earthquake-partner",
+        title: "Unsupported positioning",
+        reason: "This should fail deterministic validation.",
+        priority: "medium",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest([pokemonSet], {
+          scope: "pokemon",
+          selectedSlot: 0,
+        }),
+      ),
+    ).toContain(
+      "strategyAudit.facts[0] contradicts the supplied defensive profile.",
+    );
+  });
+
+  it("rejects Pokemon advice whose named move and teammates use unrelated facts", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", ["round", "icywind"]),
+      createSet(1, "Gardevoir", ["round"], {
+        megaEvolution: {
+          pokemonId: "gardevoir-mega",
+          pokemonName: "Gardevoir Mega",
+          displayName: "Gardevoir Mega",
+          types: ["psychic", "fairy"],
+          typeDisplayNames: ["Psychic", "Fairy"],
+          ability: "pixilate",
+          abilityDisplayName: "Pixilate",
+          defensiveProfile: {
+            weaknesses: [],
+            resistances: [],
+            immunities: [],
+          },
+        },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "unrelated-icy-wind",
+          kind: "move-owner",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "icywind",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "round-chain",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["unrelated-icy-wind"],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "round-chain",
+        title: "Use Hisuian Zoroark and Gardevoir for Round",
+        reason: "Gardevoir is the strongest Round responder.",
+        priority: "high",
+      },
+    ];
+
+    const errors = validateCopilotStrategyAuditForRequest(
+      output,
+      createRequest(pokemonSets, {
+        scope: "pokemon",
+        selectedSlot: 0,
+        mechanics: {
+          moves: [
+            {
+              id: "round",
+              displayName: "round",
+              effect:
+                "Power doubles and the user moves immediately after an ally that already used round this turn.",
+            },
+          ],
+          abilities: [],
+          items: [],
+        },
+      }),
+    );
+
+    expect(errors).toContain(
+      "Recommendation round-chain names Gardevoir without fact evidence for slot 1.",
+    );
+    expect(errors).toContain(
+      "Recommendation round-chain names shared move round without matching owner fact evidence.",
+    );
+  });
+
+  it("keeps the private audit empty for an unfilled Pokemon slot", () => {
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "invented-slot",
+          kind: "move-owner",
+          subjectSlotIndex: 5,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "protect",
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(sets, {
+          scope: "pokemon",
+          selectedSlot: 5,
+        }),
+      ),
+    ).toContain(
+      "An empty Pokemon slot must use an empty private strategy audit.",
     );
   });
 

@@ -92,6 +92,15 @@ Run only the focused ace-funnel and interaction regressions with:
 npm run eval:ai -- --strategy
 ```
 
+Run the production-derived selected-Pokemon regressions with:
+
+```bash
+npm run eval:ai -- --pokemon-regressions
+```
+
+Use `--scope pokemon --slot <index>` with a single team fixture when checking
+another configured set. Evaluation expectations stay outside the model request.
+
 The same ignored variable enables hosted PokePilot analysis through the local
 `POST /api/pokepilot/analyze` development route. Without it, the app remains
 usable and shows deterministic rules-based analysis instead. In production,

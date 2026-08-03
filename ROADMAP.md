@@ -134,6 +134,16 @@ The MVP should prove the core loop:
   legal plans and element owners, validate deterministic ownership/Mega/type/
   Speed facts, require every recommendation to cite verified audit evidence,
   and confirm the clarified contract with a 2/2 live Low smoke test.
+- [x] Split Prompt v29 into a common cache breakpoint plus Team, Pokemon, and
+  Recommend scope breakpoints, keeping variable roster state after both stable
+  prefixes and preserving a shared core cache route across analysis modes.
+- [x] Add production-derived selected-Pokemon evaluation fixtures and enforce
+  private evidence for named partners, shared moves, defensive relations, and
+  unconditional held-item Speed order. Confirm the final Pokemon scope with a
+  2/2 Luna Standard low live regression.
+- [ ] Extend Pokemon-scope semantic review from fact presence to exact prose
+  alignment for defensive partner claims, and keep alternative Illusion
+  presentations as evaluator-ranked choices rather than hardcoded answers.
 - [x] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
   - [x] Keep the API key and Luna adapter server-only.

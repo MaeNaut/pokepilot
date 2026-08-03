@@ -152,6 +152,57 @@ export async function createAiTeamEvaluationCase(
   };
 }
 
+export async function createAiPokemonEvaluationCase(
+  fixture: AiTeamFixture,
+  selectedSlot: number,
+  options: CreateAiTeamEvaluationCaseOptions,
+  metadata?: {
+    fixtureId?: string;
+    title?: string;
+    expectations?: AiTeamFixtureExpectations;
+  },
+): Promise<AiTeamEvaluationCase> {
+  const teamCase = await createAiTeamEvaluationCase(fixture, options);
+  const selectedSet = teamCase.request.sets.find(
+    (set) => set.slotIndex === selectedSlot,
+  );
+
+  if (!selectedSet) {
+    throw new Error(
+      `Fixture "${fixture.id}" has no Pokemon in slot ${selectedSlot}.`,
+    );
+  }
+
+  const request: CopilotAnalysisRequest = {
+    ...teamCase.request,
+    scope: "pokemon",
+    selectedSlot,
+  };
+
+  return {
+    ...teamCase,
+    fixtureId:
+      metadata?.fixtureId ?? `${fixture.id}-pokemon-${selectedSlot}`,
+    title: metadata?.title ?? `${fixture.title} - ${selectedSet.displayName}`,
+    request,
+    requestFingerprint: getCopilotRequestFingerprint(request),
+    evaluatorContext: {
+      ...teamCase.evaluatorContext,
+      expectations: metadata?.expectations
+        ? {
+            teamIdentities: [...metadata.expectations.teamIdentities],
+            criticalObservations: [
+              ...metadata.expectations.criticalObservations,
+            ],
+            forbiddenConclusions: [
+              ...metadata.expectations.forbiddenConclusions,
+            ],
+          }
+        : teamCase.evaluatorContext.expectations,
+    },
+  };
+}
+
 export function createAiEvaluationModelInput(
   evaluationCase: AiTeamEvaluationCase,
 ): CopilotAnalysisRequest {

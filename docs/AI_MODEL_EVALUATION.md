@@ -105,10 +105,11 @@ second fixture-specific mapping.
 model adapter receives only a cloned `CopilotAnalysisRequest`, preventing
 source metadata or expected conclusions from leaking into the prompt.
 
-The 24 complete-team fixtures cover the first team-analysis flow. Partial
-teams, empty-slot candidate filters, bench-aware analysis, and future
-single-Pokemon analysis need separate state fixtures if those hosted features
-are evaluated later.
+The 24 complete-team fixtures cover the first team-analysis flow. Two additional
+production-derived selected-Pokemon cases cover a Choice Scarf, Illusion, and
+shared-move interaction plus rain, Mega Speed, and spread-move positioning.
+Partial teams, empty-slot candidate filters, and bench-aware analysis still need
+separate state fixtures if those hosted features are evaluated later.
 
 ## First Hosted Evaluation
 
@@ -137,11 +138,12 @@ production and the evaluation CLI now default to `low`; use `medium` only for
 explicit comparison runs. Keep every request on Standard processing during
 evaluation;
 the CLI explicitly sends `service_tier: "default"`, independently of the
-Fast-mode setting used by Codex. A versioned prompt-cache key keeps equivalent
-evaluation requests on the same cache route while ensuring prompt revisions do
-not reuse stale prefixes. The adapter marks the end of the stable PokePilot
-instructions as an explicit cache breakpoint. Variable team and recommendation
-payloads remain after that breakpoint and are not written to the prompt cache.
+Fast-mode setting used by Codex. A versioned core prompt-cache key keeps
+equivalent evaluation requests on the same cache route while ensuring common
+prompt revisions do not reuse stale prefixes. The adapter marks both the common
+PokePilot instructions and the requested analysis-scope instructions as
+explicit cache breakpoints. Variable request payloads remain after both and are
+not written to the prompt cache.
 GPT-5.6 uses the explicit `30m` minimum TTL instead of the deprecated extended
 retention option used by earlier models.
 
@@ -173,10 +175,17 @@ pairwise-reasoning prompts:
 npm run eval:ai -- --strategy
 ```
 
+Run both production-derived selected-Pokemon regressions with:
+
+```bash
+npm run eval:ai -- --pokemon-regressions
+```
+
 Other useful options:
 
 ```bash
 npm run eval:ai -- --fixture singles-m3-01-gengar-starmie
+npm run eval:ai -- --fixture doubles-strategy-zoroark-round-chain --scope pokemon --slot 3
 npm run eval:ai -- --effort medium
 ```
 
@@ -282,6 +291,48 @@ changing prompt would have cost about $0.009918, so the explicit boundary saved
 about 18.2% across the cold-plus-warm pair. Production response caching remains
 a separate layer and can avoid the model call entirely for an identical
 request.
+
+### Prompt v29 Two-Level Scope Cache
+
+Prompt v29 divides stable input into two explicit cache breakpoints rather than
+making every analysis mode pay for one monolithic instruction block:
+
+1. provider-neutral PokePilot rules shared by Team, Pokemon, and Recommend;
+2. stable instructions for the requested scope;
+3. variable request JSON, which remains after both breakpoints.
+
+The cache key is versioned by the common core and reasoning effort. Updating a
+scope therefore preserves the common route while forcing only the changed
+scope prefix to warm again. A cold selected-Pokemon regression wrote 2,928
+prefix tokens, and the next Pokemon request reused all 2,928 despite receiving
+a different roster and selected slot:
+
+| Request | Input | Cached input | Cache write | Output | Latency | Estimated cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Zoroark Pokemon analysis | 9,224 | 0 | 2,928 | 1,448 | 14.712 s | $0.003729 |
+| Swampert Pokemon analysis | 8,934 | 2,928 | 0 | 1,381 | 11.247 s | $0.002917 |
+
+Both calls passed the strict model schema and deterministic audit. They used
+20,987 total tokens and cost $0.006646. The output correctly treated Choice
+Scarf Hisuian Zoroark as the first Round user and Mega Gardevoir as the
+Pixilate responder, and distinguished Pelipper's Ground immunity from partners
+weak to Swampert's Earthquake. The first Team call after the Pokemon run reused
+1,761 common-core tokens before warming its Team prefix; a later same-version
+Team call reused the full 4,567-token common-plus-Team prefix. Bumping only the
+Team scope version again retained the 1,761-token common hit.
+
+Strict completion is not a perfect semantic score. The Zoroark response chose
+a legal Mega Gengar / Shadow Tag Illusion bluff instead of the evaluator's
+preferred Farigiraf / Armor Tail expectation. The Swampert response also placed
+Pelipper's unrelated Fire resistance inside a recommendation about covering a
+Grass weakness, even though its exact Ground-immunity positioning advice was
+correct. Keep both as manual-review residuals rather than weakening validation
+or encoding fixture-specific answers.
+
+Prompt caching reduces repeated stable input billing but does not cache the
+changing team payload or generated output. Output remains the larger marginal
+cost in these short one-shot analyses, while the separate 24-hour canonical
+response cache still avoids the entire provider call for an identical request.
 
 At the enriched low-effort average of about $0.001822 per team analysis, 900
 monthly analyses would cost about $1.64 and a $10 budget would cover roughly
@@ -392,12 +443,12 @@ and [model optimization guide](https://developers.openai.com/api/docs/guides/mod
 ## Hosted Analysis Integration
 
 The first production-shaped analysis path now uses
-`POST /api/pokepilot/analyze`. The browser sends request-contract v9 and never
+`POST /api/pokepilot/analyze`. The browser sends request-contract v11 and never
 imports the OpenAI SDK or reads an API key. The route:
 
 - rejects methods other than `POST` and bodies larger than 256 KB;
 - validates the complete incoming request before any paid call;
-- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v25;
+- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v29;
 - allows up to 3,500 combined reasoning and response tokens so a valid
   structured response is not truncated by the output budget;
 - disables response storage and uses a versioned explicit prompt-cache key and
@@ -413,7 +464,7 @@ handler. Local development reads the ignored `OPENAI_API_KEY` from
 `.env.local`; deployment must provide the same name as a server secret, never
 as a `VITE_` variable.
 
-Request v9 sends a deduplicated neutral mechanics dictionary for every selected
+Request v11 sends a deduplicated neutral mechanics dictionary for every selected
 move, item, current ability, and projected Mega ability. Effects come from the
 same local Showdown snapshots and catalogs used by the product UI; move tags are
 preserved without a hand-maintained strategic allowlist. The request builder no
@@ -560,7 +611,8 @@ now carries four machine-readable layers:
 - cross-set interactions tied to one plan, phase, active state, and owning
   participants;
 - compact facts for selected move, ability, item, Mega-option, defensive type,
-  and unmodified final-Speed claims;
+  and final-Speed claims including explicitly supplied unconditional numeric
+  held-item modifiers;
 - one evidence record per recommendation, referencing existing plan,
   interaction, or fact IDs, except for a completely empty team where no such
   evidence can exist.
