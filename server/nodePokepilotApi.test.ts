@@ -4,6 +4,7 @@ import {
   createCopilotTypeLabels,
   type CopilotAnalysisRequest,
 } from "../src/utils/copilotAnalysis";
+import { createCopilotResponsibilityCounts } from "../src/utils/copilotResponsibilities";
 import { handleNodePokePilotApi } from "./nodePokepilotApi";
 import {
   createSignedPokePilotClientToken,
@@ -12,7 +13,7 @@ import {
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 12,
+  version: 14,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -38,6 +39,7 @@ const validRequest = {
       supporter: 0,
       setter: 0,
     },
+    responsibilityCounts: createCopilotResponsibilityCounts([]),
     moveSources: {},
     defensiveProfile: { weakTo: {}, resists: {}, immuneTo: {} },
     offensiveProfile: {

@@ -1,9 +1,15 @@
 import type { ShowdownLegalitySnapshot } from "../../api/showdownLegality";
+import { formatIdLabel } from "../../api/showdownIds";
+import {
+  translateGameName,
+  translatePokemonName,
+} from "../../i18n/gameTranslations";
 import type {
   ItemIndexEntry,
   PokemonAbility,
   PokemonIndexEntry,
   TeamMember,
+  TeamSlot,
 } from "../../types";
 import {
   createCopilotAnalysisRequest,
@@ -19,6 +25,14 @@ import {
   type ShowdownImportServices,
 } from "../../utils/showdownImport";
 import { createTeamAnalysisContext } from "../../utils/teamAnalysisContext";
+import { clearBuildStateSlot } from "../../utils/teamBuildState";
+import { emptyPokemonCandidateFilters } from "../../utils/pokemonCandidateFilters";
+import {
+  countTeamMegaOptions,
+  createPokemonRecommendationCandidates,
+  createPokemonRecommendationOptions,
+  getOccupiedPokemonSpeciesKeys,
+} from "../../utils/pokemonRecommendations";
 import type {
   AiTeamFixture,
   AiTeamFixtureExpectations,
@@ -84,13 +98,81 @@ export type AiEvaluationRunResult = {
   responseMetadata: AiEvaluationResponseMetadata;
 };
 
-type CreateAiTeamEvaluationCaseOptions = {
+export function getMissingExpectedRecommendationIds(
+  output: CopilotModelOutput | null,
+  expectedCandidateIds: readonly string[],
+) {
+  if (!output) return [...expectedCandidateIds];
+
+  const recommendationIds = new Set(
+    output.recommendations.map((recommendation) => recommendation.id),
+  );
+  return expectedCandidateIds.filter(
+    (candidateId) => !recommendationIds.has(candidateId),
+  );
+}
+
+export type CreateAiTeamEvaluationCaseOptions = {
   pokemonIndex: PokemonIndexEntry[];
   itemIndex: ItemIndexEntry[];
   abilityIndex?: PokemonAbility[];
   legality: ShowdownLegalitySnapshot | null;
   services?: ShowdownImportServices;
+  createRecommendationCandidates?: typeof createPokemonRecommendationCandidates;
 };
+
+type AiEvaluationCaseMetadata = {
+  fixtureId?: string;
+  title?: string;
+  expectations?: AiTeamFixtureExpectations;
+};
+
+async function createAiFixtureAnalysisContext(
+  fixture: AiTeamFixture,
+  {
+    pokemonIndex,
+    itemIndex,
+    legality,
+    services,
+  }: CreateAiTeamEvaluationCaseOptions,
+  removedSlot?: number,
+) {
+  const imported = await buildImportedShowdownSnapshot(fixture.showdownText, {
+    pokemonIndex,
+    ...(services ? { services } : {}),
+  });
+  const removedMember =
+    removedSlot === undefined ? null : imported.members[removedSlot] ?? null;
+  const team: TeamSlot[] = [...imported.members];
+  const buildState =
+    removedSlot === undefined
+      ? imported.buildState
+      : clearBuildStateSlot(imported.buildState, removedSlot);
+
+  if (removedSlot !== undefined) {
+    team[removedSlot] = null;
+  }
+
+  const moveSources = team.filter(
+    (member): member is TeamMember => Boolean(member),
+  );
+  const { diagnostics, validity } = createTeamAnalysisContext({
+    team,
+    buildState,
+    moveSources,
+    legality,
+    pokemonIndex,
+    itemIndex,
+  });
+
+  return {
+    team,
+    buildState,
+    diagnostics,
+    validity,
+    removedMember,
+  };
+}
 
 export async function createAiTeamEvaluationCase(
   fixture: AiTeamFixture,
@@ -102,35 +184,28 @@ export async function createAiTeamEvaluationCase(
     services,
   }: CreateAiTeamEvaluationCaseOptions,
 ): Promise<AiTeamEvaluationCase> {
-  const imported = await buildImportedShowdownSnapshot(fixture.showdownText, {
-    pokemonIndex,
-    ...(services ? { services } : {}),
-  });
-  const moveSources = imported.members.filter(
-    (member): member is TeamMember => Boolean(member),
-  );
-  const { diagnostics, validity } = createTeamAnalysisContext({
-    team: imported.members,
-    buildState: imported.buildState,
-    moveSources,
-    legality,
-    pokemonIndex,
-    itemIndex,
-  });
+  const { team, buildState, diagnostics, validity } =
+    await createAiFixtureAnalysisContext(fixture, {
+      pokemonIndex,
+      itemIndex,
+      abilityIndex,
+      legality,
+      services,
+    });
   const selectedSlot = Math.max(
     0,
-    imported.members.findIndex((member) => Boolean(member)),
+    team.findIndex((member) => Boolean(member)),
   );
   const request = createCopilotAnalysisRequest({
     scope: "team",
     locale: "ko",
     battleFormat: fixture.battleFormat,
     teamName: fixture.title,
-    team: imported.members,
+    team,
     pokemonIndex,
     abilityIndex,
     selectedSlot,
-    buildState: imported.buildState,
+    buildState,
     diagnostics,
     validity,
   });
@@ -156,11 +231,7 @@ export async function createAiPokemonEvaluationCase(
   fixture: AiTeamFixture,
   selectedSlot: number,
   options: CreateAiTeamEvaluationCaseOptions,
-  metadata?: {
-    fixtureId?: string;
-    title?: string;
-    expectations?: AiTeamFixtureExpectations;
-  },
+  metadata?: AiEvaluationCaseMetadata,
 ): Promise<AiTeamEvaluationCase> {
   const teamCase = await createAiTeamEvaluationCase(fixture, options);
   const selectedSet = teamCase.request.sets.find(
@@ -199,6 +270,112 @@ export async function createAiPokemonEvaluationCase(
             ],
           }
         : teamCase.evaluatorContext.expectations,
+    },
+  };
+}
+
+export async function createAiPokemonRecommendationEvaluationCase(
+  fixture: AiTeamFixture,
+  selectedSlot: number,
+  options: CreateAiTeamEvaluationCaseOptions,
+  metadata?: AiEvaluationCaseMetadata,
+): Promise<AiTeamEvaluationCase> {
+  const {
+    pokemonIndex,
+    abilityIndex = [],
+    legality,
+    createRecommendationCandidates = createPokemonRecommendationCandidates,
+  } = options;
+  const { team, buildState, diagnostics, validity, removedMember } =
+    await createAiFixtureAnalysisContext(fixture, options, selectedSlot);
+
+  if (!removedMember) {
+    throw new Error(
+      `Fixture "${fixture.id}" has no Pokemon in slot ${selectedSlot}.`,
+    );
+  }
+
+  const recommendationOptions = createPokemonRecommendationOptions({
+    pokemonIndex,
+    abilityIndex,
+    legality,
+    getPokemonDisplayName: (entry, includeForm) =>
+      translatePokemonName("ko", {
+        id: entry.name,
+        speciesId: entry.speciesKey,
+        fallback: entry.displayName,
+        includeForm,
+        formLabel: entry.formLabel,
+        formKind: entry.formKind,
+      }),
+    getTypeDisplayName: (type) =>
+      translateGameName("ko", "types", type, formatIdLabel(type)),
+    getAbilityDisplayName: (id, fallback) =>
+      translateGameName("ko", "abilities", id, fallback),
+  });
+  const recommendationCandidates = await createRecommendationCandidates({
+    options: recommendationOptions,
+    filters:
+      buildState.candidateFiltersBySlot[selectedSlot] ??
+      emptyPokemonCandidateFilters,
+    occupiedSpeciesKeys: getOccupiedPokemonSpeciesKeys(team, pokemonIndex),
+    diagnostics,
+    battleFormat: fixture.battleFormat,
+    existingMegaOptionCount: countTeamMegaOptions(
+      team,
+      buildState.itemBySlot,
+      pokemonIndex,
+    ),
+  });
+
+  if (recommendationCandidates.length === 0) {
+    throw new Error(
+      `Fixture "${fixture.id}" produced no recommendation candidates for slot ${selectedSlot}.`,
+    );
+  }
+
+  const request = createCopilotAnalysisRequest({
+    scope: "recommendation",
+    locale: "ko",
+    battleFormat: fixture.battleFormat,
+    teamName: fixture.title,
+    team,
+    pokemonIndex,
+    abilityIndex,
+    selectedSlot,
+    buildState,
+    diagnostics,
+    validity,
+    recommendationCandidates,
+  });
+
+  return {
+    schemaVersion: 1,
+    fixtureId:
+      metadata?.fixtureId ?? `${fixture.id}-recommendation-${selectedSlot}`,
+    title:
+      metadata?.title ?? `${fixture.title} - replace ${removedMember.name}`,
+    request,
+    requestFingerprint: getCopilotRequestFingerprint(request),
+    evaluatorContext: {
+      source: { ...fixture.source },
+      expectations: metadata?.expectations
+        ? {
+            teamIdentities: [...metadata.expectations.teamIdentities],
+            criticalObservations: [
+              ...metadata.expectations.criticalObservations,
+            ],
+            forbiddenConclusions: [
+              ...metadata.expectations.forbiddenConclusions,
+            ],
+          }
+        : {
+            teamIdentities: [...fixture.expectations.teamIdentities],
+            criticalObservations: [...fixture.expectations.criticalObservations],
+            forbiddenConclusions: [
+              ...fixture.expectations.forbiddenConclusions,
+            ],
+          },
     },
   };
 }

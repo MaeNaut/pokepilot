@@ -15,7 +15,9 @@ import {
 } from "../src/test/evaluation/aiEvaluationReporter";
 import {
   createAiPokemonEvaluationCase,
+  createAiPokemonRecommendationEvaluationCase,
   createAiTeamEvaluationCase,
+  getMissingExpectedRecommendationIds,
   runAiTeamEvaluationSuite,
 } from "../src/test/evaluation/aiModelEvaluation";
 import {
@@ -32,6 +34,7 @@ import {
 } from "../src/test/fixtures/aiTeamFixtures";
 import type { AiTeamFixture } from "../src/test/fixtures/aiTeamFixtureTypes";
 import { aiPokemonAnalysisFixtures } from "../src/test/fixtures/aiPokemonAnalysisFixtures";
+import { aiPokemonRecommendationFixtures } from "../src/test/fixtures/aiPokemonRecommendationFixtures";
 import { installAiEvaluationRuntime } from "./aiEvaluationRuntime";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
@@ -41,9 +44,11 @@ type CliOptions = {
   fixtures: AiTeamFixture[];
   reasoningEffort: LunaReasoningEffort;
   outputDirectory: string;
-  scope: "team" | "pokemon";
+  scope: "team" | "pokemon" | "recommendation";
   selectedSlot: number;
   pokemonRegressions: boolean;
+  recommendationRegressions: boolean;
+  repeat: number;
 };
 
 async function loadOpenAiApiKey() {
@@ -120,10 +125,24 @@ function parseCliOptions(args: string[]): CliOptions {
   }
 
   const pokemonRegressions = args.includes("--pokemon-regressions");
+  const recommendationRegressions = args.includes(
+    "--recommendation-regressions",
+  );
+  if (pokemonRegressions && recommendationRegressions) {
+    throw new Error(
+      "--pokemon-regressions and --recommendation-regressions are mutually exclusive.",
+    );
+  }
   const requestedScope = readOptionValue(args, "--scope");
-  const scope = requestedScope ?? (pokemonRegressions ? "pokemon" : "team");
-  if (scope !== "team" && scope !== "pokemon") {
-    throw new Error("--scope must be team or pokemon.");
+  const scope =
+    requestedScope ??
+    (pokemonRegressions
+      ? "pokemon"
+      : recommendationRegressions
+        ? "recommendation"
+        : "team");
+  if (scope !== "team" && scope !== "pokemon" && scope !== "recommendation") {
+    throw new Error("--scope must be team, pokemon, or recommendation.");
   }
 
   const selectedSlot = Number(readOptionValue(args, "--slot") ?? 0);
@@ -134,6 +153,16 @@ function parseCliOptions(args: string[]): CliOptions {
   if (pokemonRegressions && scope !== "pokemon") {
     throw new Error("--pokemon-regressions requires Pokemon scope.");
   }
+  if (recommendationRegressions && scope !== "recommendation") {
+    throw new Error(
+      "--recommendation-regressions requires recommendation scope.",
+    );
+  }
+
+  const repeat = Number(readOptionValue(args, "--repeat") ?? 1);
+  if (!Number.isInteger(repeat) || repeat < 1 || repeat > 10) {
+    throw new Error("--repeat must be an integer from 1 through 10.");
+  }
 
   return {
     fixtures: getFixtureSelection(args),
@@ -141,6 +170,8 @@ function parseCliOptions(args: string[]): CliOptions {
     scope,
     selectedSlot,
     pokemonRegressions,
+    recommendationRegressions,
+    repeat,
     outputDirectory: resolve(
       projectRoot,
       readOptionValue(args, "--output") ?? "artifacts/ai-evaluation",
@@ -156,13 +187,18 @@ Usage:
   npm run eval:ai -- --all
   npm run eval:ai -- --strategy
   npm run eval:ai -- --pokemon-regressions
+  npm run eval:ai -- --recommendation-regressions
   npm run eval:ai -- --fixture <fixture-id>
   npm run eval:ai -- --fixture <fixture-id> --scope pokemon --slot 0
+  npm run eval:ai -- --fixture <fixture-id> --scope recommendation --slot 0
   npm run eval:ai -- --effort none|low|medium
+  npm run eval:ai -- --recommendation-regressions --repeat 3
 
 The default run is a two-case smoke test with one Singles and one Doubles
-fixture at low reasoning. --strategy runs the focused interaction and ace-funnel
-regressions. Calls always use GPT-5.6 Luna with Standard service tier.`);
+  fixture at low reasoning. --strategy runs focused team interactions,
+  --pokemon-regressions runs selected-set cases, and --recommendation-regressions
+  removes one member before building the production candidate shortlist.
+  Calls always use GPT-5.6 Luna with Standard service tier.`);
 }
 
 function createReportFileStem(
@@ -198,7 +234,7 @@ async function main() {
       loadShowdownLegality(),
     ]);
     const evaluationCases = [];
-    const evaluationTargets = options.pokemonRegressions
+    const baseEvaluationTargets = options.pokemonRegressions
       ? aiPokemonAnalysisFixtures.map((pokemonFixture) => {
           const fixture = aiTeamFixtures.find(
             (candidate) => candidate.id === pokemonFixture.teamFixtureId,
@@ -218,13 +254,48 @@ async function main() {
               title: `${fixture.title} - ${pokemonFixture.expectedPokemonName}`,
               expectations: pokemonFixture.expectations,
             },
+            expectedCandidateIds: undefined,
+            requiredRecommendationIds: undefined,
           };
         })
-      : options.fixtures.map((fixture) => ({
-          fixture,
-          selectedSlot: options.selectedSlot,
-          metadata: undefined,
-        }));
+      : options.recommendationRegressions
+        ? aiPokemonRecommendationFixtures.map((recommendationFixture) => {
+            const fixture = aiTeamFixtures.find(
+              (candidate) =>
+                candidate.id === recommendationFixture.teamFixtureId,
+            );
+
+            if (!fixture) {
+              throw new Error(
+                `Unknown team fixture "${recommendationFixture.teamFixtureId}" for ${recommendationFixture.id}.`,
+              );
+            }
+
+            return {
+              fixture,
+              selectedSlot: recommendationFixture.removedSlot,
+              metadata: {
+                fixtureId: recommendationFixture.id,
+                title: `${fixture.title} - replace ${recommendationFixture.expectedRemovedPokemonName}`,
+                expectations: recommendationFixture.expectations,
+              },
+              expectedCandidateIds: recommendationFixture.expectedCandidateIds,
+              requiredRecommendationIds:
+                recommendationFixture.requiredRecommendationIds,
+            };
+          })
+        : options.fixtures.map((fixture) => ({
+            fixture,
+            selectedSlot: options.selectedSlot,
+            metadata: undefined,
+            expectedCandidateIds: undefined,
+            requiredRecommendationIds: undefined,
+          }));
+    const evaluationTargets = Array.from(
+      { length: options.repeat },
+      (_, repeatIndex) =>
+        baseEvaluationTargets.map((target) => ({ ...target, repeatIndex })),
+    ).flat();
 
     for (const [index, target] of evaluationTargets.entries()) {
       const { fixture } = target;
@@ -241,7 +312,7 @@ async function main() {
           fetchItem,
         },
       };
-      evaluationCases.push(
+      const evaluationCase =
         options.scope === "pokemon"
           ? await createAiPokemonEvaluationCase(
               fixture,
@@ -249,7 +320,41 @@ async function main() {
               caseOptions,
               target.metadata,
             )
-          : await createAiTeamEvaluationCase(fixture, caseOptions),
+          : options.scope === "recommendation"
+            ? await createAiPokemonRecommendationEvaluationCase(
+                fixture,
+                target.selectedSlot,
+                caseOptions,
+                target.metadata,
+              )
+            : await createAiTeamEvaluationCase(fixture, caseOptions);
+
+      if (target.expectedCandidateIds) {
+        const candidateIds = new Set(
+          evaluationCase.request.recommendationCandidates.map(
+            (candidate) => candidate.pokemonId,
+          ),
+        );
+        const missingCandidateIds = target.expectedCandidateIds.filter(
+          (candidateId) => !candidateIds.has(candidateId),
+        );
+
+        if (missingCandidateIds.length > 0) {
+          throw new Error(
+            `${target.metadata?.fixtureId ?? fixture.id} is missing expected shortlist candidates: ${missingCandidateIds.join(", ")}. ` +
+              `Generated shortlist: ${[...candidateIds].join(", ")}.`,
+          );
+        }
+      }
+
+      evaluationCases.push(
+        options.repeat === 1
+          ? evaluationCase
+          : {
+              ...evaluationCase,
+              fixtureId: `${evaluationCase.fixtureId}-run-${target.repeatIndex + 1}`,
+              title: `${evaluationCase.title} (run ${target.repeatIndex + 1})`,
+            },
       );
     }
 
@@ -261,7 +366,7 @@ async function main() {
     console.log(
       `Calling ${adapter.modelId} with Standard service tier (${options.reasoningEffort} reasoning)...`,
     );
-    const results = await runAiTeamEvaluationSuite(evaluationCases, {
+    const modelResults = await runAiTeamEvaluationSuite(evaluationCases, {
       ...adapter,
       analyze: async (request) => {
         const setNames = request.sets
@@ -270,6 +375,28 @@ async function main() {
         console.log(`Analyzing: ${request.teamName} [${setNames}]`);
         return adapter.analyze(request);
       },
+    });
+    const results = modelResults.map((result, index) => {
+      const requiredRecommendationIds =
+        evaluationTargets[index]?.requiredRecommendationIds;
+      if (!requiredRecommendationIds || result.status !== "complete") return result;
+
+      const missingCandidateIds = getMissingExpectedRecommendationIds(
+        result.output,
+        requiredRecommendationIds,
+      );
+      if (missingCandidateIds.length === 0) return result;
+
+      return {
+        ...result,
+        status: "invalid-output" as const,
+        output: null,
+        debugOutput: result.debugOutput ?? result.output,
+        validationErrors: [
+          ...result.validationErrors,
+          `Missing expected recommendation candidates: ${missingCandidateIds.join(", ")}.`,
+        ],
+      };
     });
     const completedAt = new Date().toISOString();
     const report = createAiEvaluationReport({

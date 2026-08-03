@@ -8,13 +8,14 @@ import {
   createCopilotTypeLabels,
   type CopilotAnalysisRequest,
 } from "../../utils/copilotAnalysis";
+import { createCopilotResponsibilityCounts } from "../../utils/copilotResponsibilities";
 import {
   createLunaStandardUsage,
   createOpenAiLunaAdapter,
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 12,
+  version: 14,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -44,6 +45,7 @@ const request = {
       supporter: 0,
       setter: 0,
     },
+    responsibilityCounts: createCopilotResponsibilityCounts([]),
     moveSources: {},
     defensiveProfile: {
       weakTo: {},
@@ -88,6 +90,7 @@ const groundedModelOutput = {
     plans: [],
     interactions: [],
     facts: [],
+    candidateFacts: [],
     recommendationEvidence: [],
   },
 };
@@ -207,7 +210,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 34,
+        promptVersion: 43,
       },
       usage: {
         totalTokens: 150,
@@ -337,6 +340,36 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(getPokePilotScopeInstructions("recommendation")).toContain(
       "Never name or recommend a Pokemon outside that array",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "create at least two minimal candidateFacts",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "one concrete fit fact and one concrete tradeoff fact",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "Rank exactly three unique candidates",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "scan its exact supplied ability and common-move display names",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "must name at least one exact supplied commonSet ability or move",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "reconstruct the current team's central game plan",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "Complete three private passes",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "diagnostics.responsibilityCounts",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "weak-to to weakTo",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "Use responsibility only for an exact candidate.responsibilityIds value",
     );
     expect(getPokePilotScopeInstructions("recommendation")).not.toContain(
       "inspect every unordered pair of filled sets",

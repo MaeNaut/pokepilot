@@ -69,17 +69,47 @@ export type CopilotStrategyFact = {
   valueId: string;
 };
 
+export type CopilotRecommendationCandidateFactKind =
+  | "type"
+  | "ability"
+  | "common-move"
+  | "common-item"
+  | "common-nature"
+  | "speed-tier"
+  | "usage-rank"
+  | "requires-mega-stone"
+  | "responsibility"
+  | "weak-to"
+  | "resists-team-threat"
+  | "amplifies-team-threat"
+  | "adds-unanswered-weakness"
+  | "covers-type"
+  | "role-contribution"
+  | "role-redundancy"
+  | "concept-synergy"
+  | "missing-concept-synergy"
+  | "conflict";
+
+export type CopilotRecommendationCandidateFact = {
+  id: string;
+  candidateId: string;
+  kind: CopilotRecommendationCandidateFactKind;
+  valueId: string;
+};
+
 export type CopilotRecommendationEvidence = {
   recommendationId: string;
   planIds: string[];
   interactionIds: string[];
   factIds: string[];
+  candidateFactIds: string[];
 };
 
 export type CopilotStrategyAudit = {
   plans: CopilotStrategyPlan[];
   interactions: CopilotStrategyInteraction[];
   facts: CopilotStrategyFact[];
+  candidateFacts: CopilotRecommendationCandidateFact[];
   recommendationEvidence: CopilotRecommendationEvidence[];
 };
 
@@ -128,6 +158,7 @@ export const copilotModelOutputJsonSchema = {
     },
     recommendations: {
       type: "array",
+      maxItems: 3,
       description:
         "Strategic guidance that may describe core plans, matchup branches, or optional refinements; it is not limited to edits the user must make.",
       items: {
@@ -329,10 +360,51 @@ const strategyFactJsonSchema = {
   },
 } as const;
 
+const recommendationCandidateFactJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id", "candidateId", "kind", "valueId"],
+  properties: {
+    id: { type: "string" },
+    candidateId: { type: "string" },
+    kind: {
+      type: "string",
+      enum: [
+        "type",
+        "ability",
+        "common-move",
+        "common-item",
+        "common-nature",
+        "speed-tier",
+        "usage-rank",
+        "requires-mega-stone",
+        "responsibility",
+        "weak-to",
+        "resists-team-threat",
+        "amplifies-team-threat",
+        "adds-unanswered-weakness",
+        "covers-type",
+        "role-contribution",
+        "role-redundancy",
+        "concept-synergy",
+        "missing-concept-synergy",
+        "conflict",
+      ],
+    },
+    valueId: { type: "string" },
+  },
+} as const;
+
 const recommendationEvidenceJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["recommendationId", "planIds", "interactionIds", "factIds"],
+  required: [
+    "recommendationId",
+    "planIds",
+    "interactionIds",
+    "factIds",
+    "candidateFactIds",
+  ],
   properties: {
     recommendationId: { type: "string" },
     planIds: {
@@ -350,6 +422,11 @@ const recommendationEvidenceJsonSchema = {
       maxItems: 24,
       items: { type: "string" },
     },
+    candidateFactIds: {
+      type: "array",
+      maxItems: 40,
+      items: { type: "string" },
+    },
   },
 } as const;
 
@@ -362,7 +439,13 @@ export const copilotGroundedModelOutputJsonSchema = {
     strategyAudit: {
       type: "object",
       additionalProperties: false,
-      required: ["plans", "interactions", "facts", "recommendationEvidence"],
+      required: [
+        "plans",
+        "interactions",
+        "facts",
+        "candidateFacts",
+        "recommendationEvidence",
+      ],
       properties: {
         plans: {
           type: "array",
@@ -378,6 +461,11 @@ export const copilotGroundedModelOutputJsonSchema = {
           type: "array",
           maxItems: 24,
           items: strategyFactJsonSchema,
+        },
+        candidateFacts: {
+          type: "array",
+          maxItems: 40,
+          items: recommendationCandidateFactJsonSchema,
         },
         recommendationEvidence: {
           type: "array",
@@ -401,6 +489,7 @@ const strategyAuditKeys = new Set([
   "plans",
   "interactions",
   "facts",
+  "candidateFacts",
   "recommendationEvidence",
 ]);
 const strategyPlanKeys = new Set([
@@ -439,11 +528,18 @@ const strategyFactKeys = new Set([
   "state",
   "valueId",
 ]);
+const recommendationCandidateFactKeys = new Set([
+  "id",
+  "candidateId",
+  "kind",
+  "valueId",
+]);
 const recommendationEvidenceKeys = new Set([
   "recommendationId",
   "planIds",
   "interactionIds",
   "factIds",
+  "candidateFactIds",
 ]);
 const strategyPhases = new Set(["opening", "midgame", "endgame"]);
 const strategyPokemonStates = new Set(["current", "mega"]);
@@ -468,6 +564,27 @@ const strategyFactKinds = new Set([
   "faster-than",
   "slower-than",
   "speed-tie",
+]);
+const recommendationCandidateFactKinds = new Set([
+  "type",
+  "ability",
+  "common-move",
+  "common-item",
+  "common-nature",
+  "speed-tier",
+  "usage-rank",
+  "requires-mega-stone",
+  "responsibility",
+  "weak-to",
+  "resists-team-threat",
+  "amplifies-team-threat",
+  "adds-unanswered-weakness",
+  "covers-type",
+  "role-contribution",
+  "role-redundancy",
+  "concept-synergy",
+  "missing-concept-synergy",
+  "conflict",
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -710,6 +827,32 @@ function validateStrategyFact(fact: unknown, path: string, errors: string[]) {
   }
 }
 
+function validateRecommendationCandidateFact(
+  fact: unknown,
+  path: string,
+  errors: string[],
+) {
+  if (!isRecord(fact)) {
+    errors.push(`${path} must be an object.`);
+    return;
+  }
+
+  validateExactKeys(fact, recommendationCandidateFactKeys, path, errors);
+
+  for (const field of ["id", "candidateId", "valueId"] as const) {
+    if (typeof fact[field] !== "string" || !fact[field].trim()) {
+      errors.push(`${path}.${field} must be a non-empty string.`);
+    }
+  }
+
+  if (
+    typeof fact.kind !== "string" ||
+    !recommendationCandidateFactKinds.has(fact.kind)
+  ) {
+    errors.push(`${path}.kind is not supported.`);
+  }
+}
+
 function validateRecommendationEvidence(
   evidence: unknown,
   path: string,
@@ -736,6 +879,11 @@ function validateRecommendationEvidence(
     errors,
   );
   validateStringArray(evidence.factIds, `${path}.factIds`, errors);
+  validateStringArray(
+    evidence.candidateFactIds,
+    `${path}.candidateFactIds`,
+    errors,
+  );
 }
 
 export function validateCopilotGroundedModelOutput(
@@ -861,6 +1009,18 @@ export function validateCopilotGroundedModelOutput(
     } else {
       value.strategyAudit.facts.forEach((fact, index) => {
         validateStrategyFact(fact, `strategyAudit.facts[${index}]`, errors);
+      });
+    }
+
+    if (!Array.isArray(value.strategyAudit.candidateFacts)) {
+      errors.push("strategyAudit.candidateFacts must be an array.");
+    } else {
+      value.strategyAudit.candidateFacts.forEach((fact, index) => {
+        validateRecommendationCandidateFact(
+          fact,
+          `strategyAudit.candidateFacts[${index}]`,
+          errors,
+        );
       });
     }
 

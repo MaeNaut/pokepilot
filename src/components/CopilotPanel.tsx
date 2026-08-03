@@ -23,12 +23,6 @@ import type {
 } from "../types";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
 import {
-  getLegalMoves,
-  getPokemonCandidateAbilities,
-  isPokemonLegal,
-} from "../api/showdownLegality";
-import { normalizeShowdownId } from "../api/showdownIds";
-import {
   createCopilotAnalysisRequest,
   createLocalCopilotAnalysis,
   getCopilotRequestFingerprint,
@@ -62,11 +56,13 @@ import {
 } from "../utils/copilotHistory";
 import { emptyPokemonCandidateFilters } from "../utils/pokemonCandidateFilters";
 import {
+  countTeamMegaOptions,
   createPokemonRecommendationCandidates,
+  createPokemonRecommendationOptions,
+  getOccupiedPokemonSpeciesKeys,
   type CopilotRecommendationCandidateSnapshot,
   type PokemonRecommendationOption,
 } from "../utils/pokemonRecommendations";
-import { formatIdLabel } from "../api/showdownIds";
 import { TypeBadge } from "./TypeBadge";
 
 type CopilotPanelProps = {
@@ -252,92 +248,30 @@ export function CopilotPanel({
     buildState.candidateFiltersBySlot[selectedSlot] ??
     emptyPokemonCandidateFilters;
   const recommendationOptions = useMemo<PokemonRecommendationOption[]>(() => {
-    const abilityById = new Map(
-      abilityIndex.map((ability) => [normalizeShowdownId(ability.id), ability]),
-    );
-
-    return pokemonIndex
-      .filter((entry) => entry.isSelectorOption)
-      .filter((entry) =>
-        isPokemonLegal(
-          showdownLegality,
-          entry.showdownId,
-          entry.speciesKey,
-        ),
-      )
-      .map((entry) => {
-        const includeForm =
-          entry.formKind === "gender" ||
-          entry.formKind === "regional" ||
-          entry.displayName !== formatIdLabel(entry.speciesKey);
-
-        return {
+    return createPokemonRecommendationOptions({
+      pokemonIndex,
+      abilityIndex,
+      legality: showdownLegality,
+      getPokemonDisplayName: (entry, includeForm) =>
+        pokemonName({
           id: entry.name,
-          speciesKey: entry.speciesKey,
-          displayName: pokemonName({
-            id: entry.name,
-            speciesId: entry.speciesKey,
-            fallback: entry.displayName,
-            includeForm,
-            formLabel: entry.formLabel,
-            formKind: entry.formKind,
-          }),
-          types: entry.types,
-          typeDisplayNames: entry.types.map((type) =>
-            gameName("types", type, formatIdLabel(type)),
-          ),
-          abilities: getPokemonCandidateAbilities(
-            showdownLegality,
-            entry,
-            pokemonIndex,
-          ).map((ability) => {
-            const abilityData = abilityById.get(normalizeShowdownId(ability.id));
-
-            return {
-              id: ability.id,
-              displayName: gameName("abilities", ability.id, ability.name),
-              ...(abilityData?.effect ? { effect: abilityData.effect } : {}),
-            };
-          }),
-          legalMoveIds: [
-            ...(getLegalMoves(
-              showdownLegality,
-              entry.showdownId,
-              entry.speciesKey,
-            ) ?? []),
-          ],
-          isMegaForm: entry.formKind === "mega",
-        };
-      });
+          speciesId: entry.speciesKey,
+          fallback: entry.displayName,
+          includeForm,
+          formLabel: entry.formLabel,
+          formKind: entry.formKind,
+        }),
+      getTypeDisplayName: (type) => gameName("types", type, type),
+      getAbilityDisplayName: (id, fallback) =>
+        gameName("abilities", id, fallback),
+    });
   }, [abilityIndex, gameName, pokemonIndex, pokemonName, showdownLegality]);
   const occupiedSpeciesKeys = useMemo(
-    () =>
-      new Set(
-        team.flatMap((member) => {
-          if (!member) {
-            return [];
-          }
-
-          return [
-            pokemonIndex.find((entry) => entry.name === member.id)?.speciesKey ??
-              member.id,
-          ];
-        }),
-      ),
+    () => getOccupiedPokemonSpeciesKeys(team, pokemonIndex),
     [pokemonIndex, team],
   );
   const existingMegaOptionCount = useMemo(
-    () =>
-      team.reduce((count, member, slotIndex) => {
-        if (!member) return count;
-
-        const item = buildState.itemBySlot[slotIndex];
-        const isMegaForm =
-          pokemonIndex.find((entry) => entry.name === member.id)?.formKind ===
-          "mega";
-        const hasMegaStone = item?.category === "Mega Stones";
-        return count + Number(isMegaForm || hasMegaStone);
-      }, 0),
+    () => countTeamMegaOptions(team, buildState.itemBySlot, pokemonIndex),
     [buildState.itemBySlot, pokemonIndex, team],
   );
 

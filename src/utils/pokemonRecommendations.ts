@@ -5,12 +5,18 @@ import {
   type SmogonUsageSet,
 } from "../api/smogonUsage";
 import { getPokemonLookupAliases } from "./pokemonAliases";
-import { normalizeShowdownId } from "../api/showdownIds";
+import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import { loadShowdownData } from "../api/showdownData";
 import type {
   ShowdownDataSnapshot,
   ShowdownSpeciesData,
 } from "../api/showdownData";
+import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
+import {
+  getLegalMoves,
+  getPokemonCandidateAbilities,
+  isPokemonLegal,
+} from "../api/showdownLegality";
 import {
   teamConceptDefinitions,
   type TeamConceptId,
@@ -20,12 +26,21 @@ import {
   supportMoveIds,
 } from "../data/teamRoleMoves";
 import type {
+  PokemonAbility,
   PokemonCandidateFilters,
+  PokemonIndexEntry,
   PokemonMove,
   PokemonType,
   StatBlock,
+  TeamSlot,
 } from "../types";
+import type { TeamBuildState } from "./teamBuildState";
 import { matchesPokemonCandidateFilters } from "./pokemonCandidateFilters";
+import { compactCopilotMechanicEffect } from "./copilotMechanics";
+import {
+  inferCopilotResponsibilities,
+  type CopilotResponsibilityId,
+} from "./copilotResponsibilities";
 import { orderPokemonOptionsByUsage } from "./pokemonUsageOrder";
 import {
   createPokemonDefensiveProfile,
@@ -51,6 +66,18 @@ export type PokemonRecommendationOption = {
   isMegaForm?: boolean;
 };
 
+type CreatePokemonRecommendationOptionsInput = {
+  pokemonIndex: PokemonIndexEntry[];
+  abilityIndex: PokemonAbility[];
+  legality: ShowdownLegalitySnapshot | null;
+  getPokemonDisplayName: (
+    entry: PokemonIndexEntry,
+    includeForm: boolean,
+  ) => string;
+  getTypeDisplayName: (type: PokemonType) => string;
+  getAbilityDisplayName: (id: string, fallback: string) => string;
+};
+
 export type PokemonRecommendationCommonSet = {
   ability: string | null;
   item: string | null;
@@ -61,6 +88,7 @@ export type PokemonRecommendationCommonSet = {
     type: PokemonType;
     category: string;
     power: number | null;
+    effect?: string;
   }>;
 };
 
@@ -75,7 +103,9 @@ export type CopilotRecommendationCandidateSnapshot = {
   requiresMegaStone: boolean;
   usageRank: number | null;
   commonSet: PokemonRecommendationCommonSet | null;
+  responsibilityIds: CopilotResponsibilityId[];
   fit: {
+    weakTo: PokemonType[];
     resistsTeamThreats: PokemonType[];
     amplifiesTeamThreats: PokemonType[];
     addsUnansweredWeaknesses: PokemonType[];
@@ -120,7 +150,90 @@ type ScoredCandidate = {
 
 const MAX_RECOMMENDATION_ABILITY_EFFECT_LENGTH = 320;
 const MAX_RECOMMENDATION_ABILITIES = 3;
-const DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT = 28;
+const DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT = 30;
+const RECOMMENDATION_USAGE_SHARE = 0.75;
+
+export function createPokemonRecommendationOptions({
+  pokemonIndex,
+  abilityIndex,
+  legality,
+  getPokemonDisplayName,
+  getTypeDisplayName,
+  getAbilityDisplayName,
+}: CreatePokemonRecommendationOptionsInput): PokemonRecommendationOption[] {
+  const abilityById = new Map(
+    abilityIndex.map((ability) => [normalizeShowdownId(ability.id), ability]),
+  );
+
+  return pokemonIndex
+    .filter((entry) => entry.isSelectorOption)
+    .filter((entry) =>
+      isPokemonLegal(legality, entry.showdownId, entry.speciesKey),
+    )
+    .map((entry) => {
+      const includeForm =
+        entry.formKind === "gender" ||
+        entry.formKind === "regional" ||
+        entry.displayName !== formatIdLabel(entry.speciesKey);
+
+      return {
+        id: entry.name,
+        speciesKey: entry.speciesKey,
+        displayName: getPokemonDisplayName(entry, includeForm),
+        types: entry.types,
+        typeDisplayNames: entry.types.map(getTypeDisplayName),
+        abilities: getPokemonCandidateAbilities(
+          legality,
+          entry,
+          pokemonIndex,
+        ).map((ability) => {
+          const abilityData = abilityById.get(normalizeShowdownId(ability.id));
+
+          return {
+            id: ability.id,
+            displayName: getAbilityDisplayName(ability.id, ability.name),
+            ...(abilityData?.effect ? { effect: abilityData.effect } : {}),
+          };
+        }),
+        legalMoveIds: [
+          ...(getLegalMoves(legality, entry.showdownId, entry.speciesKey) ?? []),
+        ],
+        isMegaForm: entry.formKind === "mega",
+      };
+    });
+}
+
+export function getOccupiedPokemonSpeciesKeys(
+  team: TeamSlot[],
+  pokemonIndex: PokemonIndexEntry[],
+) {
+  return new Set(
+    team.flatMap((member) => {
+      if (!member) return [];
+
+      return [
+        pokemonIndex.find((entry) => entry.name === member.id)?.speciesKey ??
+          member.id,
+      ];
+    }),
+  );
+}
+
+export function countTeamMegaOptions(
+  team: TeamSlot[],
+  itemBySlot: TeamBuildState["itemBySlot"],
+  pokemonIndex: PokemonIndexEntry[],
+) {
+  return team.reduce((count, member, slotIndex) => {
+    if (!member) return count;
+
+    const item = itemBySlot[slotIndex];
+    const isMegaForm =
+      pokemonIndex.find((entry) => entry.name === member.id)?.formKind === "mega";
+    const hasMegaStone = item?.category === "Mega Stones";
+    return count + Number(isMegaForm || hasMegaStone);
+  }, 0);
+}
 
 function normalizeRecommendationAbilities(
   abilities: PokemonRecommendationAbility[],
@@ -200,17 +313,19 @@ function createCommonSet(
     .slice(0, 4)
     .flatMap((moveId) => {
       const move = showdownData?.movesById[normalizeShowdownId(moveId)];
-      return move
-        ? [
-            {
-              id: move.id,
-              displayName: move.name,
-              type: move.type,
-              category: move.category ?? "Status",
-              power: move.power,
-            },
-          ]
-        : [];
+      if (!move) return [];
+
+      const effect = compactCopilotMechanicEffect(move.description);
+      return [
+        {
+          id: move.id,
+          displayName: move.name,
+          type: move.type,
+          category: move.category ?? "Status",
+          power: move.power,
+          ...(effect ? { effect } : {}),
+        },
+      ];
     });
 
   return {
@@ -395,7 +510,6 @@ function selectDiversifiedCandidates(
       (left, right) => right.scores[score] - left.scores[score] || tieBreak(left, right),
     );
   const lanes = [
-    rankBy("usage"),
     rankBy("defense"),
     rankBy("strategy"),
     rankBy("role"),
@@ -403,6 +517,15 @@ function selectDiversifiedCandidates(
     rankBy("overall"),
   ];
   const selected = new Map<string, ScoredCandidate>();
+  const usageQuota = Math.min(
+    limit,
+    Math.ceil(limit * RECOMMENDATION_USAGE_SHARE),
+  );
+
+  rankBy("usage")
+    .filter((entry) => entry.candidate.usageRank !== null)
+    .slice(0, usageQuota)
+    .forEach((entry) => selected.set(entry.candidate.pokemonId, entry));
 
   for (let depth = 0; depth < candidates.length && selected.size < limit; depth += 1) {
     for (const lane of lanes) {
@@ -410,6 +533,14 @@ function selectDiversifiedCandidates(
       if (entry) selected.set(entry.candidate.pokemonId, entry);
       if (selected.size >= limit) break;
     }
+  }
+
+  if (selected.size < limit) {
+    rankBy("usage").forEach((entry) => {
+      if (selected.size < limit) {
+        selected.set(entry.candidate.pokemonId, entry);
+      }
+    });
   }
 
   return [...selected.values()]
@@ -470,6 +601,26 @@ export function rankPokemonRecommendationCandidates({
     const commonMoves = getCommonMoves(usageSet, showdownData);
     const commonAbility = usageSet?.ability ?? option.abilities[0]?.id ?? "";
     const defensiveProfile = createPokemonDefensiveProfile(option, commonAbility);
+    const commonSet = createCommonSet(usageSet, showdownData);
+    const normalizedAbilities = normalizeRecommendationAbilities(
+      option.abilities,
+      usageSet?.ability ?? null,
+    );
+    const commonAbilitySnapshot =
+      normalizedAbilities.find(
+        (ability) =>
+          normalizeShowdownId(ability.id) ===
+          normalizeShowdownId(commonSet?.ability ?? commonAbility),
+      ) ?? normalizedAbilities[0];
+    const responsibilityIds = inferCopilotResponsibilities({
+      abilities: commonAbilitySnapshot ? [commonAbilitySnapshot] : [],
+      moves:
+        commonSet?.moves.map((move) => ({
+          id: move.id,
+          effect: move.effect,
+        })) ?? [],
+    });
+    const weakTo = defensiveProfile.weaknesses.map((entry) => entry.type);
     const candidateRoles = inferCandidateRoles(baseStats, usageSet, commonMoves);
     const resistsTeamThreats = teamThreats.filter((type) =>
       candidateHandlesThreat(option, type, commonAbility),
@@ -539,16 +690,15 @@ export function rankPokemonRecommendationCandidates({
         displayName: option.displayName,
         types: option.types,
         typeDisplayNames: option.typeDisplayNames,
-        abilities: normalizeRecommendationAbilities(
-          option.abilities,
-          usageSet?.ability ?? null,
-        ),
+        abilities: normalizedAbilities,
         baseStats,
         speedTier: getSpeedTier(baseStats),
         requiresMegaStone: Boolean(option.isMegaForm),
         usageRank,
-        commonSet: createCommonSet(usageSet, showdownData),
+        commonSet,
+        responsibilityIds,
         fit: {
+          weakTo,
           resistsTeamThreats,
           amplifiesTeamThreats,
           addsUnansweredWeaknesses,

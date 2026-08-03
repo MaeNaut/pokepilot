@@ -18,6 +18,7 @@ describe("orderPokemonOptionsByUsage", () => {
   const options = [
     { id: "charizard", label: "Charizard" },
     { id: "raichu-alola", label: "Raichu-Alola" },
+    { id: "maushold-family-of-four", label: "Maushold" },
     { id: "mimikyu-disguised", label: "Mimikyu" },
   ];
 
@@ -31,9 +32,17 @@ describe("orderPokemonOptionsByUsage", () => {
       "raichu-alola",
       "mimikyu-disguised",
       "charizard",
+      "maushold-family-of-four",
     ]);
     expect(result.rankByOptionId.get("raichu-alola")).toBe(1);
     expect(result.rankByOptionId.get("mimikyu-disguised")).toBe(2);
+  });
+
+  it("maps usage data for Maushold onto its preferred selector form", () => {
+    const result = orderPokemonOptionsByUsage(options, ["maushold"]);
+
+    expect(result.orderedOptions[0].id).toBe("maushold-family-of-four");
+    expect(result.rankByOptionId.get("maushold-family-of-four")).toBe(1);
   });
 
   it("uses the base species when a usage Mega is not selectable", () => {

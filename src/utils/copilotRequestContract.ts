@@ -1,5 +1,6 @@
 import type { CopilotAnalysisRequest } from "./copilotAnalysis";
 import { pokemonTypes } from "../types";
+import { copilotResponsibilityIds } from "./copilotResponsibilities";
 
 export type CopilotRequestValidation =
   | { success: true; data: CopilotAnalysisRequest; errors: [] }
@@ -126,6 +127,16 @@ function hasValidRecommendationCandidateShape(value: unknown) {
     Array.isArray(entry) &&
     entry.length <= maxLength &&
     entry.every((item) => typeof item === "string");
+  const responsibilityArray = (entry: unknown) =>
+    Array.isArray(entry) &&
+    entry.length <= copilotResponsibilityIds.length &&
+    entry.every(
+      (responsibility): responsibility is (typeof copilotResponsibilityIds)[number] =>
+        typeof responsibility === "string" &&
+        copilotResponsibilityIds.includes(
+          responsibility as (typeof copilotResponsibilityIds)[number],
+        ),
+    );
 
   return (
     isRecord(value) &&
@@ -170,9 +181,12 @@ function hasValidRecommendationCandidateShape(value: unknown) {
             typeof move.type === "string" &&
             typeof move.category === "string" &&
             (move.power === null ||
-              (typeof move.power === "number" && Number.isFinite(move.power))),
+              (typeof move.power === "number" && Number.isFinite(move.power))) &&
+            (!("effect" in move) || typeof move.effect === "string"),
         ))) &&
+    responsibilityArray(value.responsibilityIds) &&
     isRecord(value.fit) &&
+    stringArray(value.fit.weakTo) &&
     stringArray(value.fit.resistsTeamThreats) &&
     stringArray(value.fit.amplifiesTeamThreats) &&
     stringArray(value.fit.addsUnansweredWeaknesses) &&
@@ -181,6 +195,18 @@ function hasValidRecommendationCandidateShape(value: unknown) {
     stringArray(value.fit.roleRedundancies, 6) &&
     stringArray(value.fit.conceptSynergies, 7) &&
     stringArray(value.fit.conflicts, 6)
+  );
+}
+
+function hasValidResponsibilityCounts(value: unknown) {
+  return (
+    isRecord(value) &&
+    copilotResponsibilityIds.every(
+      (responsibility) =>
+        Number.isInteger(value[responsibility]) &&
+        Number(value[responsibility]) >= 0 &&
+        Number(value[responsibility]) <= 6,
+    )
   );
 }
 
@@ -224,8 +250,8 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 12) {
-    errors.push("version must be 12.");
+  if (value.version !== 14) {
+    errors.push("version must be 14.");
   }
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
@@ -296,6 +322,10 @@ export function validateCopilotAnalysisRequest(
   }
   if (!isRecord(value.diagnostics)) {
     errors.push("diagnostics must be an object.");
+  } else if (!hasValidResponsibilityCounts(value.diagnostics.responsibilityCounts)) {
+    errors.push(
+      "diagnostics.responsibilityCounts must contain every supported responsibility.",
+    );
   }
 
   validateBoundedStructure(value, "request", errors);

@@ -181,12 +181,19 @@ Run both production-derived selected-Pokemon regressions with:
 npm run eval:ai -- --pokemon-regressions
 ```
 
+Run the four production-derived empty-slot recommendation regressions with:
+
+```bash
+npm run eval:ai -- --recommendation-regressions
+```
+
 Other useful options:
 
 ```bash
 npm run eval:ai -- --fixture singles-m3-01-gengar-starmie
 npm run eval:ai -- --fixture doubles-strategy-zoroark-round-chain --scope pokemon --slot 3
 npm run eval:ai -- --effort medium
+npm run eval:ai -- --recommendation-regressions --repeat 3
 ```
 
 The runner checks the process environment for `OPENAI_API_KEY`, then falls
@@ -194,6 +201,12 @@ back to the ignored project file `.env.local`. Never add the key to a
 Vite-prefixed environment variable or commit it to the repository. See
 `.env.example` for the local file shape. Generated JSON and Markdown reports
 are written to `artifacts/ai-evaluation/`, which is ignored by Git.
+
+The Node runner also installs the browser-style data runtime used by production
+request construction. Its localStorage-compatible cache persists under
+`node_modules/.cache/pokepilot-ai/evaluation-local-storage.json`, so repeated
+runs can reuse hydrated Showdown/Smogon data without committing generated
+state. Unit tests can explicitly disable this persistence.
 
 Each report records input, cached-input, cache-write, output, reasoning, and
 total tokens; estimated Standard API cost; service tier; latency; schema
@@ -376,6 +389,52 @@ monthly analyses would cost about $1.64 and a $10 budget would cover roughly
 Follow-up chat, retries, larger future payloads, and additional analysis modes
 need their own measurements before they share the same production budget.
 
+### Prompt v43 Recommendation And Cross-Scope Closeout
+
+Request-contract v14 and Prompt v43 extend the same grounded-output policy to
+empty-slot recommendations without encoding fixture Pokemon or team-specific
+answers. The deterministic candidate snapshot now includes:
+
+- exact weaknesses alongside defensive delta counts;
+- localized common moves and abilities backed by canonical IDs;
+- generic responsibility IDs derived from move and ability mechanics, such as
+  redirection, ally damage reduction, priority denial, speed control, recovery,
+  disruption, and pivoting;
+- current-team responsibility counts so useful redundancy can be separated
+  from duplicated labels.
+
+The four recommendation fixtures remove one Pokemon from rain, ace-protection,
+Round-chain, and Singles dual-Mega teams. Evaluator-only expectations remain
+outside the request. A recommendation must stay inside the supplied 28-member
+pool and its public rationale must resolve to verified candidate facts. The
+server may repair only private bookkeeping that is uniquely recoverable from
+those verified facts, such as a meaningless object slot on a unary ownership
+fact. Invented public elements, false type relations, and evidence unsupported
+by the candidate snapshot remain blocking errors.
+
+The final four-case run passed 4/4. Repeating every recommendation fixture three
+times passed 12/12; Pelipper remained the rain restoration candidate, Maushold
+the ace-protection candidate, and Farigiraf the Round-control candidate in all
+three runs. The Singles fixture retained Rotom-Wash and Hisuian Samurott while
+allowing the lower-priority third option to vary.
+
+The changed common audit was then checked against existing scopes. The final
+Team sweep passed 4/4 and the selected-Pokemon sweep passed 6/6. Their public
+answers retained the intended Round sequencing, Swampert rain positioning,
+Illusion pressure, and exact partner type relations.
+
+| Final run | Complete | Average case latency | Cached input | Total tokens | Estimated cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Recommendation, one pass | 4/4 | 11.181 s | 13,252 | 98,305 | $0.022632 |
+| Recommendation, three repeats | 12/12 | 10.257 s | 39,756 | 294,245 | $0.067091 |
+| Team regression | 4/4 | 21.526 s | 19,492 | 55,472 | $0.016796 |
+| Selected-Pokemon regression | 6/6 | 12.809 s | 21,918 | 69,053 | $0.017721 |
+
+The final repeat recommendation plus Team and selected-Pokemon verification
+cost $0.101608. Including intermediate Prompt v41-v43 tuning and rejected
+audit variants, this development pass used about $0.242695. These are explicit
+evaluation costs, not projected per-user production averages.
+
 ## Final Luna Low Baseline
 
 Prompt v9 and request v5 completed all 20 fixtures on August 1, 2026. Prompt
@@ -479,12 +538,12 @@ and [model optimization guide](https://developers.openai.com/api/docs/guides/mod
 ## Hosted Analysis Integration
 
 The first production-shaped analysis path now uses
-`POST /api/pokepilot/analyze`. The browser sends request-contract v12 and never
+`POST /api/pokepilot/analyze`. The browser sends request-contract v14 and never
 imports the OpenAI SDK or reads an API key. The route:
 
 - rejects methods other than `POST` and bodies larger than 256 KB;
 - validates the complete incoming request before any paid call;
-- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v34;
+- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v43;
 - allows up to 3,500 combined reasoning and response tokens so a valid
   structured response is not truncated by the output budget;
 - disables response storage and uses a versioned explicit prompt-cache key and
@@ -500,11 +559,14 @@ handler. Local development reads the ignored `OPENAI_API_KEY` from
 `.env.local`; deployment must provide the same name as a server secret, never
 as a `VITE_` variable.
 
-Request v12 sends a deduplicated neutral mechanics dictionary for every selected
+Request v14 sends a deduplicated neutral mechanics dictionary for every selected
 move, item, current ability, and projected Mega ability. Effects come from the
 same local Showdown snapshots and catalogs used by the product UI; move tags are
 preserved without a hand-maintained strategic allowlist. It also sends the full
-localized type-label map used by Pokemon-scope prose validation. The request builder no
+localized type-label map used by Pokemon-scope prose validation. Recommendation
+requests additionally send canonical candidate responsibilities, exact
+weaknesses, localized common elements, and current-team responsibility counts.
+The request builder no
 longer derives partner combinations, leads, or field phases from fixture-specific
 patterns such as Choice Scarf plus Illusion plus Round. Prompt v17 instead maps
 the canonical effects back to their owning sets, audits every possible active
@@ -737,6 +799,16 @@ traffic is enabled.
 - latency and token/cost metadata can be recorded independently of model
   output.
 
+`aiPokemonRecommendationFixtures.test.ts` and
+`copilotResponsibilities.test.ts` additionally verify:
+
+- four production-derived empty-slot regressions remain parseable and point to
+  candidates contained in the production shortlist;
+- generic move and ability mechanics derive stable support responsibilities
+  without species-specific rules;
+- recommendation snapshots carry exact defensive and responsibility evidence
+  used by the hosted ranker.
+
 `teamDiagnostics.test.ts` and `copilotAnalysis.test.ts` additionally verify:
 
 - representative Bellibolt and Mega Gengar profiles do not receive invented
@@ -758,7 +830,14 @@ traffic is enabled.
 
 `copilotStrategyAudit.test.ts` verifies that grounded plans accept legal owned
 moves while rejecting both a move assigned to the wrong Pokemon and an opening
-action assigned to a Pokemon still in the backline.
+action assigned to a Pokemon still in the backline. It also verifies exact
+candidate-element completion, recommendation evidence links, strict rejection
+of invented public facts, and conservative normalization of recoverable private
+bookkeeping across Team, Pokemon, and Recommend scopes.
+
+`aiEvaluationRuntime.test.ts` verifies that the Node runner can persist and
+restore its browser-style local data cache while tests retain an isolated
+in-memory mode.
 
 `aiEvaluationReporter.test.ts` verifies aggregate usage and cost reporting,
 manual-review placeholders, and separation between model output and

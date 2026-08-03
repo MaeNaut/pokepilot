@@ -1,6 +1,7 @@
 import type { CopilotAnalysisRequest } from "./copilotAnalysis";
 import type {
   CopilotGroundedModelOutput,
+  CopilotRecommendationCandidateFact,
   CopilotStrategyFact,
   CopilotStrategyInteraction,
   CopilotStrategyPokemonState,
@@ -202,6 +203,16 @@ function getComparableSpeed(
   );
 }
 
+const unaryStrategyFactKinds = new Set<CopilotStrategyFact["kind"]>([
+  "move-owner",
+  "ability-owner",
+  "item-owner",
+  "mega-option",
+  "weak-to",
+  "resists",
+  "immune-to",
+]);
+
 function validateFactsForRequest(
   facts: CopilotGroundedModelOutput["strategyAudit"]["facts"],
   request: CopilotAnalysisRequest,
@@ -213,15 +224,6 @@ function validateFactsForRequest(
   }
 
   const factIds = new Set<string>();
-  const unaryFactKinds = new Set([
-    "move-owner",
-    "ability-owner",
-    "item-owner",
-    "mega-option",
-    "weak-to",
-    "resists",
-    "immune-to",
-  ]);
   const speedFactKinds = new Set(["faster-than", "slower-than", "speed-tie"]);
 
   facts.forEach((fact, factIndex) => {
@@ -243,7 +245,7 @@ function validateFactsForRequest(
       return;
     }
 
-    if (unaryFactKinds.has(fact.kind) && fact.objectSlotIndex !== -1) {
+    if (unaryStrategyFactKinds.has(fact.kind) && fact.objectSlotIndex !== -1) {
       errors.push(`${factPath}.objectSlotIndex must be -1 for a unary fact.`);
     }
 
@@ -335,6 +337,7 @@ function validateRecommendationEvidenceForRequest(
     planIds: Set<string>;
     interactionIds: Set<string>;
     factIds: Set<string>;
+    candidateFactIds: Set<string>;
   },
   errors: string[],
 ) {
@@ -371,6 +374,11 @@ function validateRecommendationEvidenceForRequest(
       ["planIds", evidence.planIds, knownIds.planIds],
       ["interactionIds", evidence.interactionIds, knownIds.interactionIds],
       ["factIds", evidence.factIds, knownIds.factIds],
+      [
+        "candidateFactIds",
+        evidence.candidateFactIds,
+        knownIds.candidateFactIds,
+      ],
     ] as const) {
       if (hasDuplicateIds(values)) {
         errors.push(`${evidencePath}.${key} must not contain duplicate IDs.`);
@@ -384,7 +392,8 @@ function validateRecommendationEvidenceForRequest(
     if (
       evidence.planIds.length === 0 &&
       evidence.interactionIds.length === 0 &&
-      evidence.factIds.length === 0
+      evidence.factIds.length === 0 &&
+      evidence.candidateFactIds.length === 0
     ) {
       errors.push(`${evidencePath} must reference at least one audit entry.`);
     }
@@ -430,6 +439,289 @@ function textMentionsDisplayName(text: string, displayName: string) {
   }
 
   return text.normalize("NFKC").includes(label.normalize("NFKC"));
+}
+
+function getRecommendationCandidateFactKey(
+  candidateId: string,
+  kind: CopilotRecommendationCandidateFact["kind"],
+  valueId: string,
+) {
+  return `${normalizeId(candidateId)}:${kind}:${normalizeId(valueId)}`;
+}
+
+/**
+ * Candidate references are deterministic request data. Normalize disposable
+ * private bookkeeping and complete exact public element links so a grounded
+ * answer cannot fail only because the model misstated or omitted an audit row.
+ */
+export function completeCopilotRecommendationAudit(
+  output: CopilotGroundedModelOutput,
+  request: CopilotAnalysisRequest,
+): CopilotGroundedModelOutput {
+  if (request.scope !== "recommendation") return output;
+
+  const candidateById = new Map(
+    request.recommendationCandidates.map((candidate) => [
+      normalizeId(candidate.pokemonId),
+      candidate,
+    ]),
+  );
+  const activeConceptIds = request.diagnostics.concepts.map(
+    (concept) => concept.id,
+  );
+  const candidateFacts = output.strategyAudit.candidateFacts.flatMap<
+    CopilotRecommendationCandidateFact
+  >((fact) => {
+    const candidate = candidateById.get(normalizeId(fact.candidateId));
+    if (!candidate) {
+      return [{ ...fact }];
+    }
+    if (isCandidateFactSupported(fact, candidate, activeConceptIds)) {
+      return [{ ...fact }];
+    }
+
+    if (
+      fact.kind === "role-contribution" &&
+      matchesCandidateValue(candidate.responsibilityIds, fact.valueId)
+    ) {
+      return [{
+        ...fact,
+        kind: "responsibility" as const,
+      }];
+    }
+
+    if (
+      (fact.kind === "amplifies-team-threat" ||
+        fact.kind === "adds-unanswered-weakness") &&
+      matchesCandidateValue(candidate.fit.weakTo, fact.valueId)
+    ) {
+      return [{
+        ...fact,
+        kind: "weak-to" as const,
+      }];
+    }
+
+    return [];
+  });
+  const survivingCandidateFactIds = new Set(
+    candidateFacts.map((fact) => fact.id),
+  );
+  const recommendationEvidence = output.strategyAudit.recommendationEvidence.map(
+    (evidence) => ({
+      ...evidence,
+      planIds: [...evidence.planIds],
+      interactionIds: [...evidence.interactionIds],
+      factIds: [...evidence.factIds],
+      candidateFactIds: evidence.candidateFactIds.filter((factId) =>
+        survivingCandidateFactIds.has(factId),
+      ),
+    }),
+  );
+  const factByKey = new Map(
+    candidateFacts.map((fact) => [
+      getRecommendationCandidateFactKey(
+        fact.candidateId,
+        fact.kind,
+        fact.valueId,
+      ),
+      fact,
+    ]),
+  );
+  const factIds = new Set(candidateFacts.map((fact) => fact.id));
+
+  const createFactId = (
+    recommendationIndex: number,
+    kind: CopilotRecommendationCandidateFact["kind"],
+    valueId: string,
+  ) => {
+    const baseId = `r${recommendationIndex + 1}-${kind}-${normalizeId(valueId) || "value"}`;
+    let factId = baseId;
+    let suffix = 2;
+    while (factIds.has(factId)) {
+      factId = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    factIds.add(factId);
+    return factId;
+  };
+
+  output.analysis.recommendations.forEach((recommendation, recommendationIndex) => {
+    const candidate = request.recommendationCandidates.find(
+      (entry) => normalizeId(entry.pokemonId) === normalizeId(recommendation.id),
+    );
+    const evidence = recommendationEvidence.find(
+      (entry) =>
+        normalizeId(entry.recommendationId) === normalizeId(recommendation.id),
+    );
+    if (!candidate || !evidence) return;
+
+    const recommendationText = `${recommendation.title}\n${recommendation.reason}`;
+    const ensureFact = (
+      kind: "ability" | "common-move",
+      valueId: string,
+    ) => {
+      const factKey = getRecommendationCandidateFactKey(
+        candidate.pokemonId,
+        kind,
+        valueId,
+      );
+      let fact = factByKey.get(factKey);
+      if (!fact) {
+        fact = {
+          id: createFactId(recommendationIndex, kind, valueId),
+          candidateId: candidate.pokemonId,
+          kind,
+          valueId,
+        };
+        candidateFacts.push(fact);
+        factByKey.set(factKey, fact);
+      }
+      if (!evidence.candidateFactIds.includes(fact.id)) {
+        evidence.candidateFactIds.push(fact.id);
+      }
+    };
+
+    candidate.abilities.forEach((ability) => {
+      if (textMentionsDisplayName(recommendationText, ability.displayName)) {
+        ensureFact("ability", ability.id);
+      }
+    });
+    candidate.commonSet?.moves.forEach((move) => {
+      if (textMentionsDisplayName(recommendationText, move.displayName)) {
+        ensureFact("common-move", move.id);
+      }
+    });
+
+    candidateFacts.forEach((fact) => {
+      if (
+        normalizeId(fact.candidateId) === normalizeId(candidate.pokemonId) &&
+        !evidence.candidateFactIds.includes(fact.id)
+      ) {
+        evidence.candidateFactIds.push(fact.id);
+      }
+    });
+  });
+
+  return {
+    ...output,
+    strategyAudit: {
+      ...output.strategyAudit,
+      candidateFacts,
+      recommendationEvidence,
+    },
+  };
+}
+
+/**
+ * Normalize non-semantic audit formatting and remove only surplus interaction
+ * move links when at least one action-backed link keeps the interaction valid.
+ * Unsupported facts and invented sequences remain visible to strict validation.
+ */
+export function completeCopilotStrategyAudit(
+  output: CopilotGroundedModelOutput,
+  request: CopilotAnalysisRequest,
+): CopilotGroundedModelOutput {
+  const recommendationOutput = completeCopilotRecommendationAudit(
+    output,
+    request,
+  );
+  if (request.scope === "recommendation") return recommendationOutput;
+
+  const referencedFactIds = new Set(
+    recommendationOutput.strategyAudit.recommendationEvidence.flatMap(
+      (evidence) => evidence.factIds,
+    ),
+  );
+  const facts = recommendationOutput.strategyAudit.facts
+    .map((fact) =>
+      unaryStrategyFactKinds.has(fact.kind) && fact.objectSlotIndex !== -1
+        ? { ...fact, objectSlotIndex: -1 }
+        : fact,
+    )
+    .filter((fact) => {
+      if (referencedFactIds.has(fact.id)) return true;
+      if (
+        fact.kind !== "weak-to" &&
+        fact.kind !== "resists" &&
+        fact.kind !== "immune-to"
+      ) {
+        return true;
+      }
+
+      const profileValues = getFactProfileValues(fact, request);
+      if (!profileValues) return true;
+
+      return profileValues.some(
+        (type) => normalizeId(type) === normalizeId(fact.valueId),
+      );
+    });
+  let interactions = recommendationOutput.strategyAudit.interactions;
+  if (request.scope === "team") {
+    const planById = new Map(
+      recommendationOutput.strategyAudit.plans.map((plan) => [plan.id, plan]),
+    );
+    interactions = interactions.map((interaction) => {
+      const plan = planById.get(interaction.planId);
+      if (!plan) return interaction;
+
+      const isSimultaneousInteraction =
+        interaction.kind === "ally-target" ||
+        interaction.kind === "shared-move";
+      const participants = interaction.participants.map((participant) => ({
+        ...participant,
+        moveIds: participant.moveIds.filter((moveId) =>
+          plan.actions.some(
+            (action) =>
+              action.actorSlotIndex === participant.slotIndex &&
+              normalizeId(action.moveId) === normalizeId(moveId) &&
+              action.activeSlotIndexes.includes(participant.slotIndex) &&
+              (!isSimultaneousInteraction ||
+                (action.phase === interaction.phase &&
+                  hasSameMembers(
+                    action.activeSlotIndexes,
+                    interaction.activeSlotIndexes,
+                  ))),
+          ),
+        ),
+      }));
+      const originalMoveCount = interaction.participants.reduce(
+        (total, participant) => total + participant.moveIds.length,
+        0,
+      );
+      const actionBackedMoveCount = participants.reduce(
+        (total, participant) => total + participant.moveIds.length,
+        0,
+      );
+
+      if (
+        actionBackedMoveCount === 0 ||
+        actionBackedMoveCount === originalMoveCount
+      ) {
+        return interaction;
+      }
+
+      const normalizedInteraction = {
+        ...interaction,
+        participants,
+      };
+      const kindErrors: string[] = [];
+      validateInteractionKind(normalizedInteraction, "interaction", kindErrors);
+      if (kindErrors.length > 0) {
+        return interaction;
+      }
+
+      return normalizedInteraction;
+    });
+  }
+
+  return {
+    ...recommendationOutput,
+    strategyAudit: {
+      ...recommendationOutput.strategyAudit,
+      interactions,
+      facts,
+    },
+  };
 }
 
 function hasMatchingFact(
@@ -514,18 +806,13 @@ function claimsNoTeammateDefense(text: string) {
   );
 }
 
-function validatePokemonNegativeDefensiveClaims(
+function validateNegativeDefensiveClaims(
   output: CopilotGroundedModelOutput,
   request: CopilotAnalysisRequest,
+  excludedSlotIndex: number | null,
+  scopeLabel: "Pokemon" | "Team",
   errors: string[],
 ) {
-  const selectedSet = request.sets.find(
-    (set) => set.slotIndex === request.selectedSlot,
-  );
-  if (!selectedSet) {
-    return;
-  }
-
   const publicStatements = [
     output.analysis.summary,
     output.analysis.playstyle,
@@ -551,7 +838,7 @@ function validatePokemonNegativeDefensiveClaims(
 
       const matchingTeammates = request.sets.filter(
         (set) =>
-          set.slotIndex !== selectedSet.slotIndex &&
+          set.slotIndex !== excludedSlotIndex &&
           (set.defensiveProfile.resistances.some(
             (entry) => normalizeId(entry.type) === normalizeId(typeLabel.id),
           ) ||
@@ -561,10 +848,299 @@ function validatePokemonNegativeDefensiveClaims(
       );
       if (matchingTeammates.length > 0) {
         errors.push(
-          `Pokemon analysis claims no teammate defends against ${typeLabel.displayName}, but current slot ${matchingTeammates[0].slotIndex} does.`,
+          `${scopeLabel} analysis claims no teammate defends against ${typeLabel.displayName}, but current slot ${matchingTeammates[0].slotIndex} does.`,
         );
       }
     });
+  });
+}
+
+function matchesCandidateValue(values: string[], valueId: string) {
+  return values.some((value) => normalizeId(value) === normalizeId(valueId));
+}
+
+function isCandidateFactSupported(
+  fact: CopilotRecommendationCandidateFact,
+  candidate: CopilotAnalysisRequest["recommendationCandidates"][number],
+  activeConceptIds: string[],
+) {
+  switch (fact.kind) {
+    case "type":
+      return matchesCandidateValue(candidate.types, fact.valueId);
+    case "ability":
+      return matchesCandidateValue(
+        candidate.abilities.map((ability) => ability.id),
+        fact.valueId,
+      );
+    case "common-move":
+      return matchesCandidateValue(
+        candidate.commonSet?.moves.map((move) => move.id) ?? [],
+        fact.valueId,
+      );
+    case "common-item":
+      return (
+        Boolean(candidate.commonSet?.item) &&
+        normalizeId(candidate.commonSet?.item ?? "") === normalizeId(fact.valueId)
+      );
+    case "common-nature":
+      return (
+        Boolean(candidate.commonSet?.nature) &&
+        normalizeId(candidate.commonSet?.nature ?? "") ===
+          normalizeId(fact.valueId)
+      );
+    case "speed-tier":
+      return candidate.speedTier === fact.valueId;
+    case "usage-rank":
+      return (
+        candidate.usageRank !== null &&
+        String(candidate.usageRank) === fact.valueId
+      );
+    case "requires-mega-stone":
+      return candidate.requiresMegaStone && fact.valueId === "true";
+    case "responsibility":
+      return matchesCandidateValue(candidate.responsibilityIds, fact.valueId);
+    case "weak-to":
+      return matchesCandidateValue(candidate.fit.weakTo, fact.valueId);
+    case "resists-team-threat":
+      return matchesCandidateValue(
+        candidate.fit.resistsTeamThreats,
+        fact.valueId,
+      );
+    case "amplifies-team-threat":
+      return matchesCandidateValue(
+        candidate.fit.amplifiesTeamThreats,
+        fact.valueId,
+      );
+    case "adds-unanswered-weakness":
+      return matchesCandidateValue(
+        candidate.fit.addsUnansweredWeaknesses,
+        fact.valueId,
+      );
+    case "covers-type":
+      return matchesCandidateValue(candidate.fit.coversTypes, fact.valueId);
+    case "role-contribution":
+      return matchesCandidateValue(
+        candidate.fit.roleContributions,
+        fact.valueId,
+      );
+    case "role-redundancy":
+      return matchesCandidateValue(
+        candidate.fit.roleRedundancies,
+        fact.valueId,
+      );
+    case "concept-synergy":
+      return matchesCandidateValue(
+        candidate.fit.conceptSynergies,
+        fact.valueId,
+      );
+    case "missing-concept-synergy":
+      return (
+        matchesCandidateValue(activeConceptIds, fact.valueId) &&
+        !matchesCandidateValue(candidate.fit.conceptSynergies, fact.valueId)
+      );
+    case "conflict":
+      return matchesCandidateValue(candidate.fit.conflicts, fact.valueId);
+  }
+}
+
+function validateCandidateFactsForRequest(
+  candidateFacts: CopilotRecommendationCandidateFact[],
+  request: CopilotAnalysisRequest,
+  errors: string[],
+) {
+  if (candidateFacts.length > 40) {
+    errors.push("strategyAudit.candidateFacts must contain at most 40 entries.");
+  }
+
+  const factIds = new Set<string>();
+  const candidateById = new Map(
+    request.recommendationCandidates.map((candidate) => [
+      normalizeId(candidate.pokemonId),
+      candidate,
+    ]),
+  );
+  const activeConceptIds = request.diagnostics.concepts.map(
+    (concept) => concept.id,
+  );
+
+  candidateFacts.forEach((fact, factIndex) => {
+    const factPath = `strategyAudit.candidateFacts[${factIndex}]`;
+    if (factIds.has(fact.id)) {
+      errors.push(`${factPath}.id must be unique.`);
+    }
+    factIds.add(fact.id);
+
+    const candidate = candidateById.get(normalizeId(fact.candidateId));
+    if (!candidate) {
+      errors.push(`${factPath}.candidateId references an unknown candidate.`);
+      return;
+    }
+
+    const isValid = isCandidateFactSupported(
+      fact,
+      candidate,
+      activeConceptIds,
+    );
+
+    if (!isValid) {
+      errors.push(`${factPath} contradicts the supplied recommendation candidate.`);
+    }
+  });
+
+  return factIds;
+}
+
+const recommendationFitFactKinds = new Set<
+  CopilotRecommendationCandidateFact["kind"]
+>([
+  "type",
+  "ability",
+  "common-move",
+  "responsibility",
+  "resists-team-threat",
+  "covers-type",
+  "role-contribution",
+  "concept-synergy",
+]);
+
+const recommendationTradeoffFactKinds = new Set<
+  CopilotRecommendationCandidateFact["kind"]
+>([
+  "speed-tier",
+  "usage-rank",
+  "requires-mega-stone",
+  "weak-to",
+  "amplifies-team-threat",
+  "adds-unanswered-weakness",
+  "role-redundancy",
+  "missing-concept-synergy",
+  "conflict",
+]);
+
+function validateRecommendationCandidateEvidenceCoverage(
+  output: CopilotGroundedModelOutput,
+  request: CopilotAnalysisRequest,
+  errors: string[],
+) {
+  const factById = new Map(
+    output.strategyAudit.candidateFacts.map((fact) => [fact.id, fact]),
+  );
+  const evidenceByRecommendation = new Map(
+    output.strategyAudit.recommendationEvidence.map((evidence) => [
+      evidence.recommendationId,
+      evidence,
+    ]),
+  );
+  const referencedFactIds = new Set<string>();
+
+  output.analysis.recommendations.forEach((recommendation) => {
+    const candidate = request.recommendationCandidates.find(
+      (entry) => entry.pokemonId === recommendation.id,
+    );
+    if (!candidate) {
+      errors.push(
+        `Recommendation ${recommendation.id} does not match a supplied candidate.`,
+      );
+      return;
+    }
+
+    const evidence = evidenceByRecommendation.get(recommendation.id);
+    if (!evidence) {
+      return;
+    }
+
+    const linkedFacts = evidence.candidateFactIds.flatMap((factId) => {
+      referencedFactIds.add(factId);
+      const fact = factById.get(factId);
+      return fact ? [fact] : [];
+    });
+    if (linkedFacts.length < 2) {
+      errors.push(
+        `Recommendation ${recommendation.id} must cite at least two candidate facts.`,
+      );
+    }
+    if (
+      linkedFacts.some(
+        (fact) => normalizeId(fact.candidateId) !== normalizeId(candidate.pokemonId),
+      )
+    ) {
+      errors.push(
+        `Recommendation ${recommendation.id} cites facts for another candidate.`,
+      );
+    }
+    if (!linkedFacts.some((fact) => recommendationFitFactKinds.has(fact.kind))) {
+      errors.push(
+        `Recommendation ${recommendation.id} must cite one concrete fit fact.`,
+      );
+    }
+    if (
+      !linkedFacts.some((fact) => recommendationTradeoffFactKinds.has(fact.kind))
+    ) {
+      errors.push(
+        `Recommendation ${recommendation.id} must cite one concrete tradeoff fact.`,
+      );
+    }
+
+    const recommendationText = `${recommendation.title}\n${recommendation.reason}`;
+    if (candidate.commonSet) {
+      const commonAbilityId = normalizeId(candidate.commonSet.ability ?? "");
+      const commonAbility = candidate.abilities.find(
+        (ability) =>
+          normalizeId(ability.id) === commonAbilityId ||
+          normalizeId(ability.displayName) === commonAbilityId,
+      );
+      const namesCommonElement =
+        Boolean(
+          commonAbility &&
+            textMentionsDisplayName(
+              recommendationText,
+              commonAbility.displayName,
+            ),
+        ) ||
+        candidate.commonSet.moves.some((move) =>
+          textMentionsDisplayName(recommendationText, move.displayName),
+        );
+
+      if (!namesCommonElement) {
+        errors.push(
+          `Recommendation ${recommendation.id} must name at least one supplied common ability or move.`,
+        );
+      }
+    }
+    candidate.abilities.forEach((ability) => {
+      if (
+        textMentionsDisplayName(recommendationText, ability.displayName) &&
+        !linkedFacts.some(
+          (fact) =>
+            fact.kind === "ability" &&
+            normalizeId(fact.valueId) === normalizeId(ability.id),
+        )
+      ) {
+        errors.push(
+          `Recommendation ${recommendation.id} names ${ability.displayName} without matching candidate evidence.`,
+        );
+      }
+    });
+    candidate.commonSet?.moves.forEach((move) => {
+      if (
+        textMentionsDisplayName(recommendationText, move.displayName) &&
+        !linkedFacts.some(
+          (fact) =>
+            fact.kind === "common-move" &&
+            normalizeId(fact.valueId) === normalizeId(move.id),
+        )
+      ) {
+        errors.push(
+          `Recommendation ${recommendation.id} names ${move.displayName} without matching candidate evidence.`,
+        );
+      }
+    });
+  });
+
+  output.strategyAudit.candidateFacts.forEach((fact) => {
+    if (!referencedFactIds.has(fact.id)) {
+      errors.push(`Candidate fact ${fact.id} is not linked to a recommendation.`);
+    }
   });
 }
 
@@ -784,7 +1360,13 @@ export function validateCopilotStrategyAuditForRequest(
   request: CopilotAnalysisRequest,
 ) {
   const errors: string[] = [];
-  const { plans, interactions, facts, recommendationEvidence } =
+  const {
+    plans,
+    interactions,
+    facts,
+    candidateFacts,
+    recommendationEvidence,
+  } =
     output.strategyAudit;
 
   if (request.scope === "recommendation") {
@@ -794,13 +1376,31 @@ export function validateCopilotStrategyAuditForRequest(
     if (interactions.length > 0 || facts.length > 0) {
       errors.push("Recommendation analysis must not include audit evidence.");
     }
-    if (recommendationEvidence.length > 0) {
-      errors.push(
-        "Recommendation analysis must not include recommendation evidence.",
-      );
-    }
+
+    const candidateFactIds = validateCandidateFactsForRequest(
+      candidateFacts,
+      request,
+      errors,
+    );
+    validateRecommendationEvidenceForRequest(
+      output,
+      {
+        planIds: new Set(),
+        interactionIds: new Set(),
+        factIds: new Set(),
+        candidateFactIds,
+      },
+      errors,
+    );
+    validateRecommendationCandidateEvidenceCoverage(output, request, errors);
 
     return errors;
+  }
+
+  if (candidateFacts.length > 0) {
+    errors.push(
+      "Candidate facts are only allowed for recommendation analysis.",
+    );
   }
 
   const setBySlot = new Map(request.sets.map((set) => [set.slotIndex, set]));
@@ -836,11 +1436,18 @@ export function validateCopilotStrategyAuditForRequest(
         planIds: new Set(),
         interactionIds: new Set(),
         factIds,
+        candidateFactIds: new Set(),
       },
       errors,
     );
     validatePokemonRecommendationEvidenceCoverage(output, request, errors);
-    validatePokemonNegativeDefensiveClaims(output, request, errors);
+    validateNegativeDefensiveClaims(
+      output,
+      request,
+      selectedSet.slotIndex,
+      "Pokemon",
+      errors,
+    );
 
     return errors;
   }
@@ -850,6 +1457,7 @@ export function validateCopilotStrategyAuditForRequest(
       plans.length > 0 ||
       interactions.length > 0 ||
       facts.length > 0 ||
+      candidateFacts.length > 0 ||
       recommendationEvidence.length > 0
     ) {
       errors.push("An empty team must use an empty private strategy audit.");
@@ -1169,9 +1777,15 @@ export function validateCopilotStrategyAuditForRequest(
   const factIds = validateFactsForRequest(facts, request, setBySlot, errors);
   validateRecommendationEvidenceForRequest(
     output,
-    { planIds, interactionIds, factIds },
+    {
+      planIds,
+      interactionIds,
+      factIds,
+      candidateFactIds: new Set(),
+    },
     errors,
   );
+  validateNegativeDefensiveClaims(output, request, null, "Team", errors);
 
   return errors;
 }

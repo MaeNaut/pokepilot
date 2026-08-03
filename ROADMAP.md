@@ -101,8 +101,9 @@ The MVP should prove the core loop:
 - [x] Start with structured analysis of the active team and selected Pokemon.
 - [x] Add empty-slot Pokemon recommendations that combine deterministic M-B
   legality, saved candidate filters, Species Clause, usage, defensive fit,
-  strategy, roles, and coverage into a diversified 28-candidate pool before
-  Luna ranks it from compact common-set and team-impact facts.
+  strategy, roles, coverage, exact weaknesses, and generic move/ability-derived
+  responsibilities into a diversified 28-candidate pool before Luna ranks it
+  from compact common-set and team-impact facts.
 - [x] Feed deterministic field/weather concept summaries into local team analysis and recommendations.
 - [x] Keep deterministic diagnostics, legality, stat calculations, and future damage
   calculations as the factual source of truth.
@@ -141,14 +142,19 @@ The MVP should prove the core loop:
   private evidence for named partners, shared moves, defensive relations, and
   unconditional held-item Speed order. Confirm the final Pokemon scope with a
   2/2 Luna Standard low live regression.
-- [x] Finish Pokemon-scope semantic review with request-contract v12 and Prompt
-  v34: validate exact prose alignment for defensive partner claims, reject
-  contradicted negative coverage claims, and rank alternative Illusion
-  presentations by concrete decision impact rather than hardcoded species.
+- [x] Finish cross-scope semantic review with request-contract v14 and Prompt
+  v43: preserve the selected-Pokemon defensive and deception checks, ground
+  recommendation responsibilities and exact candidate facts, and normalize
+  only recoverable private bookkeeping while rejecting unsupported prose.
+- [x] Add four empty-slot recommendation regressions and repeat each three times
+  at Luna Standard low; finish with 12/12 valid responses and stable critical
+  rain, ace-protection, and Round-control candidates.
+- [x] Re-run Team and selected-Pokemon regressions after the recommendation and
+  audit changes, finishing at 4/4 Team and 6/6 Pokemon cases.
 - [x] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
   - [x] Keep the API key and Luna adapter server-only.
-  - [x] Accept request-contract v12, call GPT-5.6 Luna Standard at low reasoning,
+  - [x] Accept request-contract v14, call GPT-5.6 Luna Standard at low reasoning,
         and validate the strict response schema at the route boundary.
   - [x] Keep team-combination and phase inference in the model rather than
         encoding fixture-derived partner strategies in the request builder.

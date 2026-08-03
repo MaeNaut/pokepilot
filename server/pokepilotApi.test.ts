@@ -3,12 +3,13 @@ import {
   createCopilotTypeLabels,
   type CopilotAnalysisRequest,
 } from "../src/utils/copilotAnalysis";
+import { createCopilotResponsibilityCounts } from "../src/utils/copilotResponsibilities";
 import type { LunaAnalysisResult } from "./openAiLuna";
 import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 12,
+  version: 14,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -38,6 +39,7 @@ const validRequest = {
       supporter: 0,
       setter: 0,
     },
+    responsibilityCounts: createCopilotResponsibilityCounts([]),
     moveSources: {},
     defensiveProfile: {
       weakTo: {},
@@ -78,6 +80,7 @@ const groundedModelOutput = {
     plans: [],
     interactions: [],
     facts: [],
+    candidateFacts: [],
     recommendationEvidence: [],
   },
 };
@@ -97,7 +100,9 @@ const recommendationRequest = {
       requiresMegaStone: false,
       usageRank: index + 1,
       commonSet: null,
+      responsibilityIds: [],
       fit: {
+        weakTo: [],
         resistsTeamThreats: [],
         amplifiesTeamThreats: [],
         addsUnansweredWeaknesses: [],
@@ -127,7 +132,7 @@ function createModelResult(output: unknown): LunaAnalysisResult {
       responseId: "resp_test",
       serviceTier: "default",
       reasoningEffort: "low",
-      promptVersion: 34,
+      promptVersion: 35,
     },
   };
 }
@@ -190,7 +195,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 34,
+        promptVersion: 43,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

@@ -144,7 +144,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 12,
+      version: 14,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -177,6 +177,20 @@ describe("Copilot analysis", () => {
       diagnostics: {
         filledSlots: 1,
         coverageCount: 5,
+        responsibilityCounts: {
+          "attack-redirection": 0,
+          "ally-damage-reduction": 0,
+          "priority-denial": 0,
+          "ally-damage-amplification": 0,
+          "spread-protection": 0,
+          "speed-control": 0,
+          "turn-order-control": 0,
+          "immediate-disruption": 0,
+          "opponent-offense-control": 1,
+          "action-denial": 0,
+          pivoting: 0,
+          "ally-recovery": 0,
+        },
         moveSources: {
           "Test Pokemon": ["Close Combat"],
         },

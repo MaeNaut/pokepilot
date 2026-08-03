@@ -228,7 +228,9 @@ export function formatAiEvaluationReportMarkdown(report: AiEvaluationReport) {
       "",
       evaluationCase.scope === "pokemon"
         ? "**Analysis focus**"
-        : "**Team identities**",
+        : evaluationCase.scope === "recommendation"
+          ? "**Recommendation goals**"
+          : "**Team identities**",
       markdownList(evaluatorContext.expectations.teamIdentities),
       "",
       "**Critical observations**",

@@ -39,13 +39,14 @@ Current slice:
   history menu with confirmed deletion
 - bounded empty-slot Pokemon recommendations: a diversified 28-candidate pool
   spanning Regulation M-B legality, saved filters, usage, defensive fit,
-  strategy, roles, and coverage, followed by AI ranking that cannot return
-  candidates outside the supplied pool
+  strategy, roles, coverage, exact defensive liabilities, and generic support
+  responsibilities, followed by AI ranking that cannot return candidates
+  outside the supplied pool
 - reduced-motion-safe staged reveals for newly completed PokePilot analyses,
   while restored and history-selected results remain immediate
-- an offline 20-team Singles/Doubles baseline plus four focused strategy
-  regressions and a GPT-5.6 Luna Standard runner with strict output, token,
-  latency, and cost reports
+- an offline 20-team Singles/Doubles baseline plus focused Team, Pokemon, and
+  empty-slot recommendation regressions and a GPT-5.6 Luna Standard runner
+  with strict output, token, latency, and cost reports
 - persisted English/Korean UI selection with localized game names, forms, and tooltips
 - persisted system/light/dark theme selection with live operating-system preference tracking
 - lazy-loaded damage Calculator mode with fixed My Pokemon / Opponent Pokemon
@@ -97,6 +98,17 @@ Run the production-derived selected-Pokemon regressions with:
 ```bash
 npm run eval:ai -- --pokemon-regressions
 ```
+
+Run the four production-derived empty-slot recommendation regressions with:
+
+```bash
+npm run eval:ai -- --recommendation-regressions
+```
+
+Add `--repeat 3` to a focused command when measuring semantic stability rather
+than a single stochastic response. The Node evaluation runtime persists its
+browser-style data cache under `node_modules/.cache/pokepilot-ai/`, avoiding
+repeat downloads while keeping generated state outside source control.
 
 Use `--scope pokemon --slot <index>` with a single team fixture when checking
 another configured set. Evaluation expectations stay outside the model request.

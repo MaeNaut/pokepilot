@@ -3,7 +3,10 @@ import { validateCopilotGroundedModelOutput } from "../src/utils/copilotModelCon
 import { getCopilotRequestFingerprint } from "../src/utils/copilotAnalysis";
 import type { CopilotAnalysisScope } from "../src/utils/copilotAnalysis";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract";
-import { validateCopilotStrategyAuditForRequest } from "../src/utils/copilotStrategyAudit";
+import {
+  completeCopilotStrategyAudit,
+  validateCopilotStrategyAuditForRequest,
+} from "../src/utils/copilotStrategyAudit";
 import {
   analyzeWithOpenAiLuna,
   OPENAI_LUNA_MODEL_ID,
@@ -270,6 +273,11 @@ export async function handlePokePilotAnalysis(
           );
         }
 
+        const groundedOutput = completeCopilotStrategyAudit(
+          outputValidation.data,
+          requestValidation.data,
+        );
+
         if (requestValidation.data.scope === "recommendation") {
           const candidateIds = new Set(
             requestValidation.data.recommendationCandidates.map(
@@ -277,14 +285,14 @@ export async function handlePokePilotAnalysis(
             ),
           );
           const recommendationIds =
-            outputValidation.data.analysis.recommendations.map(
+            groundedOutput.analysis.recommendations.map(
               (recommendation) => recommendation.id,
             );
           const expectedMinimum = Math.min(3, candidateIds.size);
 
           if (
             recommendationIds.length < expectedMinimum ||
-            recommendationIds.length > 5 ||
+            recommendationIds.length > 3 ||
             new Set(recommendationIds).size !== recommendationIds.length ||
             recommendationIds.some((id) => !candidateIds.has(id))
           ) {
@@ -296,7 +304,7 @@ export async function handlePokePilotAnalysis(
         }
 
         const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
-          outputValidation.data,
+          groundedOutput,
           requestValidation.data,
         );
 
@@ -309,7 +317,7 @@ export async function handlePokePilotAnalysis(
 
         const completed = {
           kind: "completed" as const,
-          analysis: outputValidation.data.analysis,
+          analysis: groundedOutput.analysis,
           result,
         };
         if (safeguardConfig.cacheEnabled) {

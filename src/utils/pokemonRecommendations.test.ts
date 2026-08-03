@@ -174,6 +174,96 @@ describe("rankPokemonRecommendationCandidates", () => {
     expect(result[0].abilities[0].effect?.endsWith("...")).toBe(true);
   });
 
+  it("adds exact defensive weaknesses and mechanic-derived responsibilities", () => {
+    const result = rankPokemonRecommendationCandidates({
+      options: [
+        {
+          id: "farigiraf",
+          speciesKey: "farigiraf",
+          displayName: "Farigiraf",
+          types: ["normal", "psychic"],
+          typeDisplayNames: ["Normal", "Psychic"],
+          abilities: [
+            {
+              id: "armortail",
+              displayName: "Armor Tail",
+              effect:
+                "Priority moves used by opposing Pokemon targeting this Pokemon or its allies are prevented from having an effect.",
+            },
+          ],
+          legalMoveIds: ["helpinghand", "trickroom"],
+        },
+      ],
+      filters: { types: [], ability: null, moves: [] },
+      occupiedSpeciesKeys: new Set(),
+      diagnostics,
+      usageIds: ["farigiraf"],
+      usageSets: [
+        {
+          pokemonId: "farigiraf",
+          pokemonName: "Farigiraf",
+          sourceMonth: "2026-07",
+          cutoff: 1500,
+          ability: "Armor Tail",
+          nature: "Quiet",
+          evs: { hp: 252, specialAttack: 252 },
+          moveIds: ["helpinghand", "trickroom"],
+        },
+      ],
+      showdownData: {
+        speciesById: {
+          farigiraf: {
+            id: "farigiraf",
+            name: "Farigiraf",
+            types: ["normal", "psychic"],
+            abilities: ["Armor Tail"],
+            baseStats: {
+              hp: 120,
+              attack: 90,
+              defense: 70,
+              specialAttack: 110,
+              specialDefense: 70,
+              speed: 60,
+            },
+          },
+        },
+        movesById: {
+          helpinghand: {
+            id: "helpinghand",
+            name: "Helping Hand",
+            type: "normal",
+            category: "Status",
+            power: null,
+            accuracy: 100,
+            pp: 20,
+            description: "The target's next attack has 1.5x power.",
+          },
+          trickroom: {
+            id: "trickroom",
+            name: "Trick Room",
+            type: "psychic",
+            category: "Status",
+            power: null,
+            accuracy: 100,
+            pp: 5,
+            description: "For 5 turns, slower Pokemon move first.",
+          },
+        },
+      },
+    });
+
+    expect(result[0]).toMatchObject({
+      responsibilityIds: [
+        "priority-denial",
+        "ally-damage-amplification",
+        "turn-order-control",
+      ],
+      fit: {
+        weakTo: expect.arrayContaining(["bug", "dark"]),
+      },
+    });
+  });
+
   it("keeps a lower-usage defensive specialist in a compact diversified shortlist", () => {
     const neutralOptions = Array.from({ length: 19 }, (_, index) => ({
       id: `neutral-${index + 1}`,
@@ -363,5 +453,45 @@ describe("rankPokemonRecommendationCandidates", () => {
       conceptSynergies: [],
       conflicts: ["common-ability-benefits-from-sun-not-active-sand"],
     });
+  });
+
+  it("reserves broad usage coverage while retaining a lower-usage fit candidate", () => {
+    const broadOptions = Array.from({ length: 40 }, (_, index) => ({
+      id: `candidate-${index + 1}`,
+      speciesKey: `candidate-${index + 1}`,
+      displayName: `Candidate ${index + 1}`,
+      types: [index === 39 ? ("flying" as const) : ("normal" as const)],
+      typeDisplayNames: index === 39 ? ["Flying"] : ["Normal"],
+      abilities: [],
+      legalMoveIds: [],
+    }));
+    const result = rankPokemonRecommendationCandidates({
+      options: broadOptions,
+      filters: { types: [], ability: null, moves: [] },
+      occupiedSpeciesKeys: new Set(),
+      diagnostics: {
+        ...diagnostics,
+        defensiveMatchups: [
+          {
+            type: "ground",
+            weakCount: 3,
+            fourTimesWeakCount: 0,
+            resistCount: 0,
+            immuneCount: 0,
+          },
+        ],
+      },
+      usageIds: broadOptions.map((option) => option.id),
+      showdownData,
+      limit: 10,
+    });
+
+    expect(result).toHaveLength(10);
+    expect(result.map((candidate) => candidate.pokemonId)).toEqual(
+      expect.arrayContaining([
+        "candidate-8",
+        "candidate-40",
+      ]),
+    );
   });
 });

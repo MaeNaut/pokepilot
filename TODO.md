@@ -136,8 +136,18 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Send compact common-set, base-stat, Speed-tier, role, concept, defensive
         delta, and Mega-branch facts so Luna can compare the full pool without
         treating shortlist order or usage rank as the answer.
+  - [x] Derive reusable candidate responsibility IDs from generic move and
+        ability mechanics, including redirection, ally protection, priority
+        denial, speed control, recovery, disruption, and pivoting.
+  - [x] Send exact candidate weaknesses and current-team responsibility counts
+        so complementary support can be distinguished from redundant labels.
   - [x] Let hosted AI rank only supplied candidates and reject invented,
         duplicate, or out-of-pool recommendation IDs at the server boundary.
+  - [x] Add four empty-slot recommendation fixtures covering rain restoration,
+        ace protection, Round-chain control, and Singles dual-Mega balance.
+  - [x] Finish Prompt v43 recommendation stability at Luna Standard low: the
+        four cases passed 4/4, and a three-repeat sweep passed 12/12 while the
+        required strategic candidates remained stable.
   - [x] Add a Team / Pokemon / Recommend scope and require an explicit Select
         Pokemon action before applying the popular set to the empty slot.
 - [x] Define a provider-independent Copilot request and response contract.
@@ -233,9 +243,9 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Add request-contract v12 localized type labels and Prompt v34 prose
         validation so exact weakness coverage and negative "no teammate covers
         this type" claims must match every current defensive profile.
-  - [ ] Re-run the complete focused team-strategy sweep on Prompt v34 before a
-        public hosted-AI release; scoped smoke tests pass, while complex semantic
-        synthesis remains a manual-review responsibility.
+  - [x] Re-run cross-scope Prompt v43 regressions after the recommendation
+        changes: Team passed 4/4, selected Pokemon passed 6/6, and empty-slot
+        recommendations passed 12/12 across three repeats.
   - [x] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
   - [x] Track hard failures separately from aggregate scores, latency, token use, and cost.
   - [x] Keep the ignored local evaluation key, reports, and capped test budget
@@ -243,7 +253,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Add a server-side API route for AI analysis.
   - [x] Keep API keys out of browser code.
   - [x] Move the Luna adapter behind a server-only `POST` endpoint that accepts
-        request-contract v12 and keeps Standard-tier low reasoning explicit.
+        request-contract v14 and keeps Standard-tier low reasoning explicit.
   - [x] Validate both the incoming analysis request and the strict model response
         at the server boundary before returning product data.
   - [x] Call analysis explicitly rather than automatically on every team edit.
@@ -261,6 +271,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         defensive-profile or final-Speed facts, and dangling evidence IDs.
   - [x] Apply the same deterministic fact and recommendation-evidence audit to
         hosted selected-Pokemon analysis rather than validating only Team scope.
+  - [x] Audit recommendation candidate IDs, exact common elements, defensive
+        facts, responsibility evidence, and candidate-only evidence links before
+        any ranked result reaches the browser.
+  - [x] Normalize only non-semantic private bookkeeping that can be recovered
+        from verified public evidence; keep invented public facts and unsupported
+        claims as blocking failures.
   - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
   - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
 - [x] Add local error, refresh, and stale-analysis states for Copilot.

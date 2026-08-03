@@ -53,6 +53,11 @@ import {
   type CopilotMechanicsSetInput,
   type CopilotMechanicsSnapshot,
 } from "./copilotMechanics";
+import {
+  createCopilotResponsibilityCounts,
+  inferCopilotResponsibilities,
+  type CopilotResponsibilityId,
+} from "./copilotResponsibilities";
 import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
 
 export type CopilotAnalysisScope = "team" | "pokemon" | "recommendation";
@@ -155,6 +160,7 @@ export type CopilotDiagnosticsSnapshot = {
   defensiveMatchups: DefensiveMatchup[];
   alerts: TeamDiagnosticAlert[];
   roleCounts: Record<TeamRoleId, number>;
+  responsibilityCounts: Record<CopilotResponsibilityId, number>;
   moveSources: Record<string, string[]>;
   defensiveProfile: CopilotTeamDefensiveProfile;
   offensiveProfile: CopilotTeamOffensiveProfile;
@@ -178,7 +184,7 @@ export type CopilotTypeLabelSnapshot = {
 };
 
 export type CopilotAnalysisRequest = {
-  version: 12;
+  version: 14;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -236,6 +242,29 @@ function formatLookup(value: string) {
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function localizeRecommendationCandidates(
+  locale: Locale,
+  candidates: CopilotRecommendationCandidateSnapshot[],
+) {
+  return candidates.map((candidate) => ({
+    ...candidate,
+    commonSet: candidate.commonSet
+      ? {
+          ...candidate.commonSet,
+          moves: candidate.commonSet.moves.map((move) => ({
+            ...move,
+            displayName: translateGameName(
+              locale,
+              "moves",
+              move.id,
+              move.displayName,
+            ),
+          })),
+        }
+      : null,
+  }));
 }
 
 function formatList(values: string[], locale: Locale) {
@@ -648,6 +677,7 @@ export function createCopilotAnalysisRequest({
   recommendationCandidates = [],
 }: CreateCopilotRequestInput): CopilotAnalysisRequest {
   const mechanicsSets: CopilotMechanicsSetInput[] = [];
+  const responsibilityGroups: CopilotResponsibilityId[][] = [];
   const abilityById = new Map(
     abilityIndex.map((ability) => [normalizeLookup(ability.id), ability]),
   );
@@ -705,7 +735,7 @@ export function createCopilotAnalysisRequest({
       locale,
     );
 
-    mechanicsSets.push({
+    const mechanicsSet: CopilotMechanicsSetInput = {
       abilities: [
         ...(ability && abilityDisplayName
           ? [
@@ -732,7 +762,18 @@ export function createCopilotAnalysisRequest({
       itemDisplayName,
       itemEffect: item?.effect,
       moves: selectedMoves.mechanics,
-    });
+    };
+    mechanicsSets.push(mechanicsSet);
+    responsibilityGroups.push(
+      inferCopilotResponsibilities({
+        abilities: mechanicsSet.abilities,
+        moves: mechanicsSet.moves.map((move) => ({
+          id: move.id,
+          effect: move.description,
+          tags: move.tags,
+        })),
+      }),
+    );
 
     return [
       {
@@ -796,7 +837,7 @@ export function createCopilotAnalysisRequest({
   );
 
   return {
-    version: 12,
+    version: 14,
     locale,
     scope,
     battleFormat,
@@ -807,7 +848,9 @@ export function createCopilotAnalysisRequest({
     megaOptions: createMegaOptions(sets),
     candidateFilters,
     recommendationCandidates:
-      scope === "recommendation" ? recommendationCandidates : [],
+      scope === "recommendation"
+        ? localizeRecommendationCandidates(locale, recommendationCandidates)
+        : [],
     mechanics: createCopilotMechanicsSnapshot(mechanicsSets),
     diagnostics: {
       filledSlots: diagnostics.filledSlots,
@@ -816,6 +859,8 @@ export function createCopilotAnalysisRequest({
       defensiveMatchups: diagnostics.defensiveMatchups,
       alerts: diagnostics.alerts,
       roleCounts: createRoleCounts(diagnostics),
+      responsibilityCounts:
+        createCopilotResponsibilityCounts(responsibilityGroups),
       moveSources: createTeamMoveSources(sets),
       defensiveProfile: createTeamDefensiveProfile(sets),
       offensiveProfile: createTeamOffensiveProfile(sets),

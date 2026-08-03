@@ -9,7 +9,10 @@ import {
   type LunaReasoningEffort,
 } from "../../../server/openAiLuna";
 import { validateCopilotGroundedModelOutput } from "../../utils/copilotModelContract";
-import { validateCopilotStrategyAuditForRequest } from "../../utils/copilotStrategyAudit";
+import {
+  completeCopilotStrategyAudit,
+  validateCopilotStrategyAuditForRequest,
+} from "../../utils/copilotStrategyAudit";
 import type { AiEvaluationModelAdapter } from "./aiModelEvaluation";
 
 type LunaResponsesClient = Pick<OpenAI, "responses">;
@@ -67,8 +70,12 @@ export function createOpenAiLunaAdapter({
         };
       }
 
-      const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
+      const groundedOutput = completeCopilotStrategyAudit(
         outputValidation.data,
+        request,
+      );
+      const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
+        groundedOutput,
         request,
       );
 
@@ -76,15 +83,15 @@ export function createOpenAiLunaAdapter({
         return {
           ...result,
           output: null,
-          debugOutput: outputValidation.data,
+          debugOutput: groundedOutput,
           validationErrors: strategyAuditErrors,
         };
       }
 
       return {
         ...result,
-        output: outputValidation.data.analysis,
-        debugOutput: outputValidation.data,
+        output: groundedOutput.analysis,
+        debugOutput: groundedOutput,
       };
     },
   };

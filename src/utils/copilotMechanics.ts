@@ -44,7 +44,7 @@ function normalizeId(value: string | null | undefined) {
   return (value ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function compactEffect(value: string | undefined) {
+export function compactCopilotMechanicEffect(value: string | undefined) {
   const compact = value?.replace(/\s+/g, " ").trim() ?? "";
 
   if (!compact || genericDescriptions.has(compact.toLowerCase())) {
@@ -80,7 +80,7 @@ export function createCopilotMechanicsSnapshot(
 
   for (const set of sets) {
     for (const move of set.moves) {
-      const effect = compactEffect(move.description);
+      const effect = compactCopilotMechanicEffect(move.description);
       const tags = compactTags(move.tags);
       addUniqueMechanic(moves, {
         id: move.id,
@@ -91,7 +91,7 @@ export function createCopilotMechanicsSnapshot(
     }
 
     for (const ability of set.abilities) {
-      const effect = compactEffect(ability.effect);
+      const effect = compactCopilotMechanicEffect(ability.effect);
       addUniqueMechanic(abilities, {
         id: ability.id,
         displayName: ability.displayName,
@@ -100,7 +100,7 @@ export function createCopilotMechanicsSnapshot(
     }
 
     if (set.itemId && set.itemDisplayName) {
-      const effect = compactEffect(set.itemEffect);
+      const effect = compactCopilotMechanicEffect(set.itemEffect);
       addUniqueMechanic(items, {
         id: set.itemId,
         displayName: set.itemDisplayName,

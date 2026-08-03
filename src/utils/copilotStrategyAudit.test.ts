@@ -5,7 +5,13 @@ import {
   type CopilotSetSnapshot,
 } from "./copilotAnalysis";
 import type { CopilotGroundedModelOutput } from "./copilotModelContract";
-import { validateCopilotStrategyAuditForRequest } from "./copilotStrategyAudit";
+import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
+import { createCopilotResponsibilityCounts } from "./copilotResponsibilities";
+import {
+  completeCopilotRecommendationAudit,
+  completeCopilotStrategyAudit,
+  validateCopilotStrategyAuditForRequest,
+} from "./copilotStrategyAudit";
 
 const zeroStats = {
   hp: 0,
@@ -75,7 +81,7 @@ function createRequest(
   overrides: Partial<CopilotAnalysisRequest> = {},
 ): CopilotAnalysisRequest {
   return {
-    version: 12,
+    version: 14,
     locale: "en",
     scope: "team",
     battleFormat: "doubles",
@@ -101,6 +107,7 @@ function createRequest(
         supporter: 0,
         setter: 0,
       },
+      responsibilityCounts: createCopilotResponsibilityCounts([]),
       moveSources: {},
       defensiveProfile: { weakTo: {}, resists: {}, immuneTo: {} },
       offensiveProfile: {
@@ -139,6 +146,7 @@ function createOutput(
     strategyAudit: {
       interactions: [],
       facts: [],
+      candidateFacts: [],
       recommendationEvidence: [],
       ...strategyAudit,
     },
@@ -351,6 +359,7 @@ describe("Copilot strategy audit", () => {
           planIds: ["setup"],
           interactionIds: ["opening-coaching"],
           factIds: ["scrafty-move", "speed-order"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -580,6 +589,198 @@ describe("Copilot strategy audit", () => {
         createRequest(singlesSets, { battleFormat: "singles" }),
       ),
     ).toEqual([]);
+  });
+
+  it("removes only surplus participant moves when another plan action is valid", () => {
+    const singlesSets = [
+      createSet(0, "Gengar Mega", ["perishsong", "protect", "shadowball"], {
+        pokemonId: "gengar-mega",
+        isMegaForm: true,
+        ability: "shadowtag",
+      }),
+      createSet(1, "Bellibolt", ["voltswitch"]),
+      createSet(2, "Corviknight", ["uturn"]),
+    ];
+    const output = createOutput({
+      plans: [
+        {
+          id: "perish-sequence",
+          lineupSlotIndexes: [0, 1, 2],
+          leadSlotIndexes: [0],
+          backlineSlotIndexes: [1, 2],
+          actions: [
+            {
+              phase: "opening",
+              actorSlotIndex: 0,
+              moveId: "perishsong",
+              activeSlotIndexes: [0],
+            },
+            {
+              phase: "midgame",
+              actorSlotIndex: 0,
+              moveId: "protect",
+              activeSlotIndexes: [0],
+            },
+          ],
+        },
+      ],
+      interactions: [
+        {
+          id: "perish-trap",
+          planId: "perish-sequence",
+          kind: "move-ability",
+          phase: "midgame",
+          activeSlotIndexes: [0],
+          participants: [
+            {
+              slotIndex: 0,
+              state: "current",
+              moveIds: ["perishsong", "protect", "shadowball"],
+              abilityIds: ["shadowtag"],
+              itemIds: [],
+            },
+          ],
+        },
+      ],
+    });
+    const request = createRequest(singlesSets, { battleFormat: "singles" });
+
+    expect(validateCopilotStrategyAuditForRequest(output, request)).toContain(
+      "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+    );
+
+    const completed = completeCopilotStrategyAudit(output, request);
+
+    expect(completed.strategyAudit.interactions[0].participants[0].moveIds).toEqual([
+      "perishsong",
+      "protect",
+    ]);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual([]);
+    expect(output.strategyAudit.interactions[0].participants[0].moveIds).toEqual([
+      "perishsong",
+      "protect",
+      "shadowball",
+    ]);
+  });
+
+  it("removes an unreferenced false defensive fact but preserves cited facts", () => {
+    const output = createOutput({
+      plans: [
+        {
+          id: "basic-plan",
+          lineupSlotIndexes: [0, 1, 2, 3],
+          leadSlotIndexes: [0, 1],
+          backlineSlotIndexes: [2, 3],
+          actions: [
+            {
+              phase: "opening",
+              actorSlotIndex: 0,
+              moveId: "trickroom",
+              activeSlotIndexes: [0, 1],
+            },
+          ],
+        },
+      ],
+      facts: [
+        {
+          id: "unused-false-weakness",
+          kind: "weak-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "water",
+        },
+        {
+          id: "cited-false-weakness",
+          kind: "weak-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "fire",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "basic-recommendation",
+          planIds: ["basic-plan"],
+          interactionIds: [],
+          factIds: ["cited-false-weakness"],
+          candidateFactIds: [],
+        },
+      ],
+    });
+    output.analysis.recommendations = [
+      {
+        id: "basic-recommendation",
+        title: "Basic recommendation",
+        reason: "Use the recorded plan.",
+        priority: "medium",
+      },
+    ];
+    const request = createRequest(sets);
+
+    const completed = completeCopilotStrategyAudit(output, request);
+
+    expect(completed.strategyAudit.facts.map((fact) => fact.id)).toEqual([
+      "cited-false-weakness",
+    ]);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toContain(
+      "strategyAudit.facts[0] contradicts the supplied defensive profile.",
+    );
+  });
+
+  it("normalizes a unary fact's meaningless comparison slot", () => {
+    const output = createOutput({
+      plans: [
+        {
+          id: "basic-plan",
+          lineupSlotIndexes: [0, 1, 2, 3],
+          leadSlotIndexes: [0, 1],
+          backlineSlotIndexes: [2, 3],
+          actions: [
+            {
+              phase: "opening",
+              actorSlotIndex: 0,
+              moveId: "trickroom",
+              activeSlotIndexes: [0, 1],
+            },
+          ],
+        },
+      ],
+      facts: [
+        {
+          id: "trick-room-owner",
+          kind: "move-owner",
+          subjectSlotIndex: 0,
+          objectSlotIndex: 1,
+          state: "current",
+          valueId: "trickroom",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "basic-recommendation",
+          planIds: ["basic-plan"],
+          interactionIds: [],
+          factIds: ["trick-room-owner"],
+          candidateFactIds: [],
+        },
+      ],
+    });
+    output.analysis.recommendations = [
+      {
+        id: "basic-recommendation",
+        title: "Basic recommendation",
+        reason: "Use Trick Room.",
+        priority: "medium",
+      },
+    ];
+    const request = createRequest(sets);
+
+    const completed = completeCopilotStrategyAudit(output, request);
+
+    expect(completed.strategyAudit.facts[0].objectSlotIndex).toBe(-1);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual([]);
   });
 
   it("rejects interaction bindings that the recorded participant does not own", () => {
@@ -936,6 +1137,7 @@ describe("Copilot strategy audit", () => {
           planIds: [],
           interactionIds: [],
           factIds: ["zoroark-round", "zoroark-scarf", "zoroark-faster"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -999,6 +1201,7 @@ describe("Copilot strategy audit", () => {
           planIds: [],
           interactionIds: [],
           factIds: ["swampert-slower"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1049,6 +1252,7 @@ describe("Copilot strategy audit", () => {
           planIds: [],
           interactionIds: [],
           factIds: ["false-ground-immunity"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1113,6 +1317,7 @@ describe("Copilot strategy audit", () => {
           planIds: [],
           interactionIds: [],
           factIds: ["unrelated-icy-wind"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1183,6 +1388,7 @@ describe("Copilot strategy audit", () => {
           planIds: [],
           interactionIds: [],
           factIds: ["gengar-cursed-body"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1269,6 +1475,7 @@ describe("Copilot strategy audit", () => {
             "pelipper-resists-fire",
             "archaludon-resists-grass",
           ],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1360,6 +1567,7 @@ describe("Copilot strategy audit", () => {
             "archaludon-resists-grass",
             "sinistcha-resists-grass",
           ],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1427,6 +1635,7 @@ describe("Copilot strategy audit", () => {
           planIds: [],
           interactionIds: [],
           factIds: ["swampert-earthquake", "pelipper-ground-immunity"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1562,6 +1771,7 @@ describe("Copilot strategy audit", () => {
           planIds: [],
           interactionIds: [],
           factIds: ["selected-weak-water", "incineroar-fake-out"],
+          candidateFactIds: [],
         },
       ],
     });
@@ -1622,6 +1832,405 @@ describe("Copilot strategy audit", () => {
         }),
       ),
     ).toEqual([]);
+  });
+
+  it("rejects a team-wide negative defensive claim contradicted by a current set", () => {
+    const defensiveSets = [
+      createSet(0, "Charizard", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "water", multiplier: 2 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Gastrodon", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "water", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({
+      plans: [
+        {
+          id: "defensive-core",
+          lineupSlotIndexes: [0, 1],
+          leadSlotIndexes: [0, 1],
+          backlineSlotIndexes: [],
+          actions: [],
+        },
+      ],
+    });
+    output.analysis.weaknesses = [
+      "No team member resists or is immune to Water attacks.",
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(defensiveSets),
+      ),
+    ).toContain(
+      "Team analysis claims no teammate defends against Water, but current slot 1 does.",
+    );
+  });
+
+  it("accepts recommendation evidence grounded in the supplied candidate", () => {
+    const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
+      pokemonId: "rotom-wash",
+      displayName: "Rotom Wash",
+      types: ["electric", "water"],
+      typeDisplayNames: ["Electric", "Water"],
+      abilities: [
+        { id: "levitate", displayName: "Levitate", effect: "Ground immunity." },
+      ],
+      baseStats: null,
+      speedTier: "mid",
+      requiresMegaStone: false,
+      usageRank: 18,
+      commonSet: null,
+      responsibilityIds: [],
+      fit: {
+        weakTo: [],
+        resistsTeamThreats: ["water"],
+        amplifiesTeamThreats: [],
+        addsUnansweredWeaknesses: [],
+        coversTypes: [],
+        roleContributions: [],
+        roleRedundancies: [],
+        conceptSynergies: [],
+        conflicts: [],
+      },
+    };
+    const output = createOutput({
+      plans: [],
+      candidateFacts: [
+        {
+          id: "rotom-water-answer",
+          candidateId: "rotom-wash",
+          kind: "resists-team-threat",
+          valueId: "water",
+        },
+        {
+          id: "rotom-speed-tier",
+          candidateId: "rotom-wash",
+          kind: "speed-tier",
+          valueId: "mid",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "rotom-wash",
+          planIds: [],
+          interactionIds: [],
+          factIds: [],
+          candidateFactIds: ["rotom-water-answer", "rotom-speed-tier"],
+        },
+      ],
+    });
+    output.analysis.scope = "recommendation";
+    output.analysis.recommendations = [
+      {
+        id: "rotom-wash",
+        title: "Rotom Wash",
+        reason: "Answers Water pressure, but its mid Speed needs positioning.",
+        priority: "medium",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest([], {
+          scope: "recommendation",
+          recommendationCandidates: [recommendationCandidate],
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("completes exact named candidate-element evidence from the request", () => {
+    const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
+      pokemonId: "rotom-wash",
+      displayName: "Rotom Wash",
+      types: ["electric", "water"],
+      typeDisplayNames: ["Electric", "Water"],
+      abilities: [{ id: "levitate", displayName: "Levitate" }],
+      baseStats: null,
+      speedTier: "mid",
+      requiresMegaStone: false,
+      usageRank: 18,
+      commonSet: {
+        ability: "Levitate",
+        item: "Sitrus Berry",
+        nature: "Modest",
+        moves: [
+          {
+            id: "hydropump",
+            displayName: "Hydro Pump",
+            type: "water",
+            category: "Special",
+            power: 110,
+          },
+        ],
+      },
+      responsibilityIds: [],
+      fit: {
+        weakTo: [],
+        resistsTeamThreats: ["water"],
+        amplifiesTeamThreats: [],
+        addsUnansweredWeaknesses: [],
+        coversTypes: [],
+        roleContributions: [],
+        roleRedundancies: [],
+        conceptSynergies: [],
+        conflicts: [],
+      },
+    };
+    const output = createOutput({
+      plans: [],
+      candidateFacts: [
+        {
+          id: "rotom-water-answer",
+          candidateId: "rotom-wash",
+          kind: "resists-team-threat",
+          valueId: "water",
+        },
+        {
+          id: "rotom-speed-tier",
+          candidateId: "rotom-wash",
+          kind: "speed-tier",
+          valueId: "mid",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "rotom-wash",
+          planIds: [],
+          interactionIds: [],
+          factIds: [],
+          candidateFactIds: ["rotom-speed-tier"],
+        },
+      ],
+    });
+    output.analysis.scope = "recommendation";
+    output.analysis.recommendations = [
+      {
+        id: "rotom-wash",
+        title: "Rotom Wash",
+        reason: "Levitate provides the fit, while Hydro Pump supplies pressure.",
+        priority: "medium",
+      },
+    ];
+    const request = createRequest([], {
+      scope: "recommendation",
+      recommendationCandidates: [recommendationCandidate],
+    });
+
+    const completed = completeCopilotRecommendationAudit(output, request);
+
+    expect(completed.strategyAudit.candidateFacts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          candidateId: "rotom-wash",
+          kind: "ability",
+          valueId: "levitate",
+        }),
+        expect.objectContaining({
+          candidateId: "rotom-wash",
+          kind: "common-move",
+          valueId: "hydropump",
+        }),
+      ]),
+    );
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual([]);
+    expect(
+      completed.strategyAudit.recommendationEvidence[0]?.candidateFactIds,
+    ).toContain("rotom-water-answer");
+    expect(output.strategyAudit.candidateFacts).toHaveLength(2);
+  });
+
+  it("downgrades an over-specific candidate weakness fact to exact typing evidence", () => {
+    const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
+      pokemonId: "raichu",
+      displayName: "Raichu",
+      types: ["electric"],
+      typeDisplayNames: ["Electric"],
+      abilities: [{ id: "lightningrod", displayName: "Lightning Rod" }],
+      baseStats: null,
+      speedTier: "fast",
+      requiresMegaStone: false,
+      usageRank: 20,
+      commonSet: null,
+      responsibilityIds: ["attack-redirection"],
+      fit: {
+        weakTo: ["ground"],
+        resistsTeamThreats: [],
+        amplifiesTeamThreats: [],
+        addsUnansweredWeaknesses: [],
+        coversTypes: [],
+        roleContributions: [],
+        roleRedundancies: [],
+        conceptSynergies: [],
+        conflicts: [],
+      },
+    };
+    const output = createOutput({
+      plans: [],
+      candidateFacts: [
+        {
+          id: "raichu-fit",
+          candidateId: "raichu",
+          kind: "ability",
+          valueId: "lightningrod",
+        },
+        {
+          id: "raichu-ground",
+          candidateId: "raichu",
+          kind: "adds-unanswered-weakness",
+          valueId: "ground",
+        },
+        {
+          id: "raichu-redirection",
+          candidateId: "raichu",
+          kind: "role-contribution",
+          valueId: "attack-redirection",
+        },
+        {
+          id: "raichu-invented-rain-fit",
+          candidateId: "raichu",
+          kind: "concept-synergy",
+          valueId: "rain",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "raichu",
+          planIds: [],
+          interactionIds: [],
+          factIds: [],
+          candidateFactIds: [
+            "raichu-fit",
+            "raichu-ground",
+            "raichu-redirection",
+            "raichu-invented-rain-fit",
+          ],
+        },
+      ],
+    });
+    output.analysis.scope = "recommendation";
+    output.analysis.recommendations = [
+      {
+        id: "raichu",
+        title: "Raichu",
+        reason: "Lightning Rod redirects Electric moves, but Raichu is weak to Ground.",
+        priority: "medium",
+      },
+    ];
+    const request = createRequest([], {
+      scope: "recommendation",
+      recommendationCandidates: [recommendationCandidate],
+    });
+
+    const completed = completeCopilotRecommendationAudit(output, request);
+
+    expect(completed.strategyAudit.candidateFacts[1]).toMatchObject({
+      id: "raichu-ground",
+      kind: "weak-to",
+      valueId: "ground",
+    });
+    expect(completed.strategyAudit.candidateFacts[2]).toMatchObject({
+      id: "raichu-redirection",
+      kind: "responsibility",
+      valueId: "attack-redirection",
+    });
+    expect(completed.strategyAudit.candidateFacts).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "raichu-invented-rain-fit" }),
+      ]),
+    );
+    expect(
+      completed.strategyAudit.recommendationEvidence[0]?.candidateFactIds,
+    ).not.toContain("raichu-invented-rain-fit");
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual([]);
+  });
+
+  it("rejects invented recommendation fit and ungrounded named elements", () => {
+    const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
+      pokemonId: "rotom-wash",
+      displayName: "Rotom Wash",
+      types: ["electric", "water"],
+      typeDisplayNames: ["Electric", "Water"],
+      abilities: [{ id: "levitate", displayName: "Levitate" }],
+      baseStats: null,
+      speedTier: "mid",
+      requiresMegaStone: false,
+      usageRank: 18,
+      commonSet: null,
+      responsibilityIds: [],
+      fit: {
+        weakTo: [],
+        resistsTeamThreats: ["water"],
+        amplifiesTeamThreats: [],
+        addsUnansweredWeaknesses: [],
+        coversTypes: [],
+        roleContributions: [],
+        roleRedundancies: [],
+        conceptSynergies: [],
+        conflicts: [],
+      },
+    };
+    const output = createOutput({
+      plans: [],
+      candidateFacts: [
+        {
+          id: "invented-rain-fit",
+          candidateId: "rotom-wash",
+          kind: "concept-synergy",
+          valueId: "rain",
+        },
+        {
+          id: "rotom-speed-tier",
+          candidateId: "rotom-wash",
+          kind: "speed-tier",
+          valueId: "mid",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "rotom-wash",
+          planIds: [],
+          interactionIds: [],
+          factIds: [],
+          candidateFactIds: ["invented-rain-fit", "rotom-speed-tier"],
+        },
+      ],
+    });
+    output.analysis.scope = "recommendation";
+    output.analysis.recommendations = [
+      {
+        id: "rotom-wash",
+        title: "Rotom Wash",
+        reason: "Levitate supports the rain plan, but its mid Speed needs help.",
+        priority: "medium",
+      },
+    ];
+
+    const errors = validateCopilotStrategyAuditForRequest(
+      output,
+      createRequest([], {
+        scope: "recommendation",
+        recommendationCandidates: [recommendationCandidate],
+      }),
+    );
+
+    expect(errors).toContain(
+      "strategyAudit.candidateFacts[0] contradicts the supplied recommendation candidate.",
+    );
+    expect(errors).toContain(
+      "Recommendation rotom-wash names Levitate without matching candidate evidence.",
+    );
   });
 
   it("keeps the private audit empty for an unfilled Pokemon slot", () => {

@@ -20,7 +20,9 @@ import type { AiTeamFixture } from "../fixtures/aiTeamFixtureTypes";
 import {
   createAiEvaluationModelInput,
   createAiPokemonEvaluationCase,
+  createAiPokemonRecommendationEvaluationCase,
   createAiTeamEvaluationCase,
+  getMissingExpectedRecommendationIds,
   runAiTeamEvaluationCase,
   type AiEvaluationModelAdapter,
 } from "./aiModelEvaluation";
@@ -281,9 +283,99 @@ describe("AI model evaluation request parity", () => {
       "criticalObservations",
     );
   });
+
+  it("builds recommendation cases from a genuinely empty production slot", async () => {
+    const fixture = aiTeamFixtures[0];
+    const dependencies = createFixtureDependencies(fixture);
+    const removedPokemon = parseShowdownTeam(fixture.showdownText)[0];
+    const removedPokemonId = toPokemonId(removedPokemon.pokemonName);
+    const evaluationCase = await createAiPokemonRecommendationEvaluationCase(
+      fixture,
+      0,
+      {
+        ...dependencies,
+        createRecommendationCandidates: async ({ options, occupiedSpeciesKeys }) => {
+          const option = options.find((candidate) => candidate.id === removedPokemonId);
+
+          expect(option).toBeDefined();
+          expect(occupiedSpeciesKeys.has(option?.speciesKey ?? "")).toBe(false);
+
+          return [
+            {
+              pokemonId: option?.id ?? removedPokemonId,
+              displayName: option?.displayName ?? removedPokemon.pokemonName,
+              types: option?.types ?? ["normal"],
+              typeDisplayNames: option?.typeDisplayNames ?? ["Normal"],
+              abilities: option?.abilities ?? [],
+              baseStats: null,
+              speedTier: "unknown",
+              requiresMegaStone: false,
+              usageRank: 1,
+              commonSet: null,
+              responsibilityIds: [],
+              fit: {
+                weakTo: [],
+                resistsTeamThreats: [],
+                amplifiesTeamThreats: [],
+                addsUnansweredWeaknesses: [],
+                coversTypes: [],
+                roleContributions: [],
+                roleRedundancies: [],
+                conceptSynergies: [],
+                conflicts: [],
+              },
+            },
+          ];
+        },
+      },
+      {
+        fixtureId: "recommendation-regression",
+        expectations: {
+          teamIdentities: ["Empty-slot fit"],
+          criticalObservations: ["Use supplied candidates"],
+          forbiddenConclusions: ["Inventing candidates"],
+        },
+      },
+    );
+
+    expect(evaluationCase.fixtureId).toBe("recommendation-regression");
+    expect(evaluationCase.request.scope).toBe("recommendation");
+    expect(evaluationCase.request.selectedSlot).toBe(0);
+    expect(evaluationCase.request.sets).toHaveLength(5);
+    expect(
+      evaluationCase.request.sets.some((set) => set.pokemonId === removedPokemonId),
+    ).toBe(false);
+    expect(evaluationCase.request.recommendationCandidates).toHaveLength(1);
+    expect(evaluationCase.request.recommendationCandidates[0]?.pokemonId).toBe(
+      removedPokemonId,
+    );
+    expect(collectObjectKeys(evaluationCase.request)).not.toContain(
+      "forbiddenConclusions",
+    );
+  });
 });
 
 describe("AI model output validation", () => {
+  it("reports missing evaluator-only recommendation baselines", () => {
+    expect(
+      getMissingExpectedRecommendationIds(
+        {
+          ...validModelOutput,
+          scope: "recommendation",
+          recommendations: [
+            {
+              id: "pelipper",
+              title: "Pelipper",
+              reason: "Rain support.",
+              priority: "high",
+            },
+          ],
+        },
+        ["pelipper", "farigiraf"],
+      ),
+    ).toEqual(["farigiraf"]);
+  });
+
   it("accepts the versioned structured analysis contract", () => {
     expect(validateCopilotModelOutput(validModelOutput)).toEqual({
       success: true,

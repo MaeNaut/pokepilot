@@ -3,6 +3,7 @@ import { areEquivalentBattleForms } from "../data/battleForms";
 const SPECIAL_POKEMON_LOOKUP_ALIASES: Record<string, string[]> = {
   "aegislash-blade": ["aegislash"],
   "aegislash-shield": ["aegislash"],
+  "maushold-family-of-four": ["maushold"],
   "mimikyu-disguised": ["mimikyu"],
   "morpeko-full-belly": ["morpeko"],
   "morpeko-hangry": ["morpeko"],
