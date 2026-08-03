@@ -23,13 +23,13 @@ export const aiPokemonAnalysisFixtures = [
       ],
       criticalObservations: [
         "Choice Scarf Hisuian Zoroark is the first Round user, while Mega Gardevoir is the strongest boosted responder through Pixilate.",
-        "Farigiraf is the strategically relevant Illusion presentation because it can create a false Armor Tail and Fake Out expectation without occupying the other active lead slot.",
+        "Illusion should compare Farigiraf's apparent Armor Tail priority protection with Gengar's current Cursed Body and optional Mega Shadow Tag pressure; either presentation is defensible when its concrete first-turn tradeoff is explained.",
         "The fast Zoroark can pressure before Trick Room, be preserved while Trick Room is active, and return after it expires rather than being treated as a normal in-room attacker.",
       ],
       forbiddenConclusions: [
         "Claiming that a slower teammate starts Round before Choice Scarf Hisuian Zoroark under ordinary move order.",
         "Treating all Round partners as interchangeable instead of comparing Mega Gardevoir's Pixilate response.",
-        "Using the other active lead as the Illusion presentation or recommending only generic visual ambiguity.",
+        "Using the other active lead as the Illusion presentation or recommending a disguise from generic visual ambiguity without a concrete decision impact.",
         "Telling Hisuian Zoroark to attack freely during Trick Room without a supplied priority or forced-order interaction.",
       ],
     },

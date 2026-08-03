@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type {
-  CopilotAnalysisRequest,
-  CopilotSetSnapshot,
+import {
+  createCopilotTypeLabels,
+  type CopilotAnalysisRequest,
+  type CopilotSetSnapshot,
 } from "./copilotAnalysis";
 import type { CopilotGroundedModelOutput } from "./copilotModelContract";
 import { validateCopilotStrategyAuditForRequest } from "./copilotStrategyAudit";
@@ -74,12 +75,13 @@ function createRequest(
   overrides: Partial<CopilotAnalysisRequest> = {},
 ): CopilotAnalysisRequest {
   return {
-    version: 11,
+    version: 12,
     locale: "en",
     scope: "team",
     battleFormat: "doubles",
     teamName: "Audit Team",
     selectedSlot: 0,
+    typeLabels: createCopilotTypeLabels("en"),
     sets,
     megaOptions: [],
     candidateFilters: [],
@@ -1150,6 +1152,476 @@ describe("Copilot strategy audit", () => {
     expect(errors).toContain(
       "Recommendation round-chain names shared move round without matching owner fact evidence.",
     );
+  });
+
+  it("treats the selected Pokemon as the established analysis subject", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", [], {
+        ability: "illusion",
+        abilityDisplayName: "Illusion",
+      }),
+      createSet(1, "Gengar", [], {
+        ability: "cursedbody",
+        abilityDisplayName: "Cursed Body",
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "gengar-cursed-body",
+          kind: "ability-owner",
+          subjectSlotIndex: 1,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "cursedbody",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "illusion-gengar",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["gengar-cursed-body"],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "illusion-gengar",
+        title: "Present Hisuian Zoroark as Gengar",
+        reason: "The opponent may respect Gengar's Cursed Body.",
+        priority: "medium",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          scope: "pokemon",
+          selectedSlot: 0,
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects a teammate whose unrelated resistance is grouped into weakness coverage", () => {
+    const pokemonSets = [
+      createSet(0, "Swampert", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "grass", multiplier: 4 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Pelipper", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "fire", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+      createSet(2, "Archaludon", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "grass", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "swampert-weak-grass",
+          kind: "weak-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "grass",
+        },
+        {
+          id: "pelipper-resists-fire",
+          kind: "resists",
+          subjectSlotIndex: 1,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "fire",
+        },
+        {
+          id: "archaludon-resists-grass",
+          kind: "resists",
+          subjectSlotIndex: 2,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "grass",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "grass-cover",
+          planIds: [],
+          interactionIds: [],
+          factIds: [
+            "swampert-weak-grass",
+            "pelipper-resists-fire",
+            "archaludon-resists-grass",
+          ],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "grass-cover",
+        title: "Cover Swampert's Grass weakness",
+        reason: "Use Pelipper and Archaludon to answer Grass pressure.",
+        priority: "medium",
+      },
+    ];
+
+    const errors = validateCopilotStrategyAuditForRequest(
+      output,
+      createRequest(pokemonSets, {
+        scope: "pokemon",
+        selectedSlot: 0,
+      }),
+    );
+
+    expect(errors).toContain(
+      "Recommendation grass-cover links teammate slot 1's fire defense to an unrelated selected-Pokemon weakness.",
+    );
+    expect(errors).toContain(
+      "Recommendation grass-cover names Pelipper in Grass coverage advice without matching resistance or immunity evidence.",
+    );
+  });
+
+  it("accepts exact teammate resistance evidence for Pokemon weakness coverage", () => {
+    const pokemonSets = [
+      createSet(0, "Swampert", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "grass", multiplier: 4 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Archaludon", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "grass", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+      createSet(2, "Sinistcha", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "grass", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "swampert-weak-grass",
+          kind: "weak-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "grass",
+        },
+        {
+          id: "archaludon-resists-grass",
+          kind: "resists",
+          subjectSlotIndex: 1,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "grass",
+        },
+        {
+          id: "sinistcha-resists-grass",
+          kind: "resists",
+          subjectSlotIndex: 2,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "grass",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "grass-cover",
+          planIds: [],
+          interactionIds: [],
+          factIds: [
+            "swampert-weak-grass",
+            "archaludon-resists-grass",
+            "sinistcha-resists-grass",
+          ],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "grass-cover",
+        title: "Cover Swampert's Grass weakness",
+        reason: "Archaludon and Sinistcha both resist Grass pressure.",
+        priority: "medium",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          scope: "pokemon",
+          selectedSlot: 0,
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("keeps spread-move partner immunity separate from selected weaknesses", () => {
+    const pokemonSets = [
+      createSet(0, "Pelipper", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [],
+          immunities: [{ type: "ground", cause: "typing" }],
+        },
+      }),
+      createSet(1, "Swampert", ["earthquake"], {
+        defensiveProfile: {
+          weaknesses: [{ type: "grass", multiplier: 4 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "swampert-earthquake",
+          kind: "move-owner",
+          subjectSlotIndex: 1,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "earthquake",
+        },
+        {
+          id: "pelipper-ground-immunity",
+          kind: "immune-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "ground",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "earthquake-partner",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["swampert-earthquake", "pelipper-ground-immunity"],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "earthquake-partner",
+        title: "Pair Swampert with Pelipper for Earthquake",
+        reason: "Pelipper is immune to Ground while Swampert uses Earthquake.",
+        priority: "medium",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          scope: "pokemon",
+          selectedSlot: 1,
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects a false claim that no teammate resists a named weakness", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "dark", multiplier: 2 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Umbreon", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "dark", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({ plans: [] });
+    output.analysis.scope = "pokemon";
+    output.analysis.weaknesses = [
+      "No teammate resists or is immune to Dark attacks.",
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          scope: "pokemon",
+          selectedSlot: 0,
+        }),
+      ),
+    ).toContain(
+      "Pokemon analysis claims no teammate defends against Dark, but current slot 1 does.",
+    );
+  });
+
+  it("rejects a natural Korean no-switch-in claim contradicted by the roster", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "dark", multiplier: 2 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Umbreon", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "dark", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({ plans: [] });
+    output.analysis.scope = "pokemon";
+    output.analysis.weaknesses = [
+      "현재 팀에 악 타입 공격을 받는 직접적인 저항 교대점이 없다.",
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          locale: "ko",
+          scope: "pokemon",
+          selectedSlot: 0,
+          typeLabels: createCopilotTypeLabels("ko"),
+        }),
+      ),
+    ).toContain(
+      "Pokemon analysis claims no teammate defends against 악, but current slot 1 does.",
+    );
+  });
+
+  it("does not read Korean physical-pressure prose as a Water-type claim", () => {
+    const pokemonSets = [
+      createSet(0, "Test Pokemon", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "water", multiplier: 2 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Incineroar", ["fakeout"]),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "selected-weak-water",
+          kind: "weak-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "water",
+        },
+        {
+          id: "incineroar-fake-out",
+          kind: "move-owner",
+          subjectSlotIndex: 1,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "fakeout",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "physical-pressure",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["selected-weak-water", "incineroar-fake-out"],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "physical-pressure",
+        title: "물리적 압박 보완",
+        reason: "어흥염의 속이기로 물리적 압박을 보완한다.",
+        priority: "medium",
+      },
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          locale: "ko",
+          scope: "pokemon",
+          selectedSlot: 0,
+          typeLabels: createCopilotTypeLabels("ko"),
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not infer a resistance when a teammate's combined profile is neutral", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "dark", multiplier: 2 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Sableye", [], {
+        types: ["dark", "ghost"],
+        typeDisplayNames: ["Dark", "Ghost"],
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({ plans: [] });
+    output.analysis.scope = "pokemon";
+    output.analysis.weaknesses = [
+      "No teammate resists or is immune to Dark attacks.",
+    ];
+
+    expect(
+      validateCopilotStrategyAuditForRequest(
+        output,
+        createRequest(pokemonSets, {
+          scope: "pokemon",
+          selectedSlot: 0,
+        }),
+      ),
+    ).toEqual([]);
   });
 
   it("keeps the private audit empty for an unfilled Pokemon slot", () => {

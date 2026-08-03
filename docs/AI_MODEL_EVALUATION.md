@@ -329,6 +329,42 @@ Grass weakness, even though its exact Ground-immunity positioning advice was
 correct. Keep both as manual-review residuals rather than weakening validation
 or encoding fixture-specific answers.
 
+### Prompt v34 Selected-Pokemon Quality Closeout
+
+Request-contract v12 adds all 18 localized type labels so the server can audit
+natural-language defensive claims without relying on English-only names.
+Prompt v34 and the deterministic strategy audit close the two v29 residuals:
+
+- an exact selected-Pokemon weakness can only be presented as covered by a named
+  teammate when that teammate's final current profile resists or is immune to
+  that exact type;
+- negative claims such as "no teammate resists Dark" are rejected when any
+  current teammate profile contradicts them;
+- unrelated positioning facts, such as Pelipper being immune to Swampert's
+  Earthquake, remain valid but cannot be used as evidence for covering
+  Swampert's Grass weakness;
+- Illusion privately compares every legal party ordering by visible typing,
+  current ability, optional Mega ability, first-turn decision impact, timing,
+  plausibility, and opportunity cost. Farigiraf and Gengar are therefore both
+  defensible presentations when the response explains the concrete false
+  expectation instead of treating one fixture species as the required answer.
+
+The final focused Luna Standard low Zoroark run completed the strict schema and
+audit in 13.481 seconds with 11,343 total tokens and an estimated cost of
+$0.003399. It identified Scarf Hisuian Zoroark as the first Round user, Mega
+Gardevoir as the clearest Pixilate responder, and Gengar as a plausible
+Illusion target because opponents must account for current Cursed Body and an
+optional post-Mega Shadow Tag. It also correctly treated Sableye's combined
+Dark/Ghost profile as neutral to Dark rather than resistant. The preceding v31
+two-case Zoroark/Swampert regression passed 2/2 with 22,330 total tokens and an
+estimated cost of $0.006582.
+
+Low reasoning remains stochastic: three intermediate runs produced a malformed
+defensive evidence bundle, a false private type fact, or incomplete evidence.
+The deterministic audit rejected each response rather than publishing it. The
+current product therefore favors a guarded fallback over an automatic paid
+retry; broader Prompt v34 team-strategy regression remains a release task.
+
 Prompt caching reduces repeated stable input billing but does not cache the
 changing team payload or generated output. Output remains the larger marginal
 cost in these short one-shot analyses, while the separate 24-hour canonical
@@ -443,12 +479,12 @@ and [model optimization guide](https://developers.openai.com/api/docs/guides/mod
 ## Hosted Analysis Integration
 
 The first production-shaped analysis path now uses
-`POST /api/pokepilot/analyze`. The browser sends request-contract v11 and never
+`POST /api/pokepilot/analyze`. The browser sends request-contract v12 and never
 imports the OpenAI SDK or reads an API key. The route:
 
 - rejects methods other than `POST` and bodies larger than 256 KB;
 - validates the complete incoming request before any paid call;
-- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v29;
+- calls GPT-5.6 Luna on Standard service at low reasoning with prompt v34;
 - allows up to 3,500 combined reasoning and response tokens so a valid
   structured response is not truncated by the output budget;
 - disables response storage and uses a versioned explicit prompt-cache key and
@@ -464,10 +500,11 @@ handler. Local development reads the ignored `OPENAI_API_KEY` from
 `.env.local`; deployment must provide the same name as a server secret, never
 as a `VITE_` variable.
 
-Request v11 sends a deduplicated neutral mechanics dictionary for every selected
+Request v12 sends a deduplicated neutral mechanics dictionary for every selected
 move, item, current ability, and projected Mega ability. Effects come from the
 same local Showdown snapshots and catalogs used by the product UI; move tags are
-preserved without a hand-maintained strategic allowlist. The request builder no
+preserved without a hand-maintained strategic allowlist. It also sends the full
+localized type-label map used by Pokemon-scope prose validation. The request builder no
 longer derives partner combinations, leads, or field phases from fixture-specific
 patterns such as Choice Scarf plus Illusion plus Round. Prompt v17 instead maps
 the canonical effects back to their owning sets, audits every possible active

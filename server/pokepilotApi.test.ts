@@ -1,16 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis";
+import {
+  createCopilotTypeLabels,
+  type CopilotAnalysisRequest,
+} from "../src/utils/copilotAnalysis";
 import type { LunaAnalysisResult } from "./openAiLuna";
 import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 11,
+  version: 12,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
   teamName: "Test Team",
   selectedSlot: 0,
+  typeLabels: createCopilotTypeLabels("ko"),
   sets: [],
   megaOptions: [],
   candidateFilters: [],
@@ -123,7 +127,7 @@ function createModelResult(output: unknown): LunaAnalysisResult {
       responseId: "resp_test",
       serviceTier: "default",
       reasoningEffort: "low",
-      promptVersion: 29,
+      promptVersion: 34,
     },
   };
 }
@@ -186,7 +190,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 29,
+        promptVersion: 34,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

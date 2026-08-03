@@ -4,19 +4,23 @@ import {
   getPokePilotScopeInstructions,
   pokepilotCommonInstructions,
 } from "../../../server/openAiLuna";
-import type { CopilotAnalysisRequest } from "../../utils/copilotAnalysis";
+import {
+  createCopilotTypeLabels,
+  type CopilotAnalysisRequest,
+} from "../../utils/copilotAnalysis";
 import {
   createLunaStandardUsage,
   createOpenAiLunaAdapter,
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 11,
+  version: 12,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
   teamName: "Test Team",
   selectedSlot: 0,
+  typeLabels: createCopilotTypeLabels("ko"),
   sets: [],
   megaOptions: [],
   candidateFilters: [],
@@ -203,7 +207,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 29,
+        promptVersion: 34,
       },
       usage: {
         totalTokens: 150,
@@ -306,6 +310,30 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(getPokePilotScopeInstructions("pokemon")).toContain(
       "Create exactly one recommendationEvidence entry per recommendation",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "compare every legal presented teammate on four points",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "Assign each candidate a concrete decision delta",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "Either candidate may win when the supplied facts justify it",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "needs to mention that runner-up only when the tradeoff is materially useful",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "Never add a defensive fact merely to prove that a candidate exists",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "Each named cover partner must have a supplied current or projected-Mega resistance or immunity",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "request.typeLabels maps every canonical defensive type",
+    );
+    expect(getPokePilotScopeInstructions("pokemon")).toContain(
+      "scan the current defensiveProfile of every other supplied set",
     );
     expect(getPokePilotScopeInstructions("recommendation")).toContain(
       "Never name or recommend a Pokemon outside that array",

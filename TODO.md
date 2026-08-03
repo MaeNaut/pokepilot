@@ -221,14 +221,19 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Finish selected-Pokemon shared-move responder ranking: the live v29
         regression identifies Scarf Hisuian Zoroark as the Round trigger and
         Mega Gardevoir as the stronger Pixilate responder.
-  - [ ] Continue generic deception ranking without encoding fixture answers.
-        The live v29 Pokemon result chooses a legal Mega Gengar / Shadow Tag
-        bluff, while evaluator context prefers Farigiraf's Armor Tail and Fake
-        Out expectation; keep this as manual semantic review.
+  - [x] Finish generic deception ranking without encoding fixture answers.
+        Prompt v34 privately compares every legal Illusion presentation by its
+        concrete first-turn decision impact, current ability, optional Mega
+        ability, timing, and opportunity cost. Mega Gengar and Farigiraf are
+        both valid when the response explains the actual false expectation;
+        neither species is a hardcoded answer.
   - [x] Validate selected-Pokemon recommendation evidence, named teammate
         coverage, shared-move ownership, defensive relations, and exact Speed
         comparisons including unconditional numeric held-item modifiers.
-  - [ ] Re-run the complete focused team-strategy sweep on Prompt v29 before a
+  - [x] Add request-contract v12 localized type labels and Prompt v34 prose
+        validation so exact weakness coverage and negative "no teammate covers
+        this type" claims must match every current defensive profile.
+  - [ ] Re-run the complete focused team-strategy sweep on Prompt v34 before a
         public hosted-AI release; scoped smoke tests pass, while complex semantic
         synthesis remains a manual-review responsibility.
   - [x] Score factual fidelity, format awareness, strategic synthesis, prioritization, calibration, and Korean quality.
@@ -238,7 +243,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Add a server-side API route for AI analysis.
   - [x] Keep API keys out of browser code.
   - [x] Move the Luna adapter behind a server-only `POST` endpoint that accepts
-        request-contract v11 and keeps Standard-tier low reasoning explicit.
+        request-contract v12 and keeps Standard-tier low reasoning explicit.
   - [x] Validate both the incoming analysis request and the strict model response
         at the server boundary before returning product data.
   - [x] Call analysis explicitly rather than automatically on every team edit.

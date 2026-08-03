@@ -448,6 +448,214 @@ function hasMatchingFact(
   );
 }
 
+function textMentionsTypeLabel(
+  text: string,
+  displayName: string,
+  typeId: string,
+) {
+  const normalizedText = text.normalize("NFKC").toLowerCase();
+  const labels = [displayName, typeId]
+    .map((label) => label.trim().normalize("NFKC").toLowerCase())
+    .filter((label, index, values) => label && values.indexOf(label) === index);
+
+  return labels.some((label) => {
+    const isAscii = Array.from(label).every(
+      (character) => (character.codePointAt(0) ?? 0) <= 0x7f,
+    );
+    if (!isAscii) {
+      if (Array.from(label).length === 1) {
+        let matchIndex = normalizedText.indexOf(label);
+        while (matchIndex >= 0) {
+          const before = normalizedText[matchIndex - 1] ?? "";
+          const after = normalizedText.slice(matchIndex + label.length);
+          const hasWordCharacterBefore =
+            /[a-z0-9\u3131-\u318e\uac00-\ud7a3]/i.test(before);
+          const hasTypeContextAfter =
+            after.length === 0 ||
+            /^[\s.,:;!?()[\]{}]/.test(after) ||
+            /^(?:타입|기술|공격|약점|내성|반감|저항|무효|에|을|의|과|와|로|은|는)/.test(
+              after,
+            );
+          if (!hasWordCharacterBefore && hasTypeContextAfter) {
+            return true;
+          }
+          matchIndex = normalizedText.indexOf(label, matchIndex + label.length);
+        }
+
+        return false;
+      }
+
+      return normalizedText.includes(label);
+    }
+
+    let matchIndex = normalizedText.indexOf(label);
+    while (matchIndex >= 0) {
+      const before = normalizedText[matchIndex - 1] ?? "";
+      const after = normalizedText[matchIndex + label.length] ?? "";
+      if (!/[a-z0-9]/.test(before) && !/[a-z0-9]/.test(after)) {
+        return true;
+      }
+      matchIndex = normalizedText.indexOf(label, matchIndex + label.length);
+    }
+
+    return false;
+  });
+}
+
+function hasDefensiveCoverageLanguage(text: string) {
+  return /\b(?:answer|cover|handle|patch|resist|immune|switch(?:-?in| into)?|defen[cs]e|protect against|pressure)\b|(?:약점|보완|대응|교대|반감|저항|무효|받아내|막아|압박)/i.test(
+    text,
+  );
+}
+
+function claimsNoTeammateDefense(text: string) {
+  return /(?:\bno\b|\bnone\b|\bwithout\b|\black(?:s|ing)?\b)[^.!?\n]{0,140}(?:team-?mate|partner|member|resistan|immun)|(?:team-?mate|partner|member)[^.!?\n]{0,140}(?:resist|immun)[^.!?\n]{0,50}(?:\bno\b|\bnone\b|\bwithout\b)|(?:동료|팀원|파트너)[^.!?\n]{0,140}(?:반감|저항|무효)[^.!?\n]{0,50}(?:없|부재)|(?:반감|저항|무효)[^.!?\n]{0,140}(?:동료|팀원|파트너)[^.!?\n]{0,50}(?:없|부재)|팀(?:에는|에서|에게는|에|은|이)?[^.!?\n]{0,140}(?:반감|저항|무효|교대점)[^.!?\n]{0,70}(?:없|부재)/i.test(
+    text,
+  );
+}
+
+function validatePokemonNegativeDefensiveClaims(
+  output: CopilotGroundedModelOutput,
+  request: CopilotAnalysisRequest,
+  errors: string[],
+) {
+  const selectedSet = request.sets.find(
+    (set) => set.slotIndex === request.selectedSlot,
+  );
+  if (!selectedSet) {
+    return;
+  }
+
+  const publicStatements = [
+    output.analysis.summary,
+    output.analysis.playstyle,
+    ...output.analysis.strengths,
+    ...output.analysis.weaknesses,
+    ...output.analysis.recommendations.flatMap((recommendation) => [
+      recommendation.title,
+      recommendation.reason,
+    ]),
+  ];
+
+  publicStatements.forEach((statement) => {
+    if (!claimsNoTeammateDefense(statement)) {
+      return;
+    }
+
+    request.typeLabels.forEach((typeLabel) => {
+      if (
+        !textMentionsTypeLabel(statement, typeLabel.displayName, typeLabel.id)
+      ) {
+        return;
+      }
+
+      const matchingTeammates = request.sets.filter(
+        (set) =>
+          set.slotIndex !== selectedSet.slotIndex &&
+          (set.defensiveProfile.resistances.some(
+            (entry) => normalizeId(entry.type) === normalizeId(typeLabel.id),
+          ) ||
+            set.defensiveProfile.immunities.some(
+              (entry) => normalizeId(entry.type) === normalizeId(typeLabel.id),
+            )),
+      );
+      if (matchingTeammates.length > 0) {
+        errors.push(
+          `Pokemon analysis claims no teammate defends against ${typeLabel.displayName}, but current slot ${matchingTeammates[0].slotIndex} does.`,
+        );
+      }
+    });
+  });
+}
+
+function validatePokemonDefensiveRecommendationEvidence(
+  recommendationId: string,
+  recommendationText: string,
+  evidenceFacts: CopilotStrategyFact[],
+  mentionedSets: CopilotAnalysisRequest["sets"],
+  request: CopilotAnalysisRequest,
+  errors: string[],
+) {
+  const selectedSet = request.sets.find(
+    (set) => set.slotIndex === request.selectedSlot,
+  );
+  if (!selectedSet) {
+    return;
+  }
+
+  const selectedWeaknessFacts = evidenceFacts.filter(
+    (fact) =>
+      fact.kind === "weak-to" &&
+      fact.subjectSlotIndex === selectedSet.slotIndex,
+  );
+  const teammateDefensiveFacts = evidenceFacts.filter(
+    (fact) =>
+      fact.subjectSlotIndex !== selectedSet.slotIndex &&
+      (fact.kind === "resists" || fact.kind === "immune-to"),
+  );
+  const selectedWeaknessIds = new Set(
+    selectedWeaknessFacts.map((fact) => normalizeId(fact.valueId)),
+  );
+
+  if (selectedWeaknessFacts.length > 0) {
+    teammateDefensiveFacts.forEach((fact) => {
+      if (!selectedWeaknessIds.has(normalizeId(fact.valueId))) {
+        errors.push(
+          `Recommendation ${recommendationId} links teammate slot ${fact.subjectSlotIndex}'s ${fact.valueId} defense to an unrelated selected-Pokemon weakness.`,
+        );
+      }
+    });
+  }
+
+  if (
+    selectedWeaknessFacts.length === 0 &&
+    teammateDefensiveFacts.length === 0
+  ) {
+    return;
+  }
+
+  const claimedWeaknessTypes = request.typeLabels.filter(
+    (label) =>
+      selectedSet.defensiveProfile.weaknesses.some(
+        (weakness) => normalizeId(weakness.type) === normalizeId(label.id),
+      ) &&
+      textMentionsTypeLabel(recommendationText, label.displayName, label.id),
+  );
+  if (
+    claimedWeaknessTypes.length === 0 ||
+    !hasDefensiveCoverageLanguage(recommendationText)
+  ) {
+    return;
+  }
+
+  claimedWeaknessTypes.forEach((typeLabel) => {
+    const typeId = normalizeId(typeLabel.id);
+    const hasSelectedWeaknessEvidence = selectedWeaknessFacts.some(
+      (fact) => normalizeId(fact.valueId) === typeId,
+    );
+    if (!hasSelectedWeaknessEvidence) {
+      errors.push(
+        `Recommendation ${recommendationId} discusses covering ${typeLabel.displayName} without the selected Pokemon's matching weakness fact.`,
+      );
+    }
+
+    mentionedSets
+      .filter((set) => set.slotIndex !== selectedSet.slotIndex)
+      .forEach((set) => {
+        const hasExactDefenseEvidence = teammateDefensiveFacts.some(
+          (fact) =>
+            fact.subjectSlotIndex === set.slotIndex &&
+            normalizeId(fact.valueId) === typeId,
+        );
+        if (!hasExactDefenseEvidence) {
+          errors.push(
+            `Recommendation ${recommendationId} names ${set.displayName} in ${typeLabel.displayName} coverage advice without matching resistance or immunity evidence.`,
+          );
+        }
+      });
+  });
+}
+
 function hasAllySequencingEffect(
   request: CopilotAnalysisRequest,
   moveId: string,
@@ -506,19 +714,30 @@ function validatePokemonRecommendationEvidenceCoverage(
     });
     const mentionedSlots = new Set(mentionedSets.map((set) => set.slotIndex));
 
-    mentionedSets.forEach((set) => {
-      if (
-        !evidenceFacts.some(
-          (fact) =>
-            fact.subjectSlotIndex === set.slotIndex ||
-            fact.objectSlotIndex === set.slotIndex,
-        )
-      ) {
-        errors.push(
-          `Recommendation ${recommendation.id} names ${set.displayName} without fact evidence for slot ${set.slotIndex}.`,
-        );
-      }
-    });
+    mentionedSets
+      .filter((set) => set.slotIndex !== request.selectedSlot)
+      .forEach((set) => {
+        if (
+          !evidenceFacts.some(
+            (fact) =>
+              fact.subjectSlotIndex === set.slotIndex ||
+              fact.objectSlotIndex === set.slotIndex,
+          )
+        ) {
+          errors.push(
+            `Recommendation ${recommendation.id} names ${set.displayName} without fact evidence for slot ${set.slotIndex}.`,
+          );
+        }
+      });
+
+    validatePokemonDefensiveRecommendationEvidence(
+      recommendation.id,
+      recommendationText,
+      evidenceFacts,
+      mentionedSets,
+      request,
+      errors,
+    );
 
     const checkedMoveIds = new Set<string>();
     request.sets.forEach((set) => {
@@ -621,6 +840,7 @@ export function validateCopilotStrategyAuditForRequest(
       errors,
     );
     validatePokemonRecommendationEvidenceCoverage(output, request, errors);
+    validatePokemonNegativeDefensiveClaims(output, request, errors);
 
     return errors;
   }

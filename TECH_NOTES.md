@@ -615,13 +615,13 @@ the Copilot constrained to the current team data and deterministic builder analy
 The current implementation keeps one provider-independent product contract
 across deterministic fallback and hosted analysis:
 
-- `src/utils/copilotAnalysis.ts` creates a versioned, compact request containing
-  active sets, the selected slot, deterministic diagnostics, field/weather concept
-  summaries, and validity summaries.
+- `src/utils/copilotAnalysis.ts` creates request-contract v12 containing active
+  sets, the selected slot, deterministic diagnostics, field/weather concept
+  summaries, validity summaries, and all 18 localized type labels.
 - The same module returns structured summary, strength, focus, playstyle, and
   recommendation fields from local rules when the hosted route is unavailable.
 - `POST /api/pokepilot/analyze` sends the same validated request to Luna at
-  Standard low reasoning. Prompt v29 places stable common instructions at the
+  Standard low reasoning. Prompt v34 places stable common instructions at the
   first explicit cache breakpoint, stable Team/Pokemon/Recommend instructions
   at a second breakpoint, and variable request JSON after both. The cache key is
   versioned by the shared core so different scopes and users can reuse the
@@ -629,7 +629,9 @@ across deterministic fallback and hosted analysis:
 - Hosted Team and Pokemon output includes a private strategy audit. The server
   validates selected-element ownership, legal active states, Mega states,
   defensive facts, supported Speed comparisons, and recommendation evidence,
-  then strips the audit before returning the public analysis.
+  then strips the audit before returning the public analysis. Pokemon-scope
+  validation also cross-checks public exact-weakness coverage prose and negative
+  "no teammate covers this type" claims against every current defensive profile.
 - Team and selected-Pokemon scopes keep separate results. A request fingerprint marks
   an existing result stale after relevant edits without rerunning analysis on every
   keystroke; changing only the displayed slot does not stale team-scope analysis.

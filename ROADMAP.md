@@ -141,13 +141,14 @@ The MVP should prove the core loop:
   private evidence for named partners, shared moves, defensive relations, and
   unconditional held-item Speed order. Confirm the final Pokemon scope with a
   2/2 Luna Standard low live regression.
-- [ ] Extend Pokemon-scope semantic review from fact presence to exact prose
-  alignment for defensive partner claims, and keep alternative Illusion
-  presentations as evaluator-ranked choices rather than hardcoded answers.
+- [x] Finish Pokemon-scope semantic review with request-contract v12 and Prompt
+  v34: validate exact prose alignment for defensive partner claims, reject
+  contradicted negative coverage claims, and rank alternative Illusion
+  presentations by concrete decision impact rather than hardcoded species.
 - [x] Add a server-side API route and send structured team, diagnostic, and validity
   data to the AI model.
   - [x] Keep the API key and Luna adapter server-only.
-  - [x] Accept request-contract v11, call GPT-5.6 Luna Standard at low reasoning,
+  - [x] Accept request-contract v12, call GPT-5.6 Luna Standard at low reasoning,
         and validate the strict response schema at the route boundary.
   - [x] Keep team-combination and phase inference in the model rather than
         encoding fixture-derived partner strategies in the request builder.

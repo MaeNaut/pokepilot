@@ -1,4 +1,5 @@
 import type { CopilotAnalysisRequest } from "./copilotAnalysis";
+import { pokemonTypes } from "../types";
 
 export type CopilotRequestValidation =
   | { success: true; data: CopilotAnalysisRequest; errors: [] }
@@ -11,6 +12,7 @@ const requestKeys = new Set([
   "battleFormat",
   "teamName",
   "selectedSlot",
+  "typeLabels",
   "sets",
   "megaOptions",
   "candidateFilters",
@@ -182,6 +184,28 @@ function hasValidRecommendationCandidateShape(value: unknown) {
   );
 }
 
+function hasValidTypeLabels(value: unknown) {
+  if (!Array.isArray(value) || value.length !== pokemonTypes.length) {
+    return false;
+  }
+
+  const labelsById = new Map<string, string>();
+  for (const entry of value) {
+    if (
+      !isRecord(entry) ||
+      typeof entry.id !== "string" ||
+      typeof entry.displayName !== "string" ||
+      entry.displayName.trim().length === 0 ||
+      labelsById.has(entry.id)
+    ) {
+      return false;
+    }
+    labelsById.set(entry.id, entry.displayName);
+  }
+
+  return pokemonTypes.every((type) => labelsById.has(type));
+}
+
 export function validateCopilotAnalysisRequest(
   value: unknown,
 ): CopilotRequestValidation {
@@ -200,8 +224,8 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 11) {
-    errors.push("version must be 11.");
+  if (value.version !== 12) {
+    errors.push("version must be 12.");
   }
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
@@ -229,6 +253,9 @@ export function validateCopilotAnalysisRequest(
     Number(value.selectedSlot) > 5
   ) {
     errors.push("selectedSlot must be an integer from 0 to 5.");
+  }
+  if (!hasValidTypeLabels(value.typeLabels)) {
+    errors.push("typeLabels must contain one localized label for every type.");
   }
   if (
     !Array.isArray(value.sets) ||

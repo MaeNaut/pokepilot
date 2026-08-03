@@ -1,6 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { describe, expect, it, vi } from "vitest";
-import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis";
+import {
+  createCopilotTypeLabels,
+  type CopilotAnalysisRequest,
+} from "../src/utils/copilotAnalysis";
 import { handleNodePokePilotApi } from "./nodePokepilotApi";
 import {
   createSignedPokePilotClientToken,
@@ -9,12 +12,13 @@ import {
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 11,
+  version: 12,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
   teamName: "Test Team",
   selectedSlot: 0,
+  typeLabels: createCopilotTypeLabels("ko"),
   sets: [],
   megaOptions: [],
   candidateFilters: [],

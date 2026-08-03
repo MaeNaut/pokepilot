@@ -20,15 +20,16 @@ import {
 import { getUiTranslation } from "../i18n/translations";
 import { localizeValidityIssue } from "../i18n/validityTranslations";
 import type { TeamBuildState } from "./teamBuildState";
-import type {
-  PokemonCandidateFilterValue,
-  PokemonAbility,
-  PokemonIndexEntry,
-  PokemonItem,
-  PokemonMove,
-  PokemonType,
-  StatBlock,
-  TeamSlot,
+import {
+  pokemonTypes,
+  type PokemonCandidateFilterValue,
+  type PokemonAbility,
+  type PokemonIndexEntry,
+  type PokemonItem,
+  type PokemonMove,
+  type PokemonType,
+  type StatBlock,
+  type TeamSlot,
 } from "../types";
 import type {
   TeamDiagnosticAlert,
@@ -171,13 +172,19 @@ export type CopilotCandidateFilterSnapshot = {
   moves: PokemonCandidateFilterValue[];
 };
 
+export type CopilotTypeLabelSnapshot = {
+  id: PokemonType;
+  displayName: string;
+};
+
 export type CopilotAnalysisRequest = {
-  version: 11;
+  version: 12;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
   teamName: string;
   selectedSlot: number;
+  typeLabels: CopilotTypeLabelSnapshot[];
   sets: CopilotSetSnapshot[];
   megaOptions: CopilotMegaOptionSnapshot[];
   candidateFilters: CopilotCandidateFilterSnapshot[];
@@ -253,6 +260,15 @@ function text(
 
 function localizeType(locale: Locale, type: PokemonType) {
   return translateGameName(locale, "types", type, formatLookup(type));
+}
+
+export function createCopilotTypeLabels(
+  locale: Locale,
+): CopilotTypeLabelSnapshot[] {
+  return pokemonTypes.map((type) => ({
+    id: type,
+    displayName: localizeType(locale, type),
+  }));
 }
 
 function localizeConcept(
@@ -780,12 +796,13 @@ export function createCopilotAnalysisRequest({
   );
 
   return {
-    version: 11,
+    version: 12,
     locale,
     scope,
     battleFormat,
     teamName: teamName.trim() || "Untitled Team",
     selectedSlot,
+    typeLabels: createCopilotTypeLabels(locale),
     sets,
     megaOptions: createMegaOptions(sets),
     candidateFilters,

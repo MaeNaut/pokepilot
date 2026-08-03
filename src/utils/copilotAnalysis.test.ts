@@ -144,12 +144,15 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 11,
+      version: 12,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
       teamName: "Test Team",
       selectedSlot: 0,
+      typeLabels: expect.arrayContaining([
+        { id: "grass", displayName: "Grass" },
+      ]),
       mechanics: {
         moves: [
           {
