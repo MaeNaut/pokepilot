@@ -181,8 +181,9 @@ The MVP should prove the core loop:
   team/scope/locale/request matches across reloads and language changes.
   - [x] Render history outside the clipped PokePilot panel and require explicit
         confirmation before deleting the current team's records.
-- [ ] Recheck actionable AI suggestions with deterministic legality logic before they
-  can be applied to a set or team.
+- [x] Recheck actionable AI suggestions against deterministic Pokemon, item,
+  ability, move, Mega Stone, Species Clause, and Item Clause legality in a
+  proposed state before they can mutate a set or team.
 - [ ] Add constrained follow-up chat tied to the current team state only after the
   first analysis flow is stable.
 - [ ] Finish request controls for multi-instance public deployment.

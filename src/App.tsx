@@ -49,6 +49,10 @@ import { shouldKeepSelectedPokemonForUsageTarget } from "./utils/pokemonAliases"
 import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
 import { swapArrayItems } from "./utils/reorder";
 import {
+  validateRecommendedPokemonApplication,
+  type RecommendedPokemonApplyResult,
+} from "./utils/recommendedPokemonApplication";
+import {
   moveBenchPokemonToTeam,
   moveTeamPokemonToBench,
   type BenchPokemon,
@@ -82,6 +86,11 @@ import {
   type SavedTeamSummary,
   type TeamSnapshot,
 } from "./utils/teamStorage";
+import {
+  clearBuildStateSlot,
+  patchBuildStateSlot,
+  type TeamSlotBuildPatch,
+} from "./utils/teamBuildState";
 import type {
   PokemonItem,
   TeamMember,
@@ -117,6 +126,22 @@ type PendingTeamAction =
       kind: "import";
       showdownText: string;
     };
+
+type PokemonSelectionOptions = {
+  applyUsageStats?: boolean;
+  allowBattleForm?: boolean;
+  validateRecommendation?: boolean;
+};
+
+type EditorPokemonSelectionOptions = Omit<
+  PokemonSelectionOptions,
+  "validateRecommendation"
+>;
+
+type ResolvedUsageSetPatch = {
+  patch: TeamSlotBuildPatch;
+  itemLoadFailed: boolean;
+};
 
 const localizedUntitledTeamNames = new Set(["Untitled Team", "이름 없는 팀"]);
 
@@ -200,7 +225,7 @@ function App() {
   const [failedPokemonSelection, setFailedPokemonSelection] = useState<{
     slotIndex: number;
     lookup: string;
-    options: { applyUsageStats?: boolean; allowBattleForm?: boolean };
+    options: PokemonSelectionOptions;
   } | null>(null);
   const teamActionsRef = useRef<HTMLElement | null>(null);
   const themeControlRef = useRef<HTMLDivElement | null>(null);
@@ -227,6 +252,21 @@ function App() {
     }, 240);
   }, []);
   const analysisBuildState = teamBuildState.getBuildStateSnapshot();
+  const pokemonSelectionContextFingerprint = JSON.stringify({
+    activeSavedTeamId,
+    battleFormat,
+    selectedTeamSlot,
+    team: team.map((member) => member?.id ?? null),
+    buildState: analysisBuildState,
+    pokemonIndexVersion: `${indexStatus}:${pokemonIndex.length}`,
+    itemIndexVersion: `${itemIndexStatus}:${itemIndex.length}`,
+    legalityVersion: `${showdownLegalityStatus}:${showdownLegality?.generatedAt ?? "none"}`,
+  });
+  const pokemonSelectionContextFingerprintRef = useRef(
+    pokemonSelectionContextFingerprint,
+  );
+  pokemonSelectionContextFingerprintRef.current =
+    pokemonSelectionContextFingerprint;
   const {
     diagnostics: teamDiagnostics,
     validity: teamValidity,
@@ -747,9 +787,11 @@ function App() {
   async function handleSelectPokemon(
     slotIndex: number,
     lookup: string,
-    options: { applyUsageStats?: boolean; allowBattleForm?: boolean } = {},
-  ) {
+    options: PokemonSelectionOptions = {},
+  ): Promise<RecommendedPokemonApplyResult | void> {
     const requestId = pokemonSelectionRequestRef.current + 1;
+    const initialContextFingerprint =
+      pokemonSelectionContextFingerprintRef.current;
     pokemonSelectionRequestRef.current = requestId;
     setSelectingPokemonSlot(slotIndex);
     setSearchError(null);
@@ -759,7 +801,9 @@ function App() {
     if (!lookup) {
       handleClearSlot(slotIndex);
       setSelectingPokemonSlot(null);
-      return;
+      return options.validateRecommendation
+        ? { status: "blocked", reason: "stale", issueCodes: [] }
+        : undefined;
     }
 
     const speciesKey = resolveSpeciesKeyForLegality(lookup);
@@ -769,21 +813,34 @@ function App() {
       hasLegalityFilter() &&
       !isPokemonLegal(showdownLegality, lookup, speciesKey)
     ) {
-      setSearchError(t("builder.illegalPokemon", { name: lookup }));
+      if (!options.validateRecommendation) {
+        setSearchError(t("builder.illegalPokemon", { name: lookup }));
+      }
       setSelectingPokemonSlot(null);
-      return;
+      return options.validateRecommendation
+        ? {
+            status: "blocked",
+            reason: "invalid",
+            issueCodes: ["illegal-pokemon"],
+          }
+        : undefined;
     }
 
     try {
       const selectedMember = await resolvePokemonMember(lookup);
       let targetMember = selectedMember;
-      let usageSet: SmogonUsageSet | null = null;
+      let usageSetPatch: ResolvedUsageSetPatch | null = null;
 
       if (options.applyUsageStats) {
-        usageSet = await loadPopularSmogonSet(lookup, battleFormat);
+        const usageSet = await loadPopularSmogonSet(lookup, battleFormat);
 
         if (usageSet) {
           targetMember = await resolveUsageTargetMember(usageSet, selectedMember);
+          usageSetPatch = await resolveUsageSetPatch(
+            usageSet,
+            selectedMember,
+            targetMember,
+          );
         } else if (pokemonSelectionRequestRef.current === requestId) {
           setSearchNotice({
             slotIndex,
@@ -793,7 +850,63 @@ function App() {
       }
 
       if (pokemonSelectionRequestRef.current !== requestId) {
-        return;
+        return options.validateRecommendation
+          ? { status: "blocked", reason: "stale", issueCodes: [] }
+          : undefined;
+      }
+
+      if (
+        options.validateRecommendation &&
+        pokemonSelectionContextFingerprintRef.current !==
+          initialContextFingerprint
+      ) {
+        return { status: "blocked", reason: "stale", issueCodes: [] };
+      }
+
+      const currentBuildState = teamBuildState.getBuildStateSnapshot();
+      const clearedBuildState = options.applyUsageStats
+        ? clearBuildStateSlot(currentBuildState, slotIndex)
+        : currentBuildState;
+      const proposedBuildState = usageSetPatch
+        ? patchBuildStateSlot(clearedBuildState, slotIndex, usageSetPatch.patch)
+        : clearedBuildState;
+
+      if (options.validateRecommendation) {
+        if (
+          indexStatus !== "ready" ||
+          itemIndexStatus !== "ready" ||
+          showdownLegalityStatus !== "ready" ||
+          usageSetPatch?.itemLoadFailed
+        ) {
+          return {
+            status: "blocked",
+            reason: usageSetPatch?.itemLoadFailed
+              ? "load-failed"
+              : "legality-unavailable",
+            issueCodes: [],
+          };
+        }
+
+        const validation = validateRecommendedPokemonApplication({
+          currentTeam: team,
+          slotIndex,
+          candidate: targetMember,
+          proposedBuildState,
+          legality: showdownLegality,
+          pokemonIndex,
+          itemIndex,
+        });
+
+        if (validation.status === "blocked") {
+          return {
+            status: "blocked",
+            reason:
+              validation.reason === "stale-target"
+                ? "stale"
+                : validation.reason,
+            issueCodes: validation.issues.map((issue) => issue.code),
+          };
+        }
       }
 
       if (options.applyUsageStats) {
@@ -807,19 +920,36 @@ function App() {
         currentTeam.map((member, index) => (index === slotIndex ? targetMember : member)),
       );
 
-      if (usageSet) {
-        await applyUsageSetToSlot(slotIndex, usageSet, selectedMember, targetMember);
+      if (usageSetPatch) {
+        teamBuildState.patchSlot(slotIndex, usageSetPatch.patch);
       }
+
+      return options.validateRecommendation ? { status: "applied" } : undefined;
     } catch (error) {
       if (pokemonSelectionRequestRef.current === requestId) {
-        setSearchError(error instanceof Error ? error.message : t("builder.lookupFailed"));
-        setFailedPokemonSelection({ slotIndex, lookup, options });
+        if (!options.validateRecommendation) {
+          setSearchError(
+            error instanceof Error ? error.message : t("builder.lookupFailed"),
+          );
+          setFailedPokemonSelection({ slotIndex, lookup, options });
+        }
       }
+      return options.validateRecommendation
+        ? { status: "blocked", reason: "load-failed", issueCodes: [] }
+        : undefined;
     } finally {
       if (pokemonSelectionRequestRef.current === requestId) {
         setSelectingPokemonSlot(null);
       }
     }
+  }
+
+  async function handleEditorSelectPokemon(
+    slotIndex: number,
+    lookup: string,
+    options: EditorPokemonSelectionOptions = {},
+  ) {
+    await handleSelectPokemon(slotIndex, lookup, options);
   }
 
   async function resolvePokemonMember(lookup: string) {
@@ -869,12 +999,11 @@ function App() {
     }
   }
 
-  async function applyUsageSetToSlot(
-    slotIndex: number,
+  async function resolveUsageSetPatch(
     usageSet: SmogonUsageSet,
     selectedMember: TeamMember,
     targetMember: TeamMember,
-  ) {
+  ): Promise<ResolvedUsageSetPatch> {
     const ability = resolveUsageAbility(targetMember, usageSet);
     const resolvedMoveIds = resolveSmogonUsageMoveIds(
       targetMember.moves,
@@ -884,26 +1013,31 @@ function App() {
       ? [...resolvedMoveIds, "", "", "", ""].slice(0, 4)
       : undefined;
     let item: PokemonItem | null = null;
+    let itemLoadFailed = false;
 
     if (usageSet.itemName) {
       try {
         item = await fetchItem(normalizeShowdownId(usageSet.itemName));
       } catch {
         item = null;
+        itemLoadFailed = true;
       }
     }
 
-    teamBuildState.patchSlot(slotIndex, {
-      item,
-      ...(ability ? { ability } : {}),
-      ...(usageSet.nature ? { nature: usageSet.nature } : {}),
-      ...(usageSet.evs ? { evs: normalizeImportedEvs(usageSet.evs) } : {}),
-      ...(moveIds ? { moveIds } : {}),
-      preMegaPokemon:
-        isMegaPokemonId(targetMember.id) && !isMegaPokemonId(selectedMember.id)
-          ? selectedMember.id
-          : null,
-    });
+    return {
+      patch: {
+        item,
+        ...(ability ? { ability } : {}),
+        ...(usageSet.nature ? { nature: usageSet.nature } : {}),
+        ...(usageSet.evs ? { evs: normalizeImportedEvs(usageSet.evs) } : {}),
+        ...(moveIds ? { moveIds } : {}),
+        preMegaPokemon:
+          isMegaPokemonId(targetMember.id) && !isMegaPokemonId(selectedMember.id)
+            ? selectedMember.id
+            : null,
+      },
+      itemLoadFailed,
+    };
   }
 
   function getShowdownExportText(slotIndex: number) {
@@ -1868,7 +2002,7 @@ function App() {
                 }
               }}
               onChangeSlot={handleChangeSlot}
-              onSelectPokemon={handleSelectPokemon}
+              onSelectPokemon={handleEditorSelectPokemon}
               onClearSlot={handleClearSlot}
               onReorderSlots={handleReorderSlots}
               onMoveTeamPokemonToBench={handleMoveTeamPokemonToBench}
@@ -1900,7 +2034,7 @@ function App() {
               buildState={teamBuildState}
               onSelectedSlotChange={setSelectedTeamSlot}
               onReorderSlots={handleReorderSlots}
-              onSelectPokemon={handleSelectPokemon}
+              onSelectPokemon={handleEditorSelectPokemon}
               isVisible={appMode === "calculator"}
             />
           </Suspense>
@@ -1949,9 +2083,15 @@ function App() {
             diagnostics={teamDiagnostics}
             validity={teamValidity}
             onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
-              await handleSelectPokemon(slotIndex, pokemonId, {
+              const result = await handleSelectPokemon(slotIndex, pokemonId, {
                 applyUsageStats: true,
+                validateRecommendation: true,
               });
+              return result ?? {
+                status: "blocked",
+                reason: "load-failed",
+                issueCodes: [],
+              };
             }}
           />
         </div>

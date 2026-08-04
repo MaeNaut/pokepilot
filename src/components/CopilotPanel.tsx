@@ -63,6 +63,7 @@ import {
   type CopilotRecommendationCandidateSnapshot,
   type PokemonRecommendationOption,
 } from "../utils/pokemonRecommendations";
+import type { RecommendedPokemonApplyResult } from "../utils/recommendedPokemonApplication";
 import { TypeBadge } from "./TypeBadge";
 
 type CopilotPanelProps = {
@@ -82,7 +83,7 @@ type CopilotPanelProps = {
   onSelectRecommendedPokemon: (
     slotIndex: number,
     pokemonId: string,
-  ) => Promise<void>;
+  ) => Promise<RecommendedPokemonApplyResult>;
 };
 
 type RecommendationCandidateState = {
@@ -174,6 +175,16 @@ const fallbackTranslationKeys: Record<
   unavailable: "copilot.hostedUnavailableFallback",
 };
 
+const candidateApplyFailureTranslationKeys: Record<
+  Extract<RecommendedPokemonApplyResult, { status: "blocked" }>["reason"],
+  TranslationKey
+> = {
+  stale: "copilot.candidateApplyStale",
+  invalid: "copilot.candidateApplyInvalid",
+  "legality-unavailable": "copilot.candidateApplyUnavailable",
+  "load-failed": "copilot.candidateApplyLoadFailed",
+};
+
 function logHostedAnalysisFallback(
   error: unknown,
   reason: HostedAnalysisFailureReason,
@@ -238,6 +249,9 @@ export function CopilotPanel({
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
   );
+  const [candidateApplyFailure, setCandidateApplyFailure] = useState<
+    Extract<RecommendedPokemonApplyResult, { status: "blocked" }>["reason"] | null
+  >(null);
   const [cooldownClock, setCooldownClock] = useState(Date.now);
   const [historyMenuPosition, setHistoryMenuPosition] =
     useState<HistoryMenuPosition | null>(null);
@@ -422,6 +436,10 @@ export function CopilotPanel({
       (Boolean(selectedMember) ||
         recommendationState.status !== "ready" ||
         recommendationState.candidates.length === 0));
+
+  useEffect(() => {
+    setCandidateApplyFailure(null);
+  }, [requestFingerprint, scope]);
 
   useEffect(() => {
     if (!cooldownUntil) {
@@ -628,10 +646,24 @@ export function CopilotPanel({
       return;
     }
 
+    if (isStale) {
+      setCandidateApplyFailure("stale");
+      return;
+    }
+
     setSelectingCandidateId(pokemonId);
+    setCandidateApplyFailure(null);
     try {
-      await onSelectRecommendedPokemon(selectedSlot, pokemonId);
+      const result = await onSelectRecommendedPokemon(selectedSlot, pokemonId);
+
+      if (result.status === "blocked") {
+        setCandidateApplyFailure(result.reason);
+        return;
+      }
+
       setScope("pokemon");
+    } catch {
+      setCandidateApplyFailure("load-failed");
     } finally {
       setSelectingCandidateId(null);
     }
@@ -968,8 +1000,19 @@ export function CopilotPanel({
                   {scope === "recommendation"
                     ? t("copilot.candidates")
                     : t("copilot.nextSteps")}
-                </h3>
-              </div>
+                  </h3>
+                </div>
+              {scope === "recommendation" && candidateApplyFailure ? (
+                <div className="copilot-candidate-apply-failure" role="alert">
+                  <FontAwesomeIcon
+                    icon={faTriangleExclamation}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {t(candidateApplyFailureTranslationKeys[candidateApplyFailure])}
+                  </span>
+                </div>
+              ) : null}
               <ol>
                 {response.recommendations.map((recommendation) => {
                   const candidate =
@@ -1015,7 +1058,7 @@ export function CopilotPanel({
                         <button
                           className="copilot-candidate-select"
                           type="button"
-                          disabled={Boolean(selectingCandidateId)}
+                          disabled={Boolean(selectingCandidateId) || isStale}
                           onClick={() =>
                             void handleSelectCandidate(candidate.pokemonId)
                           }

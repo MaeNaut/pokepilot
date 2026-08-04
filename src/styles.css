@@ -6722,6 +6722,24 @@ select {
   opacity: 0.65;
 }
 
+.copilot-candidate-apply-failure {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  border: 1px solid #7f4d49;
+  border-radius: 4px;
+  padding: 7px 8px;
+  background: #211716;
+  color: #efaaa2;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.copilot-candidate-apply-failure svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
 .copilot-footer {
   display: flex;
   align-items: center;

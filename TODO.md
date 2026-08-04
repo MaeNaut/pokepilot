@@ -277,7 +277,9 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Normalize only non-semantic private bookkeeping that can be recovered
         from verified public evidence; keep invented public facts and unsupported
         claims as blocking failures.
-  - [ ] Recheck suggested Pokemon, items, abilities, and moves with deterministic legality logic before offering an apply action.
+  - [x] Recheck suggested Pokemon, items, abilities, moves, and team clauses in a
+        proposed state before applying a candidate; reject stale or unverifiable
+        applications without partially mutating the team.
   - [ ] Keep AI output clearly advisory, not authoritative legality or calculator data.
 - [x] Add local error, refresh, and stale-analysis states for Copilot.
 - [x] Add a remote API-unavailable state with deterministic fallback.

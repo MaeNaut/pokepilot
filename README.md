@@ -41,7 +41,8 @@ Current slice:
   spanning Regulation M-B legality, saved filters, usage, defensive fit,
   strategy, roles, coverage, exact defensive liabilities, and generic support
   responsibilities, followed by AI ranking that cannot return candidates
-  outside the supplied pool
+  outside the supplied pool; candidate application is revalidated atomically
+  against current set and team legality before any editor state changes
 - reduced-motion-safe staged reveals for newly completed PokePilot analyses,
   while restored and history-selected results remain immediate
 - an offline 20-team Singles/Doubles baseline plus focused Team, Pokemon, and

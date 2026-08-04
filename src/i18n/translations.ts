@@ -365,6 +365,14 @@ export const en = {
   "copilot.usageRank": "Usage #{rank}",
   "copilot.unranked": "Unranked",
   "copilot.selectCandidate": "Select Pokemon",
+  "copilot.candidateApplyStale":
+    "Team or candidate filters changed. Refresh recommendations before applying.",
+  "copilot.candidateApplyInvalid":
+    "This candidate no longer passes the current Regulation M-B checks. Nothing was applied.",
+  "copilot.candidateApplyUnavailable":
+    "Current legality data is unavailable. Nothing was applied.",
+  "copilot.candidateApplyLoadFailed":
+    "Candidate data could not be verified. Nothing was applied.",
   "copilot.priorityHigh": "Core",
   "copilot.priorityMedium": "Matchup",
   "copilot.priorityLow": "Optional",
@@ -786,6 +794,14 @@ export const ko = {
   "copilot.usageRank": "채용률 #{rank}",
   "copilot.unranked": "순위 없음",
   "copilot.selectCandidate": "포켓몬 선택",
+  "copilot.candidateApplyStale":
+    "팀 또는 후보 필터 변경됨 · 추천 새로고침 필요",
+  "copilot.candidateApplyInvalid":
+    "현재 레귤레이션 M-B 적법성 검사 실패 · 적용 취소",
+  "copilot.candidateApplyUnavailable":
+    "적법성 데이터 사용 불가 · 적용 취소",
+  "copilot.candidateApplyLoadFailed":
+    "후보 데이터 검증 실패 · 적용 취소",
   "copilot.priorityHigh": "핵심",
   "copilot.priorityMedium": "상황별",
   "copilot.priorityLow": "참고",
