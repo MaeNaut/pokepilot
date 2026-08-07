@@ -1,6 +1,4 @@
-export const appModes = ["builder", "calculator"] as const;
-
-export type AppMode = (typeof appModes)[number];
+export type AppMode = "builder" | "calculator";
 
 export const DEFAULT_APP_MODE: AppMode = "builder";
 export const APP_MODE_STORAGE_KEY = "pokepilot:app-mode";

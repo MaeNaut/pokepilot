@@ -1,14 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faCheck,
-  faClockRotateLeft,
-  faLightbulb,
   faMagnifyingGlass,
   faRotateRight,
   faSpinner,
-  faTrash,
   faTriangleExclamation,
   faUser,
   faUsers,
@@ -54,17 +49,10 @@ import {
   storeCopilotHistory,
   type CopilotHistoryEntry,
 } from "../utils/copilotHistory";
-import { emptyPokemonCandidateFilters } from "../utils/pokemonCandidateFilters";
-import {
-  countTeamMegaOptions,
-  createPokemonRecommendationCandidates,
-  createPokemonRecommendationOptions,
-  getOccupiedPokemonSpeciesKeys,
-  type CopilotRecommendationCandidateSnapshot,
-  type PokemonRecommendationOption,
-} from "../utils/pokemonRecommendations";
 import type { RecommendedPokemonApplyResult } from "../utils/recommendedPokemonApplication";
-import { TypeBadge } from "./TypeBadge";
+import { useCopilotRecommendationCandidates } from "../hooks/useCopilotRecommendationCandidates";
+import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
+import { CopilotHistoryControl } from "./CopilotHistoryControl";
 
 type CopilotPanelProps = {
   savedTeamId: string | null;
@@ -86,11 +74,6 @@ type CopilotPanelProps = {
   ) => Promise<RecommendedPokemonApplyResult>;
 };
 
-type RecommendationCandidateState = {
-  status: "idle" | "loading" | "ready" | "error";
-  candidates: CopilotRecommendationCandidateSnapshot[];
-};
-
 type AnalysisState = {
   status: "idle" | "loading" | "ready" | "error";
   fingerprint?: string;
@@ -104,17 +87,7 @@ type AnalysisState = {
   shouldReveal?: boolean;
 };
 
-type HistoryMenuPosition = {
-  top: number;
-  left: number;
-  width: number;
-  maxHeight: number;
-};
-
 const idleAnalysisState: AnalysisState = { status: "idle" };
-const historyMenuWidth = 340;
-const historyMenuViewportMargin = 12;
-const historyMenuAnchorGap = 9;
 
 function formatCooldown(seconds: number) {
   const safeSeconds = Math.max(0, Math.ceil(seconds));
@@ -127,41 +100,12 @@ function formatCooldown(seconds: number) {
     : `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
-function getHistoryMenuPosition(anchor: HTMLElement): HistoryMenuPosition {
-  const anchorRect = anchor.getBoundingClientRect();
-  const width = Math.min(
-    historyMenuWidth,
-    Math.max(0, window.innerWidth - historyMenuViewportMargin * 2),
-  );
-  const left = Math.min(
-    Math.max(historyMenuViewportMargin, anchorRect.right - width),
-    window.innerWidth - width - historyMenuViewportMargin,
-  );
-  const top = anchorRect.bottom + historyMenuAnchorGap;
-
-  return {
-    top,
-    left,
-    width,
-    maxHeight: Math.max(180, window.innerHeight - top - historyMenuViewportMargin),
-  };
-}
-
 function getAnalysisContextKey(
   teamKey: string,
   scope: CopilotAnalysisScope,
 ) {
   return `${teamKey}:${scope}`;
 }
-
-const priorityTranslationKeys: Record<
-  CopilotAnalysisResponse["recommendations"][number]["priority"],
-  TranslationKey
-> = {
-  high: "copilot.priorityHigh",
-  medium: "copilot.priorityMedium",
-  low: "copilot.priorityLow",
-};
 
 const fallbackTranslationKeys: Record<
   Exclude<HostedAnalysisFailureReason, "cooldown">,
@@ -173,16 +117,6 @@ const fallbackTranslationKeys: Record<
   "rate-limited": "copilot.rateLimitedFallback",
   "service-unavailable": "copilot.serviceUnavailableFallback",
   unavailable: "copilot.hostedUnavailableFallback",
-};
-
-const candidateApplyFailureTranslationKeys: Record<
-  Extract<RecommendedPokemonApplyResult, { status: "blocked" }>["reason"],
-  TranslationKey
-> = {
-  stale: "copilot.candidateApplyStale",
-  invalid: "copilot.candidateApplyInvalid",
-  "legality-unavailable": "copilot.candidateApplyUnavailable",
-  "load-failed": "copilot.candidateApplyLoadFailed",
 };
 
 function logHostedAnalysisFallback(
@@ -230,7 +164,7 @@ export function CopilotPanel({
   validity,
   onSelectRecommendedPokemon,
 }: CopilotPanelProps) {
-  const { gameName, locale, pokemonName, t } = useLocalization();
+  const { locale, pokemonName, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [analysisByContext, setAnalysisByContext] = useState<
     Record<string, AnalysisState>
@@ -238,14 +172,7 @@ export function CopilotPanel({
   const [analysisHistory, setAnalysisHistory] = useState(
     getStoredCopilotHistory,
   );
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isHistoryDeletePending, setIsHistoryDeletePending] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
-  const [recommendationState, setRecommendationState] =
-    useState<RecommendationCandidateState>({
-      status: "idle",
-      candidates: [],
-    });
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
   );
@@ -253,91 +180,20 @@ export function CopilotPanel({
     Extract<RecommendedPokemonApplyResult, { status: "blocked" }>["reason"] | null
   >(null);
   const [cooldownClock, setCooldownClock] = useState(Date.now);
-  const [historyMenuPosition, setHistoryMenuPosition] =
-    useState<HistoryMenuPosition | null>(null);
-  const historyControlRef = useRef<HTMLDivElement | null>(null);
-  const historyMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedMember = team[selectedSlot];
-  const activeCandidateFilters =
-    buildState.candidateFiltersBySlot[selectedSlot] ??
-    emptyPokemonCandidateFilters;
-  const recommendationOptions = useMemo<PokemonRecommendationOption[]>(() => {
-    return createPokemonRecommendationOptions({
-      pokemonIndex,
-      abilityIndex,
-      legality: showdownLegality,
-      getPokemonDisplayName: (entry, includeForm) =>
-        pokemonName({
-          id: entry.name,
-          speciesId: entry.speciesKey,
-          fallback: entry.displayName,
-          includeForm,
-          formLabel: entry.formLabel,
-          formKind: entry.formKind,
-        }),
-      getTypeDisplayName: (type) => gameName("types", type, type),
-      getAbilityDisplayName: (id, fallback) =>
-        gameName("abilities", id, fallback),
-    });
-  }, [abilityIndex, gameName, pokemonIndex, pokemonName, showdownLegality]);
-  const occupiedSpeciesKeys = useMemo(
-    () => getOccupiedPokemonSpeciesKeys(team, pokemonIndex),
-    [pokemonIndex, team],
-  );
-  const existingMegaOptionCount = useMemo(
-    () => countTeamMegaOptions(team, buildState.itemBySlot, pokemonIndex),
-    [buildState.itemBySlot, pokemonIndex, team],
-  );
-
-  useEffect(() => {
-    if (scope !== "recommendation" || selectedMember) {
-      setRecommendationState({ status: "idle", candidates: [] });
-      return;
-    }
-    if (
-      abilityIndexStatus === "loading" ||
-      showdownLegalityStatus === "loading"
-    ) {
-      setRecommendationState({ status: "loading", candidates: [] });
-      return;
-    }
-
-    let isCancelled = false;
-    setRecommendationState({ status: "loading", candidates: [] });
-    void createPokemonRecommendationCandidates({
-      options: recommendationOptions,
-      filters: activeCandidateFilters,
-      occupiedSpeciesKeys,
-      diagnostics,
-      battleFormat,
-      existingMegaOptionCount,
-    })
-      .then((candidates) => {
-        if (!isCancelled) {
-          setRecommendationState({ status: "ready", candidates });
-        }
-      })
-      .catch(() => {
-        if (!isCancelled) {
-          setRecommendationState({ status: "error", candidates: [] });
-        }
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [
-    abilityIndexStatus,
-    activeCandidateFilters,
+  const recommendationState = useCopilotRecommendationCandidates({
+    scope,
+    selectedSlot,
+    team,
+    buildState,
     battleFormat,
     diagnostics,
-    existingMegaOptionCount,
-    occupiedSpeciesKeys,
-    recommendationOptions,
-    scope,
-    selectedMember,
+    pokemonIndex,
+    abilityIndex,
+    abilityIndexStatus,
+    showdownLegality,
     showdownLegalityStatus,
-  ]);
+  });
 
   const request = useMemo(
     () =>
@@ -391,16 +247,6 @@ export function CopilotPanel({
   const teamHistory = useMemo(
     () => getCopilotHistoryForTeam(analysisHistory, historyTeamKey),
     [analysisHistory, historyTeamKey],
-  );
-  const historyDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    [locale],
   );
   const cooldownRemainingSeconds = cooldownUntil
     ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
@@ -506,66 +352,6 @@ export function CopilotPanel({
     requestFingerprint,
     scope,
   ]);
-
-  useEffect(() => {
-    if (!isHistoryOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target as Node;
-
-      if (
-        historyControlRef.current?.contains(target) ||
-        historyMenuRef.current?.contains(target)
-      ) {
-        return;
-      }
-
-      setIsHistoryOpen(false);
-      setIsHistoryDeletePending(false);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsHistoryOpen(false);
-        setIsHistoryDeletePending(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isHistoryOpen]);
-
-  useEffect(() => {
-    if (!isHistoryOpen) {
-      return;
-    }
-
-    function updatePosition() {
-      if (historyControlRef.current) {
-        setHistoryMenuPosition(getHistoryMenuPosition(historyControlRef.current));
-      }
-    }
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    window.visualViewport?.addEventListener("resize", updatePosition);
-    window.visualViewport?.addEventListener("scroll", updatePosition);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-      window.visualViewport?.removeEventListener("resize", updatePosition);
-      window.visualViewport?.removeEventListener("scroll", updatePosition);
-    };
-  }, [isHistoryOpen]);
 
   async function handleAnalyze() {
     setAnalysisByContext((current) => ({
@@ -687,8 +473,6 @@ export function CopilotPanel({
         shouldReveal: false,
       },
     }));
-    setIsHistoryOpen(false);
-    setIsHistoryDeletePending(false);
   }
 
   function handleClearHistory() {
@@ -697,21 +481,6 @@ export function CopilotPanel({
       storeCopilotHistory(nextHistory);
       return nextHistory;
     });
-    setIsHistoryOpen(false);
-    setIsHistoryDeletePending(false);
-  }
-
-  function handleToggleHistory() {
-    if (isHistoryOpen) {
-      setIsHistoryOpen(false);
-      setIsHistoryDeletePending(false);
-      return;
-    }
-
-    if (historyControlRef.current) {
-      setHistoryMenuPosition(getHistoryMenuPosition(historyControlRef.current));
-    }
-    setIsHistoryOpen(true);
   }
 
   return (
@@ -719,119 +488,12 @@ export function CopilotPanel({
       <header className="copilot-header">
         <h2 id="copilot-title">PokePilot</h2>
         <div className="copilot-header-actions">
-          <div className="copilot-history-control" ref={historyControlRef}>
-            <button
-              className="copilot-history-button"
-              type="button"
-              aria-label={t("copilot.history")}
-              aria-expanded={isHistoryOpen}
-              title={t("copilot.history")}
-              onClick={handleToggleHistory}
-            >
-              <FontAwesomeIcon icon={faClockRotateLeft} aria-hidden="true" />
-            </button>
-
-            {isHistoryOpen && historyMenuPosition && typeof document !== "undefined"
-              ? createPortal(
-                  <div
-                    className="copilot-history-menu"
-                    role="dialog"
-                    aria-label={t("copilot.history")}
-                    ref={historyMenuRef}
-                    style={historyMenuPosition}
-                  >
-                    <header>
-                      <strong>{t("copilot.history")}</strong>
-                      {teamHistory.length > 0 ? (
-                        <button
-                          className="copilot-history-delete-button"
-                          type="button"
-                          aria-label={t("copilot.clearHistory")}
-                          aria-expanded={isHistoryDeletePending}
-                          title={t("copilot.clearHistory")}
-                          onClick={() => setIsHistoryDeletePending(true)}
-                        >
-                          <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
-                        </button>
-                      ) : null}
-                    </header>
-
-                    {isHistoryDeletePending ? (
-                      <div
-                        className="clear-pokemon-confirm copilot-history-delete-confirm"
-                        role="alertdialog"
-                        aria-label={t("copilot.confirmClearHistory")}
-                      >
-                        <strong>{t("copilot.confirmClearHistory")}</strong>
-                        <span>{t("toolbar.deleteWarning")}</span>
-                        <div className="clear-pokemon-confirm-actions">
-                          <button
-                            className="clear-pokemon-confirm-button"
-                            type="button"
-                            onClick={() => setIsHistoryDeletePending(false)}
-                          >
-                            {t("common.cancel")}
-                          </button>
-                          <button
-                            className="clear-pokemon-confirm-button is-danger"
-                            type="button"
-                            onClick={handleClearHistory}
-                          >
-                            {t("common.delete")}
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {teamHistory.length > 0 ? (
-                      <div className="copilot-history-list">
-                        {teamHistory.map((entry) => (
-                          <button
-                            className={
-                              analysisState.historyEntryId === entry.id
-                                ? "is-current"
-                                : ""
-                            }
-                            type="button"
-                            key={entry.id}
-                            onClick={() => handleSelectHistory(entry)}
-                          >
-                            <span className="copilot-history-meta">
-                              {t(
-                                entry.scope === "team"
-                                  ? "copilot.team"
-                                  : entry.scope === "pokemon"
-                                    ? "copilot.pokemon"
-                                    : "copilot.recommend",
-                              )}
-                              {" · "}
-                              {t(
-                                entry.locale === "ko"
-                                  ? "language.korean"
-                                  : "language.english",
-                              )}
-                              {" · "}
-                              <time dateTime={entry.createdAt}>
-                                {historyDateFormatter.format(
-                                  new Date(entry.createdAt),
-                                )}
-                              </time>
-                            </span>
-                            <strong>{entry.response.title}</strong>
-                            <span className="copilot-history-summary">
-                              {entry.response.summary}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <p>{t("copilot.historyEmpty")}</p>
-                    )}
-                  </div>,
-                  document.body,
-                )
-              : null}
-          </div>
+          <CopilotHistoryControl
+            entries={teamHistory}
+            activeEntryId={analysisState.historyEntryId}
+            onSelect={handleSelectHistory}
+            onClear={handleClearHistory}
+          />
 
           <button
             className="copilot-analyze-button"
@@ -900,185 +562,27 @@ export function CopilotPanel({
             <span>{analysisState.error}</span>
           </div>
         ) : response ? (
-          <div
-            className={`copilot-result${
-              analysisState.shouldReveal ? " is-revealing" : ""
-            }`}
+          <CopilotAnalysisResult
             key={
               analysisState.historyEntryId ??
               `${analysisContextKey}:${analysisState.fingerprint ?? "analysis"}`
             }
-          >
-            {analysisState.usedFallback ? (
-              <div className="copilot-fallback-notice" role="status">
-                <FontAwesomeIcon
-                  icon={faTriangleExclamation}
-                  aria-hidden="true"
-                />
-                <span>{fallbackMessage}</span>
-              </div>
-            ) : null}
-
-            {isStale || isLanguageMismatch ? (
-              <div className="copilot-stale-notice">
-                <span>
-                  {isLanguageMismatch
-                    ? t("copilot.languageChanged")
-                    : scope === "team"
-                      ? t("copilot.teamChanged")
-                      : scope === "pokemon"
-                        ? t("copilot.setChanged")
-                        : t("copilot.recommendationChanged")}
-                </span>
-                <button
-                  type="button"
-                  disabled={isAnalyzeDisabled}
-                  onClick={() => void handleAnalyze()}
-                >
-                  {t("copilot.refreshAnalysis")}
-                </button>
-              </div>
-            ) : null}
-
-            <section className="copilot-summary copilot-reveal is-summary">
-              <div className="copilot-summary-heading">
-                <h3>{response.title}</h3>
-                <span>{response.playstyle}</span>
-              </div>
-              <p>{response.summary}</p>
-            </section>
-
-            {response.strengths.length > 0 ? (
-              <section className="copilot-section copilot-reveal is-strengths">
-                <div className="copilot-section-heading">
-                  <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
-                  <h3>{t("copilot.strengths")}</h3>
-                </div>
-                <ul className="copilot-insight-list is-strength">
-                  {response.strengths.map((strength) => (
-                    <li key={strength}>{strength}</li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {scope !== "recommendation" || response.weaknesses.length > 0 ? (
-              <section className="copilot-section copilot-reveal is-focus">
-                <div className="copilot-section-heading">
-                  <FontAwesomeIcon
-                    icon={
-                      response.weaknesses.length > 0
-                        ? faTriangleExclamation
-                        : faCheck
-                    }
-                    aria-hidden="true"
-                  />
-                  <h3>{t("copilot.focus")}</h3>
-                </div>
-                {response.weaknesses.length > 0 ? (
-                  <ul className="copilot-insight-list is-focus">
-                    {response.weaknesses.map((weakness) => (
-                      <li key={weakness}>{weakness}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="copilot-clear-message">
-                    {t("copilot.noConcerns")}
-                  </p>
-                )}
-              </section>
-            ) : null}
-
-            <section
-              className={`copilot-section copilot-recommendations${
-                scope === "recommendation" ? " is-candidates" : ""
-              }`}
-            >
-              <div className="copilot-section-heading copilot-reveal is-recommendations-heading">
-                <FontAwesomeIcon icon={faLightbulb} aria-hidden="true" />
-                <h3>
-                  {scope === "recommendation"
-                    ? t("copilot.candidates")
-                    : t("copilot.nextSteps")}
-                  </h3>
-                </div>
-              {scope === "recommendation" && candidateApplyFailure ? (
-                <div className="copilot-candidate-apply-failure" role="alert">
-                  <FontAwesomeIcon
-                    icon={faTriangleExclamation}
-                    aria-hidden="true"
-                  />
-                  <span>
-                    {t(candidateApplyFailureTranslationKeys[candidateApplyFailure])}
-                  </span>
-                </div>
-              ) : null}
-              <ol>
-                {response.recommendations.map((recommendation) => {
-                  const candidate =
-                    scope === "recommendation"
-                      ? request.recommendationCandidates.find(
-                          (entry) => entry.pokemonId === recommendation.id,
-                        )
-                      : undefined;
-
-                  return (
-                    <li
-                      className={`is-${recommendation.priority} copilot-reveal is-recommendation`}
-                      key={recommendation.id}
-                    >
-                      {candidate ? (
-                        <div className="copilot-candidate-heading">
-                          <div>
-                            <strong>{candidate.displayName}</strong>
-                            <span className="copilot-candidate-types">
-                              {candidate.types.map((type) => (
-                                <TypeBadge type={type} key={type} />
-                              ))}
-                            </span>
-                          </div>
-                          <span>
-                            {candidate.usageRank
-                              ? t("copilot.usageRank", {
-                                  rank: candidate.usageRank,
-                                })
-                              : t("copilot.unranked")}
-                          </span>
-                        </div>
-                      ) : (
-                        <div>
-                          <strong>{recommendation.title}</strong>
-                          <span>
-                            {t(priorityTranslationKeys[recommendation.priority])}
-                          </span>
-                        </div>
-                      )}
-                      <p>{recommendation.reason}</p>
-                      {candidate ? (
-                        <button
-                          className="copilot-candidate-select"
-                          type="button"
-                          disabled={Boolean(selectingCandidateId) || isStale}
-                          onClick={() =>
-                            void handleSelectCandidate(candidate.pokemonId)
-                          }
-                        >
-                          {selectingCandidateId === candidate.pokemonId ? (
-                            <FontAwesomeIcon
-                              icon={faSpinner}
-                              spin
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                          {t("copilot.selectCandidate")}
-                        </button>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
-          </div>
+            response={response}
+            scope={scope}
+            usedFallback={Boolean(analysisState.usedFallback)}
+            fallbackMessage={fallbackMessage}
+            isStale={isStale}
+            isLanguageMismatch={isLanguageMismatch}
+            isAnalyzeDisabled={isAnalyzeDisabled}
+            shouldReveal={Boolean(analysisState.shouldReveal)}
+            recommendationCandidates={request.recommendationCandidates}
+            selectingCandidateId={selectingCandidateId}
+            candidateApplyFailure={candidateApplyFailure}
+            onAnalyze={() => void handleAnalyze()}
+            onSelectCandidate={(pokemonId) =>
+              void handleSelectCandidate(pokemonId)
+            }
+          />
         ) : (
           <div className="copilot-empty-state">
             <FontAwesomeIcon icon={faWandMagicSparkles} aria-hidden="true" />

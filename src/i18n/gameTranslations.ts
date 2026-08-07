@@ -36,7 +36,7 @@ type KoreanGameCatalog = {
 
 const koreanCatalog = koreanCatalogJson as KoreanGameCatalog;
 
-export function normalizeTranslationId(value: string) {
+function normalizeTranslationId(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 

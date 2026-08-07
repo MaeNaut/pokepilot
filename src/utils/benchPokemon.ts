@@ -67,7 +67,7 @@ export function clearBuildStateSlot(
   };
 }
 
-export function setBuildStateSlot(
+function setBuildStateSlot(
   buildState: TeamBuildState,
   slotIndex: number,
   build: PokemonBuildSnapshot,

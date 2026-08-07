@@ -127,7 +127,7 @@ export function getCopiedTeamName(name: string, teams: SavedTeamSummary[]) {
   return `${baseName} ${copyNumber}`;
 }
 
-export function createSavedPokemon(member: TeamMember): SavedPokemon {
+function createSavedPokemon(member: TeamMember): SavedPokemon {
   return {
     pokemonId: member.id,
     name: member.name,

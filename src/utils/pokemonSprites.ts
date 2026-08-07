@@ -1,4 +1,4 @@
-export const POKEAPI_CHAMPIONS_SPRITE_BASE_URL =
+const POKEAPI_CHAMPIONS_SPRITE_BASE_URL =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/champions";
 
 export function isFullShowdownSpriteUrl(url: string | undefined) {

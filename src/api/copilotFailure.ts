@@ -1,4 +1,4 @@
-export const hostedAnalysisFailureReasons = [
+const hostedAnalysisFailureReasons = [
   "cooldown",
   "connection",
   "not-configured",

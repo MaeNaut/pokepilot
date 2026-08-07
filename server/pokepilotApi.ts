@@ -1,12 +1,7 @@
 import type { CopilotModelOutput } from "../src/utils/copilotModelContract";
-import { validateCopilotGroundedModelOutput } from "../src/utils/copilotModelContract";
 import { getCopilotRequestFingerprint } from "../src/utils/copilotAnalysis";
 import type { CopilotAnalysisScope } from "../src/utils/copilotAnalysis";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract";
-import {
-  completeCopilotStrategyAudit,
-  validateCopilotStrategyAuditForRequest,
-} from "../src/utils/copilotStrategyAudit";
 import {
   analyzeWithOpenAiLuna,
   OPENAI_LUNA_MODEL_ID,
@@ -22,6 +17,7 @@ import {
   type PokePilotRequester,
   type PokePilotSafeguardMode,
 } from "./pokepilotOperations";
+import { validateHostedCopilotAnalysis } from "./pokepilotAnalysisValidation";
 
 export const POKEPILOT_API_MAX_BODY_BYTES = 256_000;
 
@@ -259,65 +255,14 @@ export async function handlePokePilotAnalysis(
               cacheNamespace: "production",
               reasoningEffort: POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
             });
-        const outputValidation = validateCopilotGroundedModelOutput(
+        const analysis = validateHostedCopilotAnalysis(
           result.output,
-        );
-
-        if (
-          !outputValidation.success ||
-          outputValidation.data.analysis.scope !== requestValidation.data.scope
-        ) {
-          throw Object.assign(
-            new Error("Hosted analysis returned an invalid response."),
-            { code: "AI_INVALID_RESPONSE" },
-          );
-        }
-
-        const groundedOutput = completeCopilotStrategyAudit(
-          outputValidation.data,
           requestValidation.data,
         );
-
-        if (requestValidation.data.scope === "recommendation") {
-          const candidateIds = new Set(
-            requestValidation.data.recommendationCandidates.map(
-              (candidate) => candidate.pokemonId,
-            ),
-          );
-          const recommendationIds =
-            groundedOutput.analysis.recommendations.map(
-              (recommendation) => recommendation.id,
-            );
-          const expectedMinimum = Math.min(3, candidateIds.size);
-
-          if (
-            recommendationIds.length < expectedMinimum ||
-            recommendationIds.length > 3 ||
-            new Set(recommendationIds).size !== recommendationIds.length ||
-            recommendationIds.some((id) => !candidateIds.has(id))
-          ) {
-            throw Object.assign(
-              new Error("Hosted recommendation returned an invalid candidate list."),
-              { code: "AI_INVALID_RESPONSE" },
-            );
-          }
-        }
-
-        const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
-          groundedOutput,
-          requestValidation.data,
-        );
-
-        if (strategyAuditErrors.length > 0) {
-          throw Object.assign(
-            new Error("Hosted analysis returned an invalid response."),
-            { code: "AI_INVALID_RESPONSE" },
-          );
-        }
 
         const completed = {
           kind: "completed" as const,
-          analysis: groundedOutput.analysis,
+          analysis,
           result,
         };
         if (safeguardConfig.cacheEnabled) {

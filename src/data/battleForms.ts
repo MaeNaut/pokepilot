@@ -1,4 +1,4 @@
-export type BattleFormGroup = {
+type BattleFormGroup = {
   speciesKey: string;
   defaultPokemonId: string;
   options: Array<{
@@ -7,7 +7,7 @@ export type BattleFormGroup = {
   }>;
 };
 
-export const battleFormGroups: BattleFormGroup[] = [
+const battleFormGroups: BattleFormGroup[] = [
   {
     speciesKey: "aegislash",
     defaultPokemonId: "aegislash-shield",

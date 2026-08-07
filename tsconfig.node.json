@@ -9,6 +9,8 @@
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noEmit": true
   },
   "include": [

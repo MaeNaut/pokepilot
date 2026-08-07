@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-export function isUsableOpenAiApiKey(value: string | undefined): value is string {
+function isUsableOpenAiApiKey(value: string | undefined): value is string {
   if (!value) {
     return false;
   }

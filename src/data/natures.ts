@@ -1,6 +1,6 @@
 import type { StatBlock, StatKey } from "../types";
 
-export type BattleStatKey = Exclude<StatKey, "hp">;
+type BattleStatKey = Exclude<StatKey, "hp">;
 
 export type Nature = {
   id: string;
@@ -34,14 +34,6 @@ export const battleStatKeys: BattleStatKey[] = [
   "specialDefense",
   "speed",
 ];
-
-export const natureStatLabels: Record<BattleStatKey, string> = {
-  attack: "Attack",
-  defense: "Defense",
-  specialAttack: "Sp. Atk",
-  specialDefense: "Sp. Def",
-  speed: "Speed",
-};
 
 export const natures: Nature[] = [
   { id: "hardy", label: "Hardy", up: "attack", down: "attack" },
