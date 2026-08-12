@@ -2034,6 +2034,7 @@ export function CalculatorPokemonEditor({
                         onChange={(event) =>
                           updateCurrentHp(Number(event.target.value))
                         }
+                        onFocus={(event) => event.currentTarget.select()}
                         onPointerDown={handleHpScrubPointerDown}
                         onPointerMove={handleHpScrubPointerMove}
                         onPointerUp={(event) => finishHpScrub(event, true)}
@@ -2373,6 +2374,14 @@ export function CalculatorPokemonEditor({
                                       ),
                                     })
                                   }
+                                  onFocus={(event) =>
+                                    event.currentTarget.select()
+                                  }
+                                  onClick={(event) => {
+                                    if (isTouchPickerLayout) {
+                                      event.currentTarget.select();
+                                    }
+                                  }}
                                 />
                               </label>
                               <span className="stat-result-value">

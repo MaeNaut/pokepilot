@@ -346,7 +346,7 @@ export const en = {
   "copilot.cooldownReadyFallback":
     "AI cooldown ended. Showing the rules-based analysis; refresh to retry.",
   "copilot.cooldownButton": "Wait {time}",
-  "copilot.hostedAnalysis": "Luna analysis",
+  "copilot.hostedAnalysis": "GPT 5.6",
   "copilot.rulesFallback": "Rules-based fallback",
   "copilot.aiReady": "AI analysis ready",
   "copilot.teamChanged": "Team changed",
@@ -775,7 +775,7 @@ export const ko = {
   "copilot.cooldownReadyFallback":
     "AI 분석 대기 종료 · 규칙 기반 분석 표시 · 재시도 가능",
   "copilot.cooldownButton": "대기 {time}",
-  "copilot.hostedAnalysis": "Luna 분석",
+  "copilot.hostedAnalysis": "GPT 5.6",
   "copilot.rulesFallback": "규칙 기반 대체 분석",
   "copilot.aiReady": "AI 분석 준비됨",
   "copilot.teamChanged": "팀이 변경됨",

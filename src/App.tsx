@@ -1498,8 +1498,9 @@ function App() {
       return;
     }
 
+    const showdownText = await getSavedTeamShowdownText(savedTeam);
+    setTeamShowdownDraft(showdownText);
     setShowdownTeamId(savedTeam.id);
-    setTeamShowdownDraft(await getSavedTeamShowdownText(savedTeam));
   }
 
   async function handleExportSavedTeam() {

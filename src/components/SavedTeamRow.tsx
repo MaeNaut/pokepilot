@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -83,6 +84,7 @@ export function SavedTeamRow({
   onExportShowdown,
 }: SavedTeamRowProps) {
   const { t } = useLocalization();
+  const showdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const displacement = getReorderDisplacement(reorder.dragState, index);
   const isSource = reorder.dragState?.sourceIndex === index;
   const isDropTarget =
@@ -97,6 +99,15 @@ export function SavedTeamRow({
           transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
         }
       : undefined;
+
+  useEffect(() => {
+    if (!isShowdownOpen) {
+      return;
+    }
+
+    showdownTextareaRef.current?.focus();
+    showdownTextareaRef.current?.select();
+  }, [isShowdownOpen]);
 
   return (
     <div
@@ -253,6 +264,7 @@ export function SavedTeamRow({
         >
           <strong>{t("team.showdownText")}</strong>
           <textarea
+            ref={showdownTextareaRef}
             value={showdownDraft}
             placeholder={t("team.pasteShowdownHere")}
             onChange={(event) => onShowdownDraftChange(event.target.value)}

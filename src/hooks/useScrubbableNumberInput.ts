@@ -93,6 +93,7 @@ export function useScrubbableNumberInput({
 
     if (shouldFocus && !gesture.isDragging) {
       event.currentTarget.focus();
+      event.currentTarget.select();
     }
   }
 

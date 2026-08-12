@@ -3804,6 +3804,12 @@ export function TeamBuilder({
                                 max={maxAllowed}
                                 value={evs[stat]}
                                 onChange={(event) => updateEv(stat, event.target.value)}
+                                onFocus={(event) => event.currentTarget.select()}
+                                onClick={(event) => {
+                                  if (isTouchPickerLayout) {
+                                    event.currentTarget.select();
+                                  }
+                                }}
                               />
                             </label>
 
