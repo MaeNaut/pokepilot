@@ -1,0 +1,63 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 128 128"
+  role="img"
+  aria-labelledby="pokepilot-favicon-title"
+>
+  <title id="pokepilot-favicon-title">PokePilot propeller ball</title>
+
+  <defs>
+    <clipPath id="ball-clip">
+      <circle cx="64" cy="75" r="42" />
+    </clipPath>
+  </defs>
+
+  <!-- Propeller -->
+  <path
+    d="M59 18C48 10 31 10 17 14C11 16 11 22 17 24C32 29 49 25 60 20Z"
+    fill="#2382f6"
+    stroke="#17191a"
+    stroke-width="5"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M69 18C80 10 97 10 111 14C117 16 117 22 111 24C96 29 79 25 68 20Z"
+    fill="#2382f6"
+    stroke="#17191a"
+    stroke-width="5"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M60 35V20H68V35"
+    fill="#ffd21f"
+    stroke="#17191a"
+    stroke-width="5"
+    stroke-linejoin="round"
+  />
+  <circle cx="64" cy="18" r="6" fill="#ff2b36" stroke="#17191a" stroke-width="5" />
+
+  <!-- Ball and four-panel propeller hat -->
+  <g clip-path="url(#ball-clip)">
+    <circle cx="64" cy="75" r="42" fill="#ffffff" />
+
+    <path d="M64 33C45 34 29 47 23 64C22 68 22 71 22 75H43C45 56 52 40 64 33Z" fill="#ff2b36" />
+    <path d="M64 33C53 41 45 57 43 75H64Z" fill="#ffd21f" />
+    <path d="M64 33V75H85C83 57 75 41 64 33Z" fill="#20c85a" />
+    <path d="M64 33C76 40 83 56 85 75H106C106 71 106 68 105 64C99 47 83 34 64 33Z" fill="#2382f6" />
+
+    <path d="M64 33C52 40 45 56 43 75" fill="none" stroke="#17191a" stroke-width="4" />
+    <path d="M64 33V75" fill="none" stroke="#17191a" stroke-width="4" />
+    <path d="M64 33C76 40 83 56 85 75" fill="none" stroke="#17191a" stroke-width="4" />
+
+    <rect x="20" y="71.5" width="88" height="7" fill="#17191a" />
+  </g>
+
+  <circle cx="64" cy="75" r="42" fill="none" stroke="#17191a" stroke-width="5.5" />
+
+  <!-- The ball's center button becomes a pair of pilot goggles. -->
+  <circle cx="46" cy="75" r="13" fill="#87dfc1" stroke="#17191a" stroke-width="5" />
+  <circle cx="82" cy="75" r="13" fill="#87dfc1" stroke="#17191a" stroke-width="5" />
+  <rect x="59" y="72.5" width="10" height="5" fill="#17191a" />
+  <ellipse cx="42" cy="70.5" rx="3.2" ry="4.2" fill="#ffffff" />
+  <ellipse cx="78" cy="70.5" rx="3.2" ry="4.2" fill="#ffffff" />
+</svg>

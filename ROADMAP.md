@@ -184,6 +184,29 @@ The MVP should prove the core loop:
 - [x] Recheck actionable AI suggestions against deterministic Pokemon, item,
   ability, move, Mega Stone, Species Clause, and Item Clause legality in a
   proposed state before they can mutate a set or team.
+- [ ] Build a shared matchup-lab foundation for PokePilot and the Calculator.
+  - [ ] Offer the same two modes for both threat analysis and set optimization:
+        general meta coverage and a dedicated opponent configured by the user.
+  - [ ] Let exact-target threat checks and set optimization work before and
+        independently of the larger meta benchmark pool.
+  - [ ] Represent every manual or meta-derived target through one scenario
+        contract so damage, Speed, legality, confidence, and AI explanation use
+        the same deterministic path.
+  - [ ] For an exact threat, test the current roster first, then EV/nature
+        tuning, move/item changes, and finally a targeted Pokemon recommendation.
+- [ ] Build one shared meta benchmark foundation for general threat analysis,
+  targeted Pokemon recommendations, calculator presets, and robust optimization.
+  - [ ] Represent common observed sets rather than species-only usage ranks,
+        preserve uncertainty, and keep monthly usage data advisory.
+  - [ ] Detect both teams that lose quickly to a threat and teams that cannot
+        make progress against a wall, recovery loop, immunity, or disruption
+        pattern even when that threat is not among the highest-usage Pokemon.
+  - [ ] Route each grounded threat to either a Pokemon-level roster answer or a
+        calculator target for an existing member.
+  - [ ] Let users promote any meta finding into a dedicated Calculator scenario,
+        confirm its opponent and field assumptions, and then optimize precisely.
+  - [ ] Compare every tuned candidate with a simple extreme-investment baseline
+        and expose assumptions, tradeoffs, confidence, and an abstain result.
 - [ ] Add constrained follow-up chat tied to the current team state only after the
   first analysis flow is stable.
 - [ ] Finish request controls for multi-instance public deployment.

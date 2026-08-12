@@ -150,6 +150,56 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         required strategic candidates remained stable.
   - [x] Add a Team / Pokemon / Recommend scope and require an explicit Select
         Pokemon action before applying the popular set to the empty slot.
+- [ ] Define one reusable matchup-scenario contract for targeted and meta-backed
+      threat analysis and set optimization.
+  - [ ] Let the Calculator create an explicit scenario directly from the chosen
+        opponent build, battle state, direction, move, and objective without
+        requiring the future meta benchmark pool.
+  - [ ] Let a meta adapter create the same scenario shape from multiple weighted
+        benchmark sets so the deterministic engines do not fork by product mode.
+  - [ ] Keep general/meta and dedicated/targeted modes available for both threat
+        analysis and set optimization.
+- [ ] Add calculator-first exact-target Pokemon set optimization.
+  - [ ] Require an explicit opponent build, battle state, direction, and one or
+        more OHKO, survival, Speed, or ally-order objectives before optimizing.
+  - [ ] Keep extreme, minimal-investment, balanced, and robust candidates on a
+        Pareto frontier; recommend fine tuning only when it produces a verified
+        gain over the extreme baseline.
+  - [ ] Treat Trick Room Speed as a separate objective that can prioritize low
+        Speed, ally action order, mirror benchmarks, or pre-room turns instead
+        of ordinary outspeed coverage.
+  - [ ] Preview gained and lost benchmarks before applying a candidate, then
+        allow replacing the current set or saving a variant to the bench.
+  - [ ] Mark exact-target results as conditional on the entered opponent and
+        battle state, and abstain when no justified tuning beats a simple set.
+- [ ] Build a reusable, format-versioned meta benchmark layer for general threat
+      analysis and robust multi-target set optimization.
+  - [ ] Generate compact representative set profiles from monthly usage data
+        while retaining source, month, usage weight, and confidence metadata;
+        treat the data as a soft prior rather than ground truth.
+  - [ ] Normalize only canonical IDs, final stats, relevant mechanics, and role
+        facts; reuse existing catalogs instead of duplicating labels,
+        descriptions, sprites, or full upstream payloads.
+  - [ ] Cluster equivalent or dominated spreads and keep extreme-investment
+        baselines so fine tuning is never assumed to be better by default.
+  - [ ] Version snapshots by regulation, Singles/Doubles format, and usage month.
+  - [ ] Keep snapshots out of the initial bundle, load only the requested
+        format on demand, and cache them outside synchronous localStorage.
+- [ ] Add deterministic team-level threat discovery in targeted and meta modes.
+  - [ ] In targeted mode, evaluate all six current sets against the exact
+        Calculator opponent and conditions.
+  - [ ] Classify each current answer as already sufficient, conditional,
+        EV/nature-tunable, move/item-dependent, or unable to provide a verified
+        answer before suggesting a new Pokemon.
+  - [ ] In meta mode, discover threats from the weighted benchmark layer rather
+        than requiring the user to configure each opponent manually.
+  - [ ] Score offensive pressure, progress denial/walling, Speed control, game
+        plan disruption, answer scarcity, reliability, and usage separately.
+  - [ ] Distinguish hard counters, reliable checks, conditional checks, and
+        unsupported matchups with visible evidence and confidence.
+  - [ ] Let a threat finding open either targeted Pokemon recommendation or a
+        prefilled calculator optimization flow instead of presenting advice as
+        a dead-end report.
 - [x] Define a provider-independent Copilot request and response contract.
   - [x] Send structured team, selected Pokemon, diagnostics, and validity summaries rather than raw UI text.
   - [x] Render summary, strengths, weaknesses, priorities, and recommendations as product UI rather than plain chat text.

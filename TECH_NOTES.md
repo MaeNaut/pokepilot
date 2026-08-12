@@ -681,6 +681,138 @@ For the first AI route, ask the AI to return structured JSON such as:
 
 Validate and handle bad AI responses gracefully.
 
+## Meta Benchmarks, Threats, And Set Optimization
+
+Treat the future meta benchmark pool as a reusable domain layer, not as a list
+owned by one PokePilot feature. Meta-backed team threat analysis, empty-slot and
+replacement recommendations, calculator opponent presets, and robust set
+optimization should refer to the same versioned set identities and deterministic
+evidence. Exact-target Calculator flows must remain usable without this pool.
+
+Threat analysis and set optimization form a symmetric product matrix:
+
+| Feature | General mode | Dedicated mode |
+| --- | --- | --- |
+| Threat analysis | Scan weighted meta sets for team-wide risks | Audit the active six against one configured opponent and battle state |
+| Set optimization | Balance several weighted meta targets | Tune one current member for explicit damage, survival, Speed, or ally-order goals |
+
+Both modes normalize their inputs into the same contract:
+
+```ts
+type MatchupScenario = {
+  opponentBuild: PokemonBuild
+  battleState: BattleState
+  direction: "attack" | "defend" | "speed"
+  objective: "ohko" | "two-hit-ko" | "survive" | "outspeed" | "ally-order"
+  moveId?: string
+  weight: number
+  source: "meta" | "explicit"
+}
+```
+
+The Calculator creates an explicit scenario directly from user input. The meta
+layer is an adapter that produces an array of the same scenarios with usage and
+confidence weights. Deterministic engines should depend on `MatchupScenario`,
+not on `MetaBenchmarkSet`, so exact optimization can ship first and meta support
+can be added without creating a second optimizer.
+
+A benchmark entry represents an observed or curated set rather than a species:
+
+```ts
+type MetaBenchmarkSet = {
+  id: string
+  regulation: string
+  format: "singles" | "doubles"
+  usageMonth: string
+  pokemonId: string
+  itemId?: string
+  abilityId: string
+  natureId: string
+  statPoints: Record<string, number>
+  moveIds: string[]
+  finalStats: Record<string, number>
+  usageWeight: number
+  confidence: "observed" | "inferred" | "curated"
+  roleIds: string[]
+  mechanicIds: string[]
+}
+```
+
+- Monthly usage is a soft prior for finding plausible sets, not an authoritative
+  answer. Preserve whether a complete set was observed together or assembled
+  from marginal item, move, nature, or spread distributions.
+- Freeze opponents to the selected monthly distribution. Do not recursively
+  optimize opposing spreads in response to the user's optimization, which would
+  create an unbounded Speed and bulk adjustment race.
+- Include simple extreme-investment sets in every optimization frontier. A tuned
+  spread is preferred only when deterministic breakpoints show a meaningful gain
+  without losing a more important outcome; returning "no justified tuning" is a
+  valid result.
+- Generate Speed, offense, and bulk candidates from stat and damage breakpoints
+  rather than brute-forcing every cross-product. Evaluate item, ability, move-core,
+  and field choices as separate supported branches, then remove candidates that
+  cost at least as many points while satisfying no additional benchmark.
+- Treat hard Trick Room, dual-mode Trick Room, pre-room support, mirror Speed,
+  and ally action order as distinct Speed objectives. Ordinary outspeed coverage
+  must not be applied automatically to a Trick Room set.
+
+Threat findings should separate fast offensive losses from progress denial and
+strategy disruption. Usage can raise exposure, but a lower-usage wall or control
+set can still rank highly when the team has no reliable answer. Deterministic
+evidence should distinguish hard counters, reliable checks, conditional checks,
+and unsupported matchups. A finding should retain the benchmark set, failure
+mode, current responders, confidence, and supported next actions.
+
+The dedicated threat-audit decision ladder is:
+
+1. Check whether a current set already provides a reliable answer.
+2. Search EV and nature breakpoints without changing the set's tools.
+3. Search supported legal move and item changes when tuning alone is insufficient.
+4. Check whether another current team member can take over the responsibility.
+5. Offer a targeted Pokemon recommendation only when the roster has no verified
+   answer under the entered assumptions.
+
+Avoid claiming that a new Pokemon is categorically required. State that the
+current roster has no verified answer against the configured opponent and battle
+state. In Doubles, preserve partner and field assumptions and later allow a two-
+Pokemon opposing core when a one-on-one scenario cannot represent the threat.
+
+The connected meta product flow is:
+
+1. PokePilot identifies and explains a grounded team threat.
+2. If the roster cannot answer it, open a targeted Pokemon recommendation.
+3. If an existing member can plausibly answer it, open the Calculator with the
+   opponent set, battle state, direction, move, and objective prefilled.
+4. The deterministic engine produces extreme, minimal-investment, balanced, and
+   robust candidates. PokePilot ranks and explains only those verified options.
+5. The user previews gained and lost benchmarks, then applies the set or stores
+   it as a bench variant.
+
+### Payload And Runtime Budget
+
+The compact benchmark catalog itself should remain manageable. The main risks
+are shipping raw upstream statistics, duplicating localized display data, or
+embedding a detailed all-versus-all matchup matrix in the browser.
+
+- Generate normalized snapshots offline or on the server and keep only canonical
+  IDs, numeric stats, weights, confidence, roles, and mechanics. Resolve names,
+  descriptions, and assets through catalogs already shipped by the app.
+- Split snapshots by regulation, format, and month. Keep only a small manifest in
+  the initial application and lazy-load the requested Singles or Doubles snapshot
+  when a benchmark-backed feature opens.
+- Cache versioned snapshots in Cache Storage or IndexedDB rather than localStorage,
+  whose synchronous reads and smaller practical quota are a poor fit for this data.
+- Do not ship a complete pairwise matrix. Evaluate the active six against the
+  relevant benchmark subset on demand, cache repeated damage/stat results, and
+  move heavier scans to a Web Worker or server job if profiling shows main-thread
+  stalls.
+- Send only ranked threat evidence or a small target subset to the model. The LLM
+  interprets and prioritizes verified facts; it does not receive raw monthly data
+  or calculate damage combinations itself.
+- Measure compressed snapshot size, parse time, scan latency, and cache hit rate
+  before selecting the final pool depth. Reduce equivalent spreads and low-value
+  tails before sacrificing important strategic archetypes solely by usage rank.
+
 ## Security Notes
 
 - Keep API keys in `.env.local`.
