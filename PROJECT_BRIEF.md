@@ -1,8 +1,8 @@
-# PokePilot AI Project Brief
+# PokePilot Project Brief
 
 ## One-Sentence Summary
 
-PokePilot AI is an unofficial AI-assisted team-building tool for Pokemon-style turn-based battles that helps players understand team synergy, type coverage, weaknesses, and possible improvements through an interactive web UI.
+PokePilot is an unofficial AI-assisted team-building tool for Pokemon-style turn-based battles that helps players understand team synergy, type coverage, weaknesses, and possible improvements through an interactive web UI.
 
 ## Why This Project Exists
 
@@ -19,7 +19,7 @@ This project should be useful for several job-search lanes:
 
 ## Product Concept
 
-Users can build or describe a team, then PokePilot AI analyzes it and provides:
+Users can build or describe a team, then PokePilot analyzes it and provides:
 
 - type weaknesses and resistances
 - offensive coverage
@@ -38,4 +38,3 @@ Users can build or describe a team, then PokePilot AI analyzes it and provides:
 ## Public Disclaimer
 
 This is an unofficial fan-made project and is not affiliated with Nintendo, Game Freak, Creatures, or The Pokemon Company.
-

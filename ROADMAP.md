@@ -1,4 +1,4 @@
-# PokePilot AI Roadmap
+# PokePilot Roadmap
 
 ## MVP Scope
 

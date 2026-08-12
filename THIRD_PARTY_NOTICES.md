@@ -74,7 +74,7 @@ Repository: https://github.com/smogon/pokemon-showdown
 
 Usage stats: https://www.smogon.com/stats/
 
-Pokemon Showdown is licensed under the MIT License. PokePilot AI uses Showdown
+Pokemon Showdown is licensed under the MIT License. PokePilot uses Showdown
 data as a practical legality reference and is not affiliated with Pokemon
 Showdown or Smogon.
 

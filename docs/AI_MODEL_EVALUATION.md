@@ -1,4 +1,4 @@
-# PokePilot AI Model Evaluation
+# PokePilot Model Evaluation
 
 ## Purpose
 

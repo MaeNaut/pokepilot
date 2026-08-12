@@ -184,7 +184,7 @@ function formatModelOutput(evaluationCase: AiEvaluationReportCase) {
 export function formatAiEvaluationReportMarkdown(report: AiEvaluationReport) {
   const { summary } = report;
   const lines = [
-    "# PokePilot AI Evaluation Report",
+    "# PokePilot Evaluation Report",
     "",
     `- Model: \`${report.run.modelId}\``,
     `- Started: ${report.run.startedAt}`,

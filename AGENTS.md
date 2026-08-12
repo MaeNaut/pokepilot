@@ -1,4 +1,4 @@
-# PokePilot AI - Codex Guidance
+# PokePilot - Codex Guidance
 
 ## Communication
 
@@ -8,7 +8,7 @@
 
 ## Project Goal
 
-PokePilot AI is an unofficial AI-assisted team-building web app for Pokemon-style turn-based battles.
+PokePilot is an unofficial AI-assisted team-building web app for Pokemon-style turn-based battles.
 
 The project should support the user's portfolio and job search by demonstrating:
 

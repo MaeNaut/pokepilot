@@ -1,4 +1,4 @@
-# PokePilot AI TODO
+# PokePilot TODO
 
 This file is for active implementation notes and small follow-up tasks. Keep larger product direction in `ROADMAP.md`.
 

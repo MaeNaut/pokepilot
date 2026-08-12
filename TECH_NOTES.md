@@ -1,4 +1,4 @@
-# PokePilot AI Technical Notes
+# PokePilot Technical Notes
 
 ## Recommended Stack
 
