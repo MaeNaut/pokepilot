@@ -34,7 +34,7 @@ requests. Do not deploy while any command or CI job is failing.
 
 ## 2. Vercel Project
 
-- Import `MaeNaut/pokepilot-ai` and keep the framework preset on Vite.
+- Import `MaeNaut/pokepilot` and keep the framework preset on Vite.
 - Use Node.js 22. The package currently requires Node.js 20 or newer.
 - Keep Preview and Production variables in separate Vercel scopes.
 - Confirm that `vercel.json` is detected. It configures the AI function's
