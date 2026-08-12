@@ -4,8 +4,10 @@ PokePilot is an unofficial AI-assisted team builder and damage calculator for
 Pokemon-style turn-based battles. It combines Regulation M-B legality, usage
 data, matchup diagnostics, and AI strategy guidance in one responsive web app.
 
-> Status: pre-deployment beta. The core Team Builder, Calculator, and PokePilot
-> analysis workflows are implemented and under final deployment QA.
+[Open the live app](https://pokepilot-ai.vercel.app)
+
+> Status: public beta. The core Team Builder, Calculator, and PokePilot analysis
+> workflows are live and under final production QA.
 
 ## Highlights
 
