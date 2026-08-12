@@ -32,8 +32,9 @@ Current slice:
 - server-hosted GPT-5.6 Luna Standard Low strategy briefs in both Team Builder
   and Calculator modes, with private plan, interaction, fact, and recommendation
   evidence audited against the submitted team before prose reaches the browser
-- process-local 24-hour AI response caching, in-flight request deduplication,
-  signed anonymous-client cooldowns, and privacy-safe token/cost telemetry
+- server-side 24-hour AI response caching, in-flight request deduplication,
+  signed anonymous-client cooldowns, and privacy-safe token/cost telemetry,
+  with shared Upstash storage when configured
 - versioned local PokePilot analysis history with reload restoration,
   language-aware result recovery, bounded per-team retention, and a panel-safe
   history menu with confirmed deletion
@@ -64,8 +65,14 @@ npm run dev
 Build check:
 
 ```bash
-npm run build
+npm run check
+npm run audit:all
 ```
+
+The combined check runs lint, the Vitest regression suite, and the production
+build. See [DEPLOYMENT_CHECKLIST.md](./docs/DEPLOYMENT_CHECKLIST.md) for the
+Vercel environment, Preview verification, production smoke test, and rollback
+steps.
 
 Refresh the checked-in Showdown catalogs and Regulation M-B snapshot:
 

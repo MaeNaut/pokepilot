@@ -68,10 +68,43 @@ function sendJson(
   response.statusCode = status;
   response.setHeader("Content-Type", "application/json; charset=utf-8");
   response.setHeader("Cache-Control", "no-store");
+  response.setHeader("X-Content-Type-Options", "nosniff");
   if (!body.ok && body.error.retryAfterSeconds) {
     response.setHeader("Retry-After", String(body.error.retryAfterSeconds));
   }
   response.end(JSON.stringify(body));
+}
+
+function getFirstHeader(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function isSameOriginRequest(request: IncomingMessage) {
+  const origin = getFirstHeader(request.headers.origin);
+
+  if (!origin) {
+    return true;
+  }
+
+  const forwardedHost = getFirstHeader(request.headers["x-forwarded-host"]);
+  const host = forwardedHost ?? getFirstHeader(request.headers.host);
+
+  if (!host) {
+    return false;
+  }
+
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
+function hasJsonContentType(request: IncomingMessage) {
+  const contentType = getFirstHeader(request.headers["content-type"]);
+  return (
+    contentType?.split(";", 1)[0]?.trim().toLowerCase() === "application/json"
+  );
 }
 
 function logOperationalEvent(event: PokePilotOperationalEvent) {
@@ -135,6 +168,28 @@ export async function handleNodePokePilotApi(
       error: {
         code: "METHOD_NOT_ALLOWED",
         message: "Only POST requests are supported.",
+      },
+    });
+    return;
+  }
+
+  if (!isSameOriginRequest(request)) {
+    sendJson(response, 403, {
+      ok: false,
+      error: {
+        code: "INVALID_REQUEST",
+        message: "Cross-origin analysis requests are not supported.",
+      },
+    });
+    return;
+  }
+
+  if (!hasJsonContentType(request)) {
+    sendJson(response, 415, {
+      ok: false,
+      error: {
+        code: "INVALID_REQUEST",
+        message: "Content-Type must be application/json.",
       },
     });
     return;

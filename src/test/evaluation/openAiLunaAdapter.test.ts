@@ -1,6 +1,7 @@
 ﻿import { describe, expect, it, vi } from "vitest";
 import type { ResponseUsage } from "openai/resources/responses/responses";
 import {
+  analyzeWithOpenAiLuna,
   getPokePilotScopeInstructions,
   pokepilotCommonInstructions,
 } from "../../../server/openAiLuna";
@@ -96,6 +97,41 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
+  it("forwards a privacy-preserving safety identifier when supplied", async () => {
+    const create = vi.fn(async () => ({
+      id: "resp_safety_identifier",
+      service_tier: "default",
+      output_text: JSON.stringify(groundedModelOutput),
+      usage: {
+        input_tokens: 100,
+        input_tokens_details: {
+          cached_tokens: 0,
+          cache_write_tokens: 0,
+        },
+        output_tokens: 50,
+        output_tokens_details: {
+          reasoning_tokens: 10,
+        },
+        total_tokens: 150,
+      },
+    }));
+
+    await analyzeWithOpenAiLuna(request, {
+      client: {
+        responses: {
+          create,
+        },
+      } as never,
+      safetyIdentifier: "anonymous-client-a",
+    });
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        safety_identifier: "anonymous-client-a",
+      }),
+    );
+  });
+
   it("calculates Standard cost without double-counting reasoning tokens", () => {
     const usage = {
       input_tokens: 1_000,

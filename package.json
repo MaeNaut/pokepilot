@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "dev:shared": "vite --mode shared --host 127.0.0.1 --port 5198 --strictPort",
@@ -16,7 +19,10 @@
     "test:run": "vitest run",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "audit:all": "npm audit --audit-level=high",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
+    "check": "npm run lint && npm run test:run && npm run build"
   },
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^7.3.0",

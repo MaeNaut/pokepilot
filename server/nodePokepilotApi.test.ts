@@ -58,7 +58,7 @@ const validRequest = {
 function createRequest(headers: Record<string, string> = {}) {
   return {
     body: validRequest,
-    headers,
+    headers: { "content-type": "application/json", ...headers },
     method: "POST",
     socket: { remoteAddress: "127.0.0.1" },
   } as unknown as IncomingMessage & { body: unknown };
@@ -95,6 +95,43 @@ function createResponse() {
 }
 
 describe("PokePilot Node HTTP boundary", () => {
+  it("rejects cross-origin browser requests before resolving a requester", async () => {
+    const target = createResponse();
+
+    await handleNodePokePilotApi(
+      createRequest({
+        host: "pokepilot.example",
+        origin: "https://attacker.example",
+      }),
+      target.response,
+      { apiKey: "unused-test-key", clientSecret: "test-secret" },
+    );
+
+    expect(target.response.statusCode).toBe(403);
+    expect(target.headers.has("set-cookie")).toBe(false);
+    expect(target.readBody()).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_REQUEST" },
+    });
+  });
+
+  it("requires JSON requests", async () => {
+    const target = createResponse();
+    const request = createRequest();
+    request.headers["content-type"] = "text/plain";
+
+    await handleNodePokePilotApi(request, target.response, {
+      apiKey: "unused-test-key",
+      clientSecret: "test-secret",
+    });
+
+    expect(target.response.statusCode).toBe(415);
+    expect(target.readBody()).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_REQUEST" },
+    });
+  });
+
   it("issues an HttpOnly signed anonymous-client cookie", async () => {
     const target = createResponse();
 

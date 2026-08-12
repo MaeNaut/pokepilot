@@ -59,6 +59,7 @@ type AnalyzeWithOpenAiLunaOptions = {
   apiKey?: string;
   cacheNamespace?: "evaluation" | "production";
   reasoningEffort?: LunaReasoningEffort;
+  safetyIdentifier?: string;
 };
 
 const lunaStandardPricePerMillion = {
@@ -217,6 +218,7 @@ export async function analyzeWithOpenAiLuna(
     apiKey,
     cacheNamespace = "production",
     reasoningEffort = POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
+    safetyIdentifier,
   }: AnalyzeWithOpenAiLunaOptions = {},
 ): Promise<LunaAnalysisResult> {
   const openAiClient =
@@ -230,6 +232,7 @@ export async function analyzeWithOpenAiLuna(
     model: OPENAI_LUNA_MODEL_ID,
     service_tier: "default",
     store: false,
+    ...(safetyIdentifier ? { safety_identifier: safetyIdentifier } : {}),
     prompt_cache_key: `pokepilot-${cacheNamespace}-core-v${POKEPILOT_AI_CORE_PROMPT_VERSION}-${reasoningEffort}`,
     prompt_cache_options: {
       mode: "explicit",

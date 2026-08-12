@@ -17,6 +17,13 @@ export default defineConfig(({ mode }) => {
     mode,
     serverEnvironment,
   );
+  const smogonStatsProxy = {
+    "/smogon-stats": {
+      target: "https://www.smogon.com",
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(/^\/smogon-stats/, "/stats"),
+    },
+  };
 
   return {
     plugins: [
@@ -29,13 +36,10 @@ export default defineConfig(({ mode }) => {
       ),
     ],
     server: {
-      proxy: {
-        "/smogon-stats": {
-          target: "https://www.smogon.com",
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/smogon-stats/, "/stats"),
-        },
-      },
+      proxy: smogonStatsProxy,
+    },
+    preview: {
+      proxy: smogonStatsProxy,
     },
   };
 });

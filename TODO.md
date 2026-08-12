@@ -413,7 +413,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Theme the editor, pickers, popovers, diagnostics, team management, and PokePilot shell consistently.
   - [x] Keep semantic nature, validity, danger, move-type, and saved-team states legible in dark mode.
   - [x] Keep exported Pokemon and team images on their stable light presentation in either app theme.
-- [ ] Add a real app icon / logo mark.
+- [x] Add a real app icon / logo mark.
 - [x] Complete the emulated tablet/mobile UI pass.
   - [x] Add the first tablet workspace layout with a fully visible Pokemon card and an edge-triggered PokePilot drawer.
   - [x] Fit short landscape tablet layouts without document overflow by compacting secondary diagnostics and footer spacing.
@@ -430,6 +430,11 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Before Public Deployment
 
+- [x] Add a checked-in CI quality gate, Vercel runtime/rewrite/security config,
+      and a concrete deployment checklist.
+- [ ] Follow `docs/DEPLOYMENT_CHECKLIST.md` for Preview verification, production
+      environment separation, smoke testing, and rollback readiness.
+- [ ] Publish a concise privacy notice and visible feedback/security contact path.
 - [ ] Clean up generated assets and audit `THIRD_PARTY_NOTICES.md`.
 - [ ] Measure the production bundle and lazy-load genuinely deferred features if
       initial transfer or parse cost warrants it.

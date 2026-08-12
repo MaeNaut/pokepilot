@@ -254,6 +254,7 @@ export async function handlePokePilotAnalysis(
               apiKey,
               cacheNamespace: "production",
               reasoningEffort: POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
+              safetyIdentifier: requester?.clientId,
             });
         const analysis = validateHostedCopilotAnalysis(
           result.output,

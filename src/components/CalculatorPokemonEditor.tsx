@@ -1795,6 +1795,17 @@ export function CalculatorPokemonEditor({
                         }`}
                         type="button"
                         disabled={isItemLocked}
+                        aria-label={
+                          build.item
+                            ? t("builder.changeItem", {
+                                item: gameName(
+                                  "items",
+                                  build.item.showdownId ?? build.item.id,
+                                  build.item.name,
+                                ),
+                              })
+                            : t("builder.chooseItem")
+                        }
                         aria-haspopup={
                           isTouchPickerLayout ? "dialog" : "listbox"
                         }
@@ -2330,6 +2341,9 @@ export function CalculatorPokemonEditor({
                                 <input
                                   className="ev-vertical-range"
                                   type="range"
+                                  aria-label={t("builder.evSlider", {
+                                    stat: t(`stat.${stat}`),
+                                  })}
                                   min={0}
                                   max={CHAMPIONS_MAX_EV_PER_STAT}
                                   step={1}

@@ -225,6 +225,8 @@ The MVP should prove the core loop:
   - [x] Connect a real development Upstash database and smoke-test shared cache,
         distributed single execution, atomic limiter state, and cleanup without
         issuing a paid model request.
+  - [x] Add the Vercel AI function duration, production Smogon rewrite, baseline
+        security/cache headers, CI quality gate, and deployment checklist.
   - [ ] Provision and require the shared store in public deployment, then verify
         cross-instance concurrency, cold starts, and Redis failure behavior.
 
