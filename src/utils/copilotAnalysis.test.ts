@@ -220,6 +220,7 @@ describe("Copilot analysis", () => {
         validity: { status: "valid" },
       },
     });
+    expect(JSON.stringify(request)).not.toMatch(/[\uac00-\ud7a3]/u);
     expect(request.sets[0]).toMatchObject({
       pokemonId: "test-pokemon",
       displayName: "Test Pokemon",

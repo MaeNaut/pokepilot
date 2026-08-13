@@ -7,8 +7,8 @@ import type {
 import { copilotGroundedModelOutputJsonSchema } from "../src/utils/copilotModelContract.js";
 
 export const OPENAI_LUNA_MODEL_ID = "gpt-5.6-luna";
-export const POKEPILOT_AI_PROMPT_VERSION = 43;
-const POKEPILOT_AI_CORE_PROMPT_VERSION = 1;
+export const POKEPILOT_AI_PROMPT_VERSION = 44;
+const POKEPILOT_AI_CORE_PROMPT_VERSION = 2;
 const POKEPILOT_AI_SCOPE_PROMPT_VERSIONS = {
   team: 4,
   pokemon: 14,
@@ -81,7 +81,7 @@ Do not invent moves, items, abilities, legality, damage calculations, matchup da
 
 Return a top-level object with analysis and strategyAudit. analysis is the user-facing response; strategyAudit is private machine-verifiable grounding and must contain no prose intended for the user. Use canonical slotIndex and canonical element IDs exactly as supplied. current means the exact supplied form, including an already-Mega set. mega means only the projected megaEvolution of a supplied non-Mega set after activation. For facts about one set use objectSlotIndex -1. For final-Speed comparisons reference the other slot, use current state, and leave valueId empty. They may include an unconditional numeric held-item Speed multiplier explicitly supplied by mechanics.items, but never weather, field, status, priority, conditional ability, or other inferred order. Cite the corresponding item-owner fact whenever an item modifier changes the comparison. A move-owner, ability-owner, item-owner, Mega-option, weakness, resistance, immunity, or final-Speed fact must exactly match request data. Ensure the public analysis never contradicts strategyAudit.
 
-Write analysis in request.locale: concise natural Korean for ko and concise natural English for en. Treat request maps and strategyAudit as private implementation details: never print raw IDs or terms such as ID, key, source map, diagnostics, or strategy audit. Convert evidence into supplied display names and ordinary strategic prose. In Korean, prefer short declarative phrases over honorific full-sentence prose. Keep identifiers stable, short, and ASCII-safe.`;
+Follow the dedicated output-language developer message after the scope instructions. It is the sole authority for the language of user-facing analysis. Treat request maps and strategyAudit as private implementation details: never print raw IDs or terms such as ID, key, source map, diagnostics, or strategy audit. Convert evidence into supplied display names and ordinary strategic prose. Keep identifiers stable, short, and ASCII-safe.`;
 
 const pokepilotTeamInstructions = `The request scope is team. Synthesize a practical game plan from the complete roster. Inspect every set's moves, item, current and projected-Mega ability, exact stats, Stat Points, validity, and supplied mechanics before assigning an archetype, opening, branch, or endgame. Before discussing Mega choices, enumerate request.megaOptions. If multiple options exist, identify plausible primary and secondary matchup branches from actual support, coverage, and difficult matchups. Name the mutually exclusive activation options without treating a legal dual-Mega roster as a flaw. Test whether both Mega choices operate under the same setter and support core before calling them separate speed or field modes.
 
@@ -153,6 +153,18 @@ export function getPokePilotScopeInstructions(scope: CopilotAnalysisScope) {
   return `PokePilot ${scope} scope instructions v${POKEPILOT_AI_SCOPE_PROMPT_VERSIONS[scope]}
 
 ${pokepilotScopeInstructions[scope]}`;
+}
+
+export function getPokePilotLocaleInstructions(
+  locale: CopilotAnalysisRequest["locale"],
+) {
+  if (locale === "ko") {
+    return `Output language requirement: Korean only.
+Write every user-facing analysis field in concise, natural Korean. Prefer short declarative phrases over honorific full-sentence prose. Do not introduce English prose beyond supplied display names and user-provided names. Keep all supplied names unchanged.`;
+  }
+
+  return `Output language requirement: English only.
+Write every user-facing analysis field in concise, natural English. Do not introduce Korean prose or Hangul beyond supplied display names and user-provided names. Keep all supplied names unchanged.`;
 }
 
 function getUncachedInputTokens(usage: ResponseUsage) {
@@ -258,6 +270,16 @@ export async function analyzeWithOpenAiLuna(
             type: "input_text",
             text: getPokePilotScopeInstructions(request.scope),
             prompt_cache_breakpoint: { mode: "explicit" },
+          },
+        ],
+      },
+      {
+        type: "message",
+        role: "developer",
+        content: [
+          {
+            type: "input_text",
+            text: getPokePilotLocaleInstructions(request.locale),
           },
         ],
       },

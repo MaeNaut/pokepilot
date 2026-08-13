@@ -60,6 +60,25 @@ describe("Korean game translations", () => {
     expect(
       translateGameName("ko", "abilities", "innardsout", "Innards Out"),
     ).toBe("내용물분출");
+    expect(translateGameName("ko", "items", "fairyfeather", "Fairy Feather")).toBe(
+      "요정의깃털",
+    );
+    expect(
+      translateGameDescription(
+        "ko",
+        "moves",
+        "kowtowcleave",
+        "This move does not check accuracy.",
+      ),
+    ).toContain("명중");
+    expect(
+      translateGameDescription(
+        "ko",
+        "items",
+        "fairyfeather",
+        "Holder's Fairy-type attacks have 1.2x power.",
+      ),
+    ).toContain("1.2배");
   });
 
   it("translates descriptions and PokePilot move tags", () => {

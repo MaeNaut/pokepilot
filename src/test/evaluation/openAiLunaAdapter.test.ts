@@ -2,6 +2,7 @@
 import type { ResponseUsage } from "openai/resources/responses/responses";
 import {
   analyzeWithOpenAiLuna,
+  getPokePilotLocaleInstructions,
   getPokePilotScopeInstructions,
   pokepilotCommonInstructions,
 } from "../../../server/openAiLuna";
@@ -193,7 +194,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-core-v1-low",
+        prompt_cache_key: "pokepilot-evaluation-core-v2-low",
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -223,6 +224,16 @@ describe("OpenAI Luna evaluation adapter", () => {
           },
           {
             type: "message",
+            role: "developer",
+            content: [
+              {
+                type: "input_text",
+                text: getPokePilotLocaleInstructions("ko"),
+              },
+            ],
+          },
+          {
+            type: "message",
             role: "user",
             content: [
               {
@@ -246,7 +257,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 43,
+        promptVersion: 44,
       },
       usage: {
         totalTokens: 150,
@@ -336,13 +347,16 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(create).toHaveBeenCalledOnce();
     const modelRequest = create.mock.calls[0]![0];
     expect(modelRequest.prompt_cache_key).toBe(
-      "pokepilot-evaluation-core-v1-low",
+      "pokepilot-evaluation-core-v2-low",
     );
     expect(modelRequest.input[0].content[0].text).toBe(
       pokepilotCommonInstructions,
     );
     expect(modelRequest.input[1].content[0].text).toBe(
       getPokePilotScopeInstructions("pokemon"),
+    );
+    expect(modelRequest.input[2].content[0].text).toBe(
+      getPokePilotLocaleInstructions("ko"),
     );
     expect(getPokePilotScopeInstructions("pokemon")).toContain(
       "resistance still takes damage",
@@ -410,6 +424,16 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(getPokePilotScopeInstructions("recommendation")).not.toContain(
       "inspect every unordered pair of filled sets",
     );
+  });
+
+  it("uses one explicit output language without adding Hangul to English prompts", () => {
+    const englishInstructions = getPokePilotLocaleInstructions("en");
+    const koreanInstructions = getPokePilotLocaleInstructions("ko");
+
+    expect(englishInstructions).toContain("English only");
+    expect(englishInstructions).not.toMatch(/[\uac00-\ud7a3]/u);
+    expect(koreanInstructions).toContain("Korean only");
+    expect(koreanInstructions).not.toContain("English only");
   });
 
   it("preserves usage when Luna returns malformed structured output", async () => {
