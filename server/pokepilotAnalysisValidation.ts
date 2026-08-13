@@ -1,12 +1,12 @@
-import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis";
+import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis.js";
 import {
   validateCopilotGroundedModelOutput,
   type CopilotModelOutput,
-} from "../src/utils/copilotModelContract";
+} from "../src/utils/copilotModelContract.js";
 import {
   completeCopilotStrategyAudit,
   validateCopilotStrategyAuditForRequest,
-} from "../src/utils/copilotStrategyAudit";
+} from "../src/utils/copilotStrategyAudit.js";
 
 function invalidAnalysis(message: string): Error & {
   code: "AI_INVALID_RESPONSE";

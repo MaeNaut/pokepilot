@@ -4,7 +4,7 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { PokePilotRequester } from "./pokepilotOperations";
+import type { PokePilotRequester } from "./pokepilotOperations.js";
 
 export const POKEPILOT_CLIENT_COOKIE = "pokepilot_client";
 const clientCookieMaxAgeSeconds = 365 * 24 * 60 * 60;

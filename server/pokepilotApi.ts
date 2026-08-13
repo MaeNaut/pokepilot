@@ -1,14 +1,14 @@
-import type { CopilotModelOutput } from "../src/utils/copilotModelContract";
-import { getCopilotRequestFingerprint } from "../src/utils/copilotAnalysis";
-import type { CopilotAnalysisScope } from "../src/utils/copilotAnalysis";
-import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract";
+import type { CopilotModelOutput } from "../src/utils/copilotModelContract.js";
+import type { CopilotAnalysisScope } from "../src/utils/copilotAnalysis.js";
+import { getCopilotRequestFingerprint } from "../src/utils/copilotRequestFingerprint.js";
+import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract.js";
 import {
   analyzeWithOpenAiLuna,
   OPENAI_LUNA_MODEL_ID,
   POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
   POKEPILOT_AI_PROMPT_VERSION,
   type LunaAnalysisResult,
-} from "./openAiLuna";
+} from "./openAiLuna.js";
 import {
   createPokePilotAnalysisCacheKey,
   getPokePilotSafeguardConfig,
@@ -16,8 +16,8 @@ import {
   type PokePilotRateLimitReservation,
   type PokePilotRequester,
   type PokePilotSafeguardMode,
-} from "./pokepilotOperations";
-import { validateHostedCopilotAnalysis } from "./pokepilotAnalysisValidation";
+} from "./pokepilotOperations.js";
+import { validateHostedCopilotAnalysis } from "./pokepilotAnalysisValidation.js";
 
 export const POKEPILOT_API_MAX_BODY_BYTES = 256_000;
 

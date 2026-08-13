@@ -3,8 +3,8 @@ import type { ResponseUsage } from "openai/resources/responses/responses";
 import type {
   CopilotAnalysisRequest,
   CopilotAnalysisScope,
-} from "../src/utils/copilotAnalysis";
-import { copilotGroundedModelOutputJsonSchema } from "../src/utils/copilotModelContract";
+} from "../src/utils/copilotAnalysis.js";
+import { copilotGroundedModelOutputJsonSchema } from "../src/utils/copilotModelContract.js";
 
 export const OPENAI_LUNA_MODEL_ID = "gpt-5.6-luna";
 export const POKEPILOT_AI_PROMPT_VERSION = 43;

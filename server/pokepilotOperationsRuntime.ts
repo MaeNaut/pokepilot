@@ -2,11 +2,11 @@ import { Redis } from "@upstash/redis";
 import {
   InMemoryPokePilotOperations,
   type PokePilotOperations,
-} from "./pokepilotOperations";
+} from "./pokepilotOperations.js";
 import {
   UpstashPokePilotOperations,
   type PokePilotRedisClient,
-} from "./upstashPokePilotOperations";
+} from "./upstashPokePilotOperations.js";
 
 export type PokePilotOperationsEnvironment = {
   POKEPILOT_REDIS_PREFIX?: string;

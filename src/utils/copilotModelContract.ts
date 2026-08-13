@@ -1,4 +1,4 @@
-import type { CopilotAnalysisResponse } from "./copilotAnalysis";
+import type { CopilotAnalysisResponse } from "./copilotAnalysis.js";
 
 export type CopilotModelOutput = Omit<CopilotAnalysisResponse, "source">;
 

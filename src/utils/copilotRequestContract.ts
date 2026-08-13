@@ -1,6 +1,6 @@
-import type { CopilotAnalysisRequest } from "./copilotAnalysis";
-import { pokemonTypes } from "../types";
-import { copilotResponsibilityIds } from "./copilotResponsibilities";
+import type { CopilotAnalysisRequest } from "./copilotAnalysis.js";
+import { pokemonTypes } from "../types.js";
+import { copilotResponsibilityIds } from "./copilotResponsibilities.js";
 
 export type CopilotRequestValidation =
   | { success: true; data: CopilotAnalysisRequest; errors: [] }

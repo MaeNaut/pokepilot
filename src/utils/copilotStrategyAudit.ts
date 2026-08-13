@@ -1,11 +1,11 @@
-import type { CopilotAnalysisRequest } from "./copilotAnalysis";
+import type { CopilotAnalysisRequest } from "./copilotAnalysis.js";
 import type {
   CopilotGroundedModelOutput,
   CopilotRecommendationCandidateFact,
   CopilotStrategyFact,
   CopilotStrategyInteraction,
   CopilotStrategyPokemonState,
-} from "./copilotModelContract";
+} from "./copilotModelContract.js";
 
 function normalizeId(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");

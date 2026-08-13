@@ -11,7 +11,7 @@ import {
   type PokePilotRequester,
   type PokePilotRunOnceOptions,
   type PokePilotRunOnceResult,
-} from "./pokepilotOperations";
+} from "./pokepilotOperations.js";
 
 const defaultKeyPrefix = "pokepilot:operations:v1";
 const defaultLockTtlMs = 75_000;

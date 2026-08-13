@@ -4,16 +4,16 @@ import {
   POKEPILOT_API_MAX_BODY_BYTES,
   type PokePilotOperationalEvent,
   type PokePilotApiResponse,
-} from "./pokepilotApi";
+} from "./pokepilotApi.js";
 import {
   resolvePokePilotClientSecret,
   resolvePokePilotRequester,
-} from "./pokepilotIdentity";
+} from "./pokepilotIdentity.js";
 import {
   type PokePilotOperations,
   type PokePilotSafeguardMode,
-} from "./pokepilotOperations";
-import { getDefaultPokePilotOperationsRuntime } from "./pokepilotOperationsRuntime";
+} from "./pokepilotOperations.js";
+import { getDefaultPokePilotOperationsRuntime } from "./pokepilotOperationsRuntime.js";
 
 type ParsedRequest = IncomingMessage & {
   body?: unknown;
