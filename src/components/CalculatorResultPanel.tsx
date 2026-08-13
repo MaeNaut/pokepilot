@@ -1,10 +1,9 @@
 import { useMemo, type Dispatch, type SetStateAction } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faAnglesLeft,
-  faAnglesRight,
   faArrowLeft,
   faArrowRight,
+  faPersonRunning,
   faRightLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import type { BattleFormat } from "../battleFormat/battleFormat";
@@ -194,7 +193,7 @@ export function CalculatorResultPanel({
     >
       <div className="calculator-direction-control">
         <span
-          className={`calculator-speed-indicator ${
+          className={`calculator-speed-indicator is-player ${
             fasterSide === "player" ? "is-active" : ""
           }`}
           aria-label={
@@ -213,7 +212,7 @@ export function CalculatorResultPanel({
           }
         >
           {fasterSide === "player" ? (
-            <FontAwesomeIcon icon={faAnglesLeft} aria-hidden="true" />
+            <FontAwesomeIcon icon={faPersonRunning} aria-hidden="true" />
           ) : null}
         </span>
 
@@ -254,7 +253,7 @@ export function CalculatorResultPanel({
           }
         >
           {fasterSide === "opponent" ? (
-            <FontAwesomeIcon icon={faAnglesRight} aria-hidden="true" />
+            <FontAwesomeIcon icon={faPersonRunning} aria-hidden="true" />
           ) : null}
         </span>
       </div>

@@ -2109,6 +2109,7 @@ export function CalculatorPokemonEditor({
                     className={`move-list calculator-shared-move-list${
                       moveReorder.isDragging ? " is-reordering" : ""
                     }`}
+                    role="group"
                     aria-label={t("builder.selectedMoves")}
                     ref={moveListRef}
                   >

@@ -3,21 +3,35 @@
 This checklist covers the first Vercel portfolio/beta deployment. It does not
 replace provider dashboards, legal review, or real-device testing.
 
-## Audit Baseline - 2026-08-11
+## Audit Baseline - 2026-08-12
 
-- `npm run check`: passed (55 test files, 296 tests).
+- `npm run check`: passed (57 test files, 312 tests).
 - `npm run audit:all`: passed with zero reported vulnerabilities.
-- Production build: CSS 202.14 KB (38.13 KB gzip), Calculator 542.28 KB
-  (134.11 KB gzip), main bundle 1,036.03 KB (291.47 KB gzip).
-- Vite Preview smoke test: Team Builder, Calculator, usage-ranked selection,
-  localized settings persistence, dark mode, touch selection dialog, and
-  PokePilot drawers passed without console warnings or broken images.
-- Responsive checks: 1920x1080 desktop, 1024x1366 and 820x1180 tablet, and
-  390x844 mobile. No horizontal document overflow was found. Compact Team
-  Builder layouts intentionally retain vertical scrolling.
-- Still unverified: a real Vercel Preview deployment, hosted response headers,
-  multi-instance Redis behavior, Lighthouse/cold-network performance, paid AI
-  smoke calls in the deployment environment, and physical mobile devices.
+- Production build: CSS 202.41 KB (38.17 KB gzip), Calculator 542.29 KB
+  (134.12 KB gzip), main bundle 1,044.28 KB (294.01 KB gzip). The existing
+  large-chunk warning remains a measured optimization target, not a release
+  blocker.
+- Production smoke test at `https://pokepilot-ai.vercel.app`: Team Builder,
+  Calculator, usage-ranked defaults, save/restore, Showdown export, locale and
+  theme persistence, bidirectional damage results, and PokePilot analysis all
+  passed without application console errors.
+- Hosted infrastructure: security and cache headers, Smogon rewrite, separate
+  Preview/Production secret scopes and Redis prefixes, an uncached AI request,
+  a repeated server-cache hit, privacy-safe logs, and fail-closed invalid input
+  behavior were verified. The measured uncached team analysis cost about
+  USD 0.00266; its identical cache hit returned without another model call.
+- Local release-candidate Lighthouse: desktop 99 Performance / 100
+  Accessibility / 100 Best Practices / 100 SEO; mobile 77 / 100 / 100 / 100.
+  Desktop LCP was about 1.0 seconds with zero blocking time; emulated mobile LCP
+  was about 4.7 seconds with 185 ms blocking time and zero layout shift.
+- Responsive checks: prior 1920x1080 desktop, representative tablet layouts,
+  and 390x844 mobile QA remain valid. The final 1920px release-candidate layout
+  has no horizontal document overflow and keeps the footer at 32px.
+- Upstash remained negligible during QA (241 commands and 12 KB at the audit
+  snapshot), and Vercel logs showed the expected function invocations.
+- Still unverified: physical Safari and Android Chrome behavior. The local
+  accessibility/privacy fixes also require one final deployment smoke test
+  after they are pushed.
 
 ## 1. Automated Gate
 
@@ -88,9 +102,11 @@ Deploy a Preview build first and verify all of the following before promoting:
 
 ## 6. Public-Beta Follow-Ups
 
-- Publish a concise privacy notice explaining localStorage, the anonymous signed
-  cookie, hashed-IP abuse controls, OpenAI processing, and bounded Redis caching.
-- Provide a visible feedback/security contact path.
+- Keep the published privacy notice aligned with localStorage, the anonymous
+  signed cookie, hashed-IP abuse controls, OpenAI processing, and bounded Redis
+  caching as those systems evolve.
+- Keep the visible feedback and security-reporting paths operational, and enable
+  GitHub private vulnerability reporting before a broader public launch.
 - Perform non-blocking real-device Safari and Android Chrome QA, including the
   virtual keyboard, safe areas, long press, orientation changes, and image export.
 - Treat PokePilot guidance as advisory; legality and calculator output remain

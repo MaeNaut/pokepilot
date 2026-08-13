@@ -94,6 +94,8 @@ cached locally so the browser does not repeatedly request or parse upstream data
 - [AI model evaluation](./docs/AI_MODEL_EVALUATION.md)
 - [Deployment checklist](./docs/DEPLOYMENT_CHECKLIST.md)
 - [Third-party notices](./THIRD_PARTY_NOTICES.md)
+- [Privacy notice](https://pokepilot-ai.vercel.app/privacy.html)
+- [Security policy](./SECURITY.md)
 
 ## Disclaimer
 

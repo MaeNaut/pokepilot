@@ -78,6 +78,23 @@ Pokemon Showdown is licensed under the MIT License. PokePilot uses Showdown
 data as a practical legality reference and is not affiliated with Pokemon
 Showdown or Smogon.
 
+## PokeAPI
+
+Selected Pokemon sprites and development-time Korean localization source data
+come from PokeAPI and its companion repositories.
+
+API repository: https://github.com/PokeAPI/pokeapi
+
+Static data: https://github.com/PokeAPI/api-data
+
+Sprites: https://github.com/PokeAPI/sprites
+
+The PokeAPI software and static data repositories use the BSD 3-Clause License.
+The sprites repository is distributed under CC0 1.0, while its license file
+also states that all image contents are copyright The Pokemon Company. CC0 does
+not waive third-party copyright, trademark, or patent rights. PokePilot claims
+no ownership of Pokemon names, characters, artwork, or sprites.
+
 ## @smogon/calc
 
 Damage ranges and battle modifiers are calculated with the `@smogon/calc`
@@ -88,3 +105,19 @@ Repository: https://github.com/smogon/damage-calc
 The installed package declares the MIT License. PokePilot supplies its current
 Pokemon Champions species, move, stat-point, and field inputs to the engine and
 is not affiliated with Smogon.
+
+## Additional Application Libraries
+
+The browser and server application also include these directly installed open
+source libraries:
+
+| Package | License |
+| --- | --- |
+| React and React DOM | MIT |
+| OpenAI JavaScript/TypeScript SDK | Apache-2.0 |
+| Upstash Redis JavaScript client | MIT |
+| Vite and the Vite React plugin | MIT |
+| TypeScript | Apache-2.0 |
+
+Their package distributions and upstream repositories contain the complete
+license texts and copyright notices.

@@ -3540,6 +3540,7 @@ export function TeamBuilder({
             <div className="editor-detail-grid">
               <div
                 className={`move-list ${moveReorder.isDragging ? "is-reordering" : ""}`}
+                role="group"
                 aria-label={t("builder.selectedMoves")}
                 ref={movePickerRef}
               >
@@ -3839,7 +3840,11 @@ export function TeamBuilder({
           </div>
 
           <div className="sprite-crop">
-            <div className="type-stack" aria-label={t("builder.pokemonType")}>
+            <div
+              className="type-stack"
+              role="group"
+              aria-label={t("builder.pokemonType")}
+            >
               {(activeMember?.types ?? []).map((type) => (
                 <TypeBadge type={type} key={type} />
               ))}

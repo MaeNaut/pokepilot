@@ -1751,7 +1751,7 @@ function App() {
               <button
                 className={`battle-format-switch is-${battleFormat}`}
                 type="button"
-                aria-label={t(
+                aria-description={t(
                   battleFormat === "singles"
                     ? "battleFormat.switchToDoubles"
                     : "battleFormat.switchToSingles",
@@ -1774,7 +1774,6 @@ function App() {
                     className={`battle-format-option${
                       battleFormat === format ? " is-active" : ""
                     }`}
-                    aria-hidden="true"
                     key={format}
                   >
                     {t(
@@ -1788,7 +1787,7 @@ function App() {
               <button
                 className="battle-format-compact-toggle"
                 type="button"
-                aria-label={t(
+                aria-description={t(
                   battleFormat === "singles"
                     ? "battleFormat.switchToDoubles"
                     : "battleFormat.switchToSingles",
@@ -2125,7 +2124,26 @@ function App() {
       </div>
 
       <footer className="footer">
-        <p>{t("footer.disclaimer")}</p>
+        <p>
+          {t("footer.disclaimer")}
+          <span className="footer-links">
+            <a href="/privacy.html">{t("footer.privacy")}</a>
+            <a
+              href="https://github.com/MaeNaut/pokepilot/issues"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t("footer.feedback")}
+            </a>
+            <a
+              href="https://github.com/MaeNaut/pokepilot/security/policy"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t("footer.security")}
+            </a>
+          </span>
+        </p>
       </footer>
     </main>
   );

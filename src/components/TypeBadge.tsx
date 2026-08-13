@@ -32,7 +32,12 @@ export function TypeBadge({ type }: TypeBadgeProps) {
   const label = gameName("types", type, type);
 
   return (
-    <span className={`type-badge ${hasIcon ? "has-type-icon" : ""}`} aria-label={label} title={label}>
+    <span
+      className={`type-badge ${hasIcon ? "has-type-icon" : ""}`}
+      role="img"
+      aria-label={label}
+      title={label}
+    >
       {hasIcon ? <span className={`type-icon type-icon-${type}`} aria-hidden="true" /> : null}
     </span>
   );

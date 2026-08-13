@@ -88,6 +88,38 @@ export function getReorderDisplacement(
   return dragState?.displacement?.index === index ? dragState.displacement : null;
 }
 
+export function installReorderSelectionGuard(
+  documentTarget: Document,
+  getSelection: () => Selection | null,
+) {
+  const rootStyle = documentTarget.documentElement.style;
+  const previousUserSelect = rootStyle.userSelect;
+  const previousWebkitUserSelect = rootStyle.webkitUserSelect;
+  const preventNativeSelection = (event: Event) => event.preventDefault();
+  const clearSelection = () => {
+    const selection = getSelection();
+
+    if (selection?.rangeCount) {
+      selection.removeAllRanges();
+    }
+  };
+
+  rootStyle.userSelect = "none";
+  rootStyle.webkitUserSelect = "none";
+  documentTarget.addEventListener("selectstart", preventNativeSelection);
+  documentTarget.addEventListener("selectionchange", clearSelection);
+  documentTarget.addEventListener("contextmenu", preventNativeSelection);
+  clearSelection();
+
+  return () => {
+    rootStyle.userSelect = previousUserSelect;
+    rootStyle.webkitUserSelect = previousWebkitUserSelect;
+    documentTarget.removeEventListener("selectstart", preventNativeSelection);
+    documentTarget.removeEventListener("selectionchange", clearSelection);
+    documentTarget.removeEventListener("contextmenu", preventNativeSelection);
+  };
+}
+
 export function useLongPressReorder({
   containerRef,
   disabled = false,
@@ -99,6 +131,7 @@ export function useLongPressReorder({
 }: UseLongPressReorderOptions) {
   const gestureRef = useRef<ReorderGesture | null>(null);
   const dropTimerRef = useRef<number | null>(null);
+  const selectionGuardCleanupRef = useRef<(() => void) | null>(null);
   const suppressClickUntilRef = useRef(0);
   const [dragState, setDragState] = useState<ReorderDragState | null>(null);
   const isDragging = dragState !== null;
@@ -114,6 +147,9 @@ export function useLongPressReorder({
       if (dropTimerRef.current !== null) {
         window.clearTimeout(dropTimerRef.current);
       }
+
+      selectionGuardCleanupRef.current?.();
+      selectionGuardCleanupRef.current = null;
     };
   }, []);
 
@@ -133,9 +169,31 @@ export function useLongPressReorder({
     };
   }, [isDragging]);
 
+  function clearNativeSelection() {
+    const selection = window.getSelection();
+
+    if (selection?.rangeCount) {
+      selection.removeAllRanges();
+    }
+  }
+
+  function releaseSelectionGuard() {
+    selectionGuardCleanupRef.current?.();
+    selectionGuardCleanupRef.current = null;
+  }
+
+  function installSelectionGuard() {
+    releaseSelectionGuard();
+    selectionGuardCleanupRef.current = installReorderSelectionGuard(
+      document,
+      () => window.getSelection(),
+    );
+  }
+
   function startDrag(gesture: ReorderGesture, element: HTMLElement) {
     gesture.isDragging = true;
     gesture.holdTimer = null;
+    clearNativeSelection();
     onDragStart?.();
 
     try {
@@ -162,6 +220,7 @@ export function useLongPressReorder({
     const gesture = gestureRef.current;
 
     if (!gesture) {
+      releaseSelectionGuard();
       return;
     }
 
@@ -174,6 +233,7 @@ export function useLongPressReorder({
     }
 
     gestureRef.current = null;
+    releaseSelectionGuard();
     setDragState(null);
   }
 
@@ -221,6 +281,7 @@ export function useLongPressReorder({
 
     if (event.pointerType === "touch") {
       const element = event.currentTarget;
+      installSelectionGuard();
       gesture.holdTimer = window.setTimeout(() => {
         if (gestureRef.current === gesture) {
           startDrag(gesture, element);
@@ -293,6 +354,8 @@ export function useLongPressReorder({
     if (element.hasPointerCapture(gesture.pointerId)) {
       element.releasePointerCapture(gesture.pointerId);
     }
+
+    releaseSelectionGuard();
 
     const sourceCenter = gesture.itemCenters.find(
       (center) => center.index === gesture.sourceIndex,

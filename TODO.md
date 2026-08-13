@@ -432,14 +432,17 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 - [x] Add a checked-in CI quality gate, Vercel runtime/rewrite/security config,
       and a concrete deployment checklist.
-- [ ] Follow `docs/DEPLOYMENT_CHECKLIST.md` for Preview verification, production
-      environment separation, smoke testing, and rollback readiness.
-- [ ] Publish a concise privacy notice and visible feedback/security contact path.
-- [ ] Clean up generated assets and audit `THIRD_PARTY_NOTICES.md`.
-- [ ] Measure the production bundle and lazy-load genuinely deferred features if
+- [x] Complete hosted environment separation, production smoke testing, cache
+      verification, response-header checks, and rollback-readiness review from
+      `docs/DEPLOYMENT_CHECKLIST.md`.
+- [ ] Use a Preview-first promotion flow for future production releases.
+- [x] Publish a concise privacy notice and visible feedback/security contact path.
+- [ ] Enable GitHub private vulnerability reporting before a broader public launch.
+- [x] Clean up generated assets and audit `THIRD_PARTY_NOTICES.md`.
+- [x] Measure the production bundle and lazy-load genuinely deferred features if
       initial transfer or parse cost warrants it.
-- [ ] Run Lighthouse and representative cold-load/network checks.
-- [ ] Run `npm run lint`, `npm run test:run`, and `npm run build`.
+- [x] Run Lighthouse and representative cold-load/network checks.
+- [x] Run `npm run lint`, `npm run test:run`, and `npm run build`.
 
 ## Done Recently
 

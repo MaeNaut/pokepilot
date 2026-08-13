@@ -1732,8 +1732,12 @@ button {
 }
 
 .calculator-speed-indicator svg {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
+}
+
+.calculator-speed-indicator.is-player svg {
+  transform: scaleX(-1);
 }
 
 .calculator-direction-button {
@@ -4808,7 +4812,7 @@ select {
   border-bottom: 1px solid #b8b8b8;
   padding: 0 4px;
   background: transparent;
-  color: #777777;
+  color: var(--color-subtle);
   text-align: left;
 }
 
@@ -7778,6 +7782,24 @@ select {
 
 .footer p {
   margin: 0;
+}
+
+.footer-links {
+  display: inline-flex;
+  gap: 0.65rem;
+  margin-inline-start: 0.85rem;
+  white-space: nowrap;
+}
+
+.footer-links a {
+  color: inherit;
+  font-weight: var(--font-semibold);
+  text-underline-offset: 2px;
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  color: var(--color-text);
 }
 
 .type-badge {
