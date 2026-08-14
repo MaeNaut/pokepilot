@@ -7026,15 +7026,10 @@ select {
 }
 
 .pokemon-share-brand-mark {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 7px;
-  background: #17191a;
-  color: #ffffff;
-  font-size: 0.82rem;
-  font-weight: var(--font-bold);
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
 .pokemon-share-brand strong {
@@ -7416,15 +7411,10 @@ select {
 }
 
 .team-share-brand-mark {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border-radius: 7px;
-  background: #17191a;
-  color: #ffffff;
-  font-size: 0.84rem;
-  font-weight: var(--font-bold);
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .team-share-brand strong {

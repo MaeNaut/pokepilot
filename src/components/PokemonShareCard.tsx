@@ -57,7 +57,13 @@ export function PokemonShareCard({
     >
       <header className="pokemon-share-header">
         <div className="pokemon-share-brand">
-          <span className="pokemon-share-brand-mark" aria-hidden="true">P</span>
+          <img
+            className="pokemon-share-brand-mark"
+            src="/favicon.svg"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
           <strong>PokePilot</strong>
         </div>
         <span className="pokemon-share-regulation">{t("toolbar.regulation")}</span>

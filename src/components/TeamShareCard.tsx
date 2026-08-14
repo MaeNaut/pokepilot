@@ -35,7 +35,13 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
     <article className="team-share-card" aria-label={`${teamName} ${t("share.teamImage")}`}>
       <header className="team-share-header">
         <div className="team-share-brand">
-          <span className="team-share-brand-mark" aria-hidden="true">P</span>
+          <img
+            className="team-share-brand-mark"
+            src="/favicon.svg"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
           <strong>PokePilot</strong>
         </div>
         <div className="team-share-title">
