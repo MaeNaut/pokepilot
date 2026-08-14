@@ -5,6 +5,7 @@ import {
   POKEPILOT_ANALYSIS_CACHE_TTL_MS,
   POKEPILOT_RATE_WINDOW_MS,
   type PokePilotOperations,
+  type PokePilotPostAnalysisCooldown,
   type PokePilotRateLimitDecision,
   type PokePilotRateLimitMode,
   type PokePilotRateLimitReservation,
@@ -88,23 +89,21 @@ const completeRateLimitReservationScript = `
 local completedAt = tonumber(ARGV[1])
 local eventId = ARGV[2]
 local windowMs = tonumber(ARGV[3])
+local clientPolicy = cjson.decode(ARGV[4])
+local ipPolicy = cjson.decode(ARGV[5])
+local cutoff = completedAt - windowMs
 
-local clientUpdated = redis.call(
-  "ZADD",
-  KEYS[1],
-  "XX",
-  "CH",
-  completedAt,
-  eventId
-)
-local ipUpdated = redis.call(
-  "ZADD",
-  KEYS[2],
-  "XX",
-  "CH",
-  completedAt,
-  eventId
-)
+local clientUpdated = 0
+local ipUpdated = 0
+
+if redis.call("ZSCORE", KEYS[1], eventId) then
+  redis.call("ZADD", KEYS[1], "XX", completedAt, eventId)
+  clientUpdated = 1
+end
+if redis.call("ZSCORE", KEYS[2], eventId) then
+  redis.call("ZADD", KEYS[2], "XX", completedAt, eventId)
+  ipUpdated = 1
+end
 
 if clientUpdated > 0 then
   redis.call("PEXPIRE", KEYS[1], windowMs)
@@ -113,7 +112,64 @@ if ipUpdated > 0 then
   redis.call("PEXPIRE", KEYS[2], windowMs)
 end
 
-return { clientUpdated, ipUpdated }
+if clientUpdated == 0 and ipUpdated == 0 then
+  return { clientUpdated, ipUpdated, 0, 0 }
+end
+
+local function retryAfter(key, policy)
+  redis.call("ZREMRANGEBYSCORE", key, "-inf", cutoff)
+  local count = redis.call("ZCARD", key)
+  local cooldownMs = 0
+
+  for _, step in ipairs(policy.cooldownSteps) do
+    if count >= tonumber(step.afterUses) then
+      cooldownMs = tonumber(step.cooldownMs)
+    end
+  end
+
+  local retryMs = 0
+  if cooldownMs > 0 and count > 0 then
+    local lastEvent = redis.call("ZRANGE", key, -1, -1, "WITHSCORES")
+    if #lastEvent >= 2 then
+      retryMs = math.max(
+        0,
+        tonumber(lastEvent[2]) + cooldownMs - completedAt
+      )
+    end
+  end
+
+  if policy.burst then
+    local burstWindowMs = tonumber(policy.burst.windowMs)
+    local burstEvents = redis.call(
+      "ZRANGEBYSCORE",
+      key,
+      "(" .. tostring(completedAt - burstWindowMs),
+      "+inf",
+      "WITHSCORES"
+    )
+    local burstCount = #burstEvents / 2
+
+    if burstCount >= tonumber(policy.burst.maxUses) and #burstEvents >= 2 then
+      retryMs = math.max(
+        retryMs,
+        tonumber(burstEvents[2]) + burstWindowMs - completedAt
+      )
+    end
+  end
+
+  return math.max(0, retryMs)
+end
+
+local clientRetryMs = retryAfter(KEYS[1], clientPolicy)
+local ipRetryMs = retryAfter(KEYS[2], ipPolicy)
+
+if clientRetryMs <= 0 and ipRetryMs <= 0 then
+  return { clientUpdated, ipUpdated, 0, 0 }
+end
+if clientRetryMs >= ipRetryMs then
+  return { clientUpdated, ipUpdated, math.ceil(clientRetryMs), 1 }
+end
+return { clientUpdated, ipUpdated, math.ceil(ipRetryMs), 2 }
 `;
 
 const cancelRateLimitReservationScript = `
@@ -257,16 +313,33 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
   async completeReservation(
     reservation: PokePilotRateLimitReservation,
     completedAt: number,
-  ) {
-    await this.redis.eval<[string, string, string], [number, number]>(
+  ): Promise<PokePilotPostAnalysisCooldown> {
+    const policies = getPokePilotRatePolicies(reservation.mode);
+    const result = await this.redis.eval<
+      [string, string, string, string, string],
+      [number, number, number, number]
+    >(
       completeRateLimitReservationScript,
       this.usageKeys(reservation.requester, reservation.mode),
       [
         String(completedAt),
         reservation.id,
         String(POKEPILOT_RATE_WINDOW_MS),
+        JSON.stringify(policies.client),
+        JSON.stringify(policies.ip),
       ],
     );
+
+    const retryAfterMs = Math.max(0, Number(result[2]) || 0);
+    return {
+      retryAfterMs,
+      scope:
+        retryAfterMs <= 0
+          ? null
+          : Number(result[3]) === 2
+            ? "ip"
+            : "client",
+    };
   }
 
   async cancelReservation(reservation: PokePilotRateLimitReservation) {

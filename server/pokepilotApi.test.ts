@@ -477,6 +477,10 @@ describe("PokePilot server API", () => {
     const limited = await handlePokePilotAnalysis(validRequest, options);
 
     expect(first.status).toBe(200);
+    expect(first.body).toMatchObject({
+      ok: true,
+      metadata: { retryAfterSeconds: 10 },
+    });
     expect(limited.body).toMatchObject({
       ok: false,
       error: {

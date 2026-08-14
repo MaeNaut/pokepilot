@@ -186,7 +186,7 @@ export function BuilderToolbar({
 
   useEffect(() => {
     if (isShowdownPanelOpen) {
-      showdownTextareaRef.current?.focus();
+      showdownTextareaRef.current?.focus({ preventScroll: true });
       showdownTextareaRef.current?.select();
     }
   }, [isShowdownPanelOpen]);
@@ -382,6 +382,7 @@ export function BuilderToolbar({
           <textarea
             className="showdown-textarea"
             ref={showdownTextareaRef}
+            inputMode="none"
             value={showdownText}
             placeholder={t("toolbar.pasteShowdown")}
             onChange={(event) => setShowdownText(event.target.value)}

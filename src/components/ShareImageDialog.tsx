@@ -80,8 +80,16 @@ export function ShareImageDialog({
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    const previousActiveElement =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const previousScrollPosition = {
+      x: window.scrollX,
+      y: window.scrollY,
+    };
     document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
+    closeButtonRef.current?.focus({ preventScroll: true });
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape") {
@@ -94,6 +102,10 @@ export function ShareImageDialog({
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      previousActiveElement?.focus({ preventScroll: true });
+      window.requestAnimationFrame(() => {
+        window.scrollTo(previousScrollPosition.x, previousScrollPosition.y);
+      });
     };
   }, [onClose]);
 

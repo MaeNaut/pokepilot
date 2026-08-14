@@ -612,6 +612,174 @@ export function completeCopilotRecommendationAudit(
   };
 }
 
+const defensiveStrategyFactKinds = new Set<CopilotStrategyFact["kind"]>([
+  "weak-to",
+  "resists",
+  "immune-to",
+]);
+
+function textMentionsSetState(
+  text: string,
+  set: CopilotAnalysisRequest["sets"][number],
+  state: CopilotStrategyPokemonState,
+) {
+  if (state === "mega") {
+    return Boolean(
+      set.megaEvolution &&
+        textMentionsDisplayName(text, set.megaEvolution.displayName),
+    );
+  }
+
+  return textMentionsDisplayName(text, set.displayName);
+}
+
+function factMatchesDefensiveProfile(
+  fact: CopilotStrategyFact,
+  request: CopilotAnalysisRequest,
+) {
+  const profileValues = getFactProfileValues(fact, request);
+  return Boolean(
+    profileValues?.some(
+      (value) => normalizeId(value) === normalizeId(fact.valueId),
+    ),
+  );
+}
+
+function textDiscussesSpeedOrder(text: string) {
+  return /\b(?:fast|faster|slow|slower|speed|speed-tie|outspeed|before|after)\b|(?:\uBE60\uB974|\uB290\uB9AC|\uC2A4\uD53C\uB4DC|\uC18D\uB3C4|\uCD94\uC6D4|\uBA3C\uC800|\uB098\uC911)/i.test(
+    text,
+  );
+}
+
+/**
+ * Repair only unambiguous private-audit bookkeeping for Pokemon analysis.
+ * Public prose still has to pass the same exact deterministic validation.
+ */
+function completePokemonRecommendationAudit(
+  output: CopilotGroundedModelOutput,
+  request: CopilotAnalysisRequest,
+): CopilotGroundedModelOutput {
+  if (request.scope !== "pokemon") {
+    return output;
+  }
+
+  const recommendationById = new Map(
+    output.analysis.recommendations.map((recommendation) => [
+      normalizeId(recommendation.id),
+      recommendation,
+    ]),
+  );
+  const evidence = output.strategyAudit.recommendationEvidence.map((entry) => ({
+    ...entry,
+    factIds: [...entry.factIds],
+  }));
+  const linkedTextsByFactId = new Map<string, string[]>();
+
+  evidence.forEach((entry) => {
+    const recommendation = recommendationById.get(
+      normalizeId(entry.recommendationId),
+    );
+    if (!recommendation) return;
+
+    const text = `${recommendation.title}\n${recommendation.reason}`;
+    entry.factIds.forEach((factId) => {
+      const texts = linkedTextsByFactId.get(factId) ?? [];
+      texts.push(text);
+      linkedTextsByFactId.set(factId, texts);
+    });
+  });
+
+  const facts = output.strategyAudit.facts.map((fact) => {
+    if (
+      !defensiveStrategyFactKinds.has(fact.kind) ||
+      factMatchesDefensiveProfile(fact, request)
+    ) {
+      return { ...fact };
+    }
+
+    const linkedTexts = linkedTextsByFactId.get(fact.id) ?? [];
+    const matchingSets = request.sets.filter((set) => {
+      if (!linkedTexts.some((text) => textMentionsSetState(text, set, fact.state))) {
+        return false;
+      }
+
+      return factMatchesDefensiveProfile(
+        { ...fact, subjectSlotIndex: set.slotIndex },
+        request,
+      );
+    });
+
+    return matchingSets.length === 1
+      ? { ...fact, subjectSlotIndex: matchingSets[0].slotIndex }
+      : { ...fact };
+  });
+  const factById = new Map(facts.map((fact) => [fact.id, fact]));
+
+  evidence.forEach((entry) => {
+    const recommendation = recommendationById.get(
+      normalizeId(entry.recommendationId),
+    );
+    if (!recommendation) return;
+
+    const text = `${recommendation.title}\n${recommendation.reason}`;
+    const linkedFacts = entry.factIds.flatMap((factId) => {
+      const fact = factById.get(factId);
+      return fact ? [fact] : [];
+    });
+
+    request.sets
+      .filter(
+        (set) =>
+          set.slotIndex !== request.selectedSlot &&
+          (textMentionsDisplayName(text, set.displayName) ||
+            Boolean(
+              set.megaEvolution &&
+                textMentionsDisplayName(
+                  text,
+                  set.megaEvolution.displayName,
+                ),
+            )),
+      )
+      .forEach((set) => {
+        if (
+          linkedFacts.some(
+            (fact) =>
+              fact.subjectSlotIndex === set.slotIndex ||
+              fact.objectSlotIndex === set.slotIndex,
+          )
+        ) {
+          return;
+        }
+
+        const directFacts = textDiscussesSpeedOrder(text)
+          ? facts.filter(
+              (fact) =>
+                (fact.kind === "faster-than" ||
+                  fact.kind === "slower-than" ||
+                  fact.kind === "speed-tie") &&
+                ((fact.subjectSlotIndex === request.selectedSlot &&
+                  fact.objectSlotIndex === set.slotIndex) ||
+                  (fact.objectSlotIndex === request.selectedSlot &&
+                    fact.subjectSlotIndex === set.slotIndex)),
+            )
+          : [];
+        if (directFacts.length === 1) {
+          entry.factIds.push(directFacts[0].id);
+          linkedFacts.push(directFacts[0]);
+        }
+      });
+  });
+
+  return {
+    ...output,
+    strategyAudit: {
+      ...output.strategyAudit,
+      facts,
+      recommendationEvidence: evidence,
+    },
+  };
+}
+
 /**
  * Normalize non-semantic audit formatting and remove only surplus interaction
  * move links when at least one action-backed link keeps the interaction valid.
@@ -626,13 +794,17 @@ export function completeCopilotStrategyAudit(
     request,
   );
   if (request.scope === "recommendation") return recommendationOutput;
+  const normalizedOutput = completePokemonRecommendationAudit(
+    recommendationOutput,
+    request,
+  );
 
   const referencedFactIds = new Set(
-    recommendationOutput.strategyAudit.recommendationEvidence.flatMap(
+    normalizedOutput.strategyAudit.recommendationEvidence.flatMap(
       (evidence) => evidence.factIds,
     ),
   );
-  const facts = recommendationOutput.strategyAudit.facts
+  const facts = normalizedOutput.strategyAudit.facts
     .map((fact) =>
       unaryStrategyFactKinds.has(fact.kind) && fact.objectSlotIndex !== -1
         ? { ...fact, objectSlotIndex: -1 }
@@ -655,10 +827,10 @@ export function completeCopilotStrategyAudit(
         (type) => normalizeId(type) === normalizeId(fact.valueId),
       );
     });
-  let interactions = recommendationOutput.strategyAudit.interactions;
+  let interactions = normalizedOutput.strategyAudit.interactions;
   if (request.scope === "team") {
     const planById = new Map(
-      recommendationOutput.strategyAudit.plans.map((plan) => [plan.id, plan]),
+      normalizedOutput.strategyAudit.plans.map((plan) => [plan.id, plan]),
     );
     interactions = interactions.map((interaction) => {
       const plan = planById.get(interaction.planId);
@@ -715,9 +887,9 @@ export function completeCopilotStrategyAudit(
   }
 
   return {
-    ...recommendationOutput,
+    ...normalizedOutput,
     strategyAudit: {
-      ...recommendationOutput.strategyAudit,
+      ...normalizedOutput.strategyAudit,
       interactions,
       facts,
     },

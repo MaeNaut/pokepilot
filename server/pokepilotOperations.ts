@@ -143,6 +143,11 @@ export type PokePilotRateLimitDecision =
       scope: "client" | "ip";
     };
 
+export type PokePilotPostAnalysisCooldown = {
+  retryAfterMs: number;
+  scope: "client" | "ip" | null;
+};
+
 export type PokePilotRunOnceResult<T> = {
   shared: boolean;
   value: T;
@@ -164,7 +169,7 @@ export interface PokePilotOperations {
   completeReservation(
     reservation: PokePilotRateLimitReservation,
     completedAt: number,
-  ): MaybePromise<void>;
+  ): MaybePromise<PokePilotPostAnalysisCooldown>;
   cancelReservation(
     reservation: PokePilotRateLimitReservation,
   ): MaybePromise<void>;
@@ -377,6 +382,30 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
       ...event,
       timestamp: completedAt,
     }));
+
+    const policies = ratePolicies[reservation.mode];
+    const { clientKey, ipKey } = this.getUsageKeys(
+      reservation.requester,
+      reservation.mode,
+    );
+    const clientRetryAfterMs = evaluateRatePolicy(
+      this.usage.get(clientKey) ?? [],
+      completedAt,
+      policies.client,
+    );
+    const ipRetryAfterMs = evaluateRatePolicy(
+      this.usage.get(ipKey) ?? [],
+      completedAt,
+      policies.ip,
+    );
+
+    if (clientRetryAfterMs <= 0 && ipRetryAfterMs <= 0) {
+      return { retryAfterMs: 0, scope: null };
+    }
+
+    return clientRetryAfterMs >= ipRetryAfterMs
+      ? { retryAfterMs: clientRetryAfterMs, scope: "client" as const }
+      : { retryAfterMs: ipRetryAfterMs, scope: "ip" as const };
   }
 
   cancelReservation(reservation: PokePilotRateLimitReservation) {

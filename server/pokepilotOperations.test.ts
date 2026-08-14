@@ -122,7 +122,10 @@ describe("PokePilot operational safeguards", () => {
     const requester = { clientId: "client-a", ipHash: "ip-a" };
     const reservation = reserve(operations, requester, 1_000, "cooldown-test");
 
-    operations.completeReservation(reservation, 9_000);
+    expect(operations.completeReservation(reservation, 9_000)).toEqual({
+      retryAfterMs: POKEPILOT_COOLDOWN_TEST_DURATION_MS,
+      scope: "client",
+    });
 
     expect(operations.reserve(requester, 9_000, "cooldown-test")).toEqual({
       allowed: false,

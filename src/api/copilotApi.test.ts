@@ -42,8 +42,10 @@ describe("hosted PokePilot client", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(requestHostedCopilotAnalysis(request)).resolves.toEqual({
-      ...modelOutput,
-      source: "hosted",
+      analysis: {
+        ...modelOutput,
+        source: "hosted",
+      },
     });
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/pokepilot/analyze",
@@ -52,6 +54,31 @@ describe("hosted PokePilot client", () => {
         body: JSON.stringify(request),
       }),
     );
+  });
+
+  it("preserves a cooldown that begins after a successful analysis", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            analysis: modelOutput,
+            metadata: {
+              model: "gpt-5.6-luna",
+              promptVersion: 44,
+              retryAfterSeconds: 60,
+            },
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    await expect(requestHostedCopilotAnalysis(request)).resolves.toMatchObject({
+      analysis: { source: "hosted" },
+      retryAfterSeconds: 60,
+    });
   });
 
   it("throws a typed error for server failures", async () => {

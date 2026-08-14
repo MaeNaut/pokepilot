@@ -426,7 +426,7 @@ function App() {
       }
 
       setIsThemeMenuOpen(false);
-      themeTriggerRef.current?.focus();
+      themeTriggerRef.current?.focus({ preventScroll: true });
     }
 
     document.addEventListener("pointerdown", closeThemeMenu);
@@ -455,7 +455,7 @@ function App() {
       }
 
       setIsLanguageMenuOpen(false);
-      languageTriggerRef.current?.focus();
+      languageTriggerRef.current?.focus({ preventScroll: true });
     }
 
     document.addEventListener("pointerdown", closeLanguageMenu);
@@ -495,7 +495,7 @@ function App() {
     function handleCopilotDrawerKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape") {
         transitionCopilotDrawer(false);
-        copilotDrawerTriggerRef.current?.focus();
+        copilotDrawerTriggerRef.current?.focus({ preventScroll: true });
         return;
       }
 
@@ -532,13 +532,15 @@ function App() {
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleCopilotDrawerKeyDown);
     window.requestAnimationFrame(() => {
-      getFocusableDrawerElements()[0]?.focus();
+      getFocusableDrawerElements()[0]?.focus({ preventScroll: true });
     });
 
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleCopilotDrawerKeyDown);
-      window.scrollTo(previousScrollPosition.x, previousScrollPosition.y);
+      window.requestAnimationFrame(() => {
+        window.scrollTo(previousScrollPosition.x, previousScrollPosition.y);
+      });
     };
   }, [isCompactDrawerLayout, isCopilotDrawerOpen, transitionCopilotDrawer]);
 
@@ -702,7 +704,7 @@ function App() {
   function selectThemePreference(preference: ThemePreference) {
     setThemePreference(preference);
     setIsThemeMenuOpen(false);
-    themeTriggerRef.current?.focus();
+    themeTriggerRef.current?.focus({ preventScroll: true });
   }
 
   function toggleLanguageMenu() {
@@ -716,7 +718,7 @@ function App() {
   function selectLocale(nextLocale: Locale) {
     setLocale(nextLocale);
     setIsLanguageMenuOpen(false);
-    languageTriggerRef.current?.focus();
+    languageTriggerRef.current?.focus({ preventScroll: true });
   }
 
   function openNewTeamImport() {
@@ -2049,7 +2051,7 @@ function App() {
           aria-label={t("copilot.closePanel")}
           onClick={() => {
             transitionCopilotDrawer(false);
-            copilotDrawerTriggerRef.current?.focus();
+            copilotDrawerTriggerRef.current?.focus({ preventScroll: true });
           }}
         />
         <div

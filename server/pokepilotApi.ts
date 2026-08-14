@@ -40,6 +40,7 @@ export type PokePilotApiResponse =
         cacheStatus: "hit" | "miss" | "shared";
         model: typeof OPENAI_LUNA_MODEL_ID;
         promptVersion: number;
+        retryAfterSeconds?: number;
       };
     }
   | {
@@ -100,6 +101,7 @@ type HostedAnalysisExecution =
       kind: "completed";
       analysis: CopilotModelOutput;
       result: LunaAnalysisResult;
+      retryAfterSeconds?: number;
     }
   | {
       kind: "cooldown";
@@ -131,6 +133,7 @@ function errorResult(
 function successResult(
   analysis: CopilotModelOutput,
   cacheStatus: "hit" | "miss" | "shared",
+  retryAfterSeconds?: number,
 ): PokePilotApiResult {
   return {
     status: 200,
@@ -141,6 +144,7 @@ function successResult(
         cacheStatus,
         model: OPENAI_LUNA_MODEL_ID,
         promptVersion: POKEPILOT_AI_PROMPT_VERSION,
+        ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
       },
     },
   };
@@ -261,23 +265,33 @@ export async function handlePokePilotAnalysis(
           requestValidation.data,
         );
 
-        const completed = {
-          kind: "completed" as const,
-          analysis,
-          result,
-        };
         if (safeguardConfig.cacheEnabled) {
           await operations?.setCached(
             operationsKey,
-            completed.analysis,
+            analysis,
             clock(),
           );
         }
+        let retryAfterSeconds: number | undefined;
         if (reservation && operations) {
-          await operations.completeReservation(reservation, clock());
+          const cooldown = await operations.completeReservation(
+            reservation,
+            clock(),
+          );
+          if (cooldown.retryAfterMs > 0) {
+            retryAfterSeconds = Math.max(
+              1,
+              Math.ceil(cooldown.retryAfterMs / 1_000),
+            );
+          }
           reservation = undefined;
         }
-        return completed;
+        return {
+          kind: "completed" as const,
+          analysis,
+          result,
+          ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
+        };
       } catch (error) {
         if (reservation && operations) {
           try {
@@ -346,7 +360,11 @@ export async function handlePokePilotAnalysis(
       scope: requestValidation.data.scope,
       totalTokens: completed.result.usage.totalTokens,
     });
-    return successResult(completed.analysis, "miss");
+    return successResult(
+      completed.analysis,
+      "miss",
+      completed.retryAfterSeconds,
+    );
   } catch (error) {
     onUpstreamError?.(error);
 

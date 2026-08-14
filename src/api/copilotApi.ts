@@ -7,11 +7,19 @@ import { validateCopilotModelOutput } from "../utils/copilotModelContract";
 type HostedAnalysisEnvelope = {
   ok?: unknown;
   analysis?: unknown;
+  metadata?: {
+    retryAfterSeconds?: unknown;
+  };
   error?: {
     code?: unknown;
     message?: unknown;
     retryAfterSeconds?: unknown;
   };
+};
+
+export type HostedCopilotAnalysisResult = {
+  analysis: CopilotAnalysisResponse;
+  retryAfterSeconds?: number;
 };
 
 export class CopilotApiError extends Error {
@@ -48,7 +56,7 @@ async function readEnvelope(response: Response) {
 export async function requestHostedCopilotAnalysis(
   request: CopilotAnalysisRequest,
   signal?: AbortSignal,
-): Promise<CopilotAnalysisResponse> {
+): Promise<HostedCopilotAnalysisResult> {
   let response: Response;
 
   try {
@@ -93,8 +101,16 @@ export async function requestHostedCopilotAnalysis(
     );
   }
 
+  const retryAfterSeconds =
+    typeof envelope.metadata?.retryAfterSeconds === "number"
+      ? Math.max(1, Math.ceil(envelope.metadata.retryAfterSeconds))
+      : undefined;
+
   return {
-    ...validation.data,
-    source: "hosted",
+    analysis: {
+      ...validation.data,
+      source: "hosted",
+    },
+    ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
   };
 }

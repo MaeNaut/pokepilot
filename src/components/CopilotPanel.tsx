@@ -369,7 +369,13 @@ export function CopilotPanel({
       let fallbackReason: AnalysisState["fallbackReason"];
 
       try {
-        nextResponse = await requestHostedCopilotAnalysis(request);
+        const hostedResult = await requestHostedCopilotAnalysis(request);
+        nextResponse = hostedResult.analysis;
+        if (hostedResult.retryAfterSeconds) {
+          setCooldownUntil(
+            Date.now() + hostedResult.retryAfterSeconds * 1_000,
+          );
+        }
       } catch (error) {
         fallbackReason = classifyHostedAnalysisFailure(error);
         logHostedAnalysisFallback(error, fallbackReason);

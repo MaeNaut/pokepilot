@@ -100,6 +100,10 @@ export function TouchSelectionDialog({
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+    const previousScrollPosition = {
+      x: window.scrollX,
+      y: window.scrollY,
+    };
     const previousBodyOverflow = document.body.style.overflow;
     const previousBodyOverscrollBehavior =
       document.body.style.overscrollBehavior;
@@ -120,7 +124,7 @@ export function TouchSelectionDialog({
           "[data-touch-picker-autofocus]",
         ) ?? dialogRef.current;
 
-      autofocusTarget?.focus();
+      autofocusTarget?.focus({ preventScroll: true });
     });
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
@@ -172,7 +176,10 @@ export function TouchSelectionDialog({
           appRoot.setAttribute("aria-hidden", previousAppRootAriaHidden);
         }
       }
-      previousActiveElement?.focus();
+      previousActiveElement?.focus({ preventScroll: true });
+      window.requestAnimationFrame(() => {
+        window.scrollTo(previousScrollPosition.x, previousScrollPosition.y);
+      });
     };
   }, []);
 

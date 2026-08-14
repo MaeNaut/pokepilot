@@ -105,7 +105,7 @@ export function SavedTeamRow({
       return;
     }
 
-    showdownTextareaRef.current?.focus();
+    showdownTextareaRef.current?.focus({ preventScroll: true });
     showdownTextareaRef.current?.select();
   }, [isShowdownOpen]);
 
@@ -265,6 +265,7 @@ export function SavedTeamRow({
           <strong>{t("team.showdownText")}</strong>
           <textarea
             ref={showdownTextareaRef}
+            inputMode="none"
             value={showdownDraft}
             placeholder={t("team.pasteShowdownHere")}
             onChange={(event) => onShowdownDraftChange(event.target.value)}

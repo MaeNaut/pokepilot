@@ -1226,6 +1226,182 @@ describe("Copilot strategy audit", () => {
     ).toEqual([]);
   });
 
+  it("links a uniquely matching comparison fact to named Pokemon advice", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", ["round"], {
+        stats: { ...zeroStats, speed: 143 },
+      }),
+      createSet(1, "Farigiraf", ["trickroom"], {
+        stats: { ...zeroStats, speed: 72 },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "zoroark-faster",
+          kind: "faster-than",
+          subjectSlotIndex: 0,
+          objectSlotIndex: 1,
+          state: "current",
+          valueId: "",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "round-trigger",
+          planIds: [],
+          interactionIds: [],
+          factIds: [],
+          candidateFactIds: [],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "round-trigger",
+        title: "Use Hisuian Zoroark before Farigiraf",
+        reason: "Hisuian Zoroark is faster than Farigiraf.",
+        priority: "medium",
+      },
+    ];
+    const request = createRequest(pokemonSets, {
+      scope: "pokemon",
+      selectedSlot: 0,
+    });
+    const completed = completeCopilotStrategyAudit(output, request);
+
+    expect(completed.strategyAudit.recommendationEvidence[0].factIds).toEqual([
+      "zoroark-faster",
+    ]);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual(
+      [],
+    );
+  });
+
+  it("does not use a Speed fact to ground unrelated named advice", () => {
+    const pokemonSets = [
+      createSet(0, "Hisuian Zoroark", [], {
+        stats: { ...zeroStats, speed: 143 },
+      }),
+      createSet(1, "Farigiraf", [], {
+        stats: { ...zeroStats, speed: 72 },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "zoroark-faster",
+          kind: "faster-than",
+          subjectSlotIndex: 0,
+          objectSlotIndex: 1,
+          state: "current",
+          valueId: "",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "unsupported-ability",
+          planIds: [],
+          interactionIds: [],
+          factIds: [],
+          candidateFactIds: [],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "unsupported-ability",
+        title: "Use Farigiraf for support",
+        reason: "Farigiraf provides an unspecified defensive benefit.",
+        priority: "medium",
+      },
+    ];
+    const request = createRequest(pokemonSets, {
+      scope: "pokemon",
+      selectedSlot: 0,
+    });
+    const completed = completeCopilotStrategyAudit(output, request);
+
+    expect(completed.strategyAudit.recommendationEvidence[0].factIds).toEqual(
+      [],
+    );
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toContain(
+      "Recommendation unsupported-ability names Farigiraf without fact evidence for slot 1.",
+    );
+  });
+
+  it("rebinds a defensive fact to the only named Pokemon with exact support", () => {
+    const pokemonSets = [
+      createSet(0, "Swampert", [], {
+        defensiveProfile: {
+          weaknesses: [{ type: "grass", multiplier: 4 }],
+          resistances: [],
+          immunities: [],
+        },
+      }),
+      createSet(1, "Sinistcha", [], {
+        defensiveProfile: {
+          weaknesses: [],
+          resistances: [{ type: "grass", multiplier: 0.5 }],
+          immunities: [],
+        },
+      }),
+    ];
+    const output = createOutput({
+      plans: [],
+      facts: [
+        {
+          id: "swampert-weak-grass",
+          kind: "weak-to",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "grass",
+        },
+        {
+          id: "sinistcha-resists-grass",
+          kind: "resists",
+          subjectSlotIndex: 0,
+          objectSlotIndex: -1,
+          state: "current",
+          valueId: "grass",
+        },
+      ],
+      recommendationEvidence: [
+        {
+          recommendationId: "grass-cover",
+          planIds: [],
+          interactionIds: [],
+          factIds: ["swampert-weak-grass", "sinistcha-resists-grass"],
+          candidateFactIds: [],
+        },
+      ],
+    });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [
+      {
+        id: "grass-cover",
+        title: "Cover Swampert's Grass weakness with Sinistcha",
+        reason: "Sinistcha resists Grass attacks aimed at Swampert.",
+        priority: "medium",
+      },
+    ];
+    const request = createRequest(pokemonSets, {
+      scope: "pokemon",
+      selectedSlot: 0,
+    });
+    const completed = completeCopilotStrategyAudit(output, request);
+
+    expect(completed.strategyAudit.facts[1].subjectSlotIndex).toBe(1);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual(
+      [],
+    );
+  });
+
   it("rejects a resistance recorded as an immunity in Pokemon analysis", () => {
     const pokemonSet = createSet(0, "Sinistcha", ["matchagotcha"], {
       defensiveProfile: {
@@ -1266,15 +1442,13 @@ describe("Copilot strategy audit", () => {
       },
     ];
 
-    expect(
-      validateCopilotStrategyAuditForRequest(
-        output,
-        createRequest([pokemonSet], {
-          scope: "pokemon",
-          selectedSlot: 0,
-        }),
-      ),
-    ).toContain(
+    const request = createRequest([pokemonSet], {
+      scope: "pokemon",
+      selectedSlot: 0,
+    });
+    const completed = completeCopilotStrategyAudit(output, request);
+
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toContain(
       "strategyAudit.facts[0] contradicts the supplied defensive profile.",
     );
   });

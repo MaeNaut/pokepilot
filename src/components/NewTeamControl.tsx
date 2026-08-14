@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileImport, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useLocalization } from "../i18n/useLocalization";
@@ -30,6 +31,16 @@ export function NewTeamControl({
   onClose,
 }: NewTeamControlProps) {
   const { t } = useLocalization();
+  const showdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (!isImportOpen) {
+      return;
+    }
+
+    showdownTextareaRef.current?.focus({ preventScroll: true });
+    showdownTextareaRef.current?.select();
+  }, [isImportOpen]);
 
   return (
     <div className="new-team-control">
@@ -77,7 +88,8 @@ export function NewTeamControl({
             <strong>{t("team.importShowdown")}</strong>
           </div>
           <textarea
-            autoFocus
+            ref={showdownTextareaRef}
+            inputMode="none"
             aria-label={t("team.showdownTeamText")}
             value={showdownDraft}
             placeholder={t("team.pasteShowdown")}

@@ -18,6 +18,7 @@ class FakeRedisClient {
     value: unknown;
   }> = [];
   rateResult: [number, number, number] = [1, 0, 0];
+  completeResult: [number, number, number, number] = [1, 1, 0, 0];
 
   async del(...keys: string[]) {
     let deleted = 0;
@@ -41,6 +42,10 @@ class FakeRedisClient {
         return 1 as TData;
       }
       return 0 as TData;
+    }
+
+    if (script.includes("local completedAt")) {
+      return this.completeResult as TData;
     }
 
     return (script.includes("ZREMRANGEBYSCORE")
@@ -129,7 +134,10 @@ describe("Upstash PokePilot operations", () => {
       throw new Error("Expected a shared rate-limit reservation.");
     }
 
-    await operations.completeReservation(decision.reservation, 18_000);
+    redis.completeResult = [1, 1, 10_000, 1];
+    await expect(
+      operations.completeReservation(decision.reservation, 18_000),
+    ).resolves.toEqual({ retryAfterMs: 10_000, scope: "client" });
     await operations.cancelReservation(decision.reservation);
 
     const completeCall = redis.evalCalls.find((call) =>
@@ -139,11 +147,11 @@ describe("Upstash PokePilot operations", () => {
       call.script.includes('"ZREM"'),
     );
     expect(completeCall).toMatchObject({
-      args: [
+      args: expect.arrayContaining([
         "18000",
         decision.reservation.id,
         String(24 * 60 * 60 * 1_000),
-      ],
+      ]),
       keys: [
         "test:pokepilot:usage:enforced:client:client-a",
         "test:pokepilot:usage:enforced:ip:hashed-ip",
