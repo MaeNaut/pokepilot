@@ -1,6 +1,7 @@
 import type { CopilotAnalysisRequest } from "./copilotAnalysis.js";
 import { pokemonTypes } from "../types.js";
 import { copilotResponsibilityIds } from "./copilotResponsibilities.js";
+import { isRecord } from "./typeGuards.js";
 
 export type CopilotRequestValidation =
   | { success: true; data: CopilotAnalysisRequest; errors: [] }
@@ -21,10 +22,6 @@ const requestKeys = new Set([
   "mechanics",
   "diagnostics",
 ]);
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function validateBoundedStructure(
   value: unknown,

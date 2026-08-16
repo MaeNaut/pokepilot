@@ -1,11 +1,7 @@
 import { fetchPokemon } from "../api/pokeApi";
 import { fetchItem } from "../api/showdownCatalog";
 import { normalizeShowdownId } from "../api/showdownIds";
-import {
-  CHAMPIONS_MAX_EV_PER_STAT,
-  CHAMPIONS_MAX_EV_TOTAL,
-  defaultEvs,
-} from "../data/natures";
+import { normalizeStatPointSpread } from "../data/natures";
 import { ACTIVE_TEAM_SIZE } from "../data/teamLimits";
 import type {
   PokemonIndexEntry,
@@ -45,32 +41,7 @@ const defaultImportServices: ShowdownImportServices = {
 export function normalizeImportedEvs(
   evs: Partial<TeamBuildState["evsBySlot"][number]>,
 ) {
-  const stats = [
-    "hp",
-    "attack",
-    "defense",
-    "specialAttack",
-    "specialDefense",
-    "speed",
-  ] as const;
-  let remaining = CHAMPIONS_MAX_EV_TOTAL;
-
-  return stats.reduce(
-    (normalized, stat) => {
-      const value = Math.max(
-        0,
-        Math.min(CHAMPIONS_MAX_EV_PER_STAT, evs[stat] ?? 0, remaining),
-      );
-
-      remaining -= value;
-
-      return {
-        ...normalized,
-        [stat]: value,
-      };
-    },
-    defaultEvs,
-  );
+  return normalizeStatPointSpread(evs);
 }
 
 export function resolveImportedPokemonId(

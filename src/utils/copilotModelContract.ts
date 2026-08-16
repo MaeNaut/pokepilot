@@ -1,8 +1,55 @@
 import type { CopilotAnalysisResponse } from "./copilotAnalysis.js";
+import { isRecord } from "./typeGuards.js";
 
 export type CopilotModelOutput = Omit<CopilotAnalysisResponse, "source">;
 
-export type CopilotStrategyPhase = "opening" | "midgame" | "endgame";
+const copilotStrategyPhases = ["opening", "midgame", "endgame"] as const;
+const copilotStrategyPokemonStates = ["current", "mega"] as const;
+const copilotStrategyInteractionKinds = [
+  "ally-target",
+  "shared-move",
+  "move-ability",
+  "move-item",
+  "field-control",
+  "positioning",
+  "deception",
+  "other",
+] as const;
+const copilotStrategyFactKinds = [
+  "move-owner",
+  "ability-owner",
+  "item-owner",
+  "mega-option",
+  "weak-to",
+  "resists",
+  "immune-to",
+  "faster-than",
+  "slower-than",
+  "speed-tie",
+] as const;
+const copilotRecommendationCandidateFactKinds = [
+  "type",
+  "ability",
+  "common-move",
+  "common-item",
+  "common-nature",
+  "speed-tier",
+  "usage-rank",
+  "requires-mega-stone",
+  "responsibility",
+  "weak-to",
+  "resists-team-threat",
+  "amplifies-team-threat",
+  "adds-unanswered-weakness",
+  "covers-type",
+  "role-contribution",
+  "role-redundancy",
+  "concept-synergy",
+  "missing-concept-synergy",
+  "conflict",
+] as const;
+
+export type CopilotStrategyPhase = (typeof copilotStrategyPhases)[number];
 
 export type CopilotStrategyAction = {
   phase: CopilotStrategyPhase;
@@ -19,17 +66,11 @@ export type CopilotStrategyPlan = {
   actions: CopilotStrategyAction[];
 };
 
-export type CopilotStrategyPokemonState = "current" | "mega";
+export type CopilotStrategyPokemonState =
+  (typeof copilotStrategyPokemonStates)[number];
 
 export type CopilotStrategyInteractionKind =
-  | "ally-target"
-  | "shared-move"
-  | "move-ability"
-  | "move-item"
-  | "field-control"
-  | "positioning"
-  | "deception"
-  | "other";
+  (typeof copilotStrategyInteractionKinds)[number];
 
 export type CopilotStrategyInteractionParticipant = {
   slotIndex: number;
@@ -49,16 +90,7 @@ export type CopilotStrategyInteraction = {
 };
 
 export type CopilotStrategyFactKind =
-  | "move-owner"
-  | "ability-owner"
-  | "item-owner"
-  | "mega-option"
-  | "weak-to"
-  | "resists"
-  | "immune-to"
-  | "faster-than"
-  | "slower-than"
-  | "speed-tie";
+  (typeof copilotStrategyFactKinds)[number];
 
 export type CopilotStrategyFact = {
   id: string;
@@ -70,25 +102,7 @@ export type CopilotStrategyFact = {
 };
 
 export type CopilotRecommendationCandidateFactKind =
-  | "type"
-  | "ability"
-  | "common-move"
-  | "common-item"
-  | "common-nature"
-  | "speed-tier"
-  | "usage-rank"
-  | "requires-mega-stone"
-  | "responsibility"
-  | "weak-to"
-  | "resists-team-threat"
-  | "amplifies-team-threat"
-  | "adds-unanswered-weakness"
-  | "covers-type"
-  | "role-contribution"
-  | "role-redundancy"
-  | "concept-synergy"
-  | "missing-concept-synergy"
-  | "conflict";
+  (typeof copilotRecommendationCandidateFactKinds)[number];
 
 export type CopilotRecommendationCandidateFact = {
   id: string;
@@ -188,7 +202,7 @@ const strategyActionJsonSchema = {
   properties: {
     phase: {
       type: "string",
-      enum: ["opening", "midgame", "endgame"],
+      enum: copilotStrategyPhases,
     },
     actorSlotIndex: { type: "integer", minimum: 0, maximum: 11 },
     moveId: { type: "string" },
@@ -246,7 +260,7 @@ const strategyInteractionParticipantJsonSchema = {
     slotIndex: { type: "integer", minimum: 0, maximum: 11 },
     state: {
       type: "string",
-      enum: ["current", "mega"],
+      enum: copilotStrategyPokemonStates,
       description:
         "current is the exact supplied set state, including an already-Mega set; mega is only a projected megaEvolution after activation.",
     },
@@ -286,20 +300,11 @@ const strategyInteractionJsonSchema = {
       type: "string",
       description:
         "shared-move requires the exact same canonical selected move and simultaneous Doubles users; it never means merely similar moves.",
-      enum: [
-        "ally-target",
-        "shared-move",
-        "move-ability",
-        "move-item",
-        "field-control",
-        "positioning",
-        "deception",
-        "other",
-      ],
+      enum: copilotStrategyInteractionKinds,
     },
     phase: {
       type: "string",
-      enum: ["opening", "midgame", "endgame"],
+      enum: copilotStrategyPhases,
     },
     activeSlotIndexes: {
       type: "array",
@@ -331,24 +336,13 @@ const strategyFactJsonSchema = {
     id: { type: "string" },
     kind: {
       type: "string",
-      enum: [
-        "move-owner",
-        "ability-owner",
-        "item-owner",
-        "mega-option",
-        "weak-to",
-        "resists",
-        "immune-to",
-        "faster-than",
-        "slower-than",
-        "speed-tie",
-      ],
+      enum: copilotStrategyFactKinds,
     },
     subjectSlotIndex: { type: "integer", minimum: 0, maximum: 11 },
     objectSlotIndex: { type: "integer", minimum: -1, maximum: 11 },
     state: {
       type: "string",
-      enum: ["current", "mega"],
+      enum: copilotStrategyPokemonStates,
       description:
         "current is the exact supplied set state; mega is only a projected megaEvolution after activation. A mega-option fact always uses current.",
     },
@@ -369,27 +363,7 @@ const recommendationCandidateFactJsonSchema = {
     candidateId: { type: "string" },
     kind: {
       type: "string",
-      enum: [
-        "type",
-        "ability",
-        "common-move",
-        "common-item",
-        "common-nature",
-        "speed-tier",
-        "usage-rank",
-        "requires-mega-stone",
-        "responsibility",
-        "weak-to",
-        "resists-team-threat",
-        "amplifies-team-threat",
-        "adds-unanswered-weakness",
-        "covers-type",
-        "role-contribution",
-        "role-redundancy",
-        "concept-synergy",
-        "missing-concept-synergy",
-        "conflict",
-      ],
+      enum: copilotRecommendationCandidateFactKinds,
     },
     valueId: { type: "string" },
   },
@@ -541,55 +515,15 @@ const recommendationEvidenceKeys = new Set([
   "factIds",
   "candidateFactIds",
 ]);
-const strategyPhases = new Set(["opening", "midgame", "endgame"]);
-const strategyPokemonStates = new Set(["current", "mega"]);
-const strategyInteractionKinds = new Set([
-  "ally-target",
-  "shared-move",
-  "move-ability",
-  "move-item",
-  "field-control",
-  "positioning",
-  "deception",
-  "other",
-]);
-const strategyFactKinds = new Set([
-  "move-owner",
-  "ability-owner",
-  "item-owner",
-  "mega-option",
-  "weak-to",
-  "resists",
-  "immune-to",
-  "faster-than",
-  "slower-than",
-  "speed-tie",
-]);
-const recommendationCandidateFactKinds = new Set([
-  "type",
-  "ability",
-  "common-move",
-  "common-item",
-  "common-nature",
-  "speed-tier",
-  "usage-rank",
-  "requires-mega-stone",
-  "responsibility",
-  "weak-to",
-  "resists-team-threat",
-  "amplifies-team-threat",
-  "adds-unanswered-weakness",
-  "covers-type",
-  "role-contribution",
-  "role-redundancy",
-  "concept-synergy",
-  "missing-concept-synergy",
-  "conflict",
-]);
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+const strategyPhases = new Set<string>(copilotStrategyPhases);
+const strategyPokemonStates = new Set<string>(copilotStrategyPokemonStates);
+const strategyInteractionKinds = new Set<string>(
+  copilotStrategyInteractionKinds,
+);
+const strategyFactKinds = new Set<string>(copilotStrategyFactKinds);
+const recommendationCandidateFactKinds = new Set<string>(
+  copilotRecommendationCandidateFactKinds,
+);
 
 function validateStringArray(
   value: unknown,

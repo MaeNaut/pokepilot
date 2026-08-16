@@ -4,23 +4,30 @@ import {
   useRef,
   useState,
 } from "react";
-import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import type { CalculatorPokemonOption } from "../calculator/calculatorEditorTypes";
 import type {
   CandidateFilterOption,
   CandidateFilterPicker,
-} from "../components/CandidateFilterPanel";
+} from "../utils/candidateFilterOptions";
 import { useLocalization } from "../i18n/useLocalization";
 import type {
   PokemonCandidateFilters,
-  PokemonCandidateFilterValue,
   PokemonMove,
   PokemonType,
 } from "../types";
 import {
+  createEmptyPokemonCandidateFilters,
   matchesPokemonCandidateFilters,
   togglePokemonTypeFilter,
 } from "../utils/pokemonCandidateFilters";
+import {
+  filterCandidateOptionsByQuery,
+  getCandidateAbilityOptions,
+  getCandidateMoveOptions,
+  getSelectedCandidateMoveOptions,
+  indexCandidateMoves,
+} from "../utils/candidateFilterOptions";
+import { getNextCircularIndex } from "../utils/optionNavigation";
 import { useDismissOnOutsidePointer } from "./useDismissOnOutsidePointer";
 import { useIncrementalOptions } from "./useIncrementalOptions";
 
@@ -32,30 +39,6 @@ type UseCalculatorCandidateFiltersOptions = {
   closeOtherPicker: () => void;
 };
 
-function createEmptyCandidateFilters(): PokemonCandidateFilters {
-  return {
-    types: [],
-    ability: null,
-    moves: [],
-  };
-}
-
-function getNextIndex(
-  currentIndex: number,
-  optionCount: number,
-  direction: 1 | -1,
-) {
-  if (optionCount === 0) {
-    return -1;
-  }
-
-  if (currentIndex < 0) {
-    return direction > 0 ? 0 : optionCount - 1;
-  }
-
-  return (currentIndex + direction + optionCount) % optionCount;
-}
-
 export function useCalculatorCandidateFilters({
   pokemonOptions,
   candidateMoveIndex,
@@ -66,7 +49,7 @@ export function useCalculatorCandidateFilters({
   const { gameName } = useLocalization();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState<PokemonCandidateFilters>(
-    createEmptyCandidateFilters,
+    createEmptyPokemonCandidateFilters,
   );
   const [openPicker, setOpenPicker] =
     useState<CandidateFilterPicker | null>(null);
@@ -89,125 +72,39 @@ export function useCalculatorCandidateFilters({
     [filters, pokemonOptions],
   );
 
-  const abilityOptions = useMemo(() => {
-    const optionsById = new Map<string, PokemonCandidateFilterValue>();
-    const filtersWithoutAbility = { ...filters, ability: null };
-
-    for (const option of pokemonOptions) {
-      if (
-        !matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          filtersWithoutAbility,
-        )
-      ) {
-        continue;
-      }
-
-      for (const ability of option.abilityOptions) {
-        optionsById.set(ability.id, ability);
-      }
-    }
-
-    return [...optionsById.values()].sort((first, second) =>
-      first.name.localeCompare(second.name),
-    );
-  }, [filters, pokemonOptions]);
+  const abilityOptions = useMemo(
+    () => getCandidateAbilityOptions(pokemonOptions, filters),
+    [filters, pokemonOptions],
+  );
 
   const moveById = useMemo(
-    () =>
-      new Map(
-        candidateMoveIndex.map((move) => [
-          normalizeShowdownId(move.id),
-          move,
-        ]),
-      ),
+    () => indexCandidateMoves(candidateMoveIndex),
     [candidateMoveIndex],
   );
 
   const selectedMoveOptions = useMemo(
-    () =>
-      filters.moves.map((filter): CandidateFilterOption => {
-        const move = moveById.get(filter.id);
-
-        return {
-          ...filter,
-          type: move?.type,
-          power: move?.power,
-        };
-      }),
-    [filters.moves, moveById],
+    () => getSelectedCandidateMoveOptions(filters, moveById),
+    [filters, moveById],
   );
 
-  const moveOptions = useMemo(() => {
-    const editedMoveIndex = Math.min(
-      moveFilterSlot ?? filters.moves.length,
-      filters.moves.length,
-    );
-    const retainedMoves = filters.moves.filter(
-      (_, moveIndex) => moveIndex !== editedMoveIndex,
-    );
-    const filtersWithoutEditedMove = {
-      ...filters,
-      moves: retainedMoves,
-    };
-    const selectedMoveIds = new Set(retainedMoves.map((move) => move.id));
-    const moveIds = new Set<string>();
+  const moveOptions = useMemo(
+    () =>
+      getCandidateMoveOptions(
+        pokemonOptions,
+        filters,
+        moveFilterSlot,
+        moveById,
+        (moveId, fallback) => gameName("moves", moveId, fallback),
+      ),
+    [filters, gameName, moveById, moveFilterSlot, pokemonOptions],
+  );
 
-    for (const option of pokemonOptions) {
-      if (
-        !matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          filtersWithoutEditedMove,
-        )
-      ) {
-        continue;
-      }
-
-      for (const moveId of option.moveIds) {
-        if (!selectedMoveIds.has(moveId)) {
-          moveIds.add(moveId);
-        }
-      }
-    }
-
-    return [...moveIds]
-      .map((moveId): CandidateFilterOption => {
-        const move = moveById.get(moveId);
-
-        return {
-          id: moveId,
-          name: gameName(
-            "moves",
-            moveId,
-            move?.name ?? formatIdLabel(moveId),
-          ),
-          type: move?.type,
-          power: move?.power,
-        };
-      })
-      .sort((first, second) => first.name.localeCompare(second.name));
-  }, [filters, gameName, moveById, moveFilterSlot, pokemonOptions]);
-
-  const normalizedQuery = query.trim().toLowerCase();
   const matchingOptions = useMemo(() => {
     const options: CandidateFilterOption[] =
       openPicker === "ability" ? abilityOptions : moveOptions;
 
-    return options.filter(
-      (option) =>
-        !normalizedQuery ||
-        option.name.toLowerCase().includes(normalizedQuery) ||
-        option.id.includes(normalizedQuery),
-    );
-  }, [abilityOptions, moveOptions, normalizedQuery, openPicker]);
+    return filterCandidateOptionsByQuery(options, query);
+  }, [abilityOptions, moveOptions, openPicker, query]);
 
   const {
     limit,
@@ -229,13 +126,13 @@ export function useCalculatorCandidateFilters({
   }, [
     matchingOptions.length,
     moveFilterSlot,
-    normalizedQuery,
     openPicker,
+    query,
     resetOptions,
   ]);
 
   useEffect(() => {
-    setFilters(createEmptyCandidateFilters());
+    setFilters(createEmptyPokemonCandidateFilters());
     setOpenPicker(null);
     setMoveFilterSlot(null);
     setQuery("");
@@ -312,7 +209,7 @@ export function useCalculatorCandidateFilters({
       Boolean(filters.moves[moveFilterSlot]);
 
     setActiveOptionIndex((current) => {
-      const nextIndex = getNextIndex(
+      const nextIndex = getNextCircularIndex(
         current,
         matchingOptions.length + (hasClearMoveOption ? 1 : 0),
         direction,
@@ -330,7 +227,7 @@ export function useCalculatorCandidateFilters({
   }
 
   function clearFilters() {
-    setFilters(createEmptyCandidateFilters());
+    setFilters(createEmptyPokemonCandidateFilters());
     closePicker();
   }
 

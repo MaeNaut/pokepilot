@@ -1,8 +1,6 @@
 import {
-  CHAMPIONS_MAX_EV_PER_STAT,
-  CHAMPIONS_MAX_EV_TOTAL,
   defaultEvs,
-  statKeys,
+  normalizeStatPointSpread,
 } from "../data/natures";
 import type { SmogonUsageSet } from "../api/smogonUsage";
 import { resolveSmogonUsageMoveIds } from "../api/smogonUsage";
@@ -16,24 +14,6 @@ export type CalculatorUsageBuild = {
   evs: StatBlock;
   moveIds: string[];
 };
-
-function normalizeUsageEvs(evs: Partial<StatBlock>): StatBlock {
-  let remaining = CHAMPIONS_MAX_EV_TOTAL;
-
-  return statKeys.reduce<StatBlock>(
-    (normalized, stat) => {
-      const value = Math.max(
-        0,
-        Math.min(CHAMPIONS_MAX_EV_PER_STAT, evs[stat] ?? 0, remaining),
-      );
-
-      normalized[stat] = value;
-      remaining -= value;
-      return normalized;
-    },
-    { ...defaultEvs },
-  );
-}
 
 function resolveUsageAbility(member: TeamMember, usageSet: SmogonUsageSet) {
   if (!usageSet.ability) {
@@ -88,7 +68,7 @@ export function createUsageCalculatorBuild(
     ability: resolveUsageAbility(member, usageSet),
     natureId: usageSet.nature?.toLowerCase() ?? fallback.natureId,
     evs: usageSet.evs
-      ? normalizeUsageEvs(usageSet.evs)
+      ? normalizeStatPointSpread(usageSet.evs)
       : fallback.evs,
     moveIds: usageSet.moveIds.length
       ? [...resolvedMoveIds, "", "", "", ""].slice(0, 4)

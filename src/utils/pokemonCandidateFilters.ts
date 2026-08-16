@@ -10,11 +10,16 @@ export type PokemonCandidate = {
   moveIds: readonly string[];
 };
 
-export const emptyPokemonCandidateFilters: PokemonCandidateFilters = {
-  types: [],
-  ability: null,
-  moves: [],
-};
+export function createEmptyPokemonCandidateFilters(): PokemonCandidateFilters {
+  return {
+    types: [],
+    ability: null,
+    moves: [],
+  };
+}
+
+export const emptyPokemonCandidateFilters =
+  createEmptyPokemonCandidateFilters();
 
 export function matchesPokemonTypeFilters(
   candidateTypes: readonly PokemonType[],

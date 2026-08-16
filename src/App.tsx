@@ -13,14 +13,12 @@ import {
   faCheck,
   faChevronLeft,
   faChevronRight,
-  faCalculator,
   faDesktop,
   faFloppyDisk,
   faLanguage,
   faList,
   faMoon,
   faSun,
-  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "./api/pokeApi";
 import { fetchItem } from "./api/showdownCatalog";
@@ -30,11 +28,14 @@ import {
   resolveSmogonUsageMoveIds,
 } from "./api/smogonUsage";
 import { isPokemonLegal } from "./api/showdownLegality";
-import { CopilotPanel } from "./components/CopilotPanel";
 import { NewTeamControl } from "./components/NewTeamControl";
 import { SavedTeamRow } from "./components/SavedTeamRow";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
+import {
+  AppModeControl,
+  BattleFormatControl,
+} from "./components/HeaderModeControls";
 import {
   ACTIVE_TEAM_SIZE,
   MAX_SAVED_TEAMS,
@@ -101,16 +102,18 @@ import { useLocalization } from "./i18n/useLocalization";
 import type { Locale } from "./i18n/gameTranslations";
 import { useTheme } from "./theme/useTheme";
 import type { ThemePreference } from "./theme/theme";
-import {
-  battleFormats,
-  type BattleFormat,
-} from "./battleFormat/battleFormat";
 import { useBattleFormat } from "./battleFormat/useBattleFormat";
 import { useAppMode } from "./appMode/useAppMode";
 
 const Calculator = lazy(() =>
   import("./components/Calculator").then((module) => ({
     default: module.Calculator,
+  })),
+);
+
+const CopilotPanel = lazy(() =>
+  import("./components/CopilotPanel").then((module) => ({
+    default: module.CopilotPanel,
   })),
 );
 
@@ -198,6 +201,9 @@ function App() {
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isCopilotDrawerOpen, setIsCopilotDrawerOpen] = useState(false);
+  const [hasOpenedCopilotPanel, setHasOpenedCopilotPanel] = useState(
+    !isCompactDrawerLayout,
+  );
   const [isCopilotDrawerTransitioning, setIsCopilotDrawerTransitioning] =
     useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
@@ -251,6 +257,13 @@ function App() {
       copilotDrawerTransitionTimeoutRef.current = null;
     }, 240);
   }, []);
+
+  useEffect(() => {
+    if (!isCompactDrawerLayout || isCopilotDrawerOpen) {
+      setHasOpenedCopilotPanel(true);
+    }
+  }, [isCompactDrawerLayout, isCopilotDrawerOpen]);
+
   const analysisBuildState = teamBuildState.getBuildStateSnapshot();
   const pokemonSelectionContextFingerprint = JSON.stringify({
     activeSavedTeamId,
@@ -1749,111 +1762,21 @@ function App() {
             </div>
           ) : null}
             </nav>
-            <div className="header-format-controls">
-              <button
-                className={`battle-format-switch is-${battleFormat}`}
-                type="button"
-                aria-description={t(
-                  battleFormat === "singles"
-                    ? "battleFormat.switchToDoubles"
-                    : "battleFormat.switchToSingles",
-                )}
-                title={t(
-                  battleFormat === "singles"
-                    ? "battleFormat.switchToDoubles"
-                    : "battleFormat.switchToSingles",
-                )}
-                onClick={() =>
-                  setBattleFormat(
-                    (battleFormat === "singles"
-                      ? "doubles"
-                      : "singles") satisfies BattleFormat,
-                  )
-                }
-              >
-                {battleFormats.map((format) => (
-                  <span
-                    className={`battle-format-option${
-                      battleFormat === format ? " is-active" : ""
-                    }`}
-                    key={format}
-                  >
-                    {t(
-                      format === "singles"
-                        ? "battleFormat.singles"
-                        : "battleFormat.doubles",
-                    )}
-                  </span>
-                ))}
-              </button>
-              <button
-                className="battle-format-compact-toggle"
-                type="button"
-                aria-description={t(
-                  battleFormat === "singles"
-                    ? "battleFormat.switchToDoubles"
-                    : "battleFormat.switchToSingles",
-                )}
-                title={t(
-                  battleFormat === "singles"
-                    ? "battleFormat.switchToDoubles"
-                    : "battleFormat.switchToSingles",
-                )}
-                onClick={() =>
-                  setBattleFormat(
-                    (battleFormat === "singles"
-                      ? "doubles"
-                      : "singles") satisfies BattleFormat,
-                  )
-                }
-              >
-                {battleFormat === "singles" ? "1v1" : "2v2"}
-              </button>
-            </div>
+            <BattleFormatControl
+              battleFormat={battleFormat}
+              onChange={setBattleFormat}
+            />
           </div>
-          <div className="header-mode-controls">
-            <button
-              className={`app-mode-toggle is-${appMode}`}
-              type="button"
-              aria-label={t(
-                appMode === "builder"
-                  ? "nav.switchToCalculator"
-                  : "nav.switchToBuilder",
-              )}
-              title={t(
-                appMode === "builder"
-                  ? "nav.switchToCalculator"
-                  : "nav.switchToBuilder",
-              )}
-              onClick={() => {
-                const nextMode =
-                  appMode === "builder" ? "calculator" : "builder";
+          <AppModeControl
+            appMode={appMode}
+            onChange={(nextMode) => {
+              if (nextMode === "calculator") {
+                setHasOpenedCalculator(true);
+              }
 
-                if (nextMode === "calculator") {
-                  setHasOpenedCalculator(true);
-                }
-
-                setAppMode(nextMode);
-              }}
-            >
-              <span
-                className={`app-mode-icon${
-                  appMode === "builder" ? " is-active" : ""
-                }`}
-                aria-hidden="true"
-              >
-                <FontAwesomeIcon icon={faUsers} />
-              </span>
-              <span
-                className={`app-mode-icon${
-                  appMode === "calculator" ? " is-active" : ""
-                }`}
-                aria-hidden="true"
-              >
-                <FontAwesomeIcon icon={faCalculator} />
-              </span>
-            </button>
-          </div>
+              setAppMode(nextMode);
+            }}
+          />
           <div className="header-preferences">
             <div className="preference-control theme-control" ref={themeControlRef}>
               <button
@@ -2070,32 +1993,44 @@ function App() {
           }
           tabIndex={isCompactDrawerLayout ? -1 : undefined}
         >
-          <CopilotPanel
-            savedTeamId={activeSavedTeamId}
-            teamName={teamNameDraft}
-            battleFormat={battleFormat}
-            team={team}
-            pokemonIndex={pokemonIndex}
-            abilityIndex={abilityIndex}
-            abilityIndexStatus={abilityIndexStatus}
-            showdownLegality={showdownLegality}
-            showdownLegalityStatus={showdownLegalityStatus}
-            selectedSlot={selectedTeamSlot}
-            buildState={teamBuildState}
-            diagnostics={teamDiagnostics}
-            validity={teamValidity}
-            onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
-              const result = await handleSelectPokemon(slotIndex, pokemonId, {
-                applyUsageStats: true,
-                validateRecommendation: true,
-              });
-              return result ?? {
-                status: "blocked",
-                reason: "load-failed",
-                issueCodes: [],
-              };
-            }}
-          />
+          {hasOpenedCopilotPanel || !isCompactDrawerLayout || isCopilotDrawerOpen ? (
+            <Suspense
+              fallback={
+                <div className="copilot-panel">
+                  <div className="copilot-empty-state">
+                    <span>{t("common.loading")}</span>
+                  </div>
+                </div>
+              }
+            >
+              <CopilotPanel
+                savedTeamId={activeSavedTeamId}
+                teamName={teamNameDraft}
+                battleFormat={battleFormat}
+                team={team}
+                pokemonIndex={pokemonIndex}
+                abilityIndex={abilityIndex}
+                abilityIndexStatus={abilityIndexStatus}
+                showdownLegality={showdownLegality}
+                showdownLegalityStatus={showdownLegalityStatus}
+                selectedSlot={selectedTeamSlot}
+                buildState={teamBuildState}
+                diagnostics={teamDiagnostics}
+                validity={teamValidity}
+                onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
+                  const result = await handleSelectPokemon(slotIndex, pokemonId, {
+                    applyUsageStats: true,
+                    validateRecommendation: true,
+                  });
+                  return result ?? {
+                    status: "blocked",
+                    reason: "load-failed",
+                    issueCodes: [],
+                  };
+                }}
+              />
+            </Suspense>
+          ) : null}
         </div>
         <button
           ref={copilotDrawerTriggerRef}

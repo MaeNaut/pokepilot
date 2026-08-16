@@ -1,3 +1,5 @@
+import { normalizeShowdownId } from "../api/showdownIds";
+
 export type CopilotMechanicEntry = {
   id: string;
   displayName: string;
@@ -41,7 +43,7 @@ const genericDescriptions = new Set([
 ]);
 
 function normalizeId(value: string | null | undefined) {
-  return (value ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  return normalizeShowdownId(value ?? "");
 }
 
 export function compactCopilotMechanicEffect(value: string | undefined) {

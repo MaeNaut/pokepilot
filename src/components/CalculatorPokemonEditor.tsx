@@ -19,7 +19,7 @@ import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
   getLegalAbilities,
   getLegalMoves,
-  getShowdownLookupKeys,
+  isExactPokemonFormLegal,
   type ShowdownLegalitySnapshot,
 } from "../api/showdownLegality";
 import type { CalculatorPokemonStatus } from "../calculator/damageCalculator";
@@ -31,10 +31,9 @@ import type {
 } from "../calculator/calculatorEditorTypes";
 import {
   calculateChampionsStats,
-  CHAMPIONS_MAX_EV_PER_STAT,
-  CHAMPIONS_MAX_EV_TOTAL,
+  clampStatPointSpread,
+  defaultEvs,
   getNatureById,
-  statKeys,
 } from "../data/natures";
 import { getBattleFormGroup } from "../data/battleForms";
 import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
@@ -49,13 +48,13 @@ import {
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useScrubbableNumberInput } from "../hooks/useScrubbableNumberInput";
 import { useLocalization } from "../i18n/useLocalization";
+import { getNextCircularIndex } from "../utils/optionNavigation";
 import type {
   ItemIndexEntry,
   PokemonAbility,
   PokemonIndexEntry,
   PokemonItem,
   PokemonMove,
-  StatBlock,
   StatKey,
   TeamMember,
   TeamSlot,
@@ -77,7 +76,9 @@ import {
   type NatureGridPosition,
 } from "./natureGridUtils";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
-import { PokemonIcon } from "./PokemonIcon";
+import { PokemonStatsEditor } from "./PokemonStatsEditor";
+import { CalculatorTeamStrip } from "./CalculatorTeamStrip";
+import { BattleFormPicker } from "./BattleFormPicker";
 import {
   AbilityDetailsContent,
   ItemDetailsContent,
@@ -140,55 +141,6 @@ type CalculatorPokemonEditorProps = {
   ) => void;
 };
 
-function getNextIndex(
-  currentIndex: number,
-  optionCount: number,
-  direction: 1 | -1,
-) {
-  if (optionCount === 0) {
-    return -1;
-  }
-
-  if (currentIndex < 0) {
-    return direction > 0 ? 0 : optionCount - 1;
-  }
-
-  return (currentIndex + direction + optionCount) % optionCount;
-}
-
-function clampEvSpread(current: StatBlock, stat: StatKey, nextValue: number) {
-  const otherTotal = statKeys.reduce(
-    (total, key) => total + (key === stat ? 0 : current[key]),
-    0,
-  );
-  const remaining = Math.max(0, CHAMPIONS_MAX_EV_TOTAL - otherTotal);
-
-  return {
-    ...current,
-    [stat]: Math.max(
-      0,
-      Math.min(
-        CHAMPIONS_MAX_EV_PER_STAT,
-        remaining,
-        Math.round(nextValue),
-      ),
-    ),
-  };
-}
-
-function isExactPokemonFormLegal(
-  showdownLegality: ShowdownLegalitySnapshot | null,
-  pokemonId: string,
-) {
-  if (!showdownLegality || showdownLegality.pokemonIds.size === 0) {
-    return true;
-  }
-
-  return getShowdownLookupKeys(pokemonId).some((lookup) =>
-    showdownLegality.pokemonIds.has(lookup),
-  );
-}
-
 export function CalculatorPokemonEditor({
   panelId,
   panelLabelledBy,
@@ -218,10 +170,9 @@ export function CalculatorPokemonEditor({
   onReorderMoves,
   onBattleChange,
 }: CalculatorPokemonEditorProps) {
-  const { gameName, pokemonFormName, pokemonName, t } = useLocalization();
+  const { gameName, pokemonName, t } = useLocalization();
   const isTouchPickerLayout = useMediaQuery("(max-width: 1420px)");
   const cardRef = useRef<HTMLElement | null>(null);
-  const teamStripRef = useRef<HTMLDivElement | null>(null);
   const moveListRef = useRef<HTMLDivElement | null>(null);
   const battleFormPickerRef = useRef<HTMLDivElement | null>(null);
   const moveResultsRef = useRef<HTMLDivElement | null>(null);
@@ -557,15 +508,6 @@ export function CalculatorPokemonEditor({
     setHoveredMove(null);
   }
 
-  const teamReorder = useLongPressReorder({
-    containerRef: teamStripRef,
-    disabled: !team || !onReorderTeamSlots,
-    itemIndexAttribute: "data-calculator-team-index",
-    itemSelector: "[data-calculator-team-index]",
-    onDragStart: closePicker,
-    onReorder: (sourceIndex, targetIndex) =>
-      onReorderTeamSlots?.(sourceIndex, targetIndex),
-  });
   const moveReorder = useLongPressReorder({
     containerRef: moveListRef,
     disabled: !member || openPicker === "move",
@@ -765,7 +707,7 @@ export function CalculatorPokemonEditor({
     direction: 1 | -1,
   ) {
     if (picker === "pokemon") {
-      const nextIndex = getNextIndex(
+      const nextIndex = getNextCircularIndex(
         activePokemonIndex,
         matchingPokemonOptions.length,
         direction,
@@ -776,7 +718,7 @@ export function CalculatorPokemonEditor({
     }
 
     if (picker === "item") {
-      const nextIndex = getNextIndex(
+      const nextIndex = getNextCircularIndex(
         activeItemIndex,
         displayedItemOptions.length,
         direction,
@@ -789,7 +731,7 @@ export function CalculatorPokemonEditor({
     }
 
     if (picker === "ability") {
-      const nextIndex = getNextIndex(
+      const nextIndex = getNextCircularIndex(
         activeAbilityIndex,
         abilityOptions.length,
         direction,
@@ -801,7 +743,7 @@ export function CalculatorPokemonEditor({
 
     if (picker === "status") {
       setActiveStatusIndex(
-        getNextIndex(
+        getNextCircularIndex(
           activeStatusIndex,
           calculatorStatusOptions.length,
           direction,
@@ -810,7 +752,7 @@ export function CalculatorPokemonEditor({
       return;
     }
 
-    const nextIndex = getNextIndex(
+    const nextIndex = getNextCircularIndex(
       activeMoveIndex,
       matchingMoveOptions.length + 1,
       direction,
@@ -880,44 +822,6 @@ export function CalculatorPokemonEditor({
     } catch {
       // The parent owns the visible lookup error.
     }
-  }
-
-  function handleBattleFormKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (!battleFormGroup) {
-      return;
-    }
-
-    if (event.key === "Escape") {
-      setIsBattleFormPickerOpen(false);
-      return;
-    }
-
-    if (event.key === "Enter" && isBattleFormPickerOpen) {
-      event.preventDefault();
-      void handleSelectBattleForm(
-        battleFormGroup.options[activeBattleFormOptionIndex].pokemonId,
-      );
-      return;
-    }
-
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
-      return;
-    }
-
-    event.preventDefault();
-
-    if (!isBattleFormPickerOpen) {
-      setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
-      setIsBattleFormPickerOpen(true);
-      return;
-    }
-
-    const direction = event.key === "ArrowDown" ? 1 : -1;
-    setActiveBattleFormOptionIndex(
-      (current) =>
-        (current + direction + battleFormGroup.options.length) %
-        battleFormGroup.options.length,
-    );
   }
 
   function selectActiveItem() {
@@ -1022,46 +926,6 @@ export function CalculatorPokemonEditor({
         selectActiveMove();
       }
     }
-  }
-
-  function handleTeamSlotKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    sourceIndex: number,
-  ) {
-    const isPrevious =
-      event.key === "ArrowLeft" || event.key === "ArrowUp";
-    const isNext =
-      event.key === "ArrowRight" || event.key === "ArrowDown";
-
-    if (
-      !event.altKey ||
-      (!isPrevious && !isNext) ||
-      !team?.[sourceIndex] ||
-      !onReorderTeamSlots
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    closePicker();
-
-    const targetIndex = Math.max(
-      0,
-      Math.min(team.length - 1, sourceIndex + (isPrevious ? -1 : 1)),
-    );
-
-    if (targetIndex === sourceIndex) {
-      return;
-    }
-
-    onReorderTeamSlots(sourceIndex, targetIndex);
-    window.requestAnimationFrame(() => {
-      teamStripRef.current
-        ?.querySelector<HTMLButtonElement>(
-          `[data-calculator-team-index="${targetIndex}"] button`,
-        )
-        ?.focus();
-    });
   }
 
   function handleMoveSlotKeyDown(
@@ -1497,96 +1361,14 @@ export function CalculatorPokemonEditor({
         </span>
 
         {side === "player" && team ? (
-          <div
-            className={`calculator-team-strip${
-              teamReorder.isDragging ? " is-reordering" : ""
-            }`}
-            aria-label={t("builder.currentTeam")}
-            ref={teamStripRef}
-          >
-            {team.map((teamMember, slotIndex) => {
-              const displacement = getReorderDisplacement(
-                teamReorder.dragState,
-                slotIndex,
-              );
-
-              return (
-                <div
-                  className={`calculator-team-slot${
-                    teamReorder.dragState?.sourceIndex === slotIndex
-                      ? " is-dragging"
-                      : ""
-                  }${
-                    teamReorder.dragState?.sourceIndex === slotIndex &&
-                    teamReorder.dragState.isDropping
-                      ? " is-dropping"
-                      : ""
-                  }${
-                    teamReorder.dragState?.targetIndex === slotIndex &&
-                    teamReorder.dragState.sourceIndex !== slotIndex
-                      ? " is-drop-target"
-                      : ""
-                  }${displacement ? " is-reorder-displaced" : ""}`}
-                  data-calculator-team-index={slotIndex}
-                  key={`${teamMember?.id ?? "empty"}-${slotIndex}`}
-                  style={
-                    teamReorder.dragState?.sourceIndex === slotIndex
-                      ? ({
-                          "--calculator-team-drag-x": `${teamReorder.dragState.offsetX}px`,
-                          "--calculator-team-drag-y": `${teamReorder.dragState.offsetY}px`,
-                        } as CSSProperties)
-                      : displacement
-                        ? {
-                            transform: `translate3d(${displacement.offsetX}px, ${displacement.offsetY}px, 0)`,
-                          }
-                        : undefined
-                  }
-                >
-                  <button
-                    className={`${selectedSlot === slotIndex ? "is-active" : ""}${
-                      teamMember ? " is-reorderable" : ""
-                    }`}
-                    type="button"
-                    aria-label={
-                      teamMember
-                        ? t("calculator.teamReorderAria", {
-                            name: getMemberDisplayName(teamMember),
-                            slot: slotIndex + 1,
-                          })
-                        : t("builder.addSlot", { slot: slotIndex + 1 })
-                    }
-                    title={
-                      teamMember
-                        ? getMemberDisplayName(teamMember)
-                        : t("common.empty")
-                    }
-                    onClick={() => {
-                      if (!teamReorder.shouldSuppressClick()) {
-                        onSelectedSlotChange?.(slotIndex);
-                      }
-                    }}
-                    onKeyDown={(event) =>
-                      handleTeamSlotKeyDown(event, slotIndex)
-                    }
-                    onPointerDown={(event) => {
-                      if (teamMember) {
-                        teamReorder.handlePointerDown(event, slotIndex);
-                      }
-                    }}
-                    onPointerMove={teamReorder.handlePointerMove}
-                    onPointerUp={teamReorder.handlePointerUp}
-                    onPointerCancel={teamReorder.handlePointerCancel}
-                  >
-                    {teamMember ? (
-                      <PokemonIcon pokemon={teamMember} />
-                    ) : (
-                      <span>+</span>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <CalculatorTeamStrip
+            team={team}
+            selectedSlot={selectedSlot}
+            getMemberDisplayName={getMemberDisplayName}
+            onBeforeReorder={closePicker}
+            onReorder={onReorderTeamSlots}
+            onSelect={(slotIndex) => onSelectedSlotChange?.(slotIndex)}
+          />
         ) : null}
 
         <strong>
@@ -1712,72 +1494,17 @@ export function CalculatorPokemonEditor({
               {openPicker !== "pokemon" &&
               battleFormGroup &&
               activeBattleFormOption ? (
-                <div className="form-picker" ref={battleFormPickerRef}>
-                  <button
-                    className="form-picker-trigger"
-                    type="button"
-                    aria-label={t("builder.form", {
-                      form: pokemonFormName(
-                        activeBattleFormOption.pokemonId,
-                        activeBattleFormOption.label,
-                      ),
-                    })}
-                    aria-expanded={isBattleFormPickerOpen}
-                    aria-haspopup="listbox"
-                    onClick={() => {
-                      setActiveBattleFormOptionIndex(
-                        activeBattleFormOptionIndexFromPokemon,
-                      );
-                      setIsBattleFormPickerOpen((isOpen) => !isOpen);
-                    }}
-                    onKeyDown={handleBattleFormKeyDown}
-                  >
-                    <span>
-                      {pokemonFormName(
-                        activeBattleFormOption.pokemonId,
-                        activeBattleFormOption.label,
-                      )}
-                    </span>
-                    <FontAwesomeIcon
-                      icon={faChevronDown}
-                      aria-hidden="true"
-                    />
-                  </button>
-
-                  {isBattleFormPickerOpen ? (
-                    <div
-                      className="form-picker-menu"
-                      role="listbox"
-                      aria-label={t("builder.battleForm")}
-                    >
-                      {battleFormGroup.options.map((option, optionIndex) => {
-                        const isSelected = member?.id === option.pokemonId;
-                        const isActive =
-                          activeBattleFormOptionIndex === optionIndex;
-
-                        return (
-                          <button
-                            className={`form-picker-option ${
-                              isActive ? "is-active" : ""
-                            }`}
-                            type="button"
-                            role="option"
-                            aria-selected={isSelected}
-                            key={option.pokemonId}
-                            onMouseEnter={() =>
-                              setActiveBattleFormOptionIndex(optionIndex)
-                            }
-                            onClick={() =>
-                              void handleSelectBattleForm(option.pokemonId)
-                            }
-                          >
-                            {pokemonFormName(option.pokemonId, option.label)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
+                <BattleFormPicker
+                  group={battleFormGroup}
+                  selectedPokemonId={member?.id ?? ""}
+                  selectedOptionIndex={activeBattleFormOptionIndexFromPokemon}
+                  activeOptionIndex={activeBattleFormOptionIndex}
+                  isOpen={isBattleFormPickerOpen}
+                  containerRef={battleFormPickerRef}
+                  onOpenChange={setIsBattleFormPickerOpen}
+                  onActiveOptionIndexChange={setActiveBattleFormOptionIndex}
+                  onSelect={handleSelectBattleForm}
+                />
               ) : null}
             </div>
 
@@ -2292,160 +2019,55 @@ export function CalculatorPokemonEditor({
                     })}
                   </div>
 
-                  <section
-                    className="stats-editor"
-                    aria-label={t("builder.pokemonStats")}
-                  >
-                    <div className="stats-editor-body">
-                      <div
-                        className="stat-axis-labels"
-                        aria-hidden="true"
-                      >
-                        <span className="is-base">
-                          {t("builder.base")}
+                  <PokemonStatsEditor
+                    baseStats={member.baseStats ?? defaultEvs}
+                    evs={build.evs}
+                    calculatedStats={calculatedStats}
+                    nature={selectedNature}
+                    isTouchLayout={isTouchPickerLayout}
+                    stageLabel={t("calculator.statStage")}
+                    onEvChange={(stat, value) =>
+                      onBuildChange({
+                        evs: clampStatPointSpread(
+                          build.evs,
+                          stat,
+                          Number(value),
+                        ),
+                      })
+                    }
+                    renderStageControl={(stat) =>
+                      stat === "hp" ? (
+                        <span
+                          className="calculator-stat-stage is-empty"
+                          aria-hidden="true"
+                        >
+                          -
                         </span>
-                        <span className="is-ev">
-                          {t("builder.ev")}
-                        </span>
-                        <span className="is-stat">
-                          {t("builder.stat")}
-                        </span>
-                        <span className="is-stage">
-                          {t("calculator.statStage")}
-                        </span>
-                      </div>
-                      <div className="stats-editor-grid">
-                        {statKeys.map((stat) => {
-                          const natureShift =
-                            selectedNature.up !==
-                              selectedNature.down &&
-                            stat === selectedNature.up
-                              ? "up"
-                              : selectedNature.up !==
-                                    selectedNature.down &&
-                                  stat === selectedNature.down
-                                ? "down"
-                                : null;
-
-                          return (
-                            <div
-                              className="stat-editor-column"
-                              key={stat}
-                            >
-                              <strong className="stat-editor-label">
-                                {t(`stat.${stat}`)}
-                              </strong>
-                              <span className="stat-base-value">
-                                {member.baseStats?.[stat] ?? 0}
-                              </span>
-                              <div className="ev-vertical-track">
-                                <input
-                                  className="ev-vertical-range"
-                                  type="range"
-                                  aria-label={t("builder.evSlider", {
-                                    stat: t(`stat.${stat}`),
-                                  })}
-                                  min={0}
-                                  max={CHAMPIONS_MAX_EV_PER_STAT}
-                                  step={1}
-                                  value={build.evs[stat]}
-                                  style={
-                                    {
-                                      "--ev-fill": `${
-                                        (build.evs[stat] /
-                                          CHAMPIONS_MAX_EV_PER_STAT) *
-                                        100
-                                      }%`,
-                                    } as CSSProperties
-                                  }
-                                  onChange={(event) =>
-                                    onBuildChange({
-                                      evs: clampEvSpread(
-                                        build.evs,
-                                        stat,
-                                        Number(event.target.value),
-                                      ),
-                                    })
-                                  }
-                                />
-                              </div>
-                              <label className="ev-number-field">
-                                <span className="sr-only">
-                                  {t(`stat.${stat}`)}{" "}
-                                  {t("builder.ev")}
-                                </span>
-                                <input
-                                  className="ev-number-input"
-                                  inputMode="numeric"
-                                  min={0}
-                                  max={CHAMPIONS_MAX_EV_PER_STAT}
-                                  value={build.evs[stat]}
-                                  onChange={(event) =>
-                                    onBuildChange({
-                                      evs: clampEvSpread(
-                                        build.evs,
-                                        stat,
-                                        Number(event.target.value),
-                                      ),
-                                    })
-                                  }
-                                  onFocus={(event) =>
-                                    event.currentTarget.select()
-                                  }
-                                  onClick={(event) => {
-                                    if (isTouchPickerLayout) {
-                                      event.currentTarget.select();
-                                    }
-                                  }}
-                                />
-                              </label>
-                              <span className="stat-result-value">
-                                <span className="stat-value">
-                                  {calculatedStats?.[stat] ?? 0}
-                                  {natureShift ? (
-                                    <span
-                                      className={`stat-nature-arrow is-${natureShift}`}
-                                      aria-hidden="true"
-                                    />
-                                  ) : null}
-                                </span>
-                              </span>
-                              {stat === "hp" ? (
-                                <span
-                                  className="calculator-stat-stage is-empty"
-                                  aria-hidden="true"
-                                >
-                                  -
-                                </span>
-                              ) : (
-                                <StatStagePicker
-                                  label={t(`stat.${stat}`)}
-                                  value={battle.boosts[stat] ?? 0}
-                                  isOpen={openRankStat === stat}
-                                  isTouchLayout={isTouchPickerLayout}
-                                  onOpen={() => {
-                                    closePicker();
-                                    setIsBattleFormPickerOpen(false);
-                                    setOpenRankStat(stat);
-                                  }}
-                                  onClose={() => setOpenRankStat(null)}
-                                  onChange={(stage) =>
-                                    onBattleChange((current) => ({
-                                      ...current,
-                                      boosts: {
-                                        ...current.boosts,
-                                        [stat]: stage,
-                                      },
-                                    }))
-                                  }
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </section>
+                      ) : (
+                        <StatStagePicker
+                          label={t(`stat.${stat}`)}
+                          value={battle.boosts[stat] ?? 0}
+                          isOpen={openRankStat === stat}
+                          isTouchLayout={isTouchPickerLayout}
+                          onOpen={() => {
+                            closePicker();
+                            setIsBattleFormPickerOpen(false);
+                            setOpenRankStat(stat);
+                          }}
+                          onClose={() => setOpenRankStat(null)}
+                          onChange={(stage) =>
+                            onBattleChange((current) => ({
+                              ...current,
+                              boosts: {
+                                ...current.boosts,
+                                [stat]: stage,
+                              },
+                            }))
+                          }
+                        />
+                      )
+                    }
+                  />
                 </div>
               </>
             ) : (

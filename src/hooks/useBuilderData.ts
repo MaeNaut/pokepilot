@@ -14,107 +14,56 @@ import type {
 
 const regulationFormat = "gen9-regulation-mb";
 
+function useCatalogData<T>(loadCatalog: () => Promise<T>, initialData: T) {
+  const [data, setData] = useState(initialData);
+  const [status, setStatus] = useState<DataLoadStatus>("idle");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    setStatus("loading");
+    void loadCatalog()
+      .then((nextData) => {
+        if (isCurrent) {
+          setData(nextData);
+          setStatus("ready");
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setStatus("error");
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [loadAttempt, loadCatalog]);
+
+  const retry = useCallback(
+    () => setLoadAttempt((attempt) => attempt + 1),
+    [],
+  );
+
+  return { data, status, retry };
+}
+
 export function useBuilderData() {
-  const [pokemonIndex, setPokemonIndex] = useState<PokemonIndexEntry[]>([]);
-  const [itemIndex, setItemIndex] = useState<ItemIndexEntry[]>([]);
-  const [abilityIndex, setAbilityIndex] = useState<PokemonAbility[]>([]);
+  const pokemonCatalog = useCatalogData<PokemonIndexEntry[]>(
+    fetchPokemonIndex,
+    [],
+  );
+  const itemCatalog = useCatalogData<ItemIndexEntry[]>(fetchItemIndex, []);
+  const abilityCatalog = useCatalogData<PokemonAbility[]>(fetchAbilityIndex, []);
   const [showdownLegality, setShowdownLegality] =
     useState<ShowdownLegalitySnapshot | null>(null);
-  const [pokemonIndexStatus, setPokemonIndexStatus] =
-    useState<DataLoadStatus>("idle");
-  const [itemIndexStatus, setItemIndexStatus] =
-    useState<DataLoadStatus>("idle");
-  const [abilityIndexStatus, setAbilityIndexStatus] =
-    useState<DataLoadStatus>("idle");
   const [showdownLegalityStatus, setShowdownLegalityStatus] =
     useState<DataLoadStatus>("idle");
   const [showdownLegalityError, setShowdownLegalityError] = useState<string | null>(
     null,
   );
-  const [pokemonIndexLoadAttempt, setPokemonIndexLoadAttempt] = useState(0);
-  const [itemIndexLoadAttempt, setItemIndexLoadAttempt] = useState(0);
   const [showdownLoadAttempt, setShowdownLoadAttempt] = useState(0);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function loadPokemonIndex() {
-      setPokemonIndexStatus("loading");
-
-      try {
-        const index = await fetchPokemonIndex();
-
-        if (isCurrent) {
-          setPokemonIndex(index);
-          setPokemonIndexStatus("ready");
-        }
-      } catch {
-        if (isCurrent) {
-          setPokemonIndexStatus("error");
-        }
-      }
-    }
-
-    void loadPokemonIndex();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [pokemonIndexLoadAttempt]);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function loadItemIndex() {
-      setItemIndexStatus("loading");
-
-      try {
-        const index = await fetchItemIndex();
-
-        if (isCurrent) {
-          setItemIndex(index);
-          setItemIndexStatus("ready");
-        }
-      } catch {
-        if (isCurrent) {
-          setItemIndexStatus("error");
-        }
-      }
-    }
-
-    void loadItemIndex();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [itemIndexLoadAttempt]);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function loadAbilityIndex() {
-      setAbilityIndexStatus("loading");
-
-      try {
-        const index = await fetchAbilityIndex();
-
-        if (isCurrent) {
-          setAbilityIndex(index);
-          setAbilityIndexStatus("ready");
-        }
-      } catch {
-        if (isCurrent) {
-          setAbilityIndexStatus("error");
-        }
-      }
-    }
-
-    void loadAbilityIndex();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -154,31 +103,23 @@ export function useBuilderData() {
     };
   }, [showdownLoadAttempt]);
 
-  const retryPokemonIndex = useCallback(
-    () => setPokemonIndexLoadAttempt((attempt) => attempt + 1),
-    [],
-  );
-  const retryItemIndex = useCallback(
-    () => setItemIndexLoadAttempt((attempt) => attempt + 1),
-    [],
-  );
   const retryShowdownLegality = useCallback(
     () => setShowdownLoadAttempt((attempt) => attempt + 1),
     [],
   );
 
   return {
-    pokemonIndex,
-    itemIndex,
-    abilityIndex,
+    pokemonIndex: pokemonCatalog.data,
+    itemIndex: itemCatalog.data,
+    abilityIndex: abilityCatalog.data,
     showdownLegality,
-    pokemonIndexStatus,
-    itemIndexStatus,
-    abilityIndexStatus,
+    pokemonIndexStatus: pokemonCatalog.status,
+    itemIndexStatus: itemCatalog.status,
+    abilityIndexStatus: abilityCatalog.status,
     showdownLegalityStatus,
     showdownLegalityError,
-    retryPokemonIndex,
-    retryItemIndex,
+    retryPokemonIndex: pokemonCatalog.retry,
+    retryItemIndex: itemCatalog.retry,
     retryShowdownLegality,
   };
 }

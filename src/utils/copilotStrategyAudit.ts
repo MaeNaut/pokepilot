@@ -6,10 +6,7 @@ import type {
   CopilotStrategyInteraction,
   CopilotStrategyPokemonState,
 } from "./copilotModelContract.js";
-
-function normalizeId(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-}
+import { normalizeShowdownId as normalizeId } from "../api/showdownIds.js";
 
 function hasDuplicates(values: number[]) {
   return new Set(values).size !== values.length;

@@ -9,9 +9,12 @@ import { formatIdLabel } from "../api/showdownIds";
 import { pokemonTypes } from "../types";
 import type {
   PokemonCandidateFilters,
-  PokemonCandidateFilterValue,
   PokemonType,
 } from "../types";
+import type {
+  CandidateFilterOption,
+  CandidateFilterPicker,
+} from "../utils/candidateFilterOptions";
 import { hasPokemonCandidateFilters } from "../utils/pokemonCandidateFilters";
 import { useLocalization } from "../i18n/useLocalization";
 import {
@@ -20,12 +23,10 @@ import {
 } from "./TouchSelectionDialog";
 import { TypeBadge } from "./TypeBadge";
 
-export type CandidateFilterPicker = "ability" | "move";
-
-export type CandidateFilterOption = PokemonCandidateFilterValue & {
-  type?: PokemonType;
-  power?: number | null;
-};
+export type {
+  CandidateFilterOption,
+  CandidateFilterPicker,
+} from "../utils/candidateFilterOptions";
 
 type CandidateFilterPanelProps = {
   filters: PokemonCandidateFilters;

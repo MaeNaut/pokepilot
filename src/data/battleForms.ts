@@ -1,4 +1,4 @@
-type BattleFormGroup = {
+export type BattleFormGroup = {
   speciesKey: string;
   defaultPokemonId: string;
   options: Array<{

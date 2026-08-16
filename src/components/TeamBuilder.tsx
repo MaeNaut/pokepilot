@@ -1,8 +1,7 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faChevronDown,
   faPlus,
   faRotateRight,
   faSpinner,
@@ -14,10 +13,10 @@ import { fetchAbility, itemFromIndexEntry } from "../api/showdownCatalog";
 import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
   getPokemonCandidateAbilities,
-  getShowdownLookupKeys,
   type ShowdownLegalitySnapshot,
   getLegalAbilities,
   getLegalMoves,
+  isExactPokemonFormLegal,
   isPokemonLegal,
   isItemLegal,
 } from "../api/showdownLegality";
@@ -54,6 +53,7 @@ import {
 } from "../utils/pokemonMoves";
 import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
 import { getIndexAfterSwap } from "../utils/reorder";
+import { getNextCircularIndex } from "../utils/optionNavigation";
 import {
   emptyPokemonCandidateFilters,
   hasPokemonCandidateFilters,
@@ -75,8 +75,8 @@ import {
 import {
   battleStatKeys,
   calculateChampionsStats,
-  CHAMPIONS_MAX_EV_PER_STAT,
   CHAMPIONS_MAX_EV_TOTAL,
+  clampStatPointSpread,
   defaultEvs,
   getNatureById,
   statKeys,
@@ -86,22 +86,17 @@ import { ItemSprite } from "./ItemSprite";
 import type { PokemonShareBuild } from "./PokemonShareCard";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
-import {
-  CandidateFilterPanel,
-  type CandidateFilterOption,
-  type CandidateFilterPicker,
-} from "./CandidateFilterPanel";
+import { CandidateFilterPanel } from "./CandidateFilterPanel";
 import { DataStatusRow } from "./DataStatusRow";
 import { BuilderToolbar } from "./BuilderToolbar";
-import {
-  BuilderSharePreview,
-  type ShareImageTarget,
-} from "./BuilderSharePreview";
+import type { ShareImageTarget } from "./BuilderSharePreview";
 import {
   TouchPickerSearchInput,
   TouchSelectionDialog,
 } from "./TouchSelectionDialog";
 import { TeamRail } from "./TeamRail";
+import { PokemonStatsEditor } from "./PokemonStatsEditor";
+import { BattleFormPicker } from "./BattleFormPicker";
 import {
   AbilityDetailsContent,
   ItemDetailsContent,
@@ -117,6 +112,21 @@ import {
 import { useLocalization } from "../i18n/useLocalization";
 import { statTranslationKeys } from "../i18n/statTranslations";
 import type { BattleFormat } from "../battleFormat/battleFormat";
+import {
+  filterCandidateOptionsByQuery,
+  getCandidateAbilityOptions,
+  getCandidateMoveOptions,
+  getSelectedCandidateMoveOptions,
+  indexCandidateMoves,
+  type CandidateFilterOption,
+  type CandidateFilterPicker,
+} from "../utils/candidateFilterOptions";
+
+const BuilderSharePreview = lazy(() =>
+  import("./BuilderSharePreview").then((module) => ({
+    default: module.BuilderSharePreview,
+  })),
+);
 
 type TeamBuilderProps = {
   teamName: string;
@@ -261,31 +271,6 @@ function resolveShareMoves(
   });
 }
 
-function isExactPokemonFormLegal(
-  showdownLegality: ShowdownLegalitySnapshot | null | undefined,
-  pokemonId: string,
-) {
-  if (!showdownLegality || showdownLegality.pokemonIds.size === 0) {
-    return true;
-  }
-
-  return getShowdownLookupKeys(pokemonId).some((lookup) =>
-    showdownLegality.pokemonIds.has(lookup),
-  );
-}
-
-function getNextOptionIndex(currentIndex: number, optionCount: number, direction: 1 | -1) {
-  if (optionCount === 0) {
-    return -1;
-  }
-
-  if (currentIndex < 0) {
-    return direction > 0 ? 0 : optionCount - 1;
-  }
-
-  return (currentIndex + direction + optionCount) % optionCount;
-}
-
 function getActiveOption<T>(options: T[], activeIndex: number) {
   return options[activeIndex >= 0 ? activeIndex : 0];
 }
@@ -342,7 +327,7 @@ export function TeamBuilder({
   onRetryShowdownLegality,
   onRetryPokemonSelection,
 }: TeamBuilderProps) {
-  const { gameName, pokemonFormName, pokemonName, t } = useLocalization();
+  const { gameName, pokemonName, t } = useLocalization();
   const isTouchPickerLayout = useMediaQuery("(max-width: 1420px)");
   const {
     itemBySlot,
@@ -917,119 +902,49 @@ export function TeamBuilder({
   const previewedPokemonOption = isTouchPickerLayout
     ? activeTouchPokemonOption
     : hoveredPokemonOption;
-  const candidateAbilityOptions = useMemo(() => {
-    const optionsById = new Map<string, PokemonCandidateFilterValue>();
-    const filtersWithoutAbility = { ...activeCandidateFilters, ability: null };
-
-    for (const option of selectOptions) {
-      if (
-        !matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          filtersWithoutAbility,
-        )
-      ) {
-        continue;
-      }
-
-      for (const ability of option.abilityOptions) {
-        optionsById.set(ability.id, ability);
-      }
-    }
-
-    return [...optionsById.values()].sort((first, second) =>
-      first.name.localeCompare(second.name),
-    );
-  }, [activeCandidateFilters, selectOptions]);
+  const candidateAbilityOptions = useMemo(
+    () => getCandidateAbilityOptions(selectOptions, activeCandidateFilters),
+    [activeCandidateFilters, selectOptions],
+  );
   const candidateMoveById = useMemo(
-    () =>
-      new Map(
-        candidateMoveIndex.map((move) => [normalizeShowdownId(move.id), move]),
-      ),
+    () => indexCandidateMoves(candidateMoveIndex),
     [candidateMoveIndex],
   );
   const selectedCandidateMoveOptions = useMemo(
     () =>
-      activeCandidateFilters.moves.map((filter): CandidateFilterOption => {
-        const move = candidateMoveById.get(filter.id);
-
-        return {
-          ...filter,
-          type: move?.type,
-          power: move?.power,
-        };
-      }),
-    [activeCandidateFilters.moves, candidateMoveById],
+      getSelectedCandidateMoveOptions(
+        activeCandidateFilters,
+        candidateMoveById,
+      ),
+    [activeCandidateFilters, candidateMoveById],
   );
-  const candidateMoveOptions = useMemo(() => {
-    const editedMoveIndex = Math.min(
-      candidateMoveFilterSlot ?? activeCandidateFilters.moves.length,
-      activeCandidateFilters.moves.length,
-    );
-    const retainedMoves = activeCandidateFilters.moves.filter(
-      (_, moveIndex) => moveIndex !== editedMoveIndex,
-    );
-    const filtersWithoutEditedMove = {
-      ...activeCandidateFilters,
-      moves: retainedMoves,
-    };
-    const selectedMoveIds = new Set(retainedMoves.map((move) => move.id));
-    const moveIds = new Set<string>();
-
-    for (const option of selectOptions) {
-      if (
-        !matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          filtersWithoutEditedMove,
-        )
-      ) {
-        continue;
-      }
-
-      for (const moveId of option.moveIds) {
-        if (!selectedMoveIds.has(moveId)) {
-          moveIds.add(moveId);
-        }
-      }
-    }
-
-    return [...moveIds]
-      .map((moveId): CandidateFilterOption => {
-        const move = candidateMoveById.get(moveId);
-        return {
-          id: moveId,
-          name: gameName("moves", moveId, move?.name ?? formatIdLabel(moveId)),
-          type: move?.type,
-          power: move?.power,
-        };
-      })
-      .sort((first, second) => first.name.localeCompare(second.name));
-  }, [
-    activeCandidateFilters,
-    candidateMoveById,
-    candidateMoveFilterSlot,
-    gameName,
-    selectOptions,
-  ]);
+  const candidateMoveOptions = useMemo(
+    () =>
+      getCandidateMoveOptions(
+        selectOptions,
+        activeCandidateFilters,
+        candidateMoveFilterSlot,
+        candidateMoveById,
+        (moveId, fallback) => gameName("moves", moveId, fallback),
+      ),
+    [
+      activeCandidateFilters,
+      candidateMoveById,
+      candidateMoveFilterSlot,
+      gameName,
+      selectOptions,
+    ],
+  );
   const matchingCandidateFilterOptions = useMemo(() => {
     const options: CandidateFilterOption[] =
       openCandidateFilterPicker === "ability"
         ? candidateAbilityOptions
         : candidateMoveOptions;
 
-    return options.filter(
-        (option) =>
-          !normalizedCandidateFilterQuery ||
-          option.name.toLowerCase().includes(normalizedCandidateFilterQuery) ||
-          option.id.includes(normalizedCandidateFilterQuery),
-      );
+    return filterCandidateOptionsByQuery(
+      options,
+      normalizedCandidateFilterQuery,
+    );
   }, [
     candidateAbilityOptions,
     candidateMoveOptions,
@@ -1669,7 +1584,7 @@ export function TeamBuilder({
       candidateMoveFilterSlot !== null &&
       Boolean(activeCandidateFilters.moves[candidateMoveFilterSlot]);
     setActiveCandidateFilterOptionIndex((current) => {
-      const nextIndex = getNextOptionIndex(
+      const nextIndex = getNextCircularIndex(
         current,
         matchingCandidateFilterOptions.length + (hasClearMoveOption ? 1 : 0),
         direction,
@@ -2002,43 +1917,6 @@ export function TeamBuilder({
     void onSelectPokemon(selectedSlot, optionName, { allowBattleForm: true });
   }
 
-  function handleBattleFormKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (!battleFormGroup) {
-      return;
-    }
-
-    if (event.key === "Escape") {
-      setIsBattleFormPickerOpen(false);
-      return;
-    }
-
-    if (event.key === "Enter" && isBattleFormPickerOpen) {
-      event.preventDefault();
-      handleSelectBattleForm(
-        battleFormGroup.options[activeBattleFormOptionIndex].pokemonId,
-      );
-      return;
-    }
-
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
-      return;
-    }
-
-    event.preventDefault();
-    const direction = event.key === "ArrowDown" ? 1 : -1;
-
-    if (!isBattleFormPickerOpen) {
-      setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
-      setIsBattleFormPickerOpen(true);
-      return;
-    }
-
-    setActiveBattleFormOptionIndex((current) =>
-      (current + direction + battleFormGroup.options.length) %
-      battleFormGroup.options.length,
-    );
-  }
-
   function handleSelectItem(value: string) {
     closeItemPicker();
 
@@ -2115,7 +1993,7 @@ export function TeamBuilder({
 
   function movePokemonKeyboardOption(direction: 1 | -1) {
     setActivePokemonOptionIndex((current) =>
-      getNextOptionIndex(current, filteredOptions.length, direction),
+      getNextCircularIndex(current, filteredOptions.length, direction),
     );
   }
 
@@ -2149,7 +2027,7 @@ export function TeamBuilder({
   function moveItemKeyboardOption(direction: 1 | -1) {
     setActiveItemOptionIndex((current) => {
       const totalOptionCount = filteredItemOptions.length + (activeItem ? 1 : 0);
-      const nextIndex = getNextOptionIndex(current, totalOptionCount, direction);
+      const nextIndex = getNextCircularIndex(current, totalOptionCount, direction);
 
       ensureItemOptionVisible(nextIndex - (activeItem ? 1 : 0));
 
@@ -2215,7 +2093,7 @@ export function TeamBuilder({
 
   function moveAbilityKeyboardOption(direction: 1 | -1) {
     setActiveAbilityOptionIndex((current) => {
-      const nextIndex = getNextOptionIndex(
+      const nextIndex = getNextCircularIndex(
         current,
         displayedAbilityOptions.length,
         direction,
@@ -2266,7 +2144,7 @@ export function TeamBuilder({
 
   function moveMoveKeyboardOption(direction: 1 | -1) {
     setActiveMoveOptionIndex((current) => {
-      const nextIndex = getNextOptionIndex(
+      const nextIndex = getNextCircularIndex(
         current,
         filteredMoveOptions.length + 1,
         direction,
@@ -2300,33 +2178,12 @@ export function TeamBuilder({
 
     setEvsBySlot((current) => ({
       ...current,
-      [selectedSlot]: (() => {
-        const slotEvs = current[selectedSlot] ?? defaultEvs;
-        const otherEvTotal = statKeys.reduce(
-          (total, currentStat) => total + (currentStat === stat ? 0 : slotEvs[currentStat]),
-          0,
-        );
-        const maxAllowed = Math.min(
-          CHAMPIONS_MAX_EV_PER_STAT,
-          Math.max(0, CHAMPIONS_MAX_EV_TOTAL - otherEvTotal),
-        );
-        const normalized = Number.isNaN(nextValue)
-          ? 0
-          : Math.max(0, Math.min(maxAllowed, nextValue));
-
-        return {
-          ...slotEvs,
-          [stat]: normalized,
-        };
-      })(),
+      [selectedSlot]: clampStatPointSpread(
+        current[selectedSlot] ?? defaultEvs,
+        stat,
+        Number.isNaN(nextValue) ? 0 : nextValue,
+      ),
     }));
-  }
-
-  function getMaxAllowedEv(stat: StatKey) {
-    return Math.min(
-      CHAMPIONS_MAX_EV_PER_STAT,
-      Math.max(0, CHAMPIONS_MAX_EV_TOTAL - (evTotal - evs[stat])),
-    );
   }
 
   function selectMove(slotIndex: number, moveId: string) {
@@ -3183,56 +3040,17 @@ export function TeamBuilder({
               ) : null}
 
               {!isNamePickerVisible && battleFormGroup && activeBattleFormOption ? (
-                <div className="form-picker" ref={battleFormPickerRef}>
-                  <button
-                    className="form-picker-trigger"
-                    type="button"
-                    aria-label={t("builder.form", {
-                      form: pokemonFormName(
-                        activeBattleFormOption.pokemonId,
-                        activeBattleFormOption.label,
-                      ),
-                    })}
-                    aria-expanded={isBattleFormPickerOpen}
-                    aria-haspopup="listbox"
-                    onClick={() => {
-                      setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
-                      setIsBattleFormPickerOpen((isOpen) => !isOpen);
-                    }}
-                    onKeyDown={handleBattleFormKeyDown}
-                  >
-                    <span>
-                      {pokemonFormName(
-                        activeBattleFormOption.pokemonId,
-                        activeBattleFormOption.label,
-                      )}
-                    </span>
-                    <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
-                  </button>
-
-                  {isBattleFormPickerOpen ? (
-                    <div className="form-picker-menu" role="listbox" aria-label={t("builder.battleForm")}>
-                      {battleFormGroup.options.map((option, optionIndex) => {
-                        const isSelected = activePokemonId === option.pokemonId;
-                        const isActive = activeBattleFormOptionIndex === optionIndex;
-
-                        return (
-                          <button
-                            className={`form-picker-option ${isActive ? "is-active" : ""}`}
-                            type="button"
-                            role="option"
-                            aria-selected={isSelected}
-                            key={option.pokemonId}
-                            onMouseEnter={() => setActiveBattleFormOptionIndex(optionIndex)}
-                            onClick={() => handleSelectBattleForm(option.pokemonId)}
-                          >
-                            {pokemonFormName(option.pokemonId, option.label)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
+                <BattleFormPicker
+                  group={battleFormGroup}
+                  selectedPokemonId={activePokemonId}
+                  selectedOptionIndex={activeBattleFormOptionIndexFromPokemon}
+                  activeOptionIndex={activeBattleFormOptionIndex}
+                  isOpen={isBattleFormPickerOpen}
+                  containerRef={battleFormPickerRef}
+                  onOpenChange={setIsBattleFormPickerOpen}
+                  onActiveOptionIndexChange={setActiveBattleFormOptionIndex}
+                  onSelect={handleSelectBattleForm}
+                />
               ) : null}
 
             </div>
@@ -3738,103 +3556,25 @@ export function TeamBuilder({
               ) : null}
 
               {activeMember ? (
-                <section className="stats-editor" aria-label={t("builder.pokemonStats")}>
-                  <div className="stats-editor-header stats-editor-header-mobile">
-                    <h2>{t("builder.stats")}</h2>
-                    <span className="ev-total">
-                      {t("builder.evTotal", {
-                        current: evTotal,
-                        max: CHAMPIONS_MAX_EV_TOTAL,
-                      })}
-                    </span>
-                  </div>
-
-                  <div className="stats-editor-body">
-                    <div className="stat-axis-labels" aria-hidden="true">
-                      <span className="is-base">{t("builder.base")}</span>
-                      <span className="is-ev">{t("builder.ev")}</span>
-                      <span className="is-stat">{t("builder.stat")}</span>
+                <PokemonStatsEditor
+                  baseStats={baseStats}
+                  evs={evs}
+                  calculatedStats={calculatedStats}
+                  nature={selectedNature}
+                  isTouchLayout={isTouchPickerLayout}
+                  header={
+                    <div className="stats-editor-header stats-editor-header-mobile">
+                      <h2>{t("builder.stats")}</h2>
+                      <span className="ev-total">
+                        {t("builder.evTotal", {
+                          current: evTotal,
+                          max: CHAMPIONS_MAX_EV_TOTAL,
+                        })}
+                      </span>
                     </div>
-
-                    <div className="stats-editor-grid">
-                      {statKeys.map((stat) => {
-                        const maxAllowed = getMaxAllowedEv(stat);
-                        const natureShift =
-                          selectedNature.up !== selectedNature.down && stat === selectedNature.up
-                            ? "up"
-                            : selectedNature.up !== selectedNature.down &&
-                                stat === selectedNature.down
-                              ? "down"
-                              : null;
-
-                        return (
-                          <div className="stat-editor-column" key={stat}>
-                            <strong className="stat-editor-label">
-                              {getLocalizedStatLabel(stat)}
-                            </strong>
-                            <span className="stat-base-value">{baseStats[stat]}</span>
-
-                            <div className="ev-vertical-track">
-                              <input
-                                className="ev-vertical-range"
-                                type="range"
-                                aria-label={t("builder.evSlider", {
-                                  stat: getLocalizedStatLabel(stat),
-                                })}
-                                min={0}
-                                max={CHAMPIONS_MAX_EV_PER_STAT}
-                                step={1}
-                                value={evs[stat]}
-                                style={
-                                  {
-                                    "--ev-fill": `${(evs[stat] / CHAMPIONS_MAX_EV_PER_STAT) * 100}%`,
-                                  } as CSSProperties
-                                }
-                                onChange={(event) => updateEv(stat, event.target.value)}
-                              />
-                            </div>
-
-                            <label className="ev-number-field">
-                              <span className="sr-only">
-                                {getLocalizedStatLabel(stat)} {t("builder.ev")}
-                              </span>
-                              <input
-                                className="ev-number-input"
-                                inputMode="numeric"
-                                min={0}
-                                max={maxAllowed}
-                                value={evs[stat]}
-                                onChange={(event) => updateEv(stat, event.target.value)}
-                                onFocus={(event) => event.currentTarget.select()}
-                                onClick={(event) => {
-                                  if (isTouchPickerLayout) {
-                                    event.currentTarget.select();
-                                  }
-                                }}
-                              />
-                            </label>
-
-                            <span className="stat-result-value">
-                              <span className="stat-value">
-                                {calculatedStats[stat]}
-                                {natureShift ? (
-                                  <span
-                                    className={`stat-nature-arrow is-${natureShift}`}
-                                    aria-label={
-                                      natureShift === "up"
-                                        ? t("builder.natureIncreases")
-                                        : t("builder.natureDecreases")
-                                    }
-                                  />
-                                ) : null}
-                              </span>
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </section>
+                  }
+                  onEvChange={updateEv}
+                />
               ) : null}
             </div>
           </div>
@@ -3863,13 +3603,17 @@ export function TeamBuilder({
       </article>
       </div>
       {renderTouchSelectionDialog()}
-      <BuilderSharePreview
-        target={shareImageTarget}
-        teamName={teamName}
-        builds={sharePokemonBuilds}
-        onTargetChange={setShareImageTarget}
-        onClose={() => setShareImageTarget(null)}
-      />
+      {shareImageTarget !== null ? (
+        <Suspense fallback={null}>
+          <BuilderSharePreview
+            target={shareImageTarget}
+            teamName={teamName}
+            builds={sharePokemonBuilds}
+            onTargetChange={setShareImageTarget}
+            onClose={() => setShareImageTarget(null)}
+          />
+        </Suspense>
+      ) : null}
     </section>
   );
 }

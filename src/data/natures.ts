@@ -90,6 +90,67 @@ export function getNatureByAlignment(up: BattleStatKey, down: BattleStatKey) {
   return natureByAlignment.get(`${up}:${down}`) ?? natures[0];
 }
 
+export function getMaxAllowedStatPoints(evs: StatBlock, stat: StatKey) {
+  const otherStatTotal = statKeys.reduce(
+    (total, currentStat) =>
+      total + (currentStat === stat ? 0 : evs[currentStat]),
+    0,
+  );
+
+  return Math.min(
+    CHAMPIONS_MAX_EV_PER_STAT,
+    Math.max(0, CHAMPIONS_MAX_EV_TOTAL - otherStatTotal),
+  );
+}
+
+export function clampStatPointSpread(
+  evs: StatBlock,
+  stat: StatKey,
+  value: number,
+) {
+  const normalizedValue = Number.isFinite(value) ? Math.round(value) : 0;
+
+  return {
+    ...evs,
+    [stat]: Math.max(
+      0,
+      Math.min(getMaxAllowedStatPoints(evs, stat), normalizedValue),
+    ),
+  };
+}
+
+export function normalizeStatPointSpread(
+  evs: Partial<StatBlock>,
+): StatBlock {
+  let remaining = CHAMPIONS_MAX_EV_TOTAL;
+
+  return statKeys.reduce<StatBlock>(
+    (normalized, stat) => {
+      const value = Math.max(
+        0,
+        Math.min(CHAMPIONS_MAX_EV_PER_STAT, evs[stat] ?? 0, remaining),
+      );
+
+      normalized[stat] = value;
+      remaining -= value;
+      return normalized;
+    },
+    { ...defaultEvs },
+  );
+}
+
+export function getNatureStatShift(nature: Nature, stat: StatKey) {
+  if (nature.up === nature.down || stat === "hp") {
+    return null;
+  }
+
+  if (stat === nature.up) {
+    return "up" as const;
+  }
+
+  return stat === nature.down ? ("down" as const) : null;
+}
+
 function getNatureMultiplier(nature: Nature, stat: StatKey) {
   if (stat === "hp" || nature.up === nature.down) {
     return 1;

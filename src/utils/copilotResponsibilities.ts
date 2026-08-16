@@ -1,3 +1,5 @@
+import { normalizeShowdownId as normalizeId } from "../api/showdownIds";
+
 export const copilotResponsibilityIds = [
   "attack-redirection",
   "ally-damage-reduction",
@@ -78,10 +80,6 @@ const moveResponsibilities: Record<
   voltswitch: ["pivoting"],
   wideguard: ["spread-protection"],
 };
-
-function normalizeId(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-}
 
 function normalizeEffect(value: string | undefined) {
   return value?.replace(/\s+/g, " ").trim().toLowerCase() ?? "";

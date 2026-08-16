@@ -13,7 +13,6 @@ import {
   faSpinner,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { toBlob } from "html-to-image";
 import { useLocalization } from "../i18n/useLocalization";
 
 type ShareImageDialogProps = {
@@ -119,6 +118,7 @@ export function ShareImageDialog({
     await document.fonts?.ready;
     await Promise.all(Array.from(node.querySelectorAll("img")).map(waitForImage));
 
+    const { toBlob } = await import("html-to-image");
     const blob = await toBlob(node, {
       backgroundColor: "#eef0f2",
       pixelRatio: 2,

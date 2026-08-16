@@ -8,8 +8,12 @@ import {
   type StatsTable,
   toID,
 } from "@smogon/calc";
-import { getNatureById } from "../data/natures";
+import {
+  CHAMPIONS_MAX_EV_PER_STAT,
+  getNatureById,
+} from "../data/natures";
 import { typeChart } from "../data/typeChart";
+import { normalizeShowdownId as normalizeId } from "../api/showdownIds";
 import type {
   PokemonItem,
   PokemonMove,
@@ -133,12 +137,11 @@ const terrainNames = {
   misty: "Misty",
 } as const;
 
-function normalizeId(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 export function statPointsToEvs(statPoints: number) {
-  const value = Math.max(0, Math.min(32, Math.trunc(statPoints)));
+  const value = Math.max(
+    0,
+    Math.min(CHAMPIONS_MAX_EV_PER_STAT, Math.trunc(statPoints)),
+  );
   return value === 0 ? 0 : value * 8 - 4;
 }
 
@@ -253,7 +256,10 @@ function createEnginePokemon(
   const maxHp =
     pokemon.member.baseStats!.hp +
     75 +
-    Math.max(0, Math.min(32, pokemon.evs.hp));
+    Math.max(
+      0,
+      Math.min(CHAMPIONS_MAX_EV_PER_STAT, pokemon.evs.hp),
+    );
 
   return new Pokemon(
     generation,

@@ -9,6 +9,7 @@ import type {
   CopilotAnalysisResponse,
   CopilotAnalysisScope,
 } from "./copilotAnalysis";
+import { isRecord } from "./typeGuards";
 import { validateCopilotModelOutput } from "./copilotModelContract";
 
 const COPILOT_HISTORY_STORAGE_KEY = "pokepilot:analysis-history:v1";
@@ -41,10 +42,6 @@ type CreateCopilotHistoryEntryInput = Omit<
   id?: string;
   createdAt?: string;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
   if (!isRecord(value) || (value.source !== "hosted" && value.source !== "local")) {
