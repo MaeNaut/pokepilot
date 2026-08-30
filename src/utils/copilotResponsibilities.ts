@@ -1,4 +1,4 @@
-import { normalizeShowdownId as normalizeId } from "../api/showdownIds";
+import { normalizeShowdownId as normalizeId } from "../api/showdownIds.js";
 
 export const copilotResponsibilityIds = [
   "attack-redirection",

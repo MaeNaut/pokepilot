@@ -15,6 +15,7 @@ const vercelRuntimeFiles = [
   "src/utils/copilotModelContract.ts",
   "src/utils/copilotRequestContract.ts",
   "src/utils/copilotRequestFingerprint.ts",
+  "src/utils/copilotResponsibilities.ts",
   "src/utils/copilotStrategyAudit.ts",
 ] as const;
 
