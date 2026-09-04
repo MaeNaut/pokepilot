@@ -857,9 +857,18 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   other than `shared` deliberately discard Redis environment values before
   selecting the operations adapter; the deployed server runtime still selects
   Upstash automatically from its server-side secrets.
-- Keep the OpenAI project hard budget as the final cost ceiling and complete a
-  live multi-instance Redis test before treating the adapter as production-
-  verified.
+- Keep the OpenAI project hard budget as the final cost ceiling. Production uses
+  `pokepilot:operations:prod`, Preview uses
+  `pokepilot:operations:preview`, and both require shared storage. The live
+  production verification sent five identical concurrent requests across cold
+  serverless invocations: one request performed the model call, four received
+  the shared result, and the follow-up was a canonical cache hit. Runtime logs
+  confirmed the Upstash adapter without recording team contents or requester
+  identifiers.
+- Use `npm run verify:deployment` for the no-cost method, origin, nested-contract,
+  response-header, and signed-cookie checks. Add `-- --allow-paid-call` only for
+  an intentional live concurrency check; the script limits the group to five
+  identical requests and expects exactly one cache miss.
 - Select local safeguard test behavior only through server-start Vite modes:
   production-like `dev`, cached/unlimited `dev:ai`, uncached/unlimited
   `dev:ai:fresh`, and one-call/10-second `dev:cooldown`. Unknown and production

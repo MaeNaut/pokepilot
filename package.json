@@ -15,6 +15,7 @@
     "data:locales": "node scripts/generate-pokeapi-locales.mjs",
     "data:showdown": "node scripts/generate-showdown-catalogs.mjs",
     "eval:ai": "tsx scripts/run-ai-evaluation.ts",
+    "verify:deployment": "tsx scripts/verify-deployment-safeguards.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "build": "tsc -b && vite build",

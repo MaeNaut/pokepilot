@@ -67,11 +67,15 @@ Useful development commands:
 | `npm run dev:cooldown` | Exercise the cooldown UI |
 | `npm run dev:shared` | Use the shared Upstash development adapter |
 | `npm run eval:ai` | Run the optional paid AI fixture evaluation |
+| `npm run verify:deployment` | Check the deployed API boundary without an OpenAI call |
 | `npm run data:showdown` | Refresh checked-in Showdown catalogs |
 | `npm run data:locales` | Refresh checked-in localization data |
 
 For shared-storage QA, copy `.env.shared.example` to `.env.shared.local`, add
 the development Upstash credentials, and run `npm run dev:shared`.
+Add `-- --allow-paid-call` to `npm run verify:deployment` only when a live
+concurrency check is intended; it uses one fresh hosted analysis and verifies
+that identical followers share that result.
 
 ## Data
 

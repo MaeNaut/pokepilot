@@ -209,7 +209,7 @@ The MVP should prove the core loop:
         and expose assumptions, tradeoffs, confidence, and an abstain result.
 - [ ] Add constrained follow-up chat tied to the current team state only after the
   first analysis flow is stable.
-- [ ] Finish request controls for multi-instance public deployment.
+- [x] Finish request controls for multi-instance public deployment.
   - [x] Key process-local cached analyses by canonical team state, format,
         regulation, locale,
         prompt version, and request-contract version.
@@ -230,7 +230,7 @@ The MVP should prove the core loop:
         and bounded expiring distributed waiters.
   - [x] Add the Vercel AI function duration, production Smogon rewrite, baseline
         security/cache headers, CI quality gate, and deployment checklist.
-  - [ ] Provision and require the shared store in public deployment, then verify
+  - [x] Provision and require the shared store in public deployment, then verify
         cross-instance concurrency, cold starts, and Redis failure behavior.
 
 ## Phase 6 - Persistence and Polish

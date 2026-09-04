@@ -341,7 +341,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         adding unbounded history to saved-team data.
   - [x] Keep the history menu outside the clipped PokePilot panel and reuse the
         shared destructive-action confirmation UI before deletion.
-- [ ] Finish deployment-stage cost controls for a multi-instance public launch.
+- [x] Finish deployment-stage cost controls for a multi-instance public launch.
   - [x] Cache identical one-shot analyses by canonical team, format, regulation,
         locale, prompt version, and request-contract version.
   - [x] Add a signed anonymous-client cookie, hashed-IP backstop, progressive
@@ -369,7 +369,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         cap both per-key and total distributed waiters below the Function deadline.
   - [x] Track provider dispatches in a separate abuse budget so repeated failed
         responses cannot refund their way around the OpenAI cost guard.
-  - [ ] Provision separate preview/production Redis namespaces, require the
+  - [x] Provision separate preview/production Redis namespaces, require the
         shared store in public deployment, and verify it under multi-instance
         concurrency and provider-failure tests.
   - [x] Avoid unbounded AI analysis or chat history in the primary team database.

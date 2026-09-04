@@ -259,12 +259,13 @@ describe("PokePilot server API", () => {
 
   it("fails closed when shared operational storage is unavailable", async () => {
     const onUpstreamError = vi.fn();
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const operations = new InMemoryPokePilotOperations();
     vi.spyOn(operations, "getCached").mockRejectedValue(
       new Error("Redis unavailable"),
     );
     const result = await handlePokePilotAnalysis(validRequest, {
-      analyze: vi.fn(async () => createModelResult(groundedModelOutput)),
+      analyze,
       onUpstreamError,
       operations,
       requester: { clientId: "client-a", ipHash: "ip-a" },
@@ -276,6 +277,7 @@ describe("PokePilot server API", () => {
       error: { code: "AI_UPSTREAM_ERROR" },
     });
     expect(onUpstreamError).toHaveBeenCalledOnce();
+    expect(analyze).not.toHaveBeenCalled();
   });
 
   it("returns only validated structured model output", async () => {
