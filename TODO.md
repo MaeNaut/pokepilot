@@ -363,6 +363,12 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Verify the real Upstash development database with a temporary
         read/write/delete round trip, cross-adapter canonical cache, distributed
         single execution, and atomic rate-limit smoke test.
+  - [x] Validate every nested AI request field before model dispatch and include
+        full team context in Pokemon analysis history, cache, and single-flight keys.
+  - [x] Rate-limit cache hits separately from success-based analysis credits and
+        cap both per-key and total distributed waiters below the Function deadline.
+  - [x] Track provider dispatches in a separate abuse budget so repeated failed
+        responses cannot refund their way around the OpenAI cost guard.
   - [ ] Provision separate preview/production Redis namespaces, require the
         shared store in public deployment, and verify it under multi-instance
         concurrency and provider-failure tests.

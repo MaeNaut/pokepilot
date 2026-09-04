@@ -85,6 +85,59 @@ const groundedModelOutput = {
   },
 };
 
+const pokemonSet: CopilotAnalysisRequest["sets"][number] = {
+  slotIndex: 0,
+  pokemonId: "rotom-wash",
+  pokemonName: "Rotom-Wash",
+  displayName: "Rotom-Wash",
+  isMegaForm: false,
+  types: ["electric", "water"],
+  typeDisplayNames: ["Electric", "Water"],
+  item: null,
+  itemDisplayName: null,
+  ability: "levitate",
+  abilityDisplayName: "Levitate",
+  nature: "Timid",
+  natureDisplayName: "Timid",
+  baseStats: null,
+  stats: null,
+  evs: {
+    hp: 0,
+    attack: 0,
+    defense: 0,
+    specialAttack: 0,
+    specialDefense: 0,
+    speed: 0,
+  },
+  evTotal: 0,
+  moves: [],
+  defensiveProfile: { weaknesses: [], resistances: [], immunities: [] },
+  megaEvolution: null,
+  offensiveProfile: {
+    physicalMoveIds: [],
+    specialMoveIds: [],
+    statusMoveIds: [],
+    spreadMoveIds: [],
+  },
+  roleIds: [],
+  setterConceptIds: [],
+  aceConceptIds: [],
+  validityStatus: "valid",
+  validityIssues: [],
+};
+
+const pokemonRequest = {
+  ...validRequest,
+  scope: "pokemon",
+  sets: [pokemonSet],
+  diagnostics: { ...validRequest.diagnostics, filledSlots: 1 },
+} satisfies CopilotAnalysisRequest;
+
+const groundedPokemonOutput = {
+  ...groundedModelOutput,
+  analysis: { ...modelOutput, scope: "pokemon" },
+};
+
 const recommendationRequest = {
   ...validRequest,
   scope: "recommendation",
@@ -151,6 +204,47 @@ describe("PokePilot server API", () => {
       error: { code: "INVALID_REQUEST" },
     });
     expect(analyze).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed nested request data before any operational work", async () => {
+    const analyze = vi.fn();
+    const operations = new InMemoryPokePilotOperations();
+    const admitRequest = vi.spyOn(operations, "admitRequest");
+    const getCached = vi.spyOn(operations, "getCached");
+    const reserve = vi.spyOn(operations, "reserve");
+    const malformed = {
+      ...validRequest,
+      sets: [
+        {
+          slotIndex: 0,
+          pokemonId: "rotom-wash",
+          displayName: "Rotom-Wash",
+          types: [null],
+          moves: [null],
+          baseStats: null,
+          stats: null,
+          evs: {},
+          defensiveProfile: {},
+          offensiveProfile: {},
+          validityIssues: [],
+        },
+      ],
+      megaOptions: [null],
+      candidateFilters: [null],
+      diagnostics: { ...validRequest.diagnostics, filledSlots: 1 },
+    };
+
+    const result = await handlePokePilotAnalysis(malformed, {
+      analyze,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    });
+
+    expect(result.status).toBe(400);
+    expect(analyze).not.toHaveBeenCalled();
+    expect(admitRequest).not.toHaveBeenCalled();
+    expect(getCached).not.toHaveBeenCalled();
+    expect(reserve).not.toHaveBeenCalled();
   });
 
   it("reports a missing server key without attempting an OpenAI request", async () => {
@@ -336,6 +430,68 @@ describe("PokePilot server API", () => {
     });
   });
 
+  it("does not reuse Pokemon analysis across different team contexts", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedPokemonOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 1_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+    const teammate: CopilotAnalysisRequest["sets"][number] = {
+      ...pokemonSet,
+      slotIndex: 1,
+      pokemonId: "incineroar",
+      pokemonName: "Incineroar",
+      displayName: "Incineroar",
+      types: ["fire", "dark"],
+      typeDisplayNames: ["Fire", "Dark"],
+    };
+
+    const first = await handlePokePilotAnalysis(pokemonRequest, options);
+    const second = await handlePokePilotAnalysis(
+      {
+        ...pokemonRequest,
+        sets: [pokemonSet, teammate],
+        diagnostics: { ...pokemonRequest.diagnostics, filledSlots: 2 },
+      },
+      options,
+    );
+
+    expect(first.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "miss" },
+    });
+    expect(second.body).toMatchObject({
+      ok: true,
+      metadata: { cacheStatus: "miss" },
+    });
+    expect(analyze).toHaveBeenCalledTimes(2);
+  });
+
+  it("rate limits repeated cache hits without another model call", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 1_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+
+    for (let index = 0; index < 20; index += 1) {
+      expect((await handlePokePilotAnalysis(validRequest, options)).status).toBe(200);
+    }
+    const limited = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(limited.body).toMatchObject({
+      ok: false,
+      error: { code: "ANALYSIS_COOLDOWN", retryAfterSeconds: 60 },
+    });
+    expect(analyze).toHaveBeenCalledOnce();
+  });
+
   it("shares an in-flight identical analysis without consuming another call", async () => {
     let completeAnalysis: ((result: LunaAnalysisResult) => void) | undefined;
     const analyze = vi.fn(
@@ -367,6 +523,42 @@ describe("PokePilot server API", () => {
       ok: true,
       metadata: { cacheStatus: "shared" },
     });
+  });
+
+  it("returns 429 when one analysis already has the maximum followers", async () => {
+    let completeAnalysis: ((result: LunaAnalysisResult) => void) | undefined;
+    const analyze = vi.fn(
+      () =>
+        new Promise<LunaAnalysisResult>((resolve) => {
+          completeAnalysis = resolve;
+        }),
+    );
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 1_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+    const owner = handlePokePilotAnalysis(validRequest, options);
+    await vi.waitFor(() => expect(analyze).toHaveBeenCalledOnce());
+    const followers = Array.from({ length: 4 }, () =>
+      handlePokePilotAnalysis(validRequest, options),
+    );
+    const overflow = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(overflow).toMatchObject({
+      status: 429,
+      body: {
+        ok: false,
+        error: { code: "AI_RATE_LIMITED", retryAfterSeconds: 5 },
+      },
+    });
+    expect(analyze).toHaveBeenCalledOnce();
+
+    completeAnalysis?.(createModelResult(groundedModelOutput));
+    await owner;
+    await Promise.all(followers);
   });
 
   it("starts a progressive client cooldown after five uncached analyses", async () => {
@@ -519,5 +711,37 @@ describe("PokePilot server API", () => {
       },
     });
     expect(analyze).toHaveBeenCalledTimes(2);
+  });
+
+  it("limits repeated paid failures without consuming user analysis credits", async () => {
+    let now = 10_000;
+    let shouldFail = true;
+    const analyze = vi.fn(async () => {
+      if (shouldFail) throw new Error("Invalid hosted output");
+      return createModelResult(groundedModelOutput);
+    });
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => now,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+
+    for (let index = 0; index < 5; index += 1) {
+      expect((await handlePokePilotAnalysis(validRequest, options)).status).toBe(502);
+    }
+    const limited = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(limited.body).toMatchObject({
+      ok: false,
+      error: { code: "ANALYSIS_COOLDOWN", retryAfterSeconds: 60 },
+    });
+    expect(analyze).toHaveBeenCalledTimes(5);
+
+    now = 70_000;
+    shouldFail = false;
+    expect((await handlePokePilotAnalysis(validRequest, options)).status).toBe(200);
+    expect(analyze).toHaveBeenCalledTimes(6);
   });
 });

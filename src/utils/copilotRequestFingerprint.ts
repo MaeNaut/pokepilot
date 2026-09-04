@@ -9,14 +9,15 @@ export function getCopilotRequestFingerprint(request: CopilotAnalysisRequest) {
     return JSON.stringify(request);
   }
 
-  return JSON.stringify({
-    version: request.version,
-    scope: request.scope,
-    battleFormat: request.battleFormat,
-    selectedSlot: request.selectedSlot,
-    selectedSet: request.sets.find((set) => set.slotIndex === request.selectedSlot),
-    selectedCandidateFilters: request.candidateFilters.find(
-      (filters) => filters.slotIndex === request.selectedSlot,
-    ),
-  });
+  return JSON.stringify({ ...request, teamName: "" });
+}
+
+export function getCopilotAnalysisCacheFingerprint(
+  request: CopilotAnalysisRequest,
+) {
+  return JSON.stringify(
+    request.scope === "team"
+      ? { ...request, selectedSlot: -1 }
+      : request,
+  );
 }

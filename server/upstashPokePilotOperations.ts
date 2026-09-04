@@ -3,21 +3,64 @@ import type { Redis } from "@upstash/redis";
 import {
   getPokePilotRatePolicies,
   POKEPILOT_ANALYSIS_CACHE_TTL_MS,
+  POKEPILOT_CLIENT_REQUEST_LIMIT,
+  POKEPILOT_IP_REQUEST_LIMIT,
   POKEPILOT_RATE_WINDOW_MS,
+  POKEPILOT_REQUEST_WINDOW_MS,
+  POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
+  PokePilotCapacityError,
   type PokePilotOperations,
   type PokePilotPostAnalysisCooldown,
   type PokePilotRateLimitDecision,
   type PokePilotRateLimitMode,
   type PokePilotRateLimitReservation,
+  type PokePilotRequestAdmissionDecision,
   type PokePilotRequester,
   type PokePilotRunOnceOptions,
   type PokePilotRunOnceResult,
+  waitForPokePilotFollower,
 } from "./pokepilotOperations.js";
 
 const defaultKeyPrefix = "pokepilot:operations:v1";
-const defaultLockTtlMs = 75_000;
-const defaultSharedResultTtlMs = 90_000;
-const defaultWaitTimeoutMs = 78_000;
+const defaultLockTtlMs = 55_000;
+const defaultSharedResultTtlMs = 60_000;
+const defaultWaitTimeoutMs = POKEPILOT_SHARED_WAITER_TIMEOUT_MS;
+
+const admitRequestScript = `
+local now = tonumber(ARGV[1])
+local windowMs = tonumber(ARGV[2])
+local eventId = ARGV[3]
+local clientLimit = tonumber(ARGV[4])
+local ipLimit = tonumber(ARGV[5])
+local cutoff = now - windowMs
+
+local function retryAfter(key, limit)
+  redis.call("ZREMRANGEBYSCORE", key, "-inf", cutoff)
+  if redis.call("ZCARD", key) < limit then
+    return 0
+  end
+  local oldest = redis.call("ZRANGE", key, 0, 0, "WITHSCORES")
+  if #oldest < 2 then
+    return 1
+  end
+  return math.max(1, tonumber(oldest[2]) + windowMs - now)
+end
+
+local clientRetryMs = retryAfter(KEYS[1], clientLimit)
+local ipRetryMs = retryAfter(KEYS[2], ipLimit)
+if clientRetryMs > 0 or ipRetryMs > 0 then
+  if clientRetryMs >= ipRetryMs then
+    return { 0, math.ceil(clientRetryMs), 1 }
+  end
+  return { 0, math.ceil(ipRetryMs), 2 }
+end
+
+redis.call("ZADD", KEYS[1], now, eventId)
+redis.call("ZADD", KEYS[2], now, eventId)
+redis.call("PEXPIRE", KEYS[1], windowMs)
+redis.call("PEXPIRE", KEYS[2], windowMs)
+return { 1, 0, 0 }
+`;
 
 const reserveRateLimitScript = `
 local now = tonumber(ARGV[1])
@@ -186,6 +229,32 @@ end
 return 0
 `;
 
+const acquireWaiterScript = `
+local now = tonumber(ARGV[1])
+local expiresAt = tonumber(ARGV[2])
+local token = ARGV[3]
+local keyLimit = tonumber(ARGV[4])
+local totalLimit = tonumber(ARGV[5])
+redis.call("ZREMRANGEBYSCORE", KEYS[1], "-inf", now)
+redis.call("ZREMRANGEBYSCORE", KEYS[2], "-inf", now)
+if redis.call("ZCARD", KEYS[1]) >= keyLimit or
+   redis.call("ZCARD", KEYS[2]) >= totalLimit then
+  return 0
+end
+redis.call("ZADD", KEYS[1], expiresAt, token)
+redis.call("ZADD", KEYS[2], expiresAt, token)
+redis.call("PEXPIRE", KEYS[1], expiresAt - now)
+redis.call("PEXPIRE", KEYS[2], expiresAt - now)
+return 1
+`;
+
+const releaseWaiterScript = `
+return {
+  redis.call("ZREM", KEYS[1], ARGV[1]),
+  redis.call("ZREM", KEYS[2], ARGV[1])
+}
+`;
+
 type RedisSetOptions =
   | { nx: true; px: number }
   | { nx?: never; px: number };
@@ -250,6 +319,8 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
   private readonly sharedResultTtlMs: number;
   private readonly sleep: (milliseconds: number) => Promise<void>;
   private readonly waitTimeoutMs: number;
+  private totalWaiters = 0;
+  private readonly waiters = new Map<string, number>();
 
   constructor({
     clock = Date.now,
@@ -310,6 +381,43 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
     };
   }
 
+  async admitRequest(
+    requester: PokePilotRequester,
+    now: number,
+  ): Promise<PokePilotRequestAdmissionDecision> {
+    return this.admitWithFixedWindow(
+      this.requestKeys(requester),
+      now,
+      POKEPILOT_REQUEST_WINDOW_MS,
+      POKEPILOT_CLIENT_REQUEST_LIMIT,
+      POKEPILOT_IP_REQUEST_LIMIT,
+    );
+  }
+
+  async admitProviderAttempt(
+    requester: PokePilotRequester,
+    now: number,
+  ): Promise<PokePilotRequestAdmissionDecision> {
+    const policies = getPokePilotRatePolicies("enforced");
+    const eventId = `${now}:${randomUUID()}`;
+    const result = await this.redis.eval<
+      [string, string, string, string, string],
+      [number, number, number]
+    >(
+      reserveRateLimitScript,
+      this.providerKeys(requester),
+      [
+        String(now),
+        String(POKEPILOT_RATE_WINDOW_MS),
+        eventId,
+        JSON.stringify(policies.client),
+        JSON.stringify(policies.ip),
+      ],
+    );
+
+    return this.toAdmissionDecision(result);
+  }
+
   async completeReservation(
     reservation: PokePilotRateLimitReservation,
     completedAt: number,
@@ -365,8 +473,34 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
       | undefined;
 
     if (existing) {
-      const completed = await existing;
-      return { value: completed.value, shared: true };
+      const waiterCount = this.waiters.get(key) ?? 0;
+      if (
+        options.maxWaiters !== undefined &&
+        waiterCount >= options.maxWaiters
+      ) {
+        throw new PokePilotCapacityError();
+      }
+      if (
+        options.maxTotalWaiters !== undefined &&
+        this.totalWaiters >= options.maxTotalWaiters
+      ) {
+        throw new PokePilotCapacityError();
+      }
+
+      this.waiters.set(key, waiterCount + 1);
+      this.totalWaiters += 1;
+      try {
+        const completed = await waitForPokePilotFollower(
+          existing,
+          options.waitTimeoutMs ?? this.waitTimeoutMs,
+        );
+        return { value: completed.value, shared: true };
+      } finally {
+        const remaining = (this.waiters.get(key) ?? 1) - 1;
+        if (remaining > 0) this.waiters.set(key, remaining);
+        else this.waiters.delete(key);
+        this.totalWaiters = Math.max(0, this.totalWaiters - 1);
+      }
     }
 
     const promise =
@@ -412,6 +546,55 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
     ];
   }
 
+  private requestKeys(requester: PokePilotRequester): [string, string] {
+    return [
+      this.key(`request:client:${requester.clientId}`),
+      this.key(`request:ip:${requester.ipHash}`),
+    ];
+  }
+
+  private providerKeys(requester: PokePilotRequester): [string, string] {
+    return [
+      this.key(`provider:client:${requester.clientId}`),
+      this.key(`provider:ip:${requester.ipHash}`),
+    ];
+  }
+
+  private async admitWithFixedWindow(
+    keys: [string, string],
+    now: number,
+    windowMs: number,
+    clientLimit: number,
+    ipLimit: number,
+  ): Promise<PokePilotRequestAdmissionDecision> {
+    const result = await this.redis.eval<
+      [string, string, string, string, string],
+      [number, number, number]
+    >(
+      admitRequestScript,
+      keys,
+      [
+        String(now),
+        String(windowMs),
+        `${now}:${randomUUID()}`,
+        String(clientLimit),
+        String(ipLimit),
+      ],
+    );
+    return this.toAdmissionDecision(result);
+  }
+
+  private toAdmissionDecision(
+    result: [number, number, number],
+  ): PokePilotRequestAdmissionDecision {
+    if (Number(result[0]) === 1) return { allowed: true };
+    return {
+      allowed: false,
+      retryAfterMs: Math.max(1, Number(result[1]) || 1),
+      scope: Number(result[2]) === 2 ? "ip" : "client",
+    };
+  }
+
   private async readSharedResult<T>(resultKey: string) {
     const value = await this.redis.get<SharedResult<T>>(resultKey);
     return isSharedResult<T>(value) ? value.value : null;
@@ -432,47 +615,131 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
   ): Promise<PokePilotRunOnceResult<T>> {
     const lockKey = this.key(`lock:${key}`);
     const resultKey = this.key(`result:${key}`);
+    const waiterKey = this.key(`waiters:${key}`);
+    const totalWaiterKey = this.key("waiters:total");
+    const deadline = this.clock() + this.waitTimeoutMs;
+    let waiterToken: string | null = null;
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const completed = await this.readSharedResult<T>(resultKey);
-      if (completed !== null) {
-        return { value: completed, shared: true };
-      }
+    try {
+      for (
+        let attempt = 0;
+        attempt < 3 && this.clock() < deadline;
+        attempt += 1
+      ) {
+        const completed = await this.readSharedResult<T>(resultKey);
+        if (completed !== null) {
+          return { value: completed, shared: true };
+        }
 
-      const token = randomUUID();
-      const acquired =
-        (await this.redis.set(lockKey, token, {
-          nx: true,
-          px: this.lockTtlMs,
-        })) === "OK";
+        const token = randomUUID();
+        const acquired =
+          (await this.redis.set(lockKey, token, {
+            nx: true,
+            px: this.lockTtlMs,
+          })) === "OK";
 
-      if (acquired) {
-        try {
-          const value = await task();
-          if (options.shouldShare?.(value) !== false) {
-            await this.redis.set<SharedResult<T>>(
-              resultKey,
-              { value, version: 1 },
-              { px: this.sharedResultTtlMs },
+        if (acquired) {
+          if (waiterToken) {
+            await this.releaseWaiter(
+              waiterKey,
+              totalWaiterKey,
+              waiterToken,
             );
+            waiterToken = null;
           }
-          return { value, shared: false };
-        } finally {
-          await this.releaseLock(lockKey, token);
+          try {
+            const value = await task();
+            if (options.shouldShare?.(value) !== false) {
+              await this.redis.set<SharedResult<T>>(
+                resultKey,
+                { value, version: 1 },
+                { px: this.sharedResultTtlMs },
+              );
+            }
+            return { value, shared: false };
+          } finally {
+            await this.releaseLock(lockKey, token);
+          }
+        }
+
+        if (
+          !waiterToken &&
+          (options.maxWaiters !== undefined ||
+            options.maxTotalWaiters !== undefined)
+        ) {
+          waiterToken = await this.acquireWaiter(
+            waiterKey,
+            totalWaiterKey,
+            options.maxWaiters ?? Number.MAX_SAFE_INTEGER,
+            options.maxTotalWaiters ?? Number.MAX_SAFE_INTEGER,
+          );
+          if (!waiterToken) throw new PokePilotCapacityError();
+        }
+
+        const shared = await this.waitForSharedResult<T>(
+          lockKey,
+          resultKey,
+          deadline,
+        );
+        if (shared !== null) {
+          return { value: shared, shared: true };
         }
       }
-
-      const shared = await this.waitForSharedResult<T>(lockKey, resultKey);
-      if (shared !== null) {
-        return { value: shared, shared: true };
+    } finally {
+      if (waiterToken) {
+        await this.releaseWaiter(
+          waiterKey,
+          totalWaiterKey,
+          waiterToken,
+        );
       }
     }
 
     throw new Error("PokePilot shared request coordination timed out.");
   }
 
-  private async waitForSharedResult<T>(lockKey: string, resultKey: string) {
-    const deadline = this.clock() + this.waitTimeoutMs;
+  private async acquireWaiter(
+    waiterKey: string,
+    totalWaiterKey: string,
+    maxWaiters: number,
+    maxTotalWaiters: number,
+  ) {
+    const now = this.clock();
+    const token = randomUUID();
+    const result = await this.redis.eval<
+      [string, string, string, string, string],
+      number
+    >(
+      acquireWaiterScript,
+      [waiterKey, totalWaiterKey],
+      [
+        String(now),
+        String(now + this.waitTimeoutMs + 5_000),
+        token,
+        String(maxWaiters),
+        String(maxTotalWaiters),
+      ],
+    );
+    return Number(result) === 1 ? token : null;
+  }
+
+  private async releaseWaiter(
+    waiterKey: string,
+    totalWaiterKey: string,
+    token: string,
+  ) {
+    await this.redis.eval<[string], [number, number]>(
+      releaseWaiterScript,
+      [waiterKey, totalWaiterKey],
+      [token],
+    );
+  }
+
+  private async waitForSharedResult<T>(
+    lockKey: string,
+    resultKey: string,
+    deadline: number,
+  ) {
     let delayMs = 200;
 
     while (this.clock() < deadline) {

@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import vm from "node:vm";
+import { parseShowdownStaticExport } from "./lib/showdownStaticExport.mjs";
 
 const SHOWDOWN_DATA_URL = "https://play.pokemonshowdown.com/data";
 const SHOWDOWN_MODS_URL =
@@ -57,20 +57,15 @@ async function fetchJson(url) {
 }
 
 function readShowdownExport(source, exportName, sourceUrl) {
-  const sandbox = { exports: {} };
-
-  vm.runInNewContext(source, sandbox, {
-    filename: sourceUrl,
-    timeout: 5_000,
-  });
-
-  const value = sandbox.exports[exportName];
-
-  if (!value || typeof value !== "object") {
-    throw new Error(`${exportName} was not present in ${sourceUrl}.`);
+  try {
+    return parseShowdownStaticExport(source, exportName, {
+      presenceFields: exportName === "BattleItems" ? ["megaStone"] : [],
+      scalarFields: ["name", "num", "desc", "shortDesc"],
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not safely parse ${sourceUrl}: ${message}`);
   }
-
-  return value;
 }
 
 function compareCatalogEntries(first, second) {

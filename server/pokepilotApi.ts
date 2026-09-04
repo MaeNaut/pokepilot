@@ -1,6 +1,6 @@
 import type { CopilotModelOutput } from "../src/utils/copilotModelContract.js";
 import type { CopilotAnalysisScope } from "../src/utils/copilotAnalysis.js";
-import { getCopilotRequestFingerprint } from "../src/utils/copilotRequestFingerprint.js";
+import { getCopilotAnalysisCacheFingerprint } from "../src/utils/copilotRequestFingerprint.js";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract.js";
 import {
   analyzeWithOpenAiLuna,
@@ -12,6 +12,10 @@ import {
 import {
   createPokePilotAnalysisCacheKey,
   getPokePilotSafeguardConfig,
+  POKEPILOT_MAX_SHARED_WAITERS,
+  POKEPILOT_MAX_TOTAL_SHARED_WAITERS,
+  POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
+  PokePilotCapacityError,
   type PokePilotOperations,
   type PokePilotRateLimitReservation,
   type PokePilotRequester,
@@ -204,7 +208,8 @@ export async function handlePokePilotAnalysis(
 
   const requestKey = createPokePilotAnalysisCacheKey(
     {
-      fingerprint: getCopilotRequestFingerprint(requestValidation.data),
+      cacheVersion: 2,
+      fingerprint: getCopilotAnalysisCacheFingerprint(requestValidation.data),
       locale: requestValidation.data.locale,
     },
     OPENAI_LUNA_MODEL_ID,
@@ -217,6 +222,34 @@ export async function handlePokePilotAnalysis(
   const startedAt = clock();
 
   try {
+    if (
+      operations &&
+      requester &&
+      safeguardConfig.requestRateLimitEnabled
+    ) {
+      const admission = await operations.admitRequest(requester, startedAt);
+      if (!admission.allowed) {
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil(admission.retryAfterMs / 1_000),
+        );
+        onOperationalEvent?.({
+          type: "cooldown",
+          limiter: admission.scope,
+          requestKey: publicRequestKey,
+          retryAfterSeconds,
+          safeguardMode,
+          scope: requestValidation.data.scope,
+        });
+        return errorResult(
+          429,
+          "ANALYSIS_COOLDOWN",
+          "Request rate limit is active.",
+          retryAfterSeconds,
+        );
+      }
+    }
+
     const cachedAnalysis = safeguardConfig.cacheEnabled
       ? await operations?.getCached<CopilotModelOutput>(
           operationsKey,
@@ -250,6 +283,24 @@ export async function handlePokePilotAnalysis(
             return { kind: "cooldown", decision };
           }
           reservation = decision.reservation;
+        }
+
+        if (
+          operations &&
+          requester &&
+          safeguardConfig.providerAttemptLimitEnabled
+        ) {
+          const decision = await operations.admitProviderAttempt(
+            requester,
+            clock(),
+          );
+          if (!decision.allowed) {
+            if (reservation) {
+              await operations.cancelReservation(reservation);
+              reservation = undefined;
+            }
+            return { kind: "cooldown", decision };
+          }
         }
 
         const result = analyze
@@ -307,7 +358,10 @@ export async function handlePokePilotAnalysis(
     const execution = operations
       ? await operations.runOnce(operationsKey, runAnalysis, {
           distributed: safeguardConfig.cacheEnabled,
+          maxTotalWaiters: POKEPILOT_MAX_TOTAL_SHARED_WAITERS,
+          maxWaiters: POKEPILOT_MAX_SHARED_WAITERS,
           shouldShare: (value) => value.kind === "completed",
+          waitTimeoutMs: POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
         })
       : { shared: false, value: await runAnalysis() };
 
@@ -366,6 +420,15 @@ export async function handlePokePilotAnalysis(
       completed.retryAfterSeconds,
     );
   } catch (error) {
+    if (error instanceof PokePilotCapacityError) {
+      return errorResult(
+        429,
+        "AI_RATE_LIMITED",
+        "Too many identical analyses are already in progress.",
+        5,
+      );
+    }
+
     onUpstreamError?.(error);
 
     if (isInvalidResponseError(error)) {

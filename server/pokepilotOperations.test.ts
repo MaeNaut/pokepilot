@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createPokePilotAnalysisCacheKey,
   getPokePilotSafeguardConfig,
   InMemoryPokePilotOperations,
   POKEPILOT_ANALYSIS_CACHE_TTL_MS,
+  POKEPILOT_CLIENT_REQUEST_LIMIT,
   POKEPILOT_COOLDOWN_TEST_DURATION_MS,
+  POKEPILOT_MAX_SHARED_WAITERS,
+  PokePilotCapacityError,
   resolvePokePilotSafeguardMode,
   type PokePilotRateLimitMode,
   type PokePilotRequester,
@@ -83,19 +86,27 @@ describe("PokePilot operational safeguards", () => {
   it("keeps local test modes explicit and production-safe by default", () => {
     expect(getPokePilotSafeguardConfig("enforced")).toEqual({
       cacheEnabled: true,
+      providerAttemptLimitEnabled: true,
       rateLimitMode: "enforced",
+      requestRateLimitEnabled: true,
     });
     expect(getPokePilotSafeguardConfig("ai-test")).toEqual({
       cacheEnabled: true,
+      providerAttemptLimitEnabled: false,
       rateLimitMode: null,
+      requestRateLimitEnabled: false,
     });
     expect(getPokePilotSafeguardConfig("ai-fresh")).toEqual({
       cacheEnabled: false,
+      providerAttemptLimitEnabled: false,
       rateLimitMode: null,
+      requestRateLimitEnabled: false,
     });
     expect(getPokePilotSafeguardConfig("cooldown-test")).toEqual({
       cacheEnabled: false,
+      providerAttemptLimitEnabled: false,
       rateLimitMode: "cooldown-test",
+      requestRateLimitEnabled: false,
     });
     expect(resolvePokePilotSafeguardMode("production")).toBe("enforced");
     expect(resolvePokePilotSafeguardMode("shared")).toBe("enforced");
@@ -148,5 +159,129 @@ describe("PokePilot operational safeguards", () => {
     operations.cancelReservation(reservation);
 
     reserve(operations, requester, 1_000, "cooldown-test");
+  });
+
+  it("limits all requests without consuming analysis credits", () => {
+    const operations = new InMemoryPokePilotOperations();
+    const requester = { clientId: "client-a", ipHash: "ip-a" };
+
+    for (let index = 0; index < POKEPILOT_CLIENT_REQUEST_LIMIT; index += 1) {
+      expect(operations.admitRequest(requester, 0)).toEqual({ allowed: true });
+    }
+    expect(operations.admitRequest(requester, 0)).toEqual({
+      allowed: false,
+      retryAfterMs: 60_000,
+      scope: "client",
+    });
+
+    reserve(operations, requester, 0);
+  });
+
+  it("counts provider attempts even when user analysis credits are canceled", () => {
+    const operations = new InMemoryPokePilotOperations();
+    const requester = { clientId: "client-a", ipHash: "ip-a" };
+
+    for (let index = 0; index < 5; index += 1) {
+      expect(operations.admitProviderAttempt(requester, 0)).toEqual({
+        allowed: true,
+      });
+    }
+    expect(operations.admitProviderAttempt(requester, 0)).toEqual({
+      allowed: false,
+      retryAfterMs: 60_000,
+      scope: "client",
+    });
+  });
+
+  it("bounds followers waiting on one in-flight analysis", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    let finish: ((value: string) => void) | undefined;
+    const owner = operations.runOnce(
+      "request",
+      () =>
+        new Promise<string>((resolve) => {
+          finish = resolve;
+        }),
+      { maxWaiters: POKEPILOT_MAX_SHARED_WAITERS },
+    );
+    const followers = Array.from({ length: POKEPILOT_MAX_SHARED_WAITERS }, () =>
+      operations.runOnce("request", async () => "duplicate", {
+        maxWaiters: POKEPILOT_MAX_SHARED_WAITERS,
+      }),
+    );
+
+    await expect(
+      operations.runOnce("request", async () => "overflow", {
+        maxWaiters: POKEPILOT_MAX_SHARED_WAITERS,
+      }),
+    ).rejects.toBeInstanceOf(PokePilotCapacityError);
+
+    finish?.("owner");
+    await expect(owner).resolves.toEqual({ shared: false, value: "owner" });
+    await expect(Promise.all(followers)).resolves.toEqual(
+      Array.from({ length: POKEPILOT_MAX_SHARED_WAITERS }, () => ({
+        shared: true,
+        value: "owner",
+      })),
+    );
+  });
+
+  it("bounds the total number of local followers across request keys", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    const finishes: Array<(value: string) => void> = [];
+    const createOwner = (key: string) =>
+      operations.runOnce(
+        key,
+        () =>
+          new Promise<string>((resolve) => {
+            finishes.push(resolve);
+          }),
+      );
+    const ownerA = createOwner("request-a");
+    const ownerB = createOwner("request-b");
+    const follower = operations.runOnce("request-a", async () => "duplicate", {
+      maxTotalWaiters: 1,
+      maxWaiters: 4,
+    });
+
+    await expect(
+      operations.runOnce("request-b", async () => "overflow", {
+        maxTotalWaiters: 1,
+        maxWaiters: 4,
+      }),
+    ).rejects.toBeInstanceOf(PokePilotCapacityError);
+
+    finishes[0]("a");
+    finishes[1]("b");
+    await Promise.all([ownerA, ownerB, follower]);
+  });
+
+  it("times out local followers before the hosting deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      const operations = new InMemoryPokePilotOperations();
+      let finish: ((value: string) => void) | undefined;
+      const owner = operations.runOnce(
+        "request",
+        () =>
+          new Promise<string>((resolve) => {
+            finish = resolve;
+          }),
+      );
+      const follower = operations.runOnce("request", async () => "duplicate", {
+        maxWaiters: 4,
+        waitTimeoutMs: 50,
+      });
+      const rejection = expect(follower).rejects.toBeInstanceOf(
+        PokePilotCapacityError,
+      );
+
+      await vi.advanceTimersByTimeAsync(50);
+      await rejection;
+      finish?.("owner");
+      await owner;
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

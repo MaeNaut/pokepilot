@@ -813,7 +813,17 @@ export function createCopilotAnalysisRequest({
           .filter((concept) => concept.aceSlots.includes(slotIndex))
           .map((concept) => concept.id),
         validityStatus: slotValidity?.status ?? "unavailable",
-        validityIssues: slotValidity?.issues.map((issue) => ({ ...issue })) ?? [],
+        validityIssues:
+          slotValidity?.issues.map((issue) => {
+            const { slotIndex: issueSlotIndex, values, ...required } = issue;
+            return {
+              ...required,
+              ...(values === undefined ? {} : { values: { ...values } }),
+              ...(issueSlotIndex === undefined
+                ? {}
+                : { slotIndex: issueSlotIndex }),
+            };
+          }) ?? [],
       },
     ];
   });

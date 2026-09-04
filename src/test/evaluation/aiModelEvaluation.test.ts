@@ -15,6 +15,7 @@ import {
   type ShowdownImportServices,
 } from "../../utils/showdownImport";
 import { validateCopilotModelOutput } from "../../utils/copilotModelContract";
+import { validateCopilotAnalysisRequest } from "../../utils/copilotRequestContract";
 import { aiTeamFixtures } from "../fixtures/aiTeamFixtures";
 import type { AiTeamFixture } from "../fixtures/aiTeamFixtureTypes";
 import {
@@ -184,6 +185,10 @@ describe("AI model evaluation request parity", () => {
       const modelInputKeys = collectObjectKeys(modelInput);
 
       expect(modelInput, fixture.id).toEqual(evaluationCase.request);
+      expect(
+        validateCopilotAnalysisRequest(modelInput).errors,
+        fixture.id,
+      ).toEqual([]);
       expect(modelInput, fixture.id).not.toBe(evaluationCase.request);
       expect(modelInput.battleFormat, fixture.id).toBe(fixture.battleFormat);
       expect(modelInput.sets, fixture.id).toHaveLength(6);
@@ -252,6 +257,9 @@ describe("AI model evaluation request parity", () => {
     expect(evaluationCase.request.scope).toBe("pokemon");
     expect(evaluationCase.request.selectedSlot).toBe(2);
     expect(evaluationCase.request.sets).toHaveLength(6);
+    expect(validateCopilotAnalysisRequest(evaluationCase.request).errors).toEqual(
+      [],
+    );
     expect(evaluationCase.fixtureId).toBe(`${fixture.id}-pokemon-2`);
     expect(evaluationCase.requestFingerprint).not.toContain(
       evaluationCase.request.teamName,
@@ -346,6 +354,9 @@ describe("AI model evaluation request parity", () => {
       evaluationCase.request.sets.some((set) => set.pokemonId === removedPokemonId),
     ).toBe(false);
     expect(evaluationCase.request.recommendationCandidates).toHaveLength(1);
+    expect(validateCopilotAnalysisRequest(evaluationCase.request).errors).toEqual(
+      [],
+    );
     expect(evaluationCase.request.recommendationCandidates[0]?.pokemonId).toBe(
       removedPokemonId,
     );

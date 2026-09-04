@@ -77,6 +77,8 @@ Current direction:
   snapshot with `npm run data:showdown`, then serve the checked-in JSON from
   `public/data`. The generator may consume Showdown's large teambuilder table,
   base learnsets, and Champions mod files, but end-user browsers do not. The
+  downloaded item and ability modules are parsed as syntax and reduced to
+  approved scalar fields; the generator never executes remote Showdown code.
   browser loads each compact artifact once through an
   in-flight-deduplicated promise and normal HTTP caching rather than issuing one
   PokeAPI request per item or ability.
@@ -821,20 +823,28 @@ embedding a detailed all-versus-all matchup matrix in the browser.
 - Sign the anonymous analysis cookie on the server and hash IP addresses before
   they enter limiter state. Never log raw IP addresses, cookie IDs, or team
   request contents.
-- Serve an identical validated analysis from the 24-hour canonical cache before
-  consuming rate-limit capacity. The first five uncached calls in a rolling day
-  have no client cooldown; later calls progress through one-minute, five-minute,
-  fifteen-minute, and one-hour waits. A more generous IP policy limits browser-ID
-  resets and bursts.
+- Apply a lightweight client/IP request window before the 24-hour canonical
+  cache lookup so cache hits cannot create unbounded Function and Redis work.
+  Cache hits still do not consume analysis credits. The first five uncached calls
+  in a rolling day have no client cooldown; later calls progress through one-
+  minute, five-minute, fifteen-minute, and one-hour waits. A more generous IP
+  policy limits browser-ID resets and bursts.
 - Reserve rate-limit capacity before an uncached model call to prevent concurrent
   bypasses, then move the event timestamp to validated completion so the user
   receives the full cooldown after the result arrives. Cancel the reservation on
   upstream, validation, or cache-write failure so failed attempts do not count.
+- Validate the complete nested request contract before operational work and key
+  Pokemon results by the full team context. Record each actual provider dispatch
+  in a separate non-refundable abuse budget, so repeated invalid or failed model
+  responses cannot bypass cost controls while user analysis credits remain
+  success-based.
 - Keep the in-memory implementation for local development. When both Upstash
   REST credentials exist, select the shared adapter automatically. It stores
   canonical responses with a 24-hour TTL, evaluates client/IP rolling limits in
-  one Redis Lua script, and coordinates identical requests with a token-owned
-  distributed lease and short-lived shared result.
+  atomic Redis Lua scripts, and coordinates identical requests with a token-owned
+  distributed lease and short-lived shared result. Per-key and global expiring
+  waiter tokens bound duplicate serverless requests, and their 50-second shared
+  deadline remains below the Vercel Function duration.
 - Set `POKEPILOT_SHARED_STORE_REQUIRED=true` for public deployment so missing or
   partial Redis configuration fails closed. Use distinct
   `POKEPILOT_REDIS_PREFIX` values for preview and production. Redis outages
