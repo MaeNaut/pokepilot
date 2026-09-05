@@ -109,6 +109,10 @@ The MVP should prove the core loop:
   calculations as the factual source of truth.
 - [x] Define provider-independent request and response types so the Copilot UI can be
   built and tested before committing to a hosted model provider.
+- [x] Add an optional Chrome on-device provider for supported English desktop
+  environments, with scope-specific baseline sessions, isolated request clones,
+  structured output validation, no hosted cooldown, and no automatic GPT
+  fallback. Keep real-device Gemini Nano quality benchmarking as a beta task.
 - [x] Add an attributed offline evaluation suite with 10 Regulation M-B Singles
   teams, 10 Regulation M-B Doubles teams, and explicit archetype-boundary cases.
 - [x] Add a separate four-team deep-strategy regression group for ace funnels,

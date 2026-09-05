@@ -204,6 +204,18 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Send structured team, selected Pokemon, diagnostics, and validity summaries rather than raw UI text.
   - [x] Render summary, strengths, weaknesses, priorities, and recommendations as product UI rather than plain chat text.
   - [x] Add regression tests for compact request snapshots and local team/Pokemon analysis.
+- [x] Add opt-in Chrome on-device AI without hosted credits or cooldowns.
+  - [x] Keep GPT 5.6 as the default and never switch a failed local request to
+        the hosted provider automatically.
+  - [x] Reuse scope-specific baseline sessions, clone and destroy one session
+        per request, constrain responses with the shared product JSON schema,
+        and retry invalid local output twice.
+  - [x] Keep deterministic rules fallback, hosted AI, and on-device AI as
+        distinct history and result sources.
+  - [x] Limit the first release to officially supported English output and
+        supported desktop Chrome devices; keep Android and Korean unavailable.
+  - [ ] Benchmark real Gemini Nano quality and context limits across Team,
+        Pokemon, and Recommend scopes before calling the local path stable.
 - [x] Add an offline Regulation M-B team fixture suite for hosted-model evaluation.
   - [x] Keep an even baseline split of 10 Singles and 10 Doubles teams.
   - [x] Attribute 16 published teams and mark four constructed archetype-boundary cases separately.

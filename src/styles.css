@@ -6312,6 +6312,63 @@ select {
   height: 12px;
 }
 
+.copilot-provider-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+  margin-top: 7px;
+  border: 1px solid #25282b;
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  background: #0d0e0f;
+}
+
+.copilot-provider-toggle button {
+  display: inline-flex;
+  min-width: 0;
+  height: 27px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #858c91;
+  font: inherit;
+  font-size: 0.66rem;
+  cursor: pointer;
+}
+
+.copilot-provider-toggle button.is-active {
+  background: #1e2223;
+  color: var(--copilot-accent);
+}
+
+.copilot-provider-toggle button:hover:not(:disabled),
+.copilot-provider-toggle button:focus-visible {
+  background: #242829;
+  color: #ffffff;
+  outline: none;
+}
+
+.copilot-provider-toggle button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.copilot-provider-toggle svg {
+  width: 11px;
+  height: 11px;
+}
+
+.copilot-provider-status {
+  margin-top: 6px;
+  color: var(--copilot-muted);
+  font-size: 0.64rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .copilot-content {
   min-height: 0;
   flex: 1;

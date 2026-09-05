@@ -44,7 +44,12 @@ type CreateCopilotHistoryEntryInput = Omit<
 };
 
 function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
-  if (!isRecord(value) || (value.source !== "hosted" && value.source !== "local")) {
+  if (
+    !isRecord(value) ||
+    (value.source !== "hosted" &&
+      value.source !== "local" &&
+      value.source !== "device")
+  ) {
     return null;
   }
 

@@ -105,4 +105,16 @@ describe("PokePilot analysis history", () => {
 
     expect(getStoredCopilotHistory()).toEqual([]);
   });
+
+  it("restores Chrome on-device analysis as a distinct source", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const deviceEntry = createCopilotHistoryEntry({
+      ...createEntry(3),
+      response: { ...response, source: "device" },
+    });
+
+    storeCopilotHistory([deviceEntry]);
+
+    expect(getStoredCopilotHistory()).toEqual([deviceEntry]);
+  });
 });

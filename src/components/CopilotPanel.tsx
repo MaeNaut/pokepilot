@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMagnifyingGlass,
+  faCloud,
+  faLaptop,
   faRotateRight,
   faSpinner,
   faTriangleExclamation,
@@ -33,6 +35,12 @@ import {
   CopilotApiError,
   requestHostedCopilotAnalysis,
 } from "../api/copilotApi";
+import {
+  getChromeLocalAiAvailability,
+  prepareChromeLocalCopilot,
+  requestChromeLocalCopilotAnalysis,
+  type ChromeLocalAiAvailability,
+} from "../api/chromeLocalAi";
 import {
   classifyHostedAnalysisFailure,
   type HostedAnalysisFailureReason,
@@ -87,7 +95,15 @@ type AnalysisState = {
   shouldReveal?: boolean;
 };
 
+type AnalysisProvider = "hosted" | "device";
+
+type DeviceAiState = {
+  status: ChromeLocalAiAvailability | "checking" | "preparing" | "error";
+  downloadProgress?: number;
+};
+
 const idleAnalysisState: AnalysisState = { status: "idle" };
+const initialDeviceAiState: DeviceAiState = { status: "checking" };
 
 function formatCooldown(seconds: number) {
   const safeSeconds = Math.max(0, Math.ceil(seconds));
@@ -166,6 +182,12 @@ export function CopilotPanel({
 }: CopilotPanelProps) {
   const { locale, pokemonName, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
+  const [analysisProvider, setAnalysisProvider] =
+    useState<AnalysisProvider>("hosted");
+  const [deviceAiState, setDeviceAiState] = useState<DeviceAiState>(
+    initialDeviceAiState,
+  );
+  const deviceStateRequestRef = useRef(0);
   const [analysisByContext, setAnalysisByContext] = useState<
     Record<string, AnalysisState>
   >({});
@@ -252,6 +274,34 @@ export function CopilotPanel({
     ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
     : 0;
   const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
+  const deviceDownloadPercent = Math.round(
+    (deviceAiState.downloadProgress ?? 0) * 100,
+  );
+  const deviceStatusLabel =
+    deviceAiState.status === "checking"
+      ? t("copilot.deviceChecking")
+      : deviceAiState.status === "downloadable"
+        ? t("copilot.deviceDownloadRequired")
+        : deviceAiState.status === "downloading"
+          ? t("copilot.deviceDownloading", { progress: deviceDownloadPercent })
+          : deviceAiState.status === "preparing"
+            ? t("copilot.devicePreparing")
+            : deviceAiState.status === "unsupported-language"
+              ? t("copilot.deviceEnglishOnly")
+              : deviceAiState.status === "unsupported-browser"
+                ? t("copilot.deviceUnsupported")
+                : deviceAiState.status === "unavailable" ||
+                    deviceAiState.status === "error"
+                  ? t("copilot.deviceUnavailable")
+                  : t("copilot.deviceReady");
+  const canChooseDeviceProvider =
+    deviceAiState.status !== "checking" &&
+    deviceAiState.status !== "unsupported-language" &&
+    deviceAiState.status !== "unsupported-browser" &&
+    deviceAiState.status !== "unavailable";
+  const isDeviceProviderReady = deviceAiState.status === "available";
+  const hostedCooldownIsActive =
+    analysisProvider === "hosted" && cooldownRemainingSeconds > 0;
   const fallbackMessage =
     analysisState.fallbackReason === "cooldown"
       ? cooldownRemainingSeconds > 0
@@ -265,7 +315,7 @@ export function CopilotPanel({
   const analyzeLabel =
     analysisState.status === "loading"
       ? t("copilot.analyzing")
-      : cooldownRemainingSeconds > 0
+      : hostedCooldownIsActive
         ? t("copilot.cooldownButton", { time: cooldownLabel })
         : response
           ? t("copilot.refresh")
@@ -277,11 +327,75 @@ export function CopilotPanel({
   const isAnalyzeDisabled =
     analysisState.status === "loading" ||
     abilityIndexStatus === "loading" ||
-    cooldownRemainingSeconds > 0 ||
+    hostedCooldownIsActive ||
+    (analysisProvider === "device" && !isDeviceProviderReady) ||
     (scope === "recommendation" &&
       (Boolean(selectedMember) ||
         recommendationState.status !== "ready" ||
         recommendationState.candidates.length === 0));
+
+  const prepareDeviceProvider = useCallback(
+    async (targetScope: CopilotAnalysisScope) => {
+      const stateRequest = ++deviceStateRequestRef.current;
+      setDeviceAiState({ status: "preparing" });
+
+      try {
+        await prepareChromeLocalCopilot(targetScope, {
+          onDownloadProgress: (progress) => {
+            if (deviceStateRequestRef.current === stateRequest) {
+              setDeviceAiState({
+                status: "downloading",
+                downloadProgress: progress,
+              });
+            }
+          },
+        });
+        if (deviceStateRequestRef.current === stateRequest) {
+          setDeviceAiState({ status: "available" });
+        }
+      } catch {
+        if (deviceStateRequestRef.current === stateRequest) {
+          setDeviceAiState({ status: "error" });
+        }
+      }
+    },
+    [],
+  );
+
+  function handleScopeChange(nextScope: CopilotAnalysisScope) {
+    setScope(nextScope);
+    if (analysisProvider === "device") {
+      void prepareDeviceProvider(nextScope);
+    }
+  }
+
+  function handleProviderChange(nextProvider: AnalysisProvider) {
+    setAnalysisProvider(nextProvider);
+    if (nextProvider === "device") {
+      void prepareDeviceProvider(scope);
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    const stateRequest = ++deviceStateRequestRef.current;
+    setDeviceAiState(initialDeviceAiState);
+
+    void getChromeLocalAiAvailability(locale).then((status) => {
+      if (cancelled || deviceStateRequestRef.current !== stateRequest) {
+        return;
+      }
+      setDeviceAiState({ status });
+      if (status === "unsupported-language" || status === "unsupported-browser") {
+        setAnalysisProvider("hosted");
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      deviceStateRequestRef.current += 1;
+    };
+  }, [locale]);
 
   useEffect(() => {
     setCandidateApplyFailure(null);
@@ -368,27 +482,31 @@ export function CopilotPanel({
       let usedFallback = false;
       let fallbackReason: AnalysisState["fallbackReason"];
 
-      try {
-        const hostedResult = await requestHostedCopilotAnalysis(request);
-        nextResponse = hostedResult.analysis;
-        if (hostedResult.retryAfterSeconds) {
-          setCooldownUntil(
-            Date.now() + hostedResult.retryAfterSeconds * 1_000,
-          );
-        }
-      } catch (error) {
-        fallbackReason = classifyHostedAnalysisFailure(error);
-        logHostedAnalysisFallback(error, fallbackReason);
+      if (analysisProvider === "device") {
+        nextResponse = await requestChromeLocalCopilotAnalysis(request);
+      } else {
+        try {
+          const hostedResult = await requestHostedCopilotAnalysis(request);
+          nextResponse = hostedResult.analysis;
+          if (hostedResult.retryAfterSeconds) {
+            setCooldownUntil(
+              Date.now() + hostedResult.retryAfterSeconds * 1_000,
+            );
+          }
+        } catch (error) {
+          fallbackReason = classifyHostedAnalysisFailure(error);
+          logHostedAnalysisFallback(error, fallbackReason);
 
-        if (
-          fallbackReason === "cooldown" &&
-          error instanceof CopilotApiError &&
-          error.retryAfterSeconds
-        ) {
-          setCooldownUntil(Date.now() + error.retryAfterSeconds * 1_000);
+          if (
+            fallbackReason === "cooldown" &&
+            error instanceof CopilotApiError &&
+            error.retryAfterSeconds
+          ) {
+            setCooldownUntil(Date.now() + error.retryAfterSeconds * 1_000);
+          }
+          nextResponse = createLocalCopilotAnalysis(request, locale);
+          usedFallback = true;
         }
-        nextResponse = createLocalCopilotAnalysis(request, locale);
-        usedFallback = true;
       }
 
       const historyEntry = createCopilotHistoryEntry({
@@ -453,7 +571,7 @@ export function CopilotPanel({
         return;
       }
 
-      setScope("pokemon");
+      handleScopeChange("pokemon");
     } catch {
       setCandidateApplyFailure("load-failed");
     } finally {
@@ -464,7 +582,7 @@ export function CopilotPanel({
   function handleSelectHistory(entry: CopilotHistoryEntry) {
     const entryContextKey = getAnalysisContextKey(historyTeamKey, entry.scope);
 
-    setScope(entry.scope);
+    handleScopeChange(entry.scope);
     setAnalysisByContext((current) => ({
       ...current,
       [entryContextKey]: {
@@ -533,7 +651,7 @@ export function CopilotPanel({
           role="tab"
           aria-selected={scope === "team"}
           className={scope === "team" ? "is-active" : ""}
-          onClick={() => setScope("team")}
+          onClick={() => handleScopeChange("team")}
         >
           <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
           {t("copilot.team")}
@@ -543,7 +661,7 @@ export function CopilotPanel({
           role="tab"
           aria-selected={scope === "pokemon"}
           className={scope === "pokemon" ? "is-active" : ""}
-          onClick={() => setScope("pokemon")}
+          onClick={() => handleScopeChange("pokemon")}
         >
           <FontAwesomeIcon icon={faUser} aria-hidden="true" />
           {t("copilot.pokemon")}
@@ -553,12 +671,48 @@ export function CopilotPanel({
           role="tab"
           aria-selected={scope === "recommendation"}
           className={scope === "recommendation" ? "is-active" : ""}
-          onClick={() => setScope("recommendation")}
+          onClick={() => handleScopeChange("recommendation")}
         >
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
           {t("copilot.recommend")}
         </button>
       </div>
+
+      <div
+        className="copilot-provider-toggle"
+        role="group"
+        aria-label={t("copilot.analysisProvider")}
+      >
+        <button
+          type="button"
+          className={analysisProvider === "hosted" ? "is-active" : ""}
+          aria-pressed={analysisProvider === "hosted"}
+          onClick={() => handleProviderChange("hosted")}
+        >
+          <FontAwesomeIcon icon={faCloud} aria-hidden="true" />
+          {t("copilot.providerHosted")}
+        </button>
+        <button
+          type="button"
+          className={analysisProvider === "device" ? "is-active" : ""}
+          aria-pressed={analysisProvider === "device"}
+          disabled={!canChooseDeviceProvider}
+          title={deviceStatusLabel}
+          onClick={() => handleProviderChange("device")}
+        >
+          <FontAwesomeIcon icon={faLaptop} aria-hidden="true" />
+          {t("copilot.providerDevice")}
+        </button>
+      </div>
+
+      {(!isDeviceProviderReady && analysisProvider === "device") ||
+      (!canChooseDeviceProvider && deviceAiState.status !== "checking") ||
+      deviceAiState.status === "downloadable" ||
+      deviceAiState.status === "downloading" ? (
+        <div className="copilot-provider-status" role="status">
+          {deviceStatusLabel}
+        </div>
+      ) : null}
 
       <div className="copilot-content" aria-live="polite">
         {analysisState.status === "error" ? (
@@ -632,9 +786,13 @@ export function CopilotPanel({
         <span>
           {response?.source === "hosted"
             ? t("copilot.hostedAnalysis")
+            : response?.source === "device"
+              ? t("copilot.deviceAnalysis")
             : response
               ? t("copilot.rulesFallback")
-              : t("copilot.aiReady")}
+              : analysisProvider === "device"
+                ? t("copilot.deviceAnalysis")
+                : t("copilot.aiReady")}
         </span>
       </footer>
     </aside>
