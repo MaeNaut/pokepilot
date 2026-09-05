@@ -208,7 +208,7 @@ export type CopilotRecommendation = {
 
 export type CopilotAnalysisResponse = {
   version: 1;
-  source: "local" | "hosted";
+  source: "local" | "hosted" | "device";
   scope: CopilotAnalysisScope;
   title: string;
   summary: string;
