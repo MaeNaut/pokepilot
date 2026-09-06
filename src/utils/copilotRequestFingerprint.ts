@@ -1,4 +1,4 @@
-import type { CopilotAnalysisRequest } from "./copilotAnalysis.js";
+import type { CopilotAnalysisRequest } from "./copilotContracts.js";
 
 export function getCopilotRequestFingerprint(request: CopilotAnalysisRequest) {
   if (request.scope === "team") {

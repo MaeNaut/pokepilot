@@ -1,5 +1,5 @@
-import type { CopilotModelOutput } from "../src/utils/copilotModelContract.js";
-import type { CopilotAnalysisScope } from "../src/utils/copilotAnalysis.js";
+import type { CopilotModelOutput } from "../src/utils/copilotModelTypes.js";
+import type { CopilotAnalysisScope } from "../src/utils/copilotContracts.js";
 import { getCopilotAnalysisCacheFingerprint } from "../src/utils/copilotRequestFingerprint.js";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract.js";
 import {

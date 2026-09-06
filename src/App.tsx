@@ -11,8 +11,6 @@ import type { KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
-  faChevronLeft,
-  faChevronRight,
   faDesktop,
   faFloppyDisk,
   faLanguage,
@@ -32,6 +30,7 @@ import { NewTeamControl } from "./components/NewTeamControl";
 import { SavedTeamRow } from "./components/SavedTeamRow";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
+import { CopilotDrawer } from "./components/CopilotDrawer";
 import {
   AppModeControl,
   BattleFormatControl,
@@ -61,7 +60,7 @@ import {
   type BenchPokemon,
 } from "./utils/benchPokemon";
 import type { CalculatorAnalysisContext } from "./calculator/setOptimizer";
-import type { CopilotSetOptimizationCandidateSnapshot } from "./utils/copilotAnalysis";
+import type { CopilotSetOptimizationCandidateSnapshot } from "./utils/copilotContracts";
 import { createTeamAnalysisContext } from "./utils/teamAnalysisContext";
 import {
   formatShowdownSlot,
@@ -206,12 +205,6 @@ function App() {
   const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
-  const [isCopilotDrawerOpen, setIsCopilotDrawerOpen] = useState(false);
-  const [hasOpenedCopilotPanel, setHasOpenedCopilotPanel] = useState(
-    !isCompactDrawerLayout,
-  );
-  const [isCopilotDrawerTransitioning, setIsCopilotDrawerTransitioning] =
-    useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
   const [newTeamShowdownDraft, setNewTeamShowdownDraft] = useState("");
   const [newTeamImportError, setNewTeamImportError] = useState<string | null>(null);
@@ -244,32 +237,10 @@ function App() {
   const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageControlRef = useRef<HTMLDivElement | null>(null);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const copilotDrawerRef = useRef<HTMLDivElement | null>(null);
-  const copilotDrawerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
-  const copilotDrawerTransitionTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
   const committedSnapshotRef = useRef<string | null>(null);
-  const transitionCopilotDrawer = useCallback((nextOpen: boolean) => {
-    if (copilotDrawerTransitionTimeoutRef.current !== null) {
-      window.clearTimeout(copilotDrawerTransitionTimeoutRef.current);
-    }
-
-    setIsCopilotDrawerTransitioning(true);
-    setIsCopilotDrawerOpen(nextOpen);
-    copilotDrawerTransitionTimeoutRef.current = window.setTimeout(() => {
-      setIsCopilotDrawerTransitioning(false);
-      copilotDrawerTransitionTimeoutRef.current = null;
-    }, 240);
-  }, []);
-
-  useEffect(() => {
-    if (!isCompactDrawerLayout || isCopilotDrawerOpen) {
-      setHasOpenedCopilotPanel(true);
-    }
-  }, [isCompactDrawerLayout, isCopilotDrawerOpen]);
-
   const analysisBuildState = teamBuildState.getBuildStateSnapshot();
   const pokemonSelectionContextFingerprint = JSON.stringify({
     activeSavedTeamId,
@@ -407,10 +378,6 @@ function App() {
       if (saveFeedbackTimeoutRef.current !== null) {
         window.clearTimeout(saveFeedbackTimeoutRef.current);
       }
-
-      if (copilotDrawerTransitionTimeoutRef.current !== null) {
-        window.clearTimeout(copilotDrawerTransitionTimeoutRef.current);
-      }
     },
     [],
   );
@@ -486,82 +453,6 @@ function App() {
     };
   }, [isLanguageMenuOpen]);
 
-  useEffect(() => {
-    if (!isCompactDrawerLayout || !isCopilotDrawerOpen) {
-      return undefined;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    const previousScrollPosition = {
-      x: window.scrollX,
-      y: window.scrollY,
-    };
-    const focusableSelector = [
-      "button:not([disabled])",
-      "[href]",
-      "input:not([disabled])",
-      "select:not([disabled])",
-      "textarea:not([disabled])",
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(",");
-
-    function getFocusableDrawerElements() {
-      return Array.from(
-        copilotDrawerRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
-      ).filter((element) => element.getClientRects().length > 0);
-    }
-
-    function handleCopilotDrawerKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        transitionCopilotDrawer(false);
-        copilotDrawerTriggerRef.current?.focus({ preventScroll: true });
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const focusableElements = getFocusableDrawerElements();
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (!firstElement || !lastElement) {
-        event.preventDefault();
-        copilotDrawerRef.current?.focus();
-        return;
-      }
-
-      const activeElement = document.activeElement;
-      if (!copilotDrawerRef.current?.contains(activeElement)) {
-        event.preventDefault();
-        (event.shiftKey ? lastElement : firstElement).focus();
-        return;
-      }
-
-      if (event.shiftKey && activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    }
-
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", handleCopilotDrawerKeyDown);
-    window.requestAnimationFrame(() => {
-      getFocusableDrawerElements()[0]?.focus({ preventScroll: true });
-    });
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleCopilotDrawerKeyDown);
-      window.requestAnimationFrame(() => {
-        window.scrollTo(previousScrollPosition.x, previousScrollPosition.y);
-      });
-    };
-  }, [isCompactDrawerLayout, isCopilotDrawerOpen, transitionCopilotDrawer]);
 
   function hasLegalityFilter() {
     return (
@@ -2016,105 +1907,48 @@ function App() {
           </Suspense>
         ) : null}
 
-        <button
-          className={`copilot-drawer-scrim${
-            isCopilotDrawerOpen ? " is-open" : ""
-          }${isCopilotDrawerTransitioning ? " is-transitioning" : ""}`}
-          type="button"
-          tabIndex={-1}
-          aria-label={t("copilot.closePanel")}
-          onClick={() => {
-            transitionCopilotDrawer(false);
-            copilotDrawerTriggerRef.current?.focus({ preventScroll: true });
-          }}
-        />
-        <div
-          ref={copilotDrawerRef}
-          className={`copilot-drawer${
-            isCopilotDrawerOpen ? " is-open" : ""
-          }${isCopilotDrawerTransitioning ? " is-transitioning" : ""}`}
-          id="copilot-drawer"
-          role={isCompactDrawerLayout ? "dialog" : undefined}
-          aria-label={isCompactDrawerLayout ? "PokePilot" : undefined}
-          aria-modal={
-            isCompactDrawerLayout && isCopilotDrawerOpen ? true : undefined
-          }
-          aria-hidden={
-            isCompactDrawerLayout && !isCopilotDrawerOpen ? true : undefined
-          }
-          tabIndex={isCompactDrawerLayout ? -1 : undefined}
-        >
-          {hasOpenedCopilotPanel || !isCompactDrawerLayout || isCopilotDrawerOpen ? (
-            <Suspense
-              fallback={
-                <div className="copilot-panel">
-                  <div className="copilot-empty-state">
-                    <span>{t("common.loading")}</span>
-                  </div>
+        <CopilotDrawer isCompactLayout={isCompactDrawerLayout}>
+          <Suspense
+            fallback={
+              <div className="copilot-panel">
+                <div className="copilot-empty-state">
+                  <span>{t("common.loading")}</span>
                 </div>
-              }
-            >
-              <CopilotPanel
-                savedTeamId={activeSavedTeamId}
-                teamName={teamNameDraft}
-                battleFormat={battleFormat}
-                team={team}
-                pokemonIndex={pokemonIndex}
-                abilityIndex={abilityIndex}
-                abilityIndexStatus={abilityIndexStatus}
-                showdownLegality={showdownLegality}
-                showdownLegalityStatus={showdownLegalityStatus}
-                selectedSlot={selectedTeamSlot}
-                buildState={teamBuildState}
-                diagnostics={teamDiagnostics}
-                validity={teamValidity}
-                isCalculatorActive={appMode === "calculator"}
-                calculatorContext={calculatorAnalysisContext}
-                onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
-                  const result = await handleSelectPokemon(slotIndex, pokemonId, {
-                    applyUsageStats: true,
-                    validateRecommendation: true,
-                  });
-                  return result ?? {
-                    status: "blocked",
-                    reason: "load-failed",
-                    issueCodes: [],
-                  };
-                }}
-                onApplyOptimizationCandidate={
-                  handleApplyOptimizationCandidate
-                }
-                onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
-              />
-            </Suspense>
-          ) : null}
-        </div>
-        <button
-          ref={copilotDrawerTriggerRef}
-          className={`copilot-drawer-handle${
-            isCopilotDrawerOpen ? " is-open" : ""
-          }${isCopilotDrawerTransitioning ? " is-transitioning" : ""}`}
-          type="button"
-          aria-controls="copilot-drawer"
-          aria-expanded={isCopilotDrawerOpen}
-          aria-label={
-            isCopilotDrawerOpen
-              ? t("copilot.closePanel")
-              : t("copilot.openPanel")
-          }
-          title={
-            isCopilotDrawerOpen
-              ? t("copilot.closePanel")
-              : t("copilot.openPanel")
-          }
-          onClick={() => transitionCopilotDrawer(!isCopilotDrawerOpen)}
-        >
-          <FontAwesomeIcon
-            icon={isCopilotDrawerOpen ? faChevronRight : faChevronLeft}
-            aria-hidden="true"
-          />
-          <span>PokePilot</span>
-        </button>
+              </div>
+            }
+          >
+            <CopilotPanel
+              savedTeamId={activeSavedTeamId}
+              teamName={teamNameDraft}
+              battleFormat={battleFormat}
+              team={team}
+              pokemonIndex={pokemonIndex}
+              abilityIndex={abilityIndex}
+              abilityIndexStatus={abilityIndexStatus}
+              showdownLegality={showdownLegality}
+              showdownLegalityStatus={showdownLegalityStatus}
+              selectedSlot={selectedTeamSlot}
+              buildState={teamBuildState}
+              diagnostics={teamDiagnostics}
+              validity={teamValidity}
+              isCalculatorActive={appMode === "calculator"}
+              calculatorContext={calculatorAnalysisContext}
+              onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
+                const result = await handleSelectPokemon(slotIndex, pokemonId, {
+                  applyUsageStats: true,
+                  validateRecommendation: true,
+                });
+                return result ?? {
+                  status: "blocked",
+                  reason: "load-failed",
+                  issueCodes: [],
+                };
+              }}
+              onApplyOptimizationCandidate={handleApplyOptimizationCandidate}
+              onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
+            />
+          </Suspense>
+        </CopilotDrawer>
       </div>
 
       <footer className="footer">

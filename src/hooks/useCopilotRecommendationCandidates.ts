@@ -19,7 +19,7 @@ import {
 } from "../utils/pokemonRecommendations";
 import type { TeamBuildState } from "../utils/teamBuildState";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
-import type { CopilotAnalysisScope } from "../utils/copilotAnalysis";
+import type { CopilotAnalysisScope } from "../utils/copilotContracts";
 
 type RecommendationCandidateState = {
   status: "idle" | "loading" | "ready" | "error";

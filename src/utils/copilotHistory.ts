@@ -9,9 +9,9 @@ import type {
   CopilotAnalysisResponse,
   CopilotAnalysisScope,
   CopilotSetOptimizationCandidateSnapshot,
-} from "./copilotAnalysis";
+} from "./copilotContracts";
 import { isRecord } from "./typeGuards";
-import { validateCopilotModelOutput } from "./copilotModelContract";
+import { validateCopilotModelOutput } from "./copilotModelValidation";
 import { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestContract";
 
 const COPILOT_HISTORY_STORAGE_KEY = "pokepilot:analysis-history:v1";

@@ -1,8 +1,6 @@
-import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis.js";
-import {
-  validateCopilotGroundedModelOutput,
-  type CopilotModelOutput,
-} from "../src/utils/copilotModelContract.js";
+import type { CopilotAnalysisRequest } from "../src/utils/copilotContracts.js";
+import { validateCopilotGroundedModelOutput } from "../src/utils/copilotModelValidation.js";
+import type { CopilotModelOutput } from "../src/utils/copilotModelTypes.js";
 import {
   completeCopilotStrategyAudit,
   validateCopilotStrategyAuditForRequest,

@@ -57,8 +57,6 @@ import { getNextCircularIndex } from "../utils/optionNavigation";
 import {
   emptyPokemonCandidateFilters,
   hasPokemonCandidateFilters,
-  matchesPokemonCandidateFilters,
-  togglePokemonTypeFilter,
 } from "../utils/pokemonCandidateFilters";
 import type { BenchPokemon } from "../utils/benchPokemon";
 import {
@@ -112,15 +110,7 @@ import {
 import { useLocalization } from "../i18n/useLocalization";
 import { statTranslationKeys } from "../i18n/statTranslations";
 import type { BattleFormat } from "../battleFormat/battleFormat";
-import {
-  filterCandidateOptionsByQuery,
-  getCandidateAbilityOptions,
-  getCandidateMoveOptions,
-  getSelectedCandidateMoveOptions,
-  indexCandidateMoves,
-  type CandidateFilterOption,
-  type CandidateFilterPicker,
-} from "../utils/candidateFilterOptions";
+import { useCandidateFilterPicker } from "../hooks/useCandidateFilterPicker";
 
 const BuilderSharePreview = lazy(() =>
   import("./BuilderSharePreview").then((module) => ({
@@ -349,14 +339,6 @@ export function TeamBuilder({
   const [isNamePickerOpen, setIsNamePickerOpen] = useState(false);
   const [nameQuery, setNameQuery] = useState("");
   const [candidateMoveIndex, setCandidateMoveIndex] = useState<PokemonMove[]>([]);
-  const [openCandidateFilterPicker, setOpenCandidateFilterPicker] =
-    useState<CandidateFilterPicker | null>(null);
-  const [candidateMoveFilterSlot, setCandidateMoveFilterSlot] = useState<
-    number | null
-  >(null);
-  const [candidateFilterQuery, setCandidateFilterQuery] = useState("");
-  const [activeCandidateFilterOptionIndex, setActiveCandidateFilterOptionIndex] =
-    useState(0);
   const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(null);
   const [isUsageOrderLoading, setIsUsageOrderLoading] = useState(false);
   const [usageOrderError, setUsageOrderError] = useState<string | null>(null);
@@ -365,7 +347,6 @@ export function TeamBuilder({
   const [shareImageTarget, setShareImageTarget] = useState<ShareImageTarget>(null);
   const builderCardLayoutRef = useRef<HTMLDivElement | null>(null);
   const namePickerRef = useRef<HTMLDivElement | null>(null);
-  const candidateFilterPickerRef = useRef<HTMLDivElement | null>(null);
   const battleFormPickerRef = useRef<HTMLDivElement | null>(null);
   const [isBattleFormPickerOpen, setIsBattleFormPickerOpen] = useState(false);
   const [activeBattleFormOptionIndex, setActiveBattleFormOptionIndex] = useState(0);
@@ -836,20 +817,37 @@ export function TeamBuilder({
           })),
     [gameName, pokemonIndex, pokemonName, pool, showdownLegality],
   );
-  const candidateFilteredSelectOptions = useMemo(
-    () =>
-      selectOptions.filter((option) =>
-        matchesPokemonCandidateFilters(
-          {
-            types: option.types,
-            abilityIds: option.abilityOptions.map((ability) => ability.id),
-            moveIds: option.moveIds,
-          },
-          activeCandidateFilters,
-        ),
-      ),
-    [activeCandidateFilters, selectOptions],
-  );
+  const {
+    activeOptionIndex: activeCandidateFilterOptionIndex,
+    filteredPokemonOptions: candidateFilteredSelectOptions,
+    moveFilterSlot: candidateMoveFilterSlot,
+    openPicker: openCandidateFilterPicker,
+    panelRef: candidateFilterPickerRef,
+    query: candidateFilterQuery,
+    selectedMoveOptions: selectedCandidateMoveOptions,
+    visibleOptions: filteredCandidateFilterOptions,
+    changeQuery: changeCandidateFilterQuery,
+    clearFilters: clearCandidateFilters,
+    closePicker: closeCandidateFilterPicker,
+    handleResultsScroll: handleCandidateFilterOptionsScroll,
+    moveActiveOption: moveCandidateFilterKeyboardOption,
+    openFilterPicker: openCandidatePicker,
+    openMovePicker: openCandidateMovePicker,
+    removeAbility: removeCandidateAbility,
+    removeMove: removeCandidateMove,
+    selectOption: selectCandidateFilterOption,
+    setActiveOptionIndex: setActiveCandidateFilterOptionIndex,
+    toggleType: toggleCandidateType,
+  } = useCandidateFilterPicker({
+    pokemonOptions: selectOptions,
+    candidateMoveIndex,
+    filters: activeCandidateFilters,
+    isTouchLayout: isTouchPickerLayout,
+    resetKey: selectedSlot,
+    closeOtherPicker: closeBuilderPopovers,
+    onFiltersChange: (filters) =>
+      patchSlot(selectedSlot, { candidateFilters: filters }),
+  });
   const {
     orderedOptions: popularSelectOptions,
     rankByOptionId: usageRankByOptionId,
@@ -871,7 +869,6 @@ export function TeamBuilder({
   const normalizedNameQuery = nameQuery.trim().toLowerCase();
   const normalizedItemQuery = itemQuery.trim().toLowerCase();
   const normalizedMoveQuery = moveQuery.trim().toLowerCase();
-  const normalizedCandidateFilterQuery = candidateFilterQuery.trim().toLowerCase();
   const matchingPokemonOptions = useMemo(
     () =>
       normalizedNameQuery
@@ -902,69 +899,6 @@ export function TeamBuilder({
   const previewedPokemonOption = isTouchPickerLayout
     ? activeTouchPokemonOption
     : hoveredPokemonOption;
-  const candidateAbilityOptions = useMemo(
-    () => getCandidateAbilityOptions(selectOptions, activeCandidateFilters),
-    [activeCandidateFilters, selectOptions],
-  );
-  const candidateMoveById = useMemo(
-    () => indexCandidateMoves(candidateMoveIndex),
-    [candidateMoveIndex],
-  );
-  const selectedCandidateMoveOptions = useMemo(
-    () =>
-      getSelectedCandidateMoveOptions(
-        activeCandidateFilters,
-        candidateMoveById,
-      ),
-    [activeCandidateFilters, candidateMoveById],
-  );
-  const candidateMoveOptions = useMemo(
-    () =>
-      getCandidateMoveOptions(
-        selectOptions,
-        activeCandidateFilters,
-        candidateMoveFilterSlot,
-        candidateMoveById,
-        (moveId, fallback) => gameName("moves", moveId, fallback),
-      ),
-    [
-      activeCandidateFilters,
-      candidateMoveById,
-      candidateMoveFilterSlot,
-      gameName,
-      selectOptions,
-    ],
-  );
-  const matchingCandidateFilterOptions = useMemo(() => {
-    const options: CandidateFilterOption[] =
-      openCandidateFilterPicker === "ability"
-        ? candidateAbilityOptions
-        : candidateMoveOptions;
-
-    return filterCandidateOptionsByQuery(
-      options,
-      normalizedCandidateFilterQuery,
-    );
-  }, [
-    candidateAbilityOptions,
-    candidateMoveOptions,
-    normalizedCandidateFilterQuery,
-    openCandidateFilterPicker,
-  ]);
-  const {
-    limit: candidateFilterOptionLimit,
-    reset: resetCandidateFilterOptions,
-    ensureIndexVisible: ensureCandidateFilterOptionVisible,
-    handleScroll: handleCandidateFilterOptionsScroll,
-  } = useIncrementalOptions(matchingCandidateFilterOptions.length);
-  const filteredCandidateFilterOptions = useMemo(
-    () =>
-      matchingCandidateFilterOptions.slice(
-        0,
-        candidateFilterOptionLimit,
-      ),
-    [candidateFilterOptionLimit, matchingCandidateFilterOptions],
-  );
   const filteredItemOptions = useMemo(
     () =>
       normalizedItemQuery
@@ -1058,19 +992,6 @@ export function TeamBuilder({
     isNamePickerVisible,
     normalizedNameQuery,
     resetPokemonOptions,
-  ]);
-
-  useEffect(() => {
-    resetCandidateFilterOptions();
-    setActiveCandidateFilterOptionIndex(
-      matchingCandidateFilterOptions.length > 0 ? 0 : -1,
-    );
-  }, [
-    candidateMoveFilterSlot,
-    matchingCandidateFilterOptions.length,
-    normalizedCandidateFilterQuery,
-    openCandidateFilterPicker,
-    resetCandidateFilterOptions,
   ]);
 
   useEffect(() => {
@@ -1377,18 +1298,6 @@ export function TeamBuilder({
   );
 
   useDismissOnOutsidePointer(
-    candidateFilterPickerRef,
-    Boolean(openCandidateFilterPicker) && !isTouchPickerLayout,
-    closeCandidateFilterPicker,
-  );
-
-  useEffect(() => {
-    setOpenCandidateFilterPicker(null);
-    setCandidateMoveFilterSlot(null);
-    setCandidateFilterQuery("");
-  }, [selectedSlot]);
-
-  useDismissOnOutsidePointer(
     battleFormPickerRef,
     isBattleFormPickerOpen,
     () => setIsBattleFormPickerOpen(false),
@@ -1516,85 +1425,8 @@ export function TeamBuilder({
   }
 
   function togglePokemonType(type: PokemonType) {
-    patchSlot(selectedSlot, {
-      candidateFilters: {
-        ...activeCandidateFilters,
-        types: togglePokemonTypeFilter(activeCandidateFilters.types, type),
-      },
-    });
+    toggleCandidateType(type);
     setActivePokemonOptionIndex(0);
-  }
-
-  function closeCandidateFilterPicker() {
-    setOpenCandidateFilterPicker(null);
-    setCandidateMoveFilterSlot(null);
-    setCandidateFilterQuery("");
-  }
-
-  function openCandidatePicker(picker: CandidateFilterPicker) {
-    setCandidateMoveFilterSlot(null);
-    setOpenCandidateFilterPicker((current) => (current === picker ? null : picker));
-    setCandidateFilterQuery("");
-    resetCandidateFilterOptions();
-    setActiveCandidateFilterOptionIndex(0);
-  }
-
-  function openCandidateMovePicker(slotIndex: number) {
-    const isSameOpenSlot =
-      openCandidateFilterPicker === "move" &&
-      candidateMoveFilterSlot === slotIndex;
-
-    setOpenCandidateFilterPicker(isSameOpenSlot ? null : "move");
-    setCandidateMoveFilterSlot(isSameOpenSlot ? null : slotIndex);
-    setCandidateFilterQuery("");
-    resetCandidateFilterOptions();
-    setActiveCandidateFilterOptionIndex(0);
-  }
-
-  function selectCandidateFilterOption(option: CandidateFilterOption) {
-    if (openCandidateFilterPicker === "ability") {
-      patchSlot(selectedSlot, {
-        candidateFilters: { ...activeCandidateFilters, ability: option },
-      });
-      closeCandidateFilterPicker();
-      return;
-    }
-
-    if (openCandidateFilterPicker === "move") {
-      const targetIndex = Math.min(
-        candidateMoveFilterSlot ?? activeCandidateFilters.moves.length,
-        activeCandidateFilters.moves.length,
-      );
-      const nextMoves = [...activeCandidateFilters.moves];
-      nextMoves[targetIndex] = { id: option.id, name: option.name };
-
-      patchSlot(selectedSlot, {
-        candidateFilters: {
-          ...activeCandidateFilters,
-          moves: nextMoves,
-        },
-      });
-      closeCandidateFilterPicker();
-    }
-  }
-
-  function moveCandidateFilterKeyboardOption(direction: 1 | -1) {
-    const hasClearMoveOption =
-      openCandidateFilterPicker === "move" &&
-      candidateMoveFilterSlot !== null &&
-      Boolean(activeCandidateFilters.moves[candidateMoveFilterSlot]);
-    setActiveCandidateFilterOptionIndex((current) => {
-      const nextIndex = getNextCircularIndex(
-        current,
-        matchingCandidateFilterOptions.length + (hasClearMoveOption ? 1 : 0),
-        direction,
-      );
-      const optionIndex = nextIndex - (hasClearMoveOption ? 1 : 0);
-
-      ensureCandidateFilterOptionVisible(optionIndex);
-
-      return nextIndex;
-    });
   }
 
   function closeItemPicker() {
@@ -3519,39 +3351,17 @@ export function TeamBuilder({
                   isTouchLayout={isTouchPickerLayout}
                   panelRef={candidateFilterPickerRef}
                   onToggleType={togglePokemonType}
-                  onClearFilters={() =>
-                    patchSlot(selectedSlot, { candidateFilters: null })
-                  }
+                  onClearFilters={clearCandidateFilters}
                   onOpenPicker={openCandidatePicker}
                   onOpenMovePicker={openCandidateMovePicker}
                   onClosePicker={closeCandidateFilterPicker}
-                  onQueryChange={(query) => {
-                    setCandidateFilterQuery(query);
-                    resetCandidateFilterOptions();
-                  }}
+                  onQueryChange={changeCandidateFilterQuery}
                   onResultsScroll={handleCandidateFilterOptionsScroll}
                   onMoveActiveOption={moveCandidateFilterKeyboardOption}
                   onActiveOptionChange={setActiveCandidateFilterOptionIndex}
                   onSelectOption={selectCandidateFilterOption}
-                  onRemoveAbility={() =>
-                    patchSlot(selectedSlot, {
-                      candidateFilters: {
-                        ...activeCandidateFilters,
-                        ability: null,
-                      },
-                    })
-                  }
-                  onRemoveMove={(moveIndex) => {
-                    patchSlot(selectedSlot, {
-                      candidateFilters: {
-                        ...activeCandidateFilters,
-                        moves: activeCandidateFilters.moves.filter(
-                          (_, index) => index !== moveIndex,
-                        ),
-                      },
-                    });
-                    closeCandidateFilterPicker();
-                  }}
+                  onRemoveAbility={removeCandidateAbility}
+                  onRemoveMove={removeCandidateMove}
                 />
               ) : null}
 

@@ -1,5 +1,5 @@
 import type { BattleFormat } from "../../battleFormat/battleFormat";
-import type { CopilotAnalysisScope } from "../../utils/copilotAnalysis";
+import type { CopilotAnalysisScope } from "../../utils/copilotContracts";
 import type {
   AiEvaluationRunResult,
   AiEvaluationUsage,

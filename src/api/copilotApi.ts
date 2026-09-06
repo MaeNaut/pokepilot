@@ -1,8 +1,8 @@
 import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
-} from "../utils/copilotAnalysis";
-import { validateCopilotModelOutput } from "../utils/copilotModelContract";
+} from "../utils/copilotContracts";
+import { validateCopilotModelOutput } from "../utils/copilotModelValidation";
 
 type HostedAnalysisEnvelope = {
   ok?: unknown;

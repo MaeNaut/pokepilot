@@ -1,10 +1,29 @@
-import type {
-  CopilotAnalysisRequest,
-  CopilotSetOptimizationCandidateSnapshot,
-} from "./copilotAnalysis.js";
+import type { CopilotAnalysisRequest } from "./copilotContracts.js";
 import { pokemonTypes } from "../types.js";
 import { copilotResponsibilityIds } from "./copilotResponsibilities.js";
+import { hasValidOptimizationShape } from "./copilotRequestOptimizationValidation.js";
+import {
+  hasOnlyKeys,
+  hasUniqueSlots,
+  isBoundedInteger,
+  isFiniteNumber,
+  isNonEmptyString,
+  isNullableString,
+  isPokemonTypeArray,
+  isSlotIndex,
+  isStatBlock,
+  isStringArray,
+  isUniqueEnumArray,
+  pokemonTypeSet,
+  teamConceptIds,
+  teamConceptIdSet,
+  teamRoleIds,
+  teamRoleIdSet,
+  validateBoundedStructure,
+} from "./copilotRequestValidationPrimitives.js";
 import { isRecord } from "./typeGuards.js";
+
+export { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestOptimizationValidation.js";
 
 export type CopilotRequestValidation =
   | { success: true; data: CopilotAnalysisRequest; errors: [] }
@@ -26,43 +45,6 @@ const requestKeys = new Set([
   "mechanics",
   "diagnostics",
 ]);
-const pokemonTypeSet = new Set<string>(pokemonTypes);
-const statIds = [
-  "hp",
-  "attack",
-  "defense",
-  "specialAttack",
-  "specialDefense",
-  "speed",
-] as const;
-const statIdSet = new Set<string>(statIds);
-const optimizationCandidateProfiles = new Set([
-  "offense-breakpoint",
-  "physical-bulk-maximum",
-  "special-bulk-maximum",
-  "physical-survival-with-reserve",
-  "special-survival-with-reserve",
-  "speed-adjustment",
-]);
-const teamRoleIds = [
-  "physical-attacker",
-  "special-attacker",
-  "physical-wall",
-  "special-wall",
-  "supporter",
-  "setter",
-] as const;
-const teamRoleIdSet = new Set<string>(teamRoleIds);
-const teamConceptIds = [
-  "trick-room",
-  "tailwind",
-  "gravity",
-  "rain",
-  "sun",
-  "sand",
-  "snow",
-] as const;
-const teamConceptIdSet = new Set<string>(teamConceptIds);
 const validityCodes = new Set([
   "ev-stat",
   "ev-total",
@@ -88,149 +70,6 @@ const validityScopes = new Set([
   "move",
   "team",
 ]);
-
-function validateBoundedStructure(
-  value: unknown,
-  path: string,
-  errors: string[],
-  depth = 0,
-) {
-  if (depth > 12) {
-    errors.push(`${path} exceeds the maximum nesting depth.`);
-    return;
-  }
-
-  if (typeof value === "string") {
-    if (value.length > 1_000) {
-      errors.push(`${path} exceeds the maximum string length.`);
-    }
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length > 100) {
-      errors.push(`${path} exceeds the maximum array length.`);
-      return;
-    }
-    value.forEach((entry, index) =>
-      validateBoundedStructure(entry, `${path}[${index}]`, errors, depth + 1),
-    );
-    return;
-  }
-
-  if (isRecord(value)) {
-    const entries = Object.entries(value);
-    if (entries.length > 100) {
-      errors.push(`${path} exceeds the maximum object size.`);
-      return;
-    }
-    entries.forEach(([key, entry]) =>
-      validateBoundedStructure(entry, `${path}.${key}`, errors, depth + 1),
-    );
-  }
-}
-
-function isNonEmptyString(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]) {
-  const allowed = new Set(keys);
-  return Object.keys(value).every((key) => allowed.has(key));
-}
-
-function isNullableString(value: unknown) {
-  return value === null || typeof value === "string";
-}
-
-function isFiniteNumber(value: unknown, minimum = -10_000, maximum = 10_000) {
-  return (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    value >= minimum &&
-    value <= maximum
-  );
-}
-
-function isBoundedInteger(value: unknown, minimum: number, maximum: number) {
-  return Number.isInteger(value) && Number(value) >= minimum && Number(value) <= maximum;
-}
-
-function isSlotIndex(value: unknown) {
-  return isBoundedInteger(value, 0, 5);
-}
-
-function isStringArray(value: unknown, maximum = 100): value is string[] {
-  return (
-    Array.isArray(value) &&
-    value.length <= maximum &&
-    value.every((entry) => typeof entry === "string")
-  );
-}
-
-function isUniqueEnumArray(
-  value: unknown,
-  allowed: Set<string>,
-  maximum: number,
-  minimum = 0,
-): value is string[] {
-  return (
-    Array.isArray(value) &&
-    value.length >= minimum &&
-    value.length <= maximum &&
-    value.every((entry) => typeof entry === "string" && allowed.has(entry)) &&
-    new Set(value).size === value.length
-  );
-}
-
-function isPokemonTypeArray(
-  value: unknown,
-  maximum = 18,
-  minimum = 0,
-): value is string[] {
-  return isUniqueEnumArray(value, pokemonTypeSet, maximum, minimum);
-}
-
-function isStatBlock(value: unknown) {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, statIds) &&
-    statIds.every((stat) => isFiniteNumber(value[stat]))
-  );
-}
-
-function hasValidMaxedStats(value: unknown, evs: unknown) {
-  return (
-    isUniqueEnumArray(value, statIdSet, statIds.length) &&
-    isRecord(evs) &&
-    statIds.every(
-      (stat) => value.includes(stat) === (Number(evs[stat]) === 32),
-    )
-  );
-}
-
-function isBoundedIntegerStatBlock(
-  value: unknown,
-  minimum: number,
-  maximum: number,
-) {
-  return (
-    isStatBlock(value) &&
-    isRecord(value) &&
-    Object.values(value).every((entry) =>
-      isBoundedInteger(entry, minimum, maximum),
-    )
-  );
-}
-
-function getStatBlockTotal(value: unknown) {
-  return isRecord(value)
-    ? Object.values(value).reduce<number>(
-        (total, entry) => total + Number(entry),
-        0,
-      )
-    : Number.NaN;
-}
 
 function hasValidMoveShape(value: unknown) {
   return (
@@ -608,297 +447,6 @@ function hasValidRecommendationCandidateShape(value: unknown) {
   );
 }
 
-function hasValidOptimizationBenchmark(value: unknown) {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, [
-      "minDamage",
-      "maxDamage",
-      "minPercent",
-      "maxPercent",
-      "defenderCurrentHp",
-      "defenderMaxHp",
-      "oneHitKoChance",
-      "koHits",
-      "koChance",
-      "possibleKoHits",
-      "guaranteedKoHits",
-    ]) &&
-    isFiniteNumber(value.minDamage, 0, 100_000) &&
-    isFiniteNumber(value.maxDamage, 0, 100_000) &&
-    isFiniteNumber(value.minPercent, 0, 100_000) &&
-    isFiniteNumber(value.maxPercent, 0, 100_000) &&
-    Number(value.minDamage) <= Number(value.maxDamage) &&
-    Number(value.minPercent) <= Number(value.maxPercent) &&
-    isBoundedInteger(value.defenderCurrentHp, 1, 100_000) &&
-    isBoundedInteger(value.defenderMaxHp, 1, 100_000) &&
-    Number(value.defenderCurrentHp) <= Number(value.defenderMaxHp) &&
-    isFiniteNumber(value.oneHitKoChance, 0, 100) &&
-    isBoundedInteger(value.koHits, 0, 100) &&
-    (value.koChance === null || isFiniteNumber(value.koChance, 0, 100)) &&
-    (value.possibleKoHits === null ||
-      isBoundedInteger(value.possibleKoHits, 1, 100_000)) &&
-    (value.guaranteedKoHits === null ||
-      isBoundedInteger(value.guaranteedKoHits, 1, 100_000)) &&
-    (value.possibleKoHits === null) === (value.guaranteedKoHits === null) &&
-    (value.possibleKoHits === null ||
-      Number(value.possibleKoHits) <= Number(value.guaranteedKoHits)) &&
-    value.possibleKoHits ===
-      (Number(value.maxDamage) > 0
-        ? Math.ceil(Number(value.defenderCurrentHp) / Number(value.maxDamage))
-        : null) &&
-    value.guaranteedKoHits ===
-      (Number(value.minDamage) > 0
-        ? Math.ceil(Number(value.defenderCurrentHp) / Number(value.minDamage))
-        : null)
-  );
-}
-
-function hasValidOptimizationField(value: unknown) {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, [
-      "weather",
-      "terrain",
-      "room",
-      "aura",
-      "gameType",
-      "isCritical",
-      "isSpread",
-      "isHelpingHand",
-      "isTailwind",
-      "isFriendGuard",
-      "isPlusMinus",
-      "isWall",
-    ]) &&
-    ["none", "sun", "rain", "sand", "snow"].includes(String(value.weather)) &&
-    ["none", "electric", "grassy", "psychic", "misty"].includes(
-      String(value.terrain),
-    ) &&
-    ["none", "magic", "wonder", "gravity"].includes(String(value.room)) &&
-    ["none", "fairy"].includes(String(value.aura)) &&
-    ["singles", "doubles"].includes(String(value.gameType)) &&
-    [
-      "isCritical",
-      "isSpread",
-      "isHelpingHand",
-      "isTailwind",
-      "isFriendGuard",
-      "isPlusMinus",
-      "isWall",
-    ].every((key) => typeof value[key] === "boolean")
-  );
-}
-
-export function isValidCopilotOptimizationCandidateSnapshot(
-  value: unknown,
-): value is CopilotSetOptimizationCandidateSnapshot {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, [
-      "id",
-      "slotIndex",
-      "focuses",
-      "profiles",
-      "maxedStats",
-      "natureId",
-      "natureDisplayName",
-      "evs",
-      "evTotal",
-      "finalStats",
-      "itemId",
-      "itemDisplayName",
-      "changedStatPoints",
-      "statPointChanges",
-      "offenseBenchmarks",
-      "defenseBenchmarks",
-      "speedBenchmark",
-    ]) &&
-    isNonEmptyString(value.id) &&
-    isSlotIndex(value.slotIndex) &&
-    isUniqueEnumArray(
-      value.focuses,
-      new Set(["offense", "defense", "speed"]),
-      3,
-    ) &&
-    Array.isArray(value.focuses) &&
-    value.focuses.length > 0 &&
-    isUniqueEnumArray(
-      value.profiles,
-      optimizationCandidateProfiles,
-      optimizationCandidateProfiles.size,
-    ) &&
-    hasValidMaxedStats(value.maxedStats, value.evs) &&
-    isNonEmptyString(value.natureId) &&
-    isNonEmptyString(value.natureDisplayName) &&
-    isBoundedIntegerStatBlock(value.evs, 0, 32) &&
-    value.evTotal === 66 &&
-    getStatBlockTotal(value.evs) === value.evTotal &&
-    isBoundedIntegerStatBlock(value.finalStats, 1, 10_000) &&
-    isNullableString(value.itemId) &&
-    isNullableString(value.itemDisplayName) &&
-    isBoundedInteger(value.changedStatPoints, 0, 384) &&
-    isBoundedIntegerStatBlock(value.statPointChanges, -32, 32) &&
-    hasValidOptimizationMoveBenchmarks(value.offenseBenchmarks) &&
-    hasValidOptimizationMoveBenchmarks(value.defenseBenchmarks) &&
-    hasValidOptimizationSpeedBenchmark(value.speedBenchmark)
-  );
-}
-
-function hasValidOptimizationMoveBenchmark(value: unknown) {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, [
-      "moveId",
-      "moveDisplayName",
-      "moveCategory",
-      "source",
-      "relevantStat",
-      "optimizedVsCurrent",
-      "current",
-      "optimized",
-    ]) &&
-    isNonEmptyString(value.moveId) &&
-    isNonEmptyString(value.moveDisplayName) &&
-    (value.moveCategory === "Physical" || value.moveCategory === "Special") &&
-    (value.source === "selected" || value.source === "usage") &&
-    statIdSet.has(String(value.relevantStat)) &&
-    ["better", "same", "worse"].includes(
-      String(value.optimizedVsCurrent),
-    ) &&
-    hasValidOptimizationBenchmark(value.current) &&
-    hasValidOptimizationBenchmark(value.optimized)
-  );
-}
-
-function hasValidOptimizationMoveBenchmarks(value: unknown) {
-  return (
-    Array.isArray(value) &&
-    value.length <= 2 &&
-    value.every(hasValidOptimizationMoveBenchmark) &&
-    new Set(
-      value.map((entry) => (isRecord(entry) ? entry.moveId : null)),
-    ).size === value.length
-  );
-}
-
-function hasValidOptimizationSpeedState(value: unknown) {
-  if (
-    !isRecord(value) ||
-    !hasOnlyKeys(value, ["playerSpeed", "opponentSpeed", "relation"]) ||
-    !isBoundedInteger(value.playerSpeed, 1, 100_000) ||
-    !isBoundedInteger(value.opponentSpeed, 1, 100_000) ||
-    !["faster", "tie", "slower"].includes(String(value.relation))
-  ) {
-    return false;
-  }
-
-  const expectedRelation =
-    Number(value.playerSpeed) === Number(value.opponentSpeed)
-      ? "tie"
-      : Number(value.playerSpeed) > Number(value.opponentSpeed)
-        ? "faster"
-        : "slower";
-  return value.relation === expectedRelation;
-}
-
-function hasValidOptimizationSpeedBenchmark(value: unknown) {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, ["current", "optimized"]) &&
-    hasValidOptimizationSpeedState(value.current) &&
-    hasValidOptimizationSpeedState(value.optimized) &&
-    isRecord(value.current) &&
-    isRecord(value.optimized) &&
-    value.current.opponentSpeed === value.optimized.opponentSpeed
-  );
-}
-
-function hasValidOptimizationShape(value: unknown) {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, [
-      "slotIndex",
-      "configuredDirection",
-      "playerPokemonId",
-      "playerDisplayName",
-      "opponentPokemonId",
-      "opponentDisplayName",
-      "field",
-      "currentBuild",
-      "candidates",
-    ]) &&
-    isSlotIndex(value.slotIndex) &&
-    ["player-to-opponent", "opponent-to-player"].includes(
-      String(value.configuredDirection),
-    ) &&
-    isNonEmptyString(value.playerPokemonId) &&
-    isNonEmptyString(value.playerDisplayName) &&
-    isNonEmptyString(value.opponentPokemonId) &&
-    isNonEmptyString(value.opponentDisplayName) &&
-    hasValidOptimizationField(value.field) &&
-    isRecord(value.currentBuild) &&
-    hasOnlyKeys(value.currentBuild, [
-      "natureId",
-      "natureDisplayName",
-      "evs",
-      "finalStats",
-      "itemId",
-      "itemDisplayName",
-    ]) &&
-    isNonEmptyString(value.currentBuild.natureId) &&
-    isNonEmptyString(value.currentBuild.natureDisplayName) &&
-    isBoundedIntegerStatBlock(value.currentBuild.evs, 0, 32) &&
-    getStatBlockTotal(value.currentBuild.evs) <= 66 &&
-    isBoundedIntegerStatBlock(value.currentBuild.finalStats, 1, 10_000) &&
-    isNullableString(value.currentBuild.itemId) &&
-    isNullableString(value.currentBuild.itemDisplayName) &&
-    Array.isArray(value.candidates) &&
-    value.candidates.length > 0 &&
-    value.candidates.length <= 8 &&
-    value.candidates.every(isValidCopilotOptimizationCandidateSnapshot) &&
-    value.candidates.every(
-      (candidate) => candidate.slotIndex === value.slotIndex,
-    ) &&
-    value.candidates.every((candidate) => {
-      if (
-        !isValidCopilotOptimizationCandidateSnapshot(candidate) ||
-        !isRecord(value.currentBuild) ||
-        !isBoundedIntegerStatBlock(value.currentBuild.evs, 0, 32)
-      ) {
-        return false;
-      }
-
-      const currentEvs = value.currentBuild.evs as Record<string, number>;
-      const expectedChanges = Object.fromEntries(
-        Object.keys(candidate.evs).map((stat) => [
-          stat,
-          candidate.evs[stat as keyof typeof candidate.evs] -
-            Number(currentEvs[stat]),
-        ]),
-      );
-      const expectedChangedStatPoints = Object.values(expectedChanges).reduce(
-        (total, change) => total + Math.abs(change),
-        0,
-      );
-
-      return (
-        Object.entries(expectedChanges).every(
-          ([stat, change]) =>
-            candidate.statPointChanges[
-              stat as keyof typeof candidate.statPointChanges
-            ] === change,
-        ) && candidate.changedStatPoints === expectedChangedStatPoints
-      );
-    }) &&
-    new Set(
-      value.candidates.map((candidate) =>
-        isRecord(candidate) ? candidate.id : null,
-      ),
-    ).size === value.candidates.length
-  );
-}
-
 function hasValidResponsibilityCounts(value: unknown) {
   return (
     isRecord(value) &&
@@ -1067,13 +615,6 @@ function hasValidDiagnostics(value: unknown) {
     isBoundedInteger(value.validity.errorCount, 0, 100) &&
     isBoundedInteger(value.validity.unavailableCount, 0, 100)
   );
-}
-
-function hasUniqueSlots(entries: unknown[]) {
-  const slots = entries.map((entry) =>
-    isRecord(entry) ? Number(entry.slotIndex) : Number.NaN,
-  );
-  return new Set(slots).size === slots.length;
 }
 
 export function validateCopilotAnalysisRequest(
