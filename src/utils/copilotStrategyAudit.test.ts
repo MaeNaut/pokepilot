@@ -81,7 +81,7 @@ function createRequest(
   overrides: Partial<CopilotAnalysisRequest> = {},
 ): CopilotAnalysisRequest {
   return {
-    version: 14,
+    version: 18,
     locale: "en",
     scope: "team",
     battleFormat: "doubles",

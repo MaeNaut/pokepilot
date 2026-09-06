@@ -39,6 +39,7 @@ import {
 import {
   ACTIVE_TEAM_SIZE,
   MAX_SAVED_TEAMS,
+  canAddBenchPokemon,
   canAddSavedTeam,
 } from "./data/teamLimits";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
@@ -56,8 +57,11 @@ import {
 import {
   moveBenchPokemonToTeam,
   moveTeamPokemonToBench,
+  getPokemonBuildSnapshot,
   type BenchPokemon,
 } from "./utils/benchPokemon";
+import type { CalculatorAnalysisContext } from "./calculator/setOptimizer";
+import type { CopilotSetOptimizationCandidateSnapshot } from "./utils/copilotAnalysis";
 import { createTeamAnalysisContext } from "./utils/teamAnalysisContext";
 import {
   formatShowdownSlot,
@@ -175,6 +179,8 @@ function App() {
   const [hasOpenedCalculator, setHasOpenedCalculator] = useState(
     appMode === "calculator",
   );
+  const [calculatorAnalysisContext, setCalculatorAnalysisContext] =
+    useState<CalculatorAnalysisContext | null>(null);
   const [bench, setBench] = useState<BenchPokemon[]>([]);
   const [selectedTeamSlot, setSelectedTeamSlot] = useState(0);
   const teamBuildState = useTeamBuildState();
@@ -667,6 +673,50 @@ function App() {
 
   function handleRemoveBenchPokemon(benchId: string) {
     setBench((current) => current.filter((entry) => entry.id !== benchId));
+  }
+
+  function handleApplyOptimizationCandidate(
+    candidate: CopilotSetOptimizationCandidateSnapshot,
+  ) {
+    if (!team[candidate.slotIndex]) {
+      return;
+    }
+
+    teamBuildState.patchSlot(candidate.slotIndex, {
+      nature: candidate.natureId,
+      evs: { ...candidate.evs },
+    });
+    setSelectedTeamSlot(candidate.slotIndex);
+  }
+
+  function handleSaveOptimizationCandidate(
+    candidate: CopilotSetOptimizationCandidateSnapshot,
+  ) {
+    const member = team[candidate.slotIndex];
+
+    if (!member || !canAddBenchPokemon(bench.length)) {
+      return false;
+    }
+
+    const currentBuild = getPokemonBuildSnapshot(
+      member,
+      teamBuildState.getBuildStateSnapshot(),
+      candidate.slotIndex,
+    );
+    setBench((current) => [
+      ...current,
+      {
+        id: createSavedTeamId(),
+        member,
+        build: {
+          ...currentBuild,
+          nature: candidate.natureId,
+          evs: { ...candidate.evs },
+        },
+      },
+    ]);
+
+    return true;
   }
 
   function commitTeamName() {
@@ -1960,6 +2010,7 @@ function App() {
               onSelectedSlotChange={setSelectedTeamSlot}
               onReorderSlots={handleReorderSlots}
               onSelectPokemon={handleEditorSelectPokemon}
+              onAnalysisContextChange={setCalculatorAnalysisContext}
               isVisible={appMode === "calculator"}
             />
           </Suspense>
@@ -2017,6 +2068,8 @@ function App() {
                 buildState={teamBuildState}
                 diagnostics={teamDiagnostics}
                 validity={teamValidity}
+                isCalculatorActive={appMode === "calculator"}
+                calculatorContext={calculatorAnalysisContext}
                 onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
                   const result = await handleSelectPokemon(slotIndex, pokemonId, {
                     applyUsageStats: true,
@@ -2028,6 +2081,10 @@ function App() {
                     issueCodes: [],
                   };
                 }}
+                onApplyOptimizationCandidate={
+                  handleApplyOptimizationCandidate
+                }
+                onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
               />
             </Suspense>
           ) : null}

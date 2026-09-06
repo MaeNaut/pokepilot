@@ -3,6 +3,7 @@ import {
   CHAMPIONS_MAX_EV_TOTAL,
   defaultEvs,
   getNatureById,
+  statLabels,
   statKeys,
 } from "../data/natures";
 import type { TeamConceptId } from "../data/teamConcepts";
@@ -29,6 +30,7 @@ import {
   type PokemonMove,
   type PokemonType,
   type StatBlock,
+  type StatKey,
   type TeamSlot,
 } from "../types";
 import type {
@@ -59,8 +61,22 @@ import {
   type CopilotResponsibilityId,
 } from "./copilotResponsibilities";
 import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
+import {
+  createSetOptimizationPlan,
+  type CalculatorAnalysisContext,
+  type SetOptimizationBenchmark,
+  type SetOptimizationCandidateProfile,
+  type SetOptimizationFocus,
+  type SetOptimizationMoveSource,
+  type SetOptimizationOutcomeComparison,
+  type SetOptimizationSpeedBenchmark,
+} from "../calculator/setOptimizer";
 
-export type CopilotAnalysisScope = "team" | "pokemon" | "recommendation";
+export type CopilotAnalysisScope =
+  | "team"
+  | "pokemon"
+  | "recommendation"
+  | "optimization";
 export type CopilotPriority = "high" | "medium" | "low";
 
 export type CopilotMoveCategory =
@@ -183,8 +199,65 @@ export type CopilotTypeLabelSnapshot = {
   displayName: string;
 };
 
+export type CopilotSetOptimizationCandidateSnapshot = {
+  id: string;
+  slotIndex: number;
+  focuses: SetOptimizationFocus[];
+  profiles: SetOptimizationCandidateProfile[];
+  maxedStats: StatKey[];
+  natureId: string;
+  natureDisplayName: string;
+  evs: StatBlock;
+  evTotal: number;
+  finalStats: StatBlock;
+  itemId: string | null;
+  itemDisplayName: string | null;
+  changedStatPoints: number;
+  statPointChanges: StatBlock;
+  offenseBenchmarks: Array<{
+    moveId: string;
+    moveDisplayName: string;
+    moveCategory: "Physical" | "Special";
+    source: SetOptimizationMoveSource;
+    relevantStat: StatKey;
+    optimizedVsCurrent: SetOptimizationOutcomeComparison;
+    current: SetOptimizationBenchmark;
+    optimized: SetOptimizationBenchmark;
+  }>;
+  defenseBenchmarks: Array<{
+    moveId: string;
+    moveDisplayName: string;
+    moveCategory: "Physical" | "Special";
+    source: SetOptimizationMoveSource;
+    relevantStat: StatKey;
+    optimizedVsCurrent: SetOptimizationOutcomeComparison;
+    current: SetOptimizationBenchmark;
+    optimized: SetOptimizationBenchmark;
+  }>;
+  speedBenchmark: SetOptimizationSpeedBenchmark;
+};
+
+export type CopilotSetOptimizationSnapshot = {
+  slotIndex: number;
+  configuredDirection: CalculatorAnalysisContext["direction"];
+  playerPokemonId: string;
+  playerDisplayName: string;
+  opponentPokemonId: string;
+  opponentDisplayName: string;
+  field: CalculatorAnalysisContext["field"];
+  currentBuild: {
+    natureId: string;
+    natureDisplayName: string;
+    evs: StatBlock;
+    finalStats: StatBlock;
+    itemId: string | null;
+    itemDisplayName: string | null;
+  };
+  candidates: CopilotSetOptimizationCandidateSnapshot[];
+};
+
 export type CopilotAnalysisRequest = {
-  version: 14;
+  version: 18;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -195,6 +268,7 @@ export type CopilotAnalysisRequest = {
   megaOptions: CopilotMegaOptionSnapshot[];
   candidateFilters: CopilotCandidateFilterSnapshot[];
   recommendationCandidates: CopilotRecommendationCandidateSnapshot[];
+  optimization?: CopilotSetOptimizationSnapshot | null;
   mechanics: CopilotMechanicsSnapshot;
   diagnostics: CopilotDiagnosticsSnapshot;
 };
@@ -216,6 +290,7 @@ export type CopilotAnalysisResponse = {
   strengths: string[];
   weaknesses: string[];
   recommendations: CopilotRecommendation[];
+  optimizationCandidates?: CopilotSetOptimizationCandidateSnapshot[];
 };
 
 type CreateCopilotRequestInput = {
@@ -231,6 +306,7 @@ type CreateCopilotRequestInput = {
   diagnostics: TeamDiagnosticsResult;
   validity: TeamValidityResult;
   recommendationCandidates?: CopilotRecommendationCandidateSnapshot[];
+  calculatorContext?: CalculatorAnalysisContext | null;
 };
 
 function normalizeLookup(value: string) {
@@ -265,6 +341,153 @@ function localizeRecommendationCandidates(
         }
       : null,
   }));
+}
+
+function getOptimizationPokemonDisplayName(
+  locale: Locale,
+  member: NonNullable<CalculatorAnalysisContext["player"]["member"]>,
+  pokemonIndex: PokemonIndexEntry[],
+) {
+  const entry = pokemonIndex.find((candidate) => candidate.name === member.id);
+
+  return translatePokemonName(locale, {
+    id: entry?.name ?? member.id,
+    fallback: entry?.displayName ?? member.name,
+    speciesId: entry?.speciesKey,
+    formLabel: entry?.formLabel,
+    formKind: entry?.formKind,
+    includeForm: true,
+  });
+}
+
+function createCopilotOptimizationSnapshot(
+  context: CalculatorAnalysisContext | null | undefined,
+  locale: Locale,
+  pokemonIndex: PokemonIndexEntry[],
+): CopilotSetOptimizationSnapshot | null {
+  if (!context) return null;
+
+  const plan = createSetOptimizationPlan(context);
+  const player = context.player.member;
+  const opponent = context.opponent.member;
+
+  if (
+    plan.status !== "ready" ||
+    !player?.baseStats ||
+    !opponent ||
+    plan.candidates.length === 0
+  ) {
+    return null;
+  }
+
+  const currentNature = getNatureById(context.player.build.natureId);
+  const currentItem = context.player.build.item;
+  const currentItemId = currentItem?.showdownId ?? currentItem?.id ?? null;
+  const currentItemDisplayName = currentItem
+    ? translateGameName(
+        locale,
+        "items",
+        currentItemId ?? currentItem.name,
+        currentItem.name,
+      )
+    : null;
+
+  return {
+    slotIndex: plan.slotIndex,
+    configuredDirection: plan.configuredDirection,
+    playerPokemonId: player.id,
+    playerDisplayName: getOptimizationPokemonDisplayName(
+      locale,
+      player,
+      pokemonIndex,
+    ),
+    opponentPokemonId: opponent.id,
+    opponentDisplayName: getOptimizationPokemonDisplayName(
+      locale,
+      opponent,
+      pokemonIndex,
+    ),
+    field: { ...context.field },
+    currentBuild: {
+      natureId: context.player.build.natureId,
+      natureDisplayName: translateGameName(
+        locale,
+        "natures",
+        context.player.build.natureId,
+        currentNature.label,
+      ),
+      evs: { ...context.player.build.evs },
+      finalStats: calculateChampionsStats(
+        player.baseStats,
+        context.player.build.evs,
+        currentNature,
+      ),
+      itemId: currentItemId,
+      itemDisplayName: currentItemDisplayName,
+    },
+    candidates: plan.candidates.map((candidate) => ({
+      id: candidate.id,
+      slotIndex: candidate.slotIndex,
+      focuses: [...candidate.focuses],
+      profiles: [...candidate.profiles],
+      maxedStats: [...candidate.maxedStats],
+      natureId: candidate.natureId,
+      natureDisplayName: translateGameName(
+        locale,
+        "natures",
+        candidate.natureId,
+        getNatureById(candidate.natureId).label,
+      ),
+      evs: { ...candidate.evs },
+      evTotal: candidate.evTotal,
+      finalStats: { ...candidate.finalStats },
+      itemId: candidate.itemId,
+      itemDisplayName: candidate.itemName
+        ? translateGameName(
+            locale,
+            "items",
+            candidate.itemId ?? candidate.itemName,
+            candidate.itemName,
+          )
+        : null,
+      changedStatPoints: candidate.changedStatPoints,
+      statPointChanges: { ...candidate.statPointChanges },
+      offenseBenchmarks: candidate.offenseBenchmarks.map((benchmark) => ({
+        moveId: benchmark.moveId,
+        moveDisplayName: translateGameName(
+          locale,
+          "moves",
+          benchmark.moveId,
+          benchmark.moveName,
+        ),
+        moveCategory: benchmark.moveCategory,
+        source: benchmark.source,
+        relevantStat: benchmark.relevantStat,
+        optimizedVsCurrent: benchmark.optimizedVsCurrent,
+        current: { ...benchmark.current },
+        optimized: { ...benchmark.optimized },
+      })),
+      defenseBenchmarks: candidate.defenseBenchmarks.map((benchmark) => ({
+        moveId: benchmark.moveId,
+        moveDisplayName: translateGameName(
+          locale,
+          "moves",
+          benchmark.moveId,
+          benchmark.moveName,
+        ),
+        moveCategory: benchmark.moveCategory,
+        source: benchmark.source,
+        relevantStat: benchmark.relevantStat,
+        optimizedVsCurrent: benchmark.optimizedVsCurrent,
+        current: { ...benchmark.current },
+        optimized: { ...benchmark.optimized },
+      })),
+      speedBenchmark: {
+        current: { ...candidate.speedBenchmark.current },
+        optimized: { ...candidate.speedBenchmark.optimized },
+      },
+    })),
+  };
 }
 
 function formatList(values: string[], locale: Locale) {
@@ -675,6 +898,7 @@ export function createCopilotAnalysisRequest({
   diagnostics,
   validity,
   recommendationCandidates = [],
+  calculatorContext,
 }: CreateCopilotRequestInput): CopilotAnalysisRequest {
   const mechanicsSets: CopilotMechanicsSetInput[] = [];
   const responsibilityGroups: CopilotResponsibilityId[][] = [];
@@ -847,7 +1071,7 @@ export function createCopilotAnalysisRequest({
   );
 
   return {
-    version: 14,
+    version: 18,
     locale,
     scope,
     battleFormat,
@@ -861,6 +1085,17 @@ export function createCopilotAnalysisRequest({
       scope === "recommendation"
         ? localizeRecommendationCandidates(locale, recommendationCandidates)
         : [],
+    optimization:
+      scope === "optimization"
+        ? createCopilotOptimizationSnapshot(
+            calculatorContext?.selectedSlot === selectedSlot &&
+              calculatorContext.player.member?.id === team[selectedSlot]?.id
+              ? calculatorContext
+              : null,
+            locale,
+            pokemonIndex,
+          )
+        : null,
     mechanics: createCopilotMechanicsSnapshot(mechanicsSets),
     diagnostics: {
       filledSlots: diagnostics.filledSlots,
@@ -1539,6 +1774,95 @@ function analyzeRecommendationRequest(
   };
 }
 
+function formatOptimizationSpread(evs: StatBlock) {
+  return statKeys
+    .filter((stat) => evs[stat] > 0)
+    .map((stat) => `${statLabels[stat]} ${evs[stat]}`)
+    .join(" / ");
+}
+
+function formatLocalOptimizationReason(
+  candidate: CopilotSetOptimizationCandidateSnapshot,
+) {
+  const offense = candidate.offenseBenchmarks[0];
+  const defense = candidate.defenseBenchmarks[0];
+  const parts = [formatOptimizationSpread(candidate.evs)];
+
+  if (offense) {
+    parts.push(
+      `${offense.moveDisplayName} ${offense.optimized.minPercent.toFixed(1)}-${offense.optimized.maxPercent.toFixed(1)}%`,
+    );
+  }
+  if (defense) {
+    parts.push(
+      `${defense.moveDisplayName} ${defense.optimized.minPercent.toFixed(1)}-${defense.optimized.maxPercent.toFixed(1)}%`,
+    );
+  }
+  parts.push(
+    `Spe ${candidate.speedBenchmark.current.playerSpeed}->${candidate.speedBenchmark.optimized.playerSpeed}`,
+  );
+
+  return parts.join(" · ");
+}
+
+function analyzeOptimizationRequest(
+  request: CopilotAnalysisRequest,
+  locale: Locale,
+): CopilotAnalysisResponse {
+  const optimization = request.optimization;
+  const isKorean = locale === "ko";
+
+  if (!optimization) {
+    return {
+      version: 1,
+      source: "local",
+      scope: "optimization",
+      title: isKorean ? "계산기 설정 필요" : "Calculator setup required",
+      summary: isKorean
+        ? "계산기에서 내 포켓몬, 상대 포켓몬과 공격 방향을 먼저 설정해야 함"
+        : "Choose both Pokemon and the attack direction in the calculator first.",
+      playstyle: isKorean ? "정확한 대상 최적화" : "Exact-target optimization",
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+    };
+  }
+
+  const candidates = optimization.candidates.slice(0, 3);
+  const playstyleLabel = isKorean
+    ? "공격·내구·스피드 통합 조정"
+    : "Combined offense, bulk, and Speed tuning";
+
+  return {
+    version: 1,
+    source: "local",
+    scope: "optimization",
+    title: `${optimization.playerDisplayName} vs. ${optimization.opponentDisplayName}`,
+    summary: isKorean
+      ? `계산기에 설정된 조건을 그대로 사용해 ${optimization.playerDisplayName}의 성격과 노력치 후보를 검증함`
+      : `Verified nature and Stat Point options for ${optimization.playerDisplayName} under the exact calculator conditions.`,
+    playstyle: playstyleLabel,
+    strengths: [
+      isKorean
+        ? "표시된 대미지 수치는 계산기 엔진으로 재검증됨"
+        : "Every displayed damage result is rechecked by the calculator engine.",
+    ],
+    weaknesses: [
+      isKorean
+        ? "현재 도구와 계산기 조건은 고정되며 다른 매치업까지 보장하지 않음"
+        : "The current item and calculator conditions stay fixed; other matchups are not guaranteed.",
+    ],
+    recommendations: candidates.map((candidate, index) => ({
+      id: candidate.id,
+      title: isKorean
+        ? `${candidate.natureDisplayName} 샘플`
+        : `${candidate.natureDisplayName} sample`,
+      reason: formatLocalOptimizationReason(candidate),
+      priority: index === 0 ? "high" : index === 1 ? "medium" : "low",
+    })),
+  };
+}
+
 export function createLocalCopilotAnalysis(
   request: CopilotAnalysisRequest,
   locale: Locale = "en",
@@ -1547,7 +1871,11 @@ export function createLocalCopilotAnalysis(
     return analyzeTeamRequest(request, locale);
   }
 
-  return request.scope === "pokemon"
-    ? analyzePokemonRequest(request, locale)
-    : analyzeRecommendationRequest(request, locale);
+  if (request.scope === "pokemon") {
+    return analyzePokemonRequest(request, locale);
+  }
+
+  return request.scope === "recommendation"
+    ? analyzeRecommendationRequest(request, locale)
+    : analyzeOptimizationRequest(request, locale);
 }

@@ -74,6 +74,10 @@ export type DamageCalculationResult =
       effectiveness: number;
       attackStat: number;
       defenseStat: number;
+      offensiveStatKey: Exclude<StatKey, "hp">;
+      offensiveStatOwner: "attacker" | "defender";
+      defensiveStatKey: Exclude<StatKey, "hp">;
+      defensiveStatOwner: "attacker" | "defender";
       offensivePower: number | null;
       description: string;
     }
@@ -92,6 +96,14 @@ const engineStatKeys: Record<StatKey, keyof StatsTable> = {
   specialDefense: "spd",
   speed: "spe",
 };
+
+const statKeysByEngine = {
+  atk: "attack",
+  def: "defense",
+  spa: "specialAttack",
+  spd: "specialDefense",
+  spe: "speed",
+} as const satisfies Record<string, Exclude<StatKey, "hp">>;
 
 const engineTypeNames: Record<PokemonType, string> = {
   normal: "Normal",
@@ -318,14 +330,38 @@ function flattenDamageRolls(damage: number | number[] | number[][]): number[] {
   );
 }
 
-function getOffensiveStat(result: ReturnType<typeof calculate>) {
-  const source =
+function getDamageStatReferences(result: ReturnType<typeof calculate>) {
+  const offensiveStatOwner =
     result.move.overrideOffensivePokemon === "target"
-      ? result.defender
-      : result.attacker;
-  const stat =
+      ? "defender"
+      : "attacker";
+  const offensiveEngineStat =
     result.move.overrideOffensiveStat ??
     (result.move.category === "Special" ? "spa" : "atk");
+  const defensiveStatOwner =
+    result.move.overrideDefensivePokemon === "source"
+      ? "attacker"
+      : "defender";
+  const defensiveEngineStat =
+    result.move.overrideDefensiveStat ??
+    (result.move.category === "Special" ? "spd" : "def");
+
+  return {
+    offensiveStatOwner,
+    offensiveEngineStat,
+    offensiveStatKey: statKeysByEngine[offensiveEngineStat],
+    defensiveStatOwner,
+    defensiveEngineStat,
+    defensiveStatKey: statKeysByEngine[defensiveEngineStat],
+  } as const;
+}
+
+function getReferencedStat(
+  result: ReturnType<typeof calculate>,
+  owner: "attacker" | "defender",
+  stat: keyof typeof statKeysByEngine,
+) {
+  const source = owner === "attacker" ? result.attacker : result.defender;
 
   return source.stats[stat];
 }
@@ -432,8 +468,17 @@ export function calculateChampionsDamage(
           defender.member.types,
           field.room === "gravity",
         );
-  const isPhysical = attacker.move.category === "Physical";
-  const attackStat = getOffensiveStat(result);
+  const statReferences = getDamageStatReferences(result);
+  const attackStat = getReferencedStat(
+    result,
+    statReferences.offensiveStatOwner,
+    statReferences.offensiveEngineStat,
+  );
+  const defenseStat = getReferencedStat(
+    result,
+    statReferences.defensiveStatOwner,
+    statReferences.defensiveEngineStat,
+  );
 
   return {
     status: "ready",
@@ -448,9 +493,11 @@ export function calculateChampionsDamage(
     koChance: ko?.chance === undefined ? null : ko.chance * 100,
     effectiveness,
     attackStat,
-    defenseStat: isPhysical
-      ? engineDefender.stats.def
-      : engineDefender.stats.spd,
+    defenseStat,
+    offensiveStatKey: statReferences.offensiveStatKey,
+    offensiveStatOwner: statReferences.offensiveStatOwner,
+    defensiveStatKey: statReferences.defensiveStatKey,
+    defensiveStatOwner: statReferences.defensiveStatOwner,
     offensivePower: getOffensivePower(result, attackStat),
     description:
       maxDamage > 0

@@ -1538,6 +1538,20 @@ export function validateCopilotStrategyAuditForRequest(
   } =
     output.strategyAudit;
 
+  if (request.scope === "optimization") {
+    if (
+      plans.length > 0 ||
+      interactions.length > 0 ||
+      facts.length > 0 ||
+      candidateFacts.length > 0 ||
+      recommendationEvidence.length > 0
+    ) {
+      errors.push("Optimization analysis must use an empty private strategy audit.");
+    }
+
+    return errors;
+  }
+
   if (request.scope === "recommendation") {
     if (plans.length > 0) {
       errors.push("Recommendation analysis must not include strategy plans.");

@@ -17,7 +17,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 14,
+  version: 18,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -257,7 +257,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 44,
+        promptVersion: 57,
       },
       usage: {
         totalTokens: 150,
@@ -424,6 +424,69 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(getPokePilotScopeInstructions("recommendation")).not.toContain(
       "inspect every unordered pair of filled sets",
     );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "evaluated in both directions",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "usage means it is an observed high-usage move candidate",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "not currently equipped",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Return one to three unique, genuinely useful",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Do not fill three slots merely because three candidates are available",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Evaluate each candidate as one complete set",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "a meaningfully higher koChance or oneHitKoChance is still a real probabilistic gain",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "minimum Stat Points that reach each supplied probability boundary",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "optimizedVsCurrent is the calculator's authoritative comparison",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "candidate.maxedStats is the exact list",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Never describe a lower defensive hit count as an improvement",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "do not establish move frequency",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "must outrank an otherwise equivalent candidate that raises it",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "A priority move alone is not evidence",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "A Speed tie is nondeterministic",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "candidate.profiles records verified outcome shapes",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "never copy an id or the English word breakpoint",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "selecting at least one from each profile is required",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "general reserve bulk",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Omit unrelated whole-team coverage",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Do not repeat any exact damage percentage, hit-count classification",
+    );
   });
 
   it("uses one explicit output language without adding Hangul to English prompts", () => {
@@ -433,6 +496,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(englishInstructions).toContain("English only");
     expect(englishInstructions).not.toMatch(/[\uac00-\ud7a3]/u);
     expect(koreanInstructions).toContain("Korean only");
+    expect(koreanInstructions).toContain("확정 N타");
     expect(koreanInstructions).not.toContain("English only");
   });
 

@@ -83,6 +83,39 @@ const bodySlam: PokemonMove = {
   description: "",
 };
 
+const bodyPress: PokemonMove = {
+  id: "body-press",
+  name: "Body Press",
+  type: "fighting",
+  category: "Physical",
+  power: 80,
+  accuracy: 100,
+  pp: 10,
+  description: "",
+};
+
+const psyshock: PokemonMove = {
+  id: "psyshock",
+  name: "Psyshock",
+  type: "psychic",
+  category: "Special",
+  power: 80,
+  accuracy: 100,
+  pp: 10,
+  description: "",
+};
+
+const foulPlay: PokemonMove = {
+  id: "foul-play",
+  name: "Foul Play",
+  type: "dark",
+  category: "Physical",
+  power: 95,
+  accuracy: 100,
+  pp: 15,
+  description: "",
+};
+
 const garchomp: TeamMember = {
   id: "garchomp",
   name: "Garchomp",
@@ -212,6 +245,48 @@ describe("Champions damage calculator adapter", () => {
     expect(result.koHits).toBe(2);
     expect(result.koChance).toBe(100);
     expect(result.offensivePower).toBe(30_000);
+    expect(result.offensiveStatKey).toBe("attack");
+    expect(result.defensiveStatKey).toBe("defense");
+  });
+
+  it("reports alternate offensive and defensive stats used by moves", () => {
+    const defender = createPokemon(incineroar);
+    const bodyPressResult = calculateChampionsDamage(
+      createPokemon(garchomp, { move: bodyPress }),
+      defender,
+      field,
+    );
+    const psyshockResult = calculateChampionsDamage(
+      createPokemon(garchomp, { move: psyshock }),
+      defender,
+      field,
+    );
+
+    expect(bodyPressResult.status).toBe("ready");
+    expect(psyshockResult.status).toBe("ready");
+
+    if (bodyPressResult.status === "ready") {
+      expect(bodyPressResult.offensiveStatKey).toBe("defense");
+      expect(bodyPressResult.offensiveStatOwner).toBe("attacker");
+    }
+    if (psyshockResult.status === "ready") {
+      expect(psyshockResult.defensiveStatKey).toBe("defense");
+      expect(psyshockResult.defensiveStatOwner).toBe("defender");
+    }
+  });
+
+  it("reports when a move uses the target's offensive stat", () => {
+    const result = calculateChampionsDamage(
+      createPokemon(incineroar, { move: foulPlay }),
+      createPokemon(garchomp),
+      field,
+    );
+
+    expect(result.status).toBe("ready");
+    if (result.status === "ready") {
+      expect(result.offensiveStatKey).toBe("attack");
+      expect(result.offensiveStatOwner).toBe("defender");
+    }
   });
 
   it("applies the doubles spread modifier only when requested", () => {

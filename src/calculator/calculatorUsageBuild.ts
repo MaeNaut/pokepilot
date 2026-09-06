@@ -5,7 +5,8 @@ import {
 import type { SmogonUsageSet } from "../api/smogonUsage";
 import { resolveSmogonUsageMoveIds } from "../api/smogonUsage";
 import { normalizeShowdownId } from "../api/showdownIds";
-import type { PokemonItem, StatBlock, TeamMember } from "../types";
+import type { PokemonItem, PokemonMove, StatBlock, TeamMember } from "../types";
+import { findMoveByLookup } from "../utils/pokemonMoves";
 
 export type CalculatorUsageBuild = {
   item: PokemonItem | null;
@@ -14,6 +15,24 @@ export type CalculatorUsageBuild = {
   evs: StatBlock;
   moveIds: string[];
 };
+
+export function resolveUsageCalculatorMoves(
+  member: TeamMember,
+  usageSet: SmogonUsageSet,
+  fallbackMoves: readonly PokemonMove[] = [],
+  limit = 8,
+) {
+  const availableMoves = [...(member.moves ?? []), ...fallbackMoves];
+
+  return resolveSmogonUsageMoveIds(
+    availableMoves,
+    usageSet.moveIds,
+    limit,
+  ).flatMap((moveId) => {
+    const move = findMoveByLookup(availableMoves, moveId);
+    return move ? [move] : [];
+  });
+}
 
 function resolveUsageAbility(member: TeamMember, usageSet: SmogonUsageSet) {
   if (!usageSet.ability) {

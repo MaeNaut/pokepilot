@@ -4,6 +4,7 @@ import type { PokemonItem, PokemonMove, TeamMember } from "../types";
 import {
   createDefaultCalculatorBuild,
   createUsageCalculatorBuild,
+  resolveUsageCalculatorMoves,
 } from "./calculatorUsageBuild";
 
 const moves: PokemonMove[] = [
@@ -94,5 +95,58 @@ describe("calculator usage builds", () => {
       natureId: "hardy",
       moveIds: ["fake-out", "flare-blitz", "", ""],
     });
+  });
+
+  it("resolves more usage moves for analysis without changing the four-slot build", () => {
+    const extraMove: PokemonMove = {
+      id: "knock-off",
+      name: "Knock Off",
+      type: "dark",
+      category: "Physical",
+      power: 65,
+      accuracy: 100,
+      pp: 20,
+      description: "",
+    };
+    const fifthMove: PokemonMove = {
+      id: "u-turn",
+      name: "U-turn",
+      type: "bug",
+      category: "Physical",
+      power: 70,
+      accuracy: 100,
+      pp: 20,
+      description: "",
+    };
+    const extendedMember = {
+      ...member,
+      moves: [...moves, extraMove, fifthMove],
+    };
+    const extendedUsageSet = {
+      ...usageSet,
+      moveIds: [
+        "fakeout",
+        "protect",
+        "missingmove",
+        "flareblitz",
+        "knockoff",
+        "uturn",
+      ],
+    };
+
+    expect(
+      resolveUsageCalculatorMoves(extendedMember, extendedUsageSet).map(
+        (move) => move.id,
+      ),
+    ).toEqual([
+      "fake-out",
+      "protect",
+      "flare-blitz",
+      "knock-off",
+      "u-turn",
+    ]);
+    expect(
+      createUsageCalculatorBuild(extendedMember, extendedUsageSet, item).moveIds,
+    ).toEqual(["fake-out", "protect", "flare-blitz", "knock-off"]);
   });
 });

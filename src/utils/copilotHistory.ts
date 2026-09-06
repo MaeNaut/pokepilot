@@ -8,9 +8,11 @@ import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
   CopilotAnalysisScope,
+  CopilotSetOptimizationCandidateSnapshot,
 } from "./copilotAnalysis";
 import { isRecord } from "./typeGuards";
 import { validateCopilotModelOutput } from "./copilotModelContract";
+import { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestContract";
 
 const COPILOT_HISTORY_STORAGE_KEY = "pokepilot:analysis-history:v1";
 const COPILOT_HISTORY_SCHEMA_VERSION = 1;
@@ -48,10 +50,34 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
     return null;
   }
 
-  const { source, ...modelOutput } = value;
+  const { source, optimizationCandidates, ...modelOutput } = value;
   const validation = validateCopilotModelOutput(modelOutput);
 
-  return validation.success ? { ...validation.data, source } : null;
+  const normalizedOptimizationCandidates = Array.isArray(optimizationCandidates)
+    ? optimizationCandidates.filter(
+        (candidate): candidate is CopilotSetOptimizationCandidateSnapshot =>
+          isValidCopilotOptimizationCandidateSnapshot(candidate),
+      )
+    : undefined;
+
+  if (
+    validation.success &&
+    validation.data.scope === "optimization" &&
+    (!normalizedOptimizationCandidates ||
+      normalizedOptimizationCandidates.length === 0)
+  ) {
+    return null;
+  }
+
+  return validation.success
+    ? {
+        ...validation.data,
+        source,
+        ...(normalizedOptimizationCandidates
+          ? { optimizationCandidates: normalizedOptimizationCandidates }
+          : {}),
+      }
+    : null;
 }
 
 function normalizeHistoryEntry(value: unknown): CopilotHistoryEntry | null {
@@ -70,7 +96,8 @@ function normalizeHistoryEntry(value: unknown): CopilotHistoryEntry | null {
     (value.locale === "en" || value.locale === "ko") &&
     (value.scope === "team" ||
       value.scope === "pokemon" ||
-      value.scope === "recommendation") &&
+      value.scope === "recommendation" ||
+      value.scope === "optimization") &&
     (value.battleFormat === "singles" || value.battleFormat === "doubles") &&
     typeof value.requestFingerprint === "string" &&
     value.requestFingerprint.length > 0 &&

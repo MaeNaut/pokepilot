@@ -9,6 +9,11 @@ import {
   getCopilotRequestFingerprint,
 } from "./copilotAnalysis";
 import { validateCopilotAnalysisRequest } from "./copilotRequestContract";
+import {
+  createCalculatorBattleState,
+  createDefaultCalculatorField,
+} from "../calculator/calculatorViewModel";
+import { defaultEvs } from "../data/natures";
 
 const closeCombat: PokemonMove = {
   id: "close-combat",
@@ -145,7 +150,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 14,
+      version: 18,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -274,6 +279,168 @@ describe("Copilot analysis", () => {
         spreadMoveIds: [],
       },
     });
+  });
+
+  it("builds and validates exact-target optimization candidates", () => {
+    const damagingMove = { ...closeCombat, category: "Physical" };
+    const opponent: TeamMember = {
+      ...member,
+      id: "test-opponent",
+      name: "Test Opponent",
+      types: ["normal"],
+      moves: [damagingMove],
+    };
+    const request = createCopilotAnalysisRequest({
+      scope: "optimization",
+      battleFormat: "singles",
+      teamName: "Test Team",
+      team: [member, null, null, null, null, null],
+      selectedSlot: 0,
+      buildState,
+      diagnostics,
+      validity,
+      calculatorContext: {
+        battleFormat: "singles",
+        selectedSlot: 0,
+        direction: "player-to-opponent",
+        player: {
+          member: { ...member, moves: [damagingMove] },
+          build: {
+            item: buildState.itemBySlot[0] ?? null,
+            ability: "Intimidate",
+            natureId: "adamant",
+            evs: buildState.evsBySlot[0],
+            moveIds: [damagingMove.id],
+          },
+          battle: createCalculatorBattleState(172),
+          moves: [damagingMove],
+          maxHp: 172,
+        },
+        opponent: {
+          member: opponent,
+          build: {
+            item: null,
+            ability: "Intimidate",
+            natureId: "hardy",
+            evs: { ...defaultEvs },
+            moveIds: [damagingMove.id],
+          },
+          battle: createCalculatorBattleState(140),
+          moves: [damagingMove],
+          maxHp: 140,
+        },
+        field: createDefaultCalculatorField("singles"),
+      },
+    });
+
+    expect(request.optimization).toMatchObject({
+      configuredDirection: "player-to-opponent",
+      playerPokemonId: "test-pokemon",
+      opponentPokemonId: "test-opponent",
+    });
+    expect(request.optimization?.candidates.length).toBeGreaterThan(0);
+    expect(
+      request.optimization?.candidates.every(
+        (candidate) =>
+          candidate.offenseBenchmarks.length <= 2 &&
+          candidate.defenseBenchmarks.length <= 2 &&
+          candidate.maxedStats.every(
+            (stat) => candidate.evs[stat] === 32,
+          ) &&
+          candidate.profiles.every((profile) =>
+            [
+              "offense-breakpoint",
+              "physical-bulk-maximum",
+              "special-bulk-maximum",
+              "physical-survival-with-reserve",
+              "special-survival-with-reserve",
+              "speed-adjustment",
+            ].includes(profile),
+          ) &&
+          [...candidate.offenseBenchmarks, ...candidate.defenseBenchmarks].every(
+            (benchmark) => benchmark.source === "selected",
+          ) &&
+          [...candidate.offenseBenchmarks, ...candidate.defenseBenchmarks].every(
+            (benchmark) =>
+              ["better", "same", "worse"].includes(
+                benchmark.optimizedVsCurrent,
+              ) &&
+              [
+                "hp",
+                "attack",
+                "defense",
+                "specialAttack",
+                "specialDefense",
+                "speed",
+              ].includes(benchmark.relevantStat),
+          ) &&
+          candidate.speedBenchmark.current.opponentSpeed ===
+            candidate.speedBenchmark.optimized.opponentSpeed,
+      ),
+    ).toBe(true);
+    expect(validateCopilotAnalysisRequest(request)).toMatchObject({
+      success: true,
+    });
+
+    const tamperedRequest = structuredClone(request);
+    if (tamperedRequest.optimization) {
+      tamperedRequest.optimization.candidates[0].statPointChanges.hp += 1;
+    }
+    expect(validateCopilotAnalysisRequest(tamperedRequest)).toMatchObject({
+      success: false,
+    });
+
+    const tamperedSpeedRequest = structuredClone(request);
+    if (tamperedSpeedRequest.optimization) {
+      tamperedSpeedRequest.optimization.candidates[0].speedBenchmark.optimized.opponentSpeed +=
+        1;
+    }
+    expect(validateCopilotAnalysisRequest(tamperedSpeedRequest)).toMatchObject({
+      success: false,
+    });
+
+    const tamperedMoveSourceRequest = structuredClone(request);
+    const firstBenchmark =
+      tamperedMoveSourceRequest.optimization?.candidates[0]
+        .offenseBenchmarks[0];
+    if (firstBenchmark) {
+      firstBenchmark.source = "invented" as "selected";
+    }
+    expect(validateCopilotAnalysisRequest(tamperedMoveSourceRequest)).toMatchObject(
+      { success: false },
+    );
+
+    const tamperedComparisonRequest = structuredClone(request);
+    const comparisonBenchmark =
+      tamperedComparisonRequest.optimization?.candidates[0]
+        .offenseBenchmarks[0];
+    if (comparisonBenchmark) {
+      comparisonBenchmark.optimizedVsCurrent = "invented" as "better";
+    }
+    expect(
+      validateCopilotAnalysisRequest(tamperedComparisonRequest),
+    ).toMatchObject({ success: false });
+
+    const tamperedMaxedStatsRequest = structuredClone(request);
+    const firstCandidate = tamperedMaxedStatsRequest.optimization?.candidates[0];
+    if (firstCandidate) {
+      firstCandidate.maxedStats = ["hp", "hp"];
+    }
+    expect(
+      validateCopilotAnalysisRequest(tamperedMaxedStatsRequest),
+    ).toMatchObject({ success: false });
+
+    const response = createLocalCopilotAnalysis(request);
+    expect(response.scope).toBe("optimization");
+    expect(response.recommendations.length).toBeGreaterThan(0);
+    expect(response.recommendations.length).toBeLessThanOrEqual(3);
+    expect(
+      response.recommendations.every((recommendation) =>
+        request.optimization?.candidates.some(
+          (candidate) => candidate.id === recommendation.id,
+        ),
+      ),
+    ).toBe(true);
   });
 
   it("projects the post-Mega state from the held Mega Stone", () => {

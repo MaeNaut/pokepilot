@@ -232,7 +232,9 @@ export function CopilotHistoryControl({
                             ? "copilot.team"
                             : entry.scope === "pokemon"
                               ? "copilot.pokemon"
-                              : "copilot.recommend",
+                              : entry.scope === "recommendation"
+                                ? "copilot.recommend"
+                                : "copilot.sample",
                         )}
                         {" \u00b7 "}
                         {t(

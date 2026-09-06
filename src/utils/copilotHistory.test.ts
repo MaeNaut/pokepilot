@@ -105,4 +105,29 @@ describe("PokePilot analysis history", () => {
 
     expect(getStoredCopilotHistory()).toEqual([]);
   });
+
+  it("drops obsolete optimization records without clearing other history", () => {
+    const storage = createMemoryStorage();
+    vi.stubGlobal("localStorage", storage);
+    const teamEntry = createEntry(2);
+    const obsoleteOptimizationEntry = {
+      ...createEntry(1),
+      scope: "optimization",
+      response: {
+        ...response,
+        scope: "optimization",
+        optimizationCandidates: [{ id: "legacy-direction-candidate" }],
+      },
+    };
+
+    storage.setItem(
+      "pokepilot:analysis-history:v1",
+      JSON.stringify({
+        version: 1,
+        entries: [obsoleteOptimizationEntry, teamEntry],
+      }),
+    );
+
+    expect(getStoredCopilotHistory()).toEqual([teamEntry]);
+  });
 });

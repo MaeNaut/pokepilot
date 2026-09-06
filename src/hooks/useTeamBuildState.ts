@@ -100,13 +100,24 @@ export function useTeamBuildState(): TeamBuildStateController {
 
   const getBuildStateSnapshot = useCallback(() => buildState, [buildState]);
 
-  return {
-    ...buildState,
-    ...fieldSetters,
-    clearSlot,
-    patchSlot,
-    reorderSlots,
-    replaceBuildState,
-    getBuildStateSnapshot,
-  };
+  return useMemo(
+    () => ({
+      ...buildState,
+      ...fieldSetters,
+      clearSlot,
+      patchSlot,
+      reorderSlots,
+      replaceBuildState,
+      getBuildStateSnapshot,
+    }),
+    [
+      buildState,
+      clearSlot,
+      fieldSetters,
+      getBuildStateSnapshot,
+      patchSlot,
+      reorderSlots,
+      replaceBuildState,
+    ],
+  );
 }

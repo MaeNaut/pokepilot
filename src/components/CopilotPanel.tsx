@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMagnifyingGlass,
   faRotateRight,
+  faSliders,
   faSpinner,
   faTriangleExclamation,
   faUser,
@@ -23,7 +24,9 @@ import {
   getCopilotRequestFingerprint,
   type CopilotAnalysisResponse,
   type CopilotAnalysisScope,
+  type CopilotSetOptimizationCandidateSnapshot,
 } from "../utils/copilotAnalysis";
+import type { CalculatorAnalysisContext } from "../calculator/setOptimizer";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
 import type { TeamValidityResult } from "../utils/teamValidity";
 import { useLocalization } from "../i18n/useLocalization";
@@ -68,10 +71,18 @@ type CopilotPanelProps = {
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;
   validity: TeamValidityResult;
+  isCalculatorActive: boolean;
+  calculatorContext: CalculatorAnalysisContext | null;
   onSelectRecommendedPokemon: (
     slotIndex: number,
     pokemonId: string,
   ) => Promise<RecommendedPokemonApplyResult>;
+  onApplyOptimizationCandidate: (
+    candidate: CopilotSetOptimizationCandidateSnapshot,
+  ) => void;
+  onSaveOptimizationCandidate: (
+    candidate: CopilotSetOptimizationCandidateSnapshot,
+  ) => boolean;
 };
 
 type AnalysisState = {
@@ -162,7 +173,11 @@ export function CopilotPanel({
   buildState,
   diagnostics,
   validity,
+  isCalculatorActive,
+  calculatorContext,
   onSelectRecommendedPokemon,
+  onApplyOptimizationCandidate,
+  onSaveOptimizationCandidate,
 }: CopilotPanelProps) {
   const { locale, pokemonName, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
@@ -178,6 +193,9 @@ export function CopilotPanel({
   );
   const [candidateApplyFailure, setCandidateApplyFailure] = useState<
     Extract<RecommendedPokemonApplyResult, { status: "blocked" }>["reason"] | null
+  >(null);
+  const [optimizationActionStatus, setOptimizationActionStatus] = useState<
+    "applied" | "saved" | "bench-full" | "stale" | null
   >(null);
   const [cooldownClock, setCooldownClock] = useState(Date.now);
   const selectedMember = team[selectedSlot];
@@ -210,6 +228,7 @@ export function CopilotPanel({
         diagnostics,
         validity,
         recommendationCandidates: recommendationState.candidates,
+        calculatorContext,
       }),
     [
       battleFormat,
@@ -224,6 +243,7 @@ export function CopilotPanel({
       teamName,
       validity,
       recommendationState.candidates,
+      calculatorContext,
     ],
   );
   const requestFingerprint = useMemo(
@@ -273,7 +293,9 @@ export function CopilotPanel({
             ? t("copilot.analyze")
             : scope === "pokemon"
               ? t("copilot.analyzePokemon")
-              : t("copilot.findRecommendations");
+              : scope === "recommendation"
+                ? t("copilot.findRecommendations")
+                : t("copilot.optimizeSet");
   const isAnalyzeDisabled =
     analysisState.status === "loading" ||
     abilityIndexStatus === "loading" ||
@@ -281,11 +303,19 @@ export function CopilotPanel({
     (scope === "recommendation" &&
       (Boolean(selectedMember) ||
         recommendationState.status !== "ready" ||
-        recommendationState.candidates.length === 0));
+        recommendationState.candidates.length === 0)) ||
+    (scope === "optimization" &&
+      (!isCalculatorActive ||
+        !request.optimization ||
+        request.optimization.candidates.length === 0));
 
   useEffect(() => {
     setCandidateApplyFailure(null);
   }, [requestFingerprint, scope]);
+
+  useEffect(() => {
+    setOptimizationActionStatus(null);
+  }, [scope]);
 
   useEffect(() => {
     if (!cooldownUntil) {
@@ -354,6 +384,7 @@ export function CopilotPanel({
   ]);
 
   async function handleAnalyze() {
+    setOptimizationActionStatus(null);
     setAnalysisByContext((current) => ({
       ...current,
       [analysisContextKey]: {
@@ -389,6 +420,18 @@ export function CopilotPanel({
         }
         nextResponse = createLocalCopilotAnalysis(request, locale);
         usedFallback = true;
+      }
+
+      if (scope === "optimization" && request.optimization) {
+        const selectedCandidateIds = new Set(
+          nextResponse.recommendations.map((recommendation) => recommendation.id),
+        );
+        nextResponse = {
+          ...nextResponse,
+          optimizationCandidates: request.optimization.candidates.filter(
+            (candidate) => selectedCandidateIds.has(candidate.id),
+          ),
+        };
       }
 
       const historyEntry = createCopilotHistoryEntry({
@@ -459,6 +502,31 @@ export function CopilotPanel({
     } finally {
       setSelectingCandidateId(null);
     }
+  }
+
+  function handleApplyOptimizationCandidate(
+    candidate: CopilotSetOptimizationCandidateSnapshot,
+  ) {
+    if (isStale) {
+      setOptimizationActionStatus("stale");
+      return;
+    }
+
+    onApplyOptimizationCandidate(candidate);
+    setOptimizationActionStatus("applied");
+  }
+
+  function handleSaveOptimizationCandidate(
+    candidate: CopilotSetOptimizationCandidateSnapshot,
+  ) {
+    if (isStale) {
+      setOptimizationActionStatus("stale");
+      return;
+    }
+
+    setOptimizationActionStatus(
+      onSaveOptimizationCandidate(candidate) ? "saved" : "bench-full",
+    );
   }
 
   function handleSelectHistory(entry: CopilotHistoryEntry) {
@@ -558,6 +626,16 @@ export function CopilotPanel({
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
           {t("copilot.recommend")}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={scope === "optimization"}
+          className={scope === "optimization" ? "is-active" : ""}
+          onClick={() => setScope("optimization")}
+        >
+          <FontAwesomeIcon icon={faSliders} aria-hidden="true" />
+          {t("copilot.sample")}
+        </button>
       </div>
 
       <div className="copilot-content" aria-live="polite">
@@ -584,10 +662,18 @@ export function CopilotPanel({
             recommendationCandidates={request.recommendationCandidates}
             selectingCandidateId={selectingCandidateId}
             candidateApplyFailure={candidateApplyFailure}
+            optimizationCandidates={
+              response.optimizationCandidates ??
+              request.optimization?.candidates ??
+              []
+            }
+            optimizationActionStatus={optimizationActionStatus}
             onAnalyze={() => void handleAnalyze()}
             onSelectCandidate={(pokemonId) =>
               void handleSelectCandidate(pokemonId)
             }
+            onApplyOptimizationCandidate={handleApplyOptimizationCandidate}
+            onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
           />
         ) : (
           <div className="copilot-empty-state">
@@ -614,7 +700,15 @@ export function CopilotPanel({
                                 count: recommendationState.candidates.length,
                               })
                             : t("copilot.noCandidates")
-                    : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
+                    : scope === "optimization"
+                      ? !isCalculatorActive
+                        ? t("copilot.openCalculatorForOptimization")
+                        : request.optimization
+                          ? t("copilot.optimizationReady", {
+                              count: request.optimization.candidates.length,
+                            })
+                          : t("copilot.configureOptimization")
+                      : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
             </span>
           </div>
         )}

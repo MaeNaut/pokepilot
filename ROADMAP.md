@@ -187,13 +187,18 @@ The MVP should prove the core loop:
 - [ ] Build a shared matchup-lab foundation for PokePilot and the Calculator.
   - [ ] Offer the same two modes for both threat analysis and set optimization:
         general meta coverage and a dedicated opponent configured by the user.
-  - [ ] Let exact-target threat checks and set optimization work before and
-        independently of the larger meta benchmark pool.
+  - [x] Let exact-target set optimization work before and independently of the
+        larger meta benchmark pool through the Calculator-linked Sample scope.
   - [ ] Represent every manual or meta-derived target through one scenario
         contract so damage, Speed, legality, confidence, and AI explanation use
         the same deterministic path.
   - [ ] For an exact threat, test the current roster first, then EV/nature
         tuning, move/item changes, and finally a targeted Pokemon recommendation.
+  - [x] For a configured Calculator matchup, enumerate deterministic nature and
+        Stat Point candidates, constrain GPT output to verified IDs, and support
+        applying the result or saving a bench variant.
+  - [x] Score each exact-target candidate as one complete set across offense,
+        defense, and Speed, prune dominated outcomes, and avoid forced filler.
 - [ ] Build one shared meta benchmark foundation for general threat analysis,
   targeted Pokemon recommendations, calculator presets, and robust optimization.
   - [ ] Represent common observed sets rather than species-only usage ranks,

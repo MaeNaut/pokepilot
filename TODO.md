@@ -152,26 +152,37 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         Pokemon action before applying the popular set to the empty slot.
 - [ ] Define one reusable matchup-scenario contract for targeted and meta-backed
       threat analysis and set optimization.
-  - [ ] Let the Calculator create an explicit scenario directly from the chosen
-        opponent build, battle state, direction, move, and objective without
-        requiring the future meta benchmark pool.
+  - [x] Let the Calculator create an exact scenario directly from the chosen
+        Pokemon builds, battle state, field, direction, and damaging moves
+        without requiring the future meta benchmark pool.
   - [ ] Let a meta adapter create the same scenario shape from multiple weighted
         benchmark sets so the deterministic engines do not fork by product mode.
   - [ ] Keep general/meta and dedicated/targeted modes available for both threat
         analysis and set optimization.
 - [ ] Add calculator-first exact-target Pokemon set optimization.
-  - [ ] Require an explicit opponent build, battle state, direction, and one or
-        more OHKO, survival, Speed, or ally-order objectives before optimizing.
-  - [ ] Keep extreme, minimal-investment, balanced, and robust candidates on a
-        Pareto frontier; recommend fine tuning only when it produces a verified
-        gain over the extreme baseline.
+  - [x] Add a PokePilot Sample scope that consumes the current Calculator
+        matchup without adding another dense control surface.
+  - [x] Generate bounded, legal nature and Stat Point candidates through the
+        deterministic damage/stat engine and lock the current item in v1.
+  - [x] Restrict hosted output to supplied candidate IDs, display the verified
+        before/after damage, and allow applying a set or copying it to the bench.
+  - [x] Evaluate every candidate across outgoing damage, incoming damage, and
+        effective Speed instead of splitting Sample into attack/defense modes.
+  - [x] Remove attacking Stat Points that do not improve any practical
+        guaranteed-hit tier, and reallocate them before candidate ranking.
+  - [x] Keep meaningful candidates on a bounded Pareto frontier and allow GPT
+        to return only one or two recommendations instead of filling three cards.
+  - [ ] Add ally-order, alternate-move, and alternate-item objectives without
+        weakening the exact calculator evidence boundary.
   - [ ] Treat Trick Room Speed as a separate objective that can prioritize low
         Speed, ally action order, mirror benchmarks, or pre-room turns instead
         of ordinary outspeed coverage.
   - [ ] Preview gained and lost benchmarks before applying a candidate, then
         allow replacing the current set or saving a variant to the bench.
-  - [ ] Mark exact-target results as conditional on the entered opponent and
-        battle state, and abstain when no justified tuning beats a simple set.
+  - [x] Mark exact-target results as conditional on the entered opponent and
+        battle state.
+  - [x] Abstain from filler candidates when no justified tuning beats a simpler
+        verified set.
 - [ ] Build a reusable, format-versioned meta benchmark layer for general threat
       analysis and robust multi-target set optimization.
   - [ ] Generate compact representative set profiles from monthly usage data

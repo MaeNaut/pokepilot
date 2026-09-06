@@ -34,9 +34,11 @@ import {
   createDefaultCalculatorBuild,
   createUsageCalculatorBuild,
 } from "../calculator/calculatorUsageBuild";
+import type { CalculatorAnalysisContext } from "../calculator/setOptimizer";
 import { defaultEvs } from "../data/natures";
 import { useCalculatorCatalog } from "../hooks/useCalculatorCatalog";
 import { useCalculatorMobileNavigation } from "../hooks/useCalculatorMobileNavigation";
+import { useCalculatorUsageMoves } from "../hooks/useCalculatorUsageMoves";
 import { usePreMegaMoves } from "../hooks/usePreMegaMoves";
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
 import { useLocalization } from "../i18n/useLocalization";
@@ -81,6 +83,7 @@ type CalculatorProps = {
     lookup: string,
     options?: { applyUsageStats?: boolean; allowBattleForm?: boolean },
   ) => Promise<void>;
+  onAnalysisContextChange?: (context: CalculatorAnalysisContext) => void;
   isVisible: boolean;
 };
 
@@ -95,6 +98,7 @@ export function Calculator({
   onSelectedSlotChange,
   onReorderSlots,
   onSelectPokemon,
+  onAnalysisContextChange,
   isVisible,
 }: CalculatorProps) {
   const { t } = useLocalization();
@@ -167,6 +171,8 @@ export function Calculator({
     opponentBuild.member,
     opponentBuild,
   );
+  const playerMaxHpRef = useRef(playerMaxHp);
+  const opponentMaxHpRef = useRef(opponentMaxHp);
   const playerSpeed = getCalculatorSpeed(
     selectedMember,
     playerBuild,
@@ -196,6 +202,16 @@ export function Calculator({
     opponentBuild.member,
     opponentPreMegaPokemonId,
     pokemonIndex,
+  );
+  const playerUsageMoves = useCalculatorUsageMoves(
+    selectedMember,
+    playerPreMegaMoves,
+    battleFormat,
+  );
+  const opponentUsageMoves = useCalculatorUsageMoves(
+    opponentBuild.member,
+    opponentPreMegaMoves,
+    battleFormat,
   );
   const playerAvailableMoves = useMemo(
     () => [...(selectedMember?.moves ?? []), ...playerPreMegaMoves],
@@ -303,9 +319,14 @@ export function Calculator({
   }, [playerMaxHp, selectedMember, selectedSlot]);
 
   useEffect(() => {
+    const previousMaxHp = playerMaxHpRef.current;
+    playerMaxHpRef.current = playerMaxHp;
     setPlayerBattle((current) => ({
       ...current,
-      currentHp: Math.min(current.currentHp, playerMaxHp),
+      currentHp:
+        current.currentHp >= previousMaxHp
+          ? playerMaxHp
+          : Math.min(current.currentHp, playerMaxHp),
     }));
   }, [playerMaxHp]);
 
@@ -321,9 +342,14 @@ export function Calculator({
   }, [opponentBuild.member, opponentMaxHp]);
 
   useEffect(() => {
+    const previousMaxHp = opponentMaxHpRef.current;
+    opponentMaxHpRef.current = opponentMaxHp;
     setOpponentBattle((current) => ({
       ...current,
-      currentHp: Math.min(current.currentHp, opponentMaxHp),
+      currentHp:
+        current.currentHp >= previousMaxHp
+          ? opponentMaxHp
+          : Math.min(current.currentHp, opponentMaxHp),
     }));
   }, [opponentMaxHp]);
 
@@ -383,6 +409,52 @@ export function Calculator({
     playerMoves,
     selectedMember,
   ]);
+
+  const analysisContext = useMemo<CalculatorAnalysisContext>(
+    () => ({
+      battleFormat,
+      selectedSlot,
+      direction,
+      player: {
+        member: selectedMember,
+        build: playerBuild,
+        battle: playerBattle,
+        moves: playerMoves,
+        usageMoves: playerUsageMoves,
+        maxHp: playerMaxHp,
+      },
+      opponent: {
+        member: opponentBuild.member,
+        build: opponentBuild,
+        battle: opponentBattle,
+        moves: opponentMoves,
+        usageMoves: opponentUsageMoves,
+        maxHp: opponentMaxHp,
+      },
+      field,
+    }),
+    [
+      battleFormat,
+      direction,
+      field,
+      opponentBattle,
+      opponentBuild,
+      opponentMaxHp,
+      opponentMoves,
+      opponentUsageMoves,
+      playerBattle,
+      playerBuild,
+      playerMaxHp,
+      playerMoves,
+      playerUsageMoves,
+      selectedMember,
+      selectedSlot,
+    ],
+  );
+
+  useEffect(() => {
+    onAnalysisContextChange?.(analysisContext);
+  }, [analysisContext, onAnalysisContextChange]);
 
   const playerItemOptions = useMemo(() => {
     const megaStoneName = selectedMember

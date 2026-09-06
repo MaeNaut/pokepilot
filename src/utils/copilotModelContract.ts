@@ -157,7 +157,7 @@ export const copilotModelOutputJsonSchema = {
     version: { type: "integer", const: 1 },
     scope: {
       type: "string",
-      enum: ["team", "pokemon", "recommendation"],
+      enum: ["team", "pokemon", "recommendation", "optimization"],
     },
     title: { type: "string" },
     summary: { type: "string" },
@@ -586,9 +586,10 @@ export function validateCopilotModelOutput(
   if (
     value.scope !== "team" &&
     value.scope !== "pokemon" &&
-    value.scope !== "recommendation"
+    value.scope !== "recommendation" &&
+    value.scope !== "optimization"
   ) {
-    errors.push("scope must be team, pokemon, or recommendation.");
+    errors.push("scope must be team, pokemon, recommendation, or optimization.");
   }
 
   for (const field of ["title", "summary", "playstyle"] as const) {
