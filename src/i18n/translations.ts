@@ -458,10 +458,12 @@ export const en = {
   "share.saved": "PNG saved.",
   "share.exportFailed": "Image export failed.",
   "footer.privacy": "Privacy",
+  "privacy.loadFailed": "The privacy notice could not be loaded.",
+  "privacy.openPage": "Open the privacy page",
   "footer.feedback": "Feedback",
   "footer.security": "Security",
   "footer.disclaimer":
-    "PokePilot is unofficial and not affiliated with Nintendo, Game Freak, Creatures, or The Pokemon Company. Data sources: PokeAPI and Pokemon Showdown. Icons: Font Awesome and third-party type SVGs.",
+    "PokePilot is unofficial and not affiliated with Nintendo, Game Freak, Creatures, or The Pokemon Company. Data sources: PokeAPI and Pokemon Showdown. Icons: Font Awesome, Lucide, and custom type symbols.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -926,10 +928,12 @@ export const ko = {
   "share.saved": "PNG 저장 완료",
   "share.exportFailed": "이미지 내보내기 실패",
   "footer.privacy": "개인정보",
+  "privacy.loadFailed": "개인정보 안내를 불러오지 못했습니다.",
+  "privacy.openPage": "개인정보 안내 페이지 열기",
   "footer.feedback": "피드백",
   "footer.security": "보안",
   "footer.disclaimer":
-    "PokePilot은 Nintendo, Game Freak, Creatures 또는 The Pokemon Company와 관련 없는 비공식 팬 도구입니다. 데이터 출처: PokeAPI 및 Pokemon Showdown. 아이콘: Font Awesome 및 서드파티 타입 SVG.",
+    "PokePilot은 Nintendo, Game Freak, Creatures 또는 The Pokemon Company와 관련 없는 비공식 팬 도구입니다. 데이터 출처: PokeAPI 및 Pokemon Showdown. 아이콘: Font Awesome, Lucide 및 자체 제작 타입 심볼.",
 } satisfies Record<TranslationKey, string>;
 
 export type TranslationVariables = Record<string, string | number>;

@@ -111,7 +111,8 @@ Deploy a Preview build first and verify all of the following before promoting:
   virtual keyboard, safe areas, long press, orientation changes, and image export.
 - Treat PokePilot guidance as advisory; legality and calculator output remain
   deterministic product features.
-- Resolve or replace the personal/non-commercial EssentiarumVG font before any
-  commercial use. Review all third-party notices again before a broad launch.
+- Move category symbols now use ISC-licensed Lucide SVGs instead of the
+  personal/non-commercial icon font. Review all third-party notices again
+  before a broad launch.
 - Revisit the large JavaScript chunks if measured cold-load or interaction
   performance is poor; the current build warning alone is not a release blocker.

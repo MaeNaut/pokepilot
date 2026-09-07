@@ -22,45 +22,36 @@ Repository: https://github.com/bubkoo/html-to-image
 
 The installed package is licensed under the MIT License.
 
-## EssentiarumVG
+## Lucide
 
-Move category symbols use the EssentiarumVG icon font by Philippe Van Lieu
-(Nick15) of Pokemon Aaah!.
+Move category SVGs in `src/assets/icons/categories` use Lucide's `swords`,
+`orbit`, and `sliders-horizontal` icons. Each SVG includes the license notice.
 
-Source: https://www.pokemonaaah.net/art/fonts/
+Source: https://github.com/lucide-icons/lucide
 
-The font is provided for personal, non-commercial use. It may not be sold,
-redistributed, or used in commercial projects without the creator's permission.
-No specific Creative Commons variant was included with the downloaded files.
+License: https://lucide.dev/license
 
-## pokemon-type-icons
+ISC License
 
-Type icons in `src/assets/icons/types` are from
-`partywhale/pokemon-type-icons`.
+Copyright (c) 2026 Lucide Icons and Contributors
 
-Repository: https://github.com/partywhale/pokemon-type-icons
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
 
-MIT License
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 
-Copyright (c) 2022 James Watkins
+## PokePilot Type Symbols
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Type SVGs in `src/assets/icons/types` are custom PokePilot vector designs.
+They replace the previously bundled pokemon-type-icons artwork. Existing type
+background colors are retained for continuity.
 
 ## Pokemon Showdown
 

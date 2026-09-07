@@ -27,6 +27,7 @@ import {
 } from "./api/smogonUsage";
 import { isPokemonLegal } from "./api/showdownLegality";
 import { NewTeamControl } from "./components/NewTeamControl";
+import { PrivacyControl } from "./components/PrivacyControl";
 import { SavedTeamRow } from "./components/SavedTeamRow";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
@@ -2075,7 +2076,7 @@ function App() {
         <p>
           {t("footer.disclaimer")}
           <span className="footer-links">
-            <a href="/privacy.html">{t("footer.privacy")}</a>
+            <PrivacyControl />
             <a
               href="https://github.com/MaeNaut/pokepilot/issues"
               target="_blank"

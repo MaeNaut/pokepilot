@@ -13,7 +13,8 @@ type TouchSelectionDialogProps = {
     | "nature"
     | "move"
     | "rank"
-    | "status";
+    | "status"
+    | "privacy";
   title: string;
   canSelect?: boolean;
   showActions?: boolean;
@@ -34,6 +35,7 @@ type TouchPickerSearchInputProps = {
 };
 
 const focusableSelector = [
+  "a[href]",
   "button:not([disabled])",
   "input:not([disabled])",
   "select:not([disabled])",
@@ -151,7 +153,11 @@ export function TouchSelectionDialog({
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
 
-      if (event.shiftKey && document.activeElement === firstElement) {
+      if (
+        event.shiftKey &&
+        (document.activeElement === firstElement ||
+          document.activeElement === dialogRef.current)
+      ) {
         event.preventDefault();
         lastElement.focus();
       } else if (!event.shiftKey && document.activeElement === lastElement) {

@@ -65,6 +65,7 @@ export function MoveTooltip({ move, id, placement = "pill" }: MoveTooltipProps) 
           <strong>{moveName}</strong>
           <span
             className={`move-category-icon is-${getMoveCategoryClass(move.category)}`}
+            role="img"
             aria-label={category}
             title={category}
           />

@@ -82,16 +82,6 @@
   --shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.34);
 }
 
-@font-face {
-  font-family: "Essentiarum VG";
-  src:
-    url("./assets/fonts/EssentiarumVG.woff2") format("woff2"),
-    url("./assets/fonts/EssentiarumVG.woff") format("woff");
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -5190,24 +5180,23 @@ select {
 }
 
 .move-category-icon::before {
-  font-family: "Essentiarum VG", sans-serif;
-  font-size: 30px;
-  font-style: normal;
-  font-weight: 400;
-  font-variant-ligatures: none;
-  line-height: 1;
+  content: "";
+  width: 30px;
+  height: 30px;
+  background-color: currentColor;
+  mask: var(--move-category-symbol) center / contain no-repeat;
 }
 
-.move-category-icon.is-physical::before {
-  content: "J";
+.move-category-icon.is-physical {
+  --move-category-symbol: url("./assets/icons/categories/physical.svg");
 }
 
-.move-category-icon.is-special::before {
-  content: "T";
+.move-category-icon.is-special {
+  --move-category-symbol: url("./assets/icons/categories/special.svg");
 }
 
-.move-category-icon.is-status::before {
-  content: "U";
+.move-category-icon.is-status {
+  --move-category-symbol: url("./assets/icons/categories/status.svg");
 }
 
 .move-tooltip-stats {
@@ -8053,15 +8042,84 @@ select {
   white-space: nowrap;
 }
 
-.footer-links a {
+.footer-links a,
+.footer-privacy-button {
   color: inherit;
   font-weight: var(--font-semibold);
   text-underline-offset: 2px;
 }
 
 .footer-links a:hover,
-.footer-links a:focus-visible {
+.footer-links a:focus-visible,
+.footer-privacy-button:hover,
+.footer-privacy-button:focus-visible {
   color: var(--color-text);
+}
+
+.footer-privacy-button {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+.touch-picker-dialog.is-privacy {
+  width: min(680px, calc(100vw - 32px));
+  height: min(720px, calc(100dvh - 48px));
+  min-height: 0;
+}
+
+.touch-picker-dialog.is-privacy .touch-picker-results {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.privacy-notice {
+  padding: 20px 24px 28px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.privacy-notice .meta {
+  margin: 0 0 24px;
+  color: var(--color-subtle);
+  font-size: 0.8rem;
+}
+
+.privacy-notice section + section {
+  margin-top: 24px;
+}
+
+.privacy-notice h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: var(--font-semibold);
+}
+
+.privacy-notice p,
+.privacy-notice ul {
+  margin: 0;
+}
+
+.privacy-notice ul {
+  padding-inline-start: 22px;
+}
+
+.privacy-notice li + li {
+  margin-top: 10px;
+}
+
+.privacy-notice a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .type-badge {
