@@ -119,8 +119,13 @@ export function ShareImageDialog({
     await Promise.all(Array.from(node.querySelectorAll("img")).map(waitForImage));
 
     const { toBlob } = await import("html-to-image");
+    const captureContent = node.firstElementChild;
+    const backgroundColor =
+      captureContent instanceof HTMLElement
+        ? window.getComputedStyle(captureContent).backgroundColor
+        : "#f7f8f8";
     const blob = await toBlob(node, {
-      backgroundColor: "#eef0f2",
+      backgroundColor,
       pixelRatio: 2,
     });
 

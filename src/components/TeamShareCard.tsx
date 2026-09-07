@@ -75,12 +75,30 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
               }
               key={`${member.id}-${index}`}
             >
-              <div className="team-share-member-accent" aria-hidden="true" />
               <div className="team-share-member-heading">
-                <div className="team-share-member-identity">
-                  <div className="team-share-member-name-row">
-                    <h3 className={getNameLengthClass(displayName)}>{displayName}</h3>
-                  </div>
+                <h3 className={getNameLengthClass(displayName)}>{displayName}</h3>
+                <div className="team-share-member-types" aria-label={t("share.pokemonTypes")}>
+                  {member.types.map((type) => (
+                    <TypeBadge type={type} key={type} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="team-share-member-build">
+                <div className="team-share-member-artwork-shell">
+                  {artworkUrl ? (
+                    <img
+                      className="team-share-member-artwork"
+                      src={artworkUrl}
+                      alt=""
+                      draggable={false}
+                      onError={(event) => {
+                        event.currentTarget.hidden = true;
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div className="team-share-member-summary">
                   <div className="team-share-member-item">
                     <span className={item ? "" : "is-empty"}>
                       {item ? <ItemSprite item={item} /> : null}
@@ -91,42 +109,27 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
                         : t("share.noItem")}
                     </strong>
                   </div>
-                </div>
-                <div className="team-share-member-types" aria-label={t("share.pokemonTypes")}>
-                  {member.types.map((type) => (
-                    <TypeBadge type={type} key={type} />
-                  ))}
-                </div>
-              </div>
-
-              {artworkUrl ? (
-                <img
-                  className="team-share-member-artwork"
-                  src={artworkUrl}
-                  alt=""
-                  draggable={false}
-                  onError={(event) => {
-                    event.currentTarget.hidden = true;
-                  }}
-                />
-              ) : null}
-
-              <div className="team-share-member-details">
-                <div className="team-share-member-detail">
-                  <span className="team-share-member-detail-label">
-                    {t("share.ability")}
-                  </span>
-                  <strong>
-                    {ability
-                      ? gameName("abilities", ability, ability)
-                      : t("share.noAbility")}
-                  </strong>
-                </div>
-                <div className="team-share-member-detail">
-                  <span className="team-share-member-detail-label">
-                    {t("share.nature")}
-                  </span>
-                  <strong>{gameName("natures", nature.id, nature.label)}</strong>
+                  <div className="team-share-member-traits">
+                    <strong>
+                      {ability
+                        ? gameName("abilities", ability, ability)
+                        : t("share.noAbility")}
+                    </strong>
+                    <span aria-hidden="true">·</span>
+                    <strong>{gameName("natures", nature.id, nature.label)}</strong>
+                  </div>
+                  <div className="team-share-member-evs">
+                    <span>{t("share.evs")}</span>
+                    {investedEvs.length > 0 ? (
+                      investedEvs.map((stat) => (
+                        <strong key={stat}>
+                          {t(statTranslationKeys[stat])} {evs[stat]}
+                        </strong>
+                      ))
+                    ) : (
+                      <strong>{t("share.noInvestment")}</strong>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -152,19 +155,6 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
                     </div>
                   );
                 })}
-              </div>
-
-              <div className="team-share-member-evs">
-                <span>{t("share.evs")}</span>
-                {investedEvs.length > 0 ? (
-                  investedEvs.map((stat) => (
-                    <strong key={stat}>
-                      {t(statTranslationKeys[stat])} {evs[stat]}
-                    </strong>
-                  ))
-                ) : (
-                  <strong>{t("share.noInvestment")}</strong>
-                )}
               </div>
             </article>
           );
