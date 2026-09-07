@@ -743,23 +743,6 @@
     height: 18px;
   }
 
-  .coverage-content {
-    grid-template-columns: 78px minmax(0, 1fr);
-    gap: 10px;
-  }
-
-  .coverage-ring {
-    width: 78px;
-    height: 78px;
-  }
-
-  .coverage-ring::before {
-    inset: 7px;
-  }
-
-  .coverage-ring strong {
-    font-size: 1.3rem;
-  }
 }
 
 @media (max-width: 599px),
@@ -1474,24 +1457,6 @@
 
   .diagnostics-section {
     padding: 10px;
-  }
-
-  .coverage-content {
-    grid-template-columns: 82px minmax(0, 1fr);
-    gap: 10px;
-  }
-
-  .coverage-ring {
-    width: 82px;
-    height: 82px;
-  }
-
-  .coverage-ring::before {
-    inset: 7px;
-  }
-
-  .coverage-ring strong {
-    font-size: 1.35rem;
   }
 
   .copilot-drawer {
