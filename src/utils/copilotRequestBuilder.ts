@@ -43,6 +43,7 @@ import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommenda
 import {
   createSetOptimizationPlan,
   type CalculatorAnalysisContext,
+  type SetOptimizationPlan,
 } from "../calculator/setOptimizer";
 import type {
   CopilotAnalysisRequest,
@@ -116,15 +117,16 @@ function createCopilotOptimizationSnapshot(
   context: CalculatorAnalysisContext | null | undefined,
   locale: Locale,
   pokemonIndex: PokemonIndexEntry[],
+  preparedPlan?: SetOptimizationPlan | null,
 ): CopilotSetOptimizationSnapshot | null {
   if (!context) return null;
 
-  const plan = createSetOptimizationPlan(context);
+  const plan = preparedPlan === undefined ? createSetOptimizationPlan(context) : preparedPlan;
   const player = context.player.member;
   const opponent = context.opponent.member;
 
   if (
-    plan.status !== "ready" ||
+    !plan || plan.status !== "ready" ||
     !player?.baseStats ||
     !opponent ||
     plan.candidates.length === 0
@@ -651,6 +653,7 @@ export function createCopilotAnalysisRequest({
   validity,
   recommendationCandidates = [],
   calculatorContext,
+  optimizationPlan,
 }: CreateCopilotRequestInput): CopilotAnalysisRequest {
   const mechanicsSets: CopilotMechanicsSetInput[] = [];
   const responsibilityGroups: CopilotResponsibilityId[][] = [];
@@ -846,6 +849,7 @@ export function createCopilotAnalysisRequest({
               : null,
             locale,
             pokemonIndex,
+            optimizationPlan,
           )
         : null,
     mechanics: createCopilotMechanicsSnapshot(mechanicsSets),

@@ -37,6 +37,7 @@ import type {
 } from "../utils/recommendedPokemonApplication";
 import { useCopilotRecommendationCandidates } from "../hooks/useCopilotRecommendationCandidates";
 import { useCopilotAnalysisSession } from "../hooks/useCopilotAnalysisSession";
+import { useSetOptimizationPlan } from "../hooks/useSetOptimizationPlan";
 import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
 import { CopilotHistoryControl } from "./CopilotHistoryControl";
 
@@ -147,9 +148,12 @@ export function CopilotPanel({
     showdownLegalityStatus,
   });
 
-  const request = useMemo(
-    () =>
-      createCopilotAnalysisRequest({
+  const optimizationState = useSetOptimizationPlan(
+    calculatorContext,
+    scope === "optimization" && isCalculatorActive,
+  );
+  const requestInput = useMemo(
+    () => ({
         scope,
         locale,
         battleFormat,
@@ -180,6 +184,14 @@ export function CopilotPanel({
       calculatorContext,
     ],
   );
+  const request = useMemo(() => createCopilotAnalysisRequest({
+    ...requestInput, optimizationPlan: optimizationState.plan,
+  }), [requestInput, optimizationState.plan]);
+  const optimizationNotice = optimizationState.error
+    ? t("copilot.candidateLoadFailed")
+    : optimizationState.plan?.status === "unavailable"
+      ? t("copilot.noOptimizationCandidates")
+      : null;
   const {
     analysisContextKey,
     analysisState,
@@ -212,7 +224,7 @@ export function CopilotPanel({
           ],
         );
   const analyzeLabel =
-    analysisState.status === "loading"
+    analysisState.status === "loading" || optimizationState.loading
       ? t("copilot.analyzing")
       : cooldownRemainingSeconds > 0
         ? t("copilot.cooldownButton", { time: cooldownLabel })
@@ -227,6 +239,7 @@ export function CopilotPanel({
                 : t("copilot.optimizeSet");
   const isAnalyzeDisabled =
     analysisState.status === "loading" ||
+    optimizationState.loading ||
     abilityIndexStatus === "loading" ||
     cooldownRemainingSeconds > 0 ||
     (scope === "recommendation" &&
@@ -235,8 +248,8 @@ export function CopilotPanel({
         recommendationState.candidates.length === 0)) ||
     (scope === "optimization" &&
       (!isCalculatorActive ||
-        !request.optimization ||
-        request.optimization.candidates.length === 0));
+        !calculatorContext?.player.member ||
+        !calculatorContext.opponent.member));
 
   useEffect(() => {
     setCandidateApplyFailure(null);
@@ -253,8 +266,15 @@ export function CopilotPanel({
     }
   }, [analysisState.fingerprint, analysisState.historyEntryId, response, scope]);
 
-  function handleAnalyze() {
+  async function handleAnalyze() {
+    if (isAnalyzeDisabled) return;
     setOptimizationActionStatus(null);
+    if (scope === "optimization") {
+      const plan = await optimizationState.run();
+      if (!plan || plan.status !== "ready" || plan.candidates.length === 0) return;
+      await analyze(createCopilotAnalysisRequest({ ...requestInput, optimizationPlan: plan }));
+      return;
+    }
     void analyze();
   }
 
@@ -374,13 +394,13 @@ export function CopilotPanel({
           >
             <FontAwesomeIcon
               icon={
-                analysisState.status === "loading"
+                analysisState.status === "loading" || optimizationState.loading
                   ? faSpinner
                   : response
                     ? faRotateRight
                     : faWandMagicSparkles
               }
-              spin={analysisState.status === "loading"}
+              spin={analysisState.status === "loading" || optimizationState.loading}
               aria-hidden="true"
             />
             {analyzeLabel}
@@ -436,6 +456,7 @@ export function CopilotPanel({
       </div>
 
       <div ref={contentRef} className="copilot-content" aria-live="polite">
+        {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
         {analysisState.status === "error" ? (
           <div className="copilot-empty-state is-error">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
@@ -503,6 +524,10 @@ export function CopilotPanel({
                     : scope === "optimization"
                       ? !isCalculatorActive
                         ? t("copilot.openCalculatorForOptimization")
+                        : optimizationState.loading
+                          ? t("copilot.loadingCandidates")
+                          : optimizationState.error
+                            ? t("copilot.candidateLoadFailed")
                         : request.optimization
                           ? t("copilot.optimizationReady", {
                               count: request.optimization.candidates.length,

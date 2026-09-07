@@ -2,6 +2,7 @@ import type { BattleFormat } from "../battleFormat/battleFormat";
 import type {
   CalculatorAnalysisContext,
   SetOptimizationBenchmark,
+  SetOptimizationPlan,
   SetOptimizationCandidateProfile,
   SetOptimizationFocus,
   SetOptimizationMoveSource,
@@ -271,4 +272,6 @@ export type CreateCopilotRequestInput = {
   validity: TeamValidityResult;
   recommendationCandidates?: CopilotRecommendationCandidateSnapshot[];
   calculatorContext?: CalculatorAnalysisContext | null;
+  // Undefined keeps the synchronous path for evaluation scripts; null skips search.
+  optimizationPlan?: SetOptimizationPlan | null;
 };

@@ -128,7 +128,8 @@ export function useCopilotAnalysisSession({
     requestFingerprint,
   ]);
 
-  async function analyze() {
+  async function analyze(submittedRequest: CopilotAnalysisRequest = request) {
+    const submittedFingerprint = getCopilotRequestFingerprint(submittedRequest);
     setAnalysisByContext((current) => ({
       ...current,
       [analysisContextKey]: {
@@ -140,16 +141,16 @@ export function useCopilotAnalysisSession({
 
     try {
       const { response: nextResponse, usedFallback, fallbackReason } =
-        await executeCopilotAnalysis(request, locale, (seconds) => {
+        await executeCopilotAnalysis(submittedRequest, locale, (seconds) => {
           setCooldownUntil(Date.now() + seconds * 1_000);
         });
 
       const historyEntry = createCopilotHistoryEntry({
         teamKey: historyTeamKey,
         locale,
-        scope: request.scope,
+        scope: submittedRequest.scope,
         battleFormat,
-        requestFingerprint,
+        requestFingerprint: submittedFingerprint,
         response: nextResponse,
         usedFallback,
         fallbackReason,

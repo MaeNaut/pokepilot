@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import * as optimizer from "../calculator/setOptimizer";
+import type { CreateCopilotRequestInput } from "./copilotContracts";
 import type { TeamBuildState } from "./teamBuildState";
 import type { PokemonIndexEntry, PokemonMove, TeamMember } from "../types";
 import type { TeamDiagnosticsResult } from "./teamDiagnostics";
@@ -290,7 +292,7 @@ describe("Copilot analysis", () => {
       types: ["normal"],
       moves: [damagingMove],
     };
-    const request = createCopilotAnalysisRequest({
+    const input: CreateCopilotRequestInput = {
       scope: "optimization",
       battleFormat: "singles",
       teamName: "Test Team",
@@ -331,7 +333,19 @@ describe("Copilot analysis", () => {
         },
         field: createDefaultCalculatorField("singles"),
       },
+    };
+    const request = createCopilotAnalysisRequest(input);
+    const preparedPlan = optimizer.createSetOptimizationPlan(input.calculatorContext!);
+    const search = vi.spyOn(optimizer, "createSetOptimizationPlan").mockImplementation(() => {
+      throw new Error("UI request building must not run the optimizer");
     });
+    try {
+      expect(createCopilotAnalysisRequest({ ...input, optimizationPlan: null }).optimization).toBeNull();
+      expect(createCopilotAnalysisRequest({ ...input, optimizationPlan: preparedPlan }).optimization).toEqual(request.optimization);
+      expect(search).not.toHaveBeenCalled();
+    } finally {
+      search.mockRestore();
+    }
 
     expect(request.optimization).toMatchObject({
       configuredDirection: "player-to-opponent",

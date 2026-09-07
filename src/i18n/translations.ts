@@ -421,6 +421,7 @@ export const en = {
   "copilot.configureOptimization":
     "Choose both Pokemon and at least one damaging move in the calculator",
   "copilot.optimizationReady": "{count} verified sample candidates ready",
+  "copilot.noOptimizationCandidates": "No meaningful sample adjustments were found for these conditions. No AI request was sent.",
   "copilot.rulesPreview": "Rules-based preview",
   "copilot.openPanel": "Open PokePilot",
   "copilot.closePanel": "Close PokePilot",
@@ -891,6 +892,7 @@ export const ko = {
   "copilot.configureOptimization":
     "계산기에서 양쪽 포켓몬과 대미지 기술을 먼저 설정",
   "copilot.optimizationReady": "검증된 샘플 후보 {count}개 준비 완료",
+  "copilot.noOptimizationCandidates": "현재 조건에서 유의미한 샘플 조정을 찾지 못했습니다. AI 요청은 보내지 않았습니다.",
   "copilot.rulesPreview": "규칙 기반 미리보기",
   "copilot.openPanel": "PokePilot 열기",
   "copilot.closePanel": "PokePilot 닫기",
