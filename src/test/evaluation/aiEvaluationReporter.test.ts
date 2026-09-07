@@ -37,13 +37,10 @@ const result = {
   requestFingerprint: "fingerprint",
   status: "complete",
   output: {
-    version: 1,
+    version: 2,
     scope: "team",
     title: "Fixture One",
-    summary: "Summary",
-    playstyle: "Balance",
-    strengths: ["Strength"],
-    weaknesses: ["Weakness"],
+    paragraphs: ["This is the analysis paragraph."],
     recommendations: [],
   },
   debugOutput: null,
@@ -87,6 +84,8 @@ describe("AI evaluation reporter", () => {
     expect(report.cases[0].manualReview.status).toBe("pending");
     expect(markdown).toContain("Estimated Standard API cost: $0.001000");
     expect(markdown).toContain("### Evaluator Expectations");
+    expect(markdown).toContain("**Analysis**");
+    expect(markdown).toContain("This is the analysis paragraph.");
     expect(markdown).toContain("**Team identities**");
     expect(markdown).toContain("- Forbidden");
   });

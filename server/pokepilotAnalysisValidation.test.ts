@@ -18,13 +18,10 @@ const request = {
 function createOutput(recommendationIds: string[]) {
   return {
     analysis: {
-      version: 1,
+      version: 2,
       scope: "optimization",
       title: "Garchomp vs. Incineroar",
-      summary: "Verified exact-target tuning.",
-      playstyle: "Guaranteed-KO tuning",
-      strengths: [] as string[],
-      weaknesses: [] as string[],
+      paragraphs: ["This is verified exact-target tuning."],
       recommendations: recommendationIds.map((recommendationId) => ({
           id: recommendationId,
           title: "Keep the smallest verified adjustment",
@@ -75,19 +72,17 @@ describe("hosted optimization validation", () => {
 
   it("removes model-written numeric KO claims while preserving strategic prose", () => {
     const output = createOutput(["set-balanced"]);
-    output.analysis.summary =
-      "Guaranteed 2HKO after investment. Keeps the support role intact.";
-    output.analysis.strengths = [
-      "Bug Bite becomes a guaranteed 2HKO.",
-      "Preserves reserve special bulk.",
+    output.analysis.paragraphs = [
+      "Guaranteed 2HKO after investment. Keeps the support role intact.",
+      "Bug Bite becomes a guaranteed 2HKO. Preserves reserve special bulk.",
     ];
     output.analysis.recommendations[0].reason =
       "Takes 34.4% to 41.4% from the target. Preserves the verified survival threshold with reserve bulk.";
 
     const analysis = validateHostedCopilotAnalysis(output, request);
 
-    expect(analysis.summary).toBe("Keeps the support role intact.");
-    expect(analysis.strengths).toEqual([
+    expect(analysis.paragraphs).toEqual([
+      "Keeps the support role intact.",
       "Preserves reserve special bulk.",
     ]);
     expect(analysis.recommendations[0].reason).toBe(
@@ -111,16 +106,17 @@ describe("hosted optimization validation", () => {
   it("removes unsupported qualitative KO-probability claims", () => {
     const output = createOutput(["set-balanced"]);
     const koreanRequest = { ...request, locale: "ko" } as CopilotAnalysisRequest;
-    output.analysis.summary =
-      "This option keeps the requested matchup role. Its KO probability rises significantly.";
+    output.analysis.paragraphs = [
+      "This option keeps the requested matchup role. Its KO probability rises significantly.",
+    ];
     output.analysis.recommendations[0].reason =
       "밀로틱보다 빠르게 움직인다. 에너지볼의 KO 확률이 크게 상승한다.";
 
     const analysis = validateHostedCopilotAnalysis(output, koreanRequest);
 
-    expect(analysis.summary).toBe(
+    expect(analysis.paragraphs).toEqual([
       "This option keeps the requested matchup role.",
-    );
+    ]);
     expect(analysis.recommendations[0].reason).toBe(
       "밀로틱보다 빠르게 움직인다.",
     );

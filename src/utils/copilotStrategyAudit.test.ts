@@ -134,13 +134,10 @@ function createOutput(
 ): CopilotGroundedModelOutput {
   return {
     analysis: {
-      version: 1,
+      version: 2,
       scope: "team",
       title: "Audit Team",
-      summary: "Summary",
-      playstyle: "Plan",
-      strengths: [],
-      weaknesses: [],
+      paragraphs: ["This is the analysis."],
       recommendations: [],
     },
     strategyAudit: {
@@ -1853,7 +1850,7 @@ describe("Copilot strategy audit", () => {
     ];
     const output = createOutput({ plans: [] });
     output.analysis.scope = "pokemon";
-    output.analysis.weaknesses = [
+    output.analysis.paragraphs = [
       "No teammate resists or is immune to Dark attacks.",
     ];
 
@@ -1889,7 +1886,7 @@ describe("Copilot strategy audit", () => {
     ];
     const output = createOutput({ plans: [] });
     output.analysis.scope = "pokemon";
-    output.analysis.weaknesses = [
+    output.analysis.paragraphs = [
       "현재 팀에 악 타입 공격을 받는 직접적인 저항 교대점이 없다.",
     ];
 
@@ -1993,7 +1990,7 @@ describe("Copilot strategy audit", () => {
     ];
     const output = createOutput({ plans: [] });
     output.analysis.scope = "pokemon";
-    output.analysis.weaknesses = [
+    output.analysis.paragraphs = [
       "No teammate resists or is immune to Dark attacks.",
     ];
 
@@ -2036,7 +2033,7 @@ describe("Copilot strategy audit", () => {
         },
       ],
     });
-    output.analysis.weaknesses = [
+    output.analysis.paragraphs = [
       "No team member resists or is immune to Water attacks.",
     ];
 

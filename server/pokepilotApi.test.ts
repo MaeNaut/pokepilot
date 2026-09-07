@@ -64,13 +64,10 @@ const validRequest = {
 } satisfies CopilotAnalysisRequest;
 
 const modelOutput = {
-  version: 1,
+  version: 2,
   scope: "team",
   title: "Test Team",
-  summary: "Summary",
-  playstyle: "Balanced",
-  strengths: [],
-  weaknesses: [],
+  paragraphs: ["This is a complete analysis paragraph."],
   recommendations: [],
 };
 
@@ -291,7 +288,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 57,
+        promptVersion: 59,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

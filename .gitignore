@@ -9,5 +9,7 @@ build/
 coverage/
 artifacts/ai-evaluation/
 *.log
+.tmp/
+design/*.pen
 .temp_*
 tmp-*.json

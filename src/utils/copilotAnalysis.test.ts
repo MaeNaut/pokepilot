@@ -709,12 +709,12 @@ describe("Copilot analysis", () => {
     const response = createLocalCopilotAnalysis(request);
 
     expect(response).toMatchObject({
-      version: 1,
+      version: 2,
       source: "local",
       scope: "team",
       title: "Test Team",
     });
-    expect(response.summary).toContain("1/6 active sets");
+    expect(response.paragraphs.join(" ")).toContain("1/6 active sets");
     expect(response.recommendations[0]).toMatchObject({
       id: "fill-team",
       priority: "medium",
@@ -733,11 +733,11 @@ describe("Copilot analysis", () => {
     });
     const response = createLocalCopilotAnalysis(request, "ko");
 
-    expect(response.summary).toContain("활성 샘플 1/6");
-    expect(response.playstyle).toBe("밸런스형");
+    expect(response.paragraphs.join(" ")).toContain("활성 샘플은 1/6개");
+    expect(response.paragraphs.join(" ")).toContain("밸런스형");
     expect(response.recommendations[0]).toMatchObject({
       id: "fill-team",
-      title: "활성 파티 완성",
+      title: "활성 파티의 남은 슬롯을 채워 주세요.",
     });
   });
 
@@ -864,11 +864,14 @@ describe("Copilot analysis", () => {
       validity,
     });
     const response = createLocalCopilotAnalysis(request);
+    const prose = response.paragraphs.join(" ");
 
     expect(response.title).toBe("Test Pokemon");
-    expect(response.summary).toContain("1 selected move");
-    expect(response.strengths).toContain("All 66 EV points are allocated.");
-    expect(response.weaknesses).not.toContain("No moves are currently configured for set analysis.");
+    expect(prose).toContain("1 selected move");
+    expect(prose).toContain("All 66 EV points are allocated.");
+    expect(prose).not.toContain(
+      "No moves are currently configured for set analysis.",
+    );
   });
 
   it("localizes Pokemon roles, abilities, natures, and generated prose", () => {
@@ -882,12 +885,12 @@ describe("Copilot analysis", () => {
       validity,
     });
     const response = createLocalCopilotAnalysis(request, "ko");
+    const prose = response.paragraphs.join(" ");
 
-    expect(response.playstyle).toBe("물리 어태커");
-    expect(response.summary).toContain("물리 어태커");
-    expect(response.summary).toContain("위협 특성");
-    expect(response.summary).toContain("고집 성격");
-    expect(response.strengths).toContain("노력치 66포인트 투자 완료");
+    expect(prose).toContain("물리 어태커");
+    expect(prose).toContain("위협 특성");
+    expect(prose).toContain("고집 성격");
+    expect(prose).toContain("노력치 66포인트를 모두 배분했습니다.");
   });
 
   it("includes saved empty-slot requirements in the request and Pokemon recommendation", () => {
@@ -918,7 +921,11 @@ describe("Copilot analysis", () => {
       ability: { id: "drought", name: "Drought" },
       moves: [{ id: "tailwind", name: "Tailwind" }],
     });
-    expect(response.summary).toContain("Fire type, Flying type, Drought ability");
-    expect(response.recommendations[0]?.title).toBe("Choose a matching Pokemon");
+    expect(response.paragraphs.join(" ")).toContain(
+      "Fire type, Flying type, Drought ability",
+    );
+    expect(response.recommendations[0]?.title).toBe(
+      "Choose a Pokemon that matches these requirements.",
+    );
   });
 });

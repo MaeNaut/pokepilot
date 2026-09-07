@@ -26,14 +26,11 @@ function createMemoryStorage(): Storage {
 }
 
 const response: CopilotAnalysisResponse = {
-  version: 1,
+  version: 2,
   source: "hosted",
   scope: "team",
   title: "Test Team",
-  summary: "Summary",
-  playstyle: "Balanced",
-  strengths: [],
-  weaknesses: [],
+  paragraphs: ["This is the saved analysis."],
   recommendations: [],
 };
 
@@ -104,6 +101,40 @@ describe("PokePilot analysis history", () => {
     );
 
     expect(getStoredCopilotHistory()).toEqual([]);
+  });
+
+  it("migrates section-based history into narrative paragraphs", () => {
+    const storage = createMemoryStorage();
+    vi.stubGlobal("localStorage", storage);
+    const legacyEntry = {
+      ...createEntry(1),
+      response: {
+        version: 1,
+        source: "hosted",
+        scope: "team",
+        title: "Legacy Team",
+        summary: "This team has a clear central plan.",
+        playstyle: "Balance",
+        strengths: ["Its opening is reliable.", "Its damage is varied."],
+        weaknesses: ["It still needs a safer switch-in."],
+        recommendations: [],
+      },
+    };
+
+    storage.setItem(
+      "pokepilot:analysis-history:v1",
+      JSON.stringify({ version: 1, entries: [legacyEntry] }),
+    );
+
+    expect(getStoredCopilotHistory()[0]?.response).toMatchObject({
+      version: 2,
+      title: "Legacy Team",
+      paragraphs: [
+        "This team has a clear central plan.",
+        "Its opening is reliable. Its damage is varied.",
+        "It still needs a safer switch-in.",
+      ],
+    });
   });
 
   it("drops obsolete optimization records without clearing other history", () => {

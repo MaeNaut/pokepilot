@@ -101,31 +101,25 @@ function sanitizeOptimizationNarrative(
   if (request.scope !== "optimization") return analysis;
 
   const isKorean = request.locale === "ko";
-  const fallbackSummary = isKorean
-    ? "표시된 계산 결과와 현재 팀 역할을 함께 고려한 상대 조정이다."
+  const fallbackParagraph = isKorean
+    ? "표시된 계산 결과와 현재 팀에서 맡는 역할을 함께 고려한 상대 조정입니다."
     : "This matchup tuning weighs the displayed calculator results against the set's current team role.";
   const fallbackTitle = isKorean
-    ? "검증된 상대 조정"
-    : "Verified matchup option";
+    ? "검증된 상대 조정을 사용해 보세요."
+    : "Use the verified matchup option.";
   const fallbackReason = isKorean
-    ? "카드에 표시된 계산 결과와 나머지 능력치의 균형을 고려한 선택이다."
+    ? "카드에 표시된 계산 결과와 나머지 능력치의 균형을 고려한 선택입니다."
     : "This option balances the calculator results shown on the card with the remaining stats.";
-  const sanitizedSummary = removeRepeatedOptimizationOutcomes(
-    analysis.summary,
-  );
+  const sanitizedParagraphs = analysis.paragraphs
+    .map(removeRepeatedOptimizationOutcomes)
+    .filter(Boolean);
 
   return {
     ...analysis,
-    summary: sanitizedSummary || fallbackSummary,
-    playstyle:
-      removeRepeatedOptimizationOutcomes(analysis.playstyle) ||
-      (isKorean ? "정확한 상대 조정" : "Exact matchup tuning"),
-    strengths: analysis.strengths
-      .map(removeRepeatedOptimizationOutcomes)
-      .filter(Boolean),
-    weaknesses: analysis.weaknesses
-      .map(removeRepeatedOptimizationOutcomes)
-      .filter(Boolean),
+    paragraphs:
+      sanitizedParagraphs.length > 0
+        ? sanitizedParagraphs
+        : [fallbackParagraph],
     recommendations: analysis.recommendations.map((recommendation) => ({
       ...recommendation,
       title:

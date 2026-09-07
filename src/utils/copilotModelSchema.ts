@@ -13,28 +13,23 @@ export const copilotModelOutputJsonSchema = {
     "version",
     "scope",
     "title",
-    "summary",
-    "playstyle",
-    "strengths",
-    "weaknesses",
+    "paragraphs",
     "recommendations",
   ],
   properties: {
-    version: { type: "integer", const: 1 },
+    version: { type: "integer", const: 2 },
     scope: {
       type: "string",
       enum: ["team", "pokemon", "recommendation", "optimization"],
     },
-    title: { type: "string" },
-    summary: { type: "string" },
-    playstyle: { type: "string" },
-    strengths: {
+    title: { type: "string", minLength: 1 },
+    paragraphs: {
       type: "array",
-      items: { type: "string" },
-    },
-    weaknesses: {
-      type: "array",
-      items: { type: "string" },
+      minItems: 1,
+      maxItems: 4,
+      description:
+        "One to four connected prose paragraphs. Do not split them into strengths, weaknesses, checks, labels, or bullet-like fragments.",
+      items: { type: "string", minLength: 1 },
     },
     recommendations: {
       type: "array",
@@ -46,9 +41,17 @@ export const copilotModelOutputJsonSchema = {
         additionalProperties: false,
         required: ["id", "title", "reason", "priority"],
         properties: {
-          id: { type: "string" },
-          title: { type: "string" },
-          reason: { type: "string" },
+          id: { type: "string", minLength: 1 },
+          title: {
+            type: "string",
+            minLength: 1,
+            description: "A complete user-facing sentence.",
+          },
+          reason: {
+            type: "string",
+            minLength: 1,
+            description: "One or more complete user-facing sentences.",
+          },
           priority: {
             type: "string",
             enum: ["high", "medium", "low"],

@@ -142,8 +142,8 @@ export function validateCopilotModelOutput(
     errors.push(`Unexpected output fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 1) {
-    errors.push("version must be 1.");
+  if (value.version !== 2) {
+    errors.push("version must be 2.");
   }
 
   if (
@@ -155,14 +155,19 @@ export function validateCopilotModelOutput(
     errors.push("scope must be team, pokemon, recommendation, or optimization.");
   }
 
-  for (const field of ["title", "summary", "playstyle"] as const) {
-    if (typeof value[field] !== "string") {
-      errors.push(`${field} must be a string.`);
-    }
+  if (typeof value.title !== "string" || !value.title.trim()) {
+    errors.push("title must be a non-empty string.");
   }
 
-  validateStringArray(value.strengths, "strengths", errors);
-  validateStringArray(value.weaknesses, "weaknesses", errors);
+  validateStringArray(value.paragraphs, "paragraphs", errors);
+  if (
+    Array.isArray(value.paragraphs) &&
+    (value.paragraphs.length < 1 ||
+      value.paragraphs.length > 4 ||
+      value.paragraphs.some((paragraph) => !paragraph.trim()))
+  ) {
+    errors.push("paragraphs must contain one to four non-empty strings.");
+  }
 
   if (!Array.isArray(value.recommendations)) {
     errors.push("recommendations must be an array.");
@@ -184,8 +189,13 @@ export function validateCopilotModelOutput(
       }
 
       for (const field of ["id", "title", "reason"] as const) {
-        if (typeof recommendation[field] !== "string") {
-          errors.push(`recommendations[${index}].${field} must be a string.`);
+        if (
+          typeof recommendation[field] !== "string" ||
+          !recommendation[field].trim()
+        ) {
+          errors.push(
+            `recommendations[${index}].${field} must be a non-empty string.`,
+          );
         }
       }
 

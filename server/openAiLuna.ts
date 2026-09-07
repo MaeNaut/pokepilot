@@ -157,7 +157,7 @@ export async function analyzeWithOpenAiLuna(
         type: "json_schema",
         name: "pokepilot_grounded_analysis",
         description:
-          "A concise PokePilot analysis with a private, machine-verifiable strategy audit.",
+          "A natural prose PokePilot analysis with recommendations and a private, machine-verifiable strategy audit.",
         strict: true,
         schema: copilotGroundedModelOutputJsonSchema,
       },

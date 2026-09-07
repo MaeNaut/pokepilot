@@ -97,10 +97,7 @@ export function validateNegativeDefensiveClaims(
   errors: string[],
 ) {
   const publicStatements = [
-    output.analysis.summary,
-    output.analysis.playstyle,
-    ...output.analysis.strengths,
-    ...output.analysis.weaknesses,
+    ...output.analysis.paragraphs,
     ...output.analysis.recommendations.flatMap((recommendation) => [
       recommendation.title,
       recommendation.reason,

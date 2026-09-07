@@ -1,8 +1,4 @@
-import {
-  CHAMPIONS_MAX_EV_TOTAL,
-  statKeys,
-  statLabels,
-} from "../data/natures";
+import { CHAMPIONS_MAX_EV_TOTAL } from "../data/natures";
 import type { TeamConceptId } from "../data/teamConcepts";
 import { roleCopilotTextKeys } from "../i18n/copilotText";
 import {
@@ -12,7 +8,7 @@ import {
 } from "../i18n/gameTranslations";
 import { getUiTranslation } from "../i18n/translations";
 import { localizeValidityIssue } from "../i18n/validityTranslations";
-import type { PokemonType, StatBlock } from "../types";
+import type { PokemonType } from "../types";
 import type {
   TeamDiagnosticAlert,
   TeamRoleId,
@@ -23,7 +19,6 @@ import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
   CopilotRecommendation,
-  CopilotSetOptimizationCandidateSnapshot,
 } from "./copilotContracts";
 import {
   describeCandidateFilter,
@@ -32,6 +27,18 @@ import {
   localizeType,
   text,
 } from "./copilotRequestBuilder";
+
+function createNarrativeParagraphs(
+  introduction: string,
+  supportingPoints: string[] = [],
+  concerns: string[] = [],
+) {
+  return [
+    introduction.trim(),
+    supportingPoints.map((point) => point.trim()).filter(Boolean).join(" "),
+    concerns.map((concern) => concern.trim()).filter(Boolean).join(" "),
+  ].filter(Boolean);
+}
 
 function inferPlaystyle(
   roleCounts: Record<TeamRoleId, number>,
@@ -359,20 +366,21 @@ function analyzeTeamRequest(
     const filterCount = request.candidateFilters.length;
 
     return {
-      version: 1,
+      version: 2,
       source: "local",
       scope: "team",
       title: teamTitle,
-      summary: filterCount
-        ? text(locale, "team.emptyWithFilters", {
-            count: filterCount,
-            slotNoun: filterCount === 1 ? "slot" : "slots",
-            verb: filterCount === 1 ? "has" : "have",
-          })
-        : text(locale, "team.empty"),
-      playstyle: text(locale, "playstyle.unclassified"),
-      strengths: [],
-      weaknesses: [text(locale, "team.noActivePokemon")],
+      paragraphs: createNarrativeParagraphs(
+        filterCount
+          ? text(locale, "team.emptyWithFilters", {
+              count: filterCount,
+              slotNoun: filterCount === 1 ? "slot" : "slots",
+              verb: filterCount === 1 ? "has" : "have",
+            })
+          : text(locale, "team.empty"),
+        [],
+        [text(locale, "team.noActivePokemon")],
+      ),
       recommendations: [
         {
           id: "add-first-pokemon",
@@ -435,25 +443,21 @@ function analyzeTeamRequest(
     .slice(0, 3)
     .map((alert) => getDiagnosticAlertMessage(request, alert, locale));
 
-  const primaryConcern = weaknesses[0]
-    ? text(locale, "team.priorityConcern", { concern: weaknesses[0] })
-    : text(locale, "team.noPriorityConcern");
-
   return {
-    version: 1,
+    version: 2,
     source: "local",
     scope: "team",
     title: teamTitle,
-    summary: text(locale, "team.summary", {
-      filled: diagnostics.filledSlots,
-      article: /^[aeiou]/i.test(playstyle) ? "an" : "a",
-      playstyle: locale === "en" ? playstyle.toLowerCase() : playstyle,
-      coverage: diagnostics.coverageCount,
-      concern: primaryConcern,
-    }),
-    playstyle,
-    strengths: strengths.slice(0, 3),
-    weaknesses,
+    paragraphs: createNarrativeParagraphs(
+      text(locale, "team.summary", {
+        filled: diagnostics.filledSlots,
+        article: /^[aeiou]/i.test(playstyle) ? "an" : "a",
+        playstyle: locale === "en" ? playstyle.toLowerCase() : playstyle,
+        coverage: diagnostics.coverageCount,
+      }),
+      strengths.slice(0, 3),
+      weaknesses,
+    ),
     recommendations: createTeamRecommendations(request, locale),
   };
 }
@@ -475,24 +479,25 @@ function analyzePokemonRequest(
       : "";
 
     return {
-      version: 1,
+      version: 2,
       source: "local",
       scope: "pokemon",
       title: text(locale, "pokemon.slotTitle", {
         slot: request.selectedSlot + 1,
       }),
-      summary: selectedCandidateFilter
-        ? text(locale, "pokemon.slotReserved", {
-            requirements: filterDescription,
-          })
-        : text(locale, "pokemon.slotEmpty"),
-      playstyle: text(locale, "playstyle.unclassified"),
-      strengths: [],
-      weaknesses: [
+      paragraphs: createNarrativeParagraphs(
         selectedCandidateFilter
-          ? text(locale, "pokemon.noRequirementMatch")
-          : text(locale, "pokemon.notConfigured"),
-      ],
+          ? text(locale, "pokemon.slotReserved", {
+              requirements: filterDescription,
+            })
+          : text(locale, "pokemon.slotEmpty"),
+        [],
+        [
+          selectedCandidateFilter
+            ? text(locale, "pokemon.noRequirementMatch")
+            : text(locale, "pokemon.notConfigured"),
+        ],
+      ),
       recommendations: [
         {
           id: "choose-pokemon",
@@ -614,20 +619,21 @@ function analyzePokemonRequest(
   });
 
   return {
-    version: 1,
+    version: 2,
     source: "local",
     scope: "pokemon",
     title: localizedPokemonName,
-    summary: text(locale, "pokemon.summary", {
-      pokemon: localizedPokemonName,
-      role: roleSummary,
-      abilityNature: abilitySummary,
-      moves: selectedSet.moves.length,
-      moveNoun: selectedSet.moves.length === 1 ? "move" : "moves",
-    }),
-    playstyle: roleNames[0] ?? text(locale, "playstyle.flexible"),
-    strengths: strengths.slice(0, 3),
-    weaknesses: weaknesses.slice(0, 3),
+    paragraphs: createNarrativeParagraphs(
+      text(locale, "pokemon.summary", {
+        pokemon: localizedPokemonName,
+        role: roleSummary,
+        abilityNature: abilitySummary,
+        moves: selectedSet.moves.length,
+        moveNoun: selectedSet.moves.length === 1 ? "move" : "moves",
+      }),
+      strengths.slice(0, 3),
+      weaknesses.slice(0, 3),
+    ),
     recommendations: recommendations.slice(0, 3),
   };
 }
@@ -641,80 +647,54 @@ function analyzeRecommendationRequest(
 
   if (request.sets.some((set) => set.slotIndex === request.selectedSlot)) {
     return {
-      version: 1,
+      version: 2,
       source: "local",
       scope: "recommendation",
       title: isKorean ? "빈 슬롯 선택 필요" : "Choose an empty slot",
-      summary: isKorean
-        ? "포켓몬 추천은 현재 선택한 빈 슬롯의 필터와 팀 구성을 기준으로 작동함"
-        : "Pokemon recommendations use the selected empty slot, its filters, and the current team.",
-      playstyle: isKorean ? "추천 준비" : "Recommendation setup",
-      strengths: [],
-      weaknesses: [],
+      paragraphs: [
+        isKorean
+          ? "포켓몬 추천은 현재 선택한 빈 슬롯의 필터와 팀 구성을 기준으로 진행됩니다."
+          : "Pokemon recommendations use the selected empty slot, its filters, and the current team.",
+      ],
       recommendations: [],
     };
   }
 
   return {
-    version: 1,
+    version: 2,
     source: "local",
     scope: "recommendation",
     title: isKorean ? "추천 후보" : "Recommended candidates",
-    summary:
+    paragraphs: [
       candidates.length > 0
         ? isKorean
-          ? "M-B 적법성, 선택 필터, 사용률과 현재 팀의 타입 구조를 반영한 후보"
-          : "Candidates filtered by M-B legality, slot requirements, usage, and the current team's type profile."
+          ? "레귤레이션 M-B 적법성, 선택한 필터, 사용률과 현재 팀의 타입 구조를 함께 반영한 후보입니다."
+          : "These candidates reflect Regulation M-B legality, the selected filters, usage, and the current team's type profile."
         : isKorean
-          ? "현재 조건을 모두 만족하는 후보 없음"
+          ? "현재 조건을 모두 만족하는 후보가 없습니다."
           : "No candidate satisfies every current requirement.",
-    playstyle: isKorean ? "후보 비교" : "Candidate comparison",
-    strengths: [],
-    weaknesses: [],
+    ],
     recommendations: candidates.map((candidate, index) => ({
       id: candidate.pokemonId,
-      title: candidate.displayName,
+      title: isKorean
+        ? `${candidate.displayName} 후보를 검토해 보세요.`
+        : `Consider ${candidate.displayName}.`,
       reason: isKorean
         ? index === 0
-          ? "현재 조건에서 가장 높은 우선순위의 합법 후보"
-          : "현재 필터와 팀 구조를 만족하는 합법 후보"
+          ? "현재 조건에서 가장 먼저 검토할 수 있는 합법적인 후보입니다."
+          : "현재 필터와 팀 구조를 만족하는 합법적인 후보입니다."
         : index === 0
-          ? "The highest-priority legal candidate under the current requirements."
-          : "A legal candidate that fits the current filters and team structure.",
+          ? "This is the highest-priority legal candidate under the current requirements."
+          : "This candidate is legal and fits the current filters and team structure.",
       priority: index === 0 ? "high" : "medium",
     })),
   };
 }
 
-function formatOptimizationSpread(evs: StatBlock) {
-  return statKeys
-    .filter((stat) => evs[stat] > 0)
-    .map((stat) => `${statLabels[stat]} ${evs[stat]}`)
-    .join(" / ");
-}
-
-function formatLocalOptimizationReason(
-  candidate: CopilotSetOptimizationCandidateSnapshot,
-) {
-  const offense = candidate.offenseBenchmarks[0];
-  const defense = candidate.defenseBenchmarks[0];
-  const parts = [formatOptimizationSpread(candidate.evs)];
-
-  if (offense) {
-    parts.push(
-      `${offense.moveDisplayName} ${offense.optimized.minPercent.toFixed(1)}-${offense.optimized.maxPercent.toFixed(1)}%`,
-    );
-  }
-  if (defense) {
-    parts.push(
-      `${defense.moveDisplayName} ${defense.optimized.minPercent.toFixed(1)}-${defense.optimized.maxPercent.toFixed(1)}%`,
-    );
-  }
-  parts.push(
-    `Spe ${candidate.speedBenchmark.current.playerSpeed}->${candidate.speedBenchmark.optimized.playerSpeed}`,
-  );
-
-  return parts.join(" · ");
+function formatLocalOptimizationReason(locale: Locale) {
+  return locale === "ko"
+    ? "계산된 공격, 내구와 스피드 결과를 함께 비교한 뒤 이 조정을 추천합니다."
+    : "This option is recommended after comparing its calculated offense, bulk, and Speed results together.";
 }
 
 function analyzeOptimizationRequest(
@@ -726,50 +706,39 @@ function analyzeOptimizationRequest(
 
   if (!optimization) {
     return {
-      version: 1,
+      version: 2,
       source: "local",
       scope: "optimization",
       title: isKorean ? "계산기 설정 필요" : "Calculator setup required",
-      summary: isKorean
-        ? "계산기에서 내 포켓몬, 상대 포켓몬과 공격 방향을 먼저 설정해야 함"
-        : "Choose both Pokemon and the attack direction in the calculator first.",
-      playstyle: isKorean ? "정확한 대상 최적화" : "Exact-target optimization",
-      strengths: [],
-      weaknesses: [],
+      paragraphs: [
+        isKorean
+          ? "계산기에서 내 포켓몬, 상대 포켓몬과 공격 방향을 먼저 설정해 주세요."
+          : "Choose both Pokemon and the attack direction in the calculator first.",
+      ],
       recommendations: [],
     };
   }
 
   const candidates = optimization.candidates.slice(0, 3);
-  const playstyleLabel = isKorean
-    ? "공격·내구·스피드 통합 조정"
-    : "Combined offense, bulk, and Speed tuning";
-
   return {
-    version: 1,
+    version: 2,
     source: "local",
     scope: "optimization",
     title: `${optimization.playerDisplayName} vs. ${optimization.opponentDisplayName}`,
-    summary: isKorean
-      ? `계산기에 설정된 조건을 그대로 사용해 ${optimization.playerDisplayName}의 성격과 노력치 후보를 검증함`
-      : `Verified nature and Stat Point options for ${optimization.playerDisplayName} under the exact calculator conditions.`,
-    playstyle: playstyleLabel,
-    strengths: [
+    paragraphs: [
       isKorean
-        ? "표시된 대미지 수치는 계산기 엔진으로 재검증됨"
-        : "Every displayed damage result is rechecked by the calculator engine.",
-    ],
-    weaknesses: [
+        ? `계산기에 설정된 조건을 그대로 사용해 ${optimization.playerDisplayName}의 성격과 노력치 후보를 검증했습니다.`
+        : `The nature and Stat Point options for ${optimization.playerDisplayName} were verified under the exact calculator conditions.`,
       isKorean
-        ? "현재 도구와 계산기 조건은 고정되며 다른 매치업까지 보장하지 않음"
-        : "The current item and calculator conditions stay fixed; other matchups are not guaranteed.",
+        ? "표시된 대미지는 계산기 엔진으로 다시 검증했지만, 현재 도구와 전투 조건을 고정한 결과이므로 다른 상대에게도 같은 성능을 보장하지는 않습니다."
+        : "The displayed damage was rechecked by the calculator engine, but the current item and battle conditions are fixed, so these results do not guarantee the same performance in other matchups.",
     ],
     recommendations: candidates.map((candidate, index) => ({
       id: candidate.id,
       title: isKorean
-        ? `${candidate.natureDisplayName} 샘플`
-        : `${candidate.natureDisplayName} sample`,
-      reason: formatLocalOptimizationReason(candidate),
+        ? `${candidate.natureDisplayName} 성격의 샘플을 검토해 보세요.`
+        : `Consider the ${candidate.natureDisplayName} sample.`,
+      reason: formatLocalOptimizationReason(locale),
       priority: index === 0 ? "high" : index === 1 ? "medium" : "low",
     })),
   };

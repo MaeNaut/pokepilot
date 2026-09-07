@@ -13,11 +13,25 @@ import {
   type ValidityIssueCode,
 } from "./teamValidity";
 
+export type RecommendedPokemonApplyFailureReason =
+  | "stale"
+  | "invalid"
+  | "legality-unavailable"
+  | "load-failed";
+
 export type RecommendedPokemonApplyResult =
   | { status: "applied" }
   | {
       status: "blocked";
-      reason: "stale" | "invalid" | "legality-unavailable" | "load-failed";
+      reason: RecommendedPokemonApplyFailureReason;
+      issueCodes: ValidityIssueCode[];
+    };
+
+export type RecommendedPokemonSaveResult =
+  | { status: "saved" }
+  | {
+      status: "blocked";
+      reason: RecommendedPokemonApplyFailureReason | "bench-full";
       issueCodes: ValidityIssueCode[];
     };
 

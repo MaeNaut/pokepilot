@@ -248,14 +248,11 @@ export type CopilotRecommendation = {
 };
 
 export type CopilotAnalysisResponse = {
-  version: 1;
+  version: 2;
   source: "local" | "hosted";
   scope: CopilotAnalysisScope;
   title: string;
-  summary: string;
-  playstyle: string;
-  strengths: string[];
-  weaknesses: string[];
+  paragraphs: string[];
   recommendations: CopilotRecommendation[];
   optimizationCandidates?: CopilotSetOptimizationCandidateSnapshot[];
 };

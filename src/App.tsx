@@ -52,6 +52,7 @@ import { swapArrayItems } from "./utils/reorder";
 import {
   validateRecommendedPokemonApplication,
   type RecommendedPokemonApplyResult,
+  type RecommendedPokemonSaveResult,
 } from "./utils/recommendedPokemonApplication";
 import {
   moveBenchPokemonToTeam,
@@ -783,26 +784,23 @@ function App() {
     }
 
     try {
-      const selectedMember = await resolvePokemonMember(lookup);
-      let targetMember = selectedMember;
-      let usageSetPatch: ResolvedUsageSetPatch | null = null;
+      const {
+        selectedMember,
+        targetMember,
+        usageSetPatch,
+        proposedBuildState,
+        usageSetFound,
+      } = await resolvePokemonChoice(slotIndex, lookup, Boolean(options.applyUsageStats));
 
-      if (options.applyUsageStats) {
-        const usageSet = await loadPopularSmogonSet(lookup, battleFormat);
-
-        if (usageSet) {
-          targetMember = await resolveUsageTargetMember(usageSet, selectedMember);
-          usageSetPatch = await resolveUsageSetPatch(
-            usageSet,
-            selectedMember,
-            targetMember,
-          );
-        } else if (pokemonSelectionRequestRef.current === requestId) {
-          setSearchNotice({
-            slotIndex,
-            message: t("builder.noPopularSet"),
-          });
-        }
+      if (
+        options.applyUsageStats &&
+        !usageSetFound &&
+        pokemonSelectionRequestRef.current === requestId
+      ) {
+        setSearchNotice({
+          slotIndex,
+          message: t("builder.noPopularSet"),
+        });
       }
 
       if (pokemonSelectionRequestRef.current !== requestId) {
@@ -818,14 +816,6 @@ function App() {
       ) {
         return { status: "blocked", reason: "stale", issueCodes: [] };
       }
-
-      const currentBuildState = teamBuildState.getBuildStateSnapshot();
-      const clearedBuildState = options.applyUsageStats
-        ? clearBuildStateSlot(currentBuildState, slotIndex)
-        : currentBuildState;
-      const proposedBuildState = usageSetPatch
-        ? patchBuildStateSlot(clearedBuildState, slotIndex, usageSetPatch.patch)
-        : clearedBuildState;
 
       if (options.validateRecommendation) {
         if (
@@ -906,6 +896,94 @@ function App() {
     options: EditorPokemonSelectionOptions = {},
   ) {
     await handleSelectPokemon(slotIndex, lookup, options);
+  }
+
+  async function handleSaveRecommendedPokemon(
+    slotIndex: number,
+    lookup: string,
+  ): Promise<RecommendedPokemonSaveResult> {
+    const initialContextFingerprint =
+      pokemonSelectionContextFingerprintRef.current;
+
+    if (!canAddBenchPokemon(bench.length)) {
+      return { status: "blocked", reason: "bench-full", issueCodes: [] };
+    }
+
+    if (team[slotIndex]) {
+      return { status: "blocked", reason: "stale", issueCodes: [] };
+    }
+
+    try {
+      const {
+        selectedMember,
+        targetMember,
+        usageSetPatch,
+        proposedBuildState,
+      } = await resolvePokemonChoice(slotIndex, lookup, true);
+
+      if (
+        pokemonSelectionContextFingerprintRef.current !==
+        initialContextFingerprint
+      ) {
+        return { status: "blocked", reason: "stale", issueCodes: [] };
+      }
+
+      if (
+        indexStatus !== "ready" ||
+        itemIndexStatus !== "ready" ||
+        showdownLegalityStatus !== "ready" ||
+        usageSetPatch?.itemLoadFailed
+      ) {
+        return {
+          status: "blocked",
+          reason: usageSetPatch?.itemLoadFailed
+            ? "load-failed"
+            : "legality-unavailable",
+          issueCodes: [],
+        };
+      }
+
+      const validation = validateRecommendedPokemonApplication({
+        currentTeam: team.map(() => null),
+        slotIndex,
+        candidate: targetMember,
+        proposedBuildState,
+        legality: showdownLegality,
+        pokemonIndex,
+        itemIndex,
+      });
+
+      if (validation.status === "blocked") {
+        return {
+          status: "blocked",
+          reason:
+            validation.reason === "stale-target"
+              ? "stale"
+              : validation.reason,
+          issueCodes: validation.issues.map((issue) => issue.code),
+        };
+      }
+
+      setCustomPool((currentPool) =>
+        mergePool([selectedMember, targetMember], currentPool),
+      );
+      setBench((current) => [
+        ...current,
+        {
+          id: createSavedTeamId(),
+          member: targetMember,
+          build: getPokemonBuildSnapshot(
+            targetMember,
+            proposedBuildState,
+            slotIndex,
+          ),
+        },
+      ]);
+
+      return { status: "saved" };
+    } catch {
+      return { status: "blocked", reason: "load-failed", issueCodes: [] };
+    }
   }
 
   async function resolvePokemonMember(lookup: string) {
@@ -993,6 +1071,47 @@ function App() {
             : null,
       },
       itemLoadFailed,
+    };
+  }
+
+  async function resolvePokemonChoice(
+    slotIndex: number,
+    lookup: string,
+    applyUsageStats: boolean,
+  ) {
+    const selectedMember = await resolvePokemonMember(lookup);
+    let targetMember = selectedMember;
+    let usageSetPatch: ResolvedUsageSetPatch | null = null;
+    let usageSetFound = false;
+
+    if (applyUsageStats) {
+      const usageSet = await loadPopularSmogonSet(lookup, battleFormat);
+      usageSetFound = Boolean(usageSet);
+
+      if (usageSet) {
+        targetMember = await resolveUsageTargetMember(usageSet, selectedMember);
+        usageSetPatch = await resolveUsageSetPatch(
+          usageSet,
+          selectedMember,
+          targetMember,
+        );
+      }
+    }
+
+    const currentBuildState = teamBuildState.getBuildStateSnapshot();
+    const clearedBuildState = applyUsageStats
+      ? clearBuildStateSlot(currentBuildState, slotIndex)
+      : currentBuildState;
+    const proposedBuildState = usageSetPatch
+      ? patchBuildStateSlot(clearedBuildState, slotIndex, usageSetPatch.patch)
+      : clearedBuildState;
+
+    return {
+      selectedMember,
+      targetMember,
+      usageSetPatch,
+      proposedBuildState,
+      usageSetFound,
     };
   }
 
@@ -1944,6 +2063,7 @@ function App() {
                   issueCodes: [],
                 };
               }}
+              onSaveRecommendedPokemon={handleSaveRecommendedPokemon}
               onApplyOptimizationCandidate={handleApplyOptimizationCandidate}
               onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
             />

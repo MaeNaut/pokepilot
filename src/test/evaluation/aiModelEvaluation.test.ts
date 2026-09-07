@@ -157,13 +157,10 @@ function collectObjectKeys(value: unknown, keys = new Set<string>()) {
 }
 
 const validModelOutput = {
-  version: 1 as const,
+  version: 2 as const,
   scope: "team" as const,
   title: "Evaluation",
-  summary: "Summary",
-  playstyle: "Balanced",
-  strengths: ["Strength"],
-  weaknesses: ["Weakness"],
+  paragraphs: ["This is a complete analysis paragraph."],
   recommendations: [
     {
       id: "recommendation-1",
@@ -393,6 +390,28 @@ describe("AI model output validation", () => {
       data: validModelOutput,
       errors: [],
     });
+  });
+
+  it("rejects the legacy section-based analysis contract", () => {
+    const validation = validateCopilotModelOutput({
+      version: 1,
+      scope: "team",
+      title: "Legacy analysis",
+      summary: "Summary",
+      playstyle: "Balance",
+      strengths: ["Strength"],
+      weaknesses: ["Weakness"],
+      recommendations: [],
+    });
+
+    expect(validation.success).toBe(false);
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Unexpected output fields"),
+        "version must be 2.",
+        "paragraphs must be an array of strings.",
+      ]),
+    );
   });
 
   it("rejects malformed or evaluator-authored output before recording it", async () => {

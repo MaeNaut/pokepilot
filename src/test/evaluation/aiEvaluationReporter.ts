@@ -160,14 +160,8 @@ function formatModelOutput(evaluationCase: AiEvaluationReportCase) {
   }
 
   return [
-    `**Summary:** ${output.summary}`,
-    `**Playstyle:** ${output.playstyle}`,
-    "",
-    "**Strengths**",
-    markdownList(output.strengths),
-    "",
-    "**Weaknesses**",
-    markdownList(output.weaknesses),
+    "**Analysis**",
+    output.paragraphs.join("\n\n"),
     "",
     "**Recommendations**",
     output.recommendations.length

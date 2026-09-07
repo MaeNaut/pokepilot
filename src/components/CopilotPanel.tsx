@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMagnifyingGlass,
@@ -31,7 +31,10 @@ import type { TranslationKey } from "../i18n/translations";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import type { HostedAnalysisFailureReason } from "../api/copilotFailure";
 import type { CopilotHistoryEntry } from "../utils/copilotHistory";
-import type { RecommendedPokemonApplyResult } from "../utils/recommendedPokemonApplication";
+import type {
+  RecommendedPokemonApplyResult,
+  RecommendedPokemonSaveResult,
+} from "../utils/recommendedPokemonApplication";
 import { useCopilotRecommendationCandidates } from "../hooks/useCopilotRecommendationCandidates";
 import { useCopilotAnalysisSession } from "../hooks/useCopilotAnalysisSession";
 import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
@@ -57,6 +60,10 @@ type CopilotPanelProps = {
     slotIndex: number,
     pokemonId: string,
   ) => Promise<RecommendedPokemonApplyResult>;
+  onSaveRecommendedPokemon: (
+    slotIndex: number,
+    pokemonId: string,
+  ) => Promise<RecommendedPokemonSaveResult>;
   onApplyOptimizationCandidate: (
     candidate: CopilotSetOptimizationCandidateSnapshot,
   ) => void;
@@ -105,6 +112,7 @@ export function CopilotPanel({
   isCalculatorActive,
   calculatorContext,
   onSelectRecommendedPokemon,
+  onSaveRecommendedPokemon,
   onApplyOptimizationCandidate,
   onSaveOptimizationCandidate,
 }: CopilotPanelProps) {
@@ -116,9 +124,14 @@ export function CopilotPanel({
   const [candidateApplyFailure, setCandidateApplyFailure] = useState<
     Extract<RecommendedPokemonApplyResult, { status: "blocked" }>["reason"] | null
   >(null);
+  const [savingCandidateId, setSavingCandidateId] = useState<string | null>(null);
+  const [candidateSaveStatus, setCandidateSaveStatus] = useState<
+    "saved" | "bench-full" | null
+  >(null);
   const [optimizationActionStatus, setOptimizationActionStatus] = useState<
     "applied" | "saved" | "bench-full" | "stale" | null
   >(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const selectedMember = team[selectedSlot];
   const recommendationState = useCopilotRecommendationCandidates({
     scope,
@@ -227,11 +240,18 @@ export function CopilotPanel({
 
   useEffect(() => {
     setCandidateApplyFailure(null);
+    setCandidateSaveStatus(null);
   }, [requestFingerprint, scope]);
 
   useEffect(() => {
     setOptimizationActionStatus(null);
   }, [scope]);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [analysisState.fingerprint, analysisState.historyEntryId, response, scope]);
 
   function handleAnalyze() {
     setOptimizationActionStatus(null);
@@ -239,7 +259,7 @@ export function CopilotPanel({
   }
 
   async function handleSelectCandidate(pokemonId: string) {
-    if (selectingCandidateId) {
+    if (selectingCandidateId || savingCandidateId) {
       return;
     }
 
@@ -250,6 +270,7 @@ export function CopilotPanel({
 
     setSelectingCandidateId(pokemonId);
     setCandidateApplyFailure(null);
+    setCandidateSaveStatus(null);
     try {
       const result = await onSelectRecommendedPokemon(selectedSlot, pokemonId);
 
@@ -263,6 +284,39 @@ export function CopilotPanel({
       setCandidateApplyFailure("load-failed");
     } finally {
       setSelectingCandidateId(null);
+    }
+  }
+
+  async function handleSaveCandidate(pokemonId: string) {
+    if (selectingCandidateId || savingCandidateId) {
+      return;
+    }
+
+    if (isStale) {
+      setCandidateApplyFailure("stale");
+      return;
+    }
+
+    setSavingCandidateId(pokemonId);
+    setCandidateApplyFailure(null);
+    setCandidateSaveStatus(null);
+    try {
+      const result = await onSaveRecommendedPokemon(selectedSlot, pokemonId);
+
+      if (result.status === "blocked") {
+        if (result.reason === "bench-full") {
+          setCandidateSaveStatus("bench-full");
+        } else {
+          setCandidateApplyFailure(result.reason);
+        }
+        return;
+      }
+
+      setCandidateSaveStatus("saved");
+    } catch {
+      setCandidateApplyFailure("load-failed");
+    } finally {
+      setSavingCandidateId(null);
     }
   }
 
@@ -381,7 +435,7 @@ export function CopilotPanel({
         </button>
       </div>
 
-      <div className="copilot-content" aria-live="polite">
+      <div ref={contentRef} className="copilot-content" aria-live="polite">
         {analysisState.status === "error" ? (
           <div className="copilot-empty-state is-error">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
@@ -404,7 +458,9 @@ export function CopilotPanel({
             shouldReveal={Boolean(analysisState.shouldReveal)}
             recommendationCandidates={request.recommendationCandidates}
             selectingCandidateId={selectingCandidateId}
+            savingCandidateId={savingCandidateId}
             candidateApplyFailure={candidateApplyFailure}
+            candidateSaveStatus={candidateSaveStatus}
             optimizationCandidates={
               response.optimizationCandidates ??
               request.optimization?.candidates ??
@@ -415,6 +471,7 @@ export function CopilotPanel({
             onSelectCandidate={(pokemonId) =>
               void handleSelectCandidate(pokemonId)
             }
+            onSaveCandidate={(pokemonId) => void handleSaveCandidate(pokemonId)}
             onApplyOptimizationCandidate={handleApplyOptimizationCandidate}
             onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
           />

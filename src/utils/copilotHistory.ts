@@ -45,13 +45,45 @@ type CreateCopilotHistoryEntryInput = Omit<
   createdAt?: string;
 };
 
+function joinLegacyParagraph(value: unknown) {
+  return Array.isArray(value)
+    ? value
+        .filter((entry): entry is string => typeof entry === "string")
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .join(" ")
+    : "";
+}
+
+function migrateLegacyModelOutput(value: unknown): unknown {
+  if (!isRecord(value) || value.version !== 1) {
+    return value;
+  }
+
+  const paragraphs = [
+    typeof value.summary === "string" ? value.summary.trim() : "",
+    joinLegacyParagraph(value.strengths),
+    joinLegacyParagraph(value.weaknesses),
+  ].filter(Boolean);
+
+  return {
+    version: 2,
+    scope: value.scope,
+    title: value.title,
+    paragraphs,
+    recommendations: value.recommendations,
+  };
+}
+
 function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
   if (!isRecord(value) || (value.source !== "hosted" && value.source !== "local")) {
     return null;
   }
 
   const { source, optimizationCandidates, ...modelOutput } = value;
-  const validation = validateCopilotModelOutput(modelOutput);
+  const validation = validateCopilotModelOutput(
+    migrateLegacyModelOutput(modelOutput),
+  );
 
   const normalizedOptimizationCandidates = Array.isArray(optimizationCandidates)
     ? optimizationCandidates.filter(

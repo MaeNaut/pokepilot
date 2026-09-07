@@ -10,13 +10,10 @@ const request = {
 } as CopilotAnalysisRequest;
 
 const modelOutput = {
-  version: 1,
+  version: 2,
   scope: "team",
   title: "Test Team",
-  summary: "Summary",
-  playstyle: "Balanced",
-  strengths: [],
-  weaknesses: [],
+  paragraphs: ["This is a complete analysis paragraph."],
   recommendations: [],
 };
 

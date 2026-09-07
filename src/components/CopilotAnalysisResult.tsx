@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faBoxArchive,
   faCheck,
-  faLightbulb,
   faSpinner,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
@@ -20,6 +20,9 @@ import {
   CopilotOptimizationStatus,
   type OptimizationActionStatus,
 } from "./CopilotOptimizationRecommendation";
+import { fetchPokemon } from "../api/pokeApi";
+import type { TeamMember } from "../types";
+import { PokemonIcon } from "./PokemonIcon";
 import { TypeBadge } from "./TypeBadge";
 
 type CandidateApplyFailureReason = Extract<
@@ -38,11 +41,14 @@ type CopilotAnalysisResultProps = {
   shouldReveal: boolean;
   recommendationCandidates: CopilotRecommendationCandidateSnapshot[];
   selectingCandidateId: string | null;
+  savingCandidateId: string | null;
   candidateApplyFailure: CandidateApplyFailureReason | null;
+  candidateSaveStatus: "saved" | "bench-full" | null;
   optimizationCandidates: CopilotSetOptimizationCandidateSnapshot[];
   optimizationActionStatus: OptimizationActionStatus | null;
   onAnalyze: () => void;
   onSelectCandidate: (pokemonId: string) => void;
+  onSaveCandidate: (pokemonId: string) => void;
   onApplyOptimizationCandidate: (
     candidate: CopilotSetOptimizationCandidateSnapshot,
   ) => void;
@@ -51,13 +57,13 @@ type CopilotAnalysisResultProps = {
   ) => void;
 };
 
-const priorityTranslationKeys: Record<
+const recommendationPriorityOrder: Record<
   CopilotAnalysisResponse["recommendations"][number]["priority"],
-  TranslationKey
+  number
 > = {
-  high: "copilot.priorityHigh",
-  medium: "copilot.priorityMedium",
-  low: "copilot.priorityLow",
+  high: 0,
+  medium: 1,
+  low: 2,
 };
 
 const candidateApplyFailureTranslationKeys: Record<
@@ -70,6 +76,39 @@ const candidateApplyFailureTranslationKeys: Record<
   "load-failed": "copilot.candidateApplyLoadFailed",
 };
 
+function CopilotCandidateSprite({
+  candidate,
+}: {
+  candidate: CopilotRecommendationCandidateSnapshot;
+}) {
+  const [pokemon, setPokemon] = useState<TeamMember | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    setPokemon(null);
+
+    void fetchPokemon(candidate.pokemonId)
+      .then((loadedPokemon) => {
+        if (!isCancelled) {
+          setPokemon(loadedPokemon);
+        }
+      })
+      .catch(() => {
+        // Keep the text fallback when no sprite source is available.
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [candidate.pokemonId]);
+
+  return (
+    <span className="copilot-candidate-sprite" aria-hidden="true">
+      {pokemon ? <PokemonIcon pokemon={pokemon} /> : null}
+    </span>
+  );
+}
+
 export function CopilotAnalysisResult({
   response,
   scope,
@@ -81,11 +120,14 @@ export function CopilotAnalysisResult({
   shouldReveal,
   recommendationCandidates,
   selectingCandidateId,
+  savingCandidateId,
   candidateApplyFailure,
+  candidateSaveStatus,
   optimizationCandidates,
   optimizationActionStatus,
   onAnalyze,
   onSelectCandidate,
+  onSaveCandidate,
   onApplyOptimizationCandidate,
   onSaveOptimizationCandidate,
 }: CopilotAnalysisResultProps) {
@@ -106,6 +148,15 @@ export function CopilotAnalysisResult({
         optimizationCandidates.map((candidate) => [candidate.id, candidate]),
       ),
     [optimizationCandidates],
+  );
+  const sortedRecommendations = useMemo(
+    () =>
+      [...response.recommendations].sort(
+        (left, right) =>
+          recommendationPriorityOrder[left.priority] -
+          recommendationPriorityOrder[right.priority],
+      ),
+    [response.recommendations],
   );
 
   return (
@@ -143,60 +194,23 @@ export function CopilotAnalysisResult({
         </div>
       ) : null}
 
-      <section className="copilot-summary copilot-reveal is-summary">
-        <div className="copilot-summary-heading">
-          <h3>{response.title}</h3>
-          <span>{response.playstyle}</span>
+      <section className="copilot-narrative copilot-reveal is-narrative">
+        <h3>{response.title}</h3>
+        <div className="copilot-narrative-copy">
+          {response.paragraphs.map((paragraph, index) => (
+            <p key={`${index}-${paragraph}`}>{paragraph}</p>
+          ))}
         </div>
-        <p>{response.summary}</p>
       </section>
-
-      {response.strengths.length > 0 ? (
-        <section className="copilot-section copilot-reveal is-strengths">
-          <div className="copilot-section-heading">
-            <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
-            <h3>{t("copilot.strengths")}</h3>
-          </div>
-          <ul className="copilot-insight-list is-strength">
-            {response.strengths.map((strength) => (
-              <li key={strength}>{strength}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {scope !== "recommendation" || response.weaknesses.length > 0 ? (
-        <section className="copilot-section copilot-reveal is-focus">
-          <div className="copilot-section-heading">
-            <FontAwesomeIcon
-              icon={
-                response.weaknesses.length > 0
-                  ? faTriangleExclamation
-                  : faCheck
-              }
-              aria-hidden="true"
-            />
-            <h3>{t("copilot.focus")}</h3>
-          </div>
-          {response.weaknesses.length > 0 ? (
-            <ul className="copilot-insight-list is-focus">
-              {response.weaknesses.map((weakness) => (
-                <li key={weakness}>{weakness}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="copilot-clear-message">{t("copilot.noConcerns")}</p>
-          )}
-        </section>
-      ) : null}
 
       <section
         className={`copilot-section copilot-recommendations${
           scope === "recommendation" ? " is-candidates" : ""
-        }${scope === "optimization" ? " is-optimization" : ""}`}
+        }${scope === "optimization" ? " is-optimization" : ""}${
+          scope === "team" || scope === "pokemon" ? " is-strategy" : ""
+        }`}
       >
         <div className="copilot-section-heading copilot-reveal is-recommendations-heading">
-          <FontAwesomeIcon icon={faLightbulb} aria-hidden="true" />
           <h3>
             {scope === "recommendation"
               ? t("copilot.candidates")
@@ -216,11 +230,35 @@ export function CopilotAnalysisResult({
             </span>
           </div>
         ) : null}
+        {scope === "recommendation" && candidateSaveStatus ? (
+          <div
+            className={`copilot-candidate-save-status${
+              candidateSaveStatus === "bench-full" ? " is-error" : ""
+            }`}
+            role="status"
+          >
+            <FontAwesomeIcon
+              icon={
+                candidateSaveStatus === "bench-full"
+                  ? faTriangleExclamation
+                  : faCheck
+              }
+              aria-hidden="true"
+            />
+            <span>
+              {t(
+                candidateSaveStatus === "bench-full"
+                  ? "copilot.candidateBenchFull"
+                  : "copilot.candidateSaved",
+              )}
+            </span>
+          </div>
+        ) : null}
         {scope === "optimization" && optimizationActionStatus ? (
           <CopilotOptimizationStatus status={optimizationActionStatus} />
         ) : null}
         <ol>
-          {response.recommendations.map((recommendation) => {
+          {sortedRecommendations.map((recommendation) => {
             const candidate =
               scope === "recommendation"
                 ? candidatesById.get(recommendation.id)
@@ -232,7 +270,7 @@ export function CopilotAnalysisResult({
 
             return (
               <li
-                className={`is-${recommendation.priority} copilot-reveal is-recommendation`}
+                className="copilot-reveal is-recommendation"
                 key={recommendation.id}
               >
                 {optimizationCandidate ? (
@@ -248,13 +286,21 @@ export function CopilotAnalysisResult({
                   <>
                     {candidate ? (
                       <div className="copilot-candidate-heading">
-                        <div>
-                          <strong>{candidate.displayName}</strong>
-                          <span className="copilot-candidate-types">
-                            {candidate.types.map((type) => (
-                              <TypeBadge type={type} key={type} />
-                            ))}
-                          </span>
+                        <div className="copilot-candidate-identity">
+                          <CopilotCandidateSprite candidate={candidate} />
+                          <div className="copilot-candidate-copy">
+                            <div className="copilot-candidate-name-row">
+                              <strong>{candidate.displayName}</strong>
+                              <span className="copilot-candidate-types">
+                                {candidate.types.map((type) => (
+                                  <TypeBadge type={type} key={type} />
+                                ))}
+                              </span>
+                            </div>
+                            <span className="copilot-candidate-role">
+                              {recommendation.title}
+                            </span>
+                          </div>
                         </div>
                         <span>
                           {candidate.usageRank
@@ -267,30 +313,51 @@ export function CopilotAnalysisResult({
                     ) : (
                       <div>
                         <strong>{recommendation.title}</strong>
-                        <span>
-                          {t(
-                            priorityTranslationKeys[recommendation.priority],
-                          )}
-                        </span>
                       </div>
                     )}
                     <p>{recommendation.reason}</p>
                     {candidate ? (
-                      <button
-                        className="copilot-candidate-select"
-                        type="button"
-                        disabled={Boolean(selectingCandidateId) || isStale}
-                        onClick={() => onSelectCandidate(candidate.pokemonId)}
-                      >
-                        {selectingCandidateId === candidate.pokemonId ? (
+                      <div className="copilot-candidate-actions">
+                        <button
+                          className="is-primary"
+                          type="button"
+                          disabled={
+                            Boolean(selectingCandidateId || savingCandidateId) ||
+                            isStale
+                          }
+                          onClick={() => onSelectCandidate(candidate.pokemonId)}
+                        >
                           <FontAwesomeIcon
-                            icon={faSpinner}
-                            spin
+                            icon={
+                              selectingCandidateId === candidate.pokemonId
+                                ? faSpinner
+                                : faCheck
+                            }
+                            spin={selectingCandidateId === candidate.pokemonId}
                             aria-hidden="true"
                           />
-                        ) : null}
-                        {t("copilot.selectCandidate")}
-                      </button>
+                          {t("copilot.selectCandidate")}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={
+                            Boolean(selectingCandidateId || savingCandidateId) ||
+                            isStale
+                          }
+                          onClick={() => onSaveCandidate(candidate.pokemonId)}
+                        >
+                          <FontAwesomeIcon
+                            icon={
+                              savingCandidateId === candidate.pokemonId
+                                ? faSpinner
+                                : faBoxArchive
+                            }
+                            spin={savingCandidateId === candidate.pokemonId}
+                            aria-hidden="true"
+                          />
+                          {t("copilot.saveToBench")}
+                        </button>
+                      </div>
                     ) : null}
                   </>
                 )}

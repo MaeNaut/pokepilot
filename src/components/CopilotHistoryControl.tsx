@@ -249,7 +249,7 @@ export function CopilotHistoryControl({
                       </span>
                       <strong>{entry.response.title}</strong>
                       <span className="copilot-history-summary">
-                        {entry.response.summary}
+                        {entry.response.paragraphs[0]}
                       </span>
                     </button>
                   ))}

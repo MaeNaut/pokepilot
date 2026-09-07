@@ -76,13 +76,10 @@ const teamInstructions = `${pokepilotCommonInstructions}
 ${getPokePilotScopeInstructions("team")}`;
 
 const modelOutput = {
-  version: 1,
+  version: 2,
   scope: "team",
   title: "Test Team",
-  summary: "Summary",
-  playstyle: "Balanced",
-  strengths: [],
-  weaknesses: [],
+  paragraphs: ["This is a complete analysis paragraph."],
   recommendations: [],
 };
 
@@ -194,7 +191,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-core-v2-low",
+        prompt_cache_key: "pokepilot-evaluation-core-v3-low",
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -257,7 +254,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 57,
+        promptVersion: 59,
       },
       usage: {
         totalTokens: 150,
@@ -295,6 +292,12 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(teamInstructions).toContain(
       "silently simulate the opening turn",
+    );
+    expect(teamInstructions).toContain(
+      "unless priority, effective Speed, and the field state",
+    );
+    expect(teamInstructions).toContain(
+      "Trick Room ordering applies only after Trick Room resolves",
     );
     expect(teamInstructions).toContain(
       "Return a top-level object with analysis and strategyAudit",
@@ -347,7 +350,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(create).toHaveBeenCalledOnce();
     const modelRequest = create.mock.calls[0]![0];
     expect(modelRequest.prompt_cache_key).toBe(
-      "pokepilot-evaluation-core-v2-low",
+      "pokepilot-evaluation-core-v3-low",
     );
     expect(modelRequest.input[0].content[0].text).toBe(
       pokepilotCommonInstructions,
@@ -497,7 +500,17 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(englishInstructions).not.toMatch(/[\uac00-\ud7a3]/u);
     expect(koreanInstructions).toContain("Korean only");
     expect(koreanInstructions).toContain("확정 N타");
+    expect(koreanInstructions).toContain("polite honorific prose");
+    expect(koreanInstructions).toContain("-습니다");
+    expect(koreanInstructions).toContain("branch as 선택지");
+    expect(koreanInstructions).toContain("role as 역할");
     expect(koreanInstructions).not.toContain("English only");
+    expect(pokepilotCommonInstructions).toContain(
+      "title, paragraphs, and recommendations",
+    );
+    expect(pokepilotCommonInstructions).toContain(
+      "instead of separately labeled strengths, weaknesses, checks",
+    );
   });
 
   it("preserves usage when Luna returns malformed structured output", async () => {
