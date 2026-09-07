@@ -447,14 +447,14 @@
   --diagnostics-muted: var(--color-muted);
 }
 
-:root[data-theme="dark"] .matchup-matrix-cell.is-exposed {
-  border-color: #8f4b49;
-  background: #3d292a;
-}
-
-:root[data-theme="dark"] .matchup-value + .matchup-value,
 :root[data-theme="dark"] .coverage-ring::before {
   border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .matchup-table .is-exposed {
+  background: #3d292a;
+  border-color: #8f4b49;
+  box-shadow: inset 1px 0 #8f4b49, inset -1px 0 #8f4b49;
 }
 
 :root[data-theme="dark"] .validity-panel,
@@ -545,16 +545,6 @@
   border-color: var(--color-surface);
   background: var(--color-text);
   box-shadow: 0 0 0 1px var(--color-border-strong);
-}
-
-:root[data-theme="dark"] .matchup-legend .is-weak,
-:root[data-theme="dark"] .matchup-matrix .is-weak {
-  color: var(--color-weak);
-}
-
-:root[data-theme="dark"] .matchup-legend .is-resist,
-:root[data-theme="dark"] .matchup-matrix .is-resist {
-  color: var(--color-resist);
 }
 
 :root[data-theme="dark"] .sprite-crop img {

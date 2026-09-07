@@ -732,17 +732,6 @@
     font-size: 0.88rem;
   }
 
-  .matchup-matrix-cell {
-    min-height: 28px;
-    grid-template-columns: 22px repeat(2, minmax(20px, 1fr));
-    padding-right: 3px;
-    padding-left: 3px;
-  }
-
-  .matchup-value {
-    font-size: 0.68rem;
-  }
-
   .team-diagnostics .type-badge,
   .team-diagnostics .type-badge.has-type-icon {
     width: 20px;
@@ -1485,14 +1474,6 @@
 
   .diagnostics-section {
     padding: 10px;
-  }
-
-  .matchup-matrix {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .matchup-matrix-cell {
-    min-height: 38px;
   }
 
   .coverage-content {

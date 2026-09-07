@@ -9,7 +9,16 @@ type TeamDiagnosticsProps = {
 export function TeamDiagnostics({
   diagnostics,
 }: TeamDiagnosticsProps) {
-  const { gameName, t } = useLocalization();
+  const { t } = useLocalization();
+  const matchupGroups = [
+    diagnostics.defensiveMatchups,
+    diagnostics.defensiveMatchups.slice(0, 9),
+    diagnostics.defensiveMatchups.slice(9),
+  ];
+  const exposedTypes = new Set(diagnostics.defensiveMatchups
+    .filter(({ weakCount, resistCount, immuneCount }) =>
+      weakCount >= 2 && weakCount > resistCount + immuneCount)
+    .map(({ type }) => type));
   const coveragePercent = Math.round(
     (diagnostics.coveredDefendingTypes.length / 18) * 100,
   );
@@ -21,39 +30,42 @@ export function TeamDiagnostics({
         <section className="diagnostics-section diagnostics-matchups">
           <div className="diagnostics-section-heading">
             <h3>{t("diagnostics.defensive")}</h3>
-            <div className="matchup-legend" aria-hidden="true">
-              <span className="is-weak">{t("diagnostics.weak")}</span>
-              <span className="is-resist" title={t("diagnostics.resistHint")}>{t("diagnostics.resist")}</span>
-            </div>
           </div>
-          <div className="matchup-matrix" aria-label={t("diagnostics.matchupAria")}>
-            {diagnostics.defensiveMatchups.map((matchup) => {
-              const resistCount = matchup.resistCount + matchup.immuneCount;
-              const isExposed =
-                matchup.weakCount >= 2 && matchup.weakCount > resistCount;
-              const typeName = gameName(
-                "types",
-                matchup.type,
-                matchup.type.charAt(0).toUpperCase() + matchup.type.slice(1),
-              );
-
-              return (
-                <div
-                  className={`matchup-matrix-cell ${isExposed ? "is-exposed" : ""}`}
-                  aria-label={t("diagnostics.matchupCell", {
-                    type: typeName,
-                    weak: matchup.weakCount,
-                    resist: resistCount,
-                  })}
-                  key={matchup.type}
-                >
-                  <TypeBadge type={matchup.type} />
-                  <span className="matchup-value is-weak">{matchup.weakCount}</span>
-                  <span className="matchup-value is-resist">{resistCount}</span>
-                </div>
-              );
-            })}
+          <div className="matchup-tables">
+            {matchupGroups.map((group, index) => (
+              <table className={`matchup-table ${index === 0 ? "is-wide" : "is-narrow"}`} aria-label={t("diagnostics.matchupAria")} key={index}>
+                <colgroup>
+                  <col className="matchup-label-column" />
+                  {group.map(({ type }) => <col key={type} />)}
+                </colgroup>
+                <thead>
+                  <tr>
+                    <td />
+                    {group.map(({ type }) => (
+                      <th scope="col" className={exposedTypes.has(type) ? "is-exposed" : undefined} key={type}><TypeBadge type={type} /></th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="is-weak">
+                    <th scope="row">{t("diagnostics.weak")}</th>
+                    {group.map(({ type, weakCount }) => (
+                      <td className={exposedTypes.has(type) ? "is-exposed" : weakCount === 0 ? "is-zero" : undefined} key={type}>{weakCount}</td>
+                    ))}
+                  </tr>
+                  <tr className="is-resist">
+                    <th scope="row" title={t("diagnostics.resistHint")}>{t("diagnostics.resist")}</th>
+                    {group.map(({ type, resistCount, immuneCount }) => (
+                      <td className={resistCount + immuneCount === 0 ? "is-zero" : undefined} key={type}>
+                        {resistCount + immuneCount}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            ))}
           </div>
+          <p className="matchup-note">{t("diagnostics.resist")}: {t("diagnostics.resistHint")}</p>
         </section>
 
         <section className="diagnostics-section diagnostics-coverage">
