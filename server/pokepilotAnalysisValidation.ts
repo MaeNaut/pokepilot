@@ -1,10 +1,17 @@
-import type { CopilotAnalysisRequest } from "../src/utils/copilotContracts.js";
-import { validateCopilotGroundedModelOutput } from "../src/utils/copilotModelValidation.js";
+import type {
+  CopilotAnalysisRequest,
+  CopilotQualityWarningCode,
+} from "../src/utils/copilotContracts.js";
+import {
+  validateCopilotGroundedModelOutput,
+  validateCopilotModelOutput,
+} from "../src/utils/copilotModelValidation.js";
 import type { CopilotModelOutput } from "../src/utils/copilotModelTypes.js";
 import {
   completeCopilotStrategyAudit,
   validateCopilotStrategyAuditForRequest,
 } from "../src/utils/copilotStrategyAudit.js";
+import { isRecord } from "../src/utils/typeGuards.js";
 
 function invalidAnalysis(message: string): Error & {
   code: "AI_INVALID_RESPONSE";
@@ -98,6 +105,75 @@ function validateOptimizationMoveNarrative(
       );
     }
   }
+}
+
+function getActionableCandidateIds(request: CopilotAnalysisRequest) {
+  if (request.scope === "recommendation") {
+    return new Set(
+      request.recommendationCandidates.map((candidate) => candidate.pokemonId),
+    );
+  }
+  if (request.scope === "optimization") {
+    return new Set(
+      request.optimization?.candidates.map((candidate) => candidate.id) ?? [],
+    );
+  }
+  return null;
+}
+
+function recoverActionableRecommendations(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  const candidateIds = getActionableCandidateIds(request);
+  if (!candidateIds) {
+    const seen = new Set<string>();
+    const recommendations = analysis.recommendations.filter(
+      (recommendation) => {
+        if (seen.size >= 3 || seen.has(recommendation.id)) return false;
+        seen.add(recommendation.id);
+        return true;
+      },
+    );
+    const adjusted = recommendations.length !== analysis.recommendations.length;
+    return {
+      analysis: adjusted ? { ...analysis, recommendations } : analysis,
+      adjusted,
+    };
+  }
+
+  const seen = new Set<string>();
+  const recommendations = analysis.recommendations.filter(
+    (recommendation) => {
+      if (
+        seen.size >= 3 ||
+        seen.has(recommendation.id) ||
+        !candidateIds.has(recommendation.id)
+      ) {
+        return false;
+      }
+      seen.add(recommendation.id);
+      return true;
+    },
+  );
+
+  if (recommendations.length === 0) {
+    throw invalidAnalysis(
+      `Hosted ${request.scope} returned no usable candidate.`,
+    );
+  }
+
+  const expectedRecommendationCount = request.scope === "recommendation"
+    ? Math.min(3, candidateIds.size)
+    : Math.min(analysis.recommendations.length, 3);
+  const adjusted =
+    recommendations.length !== analysis.recommendations.length ||
+    recommendations.length < expectedRecommendationCount;
+
+  return {
+    analysis: adjusted ? { ...analysis, recommendations } : analysis,
+    adjusted,
+  };
 }
 
 const optimizationOutcomePattern = new RegExp(
@@ -208,6 +284,73 @@ function sanitizeOptimizationNarrative(
   };
 }
 
+function repairOptimizationMoveNarrative(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  if (request.scope !== "optimization") {
+    return { analysis, repaired: false };
+  }
+
+  const candidates = new Map(
+    (request.optimization?.candidates ?? []).map((candidate) => [
+      candidate.id,
+      candidate,
+    ]),
+  );
+  let repaired = false;
+  const recommendations = analysis.recommendations.map((recommendation) => {
+    const candidate = candidates.get(recommendation.id);
+    if (!candidate?.moveChanges?.length) return recommendation;
+
+    const narrative = `${recommendation.title} ${recommendation.reason}`
+      .toLocaleLowerCase(request.locale);
+    const hasEveryReplacement = candidate.moveChanges.every((change) =>
+      narrative.includes(
+        change.optimizedMoveDisplayName.toLocaleLowerCase(request.locale),
+      ),
+    );
+    if (hasEveryReplacement) return recommendation;
+
+    repaired = true;
+    const moveSummary = candidate.moveChanges
+      .map(
+        (change) =>
+          `${change.currentMoveDisplayName} → ${change.optimizedMoveDisplayName}`,
+      )
+      .join(", ");
+    return {
+      ...recommendation,
+      title:
+        request.locale === "ko"
+          ? `${moveSummary} 기술 교체를 검토해 보세요.`
+          : `Consider the ${moveSummary} move change.`,
+      reason: verifiedOptimizationReason(recommendation.id, request),
+    };
+  });
+
+  return {
+    analysis: repaired ? { ...analysis, recommendations } : analysis,
+    repaired,
+  };
+}
+
+function hasOptimizationNarrativeRepair(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  return request.scope === "optimization" && (
+    analysis.paragraphs.some((paragraph) =>
+      optimizationOutcomePattern.test(paragraph),
+    ) ||
+    analysis.recommendations.some(
+      (recommendation) =>
+        optimizationOutcomePattern.test(recommendation.title) ||
+        optimizationOutcomePattern.test(recommendation.reason),
+    )
+  );
+}
+
 function normalizeOptimizationAudit(
   output: ReturnType<typeof completeCopilotStrategyAudit>,
   request: CopilotAnalysisRequest,
@@ -257,4 +400,69 @@ export function validateHostedCopilotAnalysis(
   }
 
   return sanitizeOptimizationNarrative(groundedOutput.analysis, request);
+}
+
+export type ReviewedHostedCopilotAnalysis = {
+  analysis: CopilotModelOutput;
+  qualityWarnings: CopilotQualityWarningCode[];
+};
+
+/**
+ * Production keeps a renderable, correctly scoped answer when only private
+ * grounding or recoverable candidate details fail. Strict evaluation continues
+ * to use validateHostedCopilotAnalysis so those quality regressions stay visible.
+ */
+export function reviewHostedCopilotAnalysis(
+  output: unknown,
+  request: CopilotAnalysisRequest,
+): ReviewedHostedCopilotAnalysis {
+  const publicOutput =
+    isRecord(output) && "analysis" in output ? output.analysis : output;
+  const publicValidation = validateCopilotModelOutput(
+    publicOutput,
+  );
+  if (
+    !publicValidation.success ||
+    publicValidation.data.scope !== request.scope
+  ) {
+    throw invalidAnalysis("Hosted analysis returned an invalid response.");
+  }
+
+  const warnings = new Set<CopilotQualityWarningCode>();
+  const recovered = recoverActionableRecommendations(
+    publicValidation.data,
+    request,
+  );
+  let analysis = recovered.analysis;
+  if (recovered.adjusted) warnings.add("recommendations-adjusted");
+
+  const groundedValidation = validateCopilotGroundedModelOutput(output);
+  if (!groundedValidation.success) {
+    warnings.add("grounding-incomplete");
+  } else {
+    const groundedOutput = normalizeOptimizationAudit(
+      completeCopilotStrategyAudit(groundedValidation.data, request),
+      request,
+    );
+    const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
+      { ...groundedOutput, analysis },
+      request,
+    );
+    if (strategyAuditErrors.length > 0) {
+      warnings.add("grounding-incomplete");
+    }
+  }
+
+  const moveRepair = repairOptimizationMoveNarrative(analysis, request);
+  analysis = moveRepair.analysis;
+  const needsNarrativeRepair = hasOptimizationNarrativeRepair(
+    analysis,
+    request,
+  );
+  analysis = sanitizeOptimizationNarrative(analysis, request);
+  if (moveRepair.repaired || needsNarrativeRepair) {
+    warnings.add("content-repaired");
+  }
+
+  return { analysis, qualityWarnings: [...warnings] };
 }

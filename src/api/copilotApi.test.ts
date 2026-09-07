@@ -78,6 +78,33 @@ describe("hosted PokePilot client", () => {
     });
   });
 
+  it("preserves supported quality warnings from a successful analysis", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            analysis: modelOutput,
+            metadata: {
+              qualityWarnings: [
+                "grounding-incomplete",
+                "grounding-incomplete",
+                "unknown-warning",
+              ],
+            },
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    await expect(requestHostedCopilotAnalysis(request)).resolves.toMatchObject({
+      analysis: { source: "hosted" },
+      qualityWarnings: ["grounding-incomplete"],
+    });
+  });
+
   it("throws a typed error for server failures", async () => {
     vi.stubGlobal(
       "fetch",

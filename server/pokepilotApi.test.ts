@@ -277,6 +277,57 @@ describe("PokePilot server API", () => {
     expect(analyze).not.toHaveBeenCalled();
   });
 
+  it("keeps a completed AI analysis when only the cache write fails", async () => {
+    const onUpstreamError = vi.fn();
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    vi.spyOn(operations, "setCached").mockRejectedValue(
+      new Error("Redis write unavailable"),
+    );
+
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze,
+      onUpstreamError,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      ok: true,
+      analysis: modelOutput,
+      metadata: { qualityWarnings: ["service-degraded"] },
+    });
+    expect(onUpstreamError).toHaveBeenCalledOnce();
+    expect(analyze).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a completed AI analysis when cooldown finalization fails", async () => {
+    const onUpstreamError = vi.fn();
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    vi.spyOn(operations, "completeReservation").mockRejectedValue(
+      new Error("Redis finalize unavailable"),
+    );
+    const cancelReservation = vi.spyOn(operations, "cancelReservation");
+
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze,
+      onUpstreamError,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      ok: true,
+      analysis: modelOutput,
+      metadata: { qualityWarnings: ["service-degraded"] },
+    });
+    expect(onUpstreamError).toHaveBeenCalledOnce();
+    expect(cancelReservation).toHaveBeenCalledOnce();
+  });
+
   it("returns only validated structured model output", async () => {
     const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const result = await handlePokePilotAnalysis(validRequest, { analyze });
@@ -310,7 +361,34 @@ describe("PokePilot server API", () => {
     });
   });
 
-  it("rejects recommendation candidates that were not supplied by the client", async () => {
+  it("keeps Pokemon analysis when only its private fact audit is invalid", async () => {
+    const result = await handlePokePilotAnalysis(pokemonRequest, {
+      analyze: async () =>
+        createModelResult({
+          ...groundedPokemonOutput,
+          strategyAudit: {
+            ...groundedPokemonOutput.strategyAudit,
+            facts: [{
+              id: "invalid-slot-fact",
+              kind: "weak-to",
+              subjectSlotIndex: 5,
+              objectSlotIndex: -1,
+              state: "current",
+              valueId: "ground",
+            }],
+          },
+        }),
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      ok: true,
+      analysis: { scope: "pokemon" },
+      metadata: { qualityWarnings: ["grounding-incomplete"] },
+    });
+  });
+
+  it("omits recommendation candidates that were not supplied by the client", async () => {
     const recommendationOutput = {
       ...groundedModelOutput,
       analysis: {
@@ -330,26 +408,35 @@ describe("PokePilot server API", () => {
       analyze: async () => createModelResult(recommendationOutput),
     });
 
-    expect(result.status).toBe(502);
+    expect(result.status).toBe(200);
     expect(result.body).toMatchObject({
-      ok: false,
-      error: { code: "AI_INVALID_RESPONSE" },
+      ok: true,
+      analysis: {
+        recommendations: [{ id: "rotom-wash" }, { id: "gastrodon" }],
+      },
+      metadata: {
+        qualityWarnings: [
+          "recommendations-adjusted",
+          "grounding-incomplete",
+        ],
+      },
     });
   });
 
-  it("rejects a response without the private strategy audit", async () => {
+  it("keeps a valid public response without the private strategy audit", async () => {
     const result = await handlePokePilotAnalysis(validRequest, {
       analyze: async () => createModelResult(modelOutput),
     });
 
-    expect(result.status).toBe(502);
+    expect(result.status).toBe(200);
     expect(result.body).toMatchObject({
-      ok: false,
-      error: { code: "AI_INVALID_RESPONSE" },
+      ok: true,
+      analysis: modelOutput,
+      metadata: { qualityWarnings: ["grounding-incomplete"] },
     });
   });
 
-  it("rejects the legacy plans-only strategy audit contract", async () => {
+  it("keeps public analysis when the private audit contract is incomplete", async () => {
     const result = await handlePokePilotAnalysis(validRequest, {
       analyze: async () =>
         createModelResult({
@@ -358,10 +445,11 @@ describe("PokePilot server API", () => {
         }),
     });
 
-    expect(result.status).toBe(502);
+    expect(result.status).toBe(200);
     expect(result.body).toMatchObject({
-      ok: false,
-      error: { code: "AI_INVALID_RESPONSE" },
+      ok: true,
+      analysis: modelOutput,
+      metadata: { qualityWarnings: ["grounding-incomplete"] },
     });
   });
 
@@ -404,6 +492,36 @@ describe("PokePilot server API", () => {
       ok: true,
       metadata: { cacheStatus: "hit" },
     });
+  });
+
+  it("preserves quality warnings when a reviewed analysis is served from cache", async () => {
+    const analyze = vi.fn(async () => createModelResult(modelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = {
+      analyze,
+      clock: () => 1_000,
+      operations,
+      requester: { clientId: "client-a", ipHash: "ip-a" },
+    };
+
+    const first = await handlePokePilotAnalysis(validRequest, options);
+    const second = await handlePokePilotAnalysis(validRequest, options);
+
+    expect(first.body).toMatchObject({
+      ok: true,
+      metadata: {
+        cacheStatus: "miss",
+        qualityWarnings: ["grounding-incomplete"],
+      },
+    });
+    expect(second.body).toMatchObject({
+      ok: true,
+      metadata: {
+        cacheStatus: "hit",
+        qualityWarnings: ["grounding-incomplete"],
+      },
+    });
+    expect(analyze).toHaveBeenCalledOnce();
   });
 
   it("keeps team-scope cache identity stable when only the selected slot changes", async () => {

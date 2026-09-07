@@ -47,6 +47,28 @@ export type CopilotAnalysisScope =
 
 export type CopilotPriority = "high" | "medium" | "low";
 
+export const copilotQualityWarningCodes = [
+  "grounding-incomplete",
+  "recommendations-adjusted",
+  "content-repaired",
+  "service-degraded",
+] as const;
+
+export type CopilotQualityWarningCode =
+  (typeof copilotQualityWarningCodes)[number];
+
+const copilotQualityWarningCodeSet = new Set<string>(
+  copilotQualityWarningCodes,
+);
+
+export function isCopilotQualityWarningCode(
+  value: unknown,
+): value is CopilotQualityWarningCode {
+  return (
+    typeof value === "string" && copilotQualityWarningCodeSet.has(value)
+  );
+}
+
 export type CopilotMoveCategory =
   | "physical"
   | "special"
@@ -281,6 +303,7 @@ export type CopilotAnalysisResponse = {
   title: string;
   paragraphs: string[];
   recommendations: CopilotRecommendation[];
+  qualityWarnings?: CopilotQualityWarningCode[];
   optimizationCandidates?: CopilotSetOptimizationCandidateSnapshot[];
 };
 

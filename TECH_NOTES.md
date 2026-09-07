@@ -691,6 +691,18 @@ across deterministic fallback and hosted analysis:
   then strips the audit before returning the public analysis. Pokemon-scope
   validation also cross-checks public exact-weakness coverage prose and negative
   "no teammate covers this type" claims against every current defensive profile.
+- Production review keeps a structurally valid, correctly scoped public AI
+  analysis when only private grounding is incomplete. It removes unknown or
+  duplicate actionable candidates, repairs deterministic optimization wording,
+  and returns compact quality-warning codes with the analysis. A full rules
+  fallback remains reserved for transport/provider failures, an unusable public
+  response, a scope mismatch, or a Recommend/Sample result with no valid
+  actionable candidate. The stricter evaluation adapter still treats every
+  grounding warning as a failed case so production recovery cannot hide model
+  quality regression. Cache-write or cooldown-finalization failures after a
+  completed model call keep the reviewed analysis and add a service warning;
+  pre-call safeguard storage failures still fail closed. Cache contract v3
+  stores warnings with the reviewed text.
 - Team and selected-Pokemon scopes keep separate results. A request fingerprint marks
   an existing result stale after relevant edits without rerunning analysis on every
   keystroke; changing only the displayed slot does not stale team-scope analysis.

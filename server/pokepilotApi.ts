@@ -1,5 +1,8 @@
 import type { CopilotModelOutput } from "../src/utils/copilotModelTypes.js";
-import type { CopilotAnalysisScope } from "../src/utils/copilotContracts.js";
+import type {
+  CopilotAnalysisScope,
+  CopilotQualityWarningCode,
+} from "../src/utils/copilotContracts.js";
 import { getCopilotAnalysisCacheFingerprint } from "../src/utils/copilotRequestFingerprint.js";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract.js";
 import {
@@ -21,7 +24,10 @@ import {
   type PokePilotRequester,
   type PokePilotSafeguardMode,
 } from "./pokepilotOperations.js";
-import { validateHostedCopilotAnalysis } from "./pokepilotAnalysisValidation.js";
+import {
+  reviewHostedCopilotAnalysis,
+  type ReviewedHostedCopilotAnalysis,
+} from "./pokepilotAnalysisValidation.js";
 
 export const POKEPILOT_API_MAX_BODY_BYTES = 256_000;
 
@@ -45,6 +51,7 @@ export type PokePilotApiResponse =
         model: typeof OPENAI_LUNA_MODEL_ID;
         promptVersion: number;
         retryAfterSeconds?: number;
+        qualityWarnings?: CopilotQualityWarningCode[];
       };
     }
   | {
@@ -104,6 +111,7 @@ type HostedAnalysisExecution =
   | {
       kind: "completed";
       analysis: CopilotModelOutput;
+      qualityWarnings: CopilotQualityWarningCode[];
       result: LunaAnalysisResult;
       retryAfterSeconds?: number;
     }
@@ -137,7 +145,13 @@ function errorResult(
 function successResult(
   analysis: CopilotModelOutput,
   cacheStatus: "hit" | "miss" | "shared",
-  retryAfterSeconds?: number,
+  {
+    qualityWarnings = [],
+    retryAfterSeconds,
+  }: {
+    qualityWarnings?: CopilotQualityWarningCode[];
+    retryAfterSeconds?: number;
+  } = {},
 ): PokePilotApiResult {
   return {
     status: 200,
@@ -149,9 +163,22 @@ function successResult(
         model: OPENAI_LUNA_MODEL_ID,
         promptVersion: POKEPILOT_AI_PROMPT_VERSION,
         ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
+        ...(qualityWarnings.length === 0 ? {} : { qualityWarnings }),
       },
     },
   };
+}
+
+function addQualityWarning(
+  reviewed: ReviewedHostedCopilotAnalysis,
+  warning: CopilotQualityWarningCode,
+): ReviewedHostedCopilotAnalysis {
+  return reviewed.qualityWarnings.includes(warning)
+    ? reviewed
+    : {
+        ...reviewed,
+        qualityWarnings: [...reviewed.qualityWarnings, warning],
+      };
 }
 
 function getUpstreamStatus(error: unknown) {
@@ -208,7 +235,7 @@ export async function handlePokePilotAnalysis(
 
   const requestKey = createPokePilotAnalysisCacheKey(
     {
-      cacheVersion: 2,
+      cacheVersion: 3,
       fingerprint: getCopilotAnalysisCacheFingerprint(requestValidation.data),
       locale: requestValidation.data.locale,
     },
@@ -251,7 +278,7 @@ export async function handlePokePilotAnalysis(
     }
 
     const cachedAnalysis = safeguardConfig.cacheEnabled
-      ? await operations?.getCached<CopilotModelOutput>(
+      ? await operations?.getCached<ReviewedHostedCopilotAnalysis>(
           operationsKey,
           startedAt,
         )
@@ -266,7 +293,9 @@ export async function handlePokePilotAnalysis(
         safeguardMode,
         scope: requestValidation.data.scope,
       });
-      return successResult(cachedAnalysis, "hit");
+      return successResult(cachedAnalysis.analysis, "hit", {
+        qualityWarnings: cachedAnalysis.qualityWarnings,
+      });
     }
 
     const runAnalysis = async (): Promise<HostedAnalysisExecution> => {
@@ -311,35 +340,51 @@ export async function handlePokePilotAnalysis(
               reasoningEffort: POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
               safetyIdentifier: requester?.clientId,
             });
-        const analysis = validateHostedCopilotAnalysis(
+        let reviewed = reviewHostedCopilotAnalysis(
           result.output,
           requestValidation.data,
         );
 
         if (safeguardConfig.cacheEnabled) {
-          await operations?.setCached(
-            operationsKey,
-            analysis,
-            clock(),
-          );
+          try {
+            await operations?.setCached(
+              operationsKey,
+              reviewed,
+              clock(),
+            );
+          } catch (error) {
+            onUpstreamError?.(error);
+            reviewed = addQualityWarning(reviewed, "service-degraded");
+          }
         }
         let retryAfterSeconds: number | undefined;
         if (reservation && operations) {
-          const cooldown = await operations.completeReservation(
-            reservation,
-            clock(),
-          );
-          if (cooldown.retryAfterMs > 0) {
-            retryAfterSeconds = Math.max(
-              1,
-              Math.ceil(cooldown.retryAfterMs / 1_000),
+          try {
+            const cooldown = await operations.completeReservation(
+              reservation,
+              clock(),
             );
+            if (cooldown.retryAfterMs > 0) {
+              retryAfterSeconds = Math.max(
+                1,
+                Math.ceil(cooldown.retryAfterMs / 1_000),
+              );
+            }
+          } catch (error) {
+            onUpstreamError?.(error);
+            try {
+              await operations.cancelReservation(reservation);
+            } catch (cleanupError) {
+              onUpstreamError?.(cleanupError);
+            }
+            reviewed = addQualityWarning(reviewed, "service-degraded");
           }
           reservation = undefined;
         }
         return {
           kind: "completed" as const,
-          analysis,
+          analysis: reviewed.analysis,
+          qualityWarnings: reviewed.qualityWarnings,
           result,
           ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
         };
@@ -397,7 +442,9 @@ export async function handlePokePilotAnalysis(
         safeguardMode,
         scope: requestValidation.data.scope,
       });
-      return successResult(completed.analysis, "shared");
+      return successResult(completed.analysis, "shared", {
+        qualityWarnings: completed.qualityWarnings,
+      });
     }
 
     onOperationalEvent?.({
@@ -417,7 +464,10 @@ export async function handlePokePilotAnalysis(
     return successResult(
       completed.analysis,
       "miss",
-      completed.retryAfterSeconds,
+      {
+        qualityWarnings: completed.qualityWarnings,
+        retryAfterSeconds: completed.retryAfterSeconds,
+      },
     );
   } catch (error) {
     if (error instanceof PokePilotCapacityError) {
