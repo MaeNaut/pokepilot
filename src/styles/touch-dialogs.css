@@ -1,0 +1,667 @@
+/* Compact-layout selection dialogs */
+.touch-picker-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.touch-picker-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(7, 9, 11, 0.64);
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-picker-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(640px, calc(100vw - 64px));
+  height: min(680px, calc(100dvh - 80px));
+  min-height: 420px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+}
+
+.touch-picker-header {
+  display: flex;
+  min-height: 50px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--color-border);
+  padding: 8px 10px 8px 18px;
+}
+
+.touch-picker-header h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.05rem;
+  font-weight: var(--font-semibold);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.touch-picker-close {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1rem;
+}
+
+.touch-picker-close:hover,
+.touch-picker-close:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.touch-picker-search {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--color-border);
+  padding: 8px 12px;
+  background: var(--color-surface-subtle);
+}
+
+.touch-picker-search-input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 13px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: var(--font-medium);
+}
+
+.touch-picker-search-input::placeholder {
+  color: var(--color-subtle);
+}
+
+.touch-picker-search-input:focus {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+
+.touch-picker-results {
+  min-height: 150px;
+  flex: 1 1 320px;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.touch-picker-option-list {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.touch-picker-option-list::-webkit-scrollbar {
+  display: none;
+}
+
+.touch-picker-option-list.pokemon-name-results,
+.touch-picker-option-list.item-results,
+.touch-picker-option-list.move-results {
+  position: static;
+  width: 100%;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.touch-picker-option-list.pokemon-name-results,
+.touch-picker-option-list.item-results {
+  align-content: start;
+  grid-auto-rows: minmax(50px, max-content);
+}
+
+.touch-picker-option-list .pokemon-name-option,
+.touch-picker-option-list .item-option,
+.touch-picker-option-list .trait-option,
+.touch-picker-option-list .candidate-filter-option,
+.touch-picker-option-list .move-option {
+  min-height: 50px;
+  touch-action: manipulation;
+}
+
+.touch-ability-options {
+  display: grid;
+  align-content: start;
+}
+
+.touch-ability-options .trait-option,
+.touch-ability-options .candidate-filter-option {
+  width: 100%;
+}
+
+.touch-picker-dialog.is-ability {
+  height: auto;
+  min-height: 0;
+  max-height: min(480px, calc(100dvh - 80px));
+}
+
+.touch-picker-dialog.is-ability .touch-picker-results {
+  min-height: 0;
+  max-height: 200px;
+  flex: 0 1 auto;
+}
+
+.touch-picker-dialog.is-ability .touch-picker-option-list {
+  height: auto;
+  max-height: 200px;
+}
+
+.touch-picker-dialog.is-ability .touch-picker-preview {
+  min-height: 104px;
+  max-height: 160px;
+}
+
+.touch-picker-dialog.is-status {
+  width: min(360px, calc(100vw - 32px));
+  height: auto;
+  min-height: 0;
+}
+
+.touch-picker-dialog.is-status .touch-picker-results {
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.touch-status-options {
+  display: grid;
+  height: auto;
+  align-content: start;
+}
+
+.touch-status-options .calculator-status-option {
+  width: 100%;
+  min-height: 52px;
+}
+
+.touch-picker-dialog.is-nature {
+  width: min(640px, calc(100vw - 32px));
+  height: auto;
+  min-height: 0;
+  max-height: calc(100dvh - 48px);
+}
+
+.touch-picker-dialog.is-nature .touch-picker-results {
+  min-height: 0;
+  flex: 0 0 auto;
+  overflow: auto;
+  padding: 12px;
+}
+
+.touch-picker-dialog.is-rank {
+  width: min(420px, calc(100vw - 32px));
+  height: auto;
+  min-height: 0;
+}
+
+.touch-picker-dialog.is-rank .touch-picker-results {
+  min-height: 0;
+  flex: 0 0 auto;
+  overflow: visible;
+  padding: 18px;
+}
+
+.touch-picker-dialog.is-rank .stat-stage-grid {
+  gap: 8px;
+}
+
+.touch-picker-dialog.is-rank .stat-stage-option {
+  min-height: 44px;
+  font-size: 0.84rem;
+}
+
+.touch-nature-grid-wrap {
+  min-width: 0;
+}
+
+.touch-picker-dialog.is-nature .nature-grid,
+.touch-picker-dialog.is-nature .nature-grid-row {
+  grid-template-columns: 92px repeat(5, minmax(72px, 1fr));
+}
+
+.touch-picker-preview {
+  min-height: 112px;
+  max-height: 210px;
+  flex: 0 1 auto;
+  overflow: auto;
+  border-top: 1px solid var(--color-border);
+  padding: 12px 16px;
+  background: var(--color-surface-subtle);
+  scrollbar-width: none;
+}
+
+.touch-picker-preview::-webkit-scrollbar {
+  display: none;
+}
+
+.touch-picker-empty-preview {
+  display: grid;
+  min-height: 94px;
+  place-items: center;
+  margin: 0;
+  color: var(--color-subtle);
+  font-size: 0.88rem;
+}
+
+.touch-pokemon-preview {
+  position: relative;
+  display: flex;
+  min-height: 86px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.touch-pokemon-preview-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.touch-pokemon-preview-artwork {
+  position: absolute;
+  right: 48px;
+  bottom: -52px;
+  width: 220px;
+  height: 190px;
+  object-fit: contain;
+  object-position: right bottom;
+  opacity: 0.17;
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] .touch-pokemon-preview-artwork {
+  filter: brightness(1.18) saturate(0.92);
+  opacity: 0.22;
+}
+
+.touch-pokemon-preview strong {
+  overflow: hidden;
+  font-size: 1.25rem;
+  font-weight: var(--font-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.touch-pokemon-preview small,
+.touch-item-preview small,
+.touch-ability-preview small {
+  color: var(--color-subtle);
+  font-size: 0.74rem;
+  font-weight: var(--font-medium);
+}
+
+.touch-pokemon-preview-types {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.touch-pokemon-preview-types .type-badge {
+  width: 38px;
+  height: 38px;
+}
+
+.touch-pokemon-preview-types .type-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.touch-item-preview,
+.touch-ability-preview {
+  min-height: 94px;
+}
+
+.touch-item-preview p,
+.touch-ability-preview p {
+  margin: 12px 0 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: var(--font-regular);
+  line-height: 1.5;
+}
+
+.touch-picker-preview .move-tooltip.move-dialog-preview {
+  position: static;
+  inset: auto;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition: none;
+}
+
+.touch-picker-preview .move-dialog-preview .move-tooltip-shell {
+  border-radius: var(--radius-lg);
+}
+
+.touch-picker-dialog.is-move .touch-picker-results {
+  flex-basis: 220px;
+}
+
+.touch-picker-dialog.is-move .touch-picker-preview {
+  min-height: 250px;
+  max-height: 300px;
+  flex: 0 0 auto;
+  overflow-y: auto;
+}
+
+.touch-picker-actions {
+  display: flex;
+  min-height: 56px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  border-top: 1px solid var(--color-border);
+  padding: 8px 12px;
+  background: var(--color-surface);
+}
+
+.touch-picker-actions button {
+  min-width: 92px;
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: var(--font-medium);
+  touch-action: manipulation;
+}
+
+.touch-picker-actions button:hover,
+.touch-picker-actions button:focus-visible {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-hover);
+}
+
+.touch-picker-actions button.is-primary {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-surface);
+}
+
+.touch-picker-actions button.is-primary:hover,
+.touch-picker-actions button.is-primary:focus-visible {
+  filter: brightness(0.88);
+}
+
+.touch-picker-actions button:disabled {
+  cursor: not-allowed;
+  filter: none;
+  opacity: 0.42;
+}
+
+body:has(.touch-picker-layer) .copilot-drawer-handle {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 599px) {
+  .touch-picker-layer {
+    padding:
+      max(16px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .touch-picker-dialog {
+    width: 100%;
+    height: min(700px, calc(100dvh - 32px));
+    min-height: 0;
+    border-radius: var(--radius-md);
+  }
+
+  .touch-picker-header {
+    min-height: 50px;
+    padding-left: 14px;
+  }
+
+  .touch-picker-header h2 {
+    font-size: 0.98rem;
+  }
+
+  .touch-picker-search {
+    padding: 8px 10px;
+  }
+
+  .touch-picker-search-input {
+    height: 42px;
+    font-size: 0.94rem;
+  }
+
+  .touch-picker-preview {
+    min-height: 112px;
+    max-height: 190px;
+    padding: 12px 14px;
+  }
+
+  .touch-picker-dialog.is-move .touch-picker-preview {
+    min-height: 240px;
+    max-height: 288px;
+  }
+
+  .touch-picker-dialog.is-ability {
+    max-height: calc(100dvh - 32px);
+  }
+
+  .touch-picker-dialog.is-nature {
+    width: 100%;
+    max-height: calc(100dvh - 32px);
+  }
+
+  .touch-picker-dialog.is-nature .touch-picker-results {
+    padding: 10px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-grid,
+  .touch-picker-dialog.is-nature .nature-grid-row {
+    grid-template-columns: 64px repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-cell {
+    min-height: 38px;
+    padding: 3px 1px;
+    font-size: 0.66rem;
+  }
+
+  .touch-picker-dialog.is-rank .touch-picker-results {
+    padding: 14px;
+  }
+
+  .touch-picker-dialog.is-rank .stat-stage-grid {
+    gap: 6px;
+  }
+
+  .touch-picker-dialog.is-rank .stat-stage-option {
+    min-height: 42px;
+  }
+
+  .touch-picker-actions {
+    min-height: 58px;
+    padding: 8px 10px;
+  }
+
+  .touch-picker-actions button {
+    min-width: 84px;
+  }
+}
+
+@media (max-width: 980px) and (max-height: 599px) and (orientation: landscape) {
+  .touch-picker-layer {
+    padding: 6px;
+  }
+
+  .touch-picker-dialog {
+    width: min(680px, calc(100vw - 24px));
+    height: calc(100dvh - 12px);
+    min-height: 0;
+  }
+
+  .touch-picker-header {
+    min-height: 44px;
+  }
+
+  .touch-picker-search {
+    padding: 6px 10px;
+  }
+
+  .touch-picker-search-input {
+    height: 36px;
+  }
+
+  .touch-picker-results {
+    min-height: 80px;
+  }
+
+  .touch-picker-preview {
+    min-height: 80px;
+    max-height: 132px;
+    padding: 9px 12px;
+  }
+
+  .touch-picker-dialog.is-move .touch-picker-results {
+    min-height: 50px;
+    flex-basis: 50px;
+  }
+
+  .touch-picker-dialog.is-move .touch-picker-preview {
+    min-height: 154px;
+    max-height: 184px;
+  }
+
+  .touch-picker-dialog.is-ability,
+  .touch-picker-dialog.is-nature {
+    max-height: calc(100dvh - 12px);
+  }
+
+  .touch-picker-dialog.is-nature .touch-picker-results {
+    padding: 6px 10px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-grid,
+  .touch-picker-dialog.is-nature .nature-grid-row {
+    grid-template-columns: 76px repeat(5, minmax(64px, 1fr));
+    gap: 3px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-grid-corner,
+  .touch-picker-dialog.is-nature .nature-stat-heading {
+    min-height: 28px;
+  }
+
+  .touch-picker-dialog.is-nature .nature-cell {
+    min-height: 28px;
+    padding: 2px;
+    font-size: 0.66rem;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-shell {
+    padding: 8px 8px 6px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-header {
+    min-height: 32px;
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-header strong {
+    font-size: 1rem;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-type,
+  .touch-picker-dialog.is-move .move-tooltip-type .type-badge {
+    width: 30px;
+    height: 30px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-type .type-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .touch-picker-dialog.is-move .move-category-icon {
+    font-size: 1.4rem;
+  }
+
+  .touch-picker-preview .move-tooltip-body {
+    margin-top: 6px;
+    padding: 8px 10px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-stats div {
+    padding: 4px 6px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip p {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .touch-picker-preview .move-tooltip-tags {
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .touch-picker-dialog.is-move .move-tooltip-tags span {
+    padding: 3px 6px;
+    font-size: 0.62rem;
+  }
+
+  .touch-picker-actions {
+    min-height: 48px;
+    padding: 5px 10px;
+  }
+
+  .touch-picker-actions button {
+    min-height: 36px;
+  }
+}

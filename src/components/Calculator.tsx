@@ -5,6 +5,7 @@ import {
   useState,
 } from "react";
 import { fetchPokemon } from "../api/pokeApi";
+import { resolveUsageTargetMember } from "../utils/pokemonSelection";
 import { itemFromIndexEntry } from "../api/showdownCatalog";
 import { normalizeShowdownId } from "../api/showdownIds";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
@@ -54,10 +55,7 @@ import { getMegaStoneItemName } from "../utils/megaEvolution";
 import {
   reconcileMoveIds,
 } from "../utils/pokemonMoves";
-import {
-  getPreferredPokeApiId,
-  shouldKeepSelectedPokemonForUsageTarget,
-} from "../utils/pokemonAliases";
+import { getPreferredPokeApiId } from "../utils/pokemonAliases";
 import { getIndexAfterSwap, swapArrayItems } from "../utils/reorder";
 import { CalculatorPokemonEditor } from "./CalculatorPokemonEditor";
 import { CalculatorMobileTabs } from "./CalculatorMobileNavigation";
@@ -629,8 +627,8 @@ export function Calculator({
         usageSet = await loadPopularSmogonSet(pokemonId, battleFormat);
 
         if (usageSet) {
-          member = await resolveOpponentUsageTargetMember(
-            usageSet,
+          member = await resolveUsageTargetMember(
+            resolveUsagePokemonId(usageSet.pokemonName),
             selectedMember,
           );
         }
@@ -741,30 +739,6 @@ export function Calculator({
     );
 
     return matchedEntry?.name ?? normalized;
-  }
-
-  async function resolveOpponentUsageTargetMember(
-    usageSet: SmogonUsageSet,
-    selectedMember: TeamMember,
-  ) {
-    const usagePokemonId = resolveUsagePokemonId(usageSet.pokemonName);
-
-    if (
-      normalizeShowdownId(usagePokemonId) ===
-        normalizeShowdownId(selectedMember.id) ||
-      shouldKeepSelectedPokemonForUsageTarget(
-        selectedMember.id,
-        usagePokemonId,
-      )
-    ) {
-      return selectedMember;
-    }
-
-    try {
-      return await fetchPokemon(usagePokemonId);
-    } catch {
-      return selectedMember;
-    }
   }
 
   return (

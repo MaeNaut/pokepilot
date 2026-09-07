@@ -1,4 +1,4 @@
-import type { PokemonMove, StatBlock } from "../types";
+import type { PokemonMove, StatBlock, TeamMember } from "../types";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
 import { toPokemonId } from "../utils/showdownText";
@@ -15,6 +15,21 @@ export type SmogonUsageSet = {
   evs?: Partial<StatBlock>;
   moveIds: string[];
 };
+
+export function resolveSmogonUsageAbility(
+  member: TeamMember,
+  ability: string | undefined,
+  fallback = "",
+) {
+  if (!ability) {
+    return fallback;
+  }
+
+  const abilityId = normalizeShowdownId(ability);
+  return member.abilities?.find(
+    (name) => normalizeShowdownId(name) === abilityId,
+  ) ?? ability;
+}
 
 type SmogonUsageSnapshot = {
   sourceMonth: string;

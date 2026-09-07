@@ -1,0 +1,1802 @@
+@media (min-width: 1720px) {
+  .pokemon-card {
+    border-radius: var(--radius-md);
+  }
+
+  .team-diagnostics {
+    width: calc(100% - var(--team-card-offset));
+  }
+}
+
+@media (min-width: 1921px) {
+  .workspace::after {
+    display: none;
+  }
+
+  .copilot-panel {
+    width: 100%;
+    height: calc(100% - 32px);
+    max-height: calc(100% - 32px);
+    min-height: 0;
+    align-self: start;
+    margin: 16px 0;
+    border: 1px solid var(--copilot-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.12);
+  }
+}
+
+@media (min-width: 1421px) and (max-width: 1660px) {
+  .team-actions {
+    margin-left: 140px;
+  }
+}
+
+@media (max-width: 1420px) {
+  .app-header-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .header-builder-workspace {
+    width: min(1040px, calc(100% - 32px));
+    justify-self: center;
+    margin-right: 0;
+  }
+
+  .header-preferences {
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    margin-left: 0;
+    transform: translateY(-50%);
+  }
+
+  .preference-menu {
+    right: 0;
+    left: auto;
+  }
+
+  .workspace {
+    height: auto;
+    max-height: none;
+    grid-template-columns: 1fr;
+  }
+
+  .builder-workspace {
+    width: min(1040px, calc(100% - 32px));
+    justify-self: center;
+    margin-right: 0;
+  }
+
+  .team-diagnostics {
+    width: calc(100% - 68px);
+    margin: 0 0 32px auto;
+  }
+
+  .copilot-panel {
+    height: auto;
+    max-height: none;
+    min-height: 360px;
+    border-top: 4px solid #9f9f9f;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 980px),
+  (min-width: 981px) and (max-width: 1100px) and (orientation: portrait) {
+  .header-builder-workspace {
+    width: min(608px, calc(100% - 32px));
+  }
+
+  .builder-workspace {
+    width: min(608px, calc(100% - 32px));
+  }
+
+  .pokemon-card {
+    min-height: 690px;
+  }
+
+  .card-main {
+    min-height: 686px;
+  }
+
+  .editor-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-filter-panel {
+    grid-column: 1;
+    margin-top: 0;
+  }
+
+  .meta-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-meta-heading {
+    display: none;
+  }
+
+  .stats-editor-header-mobile {
+    display: flex;
+    margin-bottom: 12px;
+  }
+
+
+  .team-diagnostics {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --app-header-height: 60px;
+  }
+
+  .app-header {
+    height: var(--app-header-height);
+    padding: 0;
+  }
+
+  .app-wordmark {
+    left: 16px;
+    font-size: 1rem;
+  }
+
+  .header-preferences {
+    right: 10px;
+  }
+
+  .header-builder-workspace {
+    width: min(608px, calc(100% - 16px));
+  }
+
+  .team-actions {
+    gap: 4px;
+    margin-left: 54px;
+  }
+
+  .team-name-field {
+    min-width: 0;
+  }
+
+  .team-name-field input {
+    width: clamp(120px, 42vw, 220px);
+    padding: 0 6px;
+    font-size: 0.95rem;
+  }
+
+  .team-action-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .workspace {
+    min-height: calc(100vh - var(--app-header-height) - var(--app-footer-height));
+  }
+
+  .builder-workspace {
+    width: min(608px, calc(100% - 16px));
+  }
+
+  .builder-stage {
+    margin-top: 16px;
+  }
+
+  .team-diagnostics {
+    width: calc(100% - 54px);
+    margin: 0 0 24px auto;
+  }
+
+  .builder-card-toolbar {
+    width: calc(100% - 54px);
+    margin-left: 54px;
+  }
+
+  .showdown-panel {
+    right: 0;
+    width: calc(100% - 54px);
+    margin: 0;
+  }
+
+  .builder-card-layout {
+    grid-template-columns: 54px minmax(0, 1fr);
+  }
+
+  .team-tabs {
+    width: 54px;
+    height: auto;
+  }
+
+  .team-tab,
+  .team-tab.is-active {
+    width: 50px;
+    height: 58px;
+    border-right: 0;
+    border-radius: 8px 0 0 8px;
+    font-size: 1.6rem;
+  }
+
+  .team-tab img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pokemon-card {
+    min-height: 0;
+  }
+
+  .card-main {
+    min-height: 0;
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .trait-row,
+  .card-main,
+  .editor-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mega-controls,
+  .form-picker {
+    margin-bottom: 0;
+  }
+
+  .pokemon-name-button,
+  .pokemon-name-input {
+    font-size: 2.7rem;
+  }
+
+  .pokemon-name-picker,
+  .pokemon-name-button,
+  .pokemon-name-input {
+    height: 2.7rem;
+  }
+
+  .sprite-crop {
+    position: relative;
+    inset: auto;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    min-height: 220px;
+    margin-right: -18px;
+    order: -1;
+    padding-top: 42px;
+    border-radius: 0;
+    pointer-events: auto;
+  }
+
+  .sprite-crop img {
+    top: auto;
+    right: -44px;
+    bottom: -36px;
+    width: 320px;
+    height: 300px;
+    opacity: 0.42;
+  }
+
+  .type-stack {
+    top: 0;
+    right: 12px;
+    left: auto;
+    flex-direction: row;
+    width: 120px;
+  }
+
+  .move-tooltip {
+    top: calc(100% + 8px);
+    left: 0;
+    width: min(320px, calc(100vw - 44px));
+    transform: translateY(4px);
+  }
+
+  .item-tooltip,
+  .item-option-tooltip {
+    top: calc(100% + 8px);
+    left: 0;
+    width: min(300px, calc(100vw - 44px));
+    transform: translateY(4px);
+  }
+
+  .ability-tooltip,
+  .ability-option-tooltip {
+    top: calc(100% + 8px);
+    left: 0;
+    width: min(300px, calc(100vw - 44px));
+    transform: translateY(4px);
+  }
+
+  .move-tooltip-shell {
+    padding: 16px 12px 12px;
+  }
+
+  .move-tooltip-body {
+    padding: 18px 18px;
+  }
+
+  .move-picker:hover .move-tooltip {
+    transform: translateY(0);
+  }
+}
+
+:where(.app-shell.is-compact-drawer-layout) .app-wordmark {
+  display: none;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .app-header-layout {
+  grid-template-columns: 1fr;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .header-builder-workspace {
+  width: calc(100% - 10vw);
+  justify-self: start;
+  margin-right: 0;
+  margin-left: 5vw;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .header-preferences {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  margin-left: 0;
+  transform: translateY(-50%);
+}
+
+:where(.app-shell.is-compact-drawer-layout) .preference-menu {
+  right: 0;
+  left: auto;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .team-actions {
+  margin-left: 0;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .workspace {
+  height: auto;
+  max-height: none;
+  grid-template-columns: 1fr;
+  min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
+}
+
+:where(.app-shell.is-compact-drawer-layout) .builder-workspace {
+  width: min(1040px, calc(100% - 80px));
+  justify-self: center;
+  margin-right: 0;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .team-diagnostics {
+  width: calc(100% - 68px);
+  margin: 0 0 32px auto;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .footer {
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  line-height: 1.2;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .footer p {
+  white-space: nowrap;
+}
+
+.copilot-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  width: var(--tablet-copilot-width);
+  height: 100vh;
+  height: 100dvh;
+  visibility: hidden;
+  overscroll-behavior: contain;
+  pointer-events: none;
+  transform: translateX(calc(100% + 2px));
+}
+
+@keyframes copilot-drawer-enter {
+  from {
+    transform: translateX(calc(100% + 2px));
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes copilot-drawer-exit {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(100% + 2px));
+  }
+}
+
+.copilot-drawer.is-open {
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.copilot-drawer.is-open.is-transitioning {
+  animation: copilot-drawer-enter 220ms ease both;
+}
+
+.copilot-drawer.is-transitioning:not(.is-open) {
+  visibility: visible;
+  animation: copilot-drawer-exit 220ms ease both;
+}
+
+:where(.app-shell.is-compact-drawer-layout) .copilot-drawer .copilot-panel {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  border-top: 0;
+  border-left: 1px solid #5d6267;
+  box-shadow: -18px 0 42px rgba(0, 0, 0, 0.22);
+}
+
+.copilot-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: block;
+  visibility: hidden;
+  border: 0;
+  padding: 0;
+  background: rgba(10, 11, 12, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+}
+
+@keyframes copilot-scrim-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes copilot-scrim-exit {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.copilot-drawer-scrim.is-open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.copilot-drawer-scrim.is-open.is-transitioning {
+  animation: copilot-scrim-enter 180ms ease both;
+}
+
+.copilot-drawer-scrim.is-transitioning:not(.is-open) {
+  visibility: visible;
+  animation: copilot-scrim-exit 180ms ease both;
+}
+
+.copilot-drawer-handle {
+  position: fixed;
+  top: 50vh;
+  top: 50dvh;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  width: 40px;
+  height: 122px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 9px;
+  border: 1px solid #4a4e52;
+  border-right: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  padding: 10px 0;
+  background: #0a0b0c;
+  color: #f6f6f6;
+  font: inherit;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+@keyframes copilot-handle-enter {
+  from {
+    right: 0;
+  }
+
+  to {
+    right: var(--tablet-copilot-width);
+  }
+}
+
+@keyframes copilot-handle-exit {
+  from {
+    right: var(--tablet-copilot-width);
+  }
+
+  to {
+    right: 0;
+  }
+}
+
+.copilot-drawer-handle.is-open {
+  right: var(--tablet-copilot-width);
+}
+
+.copilot-drawer-handle.is-open.is-transitioning {
+  animation: copilot-handle-enter 220ms ease both;
+}
+
+.copilot-drawer-handle.is-transitioning:not(.is-open) {
+  animation: copilot-handle-exit 220ms ease both;
+}
+
+.copilot-drawer-handle:hover,
+.copilot-drawer-handle:focus-visible {
+  border-color: #78bbaa;
+  background: #15191a;
+  outline: none;
+}
+
+.copilot-drawer-handle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(120, 187, 170, 0.32);
+}
+
+.copilot-drawer-handle svg {
+  width: 11px;
+  height: 11px;
+  color: #9ed8cb;
+}
+
+.copilot-drawer-handle span {
+  font-size: 0.72rem;
+  font-weight: var(--font-medium);
+  line-height: 1;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+@media (min-width: 600px) and (max-width: 1420px) {
+  .app-wordmark {
+    display: none;
+  }
+
+  .header-builder-workspace {
+    width: calc(100% - 10vw);
+    justify-self: start;
+    margin-left: 5vw;
+  }
+
+  .team-actions {
+    margin-left: 0;
+  }
+
+  .workspace {
+    min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
+  }
+
+  .builder-workspace {
+    width: min(1040px, calc(100% - 80px));
+  }
+
+  .footer {
+    padding: 4px 8px;
+    font-size: 0.6rem;
+    line-height: 1.2;
+  }
+
+  .footer p {
+    white-space: nowrap;
+  }
+
+  .copilot-drawer .copilot-panel {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    border-top: 0;
+    border-left: 1px solid #5d6267;
+    box-shadow: -18px 0 42px rgba(0, 0, 0, 0.22);
+  }
+}
+
+@media (max-width: 599px), (min-width: 1421px) {
+  .app-shell:not(.is-compact-drawer-layout) .copilot-drawer {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    width: auto;
+    height: auto;
+    visibility: visible;
+    overscroll-behavior: auto;
+    pointer-events: auto;
+    transform: none;
+    transition: none;
+  }
+
+  .app-shell:not(.is-compact-drawer-layout) .copilot-drawer-scrim,
+  .app-shell:not(.is-compact-drawer-layout) .copilot-drawer-handle {
+    display: none;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 760px) and (min-height: 600px) {
+  .header-builder-workspace,
+  .builder-workspace {
+    width: min(608px, calc(100% - 16px));
+  }
+
+  .header-builder-workspace {
+    margin-left: 8px;
+  }
+
+  .footer p {
+    white-space: normal;
+  }
+
+  .nature-grid-menu {
+    position: fixed;
+    top: 50%;
+    right: 16px;
+    left: 16px;
+    z-index: 110;
+    width: auto;
+    transform: translateY(-50%);
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1100px) and (min-height: 600px) {
+  .move-option-tooltip {
+    position: fixed;
+    top: calc(var(--app-header-height) + 12px);
+    right: 16px;
+    left: auto;
+    width: min(360px, calc(100vw - 32px));
+    transform: none;
+  }
+
+  .move-picker:hover .move-option-tooltip {
+    transform: none;
+  }
+
+  .editor-column:has(.nature-grid-menu),
+  .editor-column:has(.move-menu),
+  .editor-column:has(.move-picker:hover) {
+    z-index: 110;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 980px) and (min-height: 600px) {
+  .move-tooltip {
+    position: fixed;
+    top: calc(var(--app-header-height) + 12px);
+    right: 16px;
+    left: auto;
+    width: min(360px, calc(100vw - 32px));
+    transform: none;
+  }
+
+  .move-picker:hover .move-tooltip {
+    transform: none;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 640px) {
+  .nature-grid,
+  .nature-grid-row {
+    grid-template-columns: 88px repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1420px) and (max-height: 820px) {
+  .builder-stage {
+    margin-top: 8px;
+  }
+
+  .builder-card-toolbar {
+    margin-bottom: 4px;
+  }
+
+  .team-diagnostics {
+    margin-bottom: 0;
+  }
+
+  .diagnostics-section {
+    padding: 6px 10px 8px;
+  }
+
+  .diagnostics-section-heading {
+    min-height: 20px;
+    margin-bottom: 4px;
+  }
+
+  .diagnostics-section-heading h3 {
+    font-size: 0.88rem;
+  }
+
+  .matchup-matrix-cell {
+    min-height: 28px;
+    grid-template-columns: 22px repeat(2, minmax(20px, 1fr));
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+
+  .matchup-value {
+    font-size: 0.68rem;
+  }
+
+  .team-diagnostics .type-badge,
+  .team-diagnostics .type-badge.has-type-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .team-diagnostics .type-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .coverage-content {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .coverage-ring {
+    width: 78px;
+    height: 78px;
+  }
+
+  .coverage-ring::before {
+    inset: 7px;
+  }
+
+  .coverage-ring strong {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 599px),
+  (max-width: 980px) and (max-height: 599px) and (orientation: landscape) {
+  :root {
+    --app-header-height: 56px;
+    --mobile-copilot-sheet-offset: calc(
+      44px + env(safe-area-inset-top, 0px)
+    );
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 70;
+    height: var(--app-header-height);
+  }
+
+  .app-header-layout {
+    min-width: 0;
+  }
+
+  .header-builder-workspace {
+    width: calc(100% - 84px);
+    min-width: 0;
+    justify-self: start;
+    margin-left: 8px;
+  }
+
+  .team-actions {
+    width: 100%;
+    gap: 2px;
+    margin-left: 0;
+  }
+
+  .team-name-field {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .team-name-field input {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    padding: 0 4px;
+    font-size: 0.88rem;
+  }
+
+  .team-action-button {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+  }
+
+  .team-action-button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .header-preferences {
+    right: 6px;
+    gap: 0;
+  }
+
+  .preference-menu {
+    top: calc(100% + 8px);
+    width: 146px;
+  }
+
+  .team-manager-panel,
+  .new-team-import-panel,
+  .team-unsaved-warning {
+    position: fixed;
+    top: calc(var(--app-header-height) + 6px);
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-height: calc(100dvh - var(--app-header-height) - 14px);
+  }
+
+  .new-team-import-panel textarea {
+    min-height: 180px;
+  }
+
+  .workspace {
+    --tablet-copilot-width: calc(100vw - 40px);
+    min-height: calc(100dvh - var(--app-header-height) - var(--app-footer-height));
+  }
+
+  .copilot-panel {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .copilot-scope-tabs button {
+    gap: 4px;
+    font-size: 0.68rem;
+  }
+
+  .copilot-optimization-benchmark {
+    gap: 4px;
+    padding: 9px 10px;
+  }
+
+  .copilot-optimization-outcomes,
+  .copilot-optimization-range {
+    grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .copilot-optimization-range {
+    font-size: 0.92rem;
+  }
+
+  .copilot-optimization-actions button {
+    flex: 1 1 0;
+  }
+
+  .builder-workspace {
+    width: calc(100% - 24px);
+    gap: 8px;
+  }
+
+  .builder-stage {
+    margin-top: 10px;
+  }
+
+  .builder-card-toolbar {
+    width: 100%;
+    min-height: 30px;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 10px;
+    margin: 0 0 6px;
+  }
+
+  .builder-card-tool-button {
+    gap: 5px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .builder-card-tool-button svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .showdown-panel {
+    right: 0;
+    width: 100%;
+  }
+
+  .builder-card-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .team-tabs {
+    position: relative;
+    z-index: 7;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    align-items: end;
+    gap: 0;
+    margin-bottom: -1px;
+  }
+
+  .team-tab-shell {
+    width: 100%;
+    align-items: end;
+  }
+
+  .team-tab-shell + .team-tab-shell {
+    margin-top: 0;
+  }
+
+  .team-tab-shell.is-active {
+    z-index: 3;
+  }
+
+  .team-tab-shell.has-validity-error::after,
+  .team-tab-shell.has-validity-unavailable::after {
+    top: 4px;
+    right: 4px;
+  }
+
+  .team-tab-shell.is-drop-target::before {
+    inset: -2px;
+    border-radius: calc(var(--radius-md) + 1px)
+      calc(var(--radius-md) + 1px) 0 0;
+  }
+
+  .team-tab,
+  .team-tab.is-active {
+    width: 100%;
+    height: 56px;
+    border: 1px solid #c7c7c7;
+    border-bottom: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    padding: 0;
+    transform: none;
+  }
+
+  .team-tab-shell + .team-tab-shell .team-tab {
+    border-left: 0;
+  }
+
+  .team-tab.is-active {
+    border-color: var(--color-selection-border);
+    background: var(--color-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--color-selection-border),
+      0 -5px 12px rgba(0, 0, 0, 0.07);
+    transform: translateY(1px);
+  }
+
+  .team-tab img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .team-tab.is-empty {
+    font-size: 1.35rem;
+  }
+
+  .bench-tab {
+    font-size: 1rem;
+  }
+
+  .bench-count {
+    top: 3px;
+    right: 3px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    font-size: 0.55rem;
+  }
+
+  .bench-panel {
+    top: calc(100% + 8px);
+    right: 0;
+    left: auto;
+    width: min(320px, calc(100vw - 24px));
+    max-height: calc(100dvh - var(--app-header-height) - 96px);
+  }
+
+  .bench-pokemon-list {
+    max-height: calc(100dvh - var(--app-header-height) - 166px);
+  }
+
+  .pokemon-card {
+    width: 100%;
+    min-height: 0;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .pokemon-card.is-empty-slot .sprite-crop {
+    display: none;
+  }
+
+  .card-main {
+    min-height: 0;
+    padding: 16px 14px 22px;
+  }
+
+  .calculator-workspace {
+    padding: 10px 0;
+  }
+
+  .calculator-mobile-tabs {
+    margin-bottom: 8px;
+  }
+
+  .calculator-mobile-tabs button {
+    display: grid;
+    height: 46px;
+    grid-template-rows: auto auto;
+    place-content: center;
+    gap: 2px;
+    line-height: 1;
+  }
+
+  .calculator-mobile-tab-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .calculator-mobile-tab-role {
+    color: var(--color-muted);
+    font-size: 0.5rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+  }
+
+  .calculator-mobile-tabs button.is-attacking-side
+    .calculator-mobile-tab-role,
+  .calculator-mobile-tab-arrow {
+    color: var(--color-success);
+  }
+
+  .calculator-mobile-tabs button.is-active
+    :is(.calculator-mobile-tab-role, .calculator-mobile-tab-arrow) {
+    color: inherit;
+    opacity: 0.78;
+  }
+
+  .calculator-mobile-tab-arrow {
+    width: 11px;
+    height: 11px;
+    justify-self: center;
+  }
+
+  .calculator-result-panel {
+    min-height: 0;
+    grid-template-rows: auto auto auto;
+    align-content: start;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .calculator-result {
+    align-content: start;
+  }
+
+  .calculator-move-results-table {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .calculator-move-result-row {
+    align-content: start;
+    gap: 5px;
+    padding: 7px 8px;
+  }
+
+  .calculator-field-controls {
+    gap: 6px;
+    padding-top: 8px;
+  }
+
+  .calculator-set-editor .calculator-side-heading {
+    min-height: 0;
+    margin: 0 0 -1px;
+  }
+
+  .calculator-side-heading > span {
+    display: none;
+  }
+
+  .calculator-side-heading > strong {
+    display: none;
+  }
+
+  .calculator-side-heading:not(.has-team-strip) {
+    display: none;
+  }
+
+  .calculator-side-heading.has-team-strip {
+    position: relative;
+    z-index: 3;
+    display: block;
+    width: 100%;
+    height: 52px;
+    min-height: 52px;
+    flex: 0 0 52px;
+  }
+
+  .calculator-side-heading.has-team-strip .calculator-team-strip {
+    width: 100%;
+    max-width: none;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: end;
+    gap: 0;
+    margin: 0;
+  }
+
+  .calculator-team-strip button {
+    height: 52px;
+    border-bottom: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    background: var(--color-surface-subtle);
+  }
+
+  .calculator-team-slot + .calculator-team-slot button {
+    border-left: 0;
+  }
+
+  .calculator-team-strip button.is-active {
+    position: relative;
+    z-index: 2;
+    border-color: var(--color-selection-border);
+    background: var(--color-surface);
+    box-shadow:
+      inset 0 0 0 1px var(--color-selection-border),
+      0 -5px 12px rgba(0, 0, 0, 0.07);
+    transform: translateY(1px);
+  }
+
+  .calculator-team-strip img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .calculator-set-editor.is-player-side .calculator-editor-card {
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
+
+  .calculator-editor-card .card-main {
+    padding: 16px;
+  }
+
+  .pokemon-card.calculator-editor-card {
+    min-height: 672px;
+  }
+
+  .calculator-editor-card .meta-row,
+  .calculator-editor-card .calculator-vitals-row {
+    margin-top: 12px;
+  }
+
+  .calculator-editor-card .calculator-vitals-row {
+    padding-top: 10px;
+  }
+
+  .calculator-editor-card .editor-detail-grid {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .calculator-editor-card .move-list {
+    gap: 8px;
+  }
+
+  .calculator-editor-card .move-pill {
+    min-height: 44px;
+  }
+
+  .calculator-editor-card .move-power-panel {
+    min-height: 44px;
+  }
+
+  .calculator-editor-card .stats-editor {
+    padding-top: 8px;
+  }
+
+  .calculator-editor-card .stat-axis-labels,
+  .calculator-editor-card .stat-editor-column {
+    grid-template-rows: 17px 20px 88px 28px 28px 28px;
+    gap: 5px;
+  }
+
+  .calculator-editor-card .ev-vertical-track {
+    height: 88px;
+  }
+
+  .calculator-editor-card .ev-vertical-range {
+    height: 82px;
+  }
+
+  .calculator-editor-card .ev-number-input {
+    height: 28px;
+  }
+
+  .calculator-editor-card .stat-result-value {
+    min-height: 28px;
+  }
+
+  .calculator-editor-card .calculator-stat-stage,
+  .calculator-editor-card .calculator-stat-stage-trigger {
+    height: 28px;
+  }
+
+  .sprite-crop {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border-radius: var(--radius-md);
+    pointer-events: none;
+  }
+
+  .sprite-crop img {
+    top: auto;
+    right: -42px;
+    bottom: -52px;
+    width: 350px;
+    height: 330px;
+    opacity: 0.12;
+  }
+
+  .sprite-crop .type-stack {
+    top: 14px;
+    right: 14px;
+    width: auto;
+    pointer-events: auto;
+  }
+
+  .workspace.is-calculator-workspace + .footer {
+    height: var(--app-footer-height);
+    min-height: var(--app-footer-height);
+    overflow: hidden;
+    padding: 4px 8px;
+    font-size: 0.55rem;
+    line-height: 1;
+  }
+
+  .workspace.is-calculator-workspace + .footer p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .name-row {
+    width: 100%;
+    max-width: 100%;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pokemon-name-picker,
+  .pokemon-name-button,
+  .pokemon-name-input {
+    height: 2.4rem;
+  }
+
+  .pokemon-name-button,
+  .pokemon-name-input {
+    font-size: 2.2rem;
+  }
+
+  .pokemon-name-input {
+    width: min(300px, calc(100vw - 52px));
+  }
+
+  .mega-controls {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .mega-button,
+  .form-picker-trigger {
+    height: 30px;
+  }
+
+  .mega-button {
+    min-width: 34px;
+    padding: 0 8px;
+  }
+
+  .pokemon-name-menu {
+    width: min(340px, calc(100vw - 40px));
+  }
+
+  .pokemon-card.is-empty-slot .name-row,
+  .pokemon-card.is-empty-slot .pokemon-name-picker,
+  .pokemon-card.is-empty-slot .pokemon-name-input,
+  .pokemon-card.is-empty-slot .pokemon-name-menu {
+    width: 100%;
+  }
+
+  .pokemon-card.is-empty-slot .name-row,
+  .pokemon-card.is-empty-slot .pokemon-name-picker {
+    height: auto;
+  }
+
+  .pokemon-card.is-empty-slot .pokemon-name-menu {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-top: 8px;
+  }
+
+  .pokemon-card.is-empty-slot .pokemon-name-results {
+    max-height: 260px;
+  }
+
+  .meta-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 14px;
+  }
+
+  .set-meta-controls {
+    align-items: center;
+    gap: 14px;
+  }
+
+  .trait-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .trait-label {
+    font-size: 0.7rem;
+  }
+
+  .trait-value {
+    font-size: 0.96rem;
+  }
+
+  .editor-detail-grid {
+    gap: 20px;
+    margin-top: 18px;
+  }
+
+  .move-list {
+    gap: 8px;
+  }
+
+  .move-pill {
+    min-height: 46px;
+    grid-template-columns: 38px minmax(0, 1fr) 64px;
+    gap: 8px;
+    padding-left: 9px;
+    font-size: 0.9rem;
+  }
+
+  .move-power-panel {
+    min-height: 46px;
+  }
+
+  .move-results {
+    max-height: min(292px, 45dvh);
+  }
+
+  .candidate-filter-panel {
+    gap: 10px;
+  }
+
+  .candidate-filter-row {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .candidate-type-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .candidate-filter-menu,
+  .candidate-filter-move-menu {
+    width: 100%;
+  }
+
+  .nature-grid-menu {
+    position: fixed;
+    top: auto;
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    z-index: 130;
+    width: auto;
+    max-height: calc(100dvh - var(--app-header-height) - 16px);
+    overflow: auto;
+    padding: 8px;
+    transform: none;
+  }
+
+  .nature-grid,
+  .nature-grid-row {
+    grid-template-columns: 70px repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .nature-cell {
+    min-height: 35px;
+    padding: 4px 2px;
+    font-size: 0.66rem;
+  }
+
+  .stats-editor-body {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .stats-editor-grid {
+    gap: 4px;
+  }
+
+  .stat-axis-labels,
+  .stat-editor-column {
+    grid-template-rows: 17px 20px 140px 28px 30px;
+    gap: 4px;
+  }
+
+  .ev-vertical-track {
+    height: 140px;
+  }
+
+  .ev-vertical-range {
+    height: 124px;
+  }
+
+  .stat-editor-label,
+  .stat-base-value,
+  .stat-result-value {
+    font-size: 0.72rem;
+  }
+
+  .ev-number-input {
+    width: 36px;
+  }
+
+  .team-diagnostics {
+    width: 100%;
+    margin: 0 0 20px;
+  }
+
+  .diagnostics-section {
+    padding: 10px;
+  }
+
+  .matchup-matrix {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .matchup-matrix-cell {
+    min-height: 38px;
+  }
+
+  .coverage-content {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .coverage-ring {
+    width: 82px;
+    height: 82px;
+  }
+
+  .coverage-ring::before {
+    inset: 7px;
+  }
+
+  .coverage-ring strong {
+    font-size: 1.35rem;
+  }
+
+  .copilot-drawer {
+    top: var(--mobile-copilot-sheet-offset);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    transform: translateY(calc(100% + 2px));
+  }
+
+  @keyframes mobile-copilot-sheet-enter {
+    from {
+      transform: translateY(calc(100% + 2px));
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mobile-copilot-sheet-exit {
+    from {
+      transform: translateY(0);
+    }
+
+    to {
+      transform: translateY(calc(100% + 2px));
+    }
+  }
+
+  .copilot-drawer.is-open {
+    transform: translateY(0);
+  }
+
+  .copilot-drawer.is-open.is-transitioning {
+    animation: mobile-copilot-sheet-enter 220ms ease both;
+  }
+
+  .copilot-drawer.is-transitioning:not(.is-open) {
+    animation: mobile-copilot-sheet-exit 220ms ease both;
+  }
+
+  :where(.app-shell.is-compact-drawer-layout)
+    .copilot-drawer
+    .copilot-panel {
+    border: 1px solid #5d6267;
+    border-bottom: 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.22);
+  }
+
+  .copilot-drawer-handle {
+    top: auto;
+    right: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: 108px;
+    height: 40px;
+    flex-direction: row;
+    gap: 7px;
+    border: 1px solid #4a4e52;
+    border-radius: 999px;
+    padding: 0 13px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+    transform: translateX(50%);
+    transition:
+      bottom 220ms ease,
+      width 180ms ease,
+      border-radius 180ms ease,
+      background 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .copilot-drawer-handle.is-open {
+    top: auto;
+    right: 50%;
+    bottom: calc(100dvh - var(--mobile-copilot-sheet-offset));
+    left: auto;
+    width: 44px;
+    height: 40px;
+    flex-direction: row;
+    gap: 0;
+    border: 1px solid #4a4e52;
+    border-bottom: 0;
+    border-radius: 10px 10px 0 0;
+    padding: 0;
+    transform: translateX(50%);
+  }
+
+  .copilot-drawer-handle.is-open.is-transitioning,
+  .copilot-drawer-handle.is-transitioning:not(.is-open) {
+    animation: none;
+  }
+
+  .copilot-drawer-handle span {
+    font-size: 0.7rem;
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+
+  .copilot-drawer-handle.is-open span {
+    display: none;
+  }
+
+  .copilot-drawer-handle svg {
+    transform: rotate(90deg);
+  }
+
+  .app-shell:has(.nature-grid-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.item-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.trait-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.move-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.candidate-filter-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.validity-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.showdown-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.clear-pokemon-confirm) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.team-manager-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.new-team-menu) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.new-team-import-panel) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.team-unsaved-warning) .copilot-drawer-handle:not(.is-open),
+  .app-shell:has(.preference-menu) .copilot-drawer-handle:not(.is-open) {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .footer {
+    padding: 6px 10px;
+  }
+
+  .footer p {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 599px) and (orientation: portrait) {
+  .validity-panel {
+    position: fixed;
+    top: calc(var(--app-header-height) + 50px);
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - var(--app-header-height) - 62px);
+    overflow: hidden;
+    transform: none;
+  }
+
+  .validity-panel::before {
+    display: none;
+  }
+
+  .validity-issue-list {
+    max-height: min(220px, calc(100dvh - var(--app-header-height) - 142px));
+  }
+}
+
+@media (max-width: 359px) {
+  .header-builder-workspace {
+    width: calc(100% - 76px);
+  }
+
+  .team-name-field input {
+    font-size: 0.8rem;
+  }
+
+  .team-action-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .header-preferences {
+    right: 4px;
+  }
+
+  .builder-card-toolbar {
+    gap: 6px;
+  }
+
+  .builder-card-tool-button {
+    font-size: 0.66rem;
+  }
+
+  .pokemon-name-button,
+  .pokemon-name-input {
+    font-size: 1.95rem;
+  }
+
+  .team-tab,
+  .team-tab.is-active {
+    height: 52px;
+  }
+
+  .team-tab img {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1420px) {
+  :where(.app-shell.is-compact-drawer-layout) .header-builder-workspace {
+    width: calc(100% - 450px);
+  }
+}
+
+@media (max-width: 760px) {
+  .header-mode-controls {
+    right: 116px;
+    left: auto;
+    gap: 5px;
+    transform: translateY(-50%);
+  }
+
+  .battle-format-switch {
+    display: none;
+  }
+
+  .battle-format-compact-toggle {
+    display: block;
+  }
+
+  .header-builder-workspace,
+  :where(.app-shell.is-compact-drawer-layout) .header-builder-workspace {
+    width: calc(100% - 192px);
+    margin-left: 8px;
+  }
+}
+
+@media (max-width: 359px) {
+  .header-mode-controls {
+    right: 110px;
+    gap: 3px;
+  }
+
+  .battle-format-compact-toggle {
+    width: 32px;
+    padding: 0;
+  }
+
+  .header-format-controls {
+    right: 70px;
+  }
+
+  .header-builder-workspace,
+  :where(.app-shell.is-compact-drawer-layout) .header-builder-workspace {
+    width: calc(100% - 186px);
+  }
+
+}
+
+@media (max-width: 380px) {
+  .calculator-workspace {
+    padding-top: 8px;
+  }
+
+  .calculator-mobile-tabs {
+    margin-bottom: 6px;
+  }
+
+  .calculator-vitals-row {
+    grid-template-columns: minmax(0, 1fr) minmax(86px, 0.42fr);
+    align-items: center;
+    gap: 6px;
+  }
+
+  .calculator-hp-strip {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px;
+  }
+
+  .calculator-hp-strip > .calculator-vitals-label,
+  .calculator-status-control > .calculator-vitals-label {
+    display: none;
+  }
+
+  .calculator-hp-value {
+    min-width: 66px;
+    gap: 3px;
+  }
+
+  .calculator-hp-value input {
+    width: 38px;
+  }
+
+  .calculator-status-control {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+  }
+}

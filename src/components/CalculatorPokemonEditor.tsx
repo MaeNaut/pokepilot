@@ -10,9 +10,9 @@ import {
   faChevronDown,
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
-import { fetchPokemon } from "../api/pokeApi";
+import { useAbilityPreview } from "../hooks/useAbilityPreview";
+import { usePokemonArtworkPreview } from "../hooks/usePokemonArtworkPreview";
 import {
-  fetchAbility,
   itemFromIndexEntry,
 } from "../api/showdownCatalog";
 import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
@@ -51,7 +51,6 @@ import { useLocalization } from "../i18n/useLocalization";
 import { getNextCircularIndex } from "../utils/optionNavigation";
 import type {
   ItemIndexEntry,
-  PokemonAbility,
   PokemonIndexEntry,
   PokemonItem,
   PokemonMove,
@@ -193,13 +192,8 @@ export function CalculatorPokemonEditor({
   const [hoveredPokemon, setHoveredPokemon] =
     useState<CalculatorPokemonOption | null>(null);
   const [hoveredItem, setHoveredItem] = useState<PokemonItem | null>(null);
-  const [hoveredAbility, setHoveredAbility] =
-    useState<PokemonAbility | null>(null);
+  const { preview: hoveredAbility, previewAbility } = useAbilityPreview();
   const [hoveredMove, setHoveredMove] = useState<PokemonMove | null>(null);
-  const [previewArtwork, setPreviewArtwork] = useState<string | null>(null);
-  const [abilityDetails, setAbilityDetails] = useState<
-    Record<string, PokemonAbility>
-  >({});
   const [suppressedMoveTooltipSlot, setSuppressedMoveTooltipSlot] =
     useState<number | null>(null);
   const [isBattleFormPickerOpen, setIsBattleFormPickerOpen] = useState(false);
@@ -504,7 +498,7 @@ export function CalculatorPokemonEditor({
     setMoveQuery("");
     setHoveredPokemon(null);
     setHoveredItem(null);
-    setHoveredAbility(null);
+    previewAbility(null);
     setHoveredMove(null);
   }
 
@@ -534,42 +528,10 @@ export function CalculatorPokemonEditor({
     setActiveBattleFormOptionIndex(activeBattleFormOptionIndexFromPokemon);
   }, [activeBattleFormOptionIndexFromPokemon, member?.id]);
 
-  useEffect(() => {
-    if (!hoveredPokemon && !(
-      isTouchPickerLayout && openPicker === "pokemon" && activePokemonOption
-    )) {
-      setPreviewArtwork(null);
-      return;
-    }
-
-    const option = hoveredPokemon ?? activePokemonOption;
-    let isCurrent = true;
-
-    if (!option) {
-      return;
-    }
-
-    void fetchPokemon(option.id)
-      .then((pokemon) => {
-        if (isCurrent) {
-          setPreviewArtwork(pokemon.spriteUrl ?? null);
-        }
-      })
-      .catch(() => {
-        if (isCurrent) {
-          setPreviewArtwork(null);
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [
-    activePokemonOption,
-    hoveredPokemon,
-    isTouchPickerLayout,
-    openPicker,
-  ]);
+  const previewArtwork = usePokemonArtworkPreview(
+    hoveredPokemon?.id ?? (isTouchPickerLayout && openPicker === "pokemon"
+      ? activePokemonOption?.id ?? null : null),
+  );
 
   useEffect(() => {
     if (activePokemonIndex >= visiblePokemonOptions.length) {
@@ -679,28 +641,6 @@ export function CalculatorPokemonEditor({
     });
   }
 
-  async function previewAbility(ability: string) {
-    if (!ability) {
-      setHoveredAbility(null);
-      return;
-    }
-
-    const key = normalizeShowdownId(ability);
-    const cached = abilityDetails[key];
-
-    if (cached) {
-      setHoveredAbility(cached);
-      return;
-    }
-
-    try {
-      const details = await fetchAbility(ability);
-      setAbilityDetails((current) => ({ ...current, [key]: details }));
-      setHoveredAbility(details);
-    } catch {
-      setHoveredAbility({ id: key, name: ability });
-    }
-  }
 
   function moveActiveIndex(
     picker: Exclude<OpenPicker, "nature" | null>,
@@ -1042,7 +982,7 @@ export function CalculatorPokemonEditor({
           setActiveAbilityIndex(index);
           void previewAbility(ability);
         }}
-        onPreviewClear={() => setHoveredAbility(null)}
+        onPreviewClear={() => previewAbility(null)}
         onSelect={(ability) => {
           onBuildChange({ ability });
           closePicker();
@@ -1618,7 +1558,7 @@ export function CalculatorPokemonEditor({
                           }
                           onMouseLeave={() => {
                             if (!isTouchPickerLayout) {
-                              setHoveredAbility(null);
+                              previewAbility(null);
                             }
                           }}
                           onClick={() => {

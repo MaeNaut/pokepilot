@@ -9,7 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchPokemon } from "../api/pokeApi";
 import { loadShowdownData } from "../api/showdownData";
-import { fetchAbility, itemFromIndexEntry } from "../api/showdownCatalog";
+import { itemFromIndexEntry } from "../api/showdownCatalog";
 import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import {
   getPokemonCandidateAbilities,
@@ -24,7 +24,6 @@ import { loadSmogonUsagePokemonIds } from "../api/smogonUsage";
 import type {
   DataLoadStatus,
   ItemIndexEntry,
-  PokemonAbility,
   PokemonCandidateFilterValue,
   PokemonItem,
   PokemonMove,
@@ -46,7 +45,8 @@ import {
   useLongPressReorder,
 } from "../hooks/useLongPressReorder";
 import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
-import { getPokemonLookupAliases } from "../utils/pokemonAliases";
+import { useAbilityPreview } from "../hooks/useAbilityPreview";
+import { usePokemonArtworkPreview } from "../hooks/usePokemonArtworkPreview";
 import {
   findMoveByLookup,
   reconcileMoveIds,
@@ -376,15 +376,12 @@ export function TeamBuilder({
     downIndex: 0,
   });
   const [activeMoveOptionIndex, setActiveMoveOptionIndex] = useState(-1);
-  const [hoveredAbilityOption, setHoveredAbilityOption] =
-    useState<PokemonAbility | null>(null);
-  const [abilityDetailsByName, setAbilityDetailsByName] = useState<
-    Record<string, PokemonAbility>
-  >({});
+  const {
+    preview: hoveredAbilityOption,
+    detailsById: abilityDetailsByName,
+    previewAbility,
+  } = useAbilityPreview();
   const [hoveredMoveOption, setHoveredMoveOption] = useState<PokemonMove | null>(null);
-  const [pokemonOptionPreviewArtwork, setPokemonOptionPreviewArtwork] = useState<
-    string | null
-  >(null);
   const [preMegaMovesByPokemonId, setPreMegaMovesByPokemonId] = useState<
     Record<string, PokemonMove[]>
   >({});
@@ -423,16 +420,6 @@ export function TeamBuilder({
 
     return legalAbilityOptions.length > 0 ? legalAbilityOptions : abilityOptions;
   }, [abilityOptions, legalAbilitySet]);
-  const {
-    limit: abilityOptionLimit,
-    reset: resetAbilityOptions,
-    ensureIndexVisible: ensureAbilityOptionVisible,
-    handleScroll: handleAbilityOptionsScroll,
-  } = useIncrementalOptions(displayedAbilityOptions.length);
-  const visibleAbilityOptions = useMemo(
-    () => displayedAbilityOptions.slice(0, abilityOptionLimit),
-    [abilityOptionLimit, displayedAbilityOptions],
-  );
   const selectedAbility =
     abilityBySlot[selectedSlot] ??
     displayedAbilityOptions[0] ??
@@ -999,10 +986,6 @@ export function TeamBuilder({
   }, [isItemPickerOpen, normalizedItemQuery, resetItemOptions]);
 
   useEffect(() => {
-    resetAbilityOptions();
-  }, [activePokemonId, openTraitPicker, resetAbilityOptions]);
-
-  useEffect(() => {
     setUsagePokemonIds(null);
     setUsageOrderError(null);
   }, [battleFormat]);
@@ -1053,51 +1036,10 @@ export function TeamBuilder({
     });
   }, [filteredOptions]);
 
-  useEffect(() => {
-    if (!isNamePickerVisible || !previewedPokemonOption) {
-      setPokemonOptionPreviewArtwork(null);
-      return;
-    }
-
-    if (
-      activeMember?.spriteUrl &&
-      getPokemonLookupAliases(activeMember.id).some(
-        (lookup) =>
-          normalizeShowdownId(lookup) ===
-          normalizeShowdownId(previewedPokemonOption.id),
-      )
-    ) {
-      setPokemonOptionPreviewArtwork(activeMember.spriteUrl);
-      return;
-    }
-
-    let isCurrent = true;
-    setPokemonOptionPreviewArtwork(null);
-
-    const loadTimer = window.setTimeout(() => {
-      void fetchPokemon(previewedPokemonOption.id)
-        .then((pokemon) => {
-          if (isCurrent) {
-            setPokemonOptionPreviewArtwork(pokemon.spriteUrl ?? null);
-          }
-        })
-        .catch(() => {
-          if (isCurrent) {
-            setPokemonOptionPreviewArtwork(null);
-          }
-        });
-    }, 140);
-
-    return () => {
-      isCurrent = false;
-      window.clearTimeout(loadTimer);
-    };
-  }, [
-    activeMember?.id,
-    activeMember?.spriteUrl,
-    isNamePickerVisible,
-    previewedPokemonOption,
-  ]);
+  const pokemonOptionPreviewArtwork = usePokemonArtworkPreview(
+    isNamePickerVisible ? previewedPokemonOption?.id ?? null : null,
+    { delayMs: 140, member: activeMember },
+  );
 
   useEffect(() => {
     if (displayedItemOptions.length === 0) {
@@ -1176,8 +1118,8 @@ export function TeamBuilder({
     setActiveAbilityOptionIndex(
       selectedAbilityOptionIndex >= 0 ? selectedAbilityOptionIndex : 0,
     );
-    setHoveredAbilityOption(null);
-  }, [activePokemonId, displayedAbilityOptionKey, selectedAbilityOptionIndex, selectedSlot]);
+    previewAbility(null);
+  }, [activePokemonId, displayedAbilityOptionKey, previewAbility, selectedAbilityOptionIndex, selectedSlot]);
 
   useEffect(() => {
     setActiveNaturePosition(getNatureGridPosition(selectedNature));
@@ -1451,7 +1393,7 @@ export function TeamBuilder({
 
   function closeTraitPicker() {
     setOpenTraitPicker(null);
-    setHoveredAbilityOption(null);
+    previewAbility(null);
   }
 
   function closeMovePicker() {
@@ -1789,39 +1731,6 @@ export function TeamBuilder({
     setHoveredItemOption(option ? itemFromIndexEntry(option) : fallbackItem);
   }
 
-  async function previewAbility(abilityName: string) {
-    const abilityId = normalizeShowdownId(abilityName);
-
-    if (!abilityId || !activeMember) {
-      return;
-    }
-
-    const cachedAbility = abilityDetailsByName[abilityId];
-    const fallbackAbility: PokemonAbility = {
-      id: abilityId,
-      name: abilityName,
-    };
-
-    setHoveredAbilityOption(cachedAbility ?? fallbackAbility);
-
-    if (cachedAbility?.effect || cachedAbility?.shortEffect) {
-      return;
-    }
-
-    try {
-      const ability = await fetchAbility(abilityName);
-
-      setAbilityDetailsByName((current) => ({
-        ...current,
-        [abilityId]: ability,
-      }));
-      setHoveredAbilityOption((current) =>
-        current?.id === abilityId ? ability : current,
-      );
-    } catch {
-      // Keep the name-only preview when the local Showdown catalog is unavailable.
-    }
-  }
 
   function movePokemonKeyboardOption(direction: 1 | -1) {
     setActivePokemonOptionIndex((current) =>
@@ -1905,7 +1814,6 @@ export function TeamBuilder({
     );
     const nextIndex = selectedIndex >= 0 ? selectedIndex : 0;
 
-    ensureAbilityOptionVisible(nextIndex);
     setActiveAbilityOptionIndex(nextIndex);
     previewAbilityOptionAt(nextIndex);
     setOpenTraitPicker("ability");
@@ -1931,7 +1839,6 @@ export function TeamBuilder({
         direction,
       );
 
-      ensureAbilityOptionVisible(nextIndex);
 
       previewAbilityOptionAt(nextIndex);
       return nextIndex;
@@ -2295,7 +2202,7 @@ export function TeamBuilder({
   }
 
   function renderAbilityOptionRows(previewOnly: boolean) {
-    return visibleAbilityOptions.map((ability, optionIndex) => (
+    return displayedAbilityOptions.map((ability, optionIndex) => (
       <button
         className="trait-option"
         type="button"
@@ -2307,7 +2214,7 @@ export function TeamBuilder({
         key={ability}
         onBlur={() => {
           if (!previewOnly) {
-            setHoveredAbilityOption(null);
+            previewAbility(null);
           }
         }}
         onFocus={() => {
@@ -2324,7 +2231,7 @@ export function TeamBuilder({
         }
         onMouseLeave={() => {
           if (!previewOnly) {
-            setHoveredAbilityOption(null);
+            previewAbility(null);
           }
         }}
         onClick={() => {
@@ -2599,7 +2506,6 @@ export function TeamBuilder({
           <div
             className="touch-picker-option-list touch-ability-options"
             role="listbox"
-            onScroll={handleAbilityOptionsScroll}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                 event.preventDefault();
@@ -3062,7 +2968,7 @@ export function TeamBuilder({
                     aria-expanded={openTraitPicker === "ability"}
                     onBlur={() => {
                       if (!isTouchPickerLayout) {
-                        setHoveredAbilityOption(null);
+                        previewAbility(null);
                       }
                     }}
                     onClick={() => {
@@ -3076,7 +2982,7 @@ export function TeamBuilder({
                     onMouseEnter={() => void previewAbility(selectedAbility)}
                     onMouseLeave={() => {
                       if (!isTouchPickerLayout) {
-                        setHoveredAbilityOption(null);
+                        previewAbility(null);
                       }
                     }}
                   >
@@ -3087,7 +2993,6 @@ export function TeamBuilder({
                     <div
                       className="trait-menu"
                       role="listbox"
-                      onScroll={handleAbilityOptionsScroll}
                     >
                       {renderAbilityOptionRows(false)}
                     </div>

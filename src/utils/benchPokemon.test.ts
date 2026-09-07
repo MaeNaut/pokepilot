@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { MAX_BENCH_POKEMON } from "../data/teamLimits";
+import { defaultEvs } from "../data/natures";
 import type { TeamBuildState } from "./teamBuildState";
 import type { TeamMember } from "../types";
 import {
   moveBenchPokemonToTeam,
   moveTeamPokemonToBench,
+  getPokemonBuildSnapshot,
   type BenchPokemon,
 } from "./benchPokemon";
 
@@ -30,6 +32,113 @@ function member(id: string): TeamMember {
 }
 
 describe("bench Pokemon transfers", () => {
+  it("round-trips a complete build and clears only the source slot", () => {
+    const scizor = member("scizor-mega");
+    const buildState: TeamBuildState = {
+      itemBySlot: { 0: { id: "scizorite", name: "Scizorite" }, 1: null },
+      abilityBySlot: { 0: "Technician", 1: "Intimidate" },
+      natureBySlot: { 0: "adamant", 1: "careful" },
+      evsBySlot: { 0: { ...defaultEvs, hp: 32, attack: 32 }, 1: { ...defaultEvs } },
+      moveIdsBySlot: { 0: ["bug-bite", "", "protect", ""], 1: ["fake-out"] },
+      preMegaPokemonBySlot: { 0: "scizor", 1: "" },
+      candidateFiltersBySlot: {
+        0: { types: ["bug"], ability: null, moves: [] },
+        1: { types: ["dark"], ability: null, moves: [] },
+      },
+    };
+    const original = { team: [scizor, member("incineroar")], bench: [], buildState };
+    const before = structuredClone(original);
+    const benched = moveTeamPokemonToBench(original, 0, "bench-scizor");
+    for (const field of Object.keys(buildState) as Array<keyof TeamBuildState>) {
+      expect(benched.buildState[field]).not.toHaveProperty("0");
+      expect(benched.buildState[field][1]).toBe(buildState[field][1]);
+    }
+    const restored = moveBenchPokemonToTeam(benched, 0, 0, "unused");
+    expect(restored.team).toEqual(original.team);
+    expect(restored.bench).toEqual([]);
+    expect(restored.buildState).toEqual({
+      ...buildState,
+      candidateFiltersBySlot: { 1: buildState.candidateFiltersBySlot[1] },
+    });
+    expect(original).toEqual(before);
+  });
+
+  it("copies EV and move arrays both into and out of the bench", () => {
+    const pokemon = member("scizor");
+    const buildState: TeamBuildState = {
+      ...emptyBuildState,
+      evsBySlot: { 0: { ...defaultEvs, hp: 32 } },
+      moveIdsBySlot: { 0: ["bug-bite", ""] },
+    };
+    const benched = moveTeamPokemonToBench({ team: [pokemon], bench: [], buildState }, 0, "entry");
+    const snapshot = benched.bench[0].build;
+    expect(snapshot.evs).not.toBe(buildState.evsBySlot[0]);
+    expect(snapshot.moveIds).not.toBe(buildState.moveIdsBySlot[0]);
+    const restored = moveBenchPokemonToTeam(benched, 0, 0, "unused");
+    expect(restored.buildState.evsBySlot[0]).not.toBe(snapshot.evs);
+    expect(restored.buildState.moveIdsBySlot[0]).not.toBe(snapshot.moveIds);
+    restored.buildState.evsBySlot[0].hp = 0;
+    restored.buildState.moveIdsBySlot[0][0] = "protect";
+    expect(snapshot.evs.hp).toBe(32);
+    expect(snapshot.moveIds[0]).toBe("bug-bite");
+    expect(buildState.evsBySlot[0].hp).toBe(32);
+  });
+
+  it("replaces old values with explicit empty build values rather than merging", () => {
+    const pokemon = member("scizor");
+    const emptyBuild = {
+      item: null, ability: "", nature: "", evs: { ...defaultEvs },
+      moveIds: ["", "", "", ""], preMegaPokemon: "",
+    };
+    const buildState: TeamBuildState = {
+      ...emptyBuildState,
+      itemBySlot: { 0: { id: "life-orb", name: "Life Orb" } },
+      abilityBySlot: { 0: "Technician" },
+      natureBySlot: { 0: "adamant" },
+      preMegaPokemonBySlot: { 0: "scizor" },
+    };
+    const result = moveBenchPokemonToTeam({
+      team: [pokemon], buildState,
+      bench: [{ id: "entry", member: pokemon, build: emptyBuild }],
+    }, 0, 0, "displaced");
+    expect(getPokemonBuildSnapshot(pokemon, result.buildState, 0)).toEqual(emptyBuild);
+    expect(result.buildState.itemBySlot).toHaveProperty("0", null);
+    expect(result.buildState.preMegaPokemonBySlot).toHaveProperty("0", "");
+    expect(result.bench[0].build.ability).toBe("Technician");
+  });
+
+  it("allows an occupied-slot swap even when the bench is full", () => {
+    const active = member("incineroar");
+    const incoming = member("scizor");
+    const bench = Array.from({ length: MAX_BENCH_POKEMON }, (_, i) => ({
+      id: `entry-${i}`, member: incoming,
+      build: getPokemonBuildSnapshot(incoming, emptyBuildState, 0),
+    }));
+    const result = moveBenchPokemonToTeam({ team: [active], bench, buildState: emptyBuildState }, 0, 0, "displaced");
+    expect(result.bench).toHaveLength(MAX_BENCH_POKEMON);
+    expect(result.bench[0].member).toBe(active);
+    expect(result.team[0]).toBe(incoming);
+    expect(result.bench[1]).toBe(bench[1]);
+  });
+
+  it("leaves state untouched when the source team or bench entry is absent", () => {
+    const state = { team: [null], bench: [], buildState: emptyBuildState };
+    expect(moveTeamPokemonToBench(state, 0, "unused")).toBe(state);
+    expect(moveBenchPokemonToTeam(state, 0, 0, "unused")).toBe(state);
+  });
+
+  it("uses member defaults only for absent build fields", () => {
+    const pokemon = member("scizor");
+    const fallback = getPokemonBuildSnapshot(pokemon, emptyBuildState, 0);
+    expect(fallback.ability).toBe("scizor ability");
+    expect(fallback.nature).toBe("hardy");
+    expect(fallback.evs).toEqual(defaultEvs);
+    expect(fallback.evs).not.toBe(defaultEvs);
+    expect(getPokemonBuildSnapshot(pokemon, {
+      ...emptyBuildState, abilityBySlot: { 0: "" }, moveIdsBySlot: { 0: [""] },
+    }, 0)).toMatchObject({ ability: "", moveIds: [""] });
+  });
+
   it("moves a complete configured set from the active team to the bench", () => {
     const charizard = member("charizard");
     const state = moveTeamPokemonToBench(

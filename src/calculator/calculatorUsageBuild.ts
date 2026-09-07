@@ -3,8 +3,10 @@ import {
   normalizeStatPointSpread,
 } from "../data/natures";
 import type { SmogonUsageSet } from "../api/smogonUsage";
-import { resolveSmogonUsageMoveIds } from "../api/smogonUsage";
-import { normalizeShowdownId } from "../api/showdownIds";
+import {
+  resolveSmogonUsageAbility,
+  resolveSmogonUsageMoveIds,
+} from "../api/smogonUsage";
 import type { PokemonItem, PokemonMove, StatBlock, TeamMember } from "../types";
 import { findMoveByLookup } from "../utils/pokemonMoves";
 
@@ -32,21 +34,6 @@ export function resolveUsageCalculatorMoves(
     const move = findMoveByLookup(availableMoves, moveId);
     return move ? [move] : [];
   });
-}
-
-function resolveUsageAbility(member: TeamMember, usageSet: SmogonUsageSet) {
-  if (!usageSet.ability) {
-    return member.abilities?.[0] ?? "";
-  }
-
-  return (
-    member.abilities?.find(
-      (ability) =>
-        normalizeShowdownId(ability) ===
-        normalizeShowdownId(usageSet.ability ?? ""),
-    ) ??
-    usageSet.ability
-  );
 }
 
 export function createDefaultCalculatorBuild(
@@ -84,7 +71,7 @@ export function createUsageCalculatorBuild(
 
   return {
     item,
-    ability: resolveUsageAbility(member, usageSet),
+    ability: resolveSmogonUsageAbility(member, usageSet.ability, fallback.ability),
     natureId: usageSet.nature?.toLowerCase() ?? fallback.natureId,
     evs: usageSet.evs
       ? normalizeStatPointSpread(usageSet.evs)

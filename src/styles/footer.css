@@ -1,0 +1,101 @@
+.footer {
+  display: flex;
+  min-height: var(--app-footer-height);
+  align-items: center;
+  border-top: 1px solid #c8c8c8;
+  padding: 6px 5vw;
+  background: #f5f5f5;
+  color: #606060;
+  font-size: 0.78rem;
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer-links {
+  display: inline-flex;
+  gap: 0.65rem;
+  margin-inline-start: 0.85rem;
+  white-space: nowrap;
+}
+
+.footer-links a,
+.footer-privacy-button {
+  color: inherit;
+  font-weight: var(--font-semibold);
+  text-underline-offset: 2px;
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible,
+.footer-privacy-button:hover,
+.footer-privacy-button:focus-visible {
+  color: var(--color-text);
+}
+
+.footer-privacy-button {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+.touch-picker-dialog.is-privacy {
+  width: min(680px, calc(100vw - 32px));
+  height: min(720px, calc(100dvh - 48px));
+  min-height: 0;
+}
+
+.touch-picker-dialog.is-privacy .touch-picker-results {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.privacy-notice {
+  padding: 20px 24px 28px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.privacy-notice .meta {
+  margin: 0 0 24px;
+  color: var(--color-subtle);
+  font-size: 0.8rem;
+}
+
+.privacy-notice section + section {
+  margin-top: 24px;
+}
+
+.privacy-notice h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: var(--font-semibold);
+}
+
+.privacy-notice p,
+.privacy-notice ul {
+  margin: 0;
+}
+
+.privacy-notice ul {
+  padding-inline-start: 22px;
+}
+
+.privacy-notice li + li {
+  margin-top: 10px;
+}
+
+.privacy-notice a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

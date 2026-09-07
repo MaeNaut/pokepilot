@@ -49,6 +49,39 @@ Avoid forcing these skills into the project too early:
 - AWS: Useful in some job postings, but too heavy for the first version compared with Vercel/Supabase.
 - Custom ML training: Out of scope; the goal is AI-assisted product development, not model training.
 
+## Pokemon Selection Boundary
+
+- `src/utils/pokemonSelection.ts` resolves team Pokemon choices and usage-set
+  patches without committing React state. `App` retains request/context guards,
+  recommendation legality checks, and the decision to apply or save to the bench.
+- Builder and calculator share usage target-form loading and canonical ability
+  matching. Missing ability defaults remain caller-specific; calculator item
+  selection and manual-form behavior remain in the calculator.
+- Offline selection tests cover format forwarding, optional usage fields,
+  item/form load failures, Mega provenance, stale sprite refresh, and preservation
+  of other slots. They do not call live data providers or the AI API.
+
+## Analysis Session Boundaries
+
+- `copilotAnalysisExecution.ts` owns hosted/fallback execution and attaches the
+  selected optimization snapshots. The session hook owns cooldown timestamps,
+  React state, and history persistence; no request or cache contract changed.
+- `copilotAnalysisState.ts` builds ready states consistently for new analyses,
+  automatic restoration, and manual history selection. Only new analyses reveal
+  with animation; restoration must not overwrite loading or manually selected states.
+- Offline tests mock hosted/local generation to verify failure classification,
+  cooldown notification order, locale forwarding, and history restoration rules.
+
+## Bench Build Transfers
+
+- Bench transfers use the same `clearBuildStateSlot` and `patchBuildStateSlot`
+  helpers as regular team editing rather than maintaining a second slot updater.
+- Restoring a bench snapshot replaces every build field, including explicit empty
+  values, and clears only the destination's candidate filters. EV and move arrays
+  are copied in both directions so later edits cannot mutate the source snapshot.
+- Offline transfer tests cover full-build round trips, occupied-slot swaps at the
+  bench limit, unrelated-slot preservation, empty fields, and array independence.
+
 ## Data Strategy
 
 Current direction:
@@ -353,20 +386,19 @@ Desktop UX decisions after the wide-builder layout change:
   Showdown-backed type, power, accuracy, PP, description, and tags.
 - Shared move-pill content and tooltip markup live in `MoveDetails.tsx`; the
   selected move and dropdown preview should not maintain separate copies.
-- Move category icons use the EssentiarumVG Gen 8 glyph mapping: `J` for physical,
-  `T` for special, and `U` for status. The font is restricted to personal,
-  non-commercial use unless the creator grants additional permission.
-- Keep the MIT-licensed local SVG type symbols instead of PokeAPI's current
-  Scarlet/Violet or Pokemon Showdown raster PNG symbols. The local assets scale
-  cleanly and support CSS color control; the available upstream PNG sets do not
-  improve that workflow. PokeAPI and Showdown also do not currently expose a
-  newer modern move-category set that warrants replacing EssentiarumVG.
+- Move category icons use local Lucide SVGs and type icons use the local custom
+  SVG set in `src/assets/icons`. The previous EssentiarumVG font is not used.
+- Both editors share `useAbilityPreview` and `usePokemonArtworkPreview`.
+  Preview identity is separate from fetched details; closing a picker or moving
+  to another option invalidates the pending effect. The builder keeps its
+  140ms artwork debounce and current-member sprite shortcut, while calculator
+  artwork loads immediately.
 - Pokemon, item, ability, nature, and move pickers support keyboard navigation
   with hover-to-keyboard active selection continuity.
-- Pokemon, item, ability, and move result surfaces hide their visual scrollbars
-  while retaining wheel, touch, and keyboard scrolling. Render at most 20 options
-  initially and append 20 more near the scroll boundary; apply the same rule to
-  ability and move candidate-filter menus in empty slots.
+- Result surfaces hide visual scrollbars while retaining wheel, touch, and
+  keyboard scrolling. Large Pokemon, item, move, and empty-slot candidate-filter
+  lists render 20 options initially and append 20 near the scroll boundary.
+  A selected Pokemon's small ability list renders directly without pagination.
 - The move picker opens scrolled to the current move, uses natural nearest-scroll
   behavior for keyboard navigation, and prevents mouse hover from triggering
   scroll loops.
@@ -389,6 +421,14 @@ Desktop UX decisions after the wide-builder layout change:
   hydration data, and localStorage keys live in `src/utils/teamStorage.ts` rather
   than the app shell. The model is kept plain-JSON so it can later move to
   Supabase/Postgres without changing UI state shape too aggressively.
+- `useSavedTeams` owns saved-list mutations and persistence; its current-list
+  reference prevents an async import from rebuilding the list from an old
+  render. Storage writes stay outside React's replayable state updater.
+  `savedTeamLibrary.ts` owns record creation and Pokemon/bench hydration,
+  including legacy-sprite refresh and offline identity fallback.
+  `App.tsx` retains unsaved-change prompts and active-editor replacement.
+  A request generation prevents late saved-team loads or new-team imports from
+  replacing a newer team choice. Creating a blank team invalidates pending loads.
 - Bench entries store a Pokemon identity and a complete build snapshot. Moving an
   active Pokemon to the seventh Bench tab clears its active slot; moving a bench
   entry onto an occupied slot swaps the two complete sets. Bench entries remain
@@ -527,6 +567,23 @@ Still needed:
 - any newly discovered Pokemon Champions-specific battle-rule differences
 
 ## Desktop QA Baseline
+
+- The bounded September refactor is complete: editor previews, saved-team
+  persistence/hydration, and stylesheet ownership were consolidated. Do not
+  continue splitting modules solely to reduce line counts. Calculation stages,
+  AI validation, prompts, and deployment safeguards were not redesigned.
+- `src/styles.css` is the ordered entry point for feature styles under
+  `src/styles/`. Preserve its import order: responsive, theme, and touch-dialog
+  overrides intentionally follow base feature rules. Asset URLs are relative
+  to the feature stylesheet, not the entry point. The cleanup removed seven
+  redundant/overridden declarations while retaining all other declaration order.
+- Verification included 434 unit tests, delayed-response Chrome checks for both
+  previews and saved-team replacement, and batched saved-list mutations.
+  Independent Chrome pages produced pixel-identical builder/calculator
+  screenshots at 1600x1000, 1024x900, and 390x844 in light and dark themes.
+  Touch ability/search dialogs and privacy-dialog layout were also checked.
+  Temporary QA scripts, screenshots, and baseline styles remain ignored under
+  `.tmp/`; no paid model calls were needed.
 
 - Run `npm run lint`, `npm run test:run`, and `npm run build` before closing a
   major Team Builder refactor.

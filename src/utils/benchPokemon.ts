@@ -1,6 +1,10 @@
 import { defaultEvs } from "../data/natures";
 import { canAddBenchPokemon } from "../data/teamLimits";
-import type { TeamBuildState } from "./teamBuildState";
+import {
+  clearBuildStateSlot,
+  patchBuildStateSlot,
+  type TeamBuildState,
+} from "./teamBuildState";
 import type { PokemonItem, StatBlock, TeamMember, TeamSlot } from "../types";
 
 export type PokemonBuildSnapshot = {
@@ -24,12 +28,6 @@ type BenchState = {
   buildState: TeamBuildState;
 };
 
-function withoutSlot<T>(record: Record<number, T>, slotIndex: number) {
-  const nextRecord = { ...record };
-  delete nextRecord[slotIndex];
-  return nextRecord;
-}
-
 export function getPokemonBuildSnapshot(
   member: TeamMember,
   buildState: TeamBuildState,
@@ -46,46 +44,6 @@ export function getPokemonBuildSnapshot(
         []),
     ],
     preMegaPokemon: buildState.preMegaPokemonBySlot[slotIndex] ?? "",
-  };
-}
-
-export function clearBuildStateSlot(
-  buildState: TeamBuildState,
-  slotIndex: number,
-): TeamBuildState {
-  return {
-    itemBySlot: withoutSlot(buildState.itemBySlot, slotIndex),
-    abilityBySlot: withoutSlot(buildState.abilityBySlot, slotIndex),
-    natureBySlot: withoutSlot(buildState.natureBySlot, slotIndex),
-    evsBySlot: withoutSlot(buildState.evsBySlot, slotIndex),
-    moveIdsBySlot: withoutSlot(buildState.moveIdsBySlot, slotIndex),
-    preMegaPokemonBySlot: withoutSlot(buildState.preMegaPokemonBySlot, slotIndex),
-    candidateFiltersBySlot: withoutSlot(
-      buildState.candidateFiltersBySlot,
-      slotIndex,
-    ),
-  };
-}
-
-function setBuildStateSlot(
-  buildState: TeamBuildState,
-  slotIndex: number,
-  build: PokemonBuildSnapshot,
-): TeamBuildState {
-  return {
-    itemBySlot: { ...buildState.itemBySlot, [slotIndex]: build.item },
-    abilityBySlot: { ...buildState.abilityBySlot, [slotIndex]: build.ability },
-    natureBySlot: { ...buildState.natureBySlot, [slotIndex]: build.nature },
-    evsBySlot: { ...buildState.evsBySlot, [slotIndex]: { ...build.evs } },
-    moveIdsBySlot: { ...buildState.moveIdsBySlot, [slotIndex]: [...build.moveIds] },
-    preMegaPokemonBySlot: {
-      ...buildState.preMegaPokemonBySlot,
-      [slotIndex]: build.preMegaPokemon,
-    },
-    candidateFiltersBySlot: withoutSlot(
-      buildState.candidateFiltersBySlot,
-      slotIndex,
-    ),
   };
 }
 
@@ -132,11 +90,12 @@ export function moveBenchPokemonToTeam(
   const displacedMember = state.team[slotIndex];
   const nextTeam = [...state.team];
   const nextBench = [...state.bench];
-  const nextBuildState = setBuildStateSlot(
-    state.buildState,
-    slotIndex,
-    benchPokemon.build,
-  );
+  const nextBuildState = patchBuildStateSlot(state.buildState, slotIndex, {
+    ...benchPokemon.build,
+    evs: { ...benchPokemon.build.evs },
+    moveIds: [...benchPokemon.build.moveIds],
+    candidateFilters: null,
+  });
 
   nextTeam[slotIndex] = benchPokemon.member;
 

@@ -18,13 +18,8 @@ import {
   faMoon,
   faSun,
 } from "@fortawesome/free-solid-svg-icons";
-import { fetchPokemon } from "./api/pokeApi";
-import { fetchItem } from "./api/showdownCatalog";
-import { normalizeShowdownId } from "./api/showdownIds";
-import {
-  loadPopularSmogonSet,
-  resolveSmogonUsageMoveIds,
-} from "./api/smogonUsage";
+import { useSavedTeams } from "./hooks/useSavedTeams";
+import { hydrateSavedTeamMembers, hydrateSavedBench } from "./utils/savedTeamLibrary";
 import { isPokemonLegal } from "./api/showdownLegality";
 import { NewTeamControl } from "./components/NewTeamControl";
 import { PrivacyControl } from "./components/PrivacyControl";
@@ -40,15 +35,14 @@ import {
   ACTIVE_TEAM_SIZE,
   MAX_SAVED_TEAMS,
   canAddBenchPokemon,
-  canAddSavedTeam,
 } from "./data/teamLimits";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
 import { useBuilderData } from "./hooks/useBuilderData";
 import { useDismissOnOutsidePointer } from "./hooks/useDismissOnOutsidePointer";
 import { useLongPressReorder } from "./hooks/useLongPressReorder";
 import { useMediaQuery } from "./hooks/useMediaQuery";
-import { shouldKeepSelectedPokemonForUsageTarget } from "./utils/pokemonAliases";
-import { isFullShowdownSpriteUrl } from "./utils/pokemonSprites";
+import { resolvePokemonChoice as resolveTeamPokemonChoice } from "./utils/pokemonSelection";
+import type { TeamBuildState } from "./utils/teamBuildState";
 import { swapArrayItems } from "./utils/reorder";
 import {
   validateRecommendedPokemonApplication,
@@ -67,42 +61,24 @@ import { createTeamAnalysisContext } from "./utils/teamAnalysisContext";
 import {
   formatShowdownSlot,
   formatShowdownTeam,
-  toPokemonId,
 } from "./utils/showdownText";
 import {
   buildImportedShowdownSnapshot,
   normalizeImportedEvs,
-  resolveImportedPokemonId,
 } from "./utils/showdownImport";
 import {
-  SAVED_TEAM_SCHEMA_VERSION,
   clearLastActiveTeamId,
   createEmptyBuildState,
-  createFallbackMember,
   createSavedBenchPokemon,
   createSavedSlot,
   createSavedTeamId,
-  getCopiedTeamName,
   getLastActiveTeamId,
-  getStoredTeams,
   serializeTeamSnapshot,
   storeLastActiveTeamId,
-  storeTeams,
-  type SavedTeamSlot,
   type SavedTeamSummary,
   type TeamSnapshot,
 } from "./utils/teamStorage";
-import {
-  clearBuildStateSlot,
-  patchBuildStateSlot,
-  type TeamSlotBuildPatch,
-} from "./utils/teamBuildState";
-import type {
-  PokemonItem,
-  TeamMember,
-  TeamSlot,
-} from "./types";
-import type { SmogonUsageSet } from "./api/smogonUsage";
+import type { TeamMember, TeamSlot } from "./types";
 import { useLocalization } from "./i18n/useLocalization";
 import type { Locale } from "./i18n/gameTranslations";
 import { useTheme } from "./theme/useTheme";
@@ -146,11 +122,6 @@ type EditorPokemonSelectionOptions = Omit<
   "validateRecommendation"
 >;
 
-type ResolvedUsageSetPatch = {
-  patch: TeamSlotBuildPatch;
-  itemLoadFailed: boolean;
-};
-
 const localizedUntitledTeamNames = new Set(["Untitled Team", "이름 없는 팀"]);
 
 function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
@@ -158,14 +129,6 @@ function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
   return merged.filter(
     (member, index, list) => list.findIndex((item) => item.id === member.id) === index,
   );
-}
-
-function hasStaleShowdownIcon(member: TeamMember) {
-  return isFullShowdownSpriteUrl(member.iconSpriteUrl);
-}
-
-function isMegaPokemonId(value: string) {
-  return toPokemonId(value).includes("-mega");
 }
 
 function App() {
@@ -201,7 +164,8 @@ function App() {
   } = useBuilderData();
   const [teamName, setTeamName] = useState(() => t("team.untitled"));
   const [teamNameDraft, setTeamNameDraft] = useState(() => t("team.untitled"));
-  const [savedTeams, setSavedTeams] = useState<SavedTeamSummary[]>([]);
+  const savedTeamLibrary = useSavedTeams();
+  const savedTeams = savedTeamLibrary.teams;
   const [activeSavedTeamId, setActiveSavedTeamId] = useState<string | null>(null);
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
   const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
@@ -242,6 +206,7 @@ function App() {
   const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
+  const teamLoadRequestRef = useRef(0);
   const committedSnapshotRef = useRef<string | null>(null);
   const analysisBuildState = teamBuildState.getBuildStateSnapshot();
   const pokemonSelectionContextFingerprint = JSON.stringify({
@@ -342,17 +307,18 @@ function App() {
   }
 
   useEffect(() => {
-    const storedTeams = getStoredTeams();
+    const storedTeams = savedTeams;
     const lastActiveTeamId = getLastActiveTeamId();
     const lastActiveTeam = storedTeams.find(
       (savedTeam) => savedTeam.id === lastActiveTeamId,
     );
 
-    setSavedTeams(storedTeams);
-
     if (lastActiveTeam) {
       void loadSavedTeam(lastActiveTeam);
     }
+    return () => {
+      teamLoadRequestRef.current += 1;
+    };
     // Startup restore must run once from localStorage instead of following team edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -819,40 +785,15 @@ function App() {
       }
 
       if (options.validateRecommendation) {
-        if (
-          indexStatus !== "ready" ||
-          itemIndexStatus !== "ready" ||
-          showdownLegalityStatus !== "ready" ||
-          usageSetPatch?.itemLoadFailed
-        ) {
-          return {
-            status: "blocked",
-            reason: usageSetPatch?.itemLoadFailed
-              ? "load-failed"
-              : "legality-unavailable",
-            issueCodes: [],
-          };
-        }
-
-        const validation = validateRecommendedPokemonApplication({
-          currentTeam: team,
+        const blocked = checkRecommendationApplication(
+          team,
           slotIndex,
-          candidate: targetMember,
+          targetMember,
           proposedBuildState,
-          legality: showdownLegality,
-          pokemonIndex,
-          itemIndex,
-        });
-
-        if (validation.status === "blocked") {
-          return {
-            status: "blocked",
-            reason:
-              validation.reason === "stale-target"
-                ? "stale"
-                : validation.reason,
-            issueCodes: validation.issues.map((issue) => issue.code),
-          };
+          Boolean(usageSetPatch?.itemLoadFailed),
+        );
+        if (blocked) {
+          return blocked;
         }
       }
 
@@ -929,40 +870,15 @@ function App() {
         return { status: "blocked", reason: "stale", issueCodes: [] };
       }
 
-      if (
-        indexStatus !== "ready" ||
-        itemIndexStatus !== "ready" ||
-        showdownLegalityStatus !== "ready" ||
-        usageSetPatch?.itemLoadFailed
-      ) {
-        return {
-          status: "blocked",
-          reason: usageSetPatch?.itemLoadFailed
-            ? "load-failed"
-            : "legality-unavailable",
-          issueCodes: [],
-        };
-      }
-
-      const validation = validateRecommendedPokemonApplication({
-        currentTeam: team.map(() => null),
+      const blocked = checkRecommendationApplication(
+        team.map(() => null),
         slotIndex,
-        candidate: targetMember,
+        targetMember,
         proposedBuildState,
-        legality: showdownLegality,
-        pokemonIndex,
-        itemIndex,
-      });
-
-      if (validation.status === "blocked") {
-        return {
-          status: "blocked",
-          reason:
-            validation.reason === "stale-target"
-              ? "stale"
-              : validation.reason,
-          issueCodes: validation.issues.map((issue) => issue.code),
-        };
+        Boolean(usageSetPatch?.itemLoadFailed),
+      );
+      if (blocked) {
+        return blocked;
       }
 
       setCustomPool((currentPool) =>
@@ -987,133 +903,59 @@ function App() {
     }
   }
 
-  async function resolvePokemonMember(lookup: string) {
-    const localMember = customPool.find((member) => member.id === lookup);
-
-    if (localMember?.baseStats && localMember.abilities && !hasStaleShowdownIcon(localMember)) {
-      return localMember;
-    }
-
-    return fetchPokemon(lookup);
-  }
-
-  function resolveUsageAbility(member: TeamMember, usageSet: SmogonUsageSet) {
-    if (!usageSet.ability) {
-      return "";
-    }
-
-    return (
-      member.abilities?.find(
-        (ability) =>
-          normalizeShowdownId(ability) === normalizeShowdownId(usageSet.ability!),
-      ) ??
-      usageSet.ability
-    );
-  }
-
-  async function resolveUsageTargetMember(
-    usageSet: SmogonUsageSet,
-    selectedMember: TeamMember,
-  ) {
-    const usagePokemonId = resolveImportedPokemonId(
-      usageSet.pokemonName,
-      pokemonIndex,
-    );
-
+  function checkRecommendationApplication(
+    currentTeam: TeamSlot[],
+    slotIndex: number,
+    candidate: TeamMember,
+    proposedBuildState: TeamBuildState,
+    itemLoadFailed: boolean,
+  ): Extract<RecommendedPokemonApplyResult, { status: "blocked" }> | null {
     if (
-      normalizeShowdownId(usagePokemonId) === normalizeShowdownId(selectedMember.id) ||
-      shouldKeepSelectedPokemonForUsageTarget(selectedMember.id, usagePokemonId)
+      indexStatus !== "ready" ||
+      itemIndexStatus !== "ready" ||
+      showdownLegalityStatus !== "ready" ||
+      itemLoadFailed
     ) {
-      return selectedMember;
+      return {
+        status: "blocked",
+        reason: itemLoadFailed ? "load-failed" : "legality-unavailable",
+        issueCodes: [],
+      };
     }
 
-    try {
-      return await fetchPokemon(usagePokemonId);
-    } catch {
-      return selectedMember;
-    }
+    const validation = validateRecommendedPokemonApplication({
+      currentTeam,
+      slotIndex,
+      candidate,
+      proposedBuildState,
+      legality: showdownLegality,
+      pokemonIndex,
+      itemIndex,
+    });
+    return validation.status === "blocked"
+      ? {
+          status: "blocked",
+          reason:
+            validation.reason === "stale-target" ? "stale" : validation.reason,
+          issueCodes: validation.issues.map((issue) => issue.code),
+        }
+      : null;
   }
 
-  async function resolveUsageSetPatch(
-    usageSet: SmogonUsageSet,
-    selectedMember: TeamMember,
-    targetMember: TeamMember,
-  ): Promise<ResolvedUsageSetPatch> {
-    const ability = resolveUsageAbility(targetMember, usageSet);
-    const resolvedMoveIds = resolveSmogonUsageMoveIds(
-      targetMember.moves,
-      usageSet.moveIds,
-    );
-    const moveIds = usageSet.moveIds.length
-      ? [...resolvedMoveIds, "", "", "", ""].slice(0, 4)
-      : undefined;
-    let item: PokemonItem | null = null;
-    let itemLoadFailed = false;
-
-    if (usageSet.itemName) {
-      try {
-        item = await fetchItem(normalizeShowdownId(usageSet.itemName));
-      } catch {
-        item = null;
-        itemLoadFailed = true;
-      }
-    }
-
-    return {
-      patch: {
-        item,
-        ...(ability ? { ability } : {}),
-        ...(usageSet.nature ? { nature: usageSet.nature } : {}),
-        ...(usageSet.evs ? { evs: normalizeImportedEvs(usageSet.evs) } : {}),
-        ...(moveIds ? { moveIds } : {}),
-        preMegaPokemon:
-          isMegaPokemonId(targetMember.id) && !isMegaPokemonId(selectedMember.id)
-            ? selectedMember.id
-            : null,
-      },
-      itemLoadFailed,
-    };
-  }
-
-  async function resolvePokemonChoice(
+  function resolvePokemonChoice(
     slotIndex: number,
     lookup: string,
     applyUsageStats: boolean,
   ) {
-    const selectedMember = await resolvePokemonMember(lookup);
-    let targetMember = selectedMember;
-    let usageSetPatch: ResolvedUsageSetPatch | null = null;
-    let usageSetFound = false;
-
-    if (applyUsageStats) {
-      const usageSet = await loadPopularSmogonSet(lookup, battleFormat);
-      usageSetFound = Boolean(usageSet);
-
-      if (usageSet) {
-        targetMember = await resolveUsageTargetMember(usageSet, selectedMember);
-        usageSetPatch = await resolveUsageSetPatch(
-          usageSet,
-          selectedMember,
-          targetMember,
-        );
-      }
-    }
-
-    const currentBuildState = teamBuildState.getBuildStateSnapshot();
-    const clearedBuildState = applyUsageStats
-      ? clearBuildStateSlot(currentBuildState, slotIndex)
-      : currentBuildState;
-    const proposedBuildState = usageSetPatch
-      ? patchBuildStateSlot(clearedBuildState, slotIndex, usageSetPatch.patch)
-      : clearedBuildState;
-
-    return {
-      selectedMember,
-      targetMember,
-      usageSetPatch,
-      proposedBuildState,
-      usageSetFound,
-    };
+    return resolveTeamPokemonChoice({
+      slotIndex,
+      lookup,
+      applyUsageStats,
+      battleFormat,
+      customPool,
+      pokemonIndex,
+      getBuildStateSnapshot: teamBuildState.getBuildStateSnapshot,
+    });
   }
 
   function getShowdownExportText(slotIndex: number) {
@@ -1121,6 +963,7 @@ function App() {
   }
 
   async function importShowdownAsNewTeam(text: string) {
+    const requestId = ++teamLoadRequestRef.current;
     setIsImportingNewTeam(true);
     setNewTeamImportError(null);
 
@@ -1129,6 +972,7 @@ function App() {
         pokemonIndex,
         emptyTeamMessage: t("team.pasteAtLeastOne"),
       });
+      if (requestId !== teamLoadRequestRef.current) return;
       const importedMembers = importedSnapshot.members.filter(
         (member): member is TeamMember => Boolean(member),
       );
@@ -1165,12 +1009,13 @@ function App() {
         buildState: createEmptyBuildState(),
       });
     } catch (error) {
+      if (requestId !== teamLoadRequestRef.current) return;
       setIsNewTeamImportOpen(true);
       setNewTeamImportError(
         error instanceof Error ? error.message : t("toolbar.importFailed"),
       );
     } finally {
-      setIsImportingNewTeam(false);
+      if (requestId === teamLoadRequestRef.current) setIsImportingNewTeam(false);
     }
   }
 
@@ -1203,39 +1048,21 @@ function App() {
 
   function handleSaveTeam() {
     const nextName = commitTeamName();
-    const now = new Date().toISOString();
-    const nextSnapshot = getCurrentTeamSnapshot(nextName);
-    const nextTeamId = activeSavedTeamId ?? createSavedTeamId();
-    const existingTeam = savedTeams.find((savedTeam) => savedTeam.id === nextTeamId);
+    const nextSavedTeam = savedTeamLibrary.save(
+      getCurrentTeamSnapshot(nextName),
+      activeSavedTeamId,
+    );
 
-    if (!existingTeam && !canAddSavedTeam(savedTeams.length)) {
+    if (!nextSavedTeam) {
       setTeamStorageMessage(t("team.limitReached"));
       setIsTeamManagerOpen(true);
       setIsSaveConfirmed(false);
       return;
     }
 
-    const nextSavedTeam: SavedTeamSummary = {
-      version: SAVED_TEAM_SCHEMA_VERSION,
-      id: nextTeamId,
-      name: nextName,
-      battleFormat: nextSnapshot.battleFormat,
-      slots: nextSnapshot.slots,
-      bench: nextSnapshot.bench,
-      buildState: nextSnapshot.buildState,
-      createdAt: existingTeam?.createdAt ?? now,
-      updatedAt: now,
-    };
-    const nextTeams = existingTeam
-      ? savedTeams.map((savedTeam) =>
-          savedTeam.id === nextTeamId ? nextSavedTeam : savedTeam,
-        )
-      : [nextSavedTeam, ...savedTeams];
+    setActiveSavedTeamId(nextSavedTeam.id);
+    storeLastActiveTeamId(nextSavedTeam.id);
 
-    storeTeams(nextTeams);
-    setSavedTeams(nextTeams);
-    setActiveSavedTeamId(nextTeamId);
-    storeLastActiveTeamId(nextTeamId);
     setTeamStorageMessage(t("team.savedNamed", { name: nextSavedTeam.name }));
     setPendingDeleteTeamId(null);
     setRenamingTeamId(null);
@@ -1263,12 +1090,15 @@ function App() {
   }
 
   async function loadSavedTeam(savedTeam: SavedTeamSummary) {
+    const requestId = ++teamLoadRequestRef.current;
+    setIsImportingNewTeam(false);
     setTeamStorageMessage(null);
 
     const [hydratedTeam, hydratedBench] = await Promise.all([
-      hydrateSavedTeamMembers(savedTeam),
-      hydrateSavedBenchPokemon(savedTeam),
+      hydrateSavedTeamMembers(savedTeam, customPool),
+      hydrateSavedBench(savedTeam, customPool),
     ]);
+    if (requestId !== teamLoadRequestRef.current) return;
 
     setCustomPool((currentPool) =>
       mergePool(
@@ -1297,37 +1127,11 @@ function App() {
     closeTeamManager();
   }
 
-  async function hydrateSavedTeamMembers(savedTeam: SavedTeamSummary) {
-    return Promise.all(
-      savedTeam.slots.map((slot) => (slot ? hydrateSavedPokemon(slot) : null)),
-    );
-  }
 
-  async function hydrateSavedBenchPokemon(savedTeam: SavedTeamSummary) {
-    return Promise.all(
-      savedTeam.bench.map(async (entry) => ({
-        id: entry.id,
-        member: await hydrateSavedPokemon(entry.pokemon),
-        build: entry.build,
-      })),
-    );
-  }
-
-  async function hydrateSavedPokemon(slot: Exclude<SavedTeamSlot, null>) {
-    const poolMember = customPool.find((member) => member.id === slot.pokemonId);
-
-    if (poolMember && !hasStaleShowdownIcon(poolMember)) {
-      return poolMember;
-    }
-
-    try {
-      return await fetchPokemon(slot.pokemonId);
-    } catch {
-      return createFallbackMember(slot);
-    }
-  }
 
   function createNewTeam() {
+    teamLoadRequestRef.current += 1;
+    setIsImportingNewTeam(false);
     const emptyTeam = Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null);
 
     setTeam(emptyTeam);
@@ -1390,17 +1194,14 @@ function App() {
     return t("team.discardLoad", { name: action.team.name });
   }
 
-  function updateSavedTeams(nextTeams: SavedTeamSummary[]) {
-    storeTeams(nextTeams);
-    setSavedTeams(nextTeams);
-  }
+
 
   function handleReorderSavedTeams(sourceIndex: number, targetIndex: number) {
     if (sourceIndex === targetIndex) {
       return;
     }
 
-    updateSavedTeams(swapArrayItems(savedTeams, sourceIndex, targetIndex));
+    savedTeamLibrary.reorder(sourceIndex, targetIndex);
     setTeamStorageMessage(t("team.reorderedSaved"));
   }
 
@@ -1454,18 +1255,8 @@ function App() {
       return;
     }
 
-    const now = new Date().toISOString();
-    const nextTeams = savedTeams.map((savedTeam) =>
-      savedTeam.id === activeSavedTeamId
-        ? {
-            ...savedTeam,
-            name: nextName,
-            updatedAt: now,
-          }
-        : savedTeam,
-    );
+    savedTeamLibrary.rename(activeSavedTeamId, nextName);
 
-    updateSavedTeams(nextTeams);
     renameCommittedSnapshot(nextName);
     setTeamStorageMessage(t("team.renamedTo", { name: nextName }));
   }
@@ -1492,18 +1283,7 @@ function App() {
       return;
     }
 
-    const now = new Date().toISOString();
-    const nextTeams = savedTeams.map((savedTeam) =>
-      savedTeam.id === teamId
-        ? {
-            ...savedTeam,
-            name: nextName,
-            updatedAt: now,
-          }
-        : savedTeam,
-    );
-
-    updateSavedTeams(nextTeams);
+    savedTeamLibrary.rename(teamId, nextName);
 
     if (teamId === activeSavedTeamId) {
       setTeamName(nextName);
@@ -1530,23 +1310,11 @@ function App() {
   }
 
   function handleDuplicateTeam(savedTeam: SavedTeamSummary) {
-    if (!canAddSavedTeam(savedTeams.length)) {
+    if (!savedTeamLibrary.duplicate(savedTeam)) {
       setTeamStorageMessage(t("team.limitReached"));
       return;
     }
 
-    const now = new Date().toISOString();
-    const copiedTeam: SavedTeamSummary = {
-      ...savedTeam,
-      version: SAVED_TEAM_SCHEMA_VERSION,
-      id: createSavedTeamId(),
-      name: getCopiedTeamName(savedTeam.name, savedTeams),
-      createdAt: now,
-      updatedAt: now,
-    };
-    const nextTeams = [copiedTeam, ...savedTeams];
-
-    updateSavedTeams(nextTeams);
     setTeamStorageMessage(t("team.duplicatedNamed", { name: savedTeam.name }));
     setPendingDeleteTeamId(null);
     setShowdownTeamId(null);
@@ -1555,7 +1323,7 @@ function App() {
   }
 
   async function getSavedTeamShowdownText(savedTeam: SavedTeamSummary) {
-    const hydratedTeam = await hydrateSavedTeamMembers(savedTeam);
+    const hydratedTeam = await hydrateSavedTeamMembers(savedTeam, customPool);
 
     return formatShowdownTeam(
       hydratedTeam,
@@ -1595,6 +1363,7 @@ function App() {
   }
 
   async function commitImportSavedTeam(savedTeam: SavedTeamSummary) {
+    const editorRequestId = teamLoadRequestRef.current;
     setIsImportingSavedTeam(true);
 
     try {
@@ -1612,11 +1381,13 @@ function App() {
         buildState: importedSnapshot.buildState,
         updatedAt: now,
       };
-      const nextTeams = savedTeams.map((teamSummary) =>
-        teamSummary.id === savedTeam.id ? nextSavedTeam : teamSummary,
-      );
+      savedTeamLibrary.update(savedTeam.id, (current) => ({
+        ...current,
+        slots: nextSavedTeam.slots,
+        buildState: nextSavedTeam.buildState,
+        updatedAt: now,
+      }));
 
-      updateSavedTeams(nextTeams);
       setCustomPool((currentPool) =>
         mergePool(
           importedSnapshot.members.filter(
@@ -1626,7 +1397,7 @@ function App() {
         ),
       );
 
-      if (savedTeam.id === activeSavedTeamId) {
+      if (savedTeam.id === activeSavedTeamId && editorRequestId === teamLoadRequestRef.current) {
         setTeam(importedSnapshot.members);
         teamBuildState.replaceBuildState(importedSnapshot.buildState);
         committedSnapshotRef.current = serializeTeamSnapshot({
@@ -1660,9 +1431,7 @@ function App() {
 
   function handleDeleteTeam(teamId: string) {
     const deletedTeam = savedTeams.find((savedTeam) => savedTeam.id === teamId);
-    const nextTeams = savedTeams.filter((savedTeam) => savedTeam.id !== teamId);
-
-    updateSavedTeams(nextTeams);
+    savedTeamLibrary.remove(teamId);
 
     if (teamId === activeSavedTeamId) {
       setActiveSavedTeamId(null);
