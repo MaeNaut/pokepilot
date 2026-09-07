@@ -3,9 +3,11 @@ import {
   MAX_FINAL_SEARCH_FRONTIER,
 } from "./constants";
 import { evaluateSeeds } from "./candidateEvaluation";
+import { minimizeRedundantDefense } from "./defenseInvestment";
 import {
   selectCandidates,
   selectSearchFrontier,
+  trimCandidateBenchmarks,
 } from "./candidateSelection";
 import {
   createOptimizationEvaluator,
@@ -160,9 +162,22 @@ export function createSetOptimizationPlan(
     [...atomicEntries, ...pairFrontier, ...tripleEntries],
     MAX_FINAL_SEARCH_FRONTIER,
   );
-  const candidates = selectCandidates(
-    searchFrontier.map(({ candidate }) => candidate),
-  );
+  const selected = selectCandidates(searchFrontier.map(({ candidate }) => candidate));
+  const finalized = selected.flatMap((candidate) => {
+    const entry = searchFrontier.find(({ candidate: source }) => source.id === candidate.id);
+    if (!entry) return [];
+    return evaluateSeeds(
+      context,
+      [minimizeRedundantDefense(context, entry.seed, playerMoves, opponentMoves, evaluator)],
+      playerMoves,
+      opponentMoves,
+      currentSpeed,
+      evaluator,
+    ).map(({ candidate: normalized }) => trimCandidateBenchmarks({
+      ...normalized, profiles: candidate.profiles,
+    }));
+  });
+  const candidates = [...new Map(finalized.map((candidate) => [candidate.id, candidate])).values()];
 
   return {
     ...createPlanIdentity(context),

@@ -30,17 +30,35 @@ function getNatureSpreadAlignment(candidate: SetOptimizationCandidate) {
 }
 
 function hasMeaningfulChange(candidate: EvaluatedCandidate) {
+  const sacrificesOffense = candidate.offenseBenchmarks.some(
+    ({ current, optimized }) => compareOffenseOutcomes(optimized, current) < 0
+      || optimized.maxDamage < current.maxDamage,
+  );
+  const gainsRelevantSurvival = candidate.defenseBenchmarks.some(
+    ({ current, optimized }) => current.possibleKoHits !== null
+      && current.possibleKoHits <= 2
+      && hasDefensiveSurvivalBoundaryGain(optimized, current),
+  );
   const offenseChanged = candidate.offenseBenchmarks.some(
     ({ current, optimized }) => compareOffenseOutcomes(optimized, current) > 0,
   );
+  // Preserving a KO tier does not make an attack-to-bulk trade free.
+  if (sacrificesOffense && !gainsRelevantSurvival && !offenseChanged) return false;
+  const gainsGuaranteedSurvival = candidate.defenseBenchmarks.some(
+    ({ current, optimized }) => current.possibleKoHits !== null
+      && current.possibleKoHits <= 2
+      && cappedDefenseHits(optimized.possibleKoHits) > cappedDefenseHits(current.possibleKoHits),
+  );
+  if (sacrificesOffense && !gainsGuaranteedSurvival && getCandidateScore(candidate) <= 0) {
+    return false;
+  }
+
   const defenseChanged = candidate.defenseBenchmarks.some(
-    ({ current, optimized }) => compareDefenseOutcomes(optimized, current) > 0,
+    ({ current, optimized }) => hasDefensiveSurvivalBoundaryGain(optimized, current),
   );
   const speedChanged =
     candidate.speedBenchmark.current.relation !==
-      candidate.speedBenchmark.optimized.relation ||
-    candidate.speedBenchmark.current.playerSpeed !==
-      candidate.speedBenchmark.optimized.playerSpeed;
+      candidate.speedBenchmark.optimized.relation;
 
   return offenseChanged || defenseChanged || speedChanged;
 }
@@ -148,7 +166,9 @@ function getCandidateScore(candidate: EvaluatedCandidate) {
         score += delayedHitCounts * 8 + chanceReduction * 0.2;
       }
     }
-    score += Math.max(0, current.maxPercent - optimized.maxPercent) * 0.5;
+    if (hasDefensiveSurvivalBoundaryGain(optimized, current)) {
+      score += Math.max(0, current.maxPercent - optimized.maxPercent) * 0.5;
+    }
   }
   if (
     candidate.speedBenchmark.current.relation !==
@@ -245,7 +265,7 @@ function selectDefenseHighlights(
     .slice(0, MAX_BENCHMARKS_PER_AXIS);
 }
 
-function trimCandidateBenchmarks(
+export function trimCandidateBenchmarks(
   candidate: EvaluatedCandidate,
 ): SetOptimizationCandidate {
   return {

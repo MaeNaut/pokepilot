@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { resolveAutomaticEnvironment } from "./automaticEnvironment";
 import type { PokemonMove, StatBlock, TeamMember } from "../types";
 import {
   calculateChampionsDamage,
@@ -213,6 +214,22 @@ function createPokemon(
 }
 
 describe("Champions damage calculator adapter", () => {
+  it("uses Sand Stream's automatic sand for Tyranitar's special bulk against Make It Rain", () => {
+    const tyranitar: TeamMember = { ...garchomp, id: "tyranitar", name: "Tyranitar", showdownId: "tyranitar", showdownName: "Tyranitar", types: ["rock", "dark"], abilities: ["Sand Stream"], baseStats: { hp: 100, attack: 134, defense: 110, specialAttack: 95, specialDefense: 100, speed: 61 } };
+    const gholdengo: TeamMember = { ...gengar, id: "gholdengo", name: "Gholdengo", showdownId: "gholdengo", showdownName: "Gholdengo", types: ["steel", "ghost"], abilities: ["Good as Gold"], baseStats: { hp: 87, attack: 60, defense: 95, specialAttack: 133, specialDefense: 91, speed: 84 } };
+    const move: PokemonMove = { ...flamethrower, id: "makeitrain", name: "Make It Rain", type: "steel", power: 120 };
+    const attacker = createPokemon(gholdengo, { move, natureId: "modest", evs: { ...emptyEvs, specialAttack: 32 } });
+    const defender = createPokemon(tyranitar, { evs: { ...emptyEvs, hp: 32 }, currentHp: 207 });
+    const automatic = resolveAutomaticEnvironment({ player: { identity: "tyranitar", ability: "Sand Stream", speed: 81 }, opponent: { identity: "gholdengo", ability: "Good as Gold", speed: 104 } });
+    const clear = calculateChampionsDamage(attacker, defender, field);
+    const sand = calculateChampionsDamage(attacker, defender, { ...field, ...automatic });
+    expect(clear.status).toBe("ready");
+    expect(sand.status).toBe("ready");
+    if (clear.status !== "ready" || sand.status !== "ready") return;
+    expect(sand.maxDamage).toBeLessThan(clear.minDamage);
+    expect(clear.oneHitKoChance).toBeGreaterThan(0);
+    expect(sand.oneHitKoChance).toBe(0);
+  });
   it("maps Champions stat points to equivalent level 50 EV values", () => {
     expect(statPointsToEvs(0)).toBe(0);
     expect(statPointsToEvs(1)).toBe(4);

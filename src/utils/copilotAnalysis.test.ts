@@ -309,7 +309,7 @@ describe("Copilot analysis", () => {
             item: buildState.itemBySlot[0] ?? null,
             ability: "Intimidate",
             natureId: "adamant",
-            evs: buildState.evsBySlot[0],
+            evs: { ...defaultEvs, hp: 32, defense: 2, specialDefense: 32 },
             moveIds: [damagingMove.id],
           },
           battle: createCalculatorBattleState(172),

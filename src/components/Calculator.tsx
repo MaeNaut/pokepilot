@@ -15,7 +15,6 @@ import {
 } from "../api/smogonUsage";
 import {
   calculateChampionsDamage,
-  type CalculatorField,
   type CalculatorPokemon,
   type DamageCalculationResult,
 } from "../calculator/damageCalculator";
@@ -25,7 +24,6 @@ import type {
 } from "../calculator/calculatorEditorTypes";
 import {
   createCalculatorBattleState,
-  createDefaultCalculatorField,
   getCalculatorMaxHp,
   getCalculatorMoveSlots,
   getCalculatorSpeed,
@@ -38,6 +36,7 @@ import {
 import type { CalculatorAnalysisContext } from "../calculator/setOptimizer";
 import { defaultEvs } from "../data/natures";
 import { useCalculatorCatalog } from "../hooks/useCalculatorCatalog";
+import { useCalculatorField } from "../hooks/useCalculatorField";
 import { useCalculatorMobileNavigation } from "../hooks/useCalculatorMobileNavigation";
 import { useCalculatorUsageMoves } from "../hooks/useCalculatorUsageMoves";
 import { usePreMegaMoves } from "../hooks/usePreMegaMoves";
@@ -153,9 +152,18 @@ export function Calculator({
     useState(() => createCalculatorBattleState());
   const [opponentBattle, setOpponentBattle] =
     useState(() => createCalculatorBattleState());
-  const [field, setField] = useState<CalculatorField>(() =>
-    createDefaultCalculatorField(battleFormat),
-  );
+  const [field, setField] = useCalculatorField(battleFormat, {
+    player: {
+      identity: selectedMember ? `${selectedSlot}:${selectedMember.id}` : "",
+      ability: playerBuild.ability,
+      speed: getCalculatorSpeed(selectedMember, playerBuild, 0),
+    },
+    opponent: {
+      identity: opponentBuild.member?.id ?? "",
+      ability: opponentBuild.ability,
+      speed: getCalculatorSpeed(opponentBuild.member, opponentBuild, 0),
+    },
+  });
   const [isOpponentLoading, setIsOpponentLoading] = useState(false);
   const [opponentError, setOpponentError] = useState<string | null>(null);
   const [opponentPreMegaPokemonId, setOpponentPreMegaPokemonId] = useState("");
@@ -261,7 +269,7 @@ export function Calculator({
       isPlusMinus:
         battleFormat === "doubles" ? current.isPlusMinus : false,
     }));
-  }, [battleFormat]);
+  }, [battleFormat, setField]);
 
   useEffect(() => {
     if (canActivatePlusMinus) {
@@ -276,7 +284,7 @@ export function Calculator({
           }
         : current,
     );
-  }, [canActivatePlusMinus]);
+  }, [canActivatePlusMinus, setField]);
 
   useEffect(() => {
     if (

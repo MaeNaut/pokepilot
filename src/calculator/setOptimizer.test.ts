@@ -8,6 +8,8 @@ import {
 } from "../data/natures";
 import type { PokemonMove, TeamMember } from "../types";
 import { createCalculatorBattleState, createDefaultCalculatorField } from "./calculatorViewModel";
+import { createOptimizationEvaluator, getDamagingMoves } from "./setOptimizer/evaluator";
+import { minimizeRedundantDefense } from "./setOptimizer/defenseInvestment";
 import {
   createSetOptimizationPlan,
   type CalculatorAnalysisContext,
@@ -190,8 +192,75 @@ function createContext(
 }
 
 describe("exact-target set optimizer", () => {
+  it("does not replace Brave HA Tyranitar with percent-only bulk against Life Orb Gholdengo in sand", () => {
+    const knockOff: PokemonMove = { ...tackle, id: "knockoff", name: "Knock Off", type: "dark", power: 65 };
+    const rockSlide: PokemonMove = { ...tackle, id: "rockslide", name: "Rock Slide", type: "rock", power: 75, tags: ["Spread: Foes"] };
+    const makeItRain: PokemonMove = { ...flamethrower, id: "makeitrain", name: "Make It Rain", type: "steel", power: 120, tags: ["Spread: Foes"] };
+    const shadowBall: PokemonMove = { ...flamethrower, id: "shadowball", name: "Shadow Ball", type: "ghost", power: 80 };
+    const thunderbolt: PokemonMove = { ...flamethrower, id: "thunderbolt", name: "Thunderbolt", type: "electric" };
+    const tyranitar: TeamMember = {
+      ...attacker, id: "tyranitar", name: "Tyranitar", showdownName: "Tyranitar",
+      types: ["rock", "dark"], abilities: ["Sand Stream"],
+      baseStats: { hp: 100, attack: 134, defense: 110, specialAttack: 95, specialDefense: 100, speed: 61 },
+    };
+    const gholdengo: TeamMember = {
+      ...defender, id: "gholdengo", name: "Gholdengo", showdownName: "Gholdengo",
+      types: ["steel", "ghost"], abilities: ["Good as Gold"],
+      baseStats: { hp: 87, attack: 60, defense: 95, specialAttack: 133, specialDefense: 91, speed: 84 },
+    };
+    const context = createContext("player-to-opponent", tyranitar, gholdengo,
+      [rockSlide, knockOff, { ...earthquake, tags: ["Spread: All"] }, protect], [shadowBall, makeItRain, protect]);
+    context.battleFormat = "doubles";
+    context.field = { ...createDefaultCalculatorField("doubles"), weather: "sand" };
+    context.player.build.natureId = "brave";
+    context.player.build.item = { id: "tyranitarite", name: "Tyranitarite" };
+    context.player.build.evs = { ...defaultEvs, hp: 32, attack: 32, defense: 1, specialDefense: 1 };
+    context.player.maxHp = 207;
+    context.player.battle = createCalculatorBattleState(207);
+    context.opponent.build.natureId = "timid";
+    context.opponent.build.item = { id: "life-orb", showdownId: "lifeorb", name: "Life Orb" };
+    context.opponent.build.evs = { ...defaultEvs, hp: 2, specialAttack: 32, speed: 32 };
+    context.opponent.maxHp = 164;
+    context.opponent.battle = createCalculatorBattleState(164);
+    context.opponent.usageMoves = [thunderbolt];
+
+    const evaluator = createOptimizationEvaluator(context);
+    expect(evaluator.calculate(makeItRain, context.player.build, "opponent-to-player"))
+      .toMatchObject({ minDamage: 133, maxDamage: 159 });
+    expect(evaluator.calculate(knockOff, context.player.build, "player-to-opponent"))
+      .toMatchObject({ minDamage: 194, maxDamage: 230 });
+    const plan = createSetOptimizationPlan(context);
+    expect(plan.candidates).toEqual([]);
+    expect(plan.status).toBe("unavailable");
+
+    // Without sand, the same matchup has a real OHKO risk worth addressing.
+    context.field.weather = "none";
+    expect(createSetOptimizationPlan(context).candidates.length).toBeGreaterThan(0);
+
+    context.field.weather = "sand";
+    context.direction = "opponent-to-player";
+    context.opponent.build.item = null;
+    const noItemEvaluator = createOptimizationEvaluator(context);
+    const optimized = minimizeRedundantDefense(context, {
+      natureId: "brave", evs: { ...defaultEvs, hp: 32, defense: 4, specialDefense: 30 },
+      focuses: ["defense"], targets: { hp: 32, specialDefense: 30 }, axes: ["defense:specialDefense"],
+    }, getDamagingMoves(context.player), getDamagingMoves(context.opponent), noItemEvaluator);
+    expect(optimized.evs).toEqual({ ...defaultEvs, hp: 32, defense: 8, specialDefense: 26 });
+    expect(noItemEvaluator.calculate(makeItRain, { ...context.player.build, evs: optimized.evs }, "opponent-to-player"))
+      .toMatchObject({ minDamage: 84, maxDamage: 102, koHits: 3, koChance: 100 });
+    const belowBoundary = noItemEvaluator.calculate(makeItRain, {
+      ...context.player.build, evs: { ...optimized.evs, specialDefense: 25, defense: 9 },
+    }, "opponent-to-player");
+    expect(belowBoundary?.koHits).toBe(2);
+    expect(belowBoundary?.koChance).toBeGreaterThan(0);
+    const noItemPlan = createSetOptimizationPlan(context);
+    expect(noItemPlan.candidates.length).toBeGreaterThan(0);
+    expect(noItemPlan.candidates.some((candidate) => candidate.natureId === "brave"
+      && candidate.evs.specialDefense > 26 && candidate.evs.specialDefense < 32)).toBe(false);
+  });
+
   it("evaluates every legal candidate across offense, defense, and Speed", () => {
-    const context = createContext("player-to-opponent");
+    const context = createContext("player-to-opponent", attacker, defender, [earthquake], [{ ...flamethrower, type: "ice" }]);
     context.player.build.evs = {
       ...defaultEvs,
       hp: 32,
@@ -291,6 +360,7 @@ describe("exact-target set optimizer", () => {
       { ...attacker, moves: [restrainedEarthquake] },
       defender,
       [restrainedEarthquake],
+      [{ ...flamethrower, type: "ice", power: 140 }],
     );
     context.player.build.natureId = "adamant";
     context.player.build.evs = {
@@ -512,6 +582,7 @@ describe("exact-target set optimizer", () => {
         { ...attacker, moves: [utilityAttack] },
         defender,
         [utilityAttack],
+        [earthquake],
       ),
     );
 
@@ -905,7 +976,7 @@ describe("exact-target set optimizer", () => {
   });
 
   it("invests in Defense against Psyshock despite its Special category", () => {
-    const strongPsyshock = { ...psyshock, power: 1000 };
+    const strongPsyshock = { ...psyshock, power: 160 };
     const neutralDefender = {
       ...defender,
       id: "snorlax",
@@ -941,6 +1012,7 @@ describe("exact-target set optimizer", () => {
         { ...attacker, moves: [foulPlay] },
         defender,
         [foulPlay],
+        [earthquake],
       ),
     );
 

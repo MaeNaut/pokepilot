@@ -13,6 +13,7 @@ import { statTranslationKeys } from "../i18n/statTranslations";
 import type { TranslationKey } from "../i18n/translations";
 import { useLocalization } from "../i18n/useLocalization";
 import type { CopilotSetOptimizationCandidateSnapshot } from "../utils/copilotContracts";
+import { selectOptimizationEvidence } from "../utils/copilotOptimizationEvidence";
 
 export type OptimizationActionStatus =
   | "applied"
@@ -170,6 +171,8 @@ export function CopilotOptimizationRecommendation({
 }: CopilotOptimizationRecommendationProps) {
   const { t } = useLocalization();
   const nature = getNatureById(candidate.natureId);
+  const evidence = selectOptimizationEvidence(candidate);
+  const hasEvidence = evidence.offense.length > 0 || evidence.defense.length > 0 || evidence.showSpeed;
 
   const speedRelationLabel = t(
     `copilot.optimization.speed-${candidate.speedBenchmark.optimized.relation}` as TranslationKey,
@@ -214,7 +217,7 @@ export function CopilotOptimizationRecommendation({
         <strong>{formatSpread(candidate)}</strong>
       </div>
       <p>{reason}</p>
-      <details className="copilot-optimization-evidence">
+      {hasEvidence ? <details className="copilot-optimization-evidence">
         <summary>
           <span>
             <FontAwesomeIcon icon={faCalculator} aria-hidden="true" />
@@ -223,21 +226,21 @@ export function CopilotOptimizationRecommendation({
           <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
         </summary>
         <div className="copilot-optimization-benchmarks">
-          {candidate.offenseBenchmarks.map((benchmark) => (
+          {evidence.offense.map((benchmark) => (
             <CopilotOptimizationMoveBenchmark
               key={`offense-${benchmark.moveId}`}
               benchmark={benchmark}
               focus="offense"
             />
           ))}
-          {candidate.defenseBenchmarks.map((benchmark) => (
+          {evidence.defense.map((benchmark) => (
             <CopilotOptimizationMoveBenchmark
               key={`defense-${benchmark.moveId}`}
               benchmark={benchmark}
               focus="defense"
             />
           ))}
-          <div className="copilot-optimization-benchmark is-speed">
+          {evidence.showSpeed ? <div className="copilot-optimization-benchmark is-speed">
             <div className="copilot-optimization-benchmark-title">
               <strong>
                 <FontAwesomeIcon icon={faPersonRunning} aria-hidden="true" />
@@ -259,9 +262,9 @@ export function CopilotOptimizationRecommendation({
               <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
               <strong>{candidate.speedBenchmark.optimized.playerSpeed}</strong>
             </span>
-          </div>
+          </div> : null}
         </div>
-      </details>
+      </details> : null}
       <div className="copilot-optimization-actions">
         <button type="button" disabled={isStale} onClick={() => onApply(candidate)}>
           <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
