@@ -160,6 +160,24 @@ function sanitizeOptimizationNarrative(
   };
 }
 
+function normalizeOptimizationAudit(
+  output: ReturnType<typeof completeCopilotStrategyAudit>,
+  request: CopilotAnalysisRequest,
+) {
+  if (request.scope !== "optimization") return output;
+
+  return {
+    ...output,
+    strategyAudit: {
+      plans: [],
+      interactions: [],
+      facts: [],
+      candidateFacts: [],
+      recommendationEvidence: [],
+    },
+  };
+}
+
 export function validateHostedCopilotAnalysis(
   output: unknown,
   request: CopilotAnalysisRequest,
@@ -173,8 +191,8 @@ export function validateHostedCopilotAnalysis(
     throw invalidAnalysis("Hosted analysis returned an invalid response.");
   }
 
-  const groundedOutput = completeCopilotStrategyAudit(
-    outputValidation.data,
+  const groundedOutput = normalizeOptimizationAudit(
+    completeCopilotStrategyAudit(outputValidation.data, request),
     request,
   );
   validateRecommendationIds(groundedOutput.analysis, request);

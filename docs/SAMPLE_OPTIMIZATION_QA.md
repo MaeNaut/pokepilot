@@ -329,3 +329,29 @@ passed. The existing large-chunk warning remains. Ignored evidence is stored as
   explanations should not imply a new outspeed breakpoint from that tag alone.
 - Initial QA only added this report and the reproduction test. The follow-up
   modifies candidate selection and adds passing regression coverage.
+
+## Saved-Team Browser Follow-Up
+
+Chrome QA used the saved `Coach Scrafty` team rather than the controlled fixture.
+For Tyranitar versus Life Orb Gholdengo, Sand was selected automatically and the
+optimizer supplied only `set-current`. The hosted Korean result retained Brave
+H32/A32/B1/D1 and explained that the current offense, bulk, and Trick Room Speed
+direction had no verified no-loss replacement in this exact matchup.
+
+The first saved-team Scrafty versus Roseli Berry Kingambit request fell back with
+`AI_INVALID_RESPONSE`. Candidate generation remained available and the fallback
+showed the current Sassy H32/B2/D32 set plus Brave and Relaxed alternatives. A
+direct reproduction with the same Scrafty and Kingambit sets passed production
+validation, selected maximum physical bulk and `set-current`, and cost $0.00272742
+by the repository pricing table. This means the failure was intermittent rather
+than a deterministic candidate or request-contract error.
+
+Optimization does not use the private team-strategy audit, but a model-authored
+entry there could invalidate an otherwise usable optimization response. The
+server now normalizes that unused audit to empty before validation. Candidate ID,
+scope, response shape, and recommendation-count validation remain enforced. This
+hardens the identified intermittent path; because the failed browser response's
+private raw output was not exposed, it is not proof that every possible invalid
+response now recovers. Regression status after the change: 507 tests across 73
+files, lint, TypeScript, and production build passed. The existing large-chunk
+warning is unchanged.

@@ -58,6 +58,22 @@ describe("hosted optimization validation", () => {
     ).toMatchObject({ scope: "optimization" });
   });
 
+  it("ignores unused private audit entries for optimization analysis", () => {
+    const output = createOutput(["set-balanced"]);
+    output.strategyAudit.plans.push({
+      id: "unused-model-plan",
+      lineupSlotIndexes: [],
+      leadSlotIndexes: [],
+      backlineSlotIndexes: [],
+      actions: [],
+    } as never);
+
+    expect(validateHostedCopilotAnalysis(output, request)).toMatchObject({
+      scope: "optimization",
+      recommendations: [{ id: "set-balanced" }],
+    });
+  });
+
   it("rejects an empty optimization recommendation list", () => {
     expect(() =>
       validateHostedCopilotAnalysis(createOutput([]), request),
