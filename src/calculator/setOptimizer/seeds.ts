@@ -179,7 +179,8 @@ export function createDefenseSeeds(
       if (comparisonToCurrent === 0 && !preservesWithFewerPoints) continue;
       if (
         lastBenchmark &&
-        compareDefenseOutcomes(candidate.benchmark, lastBenchmark) <= 0
+        compareDefenseOutcomes(candidate.benchmark, lastBenchmark) <= 0 &&
+        candidate.defense !== CHAMPIONS_MAX_EV_PER_STAT
       ) {
         continue;
       }

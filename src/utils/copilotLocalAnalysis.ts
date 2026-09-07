@@ -19,6 +19,7 @@ import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
   CopilotRecommendation,
+  CopilotSetOptimizationCandidateSnapshot,
 } from "./copilotContracts";
 import {
   describeCandidateFilter,
@@ -697,6 +698,25 @@ function formatLocalOptimizationReason(locale: Locale) {
     : "This option is recommended after comparing its calculated offense, bulk, and Speed results together.";
 }
 
+function formatCurrentSampleReason(candidate: CopilotSetOptimizationCandidateSnapshot, locale: Locale) {
+  const attack = candidate.offenseBenchmarks.find(({ current }) =>
+    current.guaranteedKoHits !== null && current.guaranteedKoHits <= 3,
+  );
+  const defense = candidate.defenseBenchmarks.find(({ current }) =>
+    current.maxDamage > 0 && current.possibleKoHits !== null && current.possibleKoHits >= 2,
+  );
+  if (locale === "ko") {
+    const evidence = attack
+      ? `${attack.moveDisplayName}의 현재 공격 성능을 유지할 수 있습니다.`
+      : `${defense?.moveDisplayName ?? "상대의 공격"}에 대한 계산에서 현재 샘플도 한 번의 공격을 견딜 수 있습니다.`;
+    return `${evidence} 기존 화력·속도·내구를 그대로 유지하는 선택이며, 확인한 변경안은 모두 손익 비교가 필요합니다. 다른 상대까지 검증한 결과는 아닙니다.`;
+  }
+  const evidence = attack
+    ? `Keeping this set retains its current calculated offense with ${attack.moveDisplayName}.`
+    : `The current set can survive a hit from ${defense?.moveDisplayName ?? "the checked attack"} under these conditions.`;
+  return `${evidence} It keeps the existing damage, Speed, and bulk; the checked adjustments are not clear upgrades without tradeoffs. Other matchups have not been verified.`;
+}
+
 function analyzeOptimizationRequest(
   request: CopilotAnalysisRequest,
   locale: Locale,
@@ -735,10 +755,13 @@ function analyzeOptimizationRequest(
     ],
     recommendations: candidates.map((candidate, index) => ({
       id: candidate.id,
-      title: isKorean
-        ? `${candidate.natureDisplayName} 성격의 샘플을 검토해 보세요.`
-        : `Consider the ${candidate.natureDisplayName} sample.`,
-      reason: formatLocalOptimizationReason(locale),
+      title: candidate.id === "set-current"
+        ? (isKorean ? "현재 샘플을 유지해도 좋습니다." : "Keeping the current sample is a valid choice.")
+        : isKorean ? `${candidate.natureDisplayName} 성격의 샘플을 검토해 보세요.`
+          : `Consider the ${candidate.natureDisplayName} sample.`,
+      reason: candidate.id === "set-current"
+        ? formatCurrentSampleReason(candidate, locale)
+        : formatLocalOptimizationReason(locale),
       priority: index === 0 ? "high" : index === 1 ? "medium" : "low",
     })),
   };

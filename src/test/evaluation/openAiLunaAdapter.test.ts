@@ -95,6 +95,22 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
+  it("rejects a missing current-sample card just like the production validator", async () => {
+    const create = vi.fn(async () => ({
+      id: "resp_empty_optimization", service_tier: "default",
+      output_text: JSON.stringify({ ...groundedModelOutput,
+        analysis: { ...modelOutput, scope: "optimization" },
+      }),
+    }));
+    const result = await createOpenAiLunaAdapter({
+      client: { responses: { create } } as never,
+    }).analyze({ ...request, scope: "optimization", optimization: {
+      candidates: [{ id: "set-current" }],
+    } } as unknown as CopilotAnalysisRequest);
+    expect(result.output).toBeNull();
+    expect(result.validationErrors).toContain("Hosted optimization returned an invalid candidate list.");
+    expect(result.debugOutput).toBeDefined();
+  });
   it("forwards a privacy-preserving safety identifier when supplied", async () => {
     const create = vi.fn(async () => ({
       id: "resp_safety_identifier",
@@ -254,7 +270,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 59,
+        promptVersion: 62,
       },
       usage: {
         totalTokens: 150,
@@ -450,6 +466,15 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
       "minimum Stat Points that reach each supplied probability boundary",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "while also retaining alternatives that keep more of the starting investment",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "it is a comparison baseline, not a user-locked constraint",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).not.toContain(
+      "Prefer reallocating unnecessary offense",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
       "optimizedVsCurrent is the calculator's authoritative comparison",

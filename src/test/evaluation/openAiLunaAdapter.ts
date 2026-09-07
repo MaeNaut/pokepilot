@@ -1,4 +1,5 @@
 import type OpenAI from "openai";
+import { validateHostedCopilotAnalysis } from "../../../server/pokepilotAnalysisValidation";
 import {
   analyzeWithOpenAiLuna,
   createLunaStandardUsage,
@@ -88,11 +89,20 @@ export function createOpenAiLunaAdapter({
         };
       }
 
-      return {
-        ...result,
-        output: groundedOutput.analysis,
-        debugOutput: groundedOutput,
-      };
+      try {
+        return {
+          ...result,
+          output: validateHostedCopilotAnalysis(groundedOutput, request),
+          debugOutput: groundedOutput,
+        };
+      } catch (error) {
+        return {
+          ...result,
+          output: null,
+          debugOutput: groundedOutput,
+          validationErrors: [error instanceof Error ? error.message : "Invalid hosted analysis."],
+        };
+      }
     },
   };
 }

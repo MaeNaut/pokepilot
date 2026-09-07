@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateChampionsStats,
   CHAMPIONS_MAX_EV_PER_STAT,
   CHAMPIONS_MAX_EV_TOTAL,
   defaultEvs,
@@ -230,12 +231,13 @@ describe("exact-target set optimizer", () => {
     expect(evaluator.calculate(knockOff, context.player.build, "player-to-opponent"))
       .toMatchObject({ minDamage: 194, maxDamage: 230 });
     const plan = createSetOptimizationPlan(context);
-    expect(plan.candidates).toEqual([]);
-    expect(plan.status).toBe("unavailable");
+    expect(plan.candidates.map(({ id }) => id)).toEqual(["set-current"]);
+    expect(plan.candidates[0].evs).toEqual(context.player.build.evs);
+    expect(plan.status).toBe("ready");
 
-    // Without sand, the same matchup has a real OHKO risk worth addressing.
+    // A real OHKO risk allows measured tradeoffs, not automatic role replacement.
     context.field.weather = "none";
-    expect(createSetOptimizationPlan(context).candidates.length).toBeGreaterThan(0);
+    expect(createSetOptimizationPlan(context).candidates.every((candidate) => candidate.evs.attack > 0)).toBe(true);
 
     context.field.weather = "sand";
     context.direction = "opponent-to-player";
@@ -253,6 +255,12 @@ describe("exact-target set optimizer", () => {
     }, "opponent-to-player");
     expect(belowBoundary?.koHits).toBe(2);
     expect(belowBoundary?.koChance).toBeGreaterThan(0);
+    const tradeoffs = createSetOptimizationPlan(context).candidates;
+    expect(tradeoffs.some((candidate) => candidate.id === "set-current")).toBe(true);
+    expect(tradeoffs.some((candidate) => candidate.evs.attack > 0 && candidate.evs.attack < 32)).toBe(true);
+    expect(tradeoffs.every((candidate) => candidate.evs.attack > 0)).toBe(true);
+    // An explicitly bulk-oriented starting set can still tune its survival boundary.
+    context.player.build.evs = { ...defaultEvs, hp: 32, defense: 18, specialDefense: 16 };
     const noItemPlan = createSetOptimizationPlan(context);
     expect(noItemPlan.candidates.length).toBeGreaterThan(0);
     expect(noItemPlan.candidates.some((candidate) => candidate.natureId === "brave"
@@ -264,8 +272,8 @@ describe("exact-target set optimizer", () => {
     context.player.build.evs = {
       ...defaultEvs,
       hp: 32,
-      attack: 32,
-      defense: 2,
+      attack: 16,
+      defense: 18,
     };
     const plan = createSetOptimizationPlan(context);
 
@@ -278,6 +286,9 @@ describe("exact-target set optimizer", () => {
     );
 
     for (const candidate of plan.candidates) {
+      expect(candidate.finalStats.attack).toBeGreaterThanOrEqual(
+        calculateChampionsStats(attacker.baseStats!, context.player.build.evs, getNatureById(context.player.build.natureId)).attack,
+      );
       expect(candidate.evTotal).toBe(66);
       expect(
         statKeys.every(
@@ -294,8 +305,8 @@ describe("exact-target set optimizer", () => {
     expect(
       plan.candidates.some(
         (candidate) =>
-          candidate.focuses.includes("offense") &&
-          candidate.focuses.includes("defense"),
+          candidate.offenseBenchmarks.length > 0 &&
+          candidate.defenseBenchmarks.length > 0,
       ),
     ).toBe(true);
   });
@@ -349,7 +360,7 @@ describe("exact-target set optimizer", () => {
     ).toBe(true);
   });
 
-  it("does not spend offense when it cannot improve the guaranteed hit count", () => {
+  it("does not add offense to an uninvested set when it cannot improve the guaranteed hit count", () => {
     const restrainedEarthquake = {
       ...earthquake,
       id: "restrained-earthquake",
@@ -365,7 +376,7 @@ describe("exact-target set optimizer", () => {
     context.player.build.natureId = "adamant";
     context.player.build.evs = {
       ...defaultEvs,
-      attack: 32,
+      attack: 0,
       defense: 2,
       specialDefense: 32,
     };
@@ -386,13 +397,12 @@ describe("exact-target set optimizer", () => {
 
     expect(benchmark?.current.guaranteedKoHits).toBe(2);
     expect(benchmark?.optimized.guaranteedKoHits).toBe(2);
-    expect(efficientCandidate?.statPointChanges.attack).toBe(-32);
+    expect(efficientCandidate?.statPointChanges.attack).toBe(0);
     expect(efficientCandidate?.evs).toMatchObject({
       hp: 32,
       attack: 0,
-      defense: 2,
-      specialDefense: 32,
     });
+    expect(efficientCandidate!.evs.defense + efficientCandidate!.evs.specialDefense).toBe(34);
     expect(efficientCandidate?.evTotal).toBe(66);
     expect(
       plan.candidates
@@ -713,7 +723,7 @@ describe("exact-target set optimizer", () => {
     context.player.build.evs = {
       ...defaultEvs,
       hp: 32,
-      attack: 32,
+      attack: 0,
       defense: 2,
     };
 
@@ -902,7 +912,7 @@ describe("exact-target set optimizer", () => {
     context.player.build.evs = {
       ...defaultEvs,
       hp: 32,
-      attack: 32,
+      attack: 0,
       defense: 2,
     };
     context.opponent.build.natureId = "modest";

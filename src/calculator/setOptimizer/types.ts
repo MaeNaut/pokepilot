@@ -129,7 +129,7 @@ export type CandidateSeed = {
   axes: string[];
 };
 
-export type EvaluatedCandidate = SetOptimizationCandidate;
+export type EvaluatedCandidate = SetOptimizationCandidate & { roleCost?: number };
 
 export type OptimizationMove = {
   move: PokemonMove;

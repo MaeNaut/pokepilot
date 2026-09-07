@@ -171,8 +171,9 @@ export function CopilotOptimizationRecommendation({
 }: CopilotOptimizationRecommendationProps) {
   const { t } = useLocalization();
   const nature = getNatureById(candidate.natureId);
+  const isCurrent = candidate.id === "set-current";
   const evidence = selectOptimizationEvidence(candidate);
-  const hasEvidence = evidence.offense.length > 0 || evidence.defense.length > 0 || evidence.showSpeed;
+  const hasEvidence = !isCurrent && (evidence.offense.length > 0 || evidence.defense.length > 0 || evidence.showSpeed);
 
   const speedRelationLabel = t(
     `copilot.optimization.speed-${candidate.speedBenchmark.optimized.relation}` as TranslationKey,
@@ -266,10 +267,13 @@ export function CopilotOptimizationRecommendation({
         </div>
       </details> : null}
       <div className="copilot-optimization-actions">
-        <button type="button" disabled={isStale} onClick={() => onApply(candidate)}>
+        {isCurrent ? <span className="copilot-optimization-current" role="status">
+          <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
+          {t(isStale ? "copilot.analyzedSample" : "copilot.currentSample")}
+        </span> : <button type="button" disabled={isStale} onClick={() => onApply(candidate)}>
           <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
           {t("copilot.applySample")}
-        </button>
+        </button>}
         <button type="button" disabled={isStale} onClick={() => onSave(candidate)}>
           <FontAwesomeIcon icon={faBoxArchive} aria-hidden="true" />
           {t("copilot.saveToBench")}

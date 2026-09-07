@@ -6,6 +6,7 @@ import {
 } from "../../data/natures";
 import type { PokemonMove, StatKey } from "../../types";
 import { getDefensiveTargetStat } from "./evaluator";
+import { getRoleCost } from "./rolePreservation";
 import {
   compareDefenseOutcomes,
   compareOffenseOutcomes,
@@ -200,6 +201,7 @@ function evaluateSeed(
 
   return {
     id: `set-${seed.natureId}-${evCode}`,
+    roleCost: getRoleCost(context, seed),
     slotIndex: context.selectedSlot,
     focuses: seed.focuses,
     profiles: getCandidateProfiles(

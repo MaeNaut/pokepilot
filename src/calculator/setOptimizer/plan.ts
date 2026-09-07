@@ -1,9 +1,12 @@
 import {
   MAX_COMBINATION_FRONTIER,
   MAX_FINAL_SEARCH_FRONTIER,
+  MAX_OPTIMIZATION_CANDIDATES,
 } from "./constants";
 import { evaluateSeeds } from "./candidateEvaluation";
 import { minimizeRedundantDefense } from "./defenseInvestment";
+import { createRolePreserver } from "./rolePreservation";
+import { CURRENT_SAMPLE_ID, shouldOfferCurrentSample } from "./currentSample";
 import {
   selectCandidates,
   selectSearchFrontier,
@@ -68,9 +71,7 @@ function createAtomicSeeds(
         createDefenseSeeds(context, move, evaluator),
       ),
       ...createSpeedSeeds(context, evaluator),
-    ].map((seed) =>
-      minimizeRedundantOffense(context, seed, playerMoves, evaluator),
-    ),
+    ],
   );
 }
 
@@ -109,12 +110,18 @@ export function createSetOptimizationPlan(
   const currentSpeed = evaluator.speed(context.player.build);
   if (!currentSpeed) return createUnavailablePlan(context, "missing-stats");
 
-  const atomicSeeds = createAtomicSeeds(
+  const preserveRole = createRolePreserver(context);
+  const prepareSeeds = (seeds: CandidateSeed[]) => mergeSeeds(seeds.flatMap((seed) => {
+    const minimized = minimizeRedundantOffense(context, seed, playerMoves, evaluator);
+    const preserved = preserveRole(minimized);
+    return [seed, minimized, ...(preserved ? [preserved] : [])];
+  }));
+  const atomicSeeds = prepareSeeds(createAtomicSeeds(
     context,
     evaluator,
     playerMoves,
     opponentMoves,
-  );
+  ));
   const atomicEntries = evaluateSeeds(
     context,
     atomicSeeds,
@@ -124,11 +131,7 @@ export function createSetOptimizationPlan(
     evaluator,
   );
 
-  const pairSeeds = mergeSeeds(
-    createPairSeeds(context, atomicSeeds).map((seed) =>
-      minimizeRedundantOffense(context, seed, playerMoves, evaluator),
-    ),
-  );
+  const pairSeeds = prepareSeeds(createPairSeeds(context, atomicSeeds));
   const pairFrontier = selectSearchFrontier(
     evaluateSeeds(
       context,
@@ -141,13 +144,11 @@ export function createSetOptimizationPlan(
     MAX_COMBINATION_FRONTIER,
   );
 
-  const tripleSeeds = mergeSeeds(
+  const tripleSeeds = prepareSeeds(
     createCombinedSeeds(
       context,
       pairFrontier.map(({ seed }) => seed),
       atomicSeeds,
-    ).map((seed) =>
-      minimizeRedundantOffense(context, seed, playerMoves, evaluator),
     ),
   );
   const tripleEntries = evaluateSeeds(
@@ -177,7 +178,15 @@ export function createSetOptimizationPlan(
       ...normalized, profiles: candidate.profiles,
     }));
   });
-  const candidates = [...new Map(finalized.map((candidate) => [candidate.id, candidate])).values()];
+  let candidates = [...new Map(finalized.map((candidate) => [candidate.id, candidate])).values()];
+  const baseline = evaluateSeeds(context, [{
+    natureId: context.player.build.natureId, evs: { ...context.player.build.evs },
+    focuses: ["offense", "defense", "speed"], targets: {}, axes: [],
+  }], playerMoves, opponentMoves, currentSpeed, evaluator)[0]?.candidate;
+  if (baseline && shouldOfferCurrentSample(baseline, candidates)) {
+    candidates = [{ ...trimCandidateBenchmarks(baseline), id: CURRENT_SAMPLE_ID },
+      ...candidates.slice(0, MAX_OPTIMIZATION_CANDIDATES - 1)];
+  }
 
   return {
     ...createPlanIdentity(context),

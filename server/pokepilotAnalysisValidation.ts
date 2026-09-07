@@ -81,17 +81,50 @@ const optimizationOutcomePattern = new RegExp(
   "iu",
 );
 
-function removeRepeatedOptimizationOutcomes(value: string) {
-  const sentences = value.split(/(?<=[.!?。])\s+/u);
+function verifiedOptimizationReason(id: string, request: CopilotAnalysisRequest) {
+  const candidate = request.optimization?.candidates.find((entry) => entry.id === id);
+  const ko = request.locale === "ko";
+  if (id === "set-current") {
+    return ko
+      ? "현재 샘플의 화력, 스피드와 내구를 그대로 유지하는 선택입니다. 확인한 조정안의 이득과 기존 성능을 바꾸는 비용을 비교할 수 있으며, 다른 상대까지 검증한 결과는 아닙니다."
+      : "Keeping the current sample preserves its damage, Speed, and bulk. The checked adjustments can be weighed against the cost of changing that performance; other opponents have not been verified.";
+  }
 
-  return sentences
-    .map((sentence) => sentence.trim())
-    .filter(
-      (sentence) =>
-        sentence.length > 0 && !optimizationOutcomePattern.test(sentence),
-    )
-    .join(" ")
-    .trim();
+  const parts: string[] = [];
+  for (const [direction, benchmarks] of [
+    ["offense", candidate?.offenseBenchmarks ?? []],
+    ["defense", candidate?.defenseBenchmarks ?? []],
+  ] as const) {
+    for (const comparison of ["better", "worse"] as const) {
+      const names = benchmarks.filter((entry) => entry.optimizedVsCurrent === comparison)
+        .map((entry) => entry.source === "usage"
+          ? `${entry.moveDisplayName} (${ko ? "기술 교체 후보" : "optional move replacement"})`
+          : entry.moveDisplayName).join(", ");
+      if (!names) continue;
+      parts.push(ko
+        ? `${names}의 ${direction === "offense" ? "공격" : "피격 시 생존"} 결과는 현재 샘플보다 ${comparison === "better" ? "좋아집니다" : "불리해집니다"}.`
+        : `The checked ${direction === "offense" ? "offensive" : "survival"} outcome for ${names} ${comparison === "better" ? "improves" : "worsens"} compared with the current sample.`);
+    }
+  }
+  const baseline = request.optimization?.currentBuild?.finalStats;
+  const labels = {
+    hp: ko ? "체력" : "HP", attack: ko ? "공격" : "Attack",
+    defense: ko ? "방어" : "Defense", specialAttack: ko ? "특수공격" : "Special Attack",
+    specialDefense: ko ? "특수방어" : "Special Defense", speed: ko ? "스피드" : "Speed",
+  };
+  const lowerStats = baseline && candidate?.finalStats
+    ? (Object.keys(labels) as Array<keyof typeof labels>)
+      .filter((stat) => candidate.finalStats[stat] < baseline[stat]).map((stat) => labels[stat])
+    : [];
+  if (lowerStats.length) {
+    parts.push(ko
+      ? `대신 현재 샘플보다 ${lowerStats.join(", ")} 실수치가 낮아지는 점을 고려해야 합니다.`
+      : `The tradeoff is lower ${lowerStats.join(", ")} than the current sample.`);
+  }
+  parts.push(ko
+    ? "이 결과는 설정된 상대와 전투 조건에 한정되며, 다른 상대에 대한 성능은 검증하지 않았습니다."
+    : "These results are limited to the configured opponent and battle conditions; performance against other opponents has not been verified.");
+  return parts.join(" ");
 }
 
 function sanitizeOptimizationNarrative(
@@ -107,27 +140,22 @@ function sanitizeOptimizationNarrative(
   const fallbackTitle = isKorean
     ? "검증된 상대 조정을 사용해 보세요."
     : "Use the verified matchup option.";
-  const fallbackReason = isKorean
-    ? "카드에 표시된 계산 결과와 나머지 능력치의 균형을 고려한 선택입니다."
-    : "This option balances the calculator results shown on the card with the remaining stats.";
-  const sanitizedParagraphs = analysis.paragraphs
-    .map(removeRepeatedOptimizationOutcomes)
-    .filter(Boolean);
+  // Sentence deletion can leave a conclusion without its premise or only a drawback.
+  // Replace the complete affected block with calculator-grounded prose instead.
+  const hasRepeatedOutcomes = analysis.paragraphs.some((paragraph) => optimizationOutcomePattern.test(paragraph));
 
   return {
     ...analysis,
     paragraphs:
-      sanitizedParagraphs.length > 0
-        ? sanitizedParagraphs
-        : [fallbackParagraph],
+      hasRepeatedOutcomes ? [fallbackParagraph] : analysis.paragraphs,
     recommendations: analysis.recommendations.map((recommendation) => ({
       ...recommendation,
       title:
-        removeRepeatedOptimizationOutcomes(recommendation.title) ||
-        fallbackTitle,
+        optimizationOutcomePattern.test(recommendation.title) ? fallbackTitle : recommendation.title,
       reason:
-        removeRepeatedOptimizationOutcomes(recommendation.reason) ||
-        fallbackReason,
+        optimizationOutcomePattern.test(recommendation.reason)
+          ? verifiedOptimizationReason(recommendation.id, request)
+          : recommendation.reason,
     })),
   };
 }

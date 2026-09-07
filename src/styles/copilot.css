@@ -952,6 +952,17 @@
   padding: 10px 12px;
 }
 
+.copilot-optimization-current {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 8px;
+  font-size: 13px;
+  color: inherit;
+}
+
 .copilot-optimization-actions button {
   display: inline-flex;
   min-height: 34px;

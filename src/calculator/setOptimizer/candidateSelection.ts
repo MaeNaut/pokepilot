@@ -29,7 +29,15 @@ function getNatureSpreadAlignment(candidate: SetOptimizationCandidate) {
   return candidate.evs[nature.up] - candidate.evs[nature.down];
 }
 
+function getSpeedOrderChange(candidate: EvaluatedCandidate) {
+  // Without an explicit reverse-order objective, losing turn order is a cost.
+  const rank = { slower: 0, tie: 1, faster: 2 };
+  const { current, optimized } = candidate.speedBenchmark;
+  return Math.sign(rank[optimized.relation] - rank[current.relation]);
+}
+
 function hasMeaningfulChange(candidate: EvaluatedCandidate) {
+  if ((candidate.roleCost ?? 0) > 0 && getCandidateScore(candidate) <= 0) return false;
   const sacrificesOffense = candidate.offenseBenchmarks.some(
     ({ current, optimized }) => compareOffenseOutcomes(optimized, current) < 0
       || optimized.maxDamage < current.maxDamage,
@@ -56,11 +64,9 @@ function hasMeaningfulChange(candidate: EvaluatedCandidate) {
   const defenseChanged = candidate.defenseBenchmarks.some(
     ({ current, optimized }) => hasDefensiveSurvivalBoundaryGain(optimized, current),
   );
-  const speedChanged =
-    candidate.speedBenchmark.current.relation !==
-      candidate.speedBenchmark.optimized.relation;
+  const speedImproved = getSpeedOrderChange(candidate) > 0;
 
-  return offenseChanged || defenseChanged || speedChanged;
+  return offenseChanged || defenseChanged || speedImproved;
 }
 
 function getBenchmarkByMove(
@@ -71,6 +77,7 @@ function getBenchmarkByMove(
 }
 
 function dominates(left: EvaluatedCandidate, right: EvaluatedCandidate) {
+  if ((left.roleCost ?? 0) > (right.roleCost ?? 0)) return false;
   if (
     left.speedBenchmark.optimized.relation !==
     right.speedBenchmark.optimized.relation
@@ -170,14 +177,10 @@ function getCandidateScore(candidate: EvaluatedCandidate) {
       score += Math.max(0, current.maxPercent - optimized.maxPercent) * 0.5;
     }
   }
-  if (
-    candidate.speedBenchmark.current.relation !==
-    candidate.speedBenchmark.optimized.relation
-  ) {
-    score += 12;
-  }
+  score += getSpeedOrderChange(candidate) * 12;
   score += getNatureSpreadAlignment(candidate) * 0.25;
   score -= candidate.changedStatPoints * 0.02;
+  score -= candidate.roleCost ?? 0;
 
   return score;
 }
@@ -204,7 +207,11 @@ function getOutcomeSignature(candidate: EvaluatedCandidate) {
     })
     .join("|");
 
-  return `${offense}/${defense}/${candidate.speedBenchmark.optimized.relation}`;
+  // Maximum-bulk alternatives must survive coarse damage-percentage deduplication.
+  const maximumBulk = candidate.profiles.filter((profile) =>
+    profile === "physical-bulk-maximum" || profile === "special-bulk-maximum",
+  ).sort().join(",");
+  return `${offense}/${defense}/${candidate.speedBenchmark.optimized.relation}/${maximumBulk}`;
 }
 
 function selectOffenseHighlights(

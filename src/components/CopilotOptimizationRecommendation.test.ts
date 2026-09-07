@@ -111,6 +111,13 @@ function render(input: Candidate) {
 }
 
 describe("optimization evidence card", () => {
+  it("shows current sample status instead of an apply button or comparison evidence", () => {
+    const html = render(candidate({ id: "set-current", offenseBenchmarks: [early] }));
+    expect(html).toContain("copilot.currentSample");
+    expect(html).not.toContain("copilot.applySample");
+    expect(html).not.toContain("<details");
+    expect(html).toContain("copilot.saveToBench");
+  });
   it("omits an empty evidence disclosure while preserving sample actions", () => {
     const html = render(candidate({ offenseBenchmarks: [benchmark("unchanged")] }));
     expect(html).not.toContain("<details");
