@@ -674,13 +674,13 @@ the Copilot constrained to the current team data and deterministic builder analy
 The current implementation keeps one provider-independent product contract
 across deterministic fallback and hosted analysis:
 
-- `src/utils/copilotAnalysis.ts` creates request-contract v12 containing active
+- `src/utils/copilotAnalysis.ts` creates request-contract v21 containing active
   sets, the selected slot, deterministic diagnostics, field/weather concept
   summaries, validity summaries, and all 18 localized type labels.
-- The same module returns structured summary, strength, focus, playstyle, and
-  recommendation fields from local rules when the hosted route is unavailable.
+- The same module returns structured paragraphs and recommendation cards from
+  local rules when the hosted route is unavailable.
 - `POST /api/pokepilot/analyze` sends the same validated request to Luna at
-  Standard low reasoning. Prompt v34 places stable common instructions at the
+  Standard low reasoning. Prompt v72 places stable common instructions at the
   first explicit cache breakpoint, stable Team/Pokemon/Recommend instructions
   at a second breakpoint, and variable request JSON after both. The cache key is
   versioned by the shared core so different scopes and users can reuse the
@@ -774,6 +774,29 @@ layer is an adapter that produces an array of the same scenarios with usage and
 confidence weights. Deterministic engines should depend on `MatchupScenario`,
 not on `MetaBenchmarkSet`, so exact optimization can ship first and meta support
 can be added without creating a second optimizer.
+
+The current exact-target optimizer also evaluates a bounded loadout layer after
+its Stat Point frontier. Smogon parsing preserves the first four observed item
+names; the Calculator resolves at most three against the legal item catalog and
+removes items already held by another active team member. The optimizer tests at
+most two changed-item branches. For moves, it combines at most two observed
+usage moves with every equipped damaging-move slot, up to four slots per move
+and eight replacement branches total. Status moves remain outside this initial
+replacement slice.
+
+The optimization path does not keep a manual support-move list or assign move
+roles before the model call. The request supplies each changed move's exact
+type, category, power, effect, and tags, plus a neutral same-type-and-category
+comparison. The model must compare all supplied slot siblings for a proposed
+move, infer the utility lost and gained from those mechanics and the full team
+context, and either select the complete candidate with the best tradeoff or keep
+the current set. The replacement benchmark is always retained for disclosure,
+even when the move trades raw damage for utility. Item and move branches are not
+cross-multiplied, so candidate growth remains bounded. Applying or saving a
+candidate writes its complete verified nature, Stat Points, item, and four move
+slots. Speed-only item effects, status-move replacement, and ally-order
+objectives remain outside this slice until the shared scenario contract models
+them directly.
 
 A benchmark entry represents an observed or curated set rather than a species:
 

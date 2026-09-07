@@ -172,12 +172,23 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         guaranteed-hit tier, and reallocate them before candidate ranking.
   - [x] Keep meaningful candidates on a bounded Pareto frontier and allow GPT
         to return only one or two recommendations instead of filling three cards.
-  - [ ] Add ally-order, alternate-move, and alternate-item objectives without
+  - [x] Add bounded alternate-move and alternate-item objectives without
         weakening the exact calculator evidence boundary.
+    - [x] Preserve several observed Smogon item candidates and filter them
+          through the current legality and Item Clause state before optimization.
+    - [x] Compare each bounded observed usage move against every equipped
+          damaging-move slot, while keeping status moves outside the initial
+          replacement slice.
+    - [x] Send exact move mechanics without a manual support-role list, then
+          require GPT to compare every slot sibling and justify the role tradeoff.
+    - [x] Apply or bench the complete verified nature, Stat Point, item, and move
+          loadout and display every item or move change before the action.
+  - [ ] Add ally-order objectives after Trick Room and partner scenarios share
+        the reusable matchup contract.
   - [ ] Treat Trick Room Speed as a separate objective that can prioritize low
         Speed, ally action order, mirror benchmarks, or pre-room turns instead
         of ordinary outspeed coverage.
-  - [ ] Preview gained and lost benchmarks before applying a candidate, then
+  - [x] Preview gained and lost benchmarks before applying a candidate, then
         allow replacing the current set or saving a variant to the bench.
   - [x] Mark exact-target results as conditional on the entered opponent and
         battle state.

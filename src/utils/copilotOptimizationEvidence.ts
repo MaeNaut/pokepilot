@@ -27,9 +27,15 @@ function involvesEarlyKo(benchmark: MoveBenchmark): boolean {
 }
 
 function selectMoveEvidence(benchmarks: MoveBenchmark[]): MoveBenchmark[] {
-  const changed = benchmarks.filter(hasChangedOutcome);
+  const replacements = benchmarks.filter(
+    ({ currentMoveId, moveId }) => currentMoveId !== moveId,
+  );
+  const changed = benchmarks.filter(
+    (benchmark) =>
+      !replacements.includes(benchmark) && hasChangedOutcome(benchmark),
+  );
   const earlyKo = changed.filter(involvesEarlyKo);
-  return earlyKo.length > 0 ? earlyKo : changed;
+  return [...replacements, ...(earlyKo.length > 0 ? earlyKo : changed)];
 }
 
 export function selectOptimizationEvidence(candidate: EvidenceCandidate) {

@@ -11,6 +11,7 @@ export type SmogonUsageSet = {
   cutoff: number;
   ability?: string;
   itemName?: string;
+  itemNames?: string[];
   nature?: string;
   evs?: Partial<StatBlock>;
   moveIds: string[];
@@ -42,9 +43,10 @@ const SMOGON_FORMAT_IDS: Record<BattleFormat, string> = {
   singles: "gen9championsbssregmb",
   doubles: "gen9championsvgc2026regmb",
 };
-const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v3";
+const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v4";
 const SMOGON_USAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 const SMOGON_MOVE_CANDIDATE_LIMIT = 8;
+const SMOGON_ITEM_CANDIDATE_LIMIT = 4;
 const preferredCutoffs = [1630, 1500, 0];
 const sectionLabels = new Set([
   "Abilities",
@@ -144,6 +146,7 @@ function parsePokemonBlock(
     pokemonName,
     sourceMonth,
     cutoff,
+    itemNames: [],
     moveIds: [],
   };
   let activeSection: string | null = null;
@@ -175,8 +178,11 @@ function parsePokemonBlock(
       continue;
     }
 
-    if (activeSection === "Items" && !set.itemName && label !== "Nothing") {
-      set.itemName = label;
+    if (activeSection === "Items" && label !== "Nothing") {
+      if (!set.itemName) set.itemName = label;
+      if ((set.itemNames?.length ?? 0) < SMOGON_ITEM_CANDIDATE_LIMIT) {
+        set.itemNames?.push(label);
+      }
       continue;
     }
 
@@ -232,7 +238,7 @@ export function resolveSmogonUsageMoveIds(
   return resolvedMoveIds;
 }
 
-function parseMovesetText(
+export function parseSmogonMovesetText(
   text: string,
   sourceMonth: string,
   cutoff: number,
@@ -320,7 +326,11 @@ async function fetchSmogonUsageSnapshot(battleFormat: BattleFormat) {
           continue;
         }
 
-        const snapshot = parseMovesetText(await response.text(), month, cutoff);
+        const snapshot = parseSmogonMovesetText(
+          await response.text(),
+          month,
+          cutoff,
+        );
 
         if (snapshot.sets.length === 0) {
           continue;

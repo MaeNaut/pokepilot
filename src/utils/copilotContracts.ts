@@ -180,11 +180,23 @@ export type CopilotSetOptimizationCandidateSnapshot = {
   finalStats: StatBlock;
   itemId: string | null;
   itemDisplayName: string | null;
+  itemChanged: boolean;
+  moveIds: string[];
+  moveChanges: Array<{
+    slotIndex: number;
+    currentMoveId: string;
+    currentMoveDisplayName: string;
+    optimizedMoveId: string;
+    optimizedMoveDisplayName: string;
+    sameTypeAndCategory: boolean;
+  }>;
   changedStatPoints: number;
   statPointChanges: StatBlock;
   offenseBenchmarks: Array<{
     moveId: string;
     moveDisplayName: string;
+    currentMoveId: string;
+    currentMoveDisplayName: string;
     moveCategory: "Physical" | "Special";
     source: SetOptimizationMoveSource;
     relevantStat: StatKey;
@@ -195,6 +207,8 @@ export type CopilotSetOptimizationCandidateSnapshot = {
   defenseBenchmarks: Array<{
     moveId: string;
     moveDisplayName: string;
+    currentMoveId: string;
+    currentMoveDisplayName: string;
     moveCategory: "Physical" | "Special";
     source: SetOptimizationMoveSource;
     relevantStat: StatKey;
@@ -203,6 +217,16 @@ export type CopilotSetOptimizationCandidateSnapshot = {
     optimized: SetOptimizationBenchmark;
   }>;
   speedBenchmark: SetOptimizationSpeedBenchmark;
+};
+
+export type CopilotOptimizationMoveMechanicSnapshot = {
+  id: string;
+  displayName: string;
+  type: PokemonType;
+  category: CopilotMoveCategory;
+  power: number | null;
+  effect?: string;
+  tags?: string[];
 };
 
 export type CopilotSetOptimizationSnapshot = {
@@ -220,12 +244,14 @@ export type CopilotSetOptimizationSnapshot = {
     finalStats: StatBlock;
     itemId: string | null;
     itemDisplayName: string | null;
+    moveIds: string[];
   };
+  moveMechanics: CopilotOptimizationMoveMechanicSnapshot[];
   candidates: CopilotSetOptimizationCandidateSnapshot[];
 };
 
 export type CopilotAnalysisRequest = {
-  version: 18;
+  version: 21;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;

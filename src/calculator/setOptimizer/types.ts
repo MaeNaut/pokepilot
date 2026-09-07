@@ -9,6 +9,7 @@ import type {
 import type { DamageDirection } from "../calculatorViewModel";
 import type {
   PokemonMove,
+  PokemonItem,
   StatBlock,
   StatKey,
   TeamMember,
@@ -20,6 +21,7 @@ export type CalculatorAnalysisSide = {
   battle: CalculatorSideBattleState;
   moves: Array<PokemonMove | undefined>;
   usageMoves?: PokemonMove[];
+  usageItems?: PokemonItem[];
   maxHp: number;
 };
 
@@ -60,6 +62,8 @@ export type SetOptimizationBenchmark = {
 export type SetOptimizationMoveBenchmark = {
   moveId: string;
   moveName: string;
+  currentMoveId: string;
+  currentMoveName: string;
   moveCategory: "Physical" | "Special";
   source: SetOptimizationMoveSource;
   relevantStat: StatKey;
@@ -93,6 +97,9 @@ export type SetOptimizationCandidate = {
   finalStats: StatBlock;
   itemId: string | null;
   itemName: string | null;
+  itemChanged: boolean;
+  moveIds: string[];
+  moveChanges: SetOptimizationMoveChange[];
   changedStatPoints: number;
   statPointChanges: StatBlock;
   offenseBenchmarks: SetOptimizationMoveBenchmark[];
@@ -127,6 +134,22 @@ export type CandidateSeed = {
   focuses: SetOptimizationFocus[];
   targets: Partial<StatBlock>;
   axes: string[];
+};
+
+export type SetOptimizationMoveChange = {
+  slotIndex: number;
+  currentMoveId: string;
+  currentMoveName: string;
+  optimizedMoveId: string;
+  optimizedMoveName: string;
+  sameTypeAndCategory: boolean;
+};
+
+export type CandidateLoadout = {
+  item: PokemonItem | null;
+  moveIds: string[];
+  moves: OptimizationMove[];
+  moveChanges: SetOptimizationMoveChange[];
 };
 
 export type EvaluatedCandidate = SetOptimizationCandidate & { roleCost?: number };

@@ -15,9 +15,10 @@ function candidate(currentHits: number, optimizedHits: number): EvaluatedCandida
   return {
     id: "bulk", slotIndex: 0, focuses: ["defense"], profiles: [], maxedStats: [],
     natureId: "careful", evs: { ...defaultEvs }, evTotal: 0, finalStats: { ...defaultEvs },
-    itemId: null, itemName: null, changedStatPoints: 32, statPointChanges: { ...defaultEvs },
-    offenseBenchmarks: [{ moveId: "crunch", moveName: "Crunch", moveCategory: "Physical", source: "selected", relevantStat: "attack", optimizedVsCurrent: "worse", current: outcome(1), optimized: outcome(2) }],
-    defenseBenchmarks: [{ moveId: "makeitrain", moveName: "Make It Rain", moveCategory: "Special", source: "selected", relevantStat: "specialDefense", optimizedVsCurrent: "better", current: outcome(currentHits), optimized: outcome(optimizedHits, 100 / optimizedHits - 3) }],
+    itemId: null, itemName: null, itemChanged: false, moveIds: ["crunch", "", "", ""], moveChanges: [],
+    changedStatPoints: 32, statPointChanges: { ...defaultEvs },
+    offenseBenchmarks: [{ moveId: "crunch", moveName: "Crunch", currentMoveId: "crunch", currentMoveName: "Crunch", moveCategory: "Physical", source: "selected", relevantStat: "attack", optimizedVsCurrent: "worse", current: outcome(1), optimized: outcome(2) }],
+    defenseBenchmarks: [{ moveId: "makeitrain", moveName: "Make It Rain", currentMoveId: "makeitrain", currentMoveName: "Make It Rain", moveCategory: "Special", source: "selected", relevantStat: "specialDefense", optimizedVsCurrent: "better", current: outcome(currentHits), optimized: outcome(optimizedHits, 100 / optimizedHits - 3) }],
     speedBenchmark: { current: { playerSpeed: 70, opponentSpeed: 90, relation: "slower" }, optimized: { playerSpeed: 70, opponentSpeed: 90, relation: "slower" } },
   };
 }

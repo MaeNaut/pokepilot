@@ -487,6 +487,9 @@ export function CopilotPanel({
               request.optimization?.candidates ??
               []
             }
+            optimizationCurrentItemDisplayName={
+              request.optimization?.currentBuild.itemDisplayName ?? null
+            }
             optimizationActionStatus={optimizationActionStatus}
             onAnalyze={() => void handleAnalyze()}
             onSelectCandidate={(pokemonId) =>

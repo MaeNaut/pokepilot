@@ -3,11 +3,19 @@ import {
   normalizeStatPointSpread,
 } from "../data/natures";
 import type { SmogonUsageSet } from "../api/smogonUsage";
+import { normalizeShowdownId } from "../api/showdownIds";
+import { itemFromIndexEntry } from "../api/showdownCatalog";
 import {
   resolveSmogonUsageAbility,
   resolveSmogonUsageMoveIds,
 } from "../api/smogonUsage";
-import type { PokemonItem, PokemonMove, StatBlock, TeamMember } from "../types";
+import type {
+  ItemIndexEntry,
+  PokemonItem,
+  PokemonMove,
+  StatBlock,
+  TeamMember,
+} from "../types";
 import { findMoveByLookup } from "../utils/pokemonMoves";
 
 export type CalculatorUsageBuild = {
@@ -34,6 +42,36 @@ export function resolveUsageCalculatorMoves(
     const move = findMoveByLookup(availableMoves, moveId);
     return move ? [move] : [];
   });
+}
+
+export function resolveUsageCalculatorItems(
+  usageSet: SmogonUsageSet,
+  itemOptions: readonly ItemIndexEntry[],
+  limit = 3,
+) {
+  const usageItemNames = usageSet.itemNames?.length
+    ? usageSet.itemNames
+    : usageSet.itemName
+      ? [usageSet.itemName]
+      : [];
+  const itemsByLookup = new Map<string, ItemIndexEntry>();
+
+  for (const item of itemOptions) {
+    for (const value of [item.showdownId, item.name, item.displayName]) {
+      const lookup = normalizeShowdownId(value);
+      if (lookup && !itemsByLookup.has(lookup)) itemsByLookup.set(lookup, item);
+    }
+  }
+
+  const resolved = new Map<string, PokemonItem>();
+  for (const itemName of usageItemNames) {
+    const entry = itemsByLookup.get(normalizeShowdownId(itemName));
+    if (!entry || resolved.has(entry.showdownId)) continue;
+    resolved.set(entry.showdownId, itemFromIndexEntry(entry));
+    if (resolved.size >= limit) break;
+  }
+
+  return [...resolved.values()];
 }
 
 export function createDefaultCalculatorBuild(

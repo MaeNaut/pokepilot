@@ -10,8 +10,9 @@ function baseline(): EvaluatedCandidate {
     id: "baseline", slotIndex: 0, focuses: ["offense"], profiles: [], maxedStats: ["attack", "speed"],
     natureId: "jolly", evs: { ...defaultEvs, hp: 2, attack: 32, speed: 32 }, evTotal: 66,
     finalStats: { hp: 150, attack: 150, defense: 100, specialAttack: 80, specialDefense: 100, speed: 180 },
-    itemId: null, itemName: null, changedStatPoints: 0, statPointChanges: { ...defaultEvs },
-    offenseBenchmarks: [{ moveId: "attack", moveName: "Attack", moveCategory: "Physical", source: "selected",
+    itemId: null, itemName: null, itemChanged: false, moveIds: ["attack", "", "", ""], moveChanges: [],
+    changedStatPoints: 0, statPointChanges: { ...defaultEvs },
+    offenseBenchmarks: [{ moveId: "attack", moveName: "Attack", currentMoveId: "attack", currentMoveName: "Attack", moveCategory: "Physical", source: "selected",
       relevantStat: "attack", optimizedVsCurrent: "same", current: outcome, optimized: outcome }],
     defenseBenchmarks: [], speedBenchmark: { current: { playerSpeed: 180, opponentSpeed: 150, relation: "faster" },
       optimized: { playerSpeed: 180, opponentSpeed: 150, relation: "faster" } },
@@ -23,6 +24,30 @@ describe("offering the current sample", () => {
     const current = baseline();
     expect(shouldOfferCurrentSample(current, [])).toBe(true);
     expect(shouldOfferCurrentSample(current, [{ ...current, roleCost: 5 }])).toBe(true);
+  });
+  it("keeps the current set as a baseline when role or loadout changes are the only alternatives", () => {
+    const current = baseline();
+    current.offenseBenchmarks = [];
+    current.defenseBenchmarks = [];
+
+    expect(shouldOfferCurrentSample(current, [{ ...baseline(), roleCost: 5 }])).toBe(true);
+    expect(shouldOfferCurrentSample(current, [{
+      ...baseline(),
+      moveChanges: [{
+        slotIndex: 0,
+        currentMoveId: "attack",
+        currentMoveName: "Attack",
+        optimizedMoveId: "replacement",
+        optimizedMoveName: "Replacement",
+        sameTypeAndCategory: false,
+      }],
+    }])).toBe(true);
+    expect(shouldOfferCurrentSample(current, [{
+      ...baseline(),
+      itemId: "new-item",
+      itemName: "New Item",
+      itemChanged: true,
+    }])).toBe(true);
   });
   it("does not add the current sample as filler when an alternative has no measured loss", () => {
     const current = baseline();

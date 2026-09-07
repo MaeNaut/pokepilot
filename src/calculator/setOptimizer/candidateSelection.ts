@@ -37,7 +37,12 @@ function getSpeedOrderChange(candidate: EvaluatedCandidate) {
 }
 
 function hasMeaningfulChange(candidate: EvaluatedCandidate) {
-  if ((candidate.roleCost ?? 0) > 0 && getCandidateScore(candidate) <= 0) return false;
+  const hasExplicitMoveReplacement = candidate.moveChanges.length > 0;
+  if (
+    (candidate.roleCost ?? 0) > 0 &&
+    getCandidateScore(candidate) <= 0 &&
+    !hasExplicitMoveReplacement
+  ) return false;
   const sacrificesOffense = candidate.offenseBenchmarks.some(
     ({ current, optimized }) => compareOffenseOutcomes(optimized, current) < 0
       || optimized.maxDamage < current.maxDamage,
@@ -51,13 +56,23 @@ function hasMeaningfulChange(candidate: EvaluatedCandidate) {
     ({ current, optimized }) => compareOffenseOutcomes(optimized, current) > 0,
   );
   // Preserving a KO tier does not make an attack-to-bulk trade free.
-  if (sacrificesOffense && !gainsRelevantSurvival && !offenseChanged) return false;
+  if (
+    sacrificesOffense &&
+    !gainsRelevantSurvival &&
+    !offenseChanged &&
+    !hasExplicitMoveReplacement
+  ) return false;
   const gainsGuaranteedSurvival = candidate.defenseBenchmarks.some(
     ({ current, optimized }) => current.possibleKoHits !== null
       && current.possibleKoHits <= 2
       && cappedDefenseHits(optimized.possibleKoHits) > cappedDefenseHits(current.possibleKoHits),
   );
-  if (sacrificesOffense && !gainsGuaranteedSurvival && getCandidateScore(candidate) <= 0) {
+  if (
+    sacrificesOffense &&
+    !gainsGuaranteedSurvival &&
+    getCandidateScore(candidate) <= 0 &&
+    !hasExplicitMoveReplacement
+  ) {
     return false;
   }
 
@@ -66,7 +81,7 @@ function hasMeaningfulChange(candidate: EvaluatedCandidate) {
   );
   const speedImproved = getSpeedOrderChange(candidate) > 0;
 
-  return offenseChanged || defenseChanged || speedImproved;
+  return offenseChanged || defenseChanged || speedImproved || hasExplicitMoveReplacement;
 }
 
 function getBenchmarkByMove(
@@ -78,6 +93,12 @@ function getBenchmarkByMove(
 
 function dominates(left: EvaluatedCandidate, right: EvaluatedCandidate) {
   if ((left.roleCost ?? 0) > (right.roleCost ?? 0)) return false;
+  if (
+    left.itemId !== right.itemId ||
+    left.moveIds.join("|") !== right.moveIds.join("|")
+  ) {
+    return false;
+  }
   if (
     left.speedBenchmark.optimized.relation !==
     right.speedBenchmark.optimized.relation
@@ -181,6 +202,8 @@ function getCandidateScore(candidate: EvaluatedCandidate) {
   score += getNatureSpreadAlignment(candidate) * 0.25;
   score -= candidate.changedStatPoints * 0.02;
   score -= candidate.roleCost ?? 0;
+  score -= Number(candidate.itemChanged);
+  score -= candidate.moveChanges.length * 2;
 
   return score;
 }
@@ -211,13 +234,21 @@ function getOutcomeSignature(candidate: EvaluatedCandidate) {
   const maximumBulk = candidate.profiles.filter((profile) =>
     profile === "physical-bulk-maximum" || profile === "special-bulk-maximum",
   ).sort().join(",");
-  return `${offense}/${defense}/${candidate.speedBenchmark.optimized.relation}/${maximumBulk}`;
+  return `${offense}/${defense}/${candidate.speedBenchmark.optimized.relation}/${maximumBulk}/${candidate.itemId ?? "none"}/${candidate.moveIds.join(".")}`;
 }
 
 function selectOffenseHighlights(
-  benchmarks: SetOptimizationMoveBenchmark[],
+  candidate: EvaluatedCandidate,
 ) {
-  return benchmarks
+  const replacementMoveIds = new Set(
+    candidate.moveChanges.map(({ optimizedMoveId }) => optimizedMoveId),
+  );
+  const replacements = candidate.offenseBenchmarks.filter(
+    ({ moveId, currentMoveId }) =>
+      moveId !== currentMoveId && replacementMoveIds.has(moveId),
+  );
+  const highlights = candidate.offenseBenchmarks
+    .filter((benchmark) => !replacements.includes(benchmark))
     .filter(
       ({ current, optimized }) =>
         cappedOffenseHits(current.guaranteedKoHits) <=
@@ -248,7 +279,9 @@ function selectOffenseHighlights(
       }
       return (rightOutcome?.chance ?? 0) - (leftOutcome?.chance ?? 0);
     })
-    .slice(0, MAX_BENCHMARKS_PER_AXIS);
+    .slice(0, Math.max(0, MAX_BENCHMARKS_PER_AXIS - replacements.length));
+
+  return [...replacements, ...highlights].slice(0, MAX_BENCHMARKS_PER_AXIS);
 }
 
 function selectDefenseHighlights(
@@ -277,7 +310,7 @@ export function trimCandidateBenchmarks(
 ): SetOptimizationCandidate {
   return {
     ...candidate,
-    offenseBenchmarks: selectOffenseHighlights(candidate.offenseBenchmarks),
+    offenseBenchmarks: selectOffenseHighlights(candidate),
     defenseBenchmarks: selectDefenseHighlights(candidate.defenseBenchmarks),
   };
 }
@@ -451,6 +484,23 @@ function collectRequiredBulkProfiles(
   return required;
 }
 
+function collectMoveReplacementRepresentatives(
+  candidates: EvaluatedCandidate[],
+) {
+  const representatives = new Map<string, EvaluatedCandidate>();
+
+  for (const candidate of [...candidates].sort(
+    (left, right) => getCandidateScore(right) - getCandidateScore(left),
+  )) {
+    const change = candidate.moveChanges[0];
+    if (!change) continue;
+    const key = `${change.optimizedMoveId}:${change.slotIndex}`;
+    if (!representatives.has(key)) representatives.set(key, candidate);
+  }
+
+  return [...representatives.values()];
+}
+
 export function selectCandidates(candidates: EvaluatedCandidate[]) {
   const meaningful = candidates.filter(hasMeaningfulChange);
   const frontier = meaningful.filter(
@@ -471,7 +521,12 @@ export function selectCandidates(candidates: EvaluatedCandidate[]) {
 
   const diversified = [...bySignature.values()];
   const selected = new Map<string, EvaluatedCandidate>();
+  for (const candidate of collectMoveReplacementRepresentatives(meaningful)) {
+    if (selected.size >= MAX_OPTIMIZATION_CANDIDATES) break;
+    selected.set(candidate.id, candidate);
+  }
   for (const candidate of collectRequiredBulkProfiles(diversified)) {
+    if (selected.size >= MAX_OPTIMIZATION_CANDIDATES) break;
     selected.set(candidate.id, candidate);
   }
   for (const candidate of diversified) {

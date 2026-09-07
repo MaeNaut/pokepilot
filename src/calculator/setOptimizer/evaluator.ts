@@ -118,7 +118,8 @@ function calculateForBuild(
 }
 
 function getBuildCacheKey(build: CalculatorBuildValues) {
-  return `${build.natureId}:${statKeys
+  const itemId = build.item?.showdownId ?? build.item?.id ?? build.item?.name ?? "";
+  return `${build.natureId}:${itemId}:${statKeys
     .map((stat) => build.evs[stat])
     .join("-")}`;
 }

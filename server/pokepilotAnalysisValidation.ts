@@ -69,6 +69,37 @@ function validateOptimizationIds(
   }
 }
 
+function validateOptimizationMoveNarrative(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  if (request.scope !== "optimization") return;
+
+  const candidates = new Map(
+    (request.optimization?.candidates ?? []).map((candidate) => [
+      candidate.id,
+      candidate,
+    ]),
+  );
+
+  for (const recommendation of analysis.recommendations) {
+    const candidate = candidates.get(recommendation.id);
+    if (!candidate?.moveChanges?.length) continue;
+    const narrative = `${recommendation.title} ${recommendation.reason}`
+      .toLocaleLowerCase(request.locale);
+
+    if (candidate.moveChanges.some((change) =>
+      !narrative.includes(
+        change.optimizedMoveDisplayName.toLocaleLowerCase(request.locale),
+      ),
+    )) {
+      throw invalidAnalysis(
+        "Hosted optimization move explanation does not match its candidate.",
+      );
+    }
+  }
+}
+
 const optimizationOutcomePattern = new RegExp(
   [
     String.raw`\d+(?:\.\d+)?\s*%`,
@@ -86,8 +117,8 @@ function verifiedOptimizationReason(id: string, request: CopilotAnalysisRequest)
   const ko = request.locale === "ko";
   if (id === "set-current") {
     return ko
-      ? "현재 샘플의 화력, 스피드와 내구를 그대로 유지하는 선택입니다. 확인한 조정안의 이득과 기존 성능을 바꾸는 비용을 비교할 수 있으며, 다른 상대까지 검증한 결과는 아닙니다."
-      : "Keeping the current sample preserves its damage, Speed, and bulk. The checked adjustments can be weighed against the cost of changing that performance; other opponents have not been verified.";
+      ? "현재 샘플의 화력, 스피드, 내구, 도구와 기술 구성을 그대로 유지하는 선택입니다. 확인한 조정안의 이득과 기존 성능을 바꾸는 비용을 비교할 수 있으며, 다른 상대까지 검증한 결과는 아닙니다."
+      : "Keeping the current sample preserves its damage, Speed, bulk, item, and moves. The checked adjustments can be weighed against the cost of changing that performance; other opponents have not been verified.";
   }
 
   const parts: string[] = [];
@@ -97,9 +128,16 @@ function verifiedOptimizationReason(id: string, request: CopilotAnalysisRequest)
   ] as const) {
     for (const comparison of ["better", "worse"] as const) {
       const names = benchmarks.filter((entry) => entry.optimizedVsCurrent === comparison)
-        .map((entry) => entry.source === "usage"
-          ? `${entry.moveDisplayName} (${ko ? "기술 교체 후보" : "optional move replacement"})`
-          : entry.moveDisplayName).join(", ");
+        .map((entry) => {
+          if (entry.source !== "usage") return entry.moveDisplayName;
+          const isApplied = candidate?.moveChanges.some(
+            (change) => change.optimizedMoveId === entry.moveId,
+          );
+          const label = isApplied
+            ? (ko ? "적용되는 기술 교체" : "applied move replacement")
+            : (ko ? "선택 가능한 기술 교체" : "optional move replacement");
+          return `${entry.moveDisplayName} (${label})`;
+        }).join(", ");
       if (!names) continue;
       parts.push(ko
         ? `${names}의 ${direction === "offense" ? "공격" : "피격 시 생존"} 결과는 현재 샘플보다 ${comparison === "better" ? "좋아집니다" : "불리해집니다"}.`
@@ -120,6 +158,16 @@ function verifiedOptimizationReason(id: string, request: CopilotAnalysisRequest)
     parts.push(ko
       ? `대신 현재 샘플보다 ${lowerStats.join(", ")} 실수치가 낮아지는 점을 고려해야 합니다.`
       : `The tradeoff is lower ${lowerStats.join(", ")} than the current sample.`);
+  }
+  if (candidate?.itemChanged) {
+    parts.push(ko
+      ? `도구는 ${candidate.itemDisplayName ?? "없음"}(으)로 변경됩니다.`
+      : `The held item changes to ${candidate.itemDisplayName ?? "none"}.`);
+  }
+  for (const change of candidate?.moveChanges ?? []) {
+    parts.push(ko
+      ? `기술 구성은 다음과 같이 변경됩니다: ${change.currentMoveDisplayName} → ${change.optimizedMoveDisplayName}.`
+      : `${change.optimizedMoveDisplayName} replaces ${change.currentMoveDisplayName}.`);
   }
   parts.push(ko
     ? "이 결과는 설정된 상대와 전투 조건에 한정되며, 다른 상대에 대한 성능은 검증하지 않았습니다."
@@ -197,6 +245,7 @@ export function validateHostedCopilotAnalysis(
   );
   validateRecommendationIds(groundedOutput.analysis, request);
   validateOptimizationIds(groundedOutput.analysis, request);
+  validateOptimizationMoveNarrative(groundedOutput.analysis, request);
 
   const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
     groundedOutput,

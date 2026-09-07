@@ -46,6 +46,7 @@ type CopilotAnalysisResultProps = {
   candidateApplyFailure: CandidateApplyFailureReason | null;
   candidateSaveStatus: "saved" | "bench-full" | null;
   optimizationCandidates: CopilotSetOptimizationCandidateSnapshot[];
+  optimizationCurrentItemDisplayName: string | null;
   optimizationActionStatus: OptimizationActionStatus | null;
   onAnalyze: () => void;
   onSelectCandidate: (pokemonId: string) => void;
@@ -125,6 +126,7 @@ export function CopilotAnalysisResult({
   candidateApplyFailure,
   candidateSaveStatus,
   optimizationCandidates,
+  optimizationCurrentItemDisplayName,
   optimizationActionStatus,
   onAnalyze,
   onSelectCandidate,
@@ -314,6 +316,7 @@ export function CopilotAnalysisResult({
                 {optimizationCandidate ? (
                   <CopilotOptimizationRecommendation
                     candidate={optimizationCandidate}
+                    currentItemDisplayName={optimizationCurrentItemDisplayName}
                     title={recommendation.title}
                     reason={recommendation.reason}
                     isStale={isStale}

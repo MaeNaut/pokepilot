@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PokemonMove } from "../types";
 import {
   getSmogonUsageFormatId,
+  parseSmogonMovesetText,
   resolveSmogonUsageMoveIds,
 } from "./smogonUsage";
 
@@ -66,5 +67,36 @@ describe("Smogon usage formats", () => {
     expect(getSmogonUsageFormatId("doubles")).toBe(
       "gen9championsvgc2026regmb",
     );
+  });
+
+  it("keeps several observed item candidates while preserving the top item", () => {
+    const snapshot = parseSmogonMovesetText(
+      `
+ +------------+
+ | Incineroar |
+ +------------+
+ | Raw count: 100
+ | Items |
+ | Sitrus Berry 50.000% |
+ | Assault Vest 25.000% |
+ | Safety Goggles 15.000% |
+ | Leftovers 5.000% |
+ | Choice Band 3.000% |
+ | Moves |
+ | Fake Out 90.000% |
+`,
+      "2026-08",
+      1630,
+    );
+
+    expect(snapshot.sets[0]).toMatchObject({
+      itemName: "Sitrus Berry",
+      itemNames: [
+        "Sitrus Berry",
+        "Assault Vest",
+        "Safety Goggles",
+        "Leftovers",
+      ],
+    });
   });
 });

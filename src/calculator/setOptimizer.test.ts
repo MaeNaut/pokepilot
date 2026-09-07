@@ -748,6 +748,222 @@ describe("exact-target set optimizer", () => {
     expect(mixedBulkCandidate).toBeDefined();
   });
 
+  it("offers a verified usage move replacement when it improves a selected attack", () => {
+    const context = createContext(
+      "player-to-opponent",
+      attacker,
+      defender,
+      [tackle, protect],
+      [tackle],
+    );
+    context.player.usageMoves = [earthquake];
+
+    const plan = createSetOptimizationPlan(context);
+    const replacement = plan.candidates.find(
+      (candidate) => candidate.moveChanges.length > 0,
+    );
+
+    expect(replacement).toMatchObject({
+      itemChanged: false,
+      moveIds: ["earthquake", "protect", "", ""],
+      moveChanges: [
+        {
+          slotIndex: 0,
+          currentMoveId: "tackle",
+          optimizedMoveId: "earthquake",
+        },
+      ],
+    });
+    expect(
+      replacement?.offenseBenchmarks.some(
+        (benchmark) =>
+          benchmark.currentMoveId === "tackle" &&
+          benchmark.moveId === "earthquake" &&
+          benchmark.optimizedVsCurrent === "better",
+      ),
+    ).toBe(true);
+  });
+
+  it("calculates every equipped damaging slot for an observed move", () => {
+    const fakeOut = {
+      ...tackle,
+      id: "fakeout",
+      name: "Fake Out",
+      power: 40,
+    };
+    const closeCombat = {
+      ...tackle,
+      id: "closecombat",
+      name: "Close Combat",
+      type: "fighting" as const,
+      power: 120,
+    };
+    const drainPunch = {
+      ...tackle,
+      id: "drainpunch",
+      name: "Drain Punch",
+      type: "fighting" as const,
+      power: 75,
+    };
+    const context = createContext(
+      "player-to-opponent",
+      attacker,
+      defender,
+      [fakeOut, closeCombat, protect],
+      [tackle],
+    );
+    context.player.usageMoves = [drainPunch];
+
+    const plan = createSetOptimizationPlan(context);
+    const replacements = plan.candidates.filter((candidate) =>
+      candidate.moveChanges.some(
+        ({ optimizedMoveId }) => optimizedMoveId === drainPunch.id,
+      ),
+    );
+    const matchingRole = replacements.find(
+      (candidate) => candidate.moveChanges[0]?.slotIndex === 1,
+    );
+    const supportTradeoff = replacements.find(
+      (candidate) => candidate.moveChanges[0]?.slotIndex === 0,
+    );
+
+    expect(matchingRole?.moveChanges).toEqual([
+      expect.objectContaining({
+        slotIndex: 1,
+        currentMoveId: closeCombat.id,
+        optimizedMoveId: drainPunch.id,
+        sameTypeAndCategory: true,
+      }),
+    ]);
+    expect(matchingRole?.moveIds).toEqual([
+      fakeOut.id,
+      drainPunch.id,
+      protect.id,
+      "",
+    ]);
+    expect(matchingRole?.offenseBenchmarks).toContainEqual(
+      expect.objectContaining({
+        currentMoveId: closeCombat.id,
+        moveId: drainPunch.id,
+      }),
+    );
+    expect(supportTradeoff?.moveChanges[0]).toMatchObject({
+      slotIndex: 0,
+      currentMoveId: fakeOut.id,
+      optimizedMoveId: drainPunch.id,
+      sameTypeAndCategory: false,
+    });
+    expect(replacements.map(({ moveChanges }) => moveChanges[0]?.slotIndex))
+      .toEqual(expect.arrayContaining([0, 1]));
+    expect(replacements.some(({ moveChanges }) =>
+      moveChanges[0]?.slotIndex === 2,
+    )).toBe(false);
+  });
+
+  it("keeps all damaging replacement slots available for AI comparison", () => {
+    const fakeOut = {
+      ...tackle,
+      id: "fakeout",
+      name: "Fake Out",
+      power: 40,
+    };
+    const closeCombat = {
+      ...tackle,
+      id: "closecombat",
+      name: "Close Combat",
+      type: "fighting" as const,
+      power: 120,
+    };
+    const knockOff = {
+      ...tackle,
+      id: "knockoff",
+      name: "Knock Off",
+      type: "dark" as const,
+      power: 65,
+    };
+    const rockSlide = {
+      ...tackle,
+      id: "rockslide",
+      name: "Rock Slide",
+      type: "rock" as const,
+      power: 75,
+    };
+    const context = createContext(
+      "player-to-opponent",
+      attacker,
+      defender,
+      [fakeOut, closeCombat, knockOff, protect],
+      [tackle],
+    );
+    context.player.usageMoves = [rockSlide];
+
+    const plan = createSetOptimizationPlan(context);
+    const replacements = plan.candidates.filter((candidate) =>
+      candidate.moveChanges[0]?.optimizedMoveId === rockSlide.id,
+    );
+
+    expect(replacements.map(({ moveChanges }) => moveChanges[0]?.slotIndex))
+      .toEqual(expect.arrayContaining([0, 1, 2]));
+    expect(replacements.some(({ moveChanges }) =>
+      moveChanges[0]?.slotIndex === 3,
+    )).toBe(false);
+    expect(replacements).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        moveChanges: [expect.objectContaining({
+          slotIndex: 0,
+          currentMoveId: fakeOut.id,
+          optimizedMoveId: rockSlide.id,
+          sameTypeAndCategory: false,
+        })],
+      }),
+      expect.objectContaining({
+        moveChanges: [expect.objectContaining({
+          slotIndex: 2,
+          currentMoveId: knockOff.id,
+          optimizedMoveId: rockSlide.id,
+          sameTypeAndCategory: false,
+        })],
+      }),
+    ]));
+  });
+
+  it("keeps a calculated usage item alternative when it crosses an attack boundary", () => {
+    const heavyStrike: PokemonMove = {
+      ...tackle,
+      id: "heavy-strike",
+      name: "Heavy Strike",
+      power: 110,
+    };
+    const context = createContext(
+      "player-to-opponent",
+      attacker,
+      defender,
+      [heavyStrike],
+      [tackle],
+    );
+    context.player.usageItems = [
+      { id: "choiceband", showdownId: "choiceband", name: "Choice Band" },
+    ];
+
+    const plan = createSetOptimizationPlan(context);
+    const itemCandidate = plan.candidates.find(
+      (candidate) => candidate.itemChanged,
+    );
+
+    expect(itemCandidate).toMatchObject({
+      itemId: "choiceband",
+      itemName: "Choice Band",
+      itemChanged: true,
+      moveIds: ["heavy-strike", "", "", ""],
+      moveChanges: [],
+    });
+    expect(
+      itemCandidate?.offenseBenchmarks.some(
+        (benchmark) => benchmark.optimizedVsCurrent === "better",
+      ),
+    ).toBe(true);
+  });
+
   it("keeps both maximum physical bulk and a minimum survival spread with reserve special bulk", () => {
     const farigiraf: TeamMember = {
       id: "farigiraf",

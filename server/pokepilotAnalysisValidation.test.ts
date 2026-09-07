@@ -86,6 +86,45 @@ describe("hosted optimization validation", () => {
     ).toThrow("invalid candidate list");
   });
 
+  it("rejects a move explanation that names a different replacement", () => {
+    const output = createOutput(["set-move"]);
+    output.analysis.recommendations[0].title = "Use Superpower in this matchup.";
+    output.analysis.recommendations[0].reason =
+      "Superpower provides the strongest direct pressure.";
+    const moveRequest = {
+      ...request,
+      optimization: {
+        candidates: [{
+          id: "set-move",
+          moveChanges: [{ optimizedMoveDisplayName: "High Horsepower" }],
+        }],
+      },
+    } as CopilotAnalysisRequest;
+
+    expect(() => validateHostedCopilotAnalysis(output, moveRequest)).toThrow(
+      "move explanation does not match its candidate",
+    );
+  });
+
+  it("accepts a move explanation that names its applied replacement", () => {
+    const output = createOutput(["set-move"]);
+    output.analysis.recommendations[0].title =
+      "Use High Horsepower in this matchup.";
+    const moveRequest = {
+      ...request,
+      optimization: {
+        candidates: [{
+          id: "set-move",
+          moveChanges: [{ optimizedMoveDisplayName: "High Horsepower" }],
+        }],
+      },
+    } as CopilotAnalysisRequest;
+
+    expect(validateHostedCopilotAnalysis(output, moveRequest)).toMatchObject({
+      recommendations: [{ id: "set-move" }],
+    });
+  });
+
   it("replaces affected blocks without leaving detached conclusions or only drawbacks", () => {
     const output = createOutput(["set-balanced"]);
     output.analysis.paragraphs = [
@@ -156,6 +195,6 @@ describe("hosted optimization validation", () => {
     expect(validateHostedCopilotAnalysis(output, currentRequest)).toEqual(output.analysis);
     output.analysis.recommendations[0].reason = "It already reaches a guaranteed 2HKO.";
     const result = validateHostedCopilotAnalysis(output, currentRequest);
-    expect(result.recommendations[0].reason).toContain("preserves its damage, Speed, and bulk");
+    expect(result.recommendations[0].reason).toContain("preserves its damage, Speed, bulk, item, and moves");
   });
 });
