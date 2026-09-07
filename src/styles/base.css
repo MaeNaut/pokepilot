@@ -1001,7 +1001,7 @@ button {
   bottom: 0;
   left: 100%;
   width: max(0px, calc((100vw - 100%) / 2));
-  background: #0a0b0c;
+  background: var(--copilot-panel-background);
   content: "";
   pointer-events: none;
 }

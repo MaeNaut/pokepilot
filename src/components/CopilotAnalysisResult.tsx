@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBoxArchive,
@@ -24,6 +24,7 @@ import { fetchPokemon } from "../api/pokeApi";
 import type { TeamMember } from "../types";
 import { PokemonIcon } from "./PokemonIcon";
 import { TypeBadge } from "./TypeBadge";
+import { useSequentialTextReveal } from "../hooks/useSequentialTextReveal";
 
 type CandidateApplyFailureReason = Extract<
   RecommendedPokemonApplyResult,
@@ -158,9 +159,39 @@ export function CopilotAnalysisResult({
       ),
     [response.recommendations],
   );
+  const narrativeTexts = useMemo(
+    () => [response.title, ...response.paragraphs],
+    [response.paragraphs, response.title],
+  );
+  const narrativeReveal = useSequentialTextReveal(
+    narrativeTexts,
+    shouldReveal,
+  );
+
+  const renderNarrativeText = (text: string, index: number) => {
+    if (!narrativeReveal.isAnimated) {
+      return text;
+    }
+
+    return (
+      <span aria-label={text}>
+        <span aria-hidden="true">{narrativeReveal.visibleTexts[index]}</span>
+        {narrativeReveal.activeIndex === index ? (
+          <span
+            className="copilot-typing-cursor"
+            aria-hidden="true"
+          />
+        ) : null}
+      </span>
+    );
+  };
 
   return (
-    <div className={`copilot-result${shouldReveal ? " is-revealing" : ""}`}>
+    <div
+      className={`copilot-result${shouldReveal ? " is-revealing" : ""}${
+        narrativeReveal.isComplete ? " is-narrative-complete" : ""
+      }`}
+    >
       {usedFallback ? (
         <div className="copilot-fallback-notice" role="status">
           <FontAwesomeIcon
@@ -194,16 +225,18 @@ export function CopilotAnalysisResult({
         </div>
       ) : null}
 
-      <section className="copilot-narrative copilot-reveal is-narrative">
-        <h3>{response.title}</h3>
+      <section className="copilot-narrative">
+        <h3>{renderNarrativeText(response.title, 0)}</h3>
         <div className="copilot-narrative-copy">
           {response.paragraphs.map((paragraph, index) => (
-            <p key={`${index}-${paragraph}`}>{paragraph}</p>
+            <p key={`${index}-${paragraph}`}>
+              {renderNarrativeText(paragraph, index + 1)}
+            </p>
           ))}
         </div>
       </section>
 
-      <section
+      {narrativeReveal.isComplete ? <section
         className={`copilot-section copilot-recommendations${
           scope === "recommendation" ? " is-candidates" : ""
         }${scope === "optimization" ? " is-optimization" : ""}${
@@ -258,7 +291,7 @@ export function CopilotAnalysisResult({
           <CopilotOptimizationStatus status={optimizationActionStatus} />
         ) : null}
         <ol>
-          {sortedRecommendations.map((recommendation) => {
+          {sortedRecommendations.map((recommendation, index) => {
             const candidate =
               scope === "recommendation"
                 ? candidatesById.get(recommendation.id)
@@ -272,6 +305,11 @@ export function CopilotAnalysisResult({
               <li
                 className="copilot-reveal is-recommendation"
                 key={recommendation.id}
+                style={
+                  {
+                    "--copilot-reveal-index": index,
+                  } as CSSProperties
+                }
               >
                 {optimizationCandidate ? (
                   <CopilotOptimizationRecommendation
@@ -365,7 +403,7 @@ export function CopilotAnalysisResult({
             );
           })}
         </ol>
-      </section>
+      </section> : null}
     </div>
   );
 }

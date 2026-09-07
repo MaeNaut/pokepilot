@@ -551,3 +551,52 @@
   filter: brightness(1.18) saturate(0.92);
   opacity: 0.22;
 }
+
+/* PokePilot deliberately inverts the surrounding app theme. Its history menu
+   is portaled to the document body, so keep these overrides after the shared
+   dark-theme confirmation styles above. */
+:root[data-theme="dark"] .copilot-history-delete-confirm,
+:root[data-theme="dark"] .copilot-history-delete-confirm::before {
+  border-color: var(--copilot-border);
+  background: var(--copilot-surface);
+  color: var(--copilot-text);
+}
+
+:root[data-theme="dark"] .copilot-history-delete-confirm span {
+  color: var(--copilot-muted);
+}
+
+:root[data-theme="dark"]
+  .copilot-history-delete-confirm
+  .clear-pokemon-confirm-button {
+  border-color: var(--copilot-border);
+  background: var(--copilot-surface);
+  color: var(--copilot-text);
+}
+
+:root[data-theme="dark"]
+  .copilot-history-delete-confirm
+  .clear-pokemon-confirm-button:hover,
+:root[data-theme="dark"]
+  .copilot-history-delete-confirm
+  .clear-pokemon-confirm-button:focus-visible {
+  border-color: var(--copilot-text);
+}
+
+:root[data-theme="dark"]
+  .copilot-history-delete-confirm
+  .clear-pokemon-confirm-button.is-danger {
+  border-color: var(--copilot-delete);
+  background: var(--copilot-delete);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .copilot-history-delete-confirm
+  .clear-pokemon-confirm-button.is-danger:hover,
+:root[data-theme="dark"]
+  .copilot-history-delete-confirm
+  .clear-pokemon-confirm-button.is-danger:focus-visible {
+  border-color: var(--copilot-delete-hover);
+  background: var(--copilot-delete-hover);
+}
