@@ -7,6 +7,7 @@ import { evaluateSeeds } from "./candidateEvaluation";
 import { minimizeRedundantDefense } from "./defenseInvestment";
 import { createRolePreserver } from "./rolePreservation";
 import { CURRENT_SAMPLE_ID, shouldOfferCurrentSample } from "./currentSample";
+import { createAlternativeLoadouts } from "./loadouts";
 import {
   selectCandidates,
   selectSearchFrontier,
@@ -164,7 +165,7 @@ export function createSetOptimizationPlan(
     MAX_FINAL_SEARCH_FRONTIER,
   );
   const selected = selectCandidates(searchFrontier.map(({ candidate }) => candidate));
-  const finalized = selected.flatMap((candidate) => {
+  const finalizedEntries = selected.flatMap((candidate) => {
     const entry = searchFrontier.find(({ candidate: source }) => source.id === candidate.id);
     if (!entry) return [];
     return evaluateSeeds(
@@ -174,15 +175,45 @@ export function createSetOptimizationPlan(
       opponentMoves,
       currentSpeed,
       evaluator,
-    ).map(({ candidate: normalized }) => trimCandidateBenchmarks({
-      ...normalized, profiles: candidate.profiles,
+    ).map((entry) => ({
+      ...entry,
+      candidate: { ...entry.candidate, profiles: candidate.profiles },
     }));
   });
-  let candidates = [...new Map(finalized.map((candidate) => [candidate.id, candidate])).values()];
-  const baseline = evaluateSeeds(context, [{
+  const baselineSeed: CandidateSeed = {
     natureId: context.player.build.natureId, evs: { ...context.player.build.evs },
     focuses: ["offense", "defense", "speed"], targets: {}, axes: [],
-  }], playerMoves, opponentMoves, currentSpeed, evaluator)[0]?.candidate;
+  };
+  const baseline = evaluateSeeds(
+    context,
+    [baselineSeed],
+    playerMoves,
+    opponentMoves,
+    currentSpeed,
+    evaluator,
+  )[0]?.candidate;
+  const loadoutSeeds = mergeSeeds([
+    baselineSeed,
+    ...finalizedEntries.map(({ seed }) => seed),
+  ]);
+  const loadoutCandidates = createAlternativeLoadouts(
+    context,
+    playerMoves,
+  ).flatMap((loadout) =>
+    evaluateSeeds(
+      context,
+      loadoutSeeds,
+      playerMoves,
+      opponentMoves,
+      currentSpeed,
+      evaluator,
+      loadout,
+    ).map(({ candidate }) => candidate),
+  );
+  let candidates = selectCandidates([
+    ...finalizedEntries.map(({ candidate }) => candidate),
+    ...loadoutCandidates,
+  ]);
   if (baseline && shouldOfferCurrentSample(baseline, candidates)) {
     candidates = [{ ...trimCandidateBenchmarks(baseline), id: CURRENT_SAMPLE_ID },
       ...candidates.slice(0, MAX_OPTIMIZATION_CANDIDATES - 1)];

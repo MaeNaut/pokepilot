@@ -692,10 +692,24 @@ function analyzeRecommendationRequest(
   };
 }
 
-function formatLocalOptimizationReason(locale: Locale) {
-  return locale === "ko"
+function formatLocalOptimizationReason(
+  candidate: CopilotSetOptimizationCandidateSnapshot,
+  locale: Locale,
+) {
+  const moveChange = candidate.moveChanges[0];
+  const change = moveChange
+    ? locale === "ko"
+      ? `${moveChange.currentMoveDisplayName} 대신 ${moveChange.optimizedMoveDisplayName}을 적용하는 기술 변경도 포함됩니다.`
+      : `It also replaces ${moveChange.currentMoveDisplayName} with ${moveChange.optimizedMoveDisplayName}.`
+    : candidate.itemChanged
+      ? locale === "ko"
+        ? `${candidate.itemDisplayName ?? "도구 없음"}으로 바꾸는 조건도 함께 계산했습니다.`
+        : `The calculation also includes changing to ${candidate.itemDisplayName ?? "no held item"}.`
+      : "";
+  const base = locale === "ko"
     ? "계산된 공격, 내구와 스피드 결과를 함께 비교한 뒤 이 조정을 추천합니다."
     : "This option is recommended after comparing its calculated offense, bulk, and Speed results together.";
+  return change ? `${base} ${change}` : base;
 }
 
 function formatCurrentSampleReason(candidate: CopilotSetOptimizationCandidateSnapshot, locale: Locale) {
@@ -709,12 +723,12 @@ function formatCurrentSampleReason(candidate: CopilotSetOptimizationCandidateSna
     const evidence = attack
       ? `${attack.moveDisplayName}의 현재 공격 성능을 유지할 수 있습니다.`
       : `${defense?.moveDisplayName ?? "상대의 공격"}에 대한 계산에서 현재 샘플도 한 번의 공격을 견딜 수 있습니다.`;
-    return `${evidence} 기존 화력·속도·내구를 그대로 유지하는 선택이며, 확인한 변경안은 모두 손익 비교가 필요합니다. 다른 상대까지 검증한 결과는 아닙니다.`;
+    return `${evidence} 기존 화력, 스피드, 내구, 도구와 기술 구성을 그대로 유지하는 선택이며, 확인한 변경안은 모두 손익 비교가 필요합니다. 다른 상대까지 검증한 결과는 아닙니다.`;
   }
   const evidence = attack
     ? `Keeping this set retains its current calculated offense with ${attack.moveDisplayName}.`
     : `The current set can survive a hit from ${defense?.moveDisplayName ?? "the checked attack"} under these conditions.`;
-  return `${evidence} It keeps the existing damage, Speed, and bulk; the checked adjustments are not clear upgrades without tradeoffs. Other matchups have not been verified.`;
+  return `${evidence} It keeps the existing damage, Speed, bulk, item, and moves; the checked adjustments are not clear upgrades without tradeoffs. Other matchups have not been verified.`;
 }
 
 function analyzeOptimizationRequest(
@@ -739,7 +753,16 @@ function analyzeOptimizationRequest(
     };
   }
 
-  const candidates = optimization.candidates.slice(0, 3);
+  const currentCandidate = optimization.candidates.find(
+    (candidate) => candidate.id === "set-current",
+  );
+  const candidates = currentCandidate
+    ? [currentCandidate]
+    : optimization.candidates
+        .filter((candidate) =>
+          !candidate.itemChanged && candidate.moveChanges.length === 0,
+        )
+        .slice(0, 3);
   return {
     version: 2,
     source: "local",
@@ -747,11 +770,11 @@ function analyzeOptimizationRequest(
     title: `${optimization.playerDisplayName} vs. ${optimization.opponentDisplayName}`,
     paragraphs: [
       isKorean
-        ? `계산기에 설정된 조건을 그대로 사용해 ${optimization.playerDisplayName}의 성격과 노력치 후보를 검증했습니다.`
-        : `The nature and Stat Point options for ${optimization.playerDisplayName} were verified under the exact calculator conditions.`,
+        ? `계산기에 설정된 조건을 그대로 사용해 ${optimization.playerDisplayName}의 성격, 노력치, 기술과 도구 후보를 검증했습니다.`
+        : `The nature, Stat Point, move, and item options for ${optimization.playerDisplayName} were verified under the exact calculator conditions.`,
       isKorean
-        ? "표시된 대미지는 계산기 엔진으로 다시 검증했지만, 현재 도구와 전투 조건을 고정한 결과이므로 다른 상대에게도 같은 성능을 보장하지는 않습니다."
-        : "The displayed damage was rechecked by the calculator engine, but the current item and battle conditions are fixed, so these results do not guarantee the same performance in other matchups.",
+        ? "표시된 대미지는 계산기 엔진으로 다시 검증했지만, 입력한 상대와 전투 조건에 한정된 결과이므로 다른 상대에게도 같은 성능을 보장하지는 않습니다."
+        : "The displayed damage was rechecked by the calculator engine, but the result is limited to the entered opponent and battle conditions and does not guarantee the same performance in other matchups.",
     ],
     recommendations: candidates.map((candidate, index) => ({
       id: candidate.id,
@@ -761,7 +784,7 @@ function analyzeOptimizationRequest(
           : `Consider the ${candidate.natureDisplayName} sample.`,
       reason: candidate.id === "set-current"
         ? formatCurrentSampleReason(candidate, locale)
-        : formatLocalOptimizationReason(locale),
+        : formatLocalOptimizationReason(candidate, locale),
       priority: index === 0 ? "high" : index === 1 ? "medium" : "low",
     })),
   };

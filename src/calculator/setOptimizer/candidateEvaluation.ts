@@ -4,6 +4,7 @@ import {
   getNatureById,
   statKeys,
 } from "../../data/natures";
+import { normalizeShowdownId } from "../../api/showdownIds";
 import type { PokemonMove, StatKey } from "../../types";
 import { getDefensiveTargetStat } from "./evaluator";
 import { getRoleCost } from "./rolePreservation";
@@ -22,6 +23,7 @@ import {
 } from "./spreads";
 import type {
   CalculatorAnalysisContext,
+  CandidateLoadout,
   CandidateSeed,
   EvaluatedCandidate,
   EvaluatedSeed,
@@ -35,7 +37,8 @@ import type {
 } from "./types";
 
 function createMoveBenchmark(
-  move: PokemonMove,
+  currentMove: PokemonMove,
+  optimizedMove: PokemonMove,
   source: SetOptimizationMoveSource,
   current: ReadyDamageResult,
   optimized: ReadyDamageResult,
@@ -50,9 +53,11 @@ function createMoveBenchmark(
       : compareDefenseOutcomes(optimizedBenchmark, currentBenchmark);
 
   return {
-    moveId: move.id,
-    moveName: move.name,
-    moveCategory: move.category as "Physical" | "Special",
+    moveId: optimizedMove.id,
+    moveName: optimizedMove.name,
+    currentMoveId: currentMove.id,
+    currentMoveName: currentMove.name,
+    moveCategory: optimizedMove.category as "Physical" | "Special",
     source,
     relevantStat,
     optimizedVsCurrent:
@@ -133,13 +138,27 @@ function evaluateSeed(
   opponentMoves: OptimizationMove[],
   currentSpeed: SetOptimizationSpeedState,
   evaluator: OptimizationEvaluator,
+  loadout?: CandidateLoadout,
 ): EvaluatedCandidate | null {
   if (!context.player.member?.baseStats) return null;
 
-  const build = createBuild(context, seed.natureId, seed.evs);
-  const offenseBenchmarks = playerMoves.flatMap(({ move, source }) => {
+  const build = {
+    ...createBuild(context, seed.natureId, seed.evs),
+    ...(loadout ? { item: loadout.item, moveIds: loadout.moveIds } : {}),
+  };
+  const optimizedMoves = loadout?.moves ?? playerMoves;
+  const offenseBenchmarks = optimizedMoves.flatMap(({ move, source }) => {
+    const moveChange = loadout?.moveChanges.find(
+      ({ optimizedMoveId }) => optimizedMoveId === move.id,
+    );
+    const currentMove = moveChange
+      ? playerMoves.find(
+          ({ move: candidate }) => candidate.id === moveChange.currentMoveId,
+        )?.move
+      : move;
+    if (!currentMove) return [];
     const current = evaluator.calculate(
-      move,
+      currentMove,
       context.player.build,
       "player-to-opponent",
     );
@@ -155,6 +174,7 @@ function evaluateSeed(
       optimized.offensiveStatOwner === "attacker"
       ? [
           createMoveBenchmark(
+            currentMove,
             move,
             source,
             current,
@@ -184,6 +204,7 @@ function evaluateSeed(
       ? [
           createMoveBenchmark(
             move,
+            move,
             source,
             current,
             optimized,
@@ -196,11 +217,26 @@ function evaluateSeed(
   const optimizedSpeed = evaluator.speed(build);
   if (!optimizedSpeed) return null;
 
-  const item = context.player.build.item;
+  const item = loadout?.item ?? context.player.build.item;
+  const currentItem = context.player.build.item;
+  const itemId = item
+    ? normalizeShowdownId(item.showdownId ?? item.id ?? item.name)
+    : null;
+  const currentItemId = currentItem
+    ? normalizeShowdownId(
+        currentItem.showdownId ?? currentItem.id ?? currentItem.name,
+      )
+    : null;
+  const moveIds = loadout?.moveIds ?? [0, 1, 2, 3].map(
+    (index) => context.player.moves[index]?.id ?? context.player.build.moveIds[index] ?? "",
+  );
   const evCode = statKeys.map((stat) => seed.evs[stat]).join("-");
+  const loadoutCode = loadout
+    ? `-item-${itemId ?? "none"}-moves-${moveIds.join(".")}`
+    : "";
 
   return {
-    id: `set-${seed.natureId}-${evCode}`,
+    id: `set-${seed.natureId}-${evCode}${loadoutCode}`,
     roleCost: getRoleCost(context, seed),
     slotIndex: context.selectedSlot,
     focuses: seed.focuses,
@@ -223,8 +259,11 @@ function evaluateSeed(
       seed.evs,
       getNatureById(seed.natureId),
     ),
-    itemId: item?.showdownId ?? item?.id ?? null,
+    itemId,
     itemName: item?.name ?? null,
+    itemChanged: itemId !== currentItemId,
+    moveIds,
+    moveChanges: loadout?.moveChanges ?? [],
     changedStatPoints: getChangedStatPoints(
       context.player.build.evs,
       seed.evs,
@@ -246,6 +285,7 @@ export function evaluateSeeds(
   opponentMoves: OptimizationMove[],
   currentSpeed: SetOptimizationSpeedState,
   evaluator: OptimizationEvaluator,
+  loadout?: CandidateLoadout,
 ): EvaluatedSeed[] {
   return mergeSeeds(seeds).flatMap((seed) => {
     const candidate = evaluateSeed(
@@ -255,6 +295,7 @@ export function evaluateSeeds(
       opponentMoves,
       currentSpeed,
       evaluator,
+      loadout,
     );
     return candidate ? [{ seed, candidate }] : [];
   });

@@ -24,7 +24,8 @@ function outcome(overrides: Partial<Outcome> = {}): Outcome {
 
 function benchmark(id: string, current = outcome(), optimized = current): Benchmark {
   return {
-    moveId: id, moveDisplayName: id, moveCategory: "Physical", source: "selected",
+    moveId: id, moveDisplayName: id, currentMoveId: id, currentMoveDisplayName: id,
+    moveCategory: "Physical", source: "selected",
     relevantStat: "attack", optimizedVsCurrent: "same", current, optimized,
   };
 }
@@ -34,7 +35,8 @@ function candidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
     id: "sample", slotIndex: 0, focuses: ["defense"], profiles: [], maxedStats: [],
     natureId: "hardy", natureDisplayName: "Hardy", evs: stats, evTotal: 0,
-    finalStats: stats, itemId: null, itemDisplayName: null, changedStatPoints: 0,
+    finalStats: stats, itemId: null, itemDisplayName: null, itemChanged: false,
+    moveIds: ["move", "", "", ""], moveChanges: [], changedStatPoints: 0,
     statPointChanges: stats, offenseBenchmarks: [], defenseBenchmarks: [],
     speedBenchmark: {
       current: { playerSpeed: 70, opponentSpeed: 100, relation: "slower" },
@@ -103,9 +105,9 @@ describe("optimization evidence selection", () => {
   });
 });
 
-function render(input: Candidate) {
+function render(input: Candidate, currentItemDisplayName: string | null = null) {
   return renderToStaticMarkup(createElement(CopilotOptimizationRecommendation, {
-    candidate: input, title: "Sample", reason: "Rationale", isStale: false,
+    candidate: input, currentItemDisplayName, title: "Sample", reason: "Rationale", isStale: false,
     onApply: () => {}, onSave: () => {},
   }));
 }
@@ -140,5 +142,45 @@ describe("optimization evidence card", () => {
     const html = render(input);
     expect(html).toContain("<details");
     expect(html).toContain("is-speed");
+  });
+
+  it("shows an applied move replacement and its before/after calculation", () => {
+    const changedBenchmark = benchmark(
+      "earthquake",
+      outcome({ guaranteedKoHits: 3, possibleKoHits: 3, koHits: 3 }),
+      outcome({ guaranteedKoHits: 2, possibleKoHits: 2, koHits: 2 }),
+    );
+    changedBenchmark.currentMoveId = "tackle";
+    changedBenchmark.currentMoveDisplayName = "Tackle";
+    changedBenchmark.optimizedVsCurrent = "better";
+    const html = render(candidate({
+      moveIds: ["earthquake", "protect", "", ""],
+      moveChanges: [{
+        slotIndex: 0,
+        currentMoveId: "tackle",
+        currentMoveDisplayName: "Tackle",
+        optimizedMoveId: "earthquake",
+        optimizedMoveDisplayName: "Earthquake",
+        sameTypeAndCategory: false,
+      }],
+      offenseBenchmarks: [changedBenchmark],
+    }));
+
+    expect(html).toContain("copilot.optimization.move-change-label");
+    expect(html).toContain("Tackle");
+    expect(html).toContain("Earthquake");
+    expect(html).toContain("copilot.optimization.replacing-move");
+  });
+
+  it("shows the current and replacement item when the candidate changes it", () => {
+    const html = render(candidate({
+      itemId: "choiceband",
+      itemDisplayName: "Choice Band",
+      itemChanged: true,
+    }), "Life Orb");
+
+    expect(html).toContain("Life Orb");
+    expect(html).toContain("Choice Band");
+    expect(html).toContain("copilot-optimization-item-value");
   });
 });

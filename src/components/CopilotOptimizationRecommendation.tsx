@@ -61,6 +61,7 @@ function CopilotOptimizationMoveBenchmark({
   focus,
 }: OptimizationMoveBenchmarkProps) {
   const { t } = useLocalization();
+  const isMoveReplacement = benchmark.currentMoveId !== benchmark.moveId;
 
   function getOutcomeLabel(outcome: OptimizationOutcome) {
     if (outcome.guaranteedKoHits === 1) {
@@ -96,10 +97,15 @@ function CopilotOptimizationMoveBenchmark({
       <div className="copilot-optimization-benchmark-title">
         <strong>
           {t(
-            focus === "offense"
+            isMoveReplacement
+              ? "copilot.optimization.replacing-move"
+              : focus === "offense"
               ? "copilot.optimization.attacking-move"
               : "copilot.optimization.defending-move",
-            { move: benchmark.moveDisplayName },
+            {
+              current: benchmark.currentMoveDisplayName,
+              move: benchmark.moveDisplayName,
+            },
           )}
         </strong>
         {benchmark.source === "usage" ? (
@@ -154,6 +160,7 @@ export function CopilotOptimizationStatus({
 
 type CopilotOptimizationRecommendationProps = {
   candidate: CopilotSetOptimizationCandidateSnapshot;
+  currentItemDisplayName: string | null;
   title: string;
   reason: string;
   isStale: boolean;
@@ -163,6 +170,7 @@ type CopilotOptimizationRecommendationProps = {
 
 export function CopilotOptimizationRecommendation({
   candidate,
+  currentItemDisplayName,
   title,
   reason,
   isStale,
@@ -210,9 +218,31 @@ export function CopilotOptimizationRecommendation({
         </span>
         <span className="copilot-optimization-item">
           <small>{t("copilot.optimization.item-label")}</small>
-          <span>{candidate.itemDisplayName ?? t("copilot.noItem")}</span>
+          <span className="copilot-optimization-item-value">
+            {candidate.itemChanged ? (
+              <>
+                <span>{currentItemDisplayName ?? t("copilot.noItem")}</span>
+                <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
+              </>
+            ) : null}
+            <strong>{candidate.itemDisplayName ?? t("copilot.noItem")}</strong>
+          </span>
         </span>
       </div>
+      {candidate.moveChanges.length > 0 ? (
+        <div className="copilot-optimization-move-change">
+          <small>{t("copilot.optimization.move-change-label")}</small>
+          <span>
+            {candidate.moveChanges.map((change) => (
+              <span key={`${change.slotIndex}-${change.optimizedMoveId}`}>
+                <span>{change.currentMoveDisplayName}</span>
+                <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
+                <strong>{change.optimizedMoveDisplayName}</strong>
+              </span>
+            ))}
+          </span>
+        </div>
+      ) : null}
       <div className="copilot-optimization-spread">
         <small>{t("copilot.optimization.ev-spread-label")}</small>
         <strong>{formatSpread(candidate)}</strong>

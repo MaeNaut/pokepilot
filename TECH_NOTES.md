@@ -674,23 +674,49 @@ the Copilot constrained to the current team data and deterministic builder analy
 The current implementation keeps one provider-independent product contract
 across deterministic fallback and hosted analysis:
 
-- `src/utils/copilotAnalysis.ts` creates request-contract v12 containing active
+- `src/utils/copilotAnalysis.ts` creates request-contract v21 containing active
   sets, the selected slot, deterministic diagnostics, field/weather concept
   summaries, validity summaries, and all 18 localized type labels.
-- The same module returns structured summary, strength, focus, playstyle, and
-  recommendation fields from local rules when the hosted route is unavailable.
-- `POST /api/pokepilot/analyze` sends the same validated request to Luna at
-  Standard low reasoning. Prompt v34 places stable common instructions at the
-  first explicit cache breakpoint, stable Team/Pokemon/Recommend instructions
+- The same module returns structured paragraphs and recommendation cards from
+  local rules when the hosted route is unavailable.
+- `POST /api/pokepilot/analyze` sends the validated request through a server-only
+  lossless input serializer to Luna at Standard low reasoning. Prompt v73 places
+  stable common instructions at the first explicit cache breakpoint, stable
+  Team/Pokemon/Recommend/Sample instructions
   at a second breakpoint, and variable request JSON after both. The cache key is
   versioned by the shared core so different scopes and users can reuse the
   common prefix while scope revisions invalidate only their later segment.
+- `server/pokepilotModelInput.ts` shares exact repeated damage outcomes, Speed
+  states, move/ability details, and current/Mega defensive profiles in a flat
+  `sharedData` table. Occurrences use `dataRef`; full records remain in the table.
+  Matching uses complete serialized values, never element IDs alone. Every
+  candidate, selected-move owner, direction, HP condition, KO probability, and
+  strategic fact survives expansion. Small requests stay inline when references
+  plus their explanation do not save enough text. The explanation follows both
+  cache breakpoints, leaving core v3 and all scope prefixes unchanged. The browser
+  contract, fingerprints, response validation, candidate application, and cooldown
+  accounting still use the complete original request. Prompt v73 separates Redis
+  result entries from v72 without changing the OpenAI prefix caches. Every scope
+  uses the original output schema; the audit field-name compression trial was
+  reverted before release.
 - Hosted Team and Pokemon output includes a private strategy audit. The server
   validates selected-element ownership, legal active states, Mega states,
   defensive facts, supported Speed comparisons, and recommendation evidence,
   then strips the audit before returning the public analysis. Pokemon-scope
   validation also cross-checks public exact-weakness coverage prose and negative
   "no teammate covers this type" claims against every current defensive profile.
+- Production review keeps a structurally valid, correctly scoped public AI
+  analysis when only private grounding is incomplete. It removes unknown or
+  duplicate actionable candidates, repairs deterministic optimization wording,
+  and returns compact quality-warning codes with the analysis. A full rules
+  fallback remains reserved for transport/provider failures, an unusable public
+  response, a scope mismatch, or a Recommend/Sample result with no valid
+  actionable candidate. The stricter evaluation adapter still treats every
+  grounding warning as a failed case so production recovery cannot hide model
+  quality regression. Cache-write or cooldown-finalization failures after a
+  completed model call keep the reviewed analysis and add a service warning;
+  pre-call safeguard storage failures still fail closed. Cache contract v3
+  stores warnings with the reviewed text.
 - Team and selected-Pokemon scopes keep separate results. A request fingerprint marks
   an existing result stale after relevant edits without rerunning analysis on every
   keystroke; changing only the displayed slot does not stale team-scope analysis.
@@ -774,6 +800,29 @@ layer is an adapter that produces an array of the same scenarios with usage and
 confidence weights. Deterministic engines should depend on `MatchupScenario`,
 not on `MetaBenchmarkSet`, so exact optimization can ship first and meta support
 can be added without creating a second optimizer.
+
+The current exact-target optimizer also evaluates a bounded loadout layer after
+its Stat Point frontier. Smogon parsing preserves the first four observed item
+names; the Calculator resolves at most three against the legal item catalog and
+removes items already held by another active team member. The optimizer tests at
+most two changed-item branches. For moves, it combines at most two observed
+usage moves with every equipped damaging-move slot, up to four slots per move
+and eight replacement branches total. Status moves remain outside this initial
+replacement slice.
+
+The optimization path does not keep a manual support-move list or assign move
+roles before the model call. The request supplies each changed move's exact
+type, category, power, effect, and tags, plus a neutral same-type-and-category
+comparison. The model must compare all supplied slot siblings for a proposed
+move, infer the utility lost and gained from those mechanics and the full team
+context, and either select the complete candidate with the best tradeoff or keep
+the current set. The replacement benchmark is always retained for disclosure,
+even when the move trades raw damage for utility. Item and move branches are not
+cross-multiplied, so candidate growth remains bounded. Applying or saving a
+candidate writes its complete verified nature, Stat Points, item, and four move
+slots. Speed-only item effects, status-move replacement, and ally-order
+objectives remain outside this slice until the shared scenario contract models
+them directly.
 
 A benchmark entry represents an observed or curated set rather than a species:
 

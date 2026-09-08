@@ -339,6 +339,14 @@ export const en = {
     "AI analysis is not configured. Showing the rules-based fallback.",
   "copilot.invalidResponseFallback":
     "AI response failed validation. Showing the rules-based fallback.",
+  "copilot.qualityWarningGrounding":
+    "Some strategic evidence could not be verified. Review this AI analysis with care.",
+  "copilot.qualityWarningRecommendations":
+    "Some recommendations could not be verified and were omitted.",
+  "copilot.qualityWarningRepaired":
+    "Some wording was adjusted to match the verified data.",
+  "copilot.qualityWarningService":
+    "The AI analysis completed, but some server features are temporarily unavailable.",
   "copilot.rateLimitedFallback":
     "AI request limit reached. Showing the rules-based fallback.",
   "copilot.serviceUnavailableFallback":
@@ -391,8 +399,10 @@ export const en = {
   "copilot.optimization.defense": "Takes",
   "copilot.optimization.attacking-move": "Attacking {move}",
   "copilot.optimization.defending-move": "Defending {move}",
+  "copilot.optimization.replacing-move": "{current} to {move}",
   "copilot.optimization.nature-label": "Nature",
   "copilot.optimization.item-label": "Item",
+  "copilot.optimization.move-change-label": "Move",
   "copilot.optimization.ev-spread-label": "EV spread",
   "copilot.optimization.calculation-evidence": "Calculation evidence",
   "copilot.optimization.usage-move": "Usage option",
@@ -812,6 +822,14 @@ export const ko = {
     "AI 분석 미설정 · 규칙 기반 분석 표시",
   "copilot.invalidResponseFallback":
     "AI 응답 검증 실패 · 규칙 기반 분석 표시",
+  "copilot.qualityWarningGrounding":
+    "일부 전략 근거를 확인하지 못했습니다 · AI 분석을 주의해서 확인해 주세요",
+  "copilot.qualityWarningRecommendations":
+    "검증할 수 없는 추천 일부를 제외했습니다",
+  "copilot.qualityWarningRepaired":
+    "일부 표현을 검증된 데이터에 맞게 수정했습니다",
+  "copilot.qualityWarningService":
+    "AI 분석은 완료됐지만 일부 서버 기능을 일시적으로 사용할 수 없습니다",
   "copilot.rateLimitedFallback":
     "AI 요청 한도 도달 · 규칙 기반 분석 표시",
   "copilot.serviceUnavailableFallback":
@@ -864,8 +882,10 @@ export const ko = {
   "copilot.optimization.defense": "받는 피해",
   "copilot.optimization.attacking-move": "{move} 공격",
   "copilot.optimization.defending-move": "{move} 방어",
+  "copilot.optimization.replacing-move": "{current}에서 {move}(으)로 변경",
   "copilot.optimization.nature-label": "성격",
   "copilot.optimization.item-label": "도구",
+  "copilot.optimization.move-change-label": "기술",
   "copilot.optimization.ev-spread-label": "노력치",
   "copilot.optimization.calculation-evidence": "계산 근거",
   "copilot.optimization.usage-move": "사용률 후보",

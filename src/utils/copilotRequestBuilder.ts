@@ -4,6 +4,7 @@ import {
   getNatureById,
   statKeys,
 } from "../data/natures";
+import { normalizeShowdownId } from "../api/showdownIds";
 import type { TeamConceptId } from "../data/teamConcepts";
 import {
   conceptCopilotTextKeys,
@@ -31,6 +32,7 @@ import {
 import { hasPokemonCandidateFilters } from "./pokemonCandidateFilters";
 import { getMegaStoneItemName } from "./megaEvolution";
 import {
+  compactCopilotMechanicEffect,
   createCopilotMechanicsSnapshot,
   type CopilotMechanicsSetInput,
 } from "./copilotMechanics";
@@ -53,6 +55,7 @@ import type {
   CopilotMoveCategory,
   CopilotMoveSnapshot,
   CopilotMoveSpreadTarget,
+  CopilotOptimizationMoveMechanicSnapshot,
   CopilotSetOffensiveProfile,
   CopilotSetOptimizationSnapshot,
   CopilotSetSnapshot,
@@ -113,6 +116,54 @@ function getOptimizationPokemonDisplayName(
   });
 }
 
+function createOptimizationMoveMechanics(
+  context: CalculatorAnalysisContext,
+  plan: SetOptimizationPlan,
+  locale: Locale,
+): CopilotOptimizationMoveMechanicSnapshot[] {
+  const relevantMoveIds = new Set(
+    plan.candidates.flatMap((candidate) =>
+      candidate.moveChanges.flatMap((change) => [
+        change.currentMoveId,
+        change.optimizedMoveId,
+      ]),
+    ),
+  );
+  const movesById = new Map<string, PokemonMove>();
+
+  for (const move of [
+    ...context.player.moves,
+    ...(context.player.usageMoves ?? []),
+  ]) {
+    if (!move || !relevantMoveIds.has(move.id) || movesById.has(move.id)) {
+      continue;
+    }
+    movesById.set(move.id, move);
+  }
+
+  return [...movesById.values()].map((move) => {
+    const effect = compactCopilotMechanicEffect(move.description);
+    const tags = [...new Set(
+      (move.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
+    )];
+
+    return {
+      id: move.id,
+      displayName: translateGameName(
+        locale,
+        "moves",
+        move.id,
+        move.name,
+      ),
+      type: move.type,
+      category: normalizeMoveCategory(move.category),
+      power: move.power,
+      ...(effect ? { effect } : {}),
+      ...(tags.length > 0 ? { tags } : {}),
+    };
+  });
+}
+
 function createCopilotOptimizationSnapshot(
   context: CalculatorAnalysisContext | null | undefined,
   locale: Locale,
@@ -136,7 +187,11 @@ function createCopilotOptimizationSnapshot(
 
   const currentNature = getNatureById(context.player.build.natureId);
   const currentItem = context.player.build.item;
-  const currentItemId = currentItem?.showdownId ?? currentItem?.id ?? null;
+  const currentItemId = currentItem
+    ? normalizeShowdownId(
+        currentItem.showdownId ?? currentItem.id ?? currentItem.name,
+      )
+    : null;
   const currentItemDisplayName = currentItem
     ? translateGameName(
         locale,
@@ -178,7 +233,14 @@ function createCopilotOptimizationSnapshot(
       ),
       itemId: currentItemId,
       itemDisplayName: currentItemDisplayName,
+      moveIds: [0, 1, 2, 3].map(
+        (index) =>
+          context.player.moves[index]?.id ??
+          context.player.build.moveIds[index] ??
+          "",
+      ),
     },
+    moveMechanics: createOptimizationMoveMechanics(context, plan, locale),
     candidates: plan.candidates.map((candidate) => ({
       id: candidate.id,
       slotIndex: candidate.slotIndex,
@@ -204,6 +266,26 @@ function createCopilotOptimizationSnapshot(
             candidate.itemName,
           )
         : null,
+      itemChanged: candidate.itemChanged,
+      moveIds: [...candidate.moveIds],
+      moveChanges: candidate.moveChanges.map((change) => ({
+        slotIndex: change.slotIndex,
+        currentMoveId: change.currentMoveId,
+        currentMoveDisplayName: translateGameName(
+          locale,
+          "moves",
+          change.currentMoveId,
+          change.currentMoveName,
+        ),
+        optimizedMoveId: change.optimizedMoveId,
+        optimizedMoveDisplayName: translateGameName(
+          locale,
+          "moves",
+          change.optimizedMoveId,
+          change.optimizedMoveName,
+        ),
+        sameTypeAndCategory: change.sameTypeAndCategory,
+      })),
       changedStatPoints: candidate.changedStatPoints,
       statPointChanges: { ...candidate.statPointChanges },
       offenseBenchmarks: candidate.offenseBenchmarks.map((benchmark) => ({
@@ -213,6 +295,13 @@ function createCopilotOptimizationSnapshot(
           "moves",
           benchmark.moveId,
           benchmark.moveName,
+        ),
+        currentMoveId: benchmark.currentMoveId,
+        currentMoveDisplayName: translateGameName(
+          locale,
+          "moves",
+          benchmark.currentMoveId,
+          benchmark.currentMoveName,
         ),
         moveCategory: benchmark.moveCategory,
         source: benchmark.source,
@@ -228,6 +317,13 @@ function createCopilotOptimizationSnapshot(
           "moves",
           benchmark.moveId,
           benchmark.moveName,
+        ),
+        currentMoveId: benchmark.currentMoveId,
+        currentMoveDisplayName: translateGameName(
+          locale,
+          "moves",
+          benchmark.currentMoveId,
+          benchmark.currentMoveName,
         ),
         moveCategory: benchmark.moveCategory,
         source: benchmark.source,
@@ -826,7 +922,7 @@ export function createCopilotAnalysisRequest({
   );
 
   return {
-    version: 18,
+    version: 21,
     locale,
     scope,
     battleFormat,

@@ -635,7 +635,7 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 18) errors.push("version must be 18.");
+  if (value.version !== 21) errors.push("version must be 21.");
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }

@@ -199,6 +199,8 @@ The MVP should prove the core loop:
         applying the result or saving a bench variant.
   - [x] Score each exact-target candidate as one complete set across offense,
         defense, and Speed, prune dominated outcomes, and avoid forced filler.
+  - [x] Evaluate bounded observed-usage move and item branches, show their exact
+        changes and verified comparisons, and apply the complete loadout.
 - [ ] Build one shared meta benchmark foundation for general threat analysis,
   targeted Pokemon recommendations, calculator presets, and robust optimization.
   - [ ] Represent common observed sets rather than species-only usage ranks,

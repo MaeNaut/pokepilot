@@ -47,6 +47,28 @@ export type CopilotAnalysisScope =
 
 export type CopilotPriority = "high" | "medium" | "low";
 
+export const copilotQualityWarningCodes = [
+  "grounding-incomplete",
+  "recommendations-adjusted",
+  "content-repaired",
+  "service-degraded",
+] as const;
+
+export type CopilotQualityWarningCode =
+  (typeof copilotQualityWarningCodes)[number];
+
+const copilotQualityWarningCodeSet = new Set<string>(
+  copilotQualityWarningCodes,
+);
+
+export function isCopilotQualityWarningCode(
+  value: unknown,
+): value is CopilotQualityWarningCode {
+  return (
+    typeof value === "string" && copilotQualityWarningCodeSet.has(value)
+  );
+}
+
 export type CopilotMoveCategory =
   | "physical"
   | "special"
@@ -180,11 +202,23 @@ export type CopilotSetOptimizationCandidateSnapshot = {
   finalStats: StatBlock;
   itemId: string | null;
   itemDisplayName: string | null;
+  itemChanged: boolean;
+  moveIds: string[];
+  moveChanges: Array<{
+    slotIndex: number;
+    currentMoveId: string;
+    currentMoveDisplayName: string;
+    optimizedMoveId: string;
+    optimizedMoveDisplayName: string;
+    sameTypeAndCategory: boolean;
+  }>;
   changedStatPoints: number;
   statPointChanges: StatBlock;
   offenseBenchmarks: Array<{
     moveId: string;
     moveDisplayName: string;
+    currentMoveId: string;
+    currentMoveDisplayName: string;
     moveCategory: "Physical" | "Special";
     source: SetOptimizationMoveSource;
     relevantStat: StatKey;
@@ -195,6 +229,8 @@ export type CopilotSetOptimizationCandidateSnapshot = {
   defenseBenchmarks: Array<{
     moveId: string;
     moveDisplayName: string;
+    currentMoveId: string;
+    currentMoveDisplayName: string;
     moveCategory: "Physical" | "Special";
     source: SetOptimizationMoveSource;
     relevantStat: StatKey;
@@ -203,6 +239,16 @@ export type CopilotSetOptimizationCandidateSnapshot = {
     optimized: SetOptimizationBenchmark;
   }>;
   speedBenchmark: SetOptimizationSpeedBenchmark;
+};
+
+export type CopilotOptimizationMoveMechanicSnapshot = {
+  id: string;
+  displayName: string;
+  type: PokemonType;
+  category: CopilotMoveCategory;
+  power: number | null;
+  effect?: string;
+  tags?: string[];
 };
 
 export type CopilotSetOptimizationSnapshot = {
@@ -220,12 +266,14 @@ export type CopilotSetOptimizationSnapshot = {
     finalStats: StatBlock;
     itemId: string | null;
     itemDisplayName: string | null;
+    moveIds: string[];
   };
+  moveMechanics: CopilotOptimizationMoveMechanicSnapshot[];
   candidates: CopilotSetOptimizationCandidateSnapshot[];
 };
 
 export type CopilotAnalysisRequest = {
-  version: 18;
+  version: 21;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -255,6 +303,7 @@ export type CopilotAnalysisResponse = {
   title: string;
   paragraphs: string[];
   recommendations: CopilotRecommendation[];
+  qualityWarnings?: CopilotQualityWarningCode[];
   optimizationCandidates?: CopilotSetOptimizationCandidateSnapshot[];
 };
 

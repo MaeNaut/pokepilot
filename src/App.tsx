@@ -57,6 +57,7 @@ import {
 } from "./utils/benchPokemon";
 import type { CalculatorAnalysisContext } from "./calculator/setOptimizer";
 import type { CopilotSetOptimizationCandidateSnapshot } from "./utils/copilotContracts";
+import { resolveOptimizationCandidatePatch } from "./utils/optimizationCandidateApplication";
 import { createTeamAnalysisContext } from "./utils/teamAnalysisContext";
 import {
   formatShowdownSlot,
@@ -541,10 +542,10 @@ function App() {
       return;
     }
 
-    teamBuildState.patchSlot(candidate.slotIndex, {
-      nature: candidate.natureId,
-      evs: { ...candidate.evs },
-    });
+    const patch = resolveOptimizationCandidatePatch(candidate, itemIndex);
+    if (!patch) return;
+
+    teamBuildState.patchSlot(candidate.slotIndex, patch);
     setSelectedTeamSlot(candidate.slotIndex);
   }
 
@@ -562,6 +563,8 @@ function App() {
       teamBuildState.getBuildStateSnapshot(),
       candidate.slotIndex,
     );
+    const patch = resolveOptimizationCandidatePatch(candidate, itemIndex);
+    if (!patch) return false;
     setBench((current) => [
       ...current,
       {
@@ -569,8 +572,12 @@ function App() {
         member,
         build: {
           ...currentBuild,
-          nature: candidate.natureId,
-          evs: { ...candidate.evs },
+          nature: patch.nature ?? currentBuild.nature,
+          evs: patch.evs ?? currentBuild.evs,
+          moveIds: patch.moveIds ?? currentBuild.moveIds,
+          ...(Object.prototype.hasOwnProperty.call(patch, "item")
+            ? { item: patch.item ?? null }
+            : {}),
         },
       },
     ]);

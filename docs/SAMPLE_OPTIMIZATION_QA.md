@@ -355,3 +355,67 @@ private raw output was not exposed, it is not proof that every possible invalid
 response now recovers. Regression status after the change: 507 tests across 73
 files, lint, TypeScript, and production build passed. The existing large-chunk
 warning is unchanged.
+
+## Lossless Model Input Sharing (Prompt v73)
+
+The server now shares exact repeated records at the OpenAI boundary. The full
+browser request, candidate list, calculations, and validation contract are
+unchanged. Damage outcomes, Speed states, move/ability descriptions, and defensive
+profiles use a flat shared-record table only when the text savings exceed the
+reference and explanation overhead. Expansion is tested against the full original
+request, including different current HP, KO probability, move replacements, owners,
+and current/Mega immunity states. No calculations are delegated to the model.
+
+The common and scope prompt text remains byte-identical to v72. The short reference
+explanation follows both cache breakpoints, so existing core/scope caches remain
+reusable. The global response version advances to isolate Redis results.
+
+Same-request token counts, including developer messages and output schema, were
+measured with the API token counter. Changed cases were also generated once per
+variant at Standard low reasoning. Both variants used the same current prompts,
+team, opponent, and candidate list; only serialization and its explanation differ.
+
+| Case | Candidates | Before input | After input | Reduction |
+| --- | ---: | ---: | ---: | ---: |
+| Scrafty / Kingambit, including Drain Punch alternatives | 12 | 21,491 | 16,218 | 24.5% |
+| Tyranitar / Gholdengo | 6 | 15,382 | 13,661 | 11.2% |
+| Farigiraf / Scizor | 4 | 9,765 | 9,147 | 6.3% |
+| Weavile / Gholdengo | 1 | 8,065 | 8,065 | 0% |
+| ZardWile Tail Room team | - | 11,931 | 11,709 | 1.9% |
+| Selected Charizard | - | 10,615 | 10,393 | 2.1% |
+| Tail Room Pokemon recommendation | 30 | 23,400 | 21,346 | 8.8% |
+
+All 12 generated responses remained displayable under production review; 10 passed
+strict audit validation. The selected-Charizard case failed the strict evidence
+linkage audit in both variants: the original missed a named Mawile fact, while the
+shared variant encountered additional paragraph-level teammate/weakness linkage
+checks. These are still quality limitations, not a universal quality-pass claim.
+The Scrafty pair retained the current support set, the Farigiraf pair selected the
+same maximum-physical-bulk and reserve-bulk candidates, and the Pokemon recommendation
+pair selected the same three species in a different order. Tyranitar selected a
+different mix of the valid current and specialized candidates. One pair per case
+does not establish repeated-run stability or identical strategic judgments.
+
+With both variants normalized to warm prefix reads, total generation costs for the
+three sample pairs changed from $0.004128 to $0.003117, $0.003142 to $0.002796, and
+$0.001827 to $0.001704. Recommendation changed from $0.005701 to $0.005193. Team and
+Pokemon outputs happened to grow, offsetting their small input savings; normalized
+total costs increased by about 0.3% and 8.7% respectively. Input savings therefore
+do not guarantee a lower total cost for each stochastic response. Mean latency was
+11.96s before and 12.14s after; no speed improvement is established. The 12 calls
+cost $0.045333 at repository rates, including actual cache writes and reads.
+
+Verification: `npm run check` passed 544 tests across 77 files, lint, TypeScript,
+and production build. No browser/UI code changed. Ignored local evidence is in
+`.tmp/model-input-requests.json`, `.tmp/model-input-comparison.json`, and
+`.tmp/dedup-<case>-<variant>.json`.
+
+## Rejected Output Compression Experiment
+
+The uncommitted v74 private-audit field-name trial was reverted before release.
+Its small savings did not justify splitting shared prompt caches and maintaining
+another output representation. All scopes retain the original output schema and
+core-v3 cache identity. Only the lossless v73 input sharing above is retained.
+Post-revert verification passed lint, 548 tests across 77 files, TypeScript, and
+production build. All four scopes have explicit regression coverage for retaining
+the original output schema and the shared core-v3 cache key.

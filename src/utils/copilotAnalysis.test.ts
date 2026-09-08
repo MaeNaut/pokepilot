@@ -152,7 +152,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 18,
+      version: 21,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -351,6 +351,9 @@ describe("Copilot analysis", () => {
       configuredDirection: "player-to-opponent",
       playerPokemonId: "test-pokemon",
       opponentPokemonId: "test-opponent",
+      currentBuild: {
+        moveIds: [damagingMove.id, "", "", ""],
+      },
     });
     expect(request.optimization?.candidates.length).toBeGreaterThan(0);
     expect(
@@ -389,7 +392,10 @@ describe("Copilot analysis", () => {
               ].includes(benchmark.relevantStat),
           ) &&
           candidate.speedBenchmark.current.opponentSpeed ===
-            candidate.speedBenchmark.optimized.opponentSpeed,
+            candidate.speedBenchmark.optimized.opponentSpeed &&
+          candidate.moveIds.length === 4 &&
+          candidate.itemChanged === false &&
+          candidate.moveChanges.length === 0,
       ),
     ).toBe(true);
     expect(validateCopilotAnalysisRequest(request)).toMatchObject({
@@ -444,6 +450,81 @@ describe("Copilot analysis", () => {
       validateCopilotAnalysisRequest(tamperedMaxedStatsRequest),
     ).toMatchObject({ success: false });
 
+    const tamperedLoadoutRequest = structuredClone(request);
+    const loadoutCandidate = tamperedLoadoutRequest.optimization?.candidates[0];
+    if (loadoutCandidate) {
+      loadoutCandidate.itemChanged = true;
+      loadoutCandidate.moveIds[0] = "invented-move";
+    }
+    expect(
+      validateCopilotAnalysisRequest(tamperedLoadoutRequest),
+    ).toMatchObject({ success: false });
+
+    const usageMove = {
+      ...damagingMove,
+      id: "drain-punch",
+      name: "Drain Punch",
+      power: 75,
+      description: "Restores half the damage inflicted as HP to the user.",
+    };
+    const usageRequest = createCopilotAnalysisRequest({
+      ...input,
+      calculatorContext: {
+        ...input.calculatorContext!,
+        player: {
+          ...input.calculatorContext!.player,
+          usageMoves: [usageMove],
+        },
+      },
+    });
+    const moveReplacement = usageRequest.optimization?.candidates.find(
+      (candidate) => candidate.moveChanges.length > 0,
+    );
+    expect(usageRequest.optimization?.moveMechanics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: damagingMove.id }),
+        expect.objectContaining({
+          id: usageMove.id,
+          effect: usageMove.description,
+        }),
+      ]),
+    );
+    expect(usageRequest.optimization?.moveMechanics.every(
+      (mechanic) => !("responsibilityIds" in mechanic),
+    )).toBe(true);
+    expect(moveReplacement?.moveChanges[0]).toMatchObject({
+      currentMoveId: damagingMove.id,
+      optimizedMoveId: usageMove.id,
+    });
+    expect(moveReplacement?.moveChanges[0]).not.toHaveProperty(
+      "roleLossCost",
+    );
+    expect(moveReplacement?.moveChanges[0]).not.toHaveProperty(
+      "currentResponsibilityIds",
+    );
+    expect(validateCopilotAnalysisRequest(usageRequest)).toMatchObject({
+      success: true,
+    });
+
+    const mismatchedSlotFact = structuredClone(usageRequest);
+    const mismatchedChange = mismatchedSlotFact.optimization?.candidates.find(
+      (candidate) => candidate.moveChanges.length > 0,
+    )?.moveChanges[0];
+    if (mismatchedChange) {
+      mismatchedChange.sameTypeAndCategory = !mismatchedChange.sameTypeAndCategory;
+    }
+    expect(validateCopilotAnalysisRequest(mismatchedSlotFact)).toMatchObject({
+      success: false,
+    });
+
+    const missingMoveMechanic = structuredClone(usageRequest);
+    if (missingMoveMechanic.optimization) {
+      missingMoveMechanic.optimization.moveMechanics = [];
+    }
+    expect(validateCopilotAnalysisRequest(missingMoveMechanic)).toMatchObject({
+      success: false,
+    });
+
     const response = createLocalCopilotAnalysis(request);
     expect(response.scope).toBe("optimization");
     expect(response.recommendations.length).toBeGreaterThan(0);
@@ -455,6 +536,30 @@ describe("Copilot analysis", () => {
         ),
       ),
     ).toBe(true);
+
+    const fallbackCandidate = request.optimization?.candidates[0];
+    if (request.optimization && fallbackCandidate) {
+      const fallbackRequest = {
+        ...request,
+        optimization: {
+          ...request.optimization,
+          candidates: [
+            {
+              ...fallbackCandidate,
+              id: "set-current",
+              itemChanged: false,
+              moveChanges: [],
+            },
+            ...request.optimization.candidates,
+          ],
+        },
+      };
+      expect(
+        createLocalCopilotAnalysis(fallbackRequest).recommendations.map(
+          ({ id }) => id,
+        ),
+      ).toEqual(["set-current"]);
+    }
   });
 
   it("projects the post-Mega state from the held Mega Stone", () => {

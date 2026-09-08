@@ -103,6 +103,24 @@ describe("PokePilot analysis history", () => {
     expect(getStoredCopilotHistory()).toEqual([]);
   });
 
+  it("persists supported hosted quality warnings", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const warnedEntry = createCopilotHistoryEntry({
+      ...createEntry(3),
+      response: {
+        ...response,
+        qualityWarnings: ["grounding-incomplete", "content-repaired"],
+      },
+    });
+
+    storeCopilotHistory([warnedEntry]);
+
+    expect(getStoredCopilotHistory()[0]?.response.qualityWarnings).toEqual([
+      "grounding-incomplete",
+      "content-repaired",
+    ]);
+  });
+
   it("migrates section-based history into narrative paragraphs", () => {
     const storage = createMemoryStorage();
     vi.stubGlobal("localStorage", storage);

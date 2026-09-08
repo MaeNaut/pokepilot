@@ -1,5 +1,6 @@
 ﻿import { describe, expect, it, vi } from "vitest";
 import type { ResponseUsage } from "openai/resources/responses/responses";
+import { copilotGroundedModelOutputJsonSchema } from "../../utils/copilotModelSchema";
 import {
   analyzeWithOpenAiLuna,
   getPokePilotLocaleInstructions,
@@ -17,7 +18,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 18,
+  version: 21,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -95,6 +96,21 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
+  it.each(["team", "pokemon", "recommendation", "optimization"] as const)(
+    "keeps the original output schema and shared cache key for %s", async (scope) => {
+      const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
+      const result = await analyzeWithOpenAiLuna({ ...request, scope }, {
+        client: { responses: { create } } as never,
+      });
+      expect(result.output).toEqual(groundedModelOutput);
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({
+        prompt_cache_key: "pokepilot-production-core-v3-low",
+        text: expect.objectContaining({ format: expect.objectContaining({
+          schema: copilotGroundedModelOutputJsonSchema,
+        }) }),
+      }));
+    },
+  );
   it("rejects a missing current-sample card just like the production validator", async () => {
     const create = vi.fn(async () => ({
       id: "resp_empty_optimization", service_tier: "default",
@@ -105,7 +121,8 @@ describe("OpenAI Luna evaluation adapter", () => {
     const result = await createOpenAiLunaAdapter({
       client: { responses: { create } } as never,
     }).analyze({ ...request, scope: "optimization", optimization: {
-      candidates: [{ id: "set-current" }],
+      candidates: [{ id: "set-current", offenseBenchmarks: [], defenseBenchmarks: [],
+        speedBenchmark: { current: {}, optimized: {} } }],
     } } as unknown as CopilotAnalysisRequest);
     expect(result.output).toBeNull();
     expect(result.validationErrors).toContain("Hosted optimization returned an invalid candidate list.");
@@ -270,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 62,
+        promptVersion: 73,
       },
       usage: {
         totalTokens: 150,
@@ -447,10 +464,52 @@ describe("OpenAI Luna evaluation adapter", () => {
       "evaluated in both directions",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "usage means it is an observed high-usage move candidate",
+      "usage means it came from the observed high-usage move list",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "not currently equipped",
+      "When it does not appear in moveChanges, it is calculation-only evidence",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "look up both move ids in optimization.moveMechanics",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Infer each move's offensive and strategic responsibilities directly",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Complete a mandatory replacement-slot audit",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "compare every supplied slot sibling",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "rather than a fixed list",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "whose type, category, target, and strategic purpose overlap with it most",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "generic stability or unchanged-results language is insufficient",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "chance-based secondary effect alone is not enough",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Preserve the set's only supplied spread-target attack",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Do not discard a deterministic utility effect or STAB attack",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "do not translate them back into English competitive jargon",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).not.toContain(
+      "currentResponsibilityIds",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).not.toContain(
+      "roleLossCost",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "candidate.itemChanged states whether the held item differs",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
       "Return one to three unique, genuinely useful",
@@ -472,6 +531,12 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
       "it is a comparison baseline, not a user-locked constraint",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "Maximum Speed investment together with a Speed-raising nature",
+    );
+    expect(getPokePilotScopeInstructions("optimization")).toContain(
+      "already preserves a full-HP user from a one-hit knockout",
     );
     expect(getPokePilotScopeInstructions("optimization")).not.toContain(
       "Prefer reallocating unnecessary offense",

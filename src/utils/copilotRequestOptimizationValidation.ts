@@ -8,9 +8,11 @@ import {
   isFiniteNumber,
   isNonEmptyString,
   isNullableString,
+  isStringArray,
   isSlotIndex,
   isUniqueEnumArray,
   optimizationCandidateProfiles,
+  pokemonTypeSet,
   statIdSet,
 } from "./copilotRequestValidationPrimitives.js";
 import { isRecord } from "./typeGuards.js";
@@ -97,6 +99,78 @@ function hasValidOptimizationField(value: unknown) {
   );
 }
 
+function hasValidMoveIdSlots(value: unknown) {
+  return (
+    Array.isArray(value) &&
+    value.length === 4 &&
+    value.every(
+      (moveId) => typeof moveId === "string" && moveId.length <= 100,
+    )
+  );
+}
+
+function hasValidOptimizationMoveChanges(value: unknown) {
+  return (
+    Array.isArray(value) &&
+    value.length <= 1 &&
+    value.every(
+      (change) =>
+        isRecord(change) &&
+        hasOnlyKeys(change, [
+          "slotIndex",
+          "currentMoveId",
+          "currentMoveDisplayName",
+          "optimizedMoveId",
+          "optimizedMoveDisplayName",
+          "sameTypeAndCategory",
+        ]) &&
+        isBoundedInteger(change.slotIndex, 0, 3) &&
+        isNonEmptyString(change.currentMoveId) &&
+        isNonEmptyString(change.currentMoveDisplayName) &&
+        isNonEmptyString(change.optimizedMoveId) &&
+        isNonEmptyString(change.optimizedMoveDisplayName) &&
+        change.currentMoveId !== change.optimizedMoveId &&
+        typeof change.sameTypeAndCategory === "boolean",
+    )
+  );
+}
+
+function hasValidOptimizationMoveMechanic(value: unknown) {
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, [
+      "id",
+      "displayName",
+      "type",
+      "category",
+      "power",
+      "effect",
+      "tags",
+    ]) &&
+    isNonEmptyString(value.id) &&
+    isNonEmptyString(value.displayName) &&
+    pokemonTypeSet.has(String(value.type)) &&
+    ["physical", "special", "status", "unknown"].includes(
+      String(value.category),
+    ) &&
+    (value.power === null || isFiniteNumber(value.power, 0, 1_000)) &&
+    (!("effect" in value) ||
+      (isNonEmptyString(value.effect) && String(value.effect).length <= 500)) &&
+    (!("tags" in value) || isStringArray(value.tags, 32))
+  );
+}
+
+function hasValidOptimizationMoveMechanics(value: unknown) {
+  return (
+    Array.isArray(value) &&
+    value.length <= 8 &&
+    value.every(hasValidOptimizationMoveMechanic) &&
+    new Set(
+      value.map((entry) => (isRecord(entry) ? entry.id : null)),
+    ).size === value.length
+  );
+}
+
 export function isValidCopilotOptimizationCandidateSnapshot(
   value: unknown,
 ): value is CopilotSetOptimizationCandidateSnapshot {
@@ -115,6 +189,9 @@ export function isValidCopilotOptimizationCandidateSnapshot(
       "finalStats",
       "itemId",
       "itemDisplayName",
+      "itemChanged",
+      "moveIds",
+      "moveChanges",
       "changedStatPoints",
       "statPointChanges",
       "offenseBenchmarks",
@@ -144,6 +221,9 @@ export function isValidCopilotOptimizationCandidateSnapshot(
     isBoundedIntegerStatBlock(value.finalStats, 1, 10_000) &&
     isNullableString(value.itemId) &&
     isNullableString(value.itemDisplayName) &&
+    typeof value.itemChanged === "boolean" &&
+    hasValidMoveIdSlots(value.moveIds) &&
+    hasValidOptimizationMoveChanges(value.moveChanges) &&
     isBoundedInteger(value.changedStatPoints, 0, 384) &&
     isBoundedIntegerStatBlock(value.statPointChanges, -32, 32) &&
     hasValidOptimizationMoveBenchmarks(value.offenseBenchmarks) &&
@@ -158,6 +238,8 @@ function hasValidOptimizationMoveBenchmark(value: unknown) {
     hasOnlyKeys(value, [
       "moveId",
       "moveDisplayName",
+      "currentMoveId",
+      "currentMoveDisplayName",
       "moveCategory",
       "source",
       "relevantStat",
@@ -167,6 +249,8 @@ function hasValidOptimizationMoveBenchmark(value: unknown) {
     ]) &&
     isNonEmptyString(value.moveId) &&
     isNonEmptyString(value.moveDisplayName) &&
+    isNonEmptyString(value.currentMoveId) &&
+    isNonEmptyString(value.currentMoveDisplayName) &&
     (value.moveCategory === "Physical" || value.moveCategory === "Special") &&
     (value.source === "selected" || value.source === "usage") &&
     statIdSet.has(String(value.relevantStat)) &&
@@ -231,6 +315,7 @@ export function hasValidOptimizationShape(value: unknown) {
       "opponentDisplayName",
       "field",
       "currentBuild",
+      "moveMechanics",
       "candidates",
     ]) &&
     isSlotIndex(value.slotIndex) &&
@@ -250,6 +335,7 @@ export function hasValidOptimizationShape(value: unknown) {
       "finalStats",
       "itemId",
       "itemDisplayName",
+      "moveIds",
     ]) &&
     isNonEmptyString(value.currentBuild.natureId) &&
     isNonEmptyString(value.currentBuild.natureDisplayName) &&
@@ -258,9 +344,11 @@ export function hasValidOptimizationShape(value: unknown) {
     isBoundedIntegerStatBlock(value.currentBuild.finalStats, 1, 10_000) &&
     isNullableString(value.currentBuild.itemId) &&
     isNullableString(value.currentBuild.itemDisplayName) &&
+    hasValidMoveIdSlots(value.currentBuild.moveIds) &&
+    hasValidOptimizationMoveMechanics(value.moveMechanics) &&
     Array.isArray(value.candidates) &&
     value.candidates.length > 0 &&
-    value.candidates.length <= 8 &&
+    value.candidates.length <= 12 &&
     value.candidates.every(isValidCopilotOptimizationCandidateSnapshot) &&
     value.candidates.every(
       (candidate) => candidate.slotIndex === value.slotIndex,
@@ -287,13 +375,46 @@ export function hasValidOptimizationShape(value: unknown) {
         0,
       );
 
+      const currentMoveIds = value.currentBuild.moveIds as string[];
+      const candidateMoveIds = candidate.moveIds;
+      const changedMoveSlots = candidateMoveIds.flatMap((moveId, slotIndex) =>
+        moveId === currentMoveIds[slotIndex] ? [] : [slotIndex],
+      );
+      const moveChanges = candidate.moveChanges;
+      const moveMechanics = Array.isArray(value.moveMechanics)
+        ? value.moveMechanics.filter(isRecord)
+        : [];
+
       return (
         Object.entries(expectedChanges).every(
           ([stat, change]) =>
             candidate.statPointChanges[
               stat as keyof typeof candidate.statPointChanges
             ] === change,
-        ) && candidate.changedStatPoints === expectedChangedStatPoints
+        ) &&
+        candidate.changedStatPoints === expectedChangedStatPoints &&
+        candidate.itemChanged ===
+          (candidate.itemId !== value.currentBuild.itemId) &&
+        changedMoveSlots.length === moveChanges.length &&
+        changedMoveSlots.every((slotIndex) => {
+          const change = moveChanges.find((entry) => entry.slotIndex === slotIndex);
+          const currentMechanic = moveMechanics.find(
+            (entry) => entry.id === change?.currentMoveId,
+          );
+          const optimizedMechanic = moveMechanics.find(
+            (entry) => entry.id === change?.optimizedMoveId,
+          );
+          return Boolean(
+            change &&
+              change.currentMoveId === currentMoveIds[slotIndex] &&
+              change.optimizedMoveId === candidateMoveIds[slotIndex] &&
+              currentMechanic &&
+              optimizedMechanic &&
+              change.sameTypeAndCategory ===
+                (currentMechanic.type === optimizedMechanic.type &&
+                  currentMechanic.category === optimizedMechanic.category),
+          );
+        })
       );
     }) &&
     new Set(

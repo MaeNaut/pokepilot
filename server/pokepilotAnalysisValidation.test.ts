@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis";
-import { validateHostedCopilotAnalysis } from "./pokepilotAnalysisValidation";
+import {
+  reviewHostedCopilotAnalysis,
+  validateHostedCopilotAnalysis,
+} from "./pokepilotAnalysisValidation";
 
 const request = {
   locale: "en",
@@ -86,6 +89,45 @@ describe("hosted optimization validation", () => {
     ).toThrow("invalid candidate list");
   });
 
+  it("rejects a move explanation that names a different replacement", () => {
+    const output = createOutput(["set-move"]);
+    output.analysis.recommendations[0].title = "Use Superpower in this matchup.";
+    output.analysis.recommendations[0].reason =
+      "Superpower provides the strongest direct pressure.";
+    const moveRequest = {
+      ...request,
+      optimization: {
+        candidates: [{
+          id: "set-move",
+          moveChanges: [{ optimizedMoveDisplayName: "High Horsepower" }],
+        }],
+      },
+    } as unknown as CopilotAnalysisRequest;
+
+    expect(() => validateHostedCopilotAnalysis(output, moveRequest)).toThrow(
+      "move explanation does not match its candidate",
+    );
+  });
+
+  it("accepts a move explanation that names its applied replacement", () => {
+    const output = createOutput(["set-move"]);
+    output.analysis.recommendations[0].title =
+      "Use High Horsepower in this matchup.";
+    const moveRequest = {
+      ...request,
+      optimization: {
+        candidates: [{
+          id: "set-move",
+          moveChanges: [{ optimizedMoveDisplayName: "High Horsepower" }],
+        }],
+      },
+    } as CopilotAnalysisRequest;
+
+    expect(validateHostedCopilotAnalysis(output, moveRequest)).toMatchObject({
+      recommendations: [{ id: "set-move" }],
+    });
+  });
+
   it("replaces affected blocks without leaving detached conclusions or only drawbacks", () => {
     const output = createOutput(["set-balanced"]);
     output.analysis.paragraphs = [
@@ -156,6 +198,103 @@ describe("hosted optimization validation", () => {
     expect(validateHostedCopilotAnalysis(output, currentRequest)).toEqual(output.analysis);
     output.analysis.recommendations[0].reason = "It already reaches a guaranteed 2HKO.";
     const result = validateHostedCopilotAnalysis(output, currentRequest);
-    expect(result.recommendations[0].reason).toContain("preserves its damage, Speed, and bulk");
+    expect(result.recommendations[0].reason).toContain("preserves its damage, Speed, bulk, item, and moves");
+  });
+});
+
+describe("recoverable hosted analysis review", () => {
+  it("deduplicates non-actionable strategy cards without discarding the analysis", () => {
+    const output = createOutput(["one", "one", "two", "three", "four"]);
+    output.analysis.scope = "team";
+    const teamRequest = {
+      ...request,
+      scope: "team",
+      sets: [],
+    } as CopilotAnalysisRequest;
+
+    const reviewed = reviewHostedCopilotAnalysis(output, teamRequest);
+
+    expect(reviewed.analysis.recommendations.map(({ id }) => id)).toEqual([
+      "one",
+      "two",
+      "three",
+    ]);
+    expect(reviewed.qualityWarnings).toContain("recommendations-adjusted");
+  });
+
+  it("keeps a valid public analysis when the private audit is missing", () => {
+    expect(
+      reviewHostedCopilotAnalysis(createOutput(["set-balanced"]).analysis, request),
+    ).toMatchObject({
+      analysis: { recommendations: [{ id: "set-balanced" }] },
+      qualityWarnings: ["grounding-incomplete"],
+    });
+  });
+
+  it("removes only unknown actionable candidates when a valid option remains", () => {
+    const reviewed = reviewHostedCopilotAnalysis(
+      createOutput(["set-balanced", "invented-spread"]),
+      request,
+    );
+
+    expect(reviewed.analysis.recommendations.map(({ id }) => id)).toEqual([
+      "set-balanced",
+    ]);
+    expect(reviewed.qualityWarnings).toContain("recommendations-adjusted");
+  });
+
+  it("still rejects an actionable response with no usable candidate", () => {
+    expect(() =>
+      reviewHostedCopilotAnalysis(
+        createOutput(["invented-spread"]),
+        request,
+      ),
+    ).toThrow("no usable candidate");
+  });
+
+  it("repairs a move explanation that names a different replacement", () => {
+    const output = createOutput(["set-move"]);
+    output.analysis.recommendations[0].title = "Use Superpower.";
+    output.analysis.recommendations[0].reason = "Superpower is stronger.";
+    const moveRequest = {
+      ...request,
+      optimization: {
+        currentBuild: {
+          finalStats: {
+            hp: 100,
+            attack: 100,
+            defense: 100,
+            specialAttack: 100,
+            specialDefense: 100,
+            speed: 100,
+          },
+        },
+        candidates: [{
+          id: "set-move",
+          finalStats: {
+            hp: 100,
+            attack: 100,
+            defense: 100,
+            specialAttack: 100,
+            specialDefense: 100,
+            speed: 100,
+          },
+          offenseBenchmarks: [],
+          defenseBenchmarks: [],
+          itemChanged: false,
+          moveChanges: [{
+            currentMoveDisplayName: "Ice Punch",
+            optimizedMoveDisplayName: "High Horsepower",
+          }],
+        }],
+      },
+    } as unknown as CopilotAnalysisRequest;
+
+    const reviewed = reviewHostedCopilotAnalysis(output, moveRequest);
+    expect(reviewed.analysis.recommendations[0]).toMatchObject({
+      title: expect.stringContaining("High Horsepower"),
+      reason: expect.stringContaining("High Horsepower replaces Ice Punch"),
+    });
+    expect(reviewed.qualityWarnings).toContain("content-repaired");
   });
 });

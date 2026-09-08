@@ -1,6 +1,9 @@
 import type { CopilotAnalysisResponse } from "./copilotContracts.js";
 
-export type CopilotModelOutput = Omit<CopilotAnalysisResponse, "source">;
+export type CopilotModelOutput = Omit<
+  CopilotAnalysisResponse,
+  "source" | "qualityWarnings" | "optimizationCandidates"
+>;
 
 export const copilotStrategyPhases = ["opening", "midgame", "endgame"] as const;
 export const copilotStrategyPokemonStates = ["current", "mega"] as const;

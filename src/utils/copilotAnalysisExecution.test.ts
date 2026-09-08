@@ -51,6 +51,23 @@ describe("analysis execution", () => {
     expect(cooldown).toHaveBeenCalledExactlyOnceWith(60);
   });
 
+  it("keeps warned hosted analysis instead of generating a local fallback", async () => {
+    vi.mocked(requestHostedCopilotAnalysis).mockResolvedValue({
+      analysis: hosted,
+      qualityWarnings: ["grounding-incomplete"],
+    });
+
+    const result = await executeCopilotAnalysis(request, "en", vi.fn());
+
+    expect(result.response).toEqual({
+      ...hosted,
+      qualityWarnings: ["grounding-incomplete"],
+    });
+    expect(result.usedFallback).toBe(false);
+    expect(result.fallbackReason).toBeUndefined();
+    expect(createLocalCopilotAnalysis).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["NETWORK_ERROR", 0, "connection"],
     ["AI_NOT_CONFIGURED", 503, "not-configured"],

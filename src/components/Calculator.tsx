@@ -39,6 +39,7 @@ import { useCalculatorCatalog } from "../hooks/useCalculatorCatalog";
 import { useCalculatorField } from "../hooks/useCalculatorField";
 import { useCalculatorMobileNavigation } from "../hooks/useCalculatorMobileNavigation";
 import { useCalculatorUsageMoves } from "../hooks/useCalculatorUsageMoves";
+import { useCalculatorUsageItems } from "../hooks/useCalculatorUsageItems";
 import { usePreMegaMoves } from "../hooks/usePreMegaMoves";
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
 import { useLocalization } from "../i18n/useLocalization";
@@ -209,11 +210,52 @@ export function Calculator({
     opponentPreMegaPokemonId,
     pokemonIndex,
   );
+  const playerItemOptions = useMemo(() => {
+    const megaStoneName = selectedMember
+      ? getMegaStoneItemName(selectedMember.id, knownMegaStoneNames)
+      : null;
+
+    return selectableItems.filter(
+      (item) => !item.isMegaStone || item.name === megaStoneName,
+    );
+  }, [knownMegaStoneNames, selectableItems, selectedMember]);
   const playerUsageMoves = useCalculatorUsageMoves(
     selectedMember,
     playerPreMegaMoves,
     battleFormat,
   );
+  const loadedPlayerUsageItems = useCalculatorUsageItems(
+    selectedMember,
+    playerItemOptions,
+    battleFormat,
+  );
+  const playerUsageItems = useMemo(() => {
+    const occupiedItemIds = new Set(
+      Object.entries(buildState.itemBySlot).flatMap(([slot, item]) =>
+        Number(slot) !== selectedSlot && item
+          ? [normalizeShowdownId(item.showdownId ?? item.id ?? item.name)]
+          : [],
+      ),
+    );
+    const currentItemId = normalizeShowdownId(
+      playerBuild.item?.showdownId ??
+        playerBuild.item?.id ??
+        playerBuild.item?.name ??
+        "",
+    );
+
+    return loadedPlayerUsageItems.filter((item) => {
+      const itemId = normalizeShowdownId(
+        item.showdownId ?? item.id ?? item.name,
+      );
+      return itemId === currentItemId || !occupiedItemIds.has(itemId);
+    });
+  }, [
+    buildState.itemBySlot,
+    loadedPlayerUsageItems,
+    playerBuild.item,
+    selectedSlot,
+  ]);
   const opponentUsageMoves = useCalculatorUsageMoves(
     opponentBuild.member,
     opponentPreMegaMoves,
@@ -427,6 +469,7 @@ export function Calculator({
         battle: playerBattle,
         moves: playerMoves,
         usageMoves: playerUsageMoves,
+        usageItems: playerUsageItems,
         maxHp: playerMaxHp,
       },
       opponent: {
@@ -453,6 +496,7 @@ export function Calculator({
       playerMaxHp,
       playerMoves,
       playerUsageMoves,
+      playerUsageItems,
       selectedMember,
       selectedSlot,
     ],
@@ -462,15 +506,6 @@ export function Calculator({
     onAnalysisContextChange?.(analysisContext);
   }, [analysisContext, onAnalysisContextChange]);
 
-  const playerItemOptions = useMemo(() => {
-    const megaStoneName = selectedMember
-      ? getMegaStoneItemName(selectedMember.id, knownMegaStoneNames)
-      : null;
-
-    return selectableItems.filter(
-      (item) => !item.isMegaStone || item.name === megaStoneName,
-    );
-  }, [knownMegaStoneNames, selectableItems, selectedMember]);
   const opponentItemOptions = useMemo(() => {
     const megaStoneName = opponentBuild.member
       ? getMegaStoneItemName(

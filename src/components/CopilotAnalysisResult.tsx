@@ -11,6 +11,7 @@ import type { TranslationKey } from "../i18n/translations";
 import type {
   CopilotAnalysisResponse,
   CopilotAnalysisScope,
+  CopilotQualityWarningCode,
   CopilotSetOptimizationCandidateSnapshot,
 } from "../utils/copilotContracts";
 import type { CopilotRecommendationCandidateSnapshot } from "../utils/pokemonRecommendations";
@@ -46,6 +47,7 @@ type CopilotAnalysisResultProps = {
   candidateApplyFailure: CandidateApplyFailureReason | null;
   candidateSaveStatus: "saved" | "bench-full" | null;
   optimizationCandidates: CopilotSetOptimizationCandidateSnapshot[];
+  optimizationCurrentItemDisplayName: string | null;
   optimizationActionStatus: OptimizationActionStatus | null;
   onAnalyze: () => void;
   onSelectCandidate: (pokemonId: string) => void;
@@ -65,6 +67,16 @@ const recommendationPriorityOrder: Record<
   high: 0,
   medium: 1,
   low: 2,
+};
+
+const qualityWarningTranslationKeys: Record<
+  CopilotQualityWarningCode,
+  TranslationKey
+> = {
+  "grounding-incomplete": "copilot.qualityWarningGrounding",
+  "recommendations-adjusted": "copilot.qualityWarningRecommendations",
+  "content-repaired": "copilot.qualityWarningRepaired",
+  "service-degraded": "copilot.qualityWarningService",
 };
 
 const candidateApplyFailureTranslationKeys: Record<
@@ -125,6 +137,7 @@ export function CopilotAnalysisResult({
   candidateApplyFailure,
   candidateSaveStatus,
   optimizationCandidates,
+  optimizationCurrentItemDisplayName,
   optimizationActionStatus,
   onAnalyze,
   onSelectCandidate,
@@ -199,6 +212,23 @@ export function CopilotAnalysisResult({
             aria-hidden="true"
           />
           <span>{fallbackMessage}</span>
+        </div>
+      ) : null}
+
+      {!usedFallback && response.qualityWarnings?.length ? (
+        <div
+          className="copilot-fallback-notice copilot-quality-notice"
+          role="status"
+        >
+          <FontAwesomeIcon
+            icon={faTriangleExclamation}
+            aria-hidden="true"
+          />
+          <span>
+            {response.qualityWarnings
+              .map((warning) => t(qualityWarningTranslationKeys[warning]))
+              .join(" ")}
+          </span>
         </div>
       ) : null}
 
@@ -314,6 +344,7 @@ export function CopilotAnalysisResult({
                 {optimizationCandidate ? (
                   <CopilotOptimizationRecommendation
                     candidate={optimizationCandidate}
+                    currentItemDisplayName={optimizationCurrentItemDisplayName}
                     title={recommendation.title}
                     reason={recommendation.reason}
                     isStale={isStale}

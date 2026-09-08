@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { SmogonUsageSet } from "../api/smogonUsage";
-import type { PokemonItem, PokemonMove, TeamMember } from "../types";
+import type {
+  ItemIndexEntry,
+  PokemonItem,
+  PokemonMove,
+  TeamMember,
+} from "../types";
 import {
   createDefaultCalculatorBuild,
   createUsageCalculatorBuild,
+  resolveUsageCalculatorItems,
   resolveUsageCalculatorMoves,
 } from "./calculatorUsageBuild";
 
@@ -148,5 +154,50 @@ describe("calculator usage builds", () => {
     expect(
       createUsageCalculatorBuild(extendedMember, extendedUsageSet, item).moveIds,
     ).toEqual(["fake-out", "protect", "flare-blitz", "knock-off"]);
+  });
+
+  it("resolves bounded, unique usage item alternatives from the legal item list", () => {
+    const itemOptions: ItemIndexEntry[] = [
+      {
+        id: 1,
+        name: "sitrusberry",
+        showdownId: "sitrusberry",
+        displayName: "Sitrus Berry",
+        isMegaStone: false,
+      },
+      {
+        id: 2,
+        name: "assaultvest",
+        showdownId: "assaultvest",
+        displayName: "Assault Vest",
+        isMegaStone: false,
+      },
+      {
+        id: 3,
+        name: "safetygoggles",
+        showdownId: "safetygoggles",
+        displayName: "Safety Goggles",
+        isMegaStone: false,
+      },
+    ];
+    const items = resolveUsageCalculatorItems(
+      {
+        ...usageSet,
+        itemNames: [
+          "Sitrus Berry",
+          "missing-item",
+          "Assault Vest",
+          "Sitrus Berry",
+          "Safety Goggles",
+        ],
+      },
+      itemOptions,
+      2,
+    );
+
+    expect(items.map((entry) => entry.showdownId)).toEqual([
+      "sitrusberry",
+      "assaultvest",
+    ]);
   });
 });

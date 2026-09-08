@@ -8,8 +8,10 @@ import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
   CopilotAnalysisScope,
+  CopilotQualityWarningCode,
   CopilotSetOptimizationCandidateSnapshot,
 } from "./copilotContracts";
+import { isCopilotQualityWarningCode } from "./copilotContracts";
 import { isRecord } from "./typeGuards";
 import { validateCopilotModelOutput } from "./copilotModelValidation";
 import { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestContract";
@@ -80,7 +82,12 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
     return null;
   }
 
-  const { source, optimizationCandidates, ...modelOutput } = value;
+  const {
+    source,
+    optimizationCandidates,
+    qualityWarnings,
+    ...modelOutput
+  } = value;
   const validation = validateCopilotModelOutput(
     migrateLegacyModelOutput(modelOutput),
   );
@@ -91,6 +98,10 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
           isValidCopilotOptimizationCandidateSnapshot(candidate),
       )
     : undefined;
+  const normalizedQualityWarnings: CopilotQualityWarningCode[] =
+    Array.isArray(qualityWarnings)
+      ? [...new Set(qualityWarnings.filter(isCopilotQualityWarningCode))]
+      : [];
 
   if (
     validation.success &&
@@ -107,6 +118,9 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
         source,
         ...(normalizedOptimizationCandidates
           ? { optimizationCandidates: normalizedOptimizationCandidates }
+          : {}),
+        ...(normalizedQualityWarnings.length > 0
+          ? { qualityWarnings: normalizedQualityWarnings }
           : {}),
       }
     : null;

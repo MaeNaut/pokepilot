@@ -48,7 +48,12 @@ export async function executeCopilotAnalysis(
 
   try {
     const hostedResult = await requestHostedCopilotAnalysis(request);
-    nextResponse = hostedResult.analysis;
+    nextResponse = hostedResult.qualityWarnings?.length
+      ? {
+          ...hostedResult.analysis,
+          qualityWarnings: hostedResult.qualityWarnings,
+        }
+      : hostedResult.analysis;
     if (hostedResult.retryAfterSeconds) {
       onCooldown(hostedResult.retryAfterSeconds);
     }
