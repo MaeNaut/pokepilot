@@ -59,11 +59,13 @@ export type PokemonCandidateFilters = {
 export type PokemonIndexEntry = {
   name: string;
   showdownId: string;
+  showdownName?: string;
   displayName: string;
   speciesKey: string;
   sortNumber: number;
   types: PokemonType[];
   abilities: string[];
+  baseStats?: StatBlock;
   formKind: "base" | "regional" | "form" | "gender" | "mega";
   formLabel?: string;
   isSelectorOption: boolean;

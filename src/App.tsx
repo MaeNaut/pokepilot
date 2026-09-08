@@ -116,6 +116,7 @@ type PokemonSelectionOptions = {
   applyUsageStats?: boolean;
   allowBattleForm?: boolean;
   validateRecommendation?: boolean;
+  expectedRecommendationTarget?: string | null;
 };
 
 type EditorPokemonSelectionOptions = Omit<
@@ -798,6 +799,7 @@ function App() {
           targetMember,
           proposedBuildState,
           Boolean(usageSetPatch?.itemLoadFailed),
+          options.expectedRecommendationTarget ?? null,
         );
         if (blocked) {
           return blocked;
@@ -858,10 +860,6 @@ function App() {
       return { status: "blocked", reason: "bench-full", issueCodes: [] };
     }
 
-    if (team[slotIndex]) {
-      return { status: "blocked", reason: "stale", issueCodes: [] };
-    }
-
     try {
       const {
         selectedMember,
@@ -883,6 +881,7 @@ function App() {
         targetMember,
         proposedBuildState,
         Boolean(usageSetPatch?.itemLoadFailed),
+        null,
       );
       if (blocked) {
         return blocked;
@@ -916,6 +915,7 @@ function App() {
     candidate: TeamMember,
     proposedBuildState: TeamBuildState,
     itemLoadFailed: boolean,
+    expectedCurrentPokemonId: string | null,
   ): Extract<RecommendedPokemonApplyResult, { status: "blocked" }> | null {
     if (
       indexStatus !== "ready" ||
@@ -938,6 +938,7 @@ function App() {
       legality: showdownLegality,
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId,
     });
     return validation.status === "blocked"
       ? {
@@ -1829,11 +1830,19 @@ function App() {
               validity={teamValidity}
               isCalculatorActive={appMode === "calculator"}
               calculatorContext={calculatorAnalysisContext}
-              onSelectRecommendedPokemon={async (slotIndex, pokemonId) => {
+              onSelectRecommendedPokemon={async (
+                slotIndex,
+                pokemonId,
+                expectedCurrentPokemonId,
+              ) => {
                 const result = await handleSelectPokemon(slotIndex, pokemonId, {
                   applyUsageStats: true,
                   validateRecommendation: true,
+                  expectedRecommendationTarget: expectedCurrentPokemonId,
                 });
+                if (result?.status === "applied") {
+                  setSelectedTeamSlot(slotIndex);
+                }
                 return result ?? {
                   status: "blocked",
                   reason: "load-failed",

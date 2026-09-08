@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getPokePilotScopeInstructions } from "./pokepilotPrompts";
+import {
+  getPokePilotScopeInstructions,
+  pokepilotCommonInstructions,
+} from "./pokepilotPrompts";
 
 describe("PokePilot matchup prompt", () => {
   it("requires persistent-defense and conditional-power checks", () => {
@@ -14,5 +17,25 @@ describe("PokePilot matchup prompt", () => {
     expect(instructions).toContain("If every member is limited");
     expect(instructions).toContain("does not block damaging moves");
     expect(instructions).toContain("never expose them");
+    expect(instructions).toContain("Every matchup member has a state");
+    expect(instructions).toContain("mutually exclusive Mega option");
+  });
+
+  it("protects compatible supported Mega axes during replacement analysis", () => {
+    const instructions = getPokePilotScopeInstructions("recommendation");
+
+    expect(instructions).toContain("allySupportLinks");
+    expect(instructions).toContain("recipient compatibility");
+    expect(instructions).toContain("both a Mega option and a compatible ally-support link");
+    expect(instructions).toContain("Generic typing, usage, or a small role gain is not enough");
+  });
+
+  it("keeps current and projected Mega numbers distinct", () => {
+    expect(pokepilotCommonInstructions).toContain(
+      "baseStats, final stats",
+    );
+    expect(pokepilotCommonInstructions).toContain(
+      "never label a current-form benchmark as a Mega benchmark",
+    );
   });
 });

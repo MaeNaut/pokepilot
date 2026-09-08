@@ -17,12 +17,12 @@ import {
   getCalculatorMoveSlots,
   getCalculatorSpeed,
 } from "../src/calculator/calculatorViewModel";
-import { createSetOptimizationPlan } from "../src/calculator/setOptimizer";
 import type {
   CalculatorAnalysisContext,
   CalculatorAnalysisSide,
 } from "../src/calculator/setOptimizer/types";
-import { createTeamMatchupPlan } from "../src/calculator/teamMatchup";
+import { createTeamMatchupAnalysisPlans } from "../src/calculator/teamMatchup";
+import { createProjectedMegaMember } from "../src/utils/megaEvolution";
 import { createOpenAiLunaAdapter } from "../src/test/evaluation/openAiLunaAdapter";
 import {
   aiTeamDoublesFixtures,
@@ -289,6 +289,7 @@ function createSide(
   member: TeamMember,
   buildState: TeamBuildState,
   slotIndex: number,
+  pokemonIndex: Awaited<ReturnType<typeof fetchPokemonIndex>>,
 ): CalculatorAnalysisSide {
   const snapshot = getPokemonBuildSnapshot(member, buildState, slotIndex);
   const build = {
@@ -299,6 +300,12 @@ function createSide(
     moveIds: snapshot.moveIds,
   };
   const maxHp = getCalculatorMaxHp(member, build);
+  const megaMember = createProjectedMegaMember(
+    member,
+    build.item,
+    pokemonIndex,
+  );
+  const megaAbility = megaMember?.abilities?.[0];
 
   return {
     member,
@@ -306,6 +313,9 @@ function createSide(
     battle: createCalculatorBattleState(maxHp),
     moves: getCalculatorMoveSlots(member, build.moveIds),
     maxHp,
+    megaEvolution: megaMember && megaAbility
+      ? { member: megaMember, ability: megaAbility }
+      : undefined,
   };
 }
 
@@ -334,11 +344,25 @@ async function createRequest(
     selectedMember,
     teamSnapshot.buildState,
     qaCase.selectedSlot,
+    resources.pokemonIndex,
   );
-  const opponent = createSide(opponentMember, opponentSnapshot.buildState, 0);
+  const opponent = createSide(
+    opponentMember,
+    opponentSnapshot.buildState,
+    0,
+    resources.pokemonIndex,
+  );
   const roster = teamSnapshot.members.flatMap((member, slotIndex) =>
     member
-      ? [{ ...createSide(member, teamSnapshot.buildState, slotIndex), slotIndex }]
+      ? [{
+          ...createSide(
+            member,
+            teamSnapshot.buildState,
+            slotIndex,
+            resources.pokemonIndex,
+          ),
+          slotIndex,
+        }]
       : [],
   );
   const automaticEnvironment = resolveAutomaticEnvironment({
@@ -375,6 +399,7 @@ async function createRequest(
     pokemonIndex: resources.pokemonIndex,
     itemIndex: resources.itemIndex,
   });
+  const plans = createTeamMatchupAnalysisPlans(calculatorContext);
   const request = createCopilotAnalysisRequest({
     scope: "matchup",
     locale: "ko",
@@ -388,12 +413,22 @@ async function createRequest(
     diagnostics,
     validity,
     calculatorContext,
-    optimizationPlan: createSetOptimizationPlan(calculatorContext),
-    matchupPlan: createTeamMatchupPlan(calculatorContext),
+    optimizationPlan: plans.optimizationPlan,
+    matchupPlan: plans.matchupPlan,
   });
   const validation = validateCopilotAnalysisRequest(request);
   if (!validation.success) {
-    throw new Error(`${qaCase.id} request invalid: ${validation.errors.join(" ")}`);
+    throw new Error(
+      `${qaCase.id} request invalid: ${validation.errors.join(" ")}\n` +
+      JSON.stringify({
+        megaOptions: request.megaOptions,
+        matchupMembers: request.matchup?.members.map((member) => ({
+          slotIndex: member.slotIndex,
+          pokemonId: member.pokemonId,
+          state: member.state,
+        })),
+      }, null, 2),
+    );
   }
   return request;
 }

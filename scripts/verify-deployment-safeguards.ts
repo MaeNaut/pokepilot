@@ -93,7 +93,7 @@ function createInvalidNestedRequest(): CopilotAnalysisRequest & {
   };
 } {
   return {
-    version: 25,
+    version: 28,
     locale: "en",
     scope: "team",
     battleFormat: "doubles",

@@ -35,14 +35,20 @@ import type {
   TeamSlot,
 } from "../types";
 import type { TeamBuildState } from "./teamBuildState";
-import { matchesPokemonCandidateFilters } from "./pokemonCandidateFilters";
-import { compactCopilotMechanicEffect } from "./copilotMechanics";
 import {
+  emptyPokemonCandidateFilters,
+  matchesPokemonCandidateFilters,
+} from "./pokemonCandidateFilters";
+import { compactCopilotMechanicEffect } from "./copilotMechanics";
+import { getMegaEvolutionIndexEntry } from "./megaEvolution";
+import {
+  createCopilotResponsibilityCounts,
   inferCopilotResponsibilities,
   type CopilotResponsibilityId,
 } from "./copilotResponsibilities";
 import { orderPokemonOptionsByUsage } from "./pokemonUsageOrder";
 import {
+  analyzeTeam,
   createPokemonDefensiveProfile,
   getDefensiveMultiplier,
   type TeamDiagnosticsResult,
@@ -92,9 +98,30 @@ export type PokemonRecommendationCommonSet = {
   }>;
 };
 
+export type PokemonRecommendationTargetSnapshot = {
+  mode: "addition" | "replacement";
+  slotIndex: number;
+  currentPokemonId: string | null;
+  currentDisplayName: string | null;
+  currentRoleIds: TeamRoleId[];
+  currentSetterConceptIds: TeamConceptId[];
+  currentAceConceptIds: TeamConceptId[];
+  currentResponsibilityIds: CopilotResponsibilityId[];
+  megaOptionPokemonId: string | null;
+  allySupportLinks: PokemonRecommendationAllySupportLink[];
+};
+
+export type PokemonRecommendationAllySupportLink = {
+  sourceSlotIndex: number;
+  sourceKind: "move" | "ability";
+  sourceId: string;
+  responsibilityId: CopilotResponsibilityId;
+};
+
 export type CopilotRecommendationCandidateSnapshot = {
   pokemonId: string;
   displayName: string;
+  target: PokemonRecommendationTargetSnapshot;
   types: PokemonType[];
   typeDisplayNames: string[];
   abilities: PokemonRecommendationAbility[];
@@ -125,6 +152,45 @@ type CreatePokemonRecommendationCandidatesInput = {
   battleFormat: BattleFormat;
   existingMegaOptionCount?: number;
   limit?: number;
+  target?: PokemonRecommendationTargetSnapshot;
+};
+
+export type PokemonRecommendationTarget = {
+  mode: "addition" | "replacement";
+  slotIndex: number;
+  currentPokemonId: string | null;
+  currentDisplayName: string | null;
+  currentSpeciesKey: string | null;
+  filters: PokemonCandidateFilters;
+  occupiedSpeciesKeys: Set<string>;
+  diagnostics: TeamDiagnosticsResult;
+  existingMegaOptionCount: number;
+  replacementLossPenalty?: number;
+  lostUniqueRoleIds?: TeamRoleId[];
+  lostUniqueResponsibilityIds?: CopilotResponsibilityId[];
+  lostSetterConceptIds?: TeamConceptId[];
+  currentRoleIds?: TeamRoleId[];
+  currentSetterConceptIds?: TeamConceptId[];
+  currentAceConceptIds?: TeamConceptId[];
+  currentResponsibilityIds?: CopilotResponsibilityId[];
+  megaOptionPokemonId?: string | null;
+  allySupportLinks?: PokemonRecommendationAllySupportLink[];
+};
+
+type CreateUniversalPokemonRecommendationCandidatesInput = {
+  options: PokemonRecommendationOption[];
+  targets: PokemonRecommendationTarget[];
+  battleFormat: BattleFormat;
+  limit?: number;
+};
+
+type RankUniversalPokemonRecommendationCandidatesInput = Omit<
+  CreateUniversalPokemonRecommendationCandidatesInput,
+  "battleFormat"
+> & {
+  usageIds: string[] | null;
+  usageSets?: SmogonUsageSet[] | null;
+  showdownData: ShowdownDataSnapshot | null;
 };
 
 type RankPokemonRecommendationCandidatesInput = Omit<
@@ -152,6 +218,14 @@ const MAX_RECOMMENDATION_ABILITY_EFFECT_LENGTH = 320;
 const MAX_RECOMMENDATION_ABILITIES = 3;
 const DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT = 30;
 const RECOMMENDATION_USAGE_SHARE = 0.75;
+const ALLY_SUPPORT_RESPONSIBILITY_IDS = new Set<CopilotResponsibilityId>([
+  "ally-damage-amplification",
+  "ally-damage-reduction",
+  "ally-recovery",
+  "attack-redirection",
+  "priority-denial",
+  "spread-protection",
+]);
 
 export function createPokemonRecommendationOptions({
   pokemonIndex,
@@ -233,6 +307,247 @@ export function countTeamMegaOptions(
     const hasMegaStone = item?.category === "Mega Stones";
     return count + Number(isMegaForm || hasMegaStone);
   }, 0);
+}
+
+type CreatePokemonRecommendationTargetsInput = {
+  team: TeamSlot[];
+  selectedSlot: number;
+  buildState: TeamBuildState;
+  diagnostics: TeamDiagnosticsResult;
+  pokemonIndex: PokemonIndexEntry[];
+  getCurrentPokemonDisplayName: (
+    member: NonNullable<TeamSlot>,
+    entry: PokemonIndexEntry | undefined,
+  ) => string;
+};
+
+function getSelectedRecommendationMoves(
+  member: NonNullable<TeamSlot>,
+  slotIndex: number,
+  buildState: TeamBuildState,
+) {
+  const selectedMoveIds =
+    buildState.moveIdsBySlot[slotIndex]?.filter(Boolean) ??
+    member.moves?.slice(0, 4).map((move) => move.id) ??
+    [];
+  const movesById = new Map(
+    (member.moves ?? []).map((move) => [normalizeShowdownId(move.id), move]),
+  );
+
+  return selectedMoveIds.map((moveId) => {
+    const move = movesById.get(normalizeShowdownId(moveId));
+    return {
+      id: normalizeShowdownId(moveId),
+      ...(move?.description ? { effect: move.description } : {}),
+      ...(move?.tags ? { tags: move.tags } : {}),
+    };
+  });
+}
+
+function getRecommendationResponsibilityElements(
+  member: NonNullable<TeamSlot>,
+  slotIndex: number,
+  buildState: TeamBuildState,
+) {
+  const abilityId = buildState.abilityBySlot[slotIndex] ?? member.abilities?.[0];
+  return {
+    abilities: abilityId ? [{ id: normalizeShowdownId(abilityId) }] : [],
+    moves: getSelectedRecommendationMoves(member, slotIndex, buildState),
+  };
+}
+
+function getAllySupportLinks(
+  team: TeamSlot[],
+  targetSlotIndex: number,
+  buildState: TeamBuildState,
+): PokemonRecommendationAllySupportLink[] {
+  return team.flatMap((member, sourceSlotIndex) => {
+    if (!member || sourceSlotIndex === targetSlotIndex) return [];
+
+    const elements = getRecommendationResponsibilityElements(
+      member,
+      sourceSlotIndex,
+      buildState,
+    );
+    const links: PokemonRecommendationAllySupportLink[] = [];
+
+    for (const ability of elements.abilities) {
+      for (const responsibilityId of inferCopilotResponsibilities({
+        abilities: [ability],
+      })) {
+        if (ALLY_SUPPORT_RESPONSIBILITY_IDS.has(responsibilityId)) {
+          links.push({
+            sourceSlotIndex,
+            sourceKind: "ability",
+            sourceId: ability.id,
+            responsibilityId,
+          });
+        }
+      }
+    }
+
+    for (const move of elements.moves) {
+      for (const responsibilityId of inferCopilotResponsibilities({
+        moves: [move],
+      })) {
+        if (ALLY_SUPPORT_RESPONSIBILITY_IDS.has(responsibilityId)) {
+          links.push({
+            sourceSlotIndex,
+            sourceKind: "move",
+            sourceId: move.id,
+            responsibilityId,
+          });
+        }
+      }
+    }
+
+    return links;
+  });
+}
+
+export function createPokemonRecommendationTargets({
+  team,
+  selectedSlot,
+  buildState,
+  diagnostics,
+  pokemonIndex,
+  getCurrentPokemonDisplayName,
+}: CreatePokemonRecommendationTargetsInput): PokemonRecommendationTarget[] {
+  const emptySlotIndexes = team.flatMap((member, slotIndex) =>
+    member ? [] : [slotIndex],
+  );
+
+  if (emptySlotIndexes.length > 0) {
+    const targetSlotIndex = team[selectedSlot]
+      ? emptySlotIndexes[0]
+      : selectedSlot;
+    return [
+      {
+        mode: "addition",
+        slotIndex: targetSlotIndex,
+        currentPokemonId: null,
+        currentDisplayName: null,
+        currentSpeciesKey: null,
+        filters:
+          buildState.candidateFiltersBySlot[targetSlotIndex] ??
+          emptyPokemonCandidateFilters,
+        occupiedSpeciesKeys: getOccupiedPokemonSpeciesKeys(team, pokemonIndex),
+        diagnostics,
+        existingMegaOptionCount: countTeamMegaOptions(
+          team,
+          buildState.itemBySlot,
+          pokemonIndex,
+        ),
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
+    ];
+  }
+
+  const moveSources = team.filter(
+    (candidate): candidate is NonNullable<TeamSlot> => Boolean(candidate),
+  );
+  const responsibilityIdsBySlot = team.map((member, slotIndex) =>
+    member
+      ? inferCopilotResponsibilities(
+          getRecommendationResponsibilityElements(
+            member,
+            slotIndex,
+            buildState,
+          ),
+        )
+      : [],
+  );
+  const responsibilityCounts = createCopilotResponsibilityCounts(
+    responsibilityIdsBySlot,
+  );
+  return team.flatMap((member, slotIndex) => {
+    if (!member) return [];
+
+    const teamWithoutTarget = team.map((candidate, index) =>
+      index === slotIndex ? null : candidate,
+    );
+    const pokemonEntry = pokemonIndex.find(
+      (entry) => entry.name === member.id,
+    );
+    const lostUniqueRoleIds = diagnostics.roles
+      .filter(
+        (role) =>
+          role.slotIndexes.length === 1 && role.slotIndexes.includes(slotIndex),
+      )
+      .map((role) => role.id);
+    const lostSetterConceptIds = diagnostics.concepts
+      .filter((concept) => concept.setterSlots.includes(slotIndex))
+      .map((concept) => concept.id);
+    const currentAceConceptIds = diagnostics.concepts
+      .filter((concept) => concept.aceSlots.includes(slotIndex))
+      .map((concept) => concept.id);
+    const uniqueAceConceptCount = diagnostics.concepts.filter(
+      (concept) =>
+        concept.aceSlots.length === 1 && concept.aceSlots.includes(slotIndex),
+    ).length;
+    const currentRoleIds = diagnostics.roles
+      .filter((role) => role.slotIndexes.includes(slotIndex))
+      .map((role) => role.id);
+    const currentResponsibilityIds = responsibilityIdsBySlot[slotIndex];
+    const lostUniqueResponsibilityIds = currentResponsibilityIds.filter(
+      (responsibilityId) => responsibilityCounts[responsibilityId] === 1,
+    );
+    const megaOptionPokemonId =
+      pokemonEntry?.formKind === "mega"
+        ? pokemonEntry.name
+        : getMegaEvolutionIndexEntry(
+            member.id,
+            buildState.itemBySlot[slotIndex],
+            pokemonIndex,
+          )?.name ?? null;
+    const allySupportLinks = getAllySupportLinks(team, slotIndex, buildState);
+    const supportLossPenalty = Math.min(allySupportLinks.length, 3) * 2;
+    const supportedMegaAxisPenalty =
+      megaOptionPokemonId && allySupportLinks.length > 0 ? 8 : 0;
+
+    return [
+      {
+        mode: "replacement" as const,
+        slotIndex,
+        currentPokemonId: member.id,
+        currentDisplayName: getCurrentPokemonDisplayName(member, pokemonEntry),
+        currentSpeciesKey: pokemonEntry?.speciesKey ?? member.id,
+        filters: emptyPokemonCandidateFilters,
+        occupiedSpeciesKeys: getOccupiedPokemonSpeciesKeys(
+          teamWithoutTarget,
+          pokemonIndex,
+        ),
+        diagnostics: analyzeTeam(teamWithoutTarget, buildState, moveSources),
+        existingMegaOptionCount: countTeamMegaOptions(
+          teamWithoutTarget,
+          buildState.itemBySlot,
+          pokemonIndex,
+        ),
+        replacementLossPenalty:
+          lostUniqueRoleIds.length * 4 +
+          lostSetterConceptIds.length * 18 +
+          uniqueAceConceptCount * 4 +
+          lostUniqueResponsibilityIds.length * 3 +
+          Number(Boolean(megaOptionPokemonId)) * 10 +
+          supportLossPenalty +
+          supportedMegaAxisPenalty,
+        lostUniqueRoleIds,
+        lostUniqueResponsibilityIds,
+        lostSetterConceptIds,
+        currentRoleIds,
+        currentSetterConceptIds: lostSetterConceptIds,
+        currentAceConceptIds,
+        currentResponsibilityIds,
+        megaOptionPokemonId,
+        allySupportLinks,
+      },
+    ];
+  });
 }
 
 function normalizeRecommendationAbilities(
@@ -551,7 +866,7 @@ function selectDiversifiedCandidates(
     .map(({ candidate }) => candidate);
 }
 
-export function rankPokemonRecommendationCandidates({
+function scorePokemonRecommendationCandidates({
   options,
   filters,
   occupiedSpeciesKeys,
@@ -560,8 +875,19 @@ export function rankPokemonRecommendationCandidates({
   usageSets = null,
   showdownData,
   existingMegaOptionCount = 0,
-  limit = DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT,
-}: RankPokemonRecommendationCandidatesInput) {
+  target = {
+    mode: "addition",
+    slotIndex: 0,
+    currentPokemonId: null,
+    currentDisplayName: null,
+    currentRoleIds: [],
+    currentSetterConceptIds: [],
+    currentAceConceptIds: [],
+    currentResponsibilityIds: [],
+    megaOptionPokemonId: null,
+    allySupportLinks: [],
+  },
+}: RankPokemonRecommendationCandidatesInput): ScoredCandidate[] {
   const eligibleOptions = options.filter(
     (option) =>
       !occupiedSpeciesKeys.has(option.speciesKey) &&
@@ -593,7 +919,7 @@ export function rankPokemonRecommendationCandidates({
     diagnostics.roles.map((role) => [role.id, role.slotIndexes.length]),
   );
 
-  const scoredCandidates = orderedOptions.map((option) => {
+  return orderedOptions.map((option) => {
     const usageRank = rankByOptionId.get(option.id) ?? null;
     const usageSet = resolveUsageSet(option, usageSets);
     const species = resolveShowdownSpecies(option, showdownData);
@@ -680,6 +1006,7 @@ export function rankPokemonRecommendationCandidates({
       roleContributions.length * 6 - roleRedundancies.length * 2;
     const strategyScore =
       conceptSynergies.length * 8 -
+      conceptConflicts.length * 10 -
       conflicts.filter((conflict) => conflict === "would-be-third-mega-option")
         .length *
         10;
@@ -688,6 +1015,7 @@ export function rankPokemonRecommendationCandidates({
       candidate: {
         pokemonId: option.id,
         displayName: option.displayName,
+        target,
         types: option.types,
         typeDisplayNames: option.typeDisplayNames,
         abilities: normalizedAbilities,
@@ -725,7 +1053,15 @@ export function rankPokemonRecommendationCandidates({
     } satisfies ScoredCandidate;
   });
 
-  return selectDiversifiedCandidates(scoredCandidates, limit);
+}
+
+export function rankPokemonRecommendationCandidates(
+  input: RankPokemonRecommendationCandidatesInput,
+) {
+  return selectDiversifiedCandidates(
+    scorePokemonRecommendationCandidates(input),
+    input.limit ?? DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT,
+  );
 }
 
 export async function createPokemonRecommendationCandidates(
@@ -743,4 +1079,237 @@ export async function createPokemonRecommendationCandidates(
     usageSets,
     showdownData,
   });
+}
+
+function subtractScores(
+  scores: ScoredCandidate["scores"],
+  baseline: ScoredCandidate["scores"] | null,
+) {
+  if (!baseline) return scores;
+
+  return {
+    usage: scores.usage - baseline.usage,
+    defense: scores.defense - baseline.defense,
+    coverage: scores.coverage - baseline.coverage,
+    role: scores.role - baseline.role,
+    strategy: scores.strategy - baseline.strategy,
+    overall: scores.overall - baseline.overall,
+  };
+}
+
+function getCandidateSetterConceptIds(
+  candidate: CopilotRecommendationCandidateSnapshot,
+) {
+  const abilityId = normalizeShowdownId(
+    candidate.commonSet?.ability ?? candidate.abilities[0]?.id ?? "",
+  );
+  const moveIds = new Set(
+    candidate.commonSet?.moves.map((move) => normalizeShowdownId(move.id)) ?? [],
+  );
+
+  return teamConceptDefinitions.flatMap((definition): TeamConceptId[] =>
+    definition.setterAbilityIds.has(abilityId) ||
+    [...definition.setterMoveIds].some((moveId) => moveIds.has(moveId))
+      ? [definition.id]
+      : [],
+  );
+}
+
+export async function createUniversalPokemonRecommendationCandidates({
+  options,
+  targets,
+  battleFormat,
+  limit = DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT,
+}: CreateUniversalPokemonRecommendationCandidatesInput) {
+  const [usageIds, usageSets, showdownData] = await Promise.all([
+    loadSmogonUsagePokemonIds(battleFormat).catch(() => null),
+    loadSmogonUsageSets(battleFormat).catch(() => null),
+    loadShowdownData().catch(() => null),
+  ]);
+
+  return rankUniversalPokemonRecommendationCandidates({
+    options,
+    targets,
+    usageIds,
+    usageSets,
+    showdownData,
+    limit,
+  });
+}
+
+export function rankUniversalPokemonRecommendationCandidates({
+  options,
+  targets,
+  usageIds,
+  usageSets = null,
+  showdownData,
+  limit = DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT,
+}: RankUniversalPokemonRecommendationCandidatesInput) {
+  const entriesByTarget = new Map<number, ScoredCandidate[]>();
+
+  for (const target of targets) {
+    const scored = scorePokemonRecommendationCandidates({
+      options,
+      filters: target.filters,
+      occupiedSpeciesKeys: target.occupiedSpeciesKeys,
+      diagnostics: target.diagnostics,
+      existingMegaOptionCount: target.existingMegaOptionCount,
+      usageIds,
+      usageSets,
+      showdownData,
+      limit,
+    });
+    const baseline = target.currentSpeciesKey
+      ? scored.find((entry) =>
+          options.some(
+            (option) =>
+              option.id === entry.candidate.pokemonId &&
+              option.speciesKey === target.currentSpeciesKey,
+          ),
+        ) ?? null
+      : null;
+
+    const targetedEntries: ScoredCandidate[] = [];
+    for (const entry of scored) {
+      const option = options.find(
+        (candidate) => candidate.id === entry.candidate.pokemonId,
+      );
+      if (target.currentSpeciesKey && option?.speciesKey === target.currentSpeciesKey) {
+        continue;
+      }
+
+      const adjustedScores = subtractScores(
+        entry.scores,
+        baseline?.scores ?? null,
+      );
+      const candidateSetterConceptIds = getCandidateSetterConceptIds(
+        entry.candidate,
+      );
+      const restoredRoleIds = entry.candidate.fit.roleContributions.filter(
+        (roleId) => target.lostUniqueRoleIds?.includes(roleId),
+      );
+      const restoredResponsibilityIds = entry.candidate.responsibilityIds.filter(
+        (responsibilityId) =>
+          target.lostUniqueResponsibilityIds?.includes(responsibilityId),
+      );
+      const restoredConceptIds = candidateSetterConceptIds.filter((conceptId) =>
+        target.lostSetterConceptIds?.includes(conceptId),
+      );
+      const lostWeatherConceptIds = (target.lostSetterConceptIds ?? []).filter(
+        (conceptId) => weatherConceptIds.has(conceptId),
+      );
+      const conflictingWeatherIds = candidateSetterConceptIds.filter(
+        (conceptId) =>
+          weatherConceptIds.has(conceptId) &&
+          lostWeatherConceptIds.length > 0 &&
+          !lostWeatherConceptIds.includes(conceptId),
+      );
+      const restorationCredit =
+        restoredRoleIds.length * 4 +
+        restoredResponsibilityIds.length * 3 +
+        restoredConceptIds.length * 18 +
+        Number(Boolean(target.megaOptionPokemonId && entry.candidate.requiresMegaStone)) *
+          10;
+      const replacementLossPenalty = Math.max(
+        0,
+        (target.replacementLossPenalty ?? 0) - restorationCredit,
+      );
+      const replacementWeatherConflicts = conflictingWeatherIds.map(
+        (conceptId) =>
+          `replacement-sets-${conceptId}-instead-of-${lostWeatherConceptIds.join("-")}`,
+      );
+      const targetedEntry: ScoredCandidate = {
+        candidate: {
+          ...entry.candidate,
+          target: {
+            mode: target.mode,
+            slotIndex: target.slotIndex,
+            currentPokemonId: target.currentPokemonId,
+            currentDisplayName: target.currentDisplayName,
+            currentRoleIds: target.currentRoleIds ?? [],
+            currentSetterConceptIds: target.currentSetterConceptIds ?? [],
+            currentAceConceptIds: target.currentAceConceptIds ?? [],
+            currentResponsibilityIds: target.currentResponsibilityIds ?? [],
+            megaOptionPokemonId: target.megaOptionPokemonId ?? null,
+            allySupportLinks: target.allySupportLinks ?? [],
+          },
+          fit: {
+            ...entry.candidate.fit,
+            conceptSynergies: [
+              ...new Set([
+                ...entry.candidate.fit.conceptSynergies,
+                ...restoredConceptIds,
+              ]),
+            ],
+            conflicts: [
+              ...entry.candidate.fit.conflicts,
+              ...replacementWeatherConflicts,
+            ],
+          },
+        },
+        scores: {
+          ...adjustedScores,
+          strategy:
+            adjustedScores.strategy -
+            replacementLossPenalty -
+            replacementWeatherConflicts.length * 10,
+          overall:
+            adjustedScores.overall -
+            replacementLossPenalty -
+            replacementWeatherConflicts.length * 10,
+        },
+      };
+      targetedEntries.push(targetedEntry);
+    }
+
+    const diversifiedIds = new Set(
+      selectDiversifiedCandidates(targetedEntries, limit).map(
+        (candidate) => candidate.pokemonId,
+      ),
+    );
+    entriesByTarget.set(
+      target.slotIndex,
+      targetedEntries
+        .filter((entry) => diversifiedIds.has(entry.candidate.pokemonId))
+        .sort((left, right) => right.scores.overall - left.scores.overall),
+    );
+  }
+
+  if (targets.length === 1) {
+    return (entriesByTarget.get(targets[0].slotIndex) ?? [])
+      .slice(0, limit)
+      .map(({ candidate }) => candidate);
+  }
+
+  const orderedTargets = [...targets].sort(
+    (left, right) =>
+      (left.replacementLossPenalty ?? 0) -
+        (right.replacementLossPenalty ?? 0) ||
+      left.slotIndex - right.slotIndex,
+  );
+  const selected = new Map<string, ScoredCandidate>();
+  const perTargetLimit = Math.max(1, Math.floor(limit / targets.length));
+
+  for (const target of orderedTargets) {
+    const entries = entriesByTarget.get(target.slotIndex) ?? [];
+    let targetCount = 0;
+    for (const entry of entries) {
+      if (selected.has(entry.candidate.pokemonId)) continue;
+      selected.set(entry.candidate.pokemonId, entry);
+      targetCount += 1;
+      if (targetCount >= perTargetLimit || selected.size >= limit) break;
+    }
+  }
+
+  const remainingEntries = [...entriesByTarget.values()]
+    .flat()
+    .sort((left, right) => right.scores.overall - left.scores.overall);
+  for (const entry of remainingEntries) {
+    if (selected.size >= limit) break;
+    if (!selected.has(entry.candidate.pokemonId)) {
+      selected.set(entry.candidate.pokemonId, entry);
+    }
+  }
+
+  return [...selected.values()].map(({ candidate }) => candidate);
 }

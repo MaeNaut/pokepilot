@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import * as optimizer from "../calculator/setOptimizer";
 import type { CreateCopilotRequestInput } from "./copilotContracts";
+import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
 import type { TeamBuildState } from "./teamBuildState";
 import type { PokemonIndexEntry, PokemonMove, TeamMember } from "../types";
 import type { TeamDiagnosticsResult } from "./teamDiagnostics";
@@ -153,7 +154,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 25,
+      version: 28,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -701,6 +702,14 @@ describe("Copilot analysis", () => {
       name: "Charizard",
       types: ["fire", "flying"],
       abilities: ["Blaze"],
+      baseStats: {
+        hp: 78,
+        attack: 84,
+        defense: 78,
+        specialAttack: 109,
+        specialDefense: 85,
+        speed: 100,
+      },
     };
     const charizardIndex: PokemonIndexEntry[] = [
       {
@@ -711,6 +720,14 @@ describe("Copilot analysis", () => {
         sortNumber: 6,
         types: ["fire", "flying"],
         abilities: ["Blaze"],
+        baseStats: {
+          hp: 78,
+          attack: 84,
+          defense: 78,
+          specialAttack: 109,
+          specialDefense: 85,
+          speed: 100,
+        },
         formKind: "base",
         isSelectorOption: true,
       },
@@ -722,6 +739,14 @@ describe("Copilot analysis", () => {
         sortNumber: 6,
         types: ["fire", "flying"],
         abilities: ["Drought"],
+        baseStats: {
+          hp: 78,
+          attack: 104,
+          defense: 78,
+          specialAttack: 159,
+          specialDefense: 115,
+          speed: 100,
+        },
         formKind: "mega",
         formLabel: "Mega Y",
         isSelectorOption: false,
@@ -762,6 +787,15 @@ describe("Copilot analysis", () => {
         typeDisplayNames: ["Fire", "Flying"],
         ability: "Drought",
         abilityDisplayName: "Drought",
+        baseStats: {
+          hp: 78,
+          attack: 104,
+          defense: 78,
+          specialAttack: 159,
+          specialDefense: 115,
+          speed: 100,
+        },
+        stats: expect.any(Object),
         defensiveProfile: {
           weaknesses: [
             { type: "water", multiplier: 2 },
@@ -772,7 +806,7 @@ describe("Copilot analysis", () => {
         },
       },
     });
-    expect(request.megaOptions).toEqual([
+    expect(request.megaOptions).toMatchObject([
       {
         slotIndex: 0,
         pokemonId: "charizard-mega-y",
@@ -782,6 +816,15 @@ describe("Copilot analysis", () => {
         typeDisplayNames: ["Fire", "Flying"],
         ability: "Drought",
         abilityDisplayName: "Drought",
+        baseStats: {
+          hp: 78,
+          attack: 104,
+          defense: 78,
+          specialAttack: 159,
+          specialDefense: 115,
+          speed: 100,
+        },
+        stats: expect.any(Object),
       },
     ]);
   });
@@ -827,7 +870,7 @@ describe("Copilot analysis", () => {
       isMegaForm: true,
       megaEvolution: null,
     });
-    expect(request.megaOptions).toEqual([
+    expect(request.megaOptions).toMatchObject([
       {
         slotIndex: 0,
         pokemonId: "starmie-mega",
@@ -837,6 +880,8 @@ describe("Copilot analysis", () => {
         typeDisplayNames: ["Water", "Psychic"],
         ability: "Huge Power",
         abilityDisplayName: "Huge Power",
+        baseStats: megaMember.baseStats,
+        stats: expect.any(Object),
       },
     ]);
   });
@@ -1068,6 +1113,117 @@ describe("Copilot analysis", () => {
             },
           ],
         },
+      }),
+    ).toMatchObject({ success: false });
+  });
+
+  it("validates exact full-team replacement targets", () => {
+    const candidate: CopilotRecommendationCandidateSnapshot = {
+      pokemonId: "replacement-pokemon",
+      displayName: "Replacement Pokemon",
+      target: {
+        mode: "replacement",
+        slotIndex: 2,
+        currentPokemonId: member.id,
+        currentDisplayName: member.name,
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
+      types: ["water"],
+      typeDisplayNames: ["Water"],
+      abilities: [],
+      baseStats: null,
+      speedTier: "unknown",
+      requiresMegaStone: false,
+      usageRank: null,
+      commonSet: null,
+      responsibilityIds: [],
+      fit: {
+        weakTo: [],
+        resistsTeamThreats: [],
+        amplifiesTeamThreats: [],
+        addsUnansweredWeaknesses: [],
+        coversTypes: [],
+        roleContributions: [],
+        roleRedundancies: [],
+        conceptSynergies: [],
+        conflicts: [],
+      },
+    };
+    const request = createCopilotAnalysisRequest({
+      scope: "recommendation",
+      teamName: "Full Team",
+      team: Array.from({ length: 6 }, () => member),
+      selectedSlot: 0,
+      buildState,
+      diagnostics: { ...diagnostics, filledSlots: 6 },
+      validity,
+      recommendationCandidates: [candidate],
+    });
+
+    expect(validateCopilotAnalysisRequest(request).errors).toEqual([]);
+    const requestWithNormalizedSupportAbility = {
+      ...request,
+      sets: request.sets.map((set) =>
+        set.slotIndex === 0 ? { ...set, ability: "Armor Tail" } : set,
+      ),
+      recommendationCandidates: [
+        {
+          ...request.recommendationCandidates[0],
+          target: {
+            ...request.recommendationCandidates[0].target,
+            allySupportLinks: [
+              {
+                sourceSlotIndex: 0,
+                sourceKind: "ability" as const,
+                sourceId: "armortail",
+                responsibilityId: "priority-denial" as const,
+              },
+            ],
+          },
+        },
+      ],
+    };
+    expect(
+      validateCopilotAnalysisRequest(requestWithNormalizedSupportAbility).errors,
+    ).toEqual([]);
+    expect(
+      validateCopilotAnalysisRequest({
+        ...request,
+        recommendationCandidates: [
+          {
+            ...request.recommendationCandidates[0],
+            target: {
+              ...request.recommendationCandidates[0].target,
+              currentPokemonId: "different-pokemon",
+            },
+          },
+        ],
+      }),
+    ).toMatchObject({ success: false });
+    expect(
+      validateCopilotAnalysisRequest({
+        ...request,
+        recommendationCandidates: [
+          {
+            ...request.recommendationCandidates[0],
+            target: {
+              ...request.recommendationCandidates[0].target,
+              allySupportLinks: [
+                {
+                  sourceSlotIndex: 0,
+                  sourceKind: "move",
+                  sourceId: "not-selected",
+                  responsibilityId: "ally-damage-amplification",
+                },
+              ],
+            },
+          },
+        ],
       }),
     ).toMatchObject({ success: false });
   });

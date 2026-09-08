@@ -31,6 +31,8 @@ import {
   countTeamMegaOptions,
   createPokemonRecommendationCandidates,
   createPokemonRecommendationOptions,
+  createPokemonRecommendationTargets,
+  createUniversalPokemonRecommendationCandidates,
   getOccupiedPokemonSpeciesKeys,
 } from "../../utils/pokemonRecommendations";
 import type {
@@ -125,6 +127,7 @@ type AiEvaluationCaseMetadata = {
   fixtureId?: string;
   title?: string;
   expectations?: AiTeamFixtureExpectations;
+  recommendationMode?: "addition" | "replacement";
 };
 
 async function createAiFixtureAnalysisContext(
@@ -286,10 +289,16 @@ export async function createAiPokemonRecommendationEvaluationCase(
     legality,
     createRecommendationCandidates = createPokemonRecommendationCandidates,
   } = options;
+  const replacementMode = metadata?.recommendationMode === "replacement";
   const { team, buildState, diagnostics, validity, removedMember } =
-    await createAiFixtureAnalysisContext(fixture, options, selectedSlot);
+    await createAiFixtureAnalysisContext(
+      fixture,
+      options,
+      replacementMode ? undefined : selectedSlot,
+    );
+  const targetMember = replacementMode ? team[selectedSlot] : removedMember;
 
-  if (!removedMember) {
+  if (!targetMember) {
     throw new Error(
       `Fixture "${fixture.id}" has no Pokemon in slot ${selectedSlot}.`,
     );
@@ -313,20 +322,53 @@ export async function createAiPokemonRecommendationEvaluationCase(
     getAbilityDisplayName: (id, fallback) =>
       translateGameName("ko", "abilities", id, fallback),
   });
-  const recommendationCandidates = await createRecommendationCandidates({
-    options: recommendationOptions,
-    filters:
-      buildState.candidateFiltersBySlot[selectedSlot] ??
-      emptyPokemonCandidateFilters,
-    occupiedSpeciesKeys: getOccupiedPokemonSpeciesKeys(team, pokemonIndex),
-    diagnostics,
-    battleFormat: fixture.battleFormat,
-    existingMegaOptionCount: countTeamMegaOptions(
-      team,
-      buildState.itemBySlot,
-      pokemonIndex,
-    ),
-  });
+  const recommendationCandidates = replacementMode
+    ? await createUniversalPokemonRecommendationCandidates({
+        options: recommendationOptions,
+        targets: createPokemonRecommendationTargets({
+          team,
+          selectedSlot,
+          buildState,
+          diagnostics,
+          pokemonIndex,
+          getCurrentPokemonDisplayName: (member, entry) =>
+            translatePokemonName("ko", {
+              id: entry?.name ?? member.id,
+              speciesId: entry?.speciesKey,
+              fallback: entry?.displayName ?? member.name,
+              includeForm: false,
+              formLabel: entry?.formLabel,
+              formKind: entry?.formKind,
+            }),
+        }),
+        battleFormat: fixture.battleFormat,
+      })
+    : await createRecommendationCandidates({
+        options: recommendationOptions,
+        filters:
+          buildState.candidateFiltersBySlot[selectedSlot] ??
+          emptyPokemonCandidateFilters,
+        occupiedSpeciesKeys: getOccupiedPokemonSpeciesKeys(team, pokemonIndex),
+        diagnostics,
+        battleFormat: fixture.battleFormat,
+        existingMegaOptionCount: countTeamMegaOptions(
+          team,
+          buildState.itemBySlot,
+          pokemonIndex,
+        ),
+        target: {
+          mode: "addition",
+          slotIndex: selectedSlot,
+          currentPokemonId: null,
+          currentDisplayName: null,
+          currentRoleIds: [],
+          currentSetterConceptIds: [],
+          currentAceConceptIds: [],
+          currentResponsibilityIds: [],
+          megaOptionPokemonId: null,
+          allySupportLinks: [],
+        },
+      });
 
   if (recommendationCandidates.length === 0) {
     throw new Error(
@@ -354,7 +396,8 @@ export async function createAiPokemonRecommendationEvaluationCase(
     fixtureId:
       metadata?.fixtureId ?? `${fixture.id}-recommendation-${selectedSlot}`,
     title:
-      metadata?.title ?? `${fixture.title} - replace ${removedMember.name}`,
+      metadata?.title ??
+      `${fixture.title} - ${replacementMode ? "full-team replacements" : `replace ${targetMember.name}`}`,
     request,
     requestFingerprint: getCopilotRequestFingerprint(request),
     evaluatorContext: {

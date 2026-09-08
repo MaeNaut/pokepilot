@@ -39,6 +39,7 @@ describe("Showdown Pokemon index normalization", () => {
     });
     expect(byName.get("charizard-mega-x")).toMatchObject({
       showdownId: "charizardmegax",
+      showdownName: "Charizard-Mega-X",
       speciesKey: "charizard",
       formKind: "mega",
       isSelectorOption: false,

@@ -51,7 +51,10 @@ import type {
   TeamSlot,
 } from "../types";
 import { getPokemonBuildSnapshot } from "../utils/benchPokemon";
-import { getMegaStoneItemName } from "../utils/megaEvolution";
+import {
+  createProjectedMegaMember,
+  getMegaStoneItemName,
+} from "../utils/megaEvolution";
 import {
   reconcileMoveIds,
 } from "../utils/pokemonMoves";
@@ -459,7 +462,24 @@ export function Calculator({
   ]);
 
   const analysisContext = useMemo<CalculatorAnalysisContext>(
-    () => ({
+    () => {
+      const createMegaEvolution = (
+        member: TeamMember | null,
+        build: CalculatorBuildValues,
+      ) => {
+        if (!member) return undefined;
+        const megaMember = createProjectedMegaMember(
+          member,
+          build.item,
+          pokemonIndex,
+        );
+        const ability = megaMember?.abilities?.[0];
+        return megaMember && ability
+          ? { member: megaMember, ability }
+          : undefined;
+      };
+
+      return ({
       battleFormat,
       selectedSlot,
       direction,
@@ -471,6 +491,7 @@ export function Calculator({
         usageMoves: playerUsageMoves,
         usageItems: playerUsageItems,
         maxHp: playerMaxHp,
+        megaEvolution: createMegaEvolution(selectedMember, playerBuild),
       },
       opponent: {
         member: opponentBuild.member,
@@ -479,6 +500,10 @@ export function Calculator({
         moves: opponentMoves,
         usageMoves: opponentUsageMoves,
         maxHp: opponentMaxHp,
+        megaEvolution: createMegaEvolution(
+          opponentBuild.member,
+          opponentBuild,
+        ),
       },
       roster: team.flatMap((member, slotIndex) => {
         if (!member) return [];
@@ -491,6 +516,7 @@ export function Calculator({
           moveIds: snapshot.moveIds,
         };
         const maxHp = getCalculatorMaxHp(member, build);
+        const megaEvolution = createMegaEvolution(member, build);
 
         return [{
           slotIndex,
@@ -503,10 +529,12 @@ export function Calculator({
             candidateMoveIndex,
           ),
           maxHp,
+          megaEvolution,
         }];
       }),
       field,
-    }),
+    });
+    },
     [
       battleFormat,
       direction,
@@ -516,6 +544,7 @@ export function Calculator({
       opponentMaxHp,
       opponentMoves,
       opponentUsageMoves,
+      pokemonIndex,
       playerBattle,
       playerBuild,
       playerMaxHp,

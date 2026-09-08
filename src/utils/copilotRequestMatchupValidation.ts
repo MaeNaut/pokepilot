@@ -142,6 +142,7 @@ function hasValidMatchupMember(value: unknown) {
       "slotIndex",
       "pokemonId",
       "displayName",
+      "state",
       "roleIds",
       "responseTier",
       "offenseBenchmarks",
@@ -151,6 +152,7 @@ function hasValidMatchupMember(value: unknown) {
     isSlotIndex(value.slotIndex) &&
     isNonEmptyString(value.pokemonId) &&
     isNonEmptyString(value.displayName) &&
+    (value.state === "current" || value.state === "mega") &&
     isUniqueEnumArray(value.roleIds, teamRoleIdSet, teamRoleIdSet.size) &&
     ["answer", "check", "limited"].includes(String(value.responseTier)) &&
     hasValidMatchupMoveBenchmarks(value.offenseBenchmarks) &&

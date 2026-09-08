@@ -62,6 +62,7 @@ type CopilotPanelProps = {
   onSelectRecommendedPokemon: (
     slotIndex: number,
     pokemonId: string,
+    expectedCurrentPokemonId: string | null,
   ) => Promise<RecommendedPokemonApplyResult>;
   onSaveRecommendedPokemon: (
     slotIndex: number,
@@ -135,7 +136,6 @@ export function CopilotPanel({
     "applied" | "saved" | "bench-full" | "stale" | null
   >(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const selectedMember = team[selectedSlot];
   const recommendationState = useCopilotRecommendationCandidates({
     scope,
     selectedSlot,
@@ -267,8 +267,7 @@ export function CopilotPanel({
     abilityIndexStatus === "loading" ||
     cooldownRemainingSeconds > 0 ||
     (scope === "recommendation" &&
-      (Boolean(selectedMember) ||
-        recommendationState.status !== "ready" ||
+      (recommendationState.status !== "ready" ||
         recommendationState.candidates.length === 0)) ||
     (scope === "optimization" &&
       (!isCalculatorActive ||
@@ -330,7 +329,18 @@ export function CopilotPanel({
     setCandidateApplyFailure(null);
     setCandidateSaveStatus(null);
     try {
-      const result = await onSelectRecommendedPokemon(selectedSlot, pokemonId);
+      const candidate = recommendationState.candidates.find(
+        (entry) => entry.pokemonId === pokemonId,
+      );
+      if (!candidate) {
+        setCandidateApplyFailure("stale");
+        return;
+      }
+      const result = await onSelectRecommendedPokemon(
+        candidate.target.slotIndex,
+        pokemonId,
+        candidate.target.currentPokemonId,
+      );
 
       if (result.status === "blocked") {
         setCandidateApplyFailure(result.reason);
@@ -359,7 +369,17 @@ export function CopilotPanel({
     setCandidateApplyFailure(null);
     setCandidateSaveStatus(null);
     try {
-      const result = await onSaveRecommendedPokemon(selectedSlot, pokemonId);
+      const candidate = recommendationState.candidates.find(
+        (entry) => entry.pokemonId === pokemonId,
+      );
+      if (!candidate) {
+        setCandidateApplyFailure("stale");
+        return;
+      }
+      const result = await onSaveRecommendedPokemon(
+        candidate.target.slotIndex,
+        pokemonId,
+      );
 
       if (result.status === "blocked") {
         if (result.reason === "bench-full") {
@@ -564,9 +584,7 @@ export function CopilotPanel({
                       })
                     : t("copilot.emptySlot", { slot: selectedSlot + 1 })
                   : scope === "recommendation"
-                    ? selectedMember
-                      ? t("copilot.chooseEmptySlot")
-                      : recommendationState.status === "loading"
+                    ? recommendationState.status === "loading"
                         ? t("copilot.loadingCandidates")
                         : recommendationState.status === "error"
                           ? t("copilot.candidateLoadFailed")

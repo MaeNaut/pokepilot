@@ -126,10 +126,48 @@ describe("recommended Pokemon application validation", () => {
       legality: createLegality(),
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("valid");
     expect(result.proposedTeam[1]?.id).toBe("pelipper");
+  });
+
+  it("replaces the exact analyzed member when the target is unchanged", () => {
+    const result = validateRecommendedPokemonApplication({
+      currentTeam: createTeam(),
+      slotIndex: 0,
+      candidate: pelipper,
+      proposedBuildState: patchBuildStateSlot(createEmptyBuildState(), 0, {
+        ability: "Drizzle",
+        moveIds: ["hurricane"],
+      }),
+      legality: createLegality(),
+      pokemonIndex,
+      itemIndex,
+      expectedCurrentPokemonId: "swampert",
+    });
+
+    expect(result.status).toBe("valid");
+    expect(result.proposedTeam[0]?.id).toBe("pelipper");
+  });
+
+  it("blocks a replacement after the analyzed target changes", () => {
+    const result = validateRecommendedPokemonApplication({
+      currentTeam: [pelipper, null, null, null, null, null],
+      slotIndex: 0,
+      candidate: swampert,
+      proposedBuildState: createEmptyBuildState(),
+      legality: createLegality(),
+      pokemonIndex,
+      itemIndex,
+      expectedCurrentPokemonId: "swampert",
+    });
+
+    expect(result).toMatchObject({
+      status: "blocked",
+      reason: "stale-target",
+    });
   });
 
   it("blocks stale recommendations when the target slot is no longer empty", () => {
@@ -141,6 +179,7 @@ describe("recommended Pokemon application validation", () => {
       legality: createLegality(),
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("blocked");
@@ -158,6 +197,7 @@ describe("recommended Pokemon application validation", () => {
       legality: createLegality(),
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("blocked");
@@ -184,6 +224,7 @@ describe("recommended Pokemon application validation", () => {
       legality: createLegality(),
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("blocked");
@@ -204,6 +245,7 @@ describe("recommended Pokemon application validation", () => {
       legality: createLegality({ pokemonIds: new Set(["swampert"]) }),
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("blocked");
@@ -240,6 +282,7 @@ describe("recommended Pokemon application validation", () => {
       legality: createLegality(),
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("blocked");
@@ -259,6 +302,7 @@ describe("recommended Pokemon application validation", () => {
       legality: null,
       pokemonIndex,
       itemIndex,
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("blocked");
@@ -285,6 +329,7 @@ describe("recommended Pokemon application validation", () => {
       legality: createLegality(),
       pokemonIndex,
       itemIndex: [...itemIndex, choiceBand],
+      expectedCurrentPokemonId: null,
     });
 
     expect(result.status).toBe("valid");

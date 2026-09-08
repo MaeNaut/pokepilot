@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { ShowdownDataSnapshot } from "../api/showdownData";
-import type { PokemonRecommendationOption } from "./pokemonRecommendations";
-import { rankPokemonRecommendationCandidates } from "./pokemonRecommendations";
-import type { TeamDiagnosticsResult } from "./teamDiagnostics";
+import type { PokemonIndexEntry, PokemonMove, TeamMember } from "../types";
+import { createEmptyBuildState } from "./teamBuildState";
+import {
+  createPokemonRecommendationTargets,
+  rankPokemonRecommendationCandidates,
+  rankUniversalPokemonRecommendationCandidates,
+  type PokemonRecommendationOption,
+} from "./pokemonRecommendations";
+import { analyzeTeam, type TeamDiagnosticsResult } from "./teamDiagnostics";
 
 const diagnostics: TeamDiagnosticsResult = {
   filledSlots: 2,
@@ -105,6 +111,192 @@ const showdownData: ShowdownDataSnapshot = {
 };
 
 describe("rankPokemonRecommendationCandidates", () => {
+  it("protects a supported Mega axis when evaluating full-team replacements", () => {
+    const createMove = (
+      id: string,
+      category: "physical" | "status",
+    ): PokemonMove => ({
+      id,
+      name: id,
+      type: category === "physical" ? "steel" : "fighting",
+      category,
+      power: category === "physical" ? 80 : null,
+      accuracy: 100,
+      pp: 10,
+      description: "",
+    });
+    const createMember = (
+      id: string,
+      moves: PokemonMove[],
+    ): TeamMember => ({
+      id,
+      name: id,
+      types: ["normal"],
+      roles: [],
+      abilities: ["intimidate"],
+      moves,
+      baseStats: {
+        hp: 80,
+        attack: 100,
+        defense: 80,
+        specialAttack: 60,
+        specialDefense: 80,
+        speed: 70,
+      },
+    });
+    const coaching = createMove("coaching", "status");
+    const ironHead = createMove("ironhead", "physical");
+    const team = [
+      createMember("scrafty", [coaching]),
+      createMember("mawile", [ironHead]),
+      createMember("filler-2", [ironHead]),
+      createMember("filler-3", [ironHead]),
+      createMember("filler-4", [ironHead]),
+      createMember("filler-5", [ironHead]),
+    ];
+    const buildState = createEmptyBuildState();
+    buildState.moveIdsBySlot = {
+      0: ["coaching"],
+      1: ["ironhead"],
+      2: ["ironhead"],
+      3: ["ironhead"],
+      4: ["ironhead"],
+      5: ["ironhead"],
+    };
+    buildState.itemBySlot = {
+      1: {
+        id: "mawilite",
+        name: "Mawilite",
+        category: "Mega Stones",
+      },
+    };
+    const pokemonIndex: PokemonIndexEntry[] = [
+      {
+        name: "mawile",
+        showdownId: "mawile",
+        displayName: "Mawile",
+        speciesKey: "mawile",
+        sortNumber: 303,
+        types: ["steel", "fairy"],
+        abilities: ["intimidate"],
+        formKind: "base",
+        isSelectorOption: true,
+      },
+      {
+        name: "mawile-mega",
+        showdownId: "mawilemega",
+        displayName: "Mega Mawile",
+        speciesKey: "mawile",
+        sortNumber: 303,
+        types: ["steel", "fairy"],
+        abilities: ["hugepower"],
+        formKind: "mega",
+        isSelectorOption: true,
+      },
+    ];
+    const teamDiagnostics = analyzeTeam(team, buildState, team);
+    const targets = createPokemonRecommendationTargets({
+      team,
+      selectedSlot: 0,
+      buildState,
+      diagnostics: teamDiagnostics,
+      pokemonIndex,
+      getCurrentPokemonDisplayName: (member) => member.name,
+    });
+    const mawileTarget = targets.find((target) => target.slotIndex === 1);
+    const fillerTarget = targets.find((target) => target.slotIndex === 2);
+
+    expect(mawileTarget).toMatchObject({
+      megaOptionPokemonId: "mawile-mega",
+      allySupportLinks: [
+        {
+          sourceSlotIndex: 0,
+          sourceKind: "move",
+          sourceId: "coaching",
+          responsibilityId: "ally-damage-amplification",
+        },
+      ],
+    });
+    expect(mawileTarget!.replacementLossPenalty).toBeGreaterThan(
+      fillerTarget!.replacementLossPenalty ?? 0,
+    );
+  });
+
+  it("keeps an addition candidate tied to its actual empty slot", () => {
+    const result = rankUniversalPokemonRecommendationCandidates({
+      options,
+      targets: [
+        {
+          mode: "addition",
+          slotIndex: 4,
+          currentPokemonId: null,
+          currentDisplayName: null,
+          currentSpeciesKey: null,
+          filters: { types: [], ability: null, moves: [] },
+          occupiedSpeciesKeys: new Set(["scrafty"]),
+          diagnostics,
+          existingMegaOptionCount: 0,
+        },
+      ],
+      usageIds: ["scrafty", "rotom-wash", "gastrodon"],
+      showdownData,
+    });
+
+    expect(result[0].target).toMatchObject({
+      mode: "addition",
+      slotIndex: 4,
+      currentPokemonId: null,
+      currentDisplayName: null,
+    });
+  });
+
+  it("assigns a full-team candidate to the replacement where it improves fit most", () => {
+    const neutralDiagnostics: TeamDiagnosticsResult = {
+      ...diagnostics,
+      defensiveMatchups: [],
+      uncoveredDefendingTypes: [],
+    };
+    const result = rankUniversalPokemonRecommendationCandidates({
+      options,
+      targets: [
+        {
+          mode: "replacement",
+          slotIndex: 0,
+          currentPokemonId: "scrafty",
+          currentDisplayName: "Scrafty",
+          currentSpeciesKey: "scrafty",
+          filters: { types: [], ability: null, moves: [] },
+          occupiedSpeciesKeys: new Set(["gastrodon"]),
+          diagnostics,
+          existingMegaOptionCount: 0,
+        },
+        {
+          mode: "replacement",
+          slotIndex: 1,
+          currentPokemonId: "gastrodon",
+          currentDisplayName: "Gastrodon",
+          currentSpeciesKey: "gastrodon",
+          filters: { types: [], ability: null, moves: [] },
+          occupiedSpeciesKeys: new Set(["scrafty"]),
+          diagnostics: neutralDiagnostics,
+          existingMegaOptionCount: 0,
+        },
+      ],
+      usageIds: ["scrafty", "rotom-wash", "gastrodon"],
+      showdownData,
+    });
+    const rotom = result.find((candidate) => candidate.pokemonId === "rotom-wash");
+
+    expect(rotom?.target).toMatchObject({
+      mode: "replacement",
+      slotIndex: 0,
+      currentPokemonId: "scrafty",
+      currentDisplayName: "Scrafty",
+    });
+    expect(result.some((candidate) => candidate.pokemonId === "scrafty")).toBe(false);
+    expect(result.some((candidate) => candidate.pokemonId === "gastrodon")).toBe(false);
+  });
+
   it("prioritizes concrete defensive and coverage fit over adjacent usage ranks", () => {
     const result = rankPokemonRecommendationCandidates({
       options,
@@ -453,6 +645,58 @@ describe("rankPokemonRecommendationCandidates", () => {
       conceptSynergies: [],
       conflicts: ["common-ability-benefits-from-sun-not-active-sand"],
     });
+  });
+
+  it("ranks a weather-conflicting candidate below a compatible alternative", () => {
+    const sandDiagnostics: TeamDiagnosticsResult = {
+      ...diagnostics,
+      defensiveMatchups: [],
+      uncoveredDefendingTypes: [],
+      concepts: [
+        {
+          id: "sand",
+          label: "Sand",
+          status: "setup-only",
+          setterSlots: [0],
+          aceSlots: [],
+          dependentAceSlots: [],
+          independentAttackerSlots: [],
+          hasIndependentAttacker: false,
+        },
+      ],
+    };
+    const result = rankPokemonRecommendationCandidates({
+      options: [
+        {
+          id: "pelipper",
+          speciesKey: "pelipper",
+          displayName: "Pelipper",
+          types: ["water", "flying"],
+          typeDisplayNames: ["Water", "Flying"],
+          abilities: [{ id: "drizzle", displayName: "Drizzle" }],
+          legalMoveIds: [],
+        },
+        {
+          id: "corviknight",
+          speciesKey: "corviknight",
+          displayName: "Corviknight",
+          types: ["flying", "steel"],
+          typeDisplayNames: ["Flying", "Steel"],
+          abilities: [{ id: "pressure", displayName: "Pressure" }],
+          legalMoveIds: [],
+        },
+      ],
+      filters: { types: [], ability: null, moves: [] },
+      occupiedSpeciesKeys: new Set(),
+      diagnostics: sandDiagnostics,
+      usageIds: ["pelipper", "corviknight"],
+      showdownData,
+    });
+
+    expect(result.map((candidate) => candidate.pokemonId)).toEqual([
+      "corviknight",
+      "pelipper",
+    ]);
   });
 
   it("reserves broad usage coverage while retaining a lower-usage fit candidate", () => {

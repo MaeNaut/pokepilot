@@ -49,6 +49,8 @@ type CliOptions = {
   pokemonRegressions: boolean;
   recommendationRegressions: boolean;
   repeat: number;
+  prepareOnly: boolean;
+  fullTeamRecommendation: boolean;
 };
 
 async function loadOpenAiApiKey() {
@@ -164,6 +166,14 @@ function parseCliOptions(args: string[]): CliOptions {
     throw new Error("--repeat must be an integer from 1 through 10.");
   }
 
+  const fullTeamRecommendation = args.includes("--full-team");
+  if (fullTeamRecommendation && scope !== "recommendation") {
+    throw new Error("--full-team requires recommendation scope.");
+  }
+  if (fullTeamRecommendation && recommendationRegressions) {
+    throw new Error("--full-team cannot be combined with --recommendation-regressions.");
+  }
+
   return {
     fixtures: getFixtureSelection(args),
     reasoningEffort: effortValue,
@@ -172,6 +182,8 @@ function parseCliOptions(args: string[]): CliOptions {
     pokemonRegressions,
     recommendationRegressions,
     repeat,
+    prepareOnly: args.includes("--prepare-only"),
+    fullTeamRecommendation,
     outputDirectory: resolve(
       projectRoot,
       readOptionValue(args, "--output") ?? "artifacts/ai-evaluation",
@@ -191,6 +203,8 @@ Usage:
   npm run eval:ai -- --fixture <fixture-id>
   npm run eval:ai -- --fixture <fixture-id> --scope pokemon --slot 0
   npm run eval:ai -- --fixture <fixture-id> --scope recommendation --slot 0
+  npm run eval:ai -- --fixture <fixture-id> --scope recommendation --full-team --prepare-only
+  npm run eval:ai -- --fixture <fixture-id> --scope team --prepare-only
   npm run eval:ai -- --effort none|low|medium
   npm run eval:ai -- --recommendation-regressions --repeat 3
 
@@ -198,6 +212,7 @@ The default run is a two-case smoke test with one Singles and one Doubles
   fixture at low reasoning. --strategy runs focused team interactions,
   --pokemon-regressions runs selected-set cases, and --recommendation-regressions
   removes one member before building the production candidate shortlist.
+  --full-team keeps all six members and evaluates replacement targets.
   Calls always use GPT-5.6 Luna with Standard service tier.`);
 }
 
@@ -218,8 +233,6 @@ async function main() {
     printHelp();
     return;
   }
-
-  const apiKey = await loadOpenAiApiKey();
 
   const options = parseCliOptions(args);
   const startedAt = new Date().toISOString();
@@ -287,7 +300,11 @@ async function main() {
         : options.fixtures.map((fixture) => ({
             fixture,
             selectedSlot: options.selectedSlot,
-            metadata: undefined,
+            metadata:
+              options.scope === "recommendation" &&
+              options.fullTeamRecommendation
+                ? { recommendationMode: "replacement" as const }
+                : undefined,
             expectedCandidateIds: undefined,
             requiredRecommendationIds: undefined,
           }));
@@ -357,6 +374,39 @@ async function main() {
             },
       );
     }
+
+    if (options.prepareOnly) {
+      for (const evaluationCase of evaluationCases) {
+        console.log(JSON.stringify({
+          fixtureId: evaluationCase.fixtureId,
+          scope: evaluationCase.request.scope,
+          selectedSlot: evaluationCase.request.selectedSlot,
+          megaOptions: evaluationCase.request.megaOptions.map((option) => ({
+            slotIndex: option.slotIndex,
+            pokemonId: option.pokemonId,
+            ability: option.ability,
+            baseStats: option.baseStats,
+            stats: option.stats,
+          })),
+          selectedMegaEvolution: evaluationCase.request.sets.find(
+            ({ slotIndex }) =>
+              slotIndex === evaluationCase.request.selectedSlot,
+          )?.megaEvolution ?? null,
+          recommendationCandidateCount:
+            evaluationCase.request.recommendationCandidates.length,
+          recommendationCandidateTargets:
+            evaluationCase.request.recommendationCandidates
+              .slice(0, 12)
+              .map((candidate) => ({
+                pokemonId: candidate.pokemonId,
+                target: candidate.target,
+              })),
+        }, null, 2));
+      }
+      return;
+    }
+
+    const apiKey = await loadOpenAiApiKey();
 
     const adapter = createOpenAiLunaAdapter({
       apiKey,

@@ -18,7 +18,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 25,
+  version: 28,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -104,7 +104,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       });
       expect(result.output).toEqual(groundedModelOutput);
       expect(create).toHaveBeenCalledWith(expect.objectContaining({
-        prompt_cache_key: "pokepilot-production-core-v3-low",
+        prompt_cache_key: "pokepilot-production-core-v4-low",
         text: expect.objectContaining({ format: expect.objectContaining({
           schema: copilotGroundedModelOutputJsonSchema,
         }) }),
@@ -224,7 +224,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-core-v3-low",
+        prompt_cache_key: "pokepilot-evaluation-core-v4-low",
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -287,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 78,
+        promptVersion: 81,
       },
       usage: {
         totalTokens: 150,
@@ -383,7 +383,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(create).toHaveBeenCalledOnce();
     const modelRequest = create.mock.calls[0]![0];
     expect(modelRequest.prompt_cache_key).toBe(
-      "pokepilot-evaluation-core-v3-low",
+      "pokepilot-evaluation-core-v4-low",
     );
     expect(modelRequest.input[0].content[0].text).toBe(
       pokepilotCommonInstructions,
@@ -434,7 +434,13 @@ describe("OpenAI Luna evaluation adapter", () => {
       "one concrete fit fact and one concrete tradeoff fact",
     );
     expect(getPokePilotScopeInstructions("recommendation")).toContain(
-      "Rank exactly three unique candidates",
+      "For addition mode, rank exactly three unique candidates",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "return an empty recommendations array when no supplied exchange is clearly worthwhile",
+    );
+    expect(getPokePilotScopeInstructions("recommendation")).toContain(
+      "Every replacement recommendation must name target.currentDisplayName",
     );
     expect(getPokePilotScopeInstructions("recommendation")).toContain(
       "scan its exact supplied ability and common-move display names",

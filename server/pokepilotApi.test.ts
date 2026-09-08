@@ -9,7 +9,7 @@ import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 25,
+  version: 28,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -142,6 +142,18 @@ const recommendationRequest = {
     (pokemonId, index) => ({
       pokemonId,
       displayName: pokemonId,
+      target: {
+        mode: "addition",
+        slotIndex: 0,
+        currentPokemonId: null,
+        currentDisplayName: null,
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
       types: [index === 2 ? "flying" : "water"],
       typeDisplayNames: [index === 2 ? "Flying" : "Water"],
       abilities: [],
@@ -339,7 +351,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 78,
+        promptVersion: 81,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

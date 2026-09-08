@@ -6,6 +6,7 @@ import type {
   TeamSlot,
 } from "../types";
 import type { TeamBuildState } from "./teamBuildState";
+import { normalizeShowdownId } from "../api/showdownIds";
 import {
   validateTeam,
   type TeamValidityResult,
@@ -58,6 +59,7 @@ type ValidateRecommendedPokemonApplicationInput = {
   legality: ShowdownLegalitySnapshot | null;
   pokemonIndex: PokemonIndexEntry[];
   itemIndex: ItemIndexEntry[];
+  expectedCurrentPokemonId: string | null;
 };
 
 function getIssueSlotNumbers(issue: ValidityIssue) {
@@ -91,16 +93,22 @@ export function validateRecommendedPokemonApplication({
   legality,
   pokemonIndex,
   itemIndex,
+  expectedCurrentPokemonId,
 }: ValidateRecommendedPokemonApplicationInput): RecommendedPokemonApplicationValidation {
   const proposedTeam = currentTeam.map((member, index) =>
     index === slotIndex ? candidate : member,
   );
 
-  if (
-    slotIndex < 0 ||
-    slotIndex >= currentTeam.length ||
-    currentTeam[slotIndex]
-  ) {
+  const currentMember = currentTeam[slotIndex];
+  const targetMatches = expectedCurrentPokemonId === null
+    ? !currentMember
+    : Boolean(
+        currentMember &&
+          normalizeShowdownId(currentMember.id) ===
+            normalizeShowdownId(expectedCurrentPokemonId),
+      );
+
+  if (slotIndex < 0 || slotIndex >= currentTeam.length || !targetMatches) {
     return {
       status: "blocked",
       reason: "stale-target",

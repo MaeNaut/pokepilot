@@ -223,6 +223,7 @@ function createIndexEntry(species: ShowdownSpeciesData): PokemonIndexEntry | nul
   return {
     name: pokemonId,
     showdownId: species.id,
+    showdownName: species.name,
     displayName: getDisplayName(
       pokemonId,
       speciesKey,
@@ -232,6 +233,7 @@ function createIndexEntry(species: ShowdownSpeciesData): PokemonIndexEntry | nul
     sortNumber: species.num,
     types: species.types ?? [],
     abilities: species.abilities,
+    baseStats: species.baseStats,
     formKind,
     ...(formLabel ? { formLabel } : {}),
     isSelectorOption: isSelectorOption(pokemonId, formKind),

@@ -1,14 +1,10 @@
 /// <reference lib="webworker" />
-import { createTeamMatchupPlan } from "./teamMatchup";
-import { createSetOptimizationPlan } from "./setOptimizer/plan";
+import { createTeamMatchupAnalysisPlans } from "./teamMatchup";
 import type { CalculatorAnalysisContext } from "./setOptimizer/types";
 
 self.onmessage = (event: MessageEvent<CalculatorAnalysisContext>) => {
   try {
-    self.postMessage({
-      matchupPlan: createTeamMatchupPlan(event.data),
-      optimizationPlan: createSetOptimizationPlan(event.data),
-    });
+    self.postMessage(createTeamMatchupAnalysisPlans(event.data));
   } catch {
     self.postMessage({ error: true });
   }

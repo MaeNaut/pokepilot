@@ -643,23 +643,11 @@ function analyzeRecommendationRequest(
   request: CopilotAnalysisRequest,
   locale: Locale,
 ): CopilotAnalysisResponse {
-  const candidates = request.recommendationCandidates.slice(0, 5);
+  const candidates = request.recommendationCandidates.slice(0, 3);
   const isKorean = locale === "ko";
-
-  if (request.sets.some((set) => set.slotIndex === request.selectedSlot)) {
-    return {
-      version: 2,
-      source: "local",
-      scope: "recommendation",
-      title: isKorean ? "빈 슬롯 선택 필요" : "Choose an empty slot",
-      paragraphs: [
-        isKorean
-          ? "포켓몬 추천은 현재 선택한 빈 슬롯의 필터와 팀 구성을 기준으로 진행됩니다."
-          : "Pokemon recommendations use the selected empty slot, its filters, and the current team.",
-      ],
-      recommendations: [],
-    };
-  }
+  const replacementMode = candidates.every(
+    (candidate) => candidate.target.mode === "replacement",
+  );
 
   return {
     version: 2,
@@ -669,8 +657,12 @@ function analyzeRecommendationRequest(
     paragraphs: [
       candidates.length > 0
         ? isKorean
-          ? "레귤레이션 M-B 적법성, 선택한 필터, 사용률과 현재 팀의 타입 구조를 함께 반영한 후보입니다."
-          : "These candidates reflect Regulation M-B legality, the selected filters, usage, and the current team's type profile."
+          ? replacementMode
+            ? "현재 여섯 마리의 역할과 상성을 비교해 교체 가능한 후보를 골랐습니다."
+            : "레귤레이션 M-B 적법성, 선택한 필터, 사용률과 현재 팀의 타입 구조를 함께 반영한 후보입니다."
+          : replacementMode
+            ? "These candidates compare possible replacements against the roles and matchups of the current six."
+            : "These candidates reflect Regulation M-B legality, the selected filters, usage, and the current team's type profile."
         : isKorean
           ? "현재 조건을 모두 만족하는 후보가 없습니다."
           : "No candidate satisfies every current requirement.",
@@ -678,8 +670,12 @@ function analyzeRecommendationRequest(
     recommendations: candidates.map((candidate, index) => ({
       id: candidate.pokemonId,
       title: isKorean
-        ? `${candidate.displayName} 후보를 검토해 보세요.`
-        : `Consider ${candidate.displayName}.`,
+        ? candidate.target.mode === "replacement"
+          ? `${candidate.target.currentDisplayName} 대신 ${candidate.displayName}을 검토해 보세요.`
+          : `${candidate.displayName}을 검토해 보세요.`
+        : candidate.target.mode === "replacement"
+          ? `Consider ${candidate.displayName} over ${candidate.target.currentDisplayName}.`
+          : `Consider ${candidate.displayName}.`,
       reason: isKorean
         ? index === 0
           ? "현재 조건에서 가장 먼저 검토할 수 있는 합법적인 후보입니다."

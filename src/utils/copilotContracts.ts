@@ -123,6 +123,8 @@ export type CopilotMegaEvolutionSnapshot = {
   typeDisplayNames: string[];
   ability: string | null;
   abilityDisplayName: string | null;
+  baseStats: StatBlock | null;
+  stats: StatBlock | null;
   defensiveProfile: PokemonDefensiveProfile;
 };
 
@@ -135,6 +137,8 @@ export type CopilotMegaOptionSnapshot = {
   typeDisplayNames: string[];
   ability: string | null;
   abilityDisplayName: string | null;
+  baseStats: StatBlock | null;
+  stats: StatBlock | null;
 };
 
 export type CopilotSetSnapshot = {
@@ -295,6 +299,7 @@ export type CopilotMatchupMemberSnapshot = {
   slotIndex: number;
   pokemonId: string;
   displayName: string;
+  state: "current" | "mega";
   roleIds: TeamRoleId[];
   responseTier: TeamMatchupResponseTier;
   offenseBenchmarks: CopilotMatchupMoveBenchmarkSnapshot[];
@@ -327,7 +332,7 @@ export type CopilotMatchupSnapshot = {
 };
 
 export type CopilotAnalysisRequest = {
-  version: 25;
+  version: 28;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;

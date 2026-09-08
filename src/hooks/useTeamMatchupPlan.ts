@@ -1,16 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CalculatorAnalysisContext } from "../calculator/setOptimizer/types";
-import type { TeamMatchupPlan } from "../calculator/teamMatchup";
-import type { SetOptimizationPlan } from "../calculator/setOptimizer/types";
-
-type MatchupAnalysisPlans = {
-  matchupPlan: TeamMatchupPlan;
-  optimizationPlan: SetOptimizationPlan;
-};
+import type { TeamMatchupAnalysisPlans } from "../calculator/teamMatchup";
 
 type Result = {
   context: CalculatorAnalysisContext;
-  plans: MatchupAnalysisPlans | null;
+  plans: TeamMatchupAnalysisPlans | null;
   status: "loading" | "ready" | "error";
 };
 
@@ -24,7 +18,7 @@ export function useTeamMatchupPlan(
 
   useEffect(() => () => cancel.current?.(), [active, context]);
 
-  const run = useCallback((): Promise<MatchupAnalysisPlans | null> => {
+  const run = useCallback((): Promise<TeamMatchupAnalysisPlans | null> => {
     cancel.current?.();
     if (!active || !context) return Promise.resolve(null);
     setResult({ context, plans: null, status: "loading" });
@@ -33,7 +27,7 @@ export function useTeamMatchupPlan(
       let settled = false;
       let worker: Worker | undefined;
       const finish = (
-        plans: MatchupAnalysisPlans | null,
+        plans: TeamMatchupAnalysisPlans | null,
         status?: "ready" | "error",
       ) => {
         if (settled) return;
@@ -50,7 +44,7 @@ export function useTeamMatchupPlan(
           { type: "module" },
         );
         worker.onmessage = (
-          event: MessageEvent<MatchupAnalysisPlans & { error?: boolean }>,
+          event: MessageEvent<TeamMatchupAnalysisPlans & { error?: boolean }>,
         ) => finish(
           event.data.error ? null : event.data,
           event.data.error ? "error" : "ready",

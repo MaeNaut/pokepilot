@@ -120,6 +120,12 @@ describe("model input sharing", () => {
     const request = createRequest("recommendation");
     request.recommendationCandidates = Array.from({ length: 10 }, (_, index) => ({
       pokemonId: `candidate${index}`, displayName: `Candidate ${index}`,
+      target: { mode: "replacement", slotIndex: index % 6,
+        currentPokemonId: `pokemon${index % 6}`,
+        currentDisplayName: `Pokemon ${index % 6}`,
+        currentRoleIds: [], currentSetterConceptIds: [], currentAceConceptIds: [],
+        currentResponsibilityIds: [], megaOptionPokemonId: null,
+        allySupportLinks: [] },
       types: ["normal"], typeDisplayNames: ["Normal"], baseStats: null,
       speedTier: "mid", requiresMegaStone: false, usageRank: index + 1,
       abilities: [{ id: "intimidate", displayName: "Intimidate",
@@ -136,6 +142,9 @@ describe("model input sharing", () => {
     const result = serializePokePilotModelRequest(request);
     expect(result.instructions).not.toBe("");
     expect(expandModelInput(result.text)).toEqual(request);
+    expect(JSON.stringify(JSON.parse(result.text).sharedData)).toContain(
+      "recommendation-target",
+    );
     expect(JSON.parse(result.text).recommendationCandidates[0].commonSet.moves[0].effect)
       .toBe("Different supplied description.");
   });
@@ -155,6 +164,7 @@ describe("model input sharing", () => {
       pokemonId: "testmega", pokemonName: "Test Mega", displayName: "Test Mega",
       types: ["normal"], typeDisplayNames: ["Normal"],
       ability: "levitate", abilityDisplayName: "Levitate",
+      baseStats: null, stats: null,
       defensiveProfile: { ...structuredClone(set.defensiveProfile),
         immunities: [{ type: "ground", cause: "ability" }] },
     };

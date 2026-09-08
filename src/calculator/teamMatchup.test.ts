@@ -10,7 +10,11 @@ import type {
   CalculatorAnalysisContext,
   CalculatorAnalysisSide,
 } from "./setOptimizer/types";
-import { createTeamMatchupPlan } from "./teamMatchup";
+import { createSetOptimizationPlan } from "./setOptimizer";
+import {
+  createTeamMatchupAnalysisPlans,
+  createTeamMatchupPlan,
+} from "./teamMatchup";
 
 const earthquake: PokemonMove = {
   id: "earthquake",
@@ -151,6 +155,38 @@ const scrafty: TeamMember = {
     specialAttack: 45,
     specialDefense: 115,
     speed: 58,
+  },
+};
+const mawile: TeamMember = {
+  id: "mawile",
+  name: "Mawile",
+  showdownName: "Mawile",
+  types: ["steel", "fairy"],
+  roles: [],
+  abilities: ["Intimidate"],
+  moves: [sacredSword],
+  baseStats: {
+    hp: 50,
+    attack: 85,
+    defense: 85,
+    specialAttack: 55,
+    specialDefense: 55,
+    speed: 50,
+  },
+};
+const megaMawile: TeamMember = {
+  ...mawile,
+  id: "mawile-mega",
+  name: "Mega Mawile",
+  showdownName: "Mawile-Mega",
+  abilities: ["Huge Power"],
+  baseStats: {
+    hp: 50,
+    attack: 105,
+    defense: 125,
+    specialAttack: 55,
+    specialDefense: 95,
+    speed: 50,
   },
 };
 
@@ -400,6 +436,56 @@ describe("team matchup analysis", () => {
         boostAffectedDamage: false,
       },
     });
+  });
+
+  it("uses a held-stone Mega projection for matchup and sample calculations", () => {
+    const player = createSide(mawile, [sacredSword]);
+    player.build.evs.attack = 32;
+    player.build.item = {
+      id: "mawilite",
+      name: "Mawilite",
+      category: "Mega Stones",
+    };
+    player.megaEvolution = {
+      member: megaMawile,
+      ability: "Huge Power",
+    };
+    const opponent = createSide(archaludon, [tackle]);
+    const context: CalculatorAnalysisContext = {
+      battleFormat: "doubles",
+      selectedSlot: 0,
+      direction: "player-to-opponent",
+      player,
+      opponent,
+      roster: [{ ...player, slotIndex: 0 }],
+      field: createDefaultCalculatorField("doubles"),
+    };
+
+    const currentOnlyPlan = createTeamMatchupPlan({
+      ...context,
+      player: { ...player, megaEvolution: undefined },
+      roster: [{ ...player, megaEvolution: undefined, slotIndex: 0 }],
+    });
+    expect(createSetOptimizationPlan(context).playerId).toBe("mawile");
+    const plans = createTeamMatchupAnalysisPlans(context);
+    expect(currentOnlyPlan.status).toBe("ready");
+    expect(plans.matchupPlan.status).toBe("ready");
+    if (
+      currentOnlyPlan.status !== "ready" ||
+      plans.matchupPlan.status !== "ready"
+    ) return;
+
+    expect(plans.matchupPlan.members[0]).toMatchObject({
+      pokemonId: "mawile-mega",
+      pokemonName: "Mega Mawile",
+      state: "mega",
+    });
+    expect(
+      plans.matchupPlan.members[0].offenseBenchmarks[0].result.maxPercent,
+    ).toBeGreaterThan(
+      currentOnlyPlan.members[0].offenseBenchmarks[0].result.maxPercent,
+    );
+    expect(plans.optimizationPlan.playerId).toBe("mawile-mega");
   });
 
   it("orders the stronger persistent answer before a roster-order alternative", () => {

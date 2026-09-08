@@ -63,3 +63,59 @@ export function getMegaStoneItemName(
 
   return matchingStones[0]?.itemName ?? null;
 }
+
+function getItemNameCandidates(item: PokemonItem) {
+  return new Set(
+    [item.id, item.showdownId, item.name]
+      .filter((value): value is string => Boolean(value))
+      .flatMap((value) => {
+        const hyphenated = value.trim().toLowerCase().replace(/\s+/g, "-");
+        return [hyphenated, normalizeShowdownId(value)];
+      }),
+  );
+}
+
+export function getMegaEvolutionIndexEntry(
+  pokemonId: string,
+  item: PokemonItem | null | undefined,
+  pokemonIndex: PokemonIndexEntry[],
+) {
+  if (!item) return null;
+
+  const activeEntry = pokemonIndex.find((entry) => entry.name === pokemonId);
+  if (!activeEntry || activeEntry.formKind === "mega") return null;
+
+  const itemNames = getItemNameCandidates(item);
+  return pokemonIndex.find(
+    (entry) =>
+      entry.formKind === "mega" &&
+      entry.speciesKey === activeEntry.speciesKey &&
+      getMegaStoneItemName(entry.name, itemNames) !== null,
+  ) ?? null;
+}
+
+export function createProjectedMegaMember(
+  member: TeamMember,
+  item: PokemonItem | null | undefined,
+  pokemonIndex: PokemonIndexEntry[],
+): TeamMember | null {
+  const megaEntry = getMegaEvolutionIndexEntry(member.id, item, pokemonIndex);
+  if (!megaEntry?.baseStats) return null;
+
+  return {
+    ...member,
+    id: megaEntry.name,
+    name: megaEntry.displayName,
+    showdownId: megaEntry.showdownId,
+    showdownName: megaEntry.showdownName ?? megaEntry.displayName,
+    types: [...megaEntry.types],
+    baseStats: { ...megaEntry.baseStats },
+    abilities: [...megaEntry.abilities],
+  };
+}
+import { normalizeShowdownId } from "../api/showdownIds";
+import type {
+  PokemonIndexEntry,
+  PokemonItem,
+  TeamMember,
+} from "../types";

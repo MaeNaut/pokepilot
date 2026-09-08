@@ -81,7 +81,7 @@ function createRequest(
   overrides: Partial<CopilotAnalysisRequest> = {},
 ): CopilotAnalysisRequest {
   return {
-    version: 25,
+    version: 28,
     locale: "en",
     scope: "team",
     battleFormat: "doubles",
@@ -454,6 +454,8 @@ describe("Copilot strategy audit", () => {
           typeDisplayNames: ["Ghost", "Poison"],
           ability: "shadow-tag",
           abilityDisplayName: "Shadow Tag",
+          baseStats: null,
+          stats: null,
         },
       ],
     });
@@ -474,6 +476,8 @@ describe("Copilot strategy audit", () => {
         typeDisplayNames: ["Fighting", "Flying"],
         ability: "contrary",
         abilityDisplayName: "Contrary",
+        baseStats: null,
+        stats: null,
         defensiveProfile: {
           weaknesses: [],
           resistances: [],
@@ -520,6 +524,8 @@ describe("Copilot strategy audit", () => {
           typeDisplayNames: ["Fighting", "Flying"],
           ability: "contrary",
           abilityDisplayName: "Contrary",
+          baseStats: null,
+          stats: null,
         },
       ],
     });
@@ -904,6 +910,8 @@ describe("Copilot strategy audit", () => {
           typeDisplayNames: ["Steel", "Fairy"],
           ability: "huge-power",
           abilityDisplayName: "Huge Power",
+          baseStats: null,
+          stats: null,
           defensiveProfile: {
             weaknesses: [
               { type: "fire", multiplier: 2 },
@@ -927,6 +935,8 @@ describe("Copilot strategy audit", () => {
           typeDisplayNames: ["Rock", "Dark"],
           ability: "sand-stream",
           abilityDisplayName: "Sand Stream",
+          baseStats: null,
+          stats: null,
           defensiveProfile: {
             weaknesses: [{ type: "fighting", multiplier: 4 }],
             resistances: [],
@@ -1462,6 +1472,8 @@ describe("Copilot strategy audit", () => {
           typeDisplayNames: ["Psychic", "Fairy"],
           ability: "pixilate",
           abilityDisplayName: "Pixilate",
+          baseStats: null,
+          stats: null,
           defensiveProfile: {
             weaknesses: [],
             resistances: [],
@@ -2051,6 +2063,18 @@ describe("Copilot strategy audit", () => {
     const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
       pokemonId: "rotom-wash",
       displayName: "Rotom Wash",
+      target: {
+        mode: "addition",
+        slotIndex: 0,
+        currentPokemonId: null,
+        currentDisplayName: null,
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
       types: ["electric", "water"],
       typeDisplayNames: ["Electric", "Water"],
       abilities: [
@@ -2125,6 +2149,18 @@ describe("Copilot strategy audit", () => {
     const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
       pokemonId: "rotom-wash",
       displayName: "Rotom Wash",
+      target: {
+        mode: "addition",
+        slotIndex: 0,
+        currentPokemonId: null,
+        currentDisplayName: null,
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
       types: ["electric", "water"],
       typeDisplayNames: ["Electric", "Water"],
       abilities: [{ id: "levitate", displayName: "Levitate" }],
@@ -2226,6 +2262,18 @@ describe("Copilot strategy audit", () => {
     const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
       pokemonId: "raichu",
       displayName: "Raichu",
+      target: {
+        mode: "addition",
+        slotIndex: 0,
+        currentPokemonId: null,
+        currentDisplayName: null,
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
       types: ["electric"],
       typeDisplayNames: ["Electric"],
       abilities: [{ id: "lightningrod", displayName: "Lightning Rod" }],
@@ -2331,6 +2379,18 @@ describe("Copilot strategy audit", () => {
     const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
       pokemonId: "rotom-wash",
       displayName: "Rotom Wash",
+      target: {
+        mode: "addition",
+        slotIndex: 0,
+        currentPokemonId: null,
+        currentDisplayName: null,
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
       types: ["electric", "water"],
       typeDisplayNames: ["Electric", "Water"],
       abilities: [{ id: "levitate", displayName: "Levitate" }],

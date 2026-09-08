@@ -202,6 +202,63 @@ describe("hosted optimization validation", () => {
   });
 });
 
+describe("hosted Pokemon recommendation validation", () => {
+  const recommendationCandidate = {
+    pokemonId: "rotom-wash",
+    target: {
+      mode: "replacement",
+      slotIndex: 2,
+      currentPokemonId: "pelipper",
+      currentDisplayName: "Pelipper",
+    },
+  } as CopilotAnalysisRequest["recommendationCandidates"][number];
+
+  function createRecommendationOutput() {
+    const output = createOutput([]);
+    output.analysis.scope = "recommendation";
+    output.analysis.title = "Keep the current six";
+    output.analysis.paragraphs = [
+      "None of the supplied exchanges is a clear team-level improvement.",
+    ];
+    return output;
+  }
+
+  it("accepts keeping a complete team when no replacement is worthwhile", () => {
+    expect(
+      validateHostedCopilotAnalysis(createRecommendationOutput(), {
+        locale: "en",
+        scope: "recommendation",
+        recommendationCandidates: [recommendationCandidate],
+        diagnostics: { concepts: [] },
+      } as unknown as CopilotAnalysisRequest),
+    ).toMatchObject({
+      scope: "recommendation",
+      recommendations: [],
+    });
+  });
+
+  it("still requires candidate cards when filling an empty slot", () => {
+    expect(() =>
+      validateHostedCopilotAnalysis(createRecommendationOutput(), {
+        locale: "en",
+        scope: "recommendation",
+        diagnostics: { concepts: [] },
+        recommendationCandidates: [
+          {
+            ...recommendationCandidate,
+            target: {
+              mode: "addition",
+              slotIndex: 2,
+              currentPokemonId: null,
+              currentDisplayName: null,
+            },
+          },
+        ],
+      } as unknown as CopilotAnalysisRequest),
+    ).toThrow("invalid candidate list");
+  });
+});
+
 describe("recoverable hosted analysis review", () => {
   it("deduplicates non-actionable strategy cards without discarding the analysis", () => {
     const output = createOutput(["one", "one", "two", "three", "four"]);

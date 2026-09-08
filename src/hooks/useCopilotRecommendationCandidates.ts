@@ -8,12 +8,10 @@ import type {
   PokemonIndexEntry,
   TeamSlot,
 } from "../types";
-import { emptyPokemonCandidateFilters } from "../utils/pokemonCandidateFilters";
 import {
-  countTeamMegaOptions,
-  createPokemonRecommendationCandidates,
   createPokemonRecommendationOptions,
-  getOccupiedPokemonSpeciesKeys,
+  createPokemonRecommendationTargets,
+  createUniversalPokemonRecommendationCandidates,
   type CopilotRecommendationCandidateSnapshot,
   type PokemonRecommendationOption,
 } from "../utils/pokemonRecommendations";
@@ -62,10 +60,6 @@ export function useCopilotRecommendationCandidates({
   const [state, setState] = useState<RecommendationCandidateState>(
     idleRecommendationState,
   );
-  const selectedMember = team[selectedSlot];
-  const activeCandidateFilters =
-    buildState.candidateFiltersBySlot[selectedSlot] ??
-    emptyPokemonCandidateFilters;
   const options = useMemo<PokemonRecommendationOption[]>(
     () =>
       createPokemonRecommendationOptions({
@@ -87,17 +81,28 @@ export function useCopilotRecommendationCandidates({
       }),
     [abilityIndex, gameName, pokemonIndex, pokemonName, showdownLegality],
   );
-  const occupiedSpeciesKeys = useMemo(
-    () => getOccupiedPokemonSpeciesKeys(team, pokemonIndex),
-    [pokemonIndex, team],
-  );
-  const existingMegaOptionCount = useMemo(
-    () => countTeamMegaOptions(team, buildState.itemBySlot, pokemonIndex),
-    [buildState.itemBySlot, pokemonIndex, team],
+  const targets = useMemo(
+    () => createPokemonRecommendationTargets({
+      team,
+      selectedSlot,
+      buildState,
+      diagnostics,
+      pokemonIndex,
+      getCurrentPokemonDisplayName: (member, entry) =>
+        pokemonName({
+          id: entry?.name ?? member.id,
+          speciesId: entry?.speciesKey,
+          fallback: entry?.displayName ?? member.name,
+          includeForm: false,
+          formLabel: entry?.formLabel,
+          formKind: entry?.formKind,
+        }),
+    }),
+    [buildState, diagnostics, pokemonIndex, pokemonName, selectedSlot, team],
   );
 
   useEffect(() => {
-    if (scope !== "recommendation" || selectedMember) {
+    if (scope !== "recommendation") {
       setState(idleRecommendationState);
       return;
     }
@@ -111,13 +116,10 @@ export function useCopilotRecommendationCandidates({
 
     let isCancelled = false;
     setState({ status: "loading", candidates: [] });
-    void createPokemonRecommendationCandidates({
+    void createUniversalPokemonRecommendationCandidates({
       options,
-      filters: activeCandidateFilters,
-      occupiedSpeciesKeys,
-      diagnostics,
+      targets,
       battleFormat,
-      existingMegaOptionCount,
     })
       .then((candidates) => {
         if (!isCancelled) {
@@ -135,15 +137,11 @@ export function useCopilotRecommendationCandidates({
     };
   }, [
     abilityIndexStatus,
-    activeCandidateFilters,
     battleFormat,
-    diagnostics,
-    existingMegaOptionCount,
-    occupiedSpeciesKeys,
     options,
     scope,
-    selectedMember,
     showdownLegalityStatus,
+    targets,
   ]);
 
   return state;

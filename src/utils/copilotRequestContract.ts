@@ -1,4 +1,5 @@
 import type { CopilotAnalysisRequest } from "./copilotContracts.js";
+import { normalizeShowdownId } from "../api/showdownIds.js";
 import { pokemonTypes } from "../types.js";
 import { copilotResponsibilityIds } from "./copilotResponsibilities.js";
 import { hasValidOptimizationShape } from "./copilotRequestOptimizationValidation.js";
@@ -145,6 +146,8 @@ function hasValidMegaEvolutionShape(value: unknown) {
       "typeDisplayNames",
       "ability",
       "abilityDisplayName",
+      "baseStats",
+      "stats",
       "defensiveProfile",
     ]) &&
     isNonEmptyString(value.pokemonId) &&
@@ -155,6 +158,8 @@ function hasValidMegaEvolutionShape(value: unknown) {
     value.typeDisplayNames.length === value.types.length &&
     isNullableString(value.ability) &&
     isNullableString(value.abilityDisplayName) &&
+    (value.baseStats === null || isStatBlock(value.baseStats)) &&
+    (value.stats === null || isStatBlock(value.stats)) &&
     hasValidDefensiveProfile(value.defensiveProfile)
   );
 }
@@ -221,6 +226,8 @@ function hasValidSetShape(value: unknown) {
       "itemDisplayName",
       "ability",
       "abilityDisplayName",
+      "baseStats",
+      "stats",
       "nature",
       "natureDisplayName",
       "baseStats",
@@ -285,6 +292,8 @@ function hasValidMegaOptionShape(value: unknown) {
       "typeDisplayNames",
       "ability",
       "abilityDisplayName",
+      "baseStats",
+      "stats",
     ]) &&
     isSlotIndex(value.slotIndex) &&
     isNonEmptyString(value.pokemonId) &&
@@ -294,7 +303,9 @@ function hasValidMegaOptionShape(value: unknown) {
     isStringArray(value.typeDisplayNames, 2) &&
     value.typeDisplayNames.length === value.types.length &&
     isNullableString(value.ability) &&
-    isNullableString(value.abilityDisplayName)
+    isNullableString(value.abilityDisplayName) &&
+    (value.baseStats === null || isStatBlock(value.baseStats)) &&
+    (value.stats === null || isStatBlock(value.stats))
   );
 }
 
@@ -383,6 +394,7 @@ function hasValidRecommendationCandidateShape(value: unknown) {
     hasOnlyKeys(value, [
       "pokemonId",
       "displayName",
+      "target",
       "types",
       "typeDisplayNames",
       "abilities",
@@ -396,6 +408,67 @@ function hasValidRecommendationCandidateShape(value: unknown) {
     ]) &&
     isNonEmptyString(value.pokemonId) &&
     isNonEmptyString(value.displayName) &&
+    isRecord(value.target) &&
+    hasOnlyKeys(value.target, [
+      "mode",
+      "slotIndex",
+      "currentPokemonId",
+      "currentDisplayName",
+      "currentRoleIds",
+      "currentSetterConceptIds",
+      "currentAceConceptIds",
+      "currentResponsibilityIds",
+      "megaOptionPokemonId",
+      "allySupportLinks",
+    ]) &&
+    (value.target.mode === "addition" || value.target.mode === "replacement") &&
+    isSlotIndex(value.target.slotIndex) &&
+    isNullableString(value.target.currentPokemonId) &&
+    isNullableString(value.target.currentDisplayName) &&
+    isUniqueEnumArray(
+      value.target.currentRoleIds,
+      teamRoleIdSet,
+      teamRoleIds.length,
+    ) &&
+    isUniqueEnumArray(
+      value.target.currentSetterConceptIds,
+      teamConceptIdSet,
+      teamConceptIds.length,
+    ) &&
+    isUniqueEnumArray(
+      value.target.currentAceConceptIds,
+      teamConceptIdSet,
+      teamConceptIds.length,
+    ) &&
+    isUniqueEnumArray(
+      value.target.currentResponsibilityIds,
+      new Set<string>(copilotResponsibilityIds),
+      copilotResponsibilityIds.length,
+    ) &&
+    isNullableString(value.target.megaOptionPokemonId) &&
+    Array.isArray(value.target.allySupportLinks) &&
+    value.target.allySupportLinks.length <= 36 &&
+    value.target.allySupportLinks.every(
+      (link) =>
+        isRecord(link) &&
+        hasOnlyKeys(link, [
+          "sourceSlotIndex",
+          "sourceKind",
+          "sourceId",
+          "responsibilityId",
+        ]) &&
+        isSlotIndex(link.sourceSlotIndex) &&
+        (link.sourceKind === "move" || link.sourceKind === "ability") &&
+        isNonEmptyString(link.sourceId) &&
+        copilotResponsibilityIds.includes(
+          link.responsibilityId as (typeof copilotResponsibilityIds)[number],
+        ),
+    ) &&
+    (value.target.mode === "addition"
+      ? value.target.currentPokemonId === null &&
+        value.target.currentDisplayName === null
+      : isNonEmptyString(value.target.currentPokemonId) &&
+        isNonEmptyString(value.target.currentDisplayName)) &&
     isPokemonTypeArray(value.types, 2, 1) &&
     isStringArray(value.typeDisplayNames, 2) &&
     value.typeDisplayNames.length === value.types.length &&
@@ -637,7 +710,7 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 25) errors.push("version must be 25.");
+  if (value.version !== 28) errors.push("version must be 28.");
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
@@ -718,6 +791,110 @@ export function validateCopilotAnalysisRequest(
     value.recommendationCandidates.length > 0
   ) {
     errors.push("recommendationCandidates must be empty outside recommendation scope.");
+  }
+  if (
+    value.scope === "recommendation" &&
+    setsAreValid &&
+    Array.isArray(value.recommendationCandidates) &&
+    value.recommendationCandidates.every(hasValidRecommendationCandidateShape)
+  ) {
+    const candidates = value.recommendationCandidates as
+      CopilotAnalysisRequest["recommendationCandidates"];
+    const sets = value.sets as CopilotAnalysisRequest["sets"];
+    const candidateIds = candidates.map((candidate) =>
+      String(candidate.pokemonId),
+    );
+    if (new Set(candidateIds).size !== candidateIds.length) {
+      errors.push("recommendationCandidates must use unique pokemonId values.");
+    }
+
+    const modes = new Set(
+      candidates.map((candidate) =>
+        String(candidate.target.mode),
+      ),
+    );
+    if (modes.size > 1) {
+      errors.push("recommendationCandidates must use one recommendation mode.");
+    }
+
+    for (const candidate of candidates) {
+      const targetSet = sets.find(
+        (set) => set.slotIndex === candidate.target.slotIndex,
+      );
+      if (candidate.target.mode === "addition" && targetSet) {
+        errors.push("Addition recommendation targets must be empty slots.");
+        break;
+      }
+      if (
+        candidate.target.mode === "addition" &&
+        ((candidate.target.currentRoleIds?.length ?? 0) > 0 ||
+          (candidate.target.currentSetterConceptIds?.length ?? 0) > 0 ||
+          (candidate.target.currentAceConceptIds?.length ?? 0) > 0 ||
+          (candidate.target.currentResponsibilityIds?.length ?? 0) > 0 ||
+          candidate.target.megaOptionPokemonId !== null ||
+          (candidate.target.allySupportLinks?.length ?? 0) > 0)
+      ) {
+        errors.push("Addition recommendation targets must not report replacement losses.");
+        break;
+      }
+      if (
+        candidate.target.mode === "replacement" &&
+        (!targetSet || targetSet.pokemonId !== candidate.target.currentPokemonId)
+      ) {
+        errors.push(
+          "Replacement recommendation targets must match the current set.",
+        );
+        break;
+      }
+      if (candidate.target.mode !== "replacement" || !targetSet) continue;
+
+      const hasSameValues = (left: readonly string[], right: readonly string[]) =>
+        left.length === right.length && left.every((entry) => right.includes(entry));
+      if (
+        !hasSameValues(candidate.target.currentRoleIds ?? [], targetSet.roleIds) ||
+        !hasSameValues(
+          candidate.target.currentSetterConceptIds ?? [],
+          targetSet.setterConceptIds,
+        ) ||
+        !hasSameValues(
+          candidate.target.currentAceConceptIds ?? [],
+          targetSet.aceConceptIds,
+        )
+      ) {
+        errors.push("Replacement target roles and concepts must match the current set.");
+        break;
+      }
+
+      const expectedMegaOptionId = targetSet.isMegaForm
+        ? targetSet.pokemonId
+        : targetSet.megaEvolution?.pokemonId ?? null;
+      if (candidate.target.megaOptionPokemonId !== expectedMegaOptionId) {
+        errors.push("Replacement target Mega option must match the current set.");
+        break;
+      }
+
+      const hasInvalidSupportLink = (candidate.target.allySupportLinks ?? []).some(
+        (link) => {
+          if (link.sourceSlotIndex === candidate.target.slotIndex) return true;
+          const sourceSet = sets.find(
+            (set) => set.slotIndex === link.sourceSlotIndex,
+          );
+          if (!sourceSet) return true;
+          return link.sourceKind === "move"
+            ? !sourceSet.moves.some(
+                (move) =>
+                  normalizeShowdownId(move.id) ===
+                  normalizeShowdownId(link.sourceId),
+              )
+            : normalizeShowdownId(sourceSet.ability ?? "") !==
+                normalizeShowdownId(link.sourceId);
+        },
+      );
+      if (hasInvalidSupportLink) {
+        errors.push("Replacement target ally support links must use selected elements.");
+        break;
+      }
+    }
   }
   if (
     value.optimization !== undefined &&
@@ -822,7 +999,14 @@ export function validateCopilotAnalysisRequest(
       matchupMembers.some((member) => {
         if (!isRecord(member)) return true;
         const set = setBySlot.get(member.slotIndex);
-        return !set || set.pokemonId !== member.pokemonId;
+        if (!set) return true;
+        if (member.state === "current") {
+          return set.pokemonId !== member.pokemonId;
+        }
+
+        return member.state !== "mega" ||
+          !isRecord(set.megaEvolution) ||
+          set.megaEvolution.pokemonId !== member.pokemonId;
       })
     ) {
       errors.push("matchup members must match the supplied team sets.");

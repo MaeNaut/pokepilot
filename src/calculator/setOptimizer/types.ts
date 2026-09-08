@@ -23,6 +23,10 @@ export type CalculatorAnalysisSide = {
   usageMoves?: PokemonMove[];
   usageItems?: PokemonItem[];
   maxHp: number;
+  megaEvolution?: {
+    member: TeamMember;
+    ability: string;
+  };
 };
 
 export type CalculatorAnalysisContext = {

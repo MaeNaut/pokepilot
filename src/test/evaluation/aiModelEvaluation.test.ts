@@ -309,6 +309,18 @@ describe("AI model evaluation request parity", () => {
             {
               pokemonId: option?.id ?? removedPokemonId,
               displayName: option?.displayName ?? removedPokemon.pokemonName,
+              target: {
+                mode: "addition",
+                slotIndex: 0,
+                currentPokemonId: null,
+                currentDisplayName: null,
+                currentRoleIds: [],
+                currentSetterConceptIds: [],
+                currentAceConceptIds: [],
+                currentResponsibilityIds: [],
+                megaOptionPokemonId: null,
+                allySupportLinks: [],
+              },
               types: option?.types ?? ["normal"],
               typeDisplayNames: option?.typeDisplayNames ?? ["Normal"],
               abilities: option?.abilities ?? [],

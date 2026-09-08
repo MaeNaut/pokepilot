@@ -34,6 +34,7 @@ export function serializePokePilotModelRequest(request: CopilotAnalysisRequest) 
     if (set.megaEvolution) collect("defense", set.megaEvolution.defensiveProfile);
   }
   for (const candidate of request.recommendationCandidates) {
+    collect("recommendation-target", candidate.target);
     for (const move of candidate.commonSet?.moves ?? []) collect("move", move);
     for (const ability of candidate.abilities) collect("ability", ability);
   }

@@ -268,7 +268,8 @@ export function CopilotAnalysisResult({
         </div>
       </section>
 
-      {narrativeReveal.isComplete ? <section
+      {narrativeReveal.isComplete &&
+      !(scope === "recommendation" && sortedRecommendations.length === 0) ? <section
         className={`copilot-section copilot-recommendations${
           scope === "recommendation" ? " is-candidates" : ""
         }${scope === "optimization" ? " is-optimization" : ""}${
@@ -411,7 +412,10 @@ export function CopilotAnalysisResult({
                             spin={selectingCandidateId === candidate.pokemonId}
                             aria-hidden="true"
                           />
-                          {t("copilot.selectCandidate")}
+                          {candidate.target.mode === "replacement" &&
+                          candidate.target.currentDisplayName
+                            ? t("copilot.replaceCandidate")
+                            : t("copilot.selectCandidate")}
                         </button>
                         <button
                           type="button"

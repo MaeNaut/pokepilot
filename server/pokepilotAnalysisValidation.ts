@@ -35,7 +35,10 @@ function validateRecommendationIds(
   const recommendationIds = analysis.recommendations.map(
     (recommendation) => recommendation.id,
   );
-  const expectedMinimum = Math.min(3, candidateIds.size);
+  const replacementMode = request.recommendationCandidates.every(
+    (candidate) => candidate.target.mode === "replacement",
+  );
+  const expectedMinimum = replacementMode ? 0 : Math.min(3, candidateIds.size);
   const hasInvalidRecommendationList =
     recommendationIds.length < expectedMinimum ||
     recommendationIds.length > 3 ||
@@ -157,14 +160,22 @@ function recoverActionableRecommendations(
     },
   );
 
-  if (recommendations.length === 0) {
+  const permitsKeepingCurrentTeam =
+    request.scope === "recommendation" &&
+    request.recommendationCandidates.length > 0 &&
+    request.recommendationCandidates.every(
+      (candidate) => candidate.target.mode === "replacement",
+    );
+  if (recommendations.length === 0 && !permitsKeepingCurrentTeam) {
     throw invalidAnalysis(
       `Hosted ${request.scope} returned no usable candidate.`,
     );
   }
 
   const expectedRecommendationCount = request.scope === "recommendation"
-    ? Math.min(3, candidateIds.size)
+    ? permitsKeepingCurrentTeam
+      ? Math.min(analysis.recommendations.length, 3)
+      : Math.min(3, candidateIds.size)
     : Math.min(analysis.recommendations.length, 3);
   const adjusted =
     recommendations.length !== analysis.recommendations.length ||

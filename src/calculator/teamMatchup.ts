@@ -4,12 +4,15 @@ import {
   createOptimizationEvaluator,
   getDamagingMoves,
 } from "./setOptimizer/evaluator";
+import { projectCalculatorSideToMega } from "./megaProjection";
 import type {
   CalculatorAnalysisContext,
+  SetOptimizationPlan,
   SetOptimizationBenchmark,
   SetOptimizationMoveSource,
   SetOptimizationSpeedState,
 } from "./setOptimizer/types";
+import { createSetOptimizationPlan } from "./setOptimizer/plan";
 
 export type TeamMatchupResponseTier = "answer" | "check" | "limited";
 
@@ -47,6 +50,7 @@ export type TeamMatchupMemberPlan = {
   slotIndex: number;
   pokemonId: string;
   pokemonName: string;
+  state: "current" | "mega";
   responseTier: TeamMatchupResponseTier;
   offenseBenchmarks: TeamMatchupMoveBenchmark[];
   defenseBenchmarks: TeamMatchupMoveBenchmark[];
@@ -67,6 +71,11 @@ export type TeamMatchupPlan =
       members: [];
       reason: "missing-opponent" | "missing-roster" | "missing-benchmarks";
     };
+
+export type TeamMatchupAnalysisPlans = {
+  matchupPlan: TeamMatchupPlan;
+  optimizationPlan: SetOptimizationPlan;
+};
 
 const responseTierOrder: Record<TeamMatchupResponseTier, number> = {
   answer: 0,
@@ -333,6 +342,83 @@ function getResponseTier(
   return "limited";
 }
 
+type RosterSide = NonNullable<CalculatorAnalysisContext["roster"]>[number];
+
+function createMemberPlan(
+  context: CalculatorAnalysisContext,
+  side: RosterSide,
+  state: TeamMatchupMemberPlan["state"],
+): TeamMatchupMemberPlan | null {
+  const member = side.member;
+  if (!member) return null;
+
+  const memberContext: CalculatorAnalysisContext = {
+    ...context,
+    selectedSlot: side.slotIndex,
+    player: side,
+  };
+  const evaluator = createOptimizationEvaluator(memberContext);
+  const speed = evaluator.speed(side.build);
+  if (!speed) return null;
+
+  const offenseBenchmarks = retainSelectedOrTopBenchmarks(
+    getDamagingMoves(side)
+    .flatMap<TeamMatchupMoveBenchmark>(({ move, source }) => {
+      const result = evaluator.calculate(
+        move,
+        side.build,
+        "player-to-opponent",
+      );
+      if (!result) return [];
+      const persistentSequence = createPersistentOffenseSequence(
+        memberContext,
+        move,
+        result,
+      );
+      return [createMoveBenchmark(
+        move,
+        source,
+        result,
+        persistentSequence,
+      )];
+    }),
+    offenseSort,
+  );
+  const defenseBenchmarks = retainSelectedOrTopBenchmarks(
+    getDamagingMoves(context.opponent)
+    .flatMap<TeamMatchupMoveBenchmark>(({ move, source }) => {
+      const result = evaluator.calculate(
+        move,
+        side.build,
+        "opponent-to-player",
+      );
+      return result
+        ? [createMoveBenchmark(move, source, result)]
+        : [];
+    }),
+    defenseSort,
+  );
+
+  if (offenseBenchmarks.length === 0 && defenseBenchmarks.length === 0) {
+    return null;
+  }
+
+  return {
+    slotIndex: side.slotIndex,
+    pokemonId: member.id,
+    pokemonName: member.name,
+    state,
+    responseTier: getResponseTier(
+      offenseBenchmarks[0],
+      defenseBenchmarks[0],
+      speed,
+    ),
+    offenseBenchmarks,
+    defenseBenchmarks,
+    speed,
+  };
+}
+
 export function createTeamMatchupPlan(
   context: CalculatorAnalysisContext,
 ): TeamMatchupPlan {
@@ -359,73 +445,20 @@ export function createTeamMatchupPlan(
   }
 
   const members = roster.flatMap<TeamMatchupMemberPlan>((side) => {
-    const member = side.member;
-    if (!member) return [];
+    const currentPlan = createMemberPlan(context, side, "current");
+    const projectedMegaSide = projectCalculatorSideToMega(side);
+    const megaPlan = projectedMegaSide
+      ? createMemberPlan(
+          context,
+          { ...projectedMegaSide, slotIndex: side.slotIndex },
+          "mega",
+        )
+      : null;
 
-    const memberContext: CalculatorAnalysisContext = {
-      ...context,
-      selectedSlot: side.slotIndex,
-      player: side,
-    };
-    const evaluator = createOptimizationEvaluator(memberContext);
-    const speed = evaluator.speed(side.build);
-    if (!speed) return [];
-
-    const offenseBenchmarks = retainSelectedOrTopBenchmarks(
-      getDamagingMoves(side)
-      .flatMap<TeamMatchupMoveBenchmark>(({ move, source }) => {
-        const result = evaluator.calculate(
-          move,
-          side.build,
-          "player-to-opponent",
-        );
-        if (!result) return [];
-        const persistentSequence = createPersistentOffenseSequence(
-          memberContext,
-          move,
-          result,
-        );
-        return [createMoveBenchmark(
-          move,
-          source,
-          result,
-          persistentSequence,
-        )];
-      }),
-      offenseSort,
-    );
-    const defenseBenchmarks = retainSelectedOrTopBenchmarks(
-      getDamagingMoves(context.opponent)
-      .flatMap<TeamMatchupMoveBenchmark>(({ move, source }) => {
-        const result = evaluator.calculate(
-          move,
-          side.build,
-          "opponent-to-player",
-        );
-        return result
-          ? [createMoveBenchmark(move, source, result)]
-          : [];
-      }),
-      defenseSort,
-    );
-
-    if (offenseBenchmarks.length === 0 && defenseBenchmarks.length === 0) {
-      return [];
-    }
-
-    return [{
-      slotIndex: side.slotIndex,
-      pokemonId: member.id,
-      pokemonName: member.name,
-      responseTier: getResponseTier(
-        offenseBenchmarks[0],
-        defenseBenchmarks[0],
-        speed,
-      ),
-      offenseBenchmarks,
-      defenseBenchmarks,
-      speed,
-    }];
+    return [currentPlan, megaPlan]
+      .filter((plan): plan is TeamMatchupMemberPlan => Boolean(plan))
+      .sort(responseSort)
+      .slice(0, 1);
   });
 
   if (members.length === 0) {
@@ -443,5 +476,27 @@ export function createTeamMatchupPlan(
     opponentId: opponent.id,
     opponentName: opponent.name,
     members: members.sort(responseSort),
+  };
+}
+
+export function createTeamMatchupAnalysisPlans(
+  context: CalculatorAnalysisContext,
+): TeamMatchupAnalysisPlans {
+  const matchupPlan = createTeamMatchupPlan(context);
+  const selectedMember = matchupPlan.status === "ready"
+    ? matchupPlan.members.find(
+        ({ slotIndex }) => slotIndex === context.selectedSlot,
+      )
+    : null;
+  const optimizationContext = selectedMember?.state === "mega"
+    ? {
+        ...context,
+        player: projectCalculatorSideToMega(context.player) ?? context.player,
+      }
+    : context;
+
+  return {
+    matchupPlan,
+    optimizationPlan: createSetOptimizationPlan(optimizationContext),
   };
 }
