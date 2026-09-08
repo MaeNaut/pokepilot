@@ -25,9 +25,11 @@ describe("PokePilot matchup prompt", () => {
     const instructions = getPokePilotScopeInstructions("recommendation");
 
     expect(instructions).toContain("allySupportLinks");
+    expect(instructions).toContain("currentSupportElements");
     expect(instructions).toContain("recipient compatibility");
     expect(instructions).toContain("both a Mega option and a compatible ally-support link");
     expect(instructions).toContain("Generic typing, usage, or a small role gain is not enough");
+    expect(instructions).toContain("damaging move of that exact category");
   });
 
   it("keeps current and projected Mega numbers distinct", () => {

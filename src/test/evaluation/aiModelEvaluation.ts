@@ -365,6 +365,7 @@ export async function createAiPokemonRecommendationEvaluationCase(
           currentSetterConceptIds: [],
           currentAceConceptIds: [],
           currentResponsibilityIds: [],
+          currentSupportElements: [],
           megaOptionPokemonId: null,
           allySupportLinks: [],
         },

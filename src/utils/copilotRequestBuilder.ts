@@ -1136,7 +1136,7 @@ export function createCopilotAnalysisRequest({
     : unfilteredOptimization;
 
   return {
-    version: 28,
+    version: 29,
     locale,
     scope,
     battleFormat,

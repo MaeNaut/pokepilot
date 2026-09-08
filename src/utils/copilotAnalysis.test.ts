@@ -154,7 +154,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 28,
+      version: 29,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -1130,6 +1130,7 @@ describe("Copilot analysis", () => {
         currentSetterConceptIds: [],
         currentAceConceptIds: [],
         currentResponsibilityIds: [],
+        currentSupportElements: [],
         megaOptionPokemonId: null,
         allySupportLinks: [],
       },

@@ -318,6 +318,7 @@ describe("AI model evaluation request parity", () => {
                 currentSetterConceptIds: [],
                 currentAceConceptIds: [],
                 currentResponsibilityIds: [],
+                currentSupportElements: [],
                 megaOptionPokemonId: null,
                 allySupportLinks: [],
               },

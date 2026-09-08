@@ -204,6 +204,7 @@ describe("rankPokemonRecommendationCandidates", () => {
       getCurrentPokemonDisplayName: (member) => member.name,
     });
     const mawileTarget = targets.find((target) => target.slotIndex === 1);
+    const scraftyTarget = targets.find((target) => target.slotIndex === 0);
     const fillerTarget = targets.find((target) => target.slotIndex === 2);
 
     expect(mawileTarget).toMatchObject({
@@ -218,6 +219,18 @@ describe("rankPokemonRecommendationCandidates", () => {
       ],
     });
     expect(mawileTarget!.replacementLossPenalty).toBeGreaterThan(
+      fillerTarget!.replacementLossPenalty ?? 0,
+    );
+    expect(scraftyTarget).toMatchObject({
+      currentSupportElements: [
+        {
+          kind: "move",
+          id: "coaching",
+          responsibilityIds: ["ally-damage-amplification"],
+        },
+      ],
+    });
+    expect(scraftyTarget!.replacementLossPenalty).toBeGreaterThan(
       fillerTarget!.replacementLossPenalty ?? 0,
     );
   });

@@ -107,8 +107,15 @@ export type PokemonRecommendationTargetSnapshot = {
   currentSetterConceptIds: TeamConceptId[];
   currentAceConceptIds: TeamConceptId[];
   currentResponsibilityIds: CopilotResponsibilityId[];
+  currentSupportElements: PokemonRecommendationSupportElement[];
   megaOptionPokemonId: string | null;
   allySupportLinks: PokemonRecommendationAllySupportLink[];
+};
+
+export type PokemonRecommendationSupportElement = {
+  kind: "move" | "ability";
+  id: string;
+  responsibilityIds: CopilotResponsibilityId[];
 };
 
 export type PokemonRecommendationAllySupportLink = {
@@ -173,6 +180,7 @@ export type PokemonRecommendationTarget = {
   currentSetterConceptIds?: TeamConceptId[];
   currentAceConceptIds?: TeamConceptId[];
   currentResponsibilityIds?: CopilotResponsibilityId[];
+  currentSupportElements?: PokemonRecommendationSupportElement[];
   megaOptionPokemonId?: string | null;
   allySupportLinks?: PokemonRecommendationAllySupportLink[];
 };
@@ -405,6 +413,36 @@ function getAllySupportLinks(
   });
 }
 
+function getCurrentSupportElements(
+  member: NonNullable<TeamSlot>,
+  slotIndex: number,
+  buildState: TeamBuildState,
+): PokemonRecommendationSupportElement[] {
+  const elements = getRecommendationResponsibilityElements(
+    member,
+    slotIndex,
+    buildState,
+  );
+  return [
+    ...elements.abilities.map((ability) => ({
+      kind: "ability" as const,
+      id: ability.id,
+      responsibilityIds: inferCopilotResponsibilities({ abilities: [ability] }).filter(
+        (responsibilityId) =>
+          ALLY_SUPPORT_RESPONSIBILITY_IDS.has(responsibilityId),
+      ),
+    })),
+    ...elements.moves.map((move) => ({
+      kind: "move" as const,
+      id: move.id,
+      responsibilityIds: inferCopilotResponsibilities({ moves: [move] }).filter(
+        (responsibilityId) =>
+          ALLY_SUPPORT_RESPONSIBILITY_IDS.has(responsibilityId),
+      ),
+    })),
+  ].filter((element) => element.responsibilityIds.length > 0);
+}
+
 export function createPokemonRecommendationTargets({
   team,
   selectedSlot,
@@ -442,6 +480,7 @@ export function createPokemonRecommendationTargets({
         currentSetterConceptIds: [],
         currentAceConceptIds: [],
         currentResponsibilityIds: [],
+        currentSupportElements: [],
         megaOptionPokemonId: null,
         allySupportLinks: [],
       },
@@ -494,6 +533,11 @@ export function createPokemonRecommendationTargets({
       .filter((role) => role.slotIndexes.includes(slotIndex))
       .map((role) => role.id);
     const currentResponsibilityIds = responsibilityIdsBySlot[slotIndex];
+    const currentSupportElements = getCurrentSupportElements(
+      member,
+      slotIndex,
+      buildState,
+    );
     const lostUniqueResponsibilityIds = currentResponsibilityIds.filter(
       (responsibilityId) => responsibilityCounts[responsibilityId] === 1,
     );
@@ -509,6 +553,11 @@ export function createPokemonRecommendationTargets({
     const supportLossPenalty = Math.min(allySupportLinks.length, 3) * 2;
     const supportedMegaAxisPenalty =
       megaOptionPokemonId && allySupportLinks.length > 0 ? 8 : 0;
+    const supportsMegaPartnerPenalty =
+      currentSupportElements.length > 0 &&
+      countTeamMegaOptions(teamWithoutTarget, buildState.itemBySlot, pokemonIndex) > 0
+        ? 8
+        : 0;
 
     return [
       {
@@ -535,7 +584,9 @@ export function createPokemonRecommendationTargets({
           lostUniqueResponsibilityIds.length * 3 +
           Number(Boolean(megaOptionPokemonId)) * 10 +
           supportLossPenalty +
-          supportedMegaAxisPenalty,
+          supportedMegaAxisPenalty +
+          currentSupportElements.length * 4 +
+          supportsMegaPartnerPenalty,
         lostUniqueRoleIds,
         lostUniqueResponsibilityIds,
         lostSetterConceptIds,
@@ -543,6 +594,7 @@ export function createPokemonRecommendationTargets({
         currentSetterConceptIds: lostSetterConceptIds,
         currentAceConceptIds,
         currentResponsibilityIds,
+        currentSupportElements,
         megaOptionPokemonId,
         allySupportLinks,
       },
@@ -884,6 +936,7 @@ function scorePokemonRecommendationCandidates({
     currentSetterConceptIds: [],
     currentAceConceptIds: [],
     currentResponsibilityIds: [],
+    currentSupportElements: [],
     megaOptionPokemonId: null,
     allySupportLinks: [],
   },
@@ -1230,6 +1283,7 @@ export function rankUniversalPokemonRecommendationCandidates({
             currentSetterConceptIds: target.currentSetterConceptIds ?? [],
             currentAceConceptIds: target.currentAceConceptIds ?? [],
             currentResponsibilityIds: target.currentResponsibilityIds ?? [],
+            currentSupportElements: target.currentSupportElements ?? [],
             megaOptionPokemonId: target.megaOptionPokemonId ?? null,
             allySupportLinks: target.allySupportLinks ?? [],
           },

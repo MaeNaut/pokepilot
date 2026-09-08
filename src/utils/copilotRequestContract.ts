@@ -418,6 +418,7 @@ function hasValidRecommendationCandidateShape(value: unknown) {
       "currentSetterConceptIds",
       "currentAceConceptIds",
       "currentResponsibilityIds",
+      "currentSupportElements",
       "megaOptionPokemonId",
       "allySupportLinks",
     ]) &&
@@ -444,6 +445,21 @@ function hasValidRecommendationCandidateShape(value: unknown) {
       value.target.currentResponsibilityIds,
       new Set<string>(copilotResponsibilityIds),
       copilotResponsibilityIds.length,
+    ) &&
+    Array.isArray(value.target.currentSupportElements) &&
+    value.target.currentSupportElements.length <= 12 &&
+    value.target.currentSupportElements.every(
+      (element) =>
+        isRecord(element) &&
+        hasOnlyKeys(element, ["kind", "id", "responsibilityIds"]) &&
+        (element.kind === "move" || element.kind === "ability") &&
+        isNonEmptyString(element.id) &&
+        isUniqueEnumArray(
+          element.responsibilityIds,
+          new Set<string>(copilotResponsibilityIds),
+          copilotResponsibilityIds.length,
+          1,
+        ),
     ) &&
     isNullableString(value.target.megaOptionPokemonId) &&
     Array.isArray(value.target.allySupportLinks) &&
@@ -710,7 +726,7 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 28) errors.push("version must be 28.");
+  if (value.version !== 29) errors.push("version must be 29.");
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
@@ -831,6 +847,7 @@ export function validateCopilotAnalysisRequest(
           (candidate.target.currentSetterConceptIds?.length ?? 0) > 0 ||
           (candidate.target.currentAceConceptIds?.length ?? 0) > 0 ||
           (candidate.target.currentResponsibilityIds?.length ?? 0) > 0 ||
+          (candidate.target.currentSupportElements?.length ?? 0) > 0 ||
           candidate.target.megaOptionPokemonId !== null ||
           (candidate.target.allySupportLinks?.length ?? 0) > 0)
       ) {
@@ -870,6 +887,21 @@ export function validateCopilotAnalysisRequest(
         : targetSet.megaEvolution?.pokemonId ?? null;
       if (candidate.target.megaOptionPokemonId !== expectedMegaOptionId) {
         errors.push("Replacement target Mega option must match the current set.");
+        break;
+      }
+
+      const hasInvalidTargetSupportElement =
+        candidate.target.currentSupportElements.some((element) =>
+          element.kind === "move"
+            ? !targetSet.moves.some(
+                (move) =>
+                  normalizeShowdownId(move.id) === normalizeShowdownId(element.id),
+              )
+            : normalizeShowdownId(targetSet.ability ?? "") !==
+              normalizeShowdownId(element.id),
+        );
+      if (hasInvalidTargetSupportElement) {
+        errors.push("Replacement target support elements must use selected elements.");
         break;
       }
 
