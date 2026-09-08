@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { serializePokePilotModelRequest } from "./pokepilotModelInput.js";
 import type { CopilotAnalysisRequest } from "../src/utils/copilotContracts.js";
 import { copilotGroundedModelOutputJsonSchema } from "../src/utils/copilotModelSchema.js";
 import {
@@ -85,6 +86,7 @@ export async function analyzeWithOpenAiLuna(
     safetyIdentifier,
   }: AnalyzeWithOpenAiLunaOptions = {},
 ): Promise<LunaAnalysisResult> {
+  const modelInput = serializePokePilotModelRequest(request);
   const openAiClient =
     client ??
     new OpenAI({
@@ -131,7 +133,8 @@ export async function analyzeWithOpenAiLuna(
         content: [
           {
             type: "input_text",
-            text: getPokePilotLocaleInstructions(request.locale),
+            text: [modelInput.instructions, getPokePilotLocaleInstructions(request.locale)]
+              .filter(Boolean).join("\n\n"),
           },
         ],
       },
@@ -141,7 +144,7 @@ export async function analyzeWithOpenAiLuna(
         content: [
           {
             type: "input_text",
-            text: JSON.stringify(request),
+            text: modelInput.text,
           },
         ],
       },

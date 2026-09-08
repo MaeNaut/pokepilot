@@ -679,12 +679,26 @@ across deterministic fallback and hosted analysis:
   summaries, validity summaries, and all 18 localized type labels.
 - The same module returns structured paragraphs and recommendation cards from
   local rules when the hosted route is unavailable.
-- `POST /api/pokepilot/analyze` sends the same validated request to Luna at
-  Standard low reasoning. Prompt v72 places stable common instructions at the
-  first explicit cache breakpoint, stable Team/Pokemon/Recommend instructions
+- `POST /api/pokepilot/analyze` sends the validated request through a server-only
+  lossless input serializer to Luna at Standard low reasoning. Prompt v73 places
+  stable common instructions at the first explicit cache breakpoint, stable
+  Team/Pokemon/Recommend/Sample instructions
   at a second breakpoint, and variable request JSON after both. The cache key is
   versioned by the shared core so different scopes and users can reuse the
   common prefix while scope revisions invalidate only their later segment.
+- `server/pokepilotModelInput.ts` shares exact repeated damage outcomes, Speed
+  states, move/ability details, and current/Mega defensive profiles in a flat
+  `sharedData` table. Occurrences use `dataRef`; full records remain in the table.
+  Matching uses complete serialized values, never element IDs alone. Every
+  candidate, selected-move owner, direction, HP condition, KO probability, and
+  strategic fact survives expansion. Small requests stay inline when references
+  plus their explanation do not save enough text. The explanation follows both
+  cache breakpoints, leaving core v3 and all scope prefixes unchanged. The browser
+  contract, fingerprints, response validation, candidate application, and cooldown
+  accounting still use the complete original request. Prompt v73 separates Redis
+  result entries from v72 without changing the OpenAI prefix caches. Every scope
+  uses the original output schema; the audit field-name compression trial was
+  reverted before release.
 - Hosted Team and Pokemon output includes a private strategy audit. The server
   validates selected-element ownership, legal active states, Mega states,
   defensive facts, supported Speed comparisons, and recommendation evidence,

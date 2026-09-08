@@ -3,7 +3,7 @@ import type {
   CopilotAnalysisScope,
 } from "../src/utils/copilotContracts.js";
 
-export const POKEPILOT_AI_PROMPT_VERSION = 72;
+export const POKEPILOT_AI_PROMPT_VERSION = 73;
 export const POKEPILOT_AI_CORE_PROMPT_VERSION = 3;
 const POKEPILOT_AI_SCOPE_PROMPT_VERSIONS = {
   team: 6,

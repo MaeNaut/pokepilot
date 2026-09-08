@@ -1,5 +1,6 @@
 ﻿import { describe, expect, it, vi } from "vitest";
 import type { ResponseUsage } from "openai/resources/responses/responses";
+import { copilotGroundedModelOutputJsonSchema } from "../../utils/copilotModelSchema";
 import {
   analyzeWithOpenAiLuna,
   getPokePilotLocaleInstructions,
@@ -95,6 +96,21 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
+  it.each(["team", "pokemon", "recommendation", "optimization"] as const)(
+    "keeps the original output schema and shared cache key for %s", async (scope) => {
+      const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
+      const result = await analyzeWithOpenAiLuna({ ...request, scope }, {
+        client: { responses: { create } } as never,
+      });
+      expect(result.output).toEqual(groundedModelOutput);
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({
+        prompt_cache_key: "pokepilot-production-core-v3-low",
+        text: expect.objectContaining({ format: expect.objectContaining({
+          schema: copilotGroundedModelOutputJsonSchema,
+        }) }),
+      }));
+    },
+  );
   it("rejects a missing current-sample card just like the production validator", async () => {
     const create = vi.fn(async () => ({
       id: "resp_empty_optimization", service_tier: "default",
@@ -105,7 +121,8 @@ describe("OpenAI Luna evaluation adapter", () => {
     const result = await createOpenAiLunaAdapter({
       client: { responses: { create } } as never,
     }).analyze({ ...request, scope: "optimization", optimization: {
-      candidates: [{ id: "set-current" }],
+      candidates: [{ id: "set-current", offenseBenchmarks: [], defenseBenchmarks: [],
+        speedBenchmark: { current: {}, optimized: {} } }],
     } } as unknown as CopilotAnalysisRequest);
     expect(result.output).toBeNull();
     expect(result.validationErrors).toContain("Hosted optimization returned an invalid candidate list.");
@@ -270,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 72,
+        promptVersion: 73,
       },
       usage: {
         totalTokens: 150,
