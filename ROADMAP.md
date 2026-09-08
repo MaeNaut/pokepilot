@@ -194,6 +194,10 @@ The MVP should prove the core loop:
         the same deterministic path.
   - [ ] For an exact threat, test the current roster first, then EV/nature
         tuning, move/item changes, and finally a targeted Pokemon recommendation.
+  - [x] Add a Calculator-linked Matchup scope that checks every current team
+        member at full HP and neutral stat stages, distinguishes selected moves
+        from bounded usage options, and surfaces a useful selected-member sample
+        adjustment or a roster-change signal only after checking existing answers.
   - [x] For a configured Calculator matchup, enumerate deterministic nature and
         Stat Point candidates, constrain GPT output to verified IDs, and support
         applying the result or saving a bench variant.

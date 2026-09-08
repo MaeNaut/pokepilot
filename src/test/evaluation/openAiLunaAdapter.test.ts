@@ -18,7 +18,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 21,
+  version: 25,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -96,7 +96,7 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
-  it.each(["team", "pokemon", "recommendation", "optimization"] as const)(
+  it.each(["team", "pokemon", "recommendation", "optimization", "matchup"] as const)(
     "keeps the original output schema and shared cache key for %s", async (scope) => {
       const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
       const result = await analyzeWithOpenAiLuna({ ...request, scope }, {
@@ -287,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 73,
+        promptVersion: 78,
       },
       usage: {
         totalTokens: 150,

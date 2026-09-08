@@ -337,7 +337,7 @@
 
 .copilot-scope-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-top: 16px;
   border: 1px solid var(--copilot-border);
   border-radius: var(--radius-sm);
@@ -347,17 +347,19 @@
 
 .copilot-scope-tabs button {
   display: inline-flex;
+  min-width: 0;
   height: 32px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 5px;
   border: 0;
   border-radius: 4px;
   background: transparent;
   color: var(--copilot-muted);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .copilot-scope-tabs button.is-active {
@@ -373,6 +375,18 @@
 .copilot-scope-tabs svg {
   width: 12px;
   height: 12px;
+}
+
+@media (max-width: 520px) {
+  .copilot-scope-tabs button {
+    gap: 3px;
+    font-size: 0.62rem;
+  }
+
+  .copilot-scope-tabs svg {
+    width: 10px;
+    height: 10px;
+  }
 }
 
 .copilot-content {
@@ -787,19 +801,26 @@
   gap: 12px;
 }
 
-.copilot-recommendations.is-optimization li {
+.copilot-recommendations.is-optimization li,
+.copilot-recommendations li.is-optimization-card {
   overflow: hidden;
   border: 1px solid var(--copilot-border);
   border-radius: 4px;
+  padding: 0;
   background: var(--copilot-card);
 }
 
-.copilot-recommendations.is-optimization p {
+.copilot-recommendations.is-optimization p,
+.copilot-recommendations li.is-optimization-card > p {
   margin: 0;
   padding: 10px 12px 12px;
   color: var(--copilot-copy-muted);
   font-size: 0.74rem;
   line-height: 1.55;
+}
+
+.copilot-recommendations.is-strategy li.is-optimization-card {
+  margin: 12px 0;
 }
 
 .copilot-recommendations li > .copilot-optimization-heading,

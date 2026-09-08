@@ -31,6 +31,7 @@ export type CalculatorAnalysisContext = {
   direction: DamageDirection;
   player: CalculatorAnalysisSide;
   opponent: CalculatorAnalysisSide;
+  roster?: Array<CalculatorAnalysisSide & { slotIndex: number }>;
   field: CalculatorField;
 };
 

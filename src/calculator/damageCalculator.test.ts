@@ -174,6 +174,36 @@ const gengar: TeamMember = {
   moves: [bodySlam],
 };
 
+const aegislashShield: TeamMember = {
+  id: "aegislash-shield",
+  name: "Aegislash",
+  showdownId: "aegislashshield",
+  showdownName: "Aegislash-Shield",
+  types: ["steel", "ghost"],
+  roles: [],
+  baseStats: {
+    hp: 60,
+    attack: 50,
+    defense: 140,
+    specialAttack: 50,
+    specialDefense: 140,
+    speed: 60,
+  },
+  abilities: ["Stance Change"],
+  moves: [],
+};
+
+const sacredSword: PokemonMove = {
+  id: "sacredsword",
+  name: "Sacred Sword",
+  type: "fighting",
+  category: "Physical",
+  power: 90,
+  accuracy: 100,
+  pp: 15,
+  description: "Ignores the target's stat stage changes.",
+};
+
 const field: CalculatorField = {
   weather: "none",
   terrain: "none",
@@ -214,6 +244,141 @@ function createPokemon(
 }
 
 describe("Champions damage calculator adapter", () => {
+  it("uses Aegislash-Blade's attacking stats when Stance Change activates", () => {
+    const defender = createPokemon(incineroar);
+    const transformed = calculateChampionsDamage(
+      createPokemon(aegislashShield, { move: sacredSword }),
+      defender,
+      field,
+    );
+    const staticShield = calculateChampionsDamage(
+      createPokemon(aegislashShield, {
+        ability: "No Guard",
+        move: sacredSword,
+      }),
+      defender,
+      field,
+    );
+
+    expect(transformed.status).toBe("ready");
+    expect(staticShield.status).toBe("ready");
+    if (transformed.status !== "ready" || staticShield.status !== "ready") {
+      return;
+    }
+    expect(transformed.attackStat).toBeGreaterThan(staticShield.attackStat);
+    expect(transformed.minDamage).toBeGreaterThan(staticShield.maxDamage);
+  });
+
+  it("keeps Sacred Sword damage unchanged through Defense boosts", () => {
+    const attacker = createPokemon(aegislashShield, { move: sacredSword });
+    const baseline = calculateChampionsDamage(
+      attacker,
+      createPokemon(incineroar),
+      field,
+    );
+    const boosted = calculateChampionsDamage(
+      attacker,
+      createPokemon(incineroar, {
+        boosts: {
+          attack: 0,
+          defense: 6,
+          specialAttack: 0,
+          specialDefense: 0,
+          speed: 0,
+        },
+      }),
+      field,
+    );
+
+    expect(baseline.status).toBe("ready");
+    expect(boosted.status).toBe("ready");
+    if (baseline.status !== "ready" || boosted.status !== "ready") return;
+    expect(boosted.minDamage).toBe(baseline.minDamage);
+    expect(boosted.maxDamage).toBe(baseline.maxDamage);
+  });
+
+  it("preserves static defensive abilities and type immunities", () => {
+    const physicalAttacker = createPokemon(garchomp, { move: bodySlam });
+    const plainDefender = createPokemon(incineroar, { ability: "Blaze" });
+    const furCoatDefender = createPokemon(incineroar, { ability: "Fur Coat" });
+    const plainDamage = calculateChampionsDamage(
+      physicalAttacker,
+      plainDefender,
+      field,
+    );
+    const furCoatDamage = calculateChampionsDamage(
+      physicalAttacker,
+      furCoatDefender,
+      field,
+    );
+    const multiscaleFull = calculateChampionsDamage(
+      physicalAttacker,
+      createPokemon(incineroar, { ability: "Multiscale" }),
+      field,
+    );
+    const multiscaleChipped = calculateChampionsDamage(
+      physicalAttacker,
+      createPokemon(incineroar, {
+        ability: "Multiscale",
+        currentHp: 80,
+      }),
+      field,
+    );
+    const fireImmunity = calculateChampionsDamage(
+      createPokemon(garchomp, { move: flamethrower }),
+      createPokemon(incineroar, { ability: "Flash Fire" }),
+      field,
+    );
+
+    expect(plainDamage.status).toBe("ready");
+    expect(furCoatDamage.status).toBe("ready");
+    expect(multiscaleFull.status).toBe("ready");
+    expect(multiscaleChipped.status).toBe("ready");
+    expect(fireImmunity.status).toBe("ready");
+    if (
+      plainDamage.status !== "ready" ||
+      furCoatDamage.status !== "ready" ||
+      multiscaleFull.status !== "ready" ||
+      multiscaleChipped.status !== "ready" ||
+      fireImmunity.status !== "ready"
+    ) return;
+
+    expect(furCoatDamage.maxDamage).toBeLessThan(plainDamage.minDamage);
+    expect(multiscaleFull.maxDamage).toBeLessThan(multiscaleChipped.minDamage);
+    expect(fireImmunity.maxDamage).toBe(0);
+  });
+
+  it("lets Unaware ignore the attacker's positive stat stages", () => {
+    const boostedAttacker = createPokemon(garchomp, {
+      move: earthquake,
+      boosts: {
+        attack: 6,
+        defense: 0,
+        specialAttack: 0,
+        specialDefense: 0,
+        speed: 0,
+      },
+    });
+    const neutralAttacker = createPokemon(garchomp, { move: earthquake });
+    const unawareDefender = createPokemon(incineroar, { ability: "Unaware" });
+    const boosted = calculateChampionsDamage(
+      boostedAttacker,
+      unawareDefender,
+      field,
+    );
+    const neutral = calculateChampionsDamage(
+      neutralAttacker,
+      unawareDefender,
+      field,
+    );
+
+    expect(boosted.status).toBe("ready");
+    expect(neutral.status).toBe("ready");
+    if (boosted.status !== "ready" || neutral.status !== "ready") return;
+    expect(boosted.minDamage).toBe(neutral.minDamage);
+    expect(boosted.maxDamage).toBe(neutral.maxDamage);
+  });
+
   it("uses Sand Stream's automatic sand for Tyranitar's special bulk against Make It Rain", () => {
     const tyranitar: TeamMember = { ...garchomp, id: "tyranitar", name: "Tyranitar", showdownId: "tyranitar", showdownName: "Tyranitar", types: ["rock", "dark"], abilities: ["Sand Stream"], baseStats: { hp: 100, attack: 134, defense: 110, specialAttack: 95, specialDefense: 100, speed: 61 } };
     const gholdengo: TeamMember = { ...gengar, id: "gholdengo", name: "Gholdengo", showdownId: "gholdengo", showdownName: "Gholdengo", types: ["steel", "ghost"], abilities: ["Good as Gold"], baseStats: { hp: 87, attack: 60, defense: 95, specialAttack: 133, specialDefense: 91, speed: 84 } };

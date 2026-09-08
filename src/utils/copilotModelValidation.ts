@@ -150,9 +150,10 @@ export function validateCopilotModelOutput(
     value.scope !== "team" &&
     value.scope !== "pokemon" &&
     value.scope !== "recommendation" &&
-    value.scope !== "optimization"
+    value.scope !== "optimization" &&
+    value.scope !== "matchup"
   ) {
-    errors.push("scope must be team, pokemon, recommendation, or optimization.");
+    errors.push("scope must be team, pokemon, recommendation, optimization, or matchup.");
   }
 
   if (typeof value.title !== "string" || !value.title.trim()) {

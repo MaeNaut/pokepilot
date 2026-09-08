@@ -80,7 +80,7 @@ function validateOptimizationMoveNarrative(
   analysis: CopilotModelOutput,
   request: CopilotAnalysisRequest,
 ) {
-  if (request.scope !== "optimization") return;
+  if (request.scope !== "optimization" && request.scope !== "matchup") return;
 
   const candidates = new Map(
     (request.optimization?.candidates ?? []).map((candidate) => [
@@ -288,7 +288,7 @@ function repairOptimizationMoveNarrative(
   analysis: CopilotModelOutput,
   request: CopilotAnalysisRequest,
 ) {
-  if (request.scope !== "optimization") {
+  if (request.scope !== "optimization" && request.scope !== "matchup") {
     return { analysis, repaired: false };
   }
 
@@ -351,11 +351,13 @@ function hasOptimizationNarrativeRepair(
   );
 }
 
-function normalizeOptimizationAudit(
+function normalizeCalculatorGroundedAudit(
   output: ReturnType<typeof completeCopilotStrategyAudit>,
   request: CopilotAnalysisRequest,
 ) {
-  if (request.scope !== "optimization") return output;
+  if (request.scope !== "optimization" && request.scope !== "matchup") {
+    return output;
+  }
 
   return {
     ...output,
@@ -382,7 +384,7 @@ export function validateHostedCopilotAnalysis(
     throw invalidAnalysis("Hosted analysis returned an invalid response.");
   }
 
-  const groundedOutput = normalizeOptimizationAudit(
+  const groundedOutput = normalizeCalculatorGroundedAudit(
     completeCopilotStrategyAudit(outputValidation.data, request),
     request,
   );
@@ -440,7 +442,7 @@ export function reviewHostedCopilotAnalysis(
   if (!groundedValidation.success) {
     warnings.add("grounding-incomplete");
   } else {
-    const groundedOutput = normalizeOptimizationAudit(
+    const groundedOutput = normalizeCalculatorGroundedAudit(
       completeCopilotStrategyAudit(groundedValidation.data, request),
       request,
     );

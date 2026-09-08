@@ -241,9 +241,11 @@ export function CopilotAnalysisResult({
                 ? t("copilot.teamChanged")
                 : scope === "pokemon"
                   ? t("copilot.setChanged")
-                  : scope === "recommendation"
-                    ? t("copilot.recommendationChanged")
-                    : t("copilot.optimizationChanged")}
+                : scope === "recommendation"
+                  ? t("copilot.recommendationChanged")
+                    : scope === "matchup"
+                      ? t("copilot.matchupChanged")
+                      : t("copilot.optimizationChanged")}
           </span>
           <button
             type="button"
@@ -270,7 +272,7 @@ export function CopilotAnalysisResult({
         className={`copilot-section copilot-recommendations${
           scope === "recommendation" ? " is-candidates" : ""
         }${scope === "optimization" ? " is-optimization" : ""}${
-          scope === "team" || scope === "pokemon" ? " is-strategy" : ""
+          scope === "team" || scope === "pokemon" || scope === "matchup" ? " is-strategy" : ""
         }`}
       >
         <div className="copilot-section-heading copilot-reveal is-recommendations-heading">
@@ -279,7 +281,9 @@ export function CopilotAnalysisResult({
               ? t("copilot.candidates")
               : scope === "optimization"
                 ? t("copilot.optimizedSamples")
-                : t("copilot.nextSteps")}
+                : scope === "matchup"
+                  ? t("copilot.matchupRecommendations")
+                  : t("copilot.nextSteps")}
           </h3>
         </div>
         {scope === "recommendation" && candidateApplyFailure ? (
@@ -317,7 +321,7 @@ export function CopilotAnalysisResult({
             </span>
           </div>
         ) : null}
-        {scope === "optimization" && optimizationActionStatus ? (
+        {(scope === "optimization" || scope === "matchup") && optimizationActionStatus ? (
           <CopilotOptimizationStatus status={optimizationActionStatus} />
         ) : null}
         <ol>
@@ -327,13 +331,15 @@ export function CopilotAnalysisResult({
                 ? candidatesById.get(recommendation.id)
                 : undefined;
             const optimizationCandidate =
-              scope === "optimization"
+              scope === "optimization" || scope === "matchup"
                 ? optimizationCandidatesById.get(recommendation.id)
                 : undefined;
 
             return (
               <li
-                className="copilot-reveal is-recommendation"
+                className={`copilot-reveal is-recommendation${
+                  optimizationCandidate ? " is-optimization-card" : ""
+                }`}
                 key={recommendation.id}
                 style={
                   {

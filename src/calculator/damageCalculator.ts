@@ -12,6 +12,7 @@ import {
   CHAMPIONS_MAX_EV_PER_STAT,
   getNatureById,
 } from "../data/natures";
+import { getAttackTriggeredBattleFormId } from "../data/battleForms";
 import { typeChart } from "../data/typeChart";
 import { normalizeShowdownId as normalizeId } from "../api/showdownIds";
 import type {
@@ -187,18 +188,28 @@ function toEngineBoosts(boosts: CalculatorBoosts) {
 
 function getSpeciesOverrides(
   pokemon: CalculatorPokemon,
+  automaticFormId: string | null = null,
 ): NonNullable<State.Pokemon["overrides"]> {
   const member = pokemon.member;
-  const speciesId = normalizeId(member.showdownId ?? member.id);
+  const speciesId = normalizeId(
+    automaticFormId ?? member.showdownId ?? member.id,
+  );
   const knownSpecies = generation.species.get(toID(speciesId));
-  const types = member.types.map((type) => engineTypeNames[type]);
+  const automaticSpecies = automaticFormId ? knownSpecies : undefined;
+  const types = automaticSpecies
+    ? automaticSpecies.types
+    : member.types.map((type) => engineTypeNames[type]);
 
   return {
     kind: "Species",
     id: speciesId,
-    name: member.showdownName ?? member.name,
+    name: automaticSpecies
+      ? automaticSpecies.name
+      : member.showdownName ?? member.name,
     types,
-    baseStats: toEngineStats(member.baseStats!),
+    baseStats: automaticSpecies
+      ? automaticSpecies.baseStats
+      : toEngineStats(member.baseStats!),
     weightkg: knownSpecies?.weightkg ?? 100,
     abilities: {
       0: pokemon.ability || member.abilities?.[0] || "",
@@ -263,7 +274,7 @@ function getMoveOverrides(
 
 function createEnginePokemon(
   pokemon: CalculatorPokemon,
-  options: { abilityOn?: boolean } = {},
+  options: { abilityOn?: boolean; isAttacking?: boolean } = {},
 ) {
   const maxHp =
     pokemon.member.baseStats!.hp +
@@ -273,9 +284,14 @@ function createEnginePokemon(
       Math.min(CHAMPIONS_MAX_EV_PER_STAT, pokemon.evs.hp),
     );
 
+  const automaticFormId = options.isAttacking
+    ? getAttackTriggeredBattleFormId(pokemon.member.id, pokemon.ability)
+    : null;
+  const speciesOverrides = getSpeciesOverrides(pokemon, automaticFormId);
+
   return new Pokemon(
     generation,
-    pokemon.member.showdownName ?? pokemon.member.name,
+    speciesOverrides.name ?? pokemon.member.showdownName ?? pokemon.member.name,
     {
       level: CALCULATOR_LEVEL,
       ability: pokemon.ability || undefined,
@@ -286,7 +302,7 @@ function createEnginePokemon(
       boosts: toEngineBoosts(pokemon.boosts),
       curHP: Math.max(1, Math.min(maxHp, pokemon.currentHp)),
       status: pokemon.status === "burned" ? "brn" : "",
-      overrides: getSpeciesOverrides(pokemon),
+      overrides: speciesOverrides,
     },
   );
 }
@@ -416,6 +432,7 @@ export function calculateChampionsDamage(
     abilityOn:
       field.isPlusMinus &&
       (attackerAbilityId === "plus" || attackerAbilityId === "minus"),
+    isAttacking: true,
   });
   const engineDefender = createEnginePokemon(defender);
   const engineMove = new Move(generation, attacker.move.name, {

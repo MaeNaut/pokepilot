@@ -790,6 +790,170 @@ function analyzeOptimizationRequest(
   };
 }
 
+function describeMatchupMember(
+  member: NonNullable<CopilotAnalysisRequest["matchup"]>["members"][number],
+  locale: Locale,
+) {
+  const offense = member.offenseBenchmarks[0];
+  const defense = member.defenseBenchmarks[0];
+  const movesFirst = member.speed.relation !== "slower";
+  const offenseName = offense
+    ? locale === "ko" && offense.source === "usage"
+      ? `사용률 후보인 ${offense.moveDisplayName}`
+      : locale === "en" && offense.source === "usage"
+        ? `The observed usage option ${offense.moveDisplayName}`
+        : offense.moveDisplayName
+    : null;
+  const defenseName = defense
+    ? locale === "ko" && defense.source === "usage"
+      ? `사용률 후보인 ${defense.moveDisplayName}`
+      : locale === "en" && defense.source === "usage"
+        ? `the observed usage option ${defense.moveDisplayName}`
+        : defense.moveDisplayName
+    : null;
+  const persistentSequence = offense?.persistentSequence;
+  const persistentHits = persistentSequence?.guaranteedKoHits;
+  const persistentNote = persistentSequence
+    ? locale === "ko"
+      ? persistentSequence.boostAffectedDamage
+        ? `상대 특성으로 방어가 누적되는 과정까지 계산하면 ${persistentHits ? `확정 ${persistentHits}타` : "6타 이내 확정 처리가 어려운 범위"}입니다.`
+        : `상대의 방어 상승 후에도 피해량이 유지되며 ${persistentHits ? `확정 ${persistentHits}타` : "6타 이내 확정 처리가 어려운 범위"}입니다.`
+      : persistentSequence.boostAffectedDamage
+        ? `After recalculating each defensive boost, it is ${persistentHits ? `a guaranteed ${persistentHits}-hit KO` : "not a guaranteed KO within six hits"}.`
+        : `Its damage remains unchanged after the defensive boosts, leaving ${persistentHits ? `a guaranteed ${persistentHits}-hit KO` : "no guaranteed KO within six hits"}.`
+    : null;
+
+  if (locale === "ko") {
+    const parts = [
+      offense
+        ? `${offenseName}(으)로 실질적인 반격이 가능합니다.`
+        : "확인된 공격 기술만으로는 직접 압박하기 어렵습니다.",
+      defense && (defense.result.possibleKoHits ?? 0) >= 2
+        ? `${defenseName}을 한 번 견딜 수 있습니다.`
+        : defense
+          ? `${defenseName}을 직접 받아내기는 불안정합니다.`
+          : "상대의 유효한 공격 기술이 설정되지 않았습니다.",
+      movesFirst ? "현재 조건에서는 상대보다 먼저 움직입니다." : "현재 조건에서는 상대보다 늦게 움직입니다.",
+      persistentNote,
+    ];
+    return parts.filter(Boolean).join(" ");
+  }
+
+  const parts = [
+    offense
+      ? `${offenseName} provides its clearest verified pressure.`
+      : "The selected attacks do not provide direct verified pressure.",
+    defense && (defense.result.possibleKoHits ?? 0) >= 2
+      ? `It can survive one ${defenseName}.`
+      : defense
+        ? `Switching directly into ${defenseName} is unreliable.`
+        : "No damaging opponent move is configured.",
+    movesFirst
+      ? "It moves before the opponent under the current conditions."
+      : "It moves after the opponent under the current conditions.",
+    persistentNote,
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
+function analyzeMatchupRequest(
+  request: CopilotAnalysisRequest,
+  locale: Locale,
+): CopilotAnalysisResponse {
+  const matchup = request.matchup;
+  const isKorean = locale === "ko";
+
+  if (!matchup) {
+    return {
+      version: 2,
+      source: "local",
+      scope: "matchup",
+      title: isKorean ? "대응 분석 설정이 필요합니다" : "Matchup setup required",
+      paragraphs: [
+        isKorean
+          ? "계산기에서 상대 포켓몬과 공격 기술을 설정한 뒤 다시 분석해 주세요."
+          : "Configure an opponent and attacking moves in the calculator before running this analysis.",
+      ],
+      recommendations: [],
+    };
+  }
+
+  const answers = matchup.members.filter((member) => member.responseTier === "answer");
+  const checks = matchup.members.filter((member) => member.responseTier === "check");
+  const selectedResponse = matchup.members.find(
+    (member) => member.slotIndex === request.selectedSlot,
+  );
+  const answerNames = answers.map((member) => member.displayName);
+  const checkNames = checks.map((member) => member.displayName);
+  const title = `${request.teamName} vs. ${matchup.opponent.displayName}`;
+  const paragraphs = [
+    answers.length > 0
+      ? isKorean
+        ? `${answerNames.join(", ")}은(는) 현재 계산 조건에서 팀이 이미 보유한 직접적인 대응책으로 확인됩니다.`
+        : `${answerNames.join(", ")} ${answers.length === 1 ? "is" : "are"} already a direct answer under the configured conditions.`
+      : checks.length > 0
+        ? isKorean
+          ? `${checkNames.join(", ")}은(는) 조건부 견제 수단이지만 안전한 교체 대응으로 보기는 어렵습니다.`
+          : `${checkNames.join(", ")} ${checks.length === 1 ? "is" : "are"} a conditional check rather than a safe switch-in.`
+        : isKorean
+          ? "현재 팀에서는 설정된 상대를 안정적으로 상대할 수 있는 직접적인 대응책을 찾지 못했습니다."
+          : "The current team has no dependable direct answer to the configured opponent.",
+    isKorean
+      ? "팀원은 모두 체력이 가득 찬 상태와 중립 랭크로 비교했으며, 결과는 계산기에 설정된 상대와 배틀 환경에만 해당합니다."
+      : "Every team member was compared at full HP and neutral stat stages, and these findings apply only to the configured opponent and battle environment.",
+  ];
+  const recommendations: CopilotRecommendation[] = [];
+
+  const primaryResponse = answers[0] ?? checks[0];
+  if (primaryResponse) {
+    recommendations.push({
+      id: `use-slot-${primaryResponse.slotIndex}`,
+      title: isKorean
+        ? `${primaryResponse.displayName}을(를) 중심으로 대응하는 편이 좋습니다.`
+        : `Use ${primaryResponse.displayName} as the primary response.`,
+      reason: describeMatchupMember(primaryResponse, locale),
+      priority: "high",
+    });
+  }
+
+  const optimizationCandidate =
+    answers.length === 0 && selectedResponse?.responseTier !== "answer"
+      ? request.optimization?.candidates.find((candidate) => candidate.id !== "set-current")
+      : undefined;
+  if (optimizationCandidate) {
+    recommendations.push({
+      id: optimizationCandidate.id,
+      title: isKorean
+        ? `${optimizationCandidate.natureDisplayName} 성격의 조정 샘플을 검토해 보세요.`
+        : `Consider the ${optimizationCandidate.natureDisplayName} tuned sample.`,
+      reason: formatLocalOptimizationReason(optimizationCandidate, locale),
+      priority: recommendations.length === 0 ? "high" : "medium",
+    });
+  }
+
+  if (recommendations.length === 0 || (answers.length === 0 && !optimizationCandidate)) {
+    recommendations.push({
+      id: "review-roster-answer",
+      title: isKorean
+        ? "팀 차원의 새로운 대응책을 검토해 보세요."
+        : "Consider adding a roster-level answer.",
+      reason: isKorean
+        ? "현재 샘플과 선택된 기술만으로는 안정적인 대응이 확인되지 않았습니다. 이후 포켓몬 교체 후보를 검토할 가치가 있습니다."
+        : "The current samples and selected moves do not establish a dependable answer, so a future replacement candidate is worth evaluating.",
+      priority: recommendations.length === 0 ? "high" : "medium",
+    });
+  }
+
+  return {
+    version: 2,
+    source: "local",
+    scope: "matchup",
+    title,
+    paragraphs,
+    recommendations: recommendations.slice(0, 3),
+  };
+}
+
 export function createLocalCopilotAnalysis(
   request: CopilotAnalysisRequest,
   locale: Locale = "en",
@@ -800,6 +964,10 @@ export function createLocalCopilotAnalysis(
 
   if (request.scope === "pokemon") {
     return analyzePokemonRequest(request, locale);
+  }
+
+  if (request.scope === "matchup") {
+    return analyzeMatchupRequest(request, locale);
   }
 
   return request.scope === "recommendation"

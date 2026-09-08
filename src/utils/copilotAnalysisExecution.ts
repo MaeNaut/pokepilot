@@ -72,7 +72,10 @@ export async function executeCopilotAnalysis(
     usedFallback = true;
   }
 
-  if (request.scope === "optimization" && request.optimization) {
+  if (
+    (request.scope === "optimization" || request.scope === "matchup") &&
+    request.optimization
+  ) {
     const selectedCandidateIds = new Set(
       nextResponse.recommendations.map((recommendation) => recommendation.id),
     );

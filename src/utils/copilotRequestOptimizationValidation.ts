@@ -17,7 +17,7 @@ import {
 } from "./copilotRequestValidationPrimitives.js";
 import { isRecord } from "./typeGuards.js";
 
-function hasValidOptimizationBenchmark(value: unknown) {
+export function hasValidOptimizationBenchmark(value: unknown) {
   return (
     isRecord(value) &&
     hasOnlyKeys(value, [
@@ -63,7 +63,7 @@ function hasValidOptimizationBenchmark(value: unknown) {
   );
 }
 
-function hasValidOptimizationField(value: unknown) {
+export function hasValidOptimizationField(value: unknown) {
   return (
     isRecord(value) &&
     hasOnlyKeys(value, [
@@ -135,7 +135,7 @@ function hasValidOptimizationMoveChanges(value: unknown) {
   );
 }
 
-function hasValidOptimizationMoveMechanic(value: unknown) {
+export function hasValidOptimizationMoveMechanic(value: unknown) {
   return (
     isRecord(value) &&
     hasOnlyKeys(value, [
@@ -271,7 +271,7 @@ function hasValidOptimizationMoveBenchmarks(value: unknown) {
   );
 }
 
-function hasValidOptimizationSpeedState(value: unknown) {
+export function hasValidOptimizationSpeedState(value: unknown) {
   if (
     !isRecord(value) ||
     !hasOnlyKeys(value, ["playerSpeed", "opponentSpeed", "relation"]) ||

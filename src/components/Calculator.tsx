@@ -480,6 +480,31 @@ export function Calculator({
         usageMoves: opponentUsageMoves,
         maxHp: opponentMaxHp,
       },
+      roster: team.flatMap((member, slotIndex) => {
+        if (!member) return [];
+        const snapshot = getPokemonBuildSnapshot(member, buildState, slotIndex);
+        const build: CalculatorBuildValues = {
+          item: snapshot.item,
+          ability: snapshot.ability,
+          natureId: snapshot.nature,
+          evs: snapshot.evs,
+          moveIds: snapshot.moveIds,
+        };
+        const maxHp = getCalculatorMaxHp(member, build);
+
+        return [{
+          slotIndex,
+          member,
+          build,
+          battle: createCalculatorBattleState(maxHp),
+          moves: getCalculatorMoveSlots(
+            member,
+            build.moveIds,
+            candidateMoveIndex,
+          ),
+          maxHp,
+        }];
+      }),
       field,
     }),
     [
@@ -499,6 +524,9 @@ export function Calculator({
       playerUsageItems,
       selectedMember,
       selectedSlot,
+      team,
+      buildState,
+      candidateMoveIndex,
     ],
   );
 

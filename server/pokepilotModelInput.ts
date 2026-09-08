@@ -49,6 +49,16 @@ export function serializePokePilotModelRequest(request: CopilotAnalysisRequest) 
     collect("speed", candidate.speedBenchmark.current);
     collect("speed", candidate.speedBenchmark.optimized);
   }
+  for (const move of request.matchup?.opponent.moves ?? []) collect("move", move);
+  for (const member of request.matchup?.members ?? []) {
+    for (const benchmark of [
+      ...member.offenseBenchmarks,
+      ...member.defenseBenchmarks,
+    ]) {
+      collect("damage", benchmark.result);
+    }
+    collect("speed", member.speed);
+  }
 
   const references = new WeakMap<object, { dataRef: string }>();
   const sharedData: Record<string, object> = {};

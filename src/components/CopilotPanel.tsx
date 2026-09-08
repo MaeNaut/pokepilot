@@ -4,6 +4,7 @@ import {
   faMagnifyingGlass,
   faRotateRight,
   faSliders,
+  faShieldHalved,
   faSpinner,
   faTriangleExclamation,
   faUser,
@@ -38,6 +39,7 @@ import type {
 import { useCopilotRecommendationCandidates } from "../hooks/useCopilotRecommendationCandidates";
 import { useCopilotAnalysisSession } from "../hooks/useCopilotAnalysisSession";
 import { useSetOptimizationPlan } from "../hooks/useSetOptimizationPlan";
+import { useTeamMatchupPlan } from "../hooks/useTeamMatchupPlan";
 import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
 import { CopilotHistoryControl } from "./CopilotHistoryControl";
 
@@ -152,6 +154,10 @@ export function CopilotPanel({
     calculatorContext,
     scope === "optimization" && isCalculatorActive,
   );
+  const matchupState = useTeamMatchupPlan(
+    calculatorContext,
+    scope === "matchup" && isCalculatorActive,
+  );
   const requestInput = useMemo(
     () => ({
         scope,
@@ -185,13 +191,29 @@ export function CopilotPanel({
     ],
   );
   const request = useMemo(() => createCopilotAnalysisRequest({
-    ...requestInput, optimizationPlan: optimizationState.plan,
-  }), [requestInput, optimizationState.plan]);
+    ...requestInput,
+    optimizationPlan:
+      scope === "matchup"
+        ? matchupState.optimizationPlan
+        : optimizationState.plan,
+    matchupPlan: matchupState.matchupPlan,
+  }), [
+    requestInput,
+    scope,
+    optimizationState.plan,
+    matchupState.optimizationPlan,
+    matchupState.matchupPlan,
+  ]);
   const optimizationNotice = optimizationState.error
     ? t("copilot.candidateLoadFailed")
     : optimizationState.plan?.status === "unavailable"
       ? t("copilot.noOptimizationCandidates")
       : null;
+  const matchupNotice = matchupState.error
+    ? t("copilot.matchupLoadFailed")
+    : null;
+  const isAnalysisPreparing =
+    optimizationState.loading || matchupState.loading;
   const {
     analysisContextKey,
     analysisState,
@@ -224,7 +246,7 @@ export function CopilotPanel({
           ],
         );
   const analyzeLabel =
-    analysisState.status === "loading" || optimizationState.loading
+    analysisState.status === "loading" || isAnalysisPreparing
       ? t("copilot.analyzing")
       : cooldownRemainingSeconds > 0
         ? t("copilot.cooldownButton", { time: cooldownLabel })
@@ -236,10 +258,12 @@ export function CopilotPanel({
               ? t("copilot.analyzePokemon")
               : scope === "recommendation"
                 ? t("copilot.findRecommendations")
-                : t("copilot.optimizeSet");
+                : scope === "matchup"
+                  ? t("copilot.analyzeMatchup")
+                  : t("copilot.optimizeSet");
   const isAnalyzeDisabled =
     analysisState.status === "loading" ||
-    optimizationState.loading ||
+    isAnalysisPreparing ||
     abilityIndexStatus === "loading" ||
     cooldownRemainingSeconds > 0 ||
     (scope === "recommendation" &&
@@ -249,7 +273,11 @@ export function CopilotPanel({
     (scope === "optimization" &&
       (!isCalculatorActive ||
         !calculatorContext?.player.member ||
-        !calculatorContext.opponent.member));
+        !calculatorContext.opponent.member)) ||
+    (scope === "matchup" &&
+      (!isCalculatorActive ||
+        !calculatorContext?.opponent.member ||
+        !calculatorContext.roster?.length));
 
   useEffect(() => {
     setCandidateApplyFailure(null);
@@ -273,6 +301,16 @@ export function CopilotPanel({
       const plan = await optimizationState.run();
       if (!plan || plan.status !== "ready" || plan.candidates.length === 0) return;
       await analyze(createCopilotAnalysisRequest({ ...requestInput, optimizationPlan: plan }));
+      return;
+    }
+    if (scope === "matchup") {
+      const plans = await matchupState.run();
+      if (!plans || plans.matchupPlan.status !== "ready") return;
+      await analyze(createCopilotAnalysisRequest({
+        ...requestInput,
+        optimizationPlan: plans.optimizationPlan,
+        matchupPlan: plans.matchupPlan,
+      }));
       return;
     }
     void analyze();
@@ -394,13 +432,13 @@ export function CopilotPanel({
           >
             <FontAwesomeIcon
               icon={
-                analysisState.status === "loading" || optimizationState.loading
+                analysisState.status === "loading" || isAnalysisPreparing
                   ? faSpinner
                   : response
                     ? faRotateRight
                     : faWandMagicSparkles
               }
-              spin={analysisState.status === "loading" || optimizationState.loading}
+              spin={analysisState.status === "loading" || isAnalysisPreparing}
               aria-hidden="true"
             />
             {analyzeLabel}
@@ -436,12 +474,22 @@ export function CopilotPanel({
         <button
           type="button"
           role="tab"
+          aria-selected={scope === "matchup"}
+          className={scope === "matchup" ? "is-active" : ""}
+          onClick={() => setScope("matchup")}
+        >
+          <FontAwesomeIcon icon={faShieldHalved} aria-hidden="true" />
+          {t("copilot.matchup")}
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={scope === "recommendation"}
           className={scope === "recommendation" ? "is-active" : ""}
           onClick={() => setScope("recommendation")}
         >
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
-          {t("copilot.recommend")}
+          {t("copilot.recommendTab")}
         </button>
         <button
           type="button"
@@ -457,6 +505,7 @@ export function CopilotPanel({
 
       <div ref={contentRef} className="copilot-content" aria-live="polite">
         {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
+        {matchupNotice ? <p role="status">{matchupNotice}</p> : null}
         {analysisState.status === "error" ? (
           <div className="copilot-empty-state is-error">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
@@ -506,12 +555,14 @@ export function CopilotPanel({
             <span>
               {scope === "team"
                 ? t("copilot.activeSets", { count: diagnostics.filledSlots })
-                : scope === "pokemon" && selectedSet
-                  ? pokemonName({
-                      id: selectedSet.pokemonId,
-                      fallback: selectedSet.pokemonName,
-                      includeForm: false,
-                    })
+                : scope === "pokemon"
+                  ? selectedSet
+                    ? pokemonName({
+                        id: selectedSet.pokemonId,
+                        fallback: selectedSet.pokemonName,
+                        includeForm: false,
+                      })
+                    : t("copilot.emptySlot", { slot: selectedSlot + 1 })
                   : scope === "recommendation"
                     ? selectedMember
                       ? t("copilot.chooseEmptySlot")
@@ -524,19 +575,27 @@ export function CopilotPanel({
                                 count: recommendationState.candidates.length,
                               })
                             : t("copilot.noCandidates")
-                    : scope === "optimization"
+                    : scope === "matchup"
                       ? !isCalculatorActive
-                        ? t("copilot.openCalculatorForOptimization")
-                        : optimizationState.loading
-                          ? t("copilot.loadingCandidates")
-                          : optimizationState.error
-                            ? t("copilot.candidateLoadFailed")
-                        : request.optimization
-                          ? t("copilot.optimizationReady", {
-                              count: request.optimization.candidates.length,
+                        ? t("copilot.openCalculatorForMatchup")
+                        : !calculatorContext?.opponent.member
+                          ? t("copilot.configureMatchup")
+                          : t("copilot.matchupReady", {
+                              count: calculatorContext.roster?.length ?? 0,
                             })
-                          : t("copilot.configureOptimization")
-                      : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
+                      : scope === "optimization"
+                        ? !isCalculatorActive
+                          ? t("copilot.openCalculatorForOptimization")
+                          : optimizationState.loading
+                            ? t("copilot.loadingCandidates")
+                            : optimizationState.error
+                              ? t("copilot.candidateLoadFailed")
+                              : request.optimization
+                                ? t("copilot.optimizationReady", {
+                                    count: request.optimization.candidates.length,
+                                  })
+                                : t("copilot.configureOptimization")
+                        : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
             </span>
           </div>
         )}

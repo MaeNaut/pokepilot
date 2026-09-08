@@ -143,7 +143,8 @@ function normalizeHistoryEntry(value: unknown): CopilotHistoryEntry | null {
     (value.scope === "team" ||
       value.scope === "pokemon" ||
       value.scope === "recommendation" ||
-      value.scope === "optimization") &&
+      value.scope === "optimization" ||
+      value.scope === "matchup") &&
     (value.battleFormat === "singles" || value.battleFormat === "doubles") &&
     typeof value.requestFingerprint === "string" &&
     value.requestFingerprint.length > 0 &&

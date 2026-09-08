@@ -2,6 +2,7 @@ import type { CopilotAnalysisRequest } from "./copilotContracts.js";
 import { pokemonTypes } from "../types.js";
 import { copilotResponsibilityIds } from "./copilotResponsibilities.js";
 import { hasValidOptimizationShape } from "./copilotRequestOptimizationValidation.js";
+import { hasValidMatchupShape } from "./copilotRequestMatchupValidation.js";
 import {
   hasOnlyKeys,
   hasUniqueSlots,
@@ -42,6 +43,7 @@ const requestKeys = new Set([
   "candidateFilters",
   "recommendationCandidates",
   "optimization",
+  "matchup",
   "mechanics",
   "diagnostics",
 ]);
@@ -635,7 +637,7 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 21) errors.push("version must be 21.");
+  if (value.version !== 25) errors.push("version must be 25.");
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
@@ -643,9 +645,10 @@ export function validateCopilotAnalysisRequest(
     value.scope !== "team" &&
     value.scope !== "pokemon" &&
     value.scope !== "recommendation" &&
-    value.scope !== "optimization"
+    value.scope !== "optimization" &&
+    value.scope !== "matchup"
   ) {
-    errors.push("scope must be team, pokemon, recommendation, or optimization.");
+    errors.push("scope must be team, pokemon, recommendation, optimization, or matchup.");
   }
   if (value.battleFormat !== "singles" && value.battleFormat !== "doubles") {
     errors.push("battleFormat must be singles or doubles.");
@@ -728,10 +731,28 @@ export function validateCopilotAnalysisRequest(
   }
   if (
     value.scope !== "optimization" &&
+    value.scope !== "matchup" &&
     value.optimization !== undefined &&
     value.optimization !== null
   ) {
     errors.push("optimization must be null outside optimization scope.");
+  }
+  if (
+    value.matchup !== undefined &&
+    value.matchup !== null &&
+    !hasValidMatchupShape(value.matchup)
+  ) {
+    errors.push("matchup must match the exact team matchup contract.");
+  }
+  if (value.scope === "matchup" && !hasValidMatchupShape(value.matchup)) {
+    errors.push("matchup scope requires verified team matchup evidence.");
+  }
+  if (
+    value.scope !== "matchup" &&
+    value.matchup !== undefined &&
+    value.matchup !== null
+  ) {
+    errors.push("matchup must be null outside matchup scope.");
   }
   if (!hasValidMechanicsShape(value.mechanics)) {
     errors.push("mechanics must contain bounded move, ability, and item arrays.");
@@ -759,19 +780,59 @@ export function validateCopilotAnalysisRequest(
     errors.push("pokemon scope requires a set in selectedSlot.");
   }
   if (
-    value.scope === "optimization" &&
+    (value.scope === "optimization" || value.scope === "matchup") &&
     isRecord(value.optimization) &&
     value.optimization.slotIndex !== value.selectedSlot
   ) {
     errors.push("optimization slotIndex must match selectedSlot.");
   }
-  if (value.scope === "optimization" && isRecord(value.optimization)) {
+  if (
+    (value.scope === "optimization" || value.scope === "matchup") &&
+    isRecord(value.optimization)
+  ) {
     const optimizationField = isRecord(value.optimization.field)
       ? value.optimization.field
       : null;
 
     if (optimizationField?.gameType !== value.battleFormat) {
       errors.push("optimization field gameType must match battleFormat.");
+    }
+  }
+  if (value.scope === "matchup" && isRecord(value.matchup)) {
+    const matchupField = isRecord(value.matchup.field)
+      ? value.matchup.field
+      : null;
+    if (matchupField?.gameType !== value.battleFormat) {
+      errors.push("matchup field gameType must match battleFormat.");
+    }
+
+    const setBySlot = new Map(
+      Array.isArray(value.sets)
+        ? value.sets.flatMap((set) =>
+            isRecord(set) && isSlotIndex(set.slotIndex)
+              ? [[set.slotIndex, set] as const]
+              : [],
+          )
+        : [],
+    );
+    const matchupMembers = Array.isArray(value.matchup.members)
+      ? value.matchup.members
+      : [];
+    if (
+      matchupMembers.some((member) => {
+        if (!isRecord(member)) return true;
+        const set = setBySlot.get(member.slotIndex);
+        return !set || set.pokemonId !== member.pokemonId;
+      })
+    ) {
+      errors.push("matchup members must match the supplied team sets.");
+    }
+    if (
+      isRecord(value.optimization) &&
+      isRecord(value.matchup.opponent) &&
+      value.optimization.opponentPokemonId !== value.matchup.opponent.pokemonId
+    ) {
+      errors.push("optimization and matchup must use the same opponent.");
     }
   }
 

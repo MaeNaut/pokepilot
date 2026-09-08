@@ -234,7 +234,9 @@ export function CopilotHistoryControl({
                               ? "copilot.pokemon"
                               : entry.scope === "recommendation"
                                 ? "copilot.recommend"
-                                : "copilot.sample",
+                                : entry.scope === "matchup"
+                                  ? "copilot.matchup"
+                                  : "copilot.sample",
                         )}
                         {" \u00b7 "}
                         {t(

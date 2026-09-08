@@ -37,7 +37,7 @@ export function validateCopilotStrategyAuditForRequest(
   } =
     output.strategyAudit;
 
-  if (request.scope === "optimization") {
+  if (request.scope === "optimization" || request.scope === "matchup") {
     if (
       plans.length > 0 ||
       interactions.length > 0 ||
@@ -45,7 +45,7 @@ export function validateCopilotStrategyAuditForRequest(
       candidateFacts.length > 0 ||
       recommendationEvidence.length > 0
     ) {
-      errors.push("Optimization analysis must use an empty private strategy audit.");
+      errors.push("Calculator-grounded analysis must use an empty private strategy audit.");
     }
 
     return errors;

@@ -8,7 +8,13 @@ import type {
   SetOptimizationMoveSource,
   SetOptimizationOutcomeComparison,
   SetOptimizationSpeedBenchmark,
+  SetOptimizationSpeedState,
 } from "../calculator/setOptimizer";
+import type {
+  TeamMatchupPersistentSequence,
+  TeamMatchupPlan,
+  TeamMatchupResponseTier,
+} from "../calculator/teamMatchup";
 import type { TeamConceptId } from "../data/teamConcepts";
 import type { Locale } from "../i18n/gameTranslations";
 import type {
@@ -43,7 +49,8 @@ export type CopilotAnalysisScope =
   | "team"
   | "pokemon"
   | "recommendation"
-  | "optimization";
+  | "optimization"
+  | "matchup";
 
 export type CopilotPriority = "high" | "medium" | "low";
 
@@ -272,8 +279,55 @@ export type CopilotSetOptimizationSnapshot = {
   candidates: CopilotSetOptimizationCandidateSnapshot[];
 };
 
+export type CopilotMatchupMoveBenchmarkSnapshot = {
+  moveId: string;
+  moveDisplayName: string;
+  moveCategory: "Physical" | "Special";
+  source: SetOptimizationMoveSource;
+  requiresRecharge: boolean;
+  possibleActionTurns: number | null;
+  guaranteedActionTurns: number | null;
+  result: SetOptimizationBenchmark;
+  persistentSequence?: TeamMatchupPersistentSequence;
+};
+
+export type CopilotMatchupMemberSnapshot = {
+  slotIndex: number;
+  pokemonId: string;
+  displayName: string;
+  roleIds: TeamRoleId[];
+  responseTier: TeamMatchupResponseTier;
+  offenseBenchmarks: CopilotMatchupMoveBenchmarkSnapshot[];
+  defenseBenchmarks: CopilotMatchupMoveBenchmarkSnapshot[];
+  speed: SetOptimizationSpeedState;
+};
+
+export type CopilotMatchupSnapshot = {
+  opponent: {
+    pokemonId: string;
+    displayName: string;
+    types: PokemonType[];
+    typeDisplayNames: string[];
+    itemId: string | null;
+    itemDisplayName: string | null;
+    itemEffect: string | null;
+    abilityId: string | null;
+    abilityDisplayName: string | null;
+    abilityEffect: string | null;
+    natureId: string;
+    natureDisplayName: string;
+    evs: StatBlock;
+    finalStats: StatBlock;
+    selectedMoveIds: string[];
+    moves: CopilotOptimizationMoveMechanicSnapshot[];
+  };
+  field: CalculatorAnalysisContext["field"];
+  teamBaseline: "full-hp-neutral-stages";
+  members: CopilotMatchupMemberSnapshot[];
+};
+
 export type CopilotAnalysisRequest = {
-  version: 21;
+  version: 25;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -285,6 +339,7 @@ export type CopilotAnalysisRequest = {
   candidateFilters: CopilotCandidateFilterSnapshot[];
   recommendationCandidates: CopilotRecommendationCandidateSnapshot[];
   optimization?: CopilotSetOptimizationSnapshot | null;
+  matchup?: CopilotMatchupSnapshot | null;
   mechanics: CopilotMechanicsSnapshot;
   diagnostics: CopilotDiagnosticsSnapshot;
 };
@@ -323,4 +378,5 @@ export type CreateCopilotRequestInput = {
   calculatorContext?: CalculatorAnalysisContext | null;
   // Undefined keeps the synchronous path for evaluation scripts; null skips search.
   optimizationPlan?: SetOptimizationPlan | null;
+  matchupPlan?: TeamMatchupPlan | null;
 };

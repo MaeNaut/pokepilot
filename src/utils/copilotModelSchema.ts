@@ -20,7 +20,7 @@ export const copilotModelOutputJsonSchema = {
     version: { type: "integer", const: 2 },
     scope: {
       type: "string",
-      enum: ["team", "pokemon", "recommendation", "optimization"],
+      enum: ["team", "pokemon", "recommendation", "optimization", "matchup"],
     },
     title: { type: "string", minLength: 1 },
     paragraphs: {
