@@ -418,34 +418,88 @@ function hasValidMetaThreat(value: unknown) {
   );
 }
 
-function hasValidMetaMatchupShape(value: unknown) {
+function hasValidMetaReplacementEvidence(value: unknown) {
   return (
     isRecord(value) &&
     hasOnlyKeys(value, [
+      "candidatePokemonId",
+      "targetSlotIndex",
+      "threatPokemonId",
+      "member",
+    ]) &&
+    isNonEmptyString(value.candidatePokemonId) &&
+    isSlotIndex(value.targetSlotIndex) &&
+    isNonEmptyString(value.threatPokemonId) &&
+    hasValidMetaMatchupMember(value.member) &&
+    isRecord(value.member) &&
+    value.member.slotIndex === value.targetSlotIndex &&
+    (value.member.responseTier === "answer" || value.member.responseTier === "check")
+  );
+}
+
+function hasValidMetaMatchupShape(value: unknown) {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, [
       "mode",
       "sourceMonth",
       "cutoff",
       "evaluatedThreatCount",
       "teamBaseline",
       "threats",
-    ]) &&
-    value.mode === "meta" &&
-    /^\d{4}-\d{2}$/.test(String(value.sourceMonth)) &&
-    isBoundedInteger(value.cutoff, 0, 100_000) &&
-    isBoundedInteger(value.evaluatedThreatCount, 1, 100) &&
-    value.teamBaseline === "full-hp-neutral-stages" &&
-    Array.isArray(value.threats) &&
-    value.threats.length > 0 &&
-    value.threats.length <= 5 &&
-    value.threats.every(hasValidMetaThreat) &&
+      "replacementEvidence",
+    ]) ||
+    value.mode !== "meta" ||
+    !/^\d{4}-\d{2}$/.test(String(value.sourceMonth)) ||
+    !isBoundedInteger(value.cutoff, 0, 100_000) ||
+    !isBoundedInteger(value.evaluatedThreatCount, 1, 100) ||
+    value.teamBaseline !== "full-hp-neutral-stages" ||
+    !Array.isArray(value.threats) ||
+    value.threats.length < 1 ||
+    value.threats.length > 5 ||
+    !value.threats.every(hasValidMetaThreat) ||
     new Set(
       value.threats.map((threat) =>
         isRecord(threat) && isRecord(threat.opponent)
           ? threat.opponent.pokemonId
           : null,
       ),
-    ).size === value.threats.length
+    ).size !== value.threats.length ||
+    !Array.isArray(value.replacementEvidence) ||
+    value.replacementEvidence.length > 3 ||
+    !value.replacementEvidence.every(hasValidMetaReplacementEvidence)
+  ) {
+    return false;
+  }
+
+  const threatByPokemonId = new Map(
+    value.threats.flatMap((threat) =>
+      isRecord(threat) && isRecord(threat.opponent) &&
+      isNonEmptyString(threat.opponent.pokemonId)
+        ? [[String(threat.opponent.pokemonId), threat] as const]
+        : [],
+    ),
   );
+  return value.replacementEvidence.every((entry) => {
+    if (!isRecord(entry) || !isRecord(entry.member)) return false;
+    const threat = threatByPokemonId.get(String(entry.threatPokemonId));
+    if (!isRecord(threat) || !isRecord(threat.opponent)) return false;
+    const opponentMoveIds = new Set(
+      Array.isArray(threat.opponent.moves)
+        ? threat.opponent.moves.flatMap((move) =>
+            isRecord(move) && isNonEmptyString(move.id)
+              ? [String(move.id)]
+              : [],
+          )
+        : [],
+    );
+    return Array.isArray(entry.member.defenseBenchmarks) &&
+      entry.member.defenseBenchmarks.every(
+        (benchmark) =>
+          isRecord(benchmark) &&
+          opponentMoveIds.has(String(benchmark.moveId)),
+      );
+  });
 }
 
 export function hasValidMatchupShape(value: unknown) {

@@ -273,6 +273,89 @@ describe("hosted Pokemon recommendation validation", () => {
   });
 });
 
+describe("hosted meta threat replacement validation", () => {
+  const candidate = {
+    pokemonId: "rotom-wash",
+    displayName: "Rotom Wash",
+    target: {
+      mode: "replacement",
+      slotIndex: 2,
+      currentPokemonId: "pelipper",
+      currentDisplayName: "Pelipper",
+    },
+  } as CopilotAnalysisRequest["recommendationCandidates"][number];
+  const metaRequest = {
+    ...request,
+    scope: "matchup",
+    optimization: null,
+    recommendationCandidates: [candidate],
+    matchup: { mode: "meta", replacementEvidence: [] },
+  } as unknown as CopilotAnalysisRequest;
+
+  function createMetaOutput(title: string) {
+    const output = createOutput([candidate.pokemonId]);
+    output.analysis.scope = "matchup";
+    output.analysis.title = "Meta threat audit";
+    output.analysis.recommendations[0].title = title;
+    output.analysis.recommendations[0].reason =
+      "This replacement provides a verified response to the selected threat.";
+    return output;
+  }
+
+  it("accepts an exact candidate and replacement target explanation", () => {
+    expect(
+      validateHostedCopilotAnalysis(
+        createMetaOutput("Consider Rotom Wash over Pelipper."),
+        metaRequest,
+      ),
+    ).toMatchObject({
+      scope: "matchup",
+      recommendations: [{ id: "rotom-wash" }],
+    });
+  });
+
+  it("rejects a candidate explanation that names another teammate as its target", () => {
+    expect(() =>
+      validateHostedCopilotAnalysis(
+        createMetaOutput("Consider Rotom Wash over Venusaur."),
+        metaRequest,
+      ),
+    ).toThrow("replacement explanation does not match its exact target");
+  });
+
+  it("repairs a mismatched replacement target for the production response", () => {
+    const reviewed = reviewHostedCopilotAnalysis(
+      createMetaOutput("Consider Rotom Wash over Venusaur."),
+      {
+        ...metaRequest,
+        matchup: {
+          mode: "meta",
+          replacementEvidence: [{
+            candidatePokemonId: "rotom-wash",
+            targetSlotIndex: 2,
+            threatPokemonId: "archaludon",
+            member: { responseTier: "answer" },
+          }],
+          threats: [{
+            opponent: {
+              pokemonId: "archaludon",
+              displayName: "Archaludon",
+            },
+          }],
+        },
+      } as unknown as CopilotAnalysisRequest,
+    );
+
+    expect(reviewed.analysis.recommendations[0]).toMatchObject({
+      title: "Consider Rotom Wash over Pelipper.",
+    });
+    expect(reviewed.analysis.recommendations[0].reason).toContain(
+      "losing Pelipper",
+    );
+    expect(reviewed.qualityWarnings).toContain("content-repaired");
+  });
+});
+
 describe("recoverable hosted analysis review", () => {
   it("deduplicates non-actionable strategy cards without discarding the analysis", () => {
     const output = createOutput(["one", "one", "two", "three", "four"]);

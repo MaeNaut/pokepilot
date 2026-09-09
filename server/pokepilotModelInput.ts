@@ -66,6 +66,15 @@ export function serializePokePilotModelRequest(request: CopilotAnalysisRequest) 
         collect("speed", member.speed);
       }
     }
+    for (const evidence of request.matchup.replacementEvidence) {
+      for (const benchmark of [
+        ...evidence.member.offenseBenchmarks,
+        ...evidence.member.defenseBenchmarks,
+      ]) {
+        collect("damage", benchmark.outcome);
+      }
+      collect("speed", evidence.member.speed);
+    }
   } else if (request.matchup?.mode === "exact") {
     for (const move of request.matchup.opponent.moves) collect("move", move);
     for (const member of request.matchup.members) {

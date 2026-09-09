@@ -156,7 +156,7 @@ function createRoster(
   );
 }
 
-function createOpponent(
+export function createMetaThreatUsageSide(
   usageSet: SmogonUsageSet,
   showdownData: ShowdownDataSnapshot,
   itemIndex: ItemIndexEntry[],
@@ -226,7 +226,11 @@ export function createMetaThreatAnalysisInput({
 }): MetaThreatAnalysisInput {
   const roster = createRoster(team, buildState, pokemonIndex);
   const candidates = usageSets.flatMap<MetaThreatCandidate>((usageSet, index) => {
-    const opponent = createOpponent(usageSet, showdownData, itemIndex);
+    const opponent = createMetaThreatUsageSide(
+      usageSet,
+      showdownData,
+      itemIndex,
+    );
     return opponent
       ? [{
           usageRank: index + 1,

@@ -13,7 +13,7 @@ import {
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 33,
+  version: 34,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",

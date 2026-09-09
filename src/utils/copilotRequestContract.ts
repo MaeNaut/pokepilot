@@ -726,7 +726,7 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 33) errors.push("version must be 33.");
+  if (value.version !== 34) errors.push("version must be 34.");
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
@@ -803,13 +803,16 @@ export function validateCopilotAnalysisRequest(
   }
   if (
     value.scope !== "recommendation" &&
+    value.scope !== "matchup" &&
     Array.isArray(value.recommendationCandidates) &&
     value.recommendationCandidates.length > 0
   ) {
-    errors.push("recommendationCandidates must be empty outside recommendation scope.");
+    errors.push(
+      "recommendationCandidates must be empty outside recommendation and matchup scopes.",
+    );
   }
   if (
-    value.scope === "recommendation" &&
+    (value.scope === "recommendation" || value.scope === "matchup") &&
     setsAreValid &&
     Array.isArray(value.recommendationCandidates) &&
     value.recommendationCandidates.every(hasValidRecommendationCandidateShape)
@@ -817,6 +820,18 @@ export function validateCopilotAnalysisRequest(
     const candidates = value.recommendationCandidates as
       CopilotAnalysisRequest["recommendationCandidates"];
     const sets = value.sets as CopilotAnalysisRequest["sets"];
+    if (
+      value.scope === "matchup" &&
+      candidates.length > 0 &&
+      (candidates.length > 3 ||
+        !isRecord(value.matchup) ||
+        value.matchup.mode !== "meta" ||
+        candidates.some(({ target }) => target.mode !== "replacement"))
+    ) {
+      errors.push(
+        "meta matchup recommendationCandidates must contain at most three replacements.",
+      );
+    }
     const candidateIds = candidates.map((candidate) =>
       String(candidate.pokemonId),
     );
@@ -1056,6 +1071,41 @@ export function validateCopilotAnalysisRequest(
       })) {
         errors.push("matchup members must match the supplied team sets.");
         break;
+      }
+    }
+
+    if (value.matchup.mode === "meta") {
+      const candidates = Array.isArray(value.recommendationCandidates)
+        ? value.recommendationCandidates.filter(isRecord)
+        : [];
+      const evidence = Array.isArray(value.matchup.replacementEvidence)
+        ? value.matchup.replacementEvidence.filter(isRecord)
+        : [];
+      const hasInvalidReplacementEvidence =
+        candidates.length !== evidence.length ||
+        new Set(evidence.map((entry) => entry.threatPokemonId)).size > 1 ||
+        candidates.some((candidate) =>
+          !evidence.some(
+            (entry) =>
+              entry.candidatePokemonId === candidate.pokemonId &&
+              isRecord(candidate.target) &&
+              entry.targetSlotIndex === candidate.target.slotIndex,
+          ),
+        ) ||
+        evidence.some((entry) => {
+          const threat = matchupEntries.find(
+            (matchupEntry) =>
+              isRecord(matchupEntry.opponent) &&
+              matchupEntry.opponent.pokemonId === entry.threatPokemonId,
+          );
+          return !isRecord(threat) ||
+            threat.answerCount !== 0 ||
+            threat.checkCount !== 0;
+        });
+      if (hasInvalidReplacementEvidence) {
+        errors.push(
+          "meta matchup replacement candidates must match verified evidence for one structurally unanswered threat.",
+        );
       }
     }
 

@@ -940,6 +940,16 @@ function analyzeMatchupRequest(
         (member) => member.responseTier === "check",
       );
       const response = answer ?? check;
+      const replacementEvidence = matchup.replacementEvidence.find(
+        (entry) => entry.threatPokemonId === threat.opponent.pokemonId,
+      );
+      const replacementCandidate = replacementEvidence
+        ? request.recommendationCandidates.find(
+            (candidate) =>
+              candidate.pokemonId === replacementEvidence.candidatePokemonId &&
+              candidate.target.slotIndex === replacementEvidence.targetSlotIndex,
+          )
+        : undefined;
       const isOptimizationThreat = Boolean(
         optimizationCandidate &&
         request.optimization?.opponentPokemonId === threat.opponent.pokemonId &&
@@ -958,6 +968,18 @@ function analyzeMatchupRequest(
               ? `Consider the ${optimizationCandidate.natureDisplayName} tuned sample with ${addedMove}.`
               : `Consider the ${optimizationCandidate.natureDisplayName} tuned sample.`,
           reason: formatLocalOptimizationReason(optimizationCandidate, locale),
+          priority: "high" as const,
+        };
+      }
+      if (!response && replacementEvidence && replacementCandidate) {
+        return {
+          id: replacementCandidate.pokemonId,
+          title: isKorean
+            ? `${replacementCandidate.target.currentDisplayName ?? "현재 포켓몬"} 대신 ${replacementCandidate.displayName}을 검토해 보세요.`
+            : `Consider ${replacementCandidate.displayName} over ${replacementCandidate.target.currentDisplayName ?? "the current Pokemon"}.`,
+          reason: isKorean
+            ? `${replacementCandidate.displayName}은(는) 대표 사용률 샘플 기준으로 ${threat.opponent.displayName}에게 ${replacementEvidence.member.responseTier === "answer" ? "확실한 대응" : "조건부 견제"}이 됩니다. 다만 이 계산은 해당 위협 하나만 검증하므로, 교체 대상의 기존 역할과 지원 연계를 함께 비교해야 합니다.`
+            : `${replacementCandidate.displayName} is a ${replacementEvidence.member.responseTier === "answer" ? "verified answer" : "conditional check"} to ${threat.opponent.displayName} with its representative usage sample. This calculation covers only that threat, so weigh it against the replaced member's existing roles and support links.`,
           priority: "high" as const,
         };
       }

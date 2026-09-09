@@ -294,7 +294,7 @@ export function CopilotAnalysisResult({
                   : t("copilot.nextSteps")}
           </h3>
         </div>
-        {scope === "recommendation" && candidateApplyFailure ? (
+        {(scope === "recommendation" || scope === "matchup") && candidateApplyFailure ? (
           <div className="copilot-candidate-apply-failure" role="alert">
             <FontAwesomeIcon
               icon={faTriangleExclamation}
@@ -305,7 +305,7 @@ export function CopilotAnalysisResult({
             </span>
           </div>
         ) : null}
-        {scope === "recommendation" && candidateSaveStatus ? (
+        {(scope === "recommendation" || scope === "matchup") && candidateSaveStatus ? (
           <div
             className={`copilot-candidate-save-status${
               candidateSaveStatus === "bench-full" ? " is-error" : ""
@@ -335,7 +335,7 @@ export function CopilotAnalysisResult({
         <ol>
           {sortedRecommendations.map((recommendation, index) => {
             const candidate =
-              scope === "recommendation"
+              scope === "recommendation" || scope === "matchup"
                 ? candidatesById.get(recommendation.id)
                 : undefined;
             const optimizationCandidate =
@@ -347,6 +347,8 @@ export function CopilotAnalysisResult({
               <li
                 className={`copilot-reveal is-recommendation${
                   optimizationCandidate ? " is-optimization-card" : ""
+                }${
+                  candidate ? " is-candidate-card" : ""
                 }`}
                 key={recommendation.id}
                 style={

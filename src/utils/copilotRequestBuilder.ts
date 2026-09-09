@@ -545,12 +545,14 @@ function createCopilotExactMatchupSnapshot(
 
 function createCopilotMetaMatchupSnapshot(
   plan: MetaThreatAnalysisPlan | null | undefined,
+  replacementCandidates: CreateCopilotRequestInput["threatReplacementCandidates"],
   locale: Locale,
   pokemonIndex: PokemonIndexEntry[],
   sets: CopilotSetSnapshot[],
   abilityById: Map<string, PokemonAbility>,
 ): CopilotMetaMatchupSnapshot | null {
   if (!plan || plan.status !== "ready") return null;
+  const replacementEvidence: CopilotMetaMatchupSnapshot["replacementEvidence"] = [];
 
   const threats = plan.threats.flatMap((threat) => {
     const exact = createCopilotExactMatchupSnapshot(
@@ -600,10 +602,53 @@ function createCopilotMetaMatchupSnapshot(
         .map(compactBenchmark),
       speed: member.speed,
     }));
+    const threatReplacementEvidence = (replacementCandidates ?? [])
+      .filter(
+        ({ threatPokemonId }) =>
+          normalizeShowdownId(threatPokemonId) ===
+          normalizeShowdownId(opponent.pokemonId),
+      )
+      .map(({ candidate, member }) => ({
+        candidatePokemonId: candidate.pokemonId,
+        targetSlotIndex: candidate.target.slotIndex,
+        threatPokemonId: opponent.pokemonId,
+        member: {
+          slotIndex: member.slotIndex,
+          pokemonId: member.pokemonId,
+          displayName: candidate.displayName,
+          state: member.state,
+          responseTier: member.responseTier,
+          offenseBenchmarks: member.offenseBenchmarks.slice(0, 1).map((benchmark) =>
+            compactBenchmark({
+              ...benchmark,
+              moveDisplayName: translateGameName(
+                locale,
+                "moves",
+                benchmark.moveId,
+                benchmark.moveName,
+              ),
+            }),
+          ),
+          defenseBenchmarks: member.defenseBenchmarks.slice(0, 1).map((benchmark) =>
+            compactBenchmark({
+              ...benchmark,
+              moveDisplayName: translateGameName(
+                locale,
+                "moves",
+                benchmark.moveId,
+                benchmark.moveName,
+              ),
+            }),
+          ),
+          speed: { ...member.speed },
+        },
+      }));
+    replacementEvidence.push(...threatReplacementEvidence);
     const retainedOpponentMoveIds = new Set(
-      members.flatMap((member) =>
-        member.defenseBenchmarks.map((benchmark) => benchmark.moveId),
-      ),
+      [...members, ...threatReplacementEvidence.map(({ member }) => member)]
+        .flatMap((member) =>
+          member.defenseBenchmarks.map((benchmark) => benchmark.moveId),
+        ),
     );
 
     return [{
@@ -638,6 +683,7 @@ function createCopilotMetaMatchupSnapshot(
     evaluatedThreatCount: plan.evaluatedThreatCount,
     teamBaseline: "full-hp-neutral-stages",
     threats,
+    replacementEvidence,
   };
 }
 
@@ -665,15 +711,31 @@ function filterPersistentMatchupOptimization(
       benchmark.persistentSequence ? [benchmark.moveId] : [],
     ) ?? [],
   );
-  if (persistentMoveIds.size === 0) return optimization;
+  const preservesActionOrder = (
+    candidate: CopilotSetOptimizationSnapshot["candidates"][number],
+  ) => {
+    const speed = candidate.speedBenchmark;
+    if (
+      speed?.current.relation !== "faster" ||
+      speed.optimized.relation === "faster"
+    ) {
+      return true;
+    }
+
+    return candidate.defenseBenchmarks.some(({ current, optimized }) =>
+      current.possibleKoHits === 1 &&
+      (optimized.possibleKoHits === null || optimized.possibleKoHits >= 2),
+    );
+  };
 
   const candidates = optimization.candidates.filter((candidate) =>
     candidate.id === "set-current" ||
-    !candidate.offenseBenchmarks.some((benchmark) =>
-      benchmark.optimizedVsCurrent === "better" &&
-      (persistentMoveIds.has(benchmark.moveId) ||
-        persistentMoveIds.has(benchmark.currentMoveId)),
-    ),
+    (preservesActionOrder(candidate) &&
+      !candidate.offenseBenchmarks.some((benchmark) =>
+        benchmark.optimizedVsCurrent === "better" &&
+        (persistentMoveIds.has(benchmark.moveId) ||
+          persistentMoveIds.has(benchmark.currentMoveId)),
+      )),
   );
 
   if (matchup.mode === "exact") {
@@ -1100,6 +1162,7 @@ export function createCopilotAnalysisRequest({
   optimizationPlan,
   matchupPlan,
   threatPlan,
+  threatReplacementCandidates = [],
 }: CreateCopilotRequestInput): CopilotAnalysisRequest {
   const mechanicsSets: CopilotMechanicsSetInput[] = [];
   const responsibilityGroups: CopilotResponsibilityId[][] = [];
@@ -1276,6 +1339,7 @@ export function createCopilotAnalysisRequest({
   const matchup = scope === "matchup"
     ? createCopilotMetaMatchupSnapshot(
         threatPlan,
+        threatReplacementCandidates,
         locale,
         pokemonIndex,
         sets,
@@ -1331,7 +1395,7 @@ export function createCopilotAnalysisRequest({
     : unfilteredOptimization;
 
   return {
-    version: 33,
+    version: 34,
     locale,
     scope,
     battleFormat,
@@ -1342,8 +1406,13 @@ export function createCopilotAnalysisRequest({
     megaOptions: createMegaOptions(sets),
     candidateFilters,
     recommendationCandidates:
-      scope === "recommendation"
-        ? localizeRecommendationCandidates(locale, recommendationCandidates)
+      scope === "recommendation" || scope === "matchup"
+        ? localizeRecommendationCandidates(
+            locale,
+            scope === "matchup"
+              ? threatReplacementCandidates.map(({ candidate }) => candidate)
+              : recommendationCandidates,
+          )
         : [],
     optimization,
     matchup,

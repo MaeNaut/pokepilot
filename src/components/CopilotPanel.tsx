@@ -219,6 +219,9 @@ export function CopilotPanel({
     battleFormat,
     pokemonIndex,
     itemIndex,
+    abilityIndex,
+    diagnostics,
+    showdownLegality,
     enabled: scope === "matchup",
   });
   const requestInput = useMemo(
@@ -256,11 +259,13 @@ export function CopilotPanel({
     optimizationPlan:
       scope === "matchup" ? null : optimizationState.plan,
     threatPlan: matchupState.plan,
+    threatReplacementCandidates: matchupState.replacementCandidates,
   }), [
     requestInput,
     scope,
     optimizationState.plan,
     matchupState.plan,
+    matchupState.replacementCandidates,
   ]);
   const optimizationNotice = optimizationState.error
     ? t("copilot.candidateLoadFailed")
@@ -372,12 +377,13 @@ export function CopilotPanel({
       return;
     }
     if (scope === "matchup") {
-      const plan = await matchupState.run();
-      if (!plan || plan.status !== "ready") return;
+      const result = await matchupState.run();
+      if (!result || result.plan.status !== "ready") return;
       await analyze(createCopilotAnalysisRequest({
         ...requestInput,
         optimizationPlan: null,
-        threatPlan: plan,
+        threatPlan: result.plan,
+        threatReplacementCandidates: result.replacementCandidates,
       }));
       return;
     }
@@ -398,7 +404,7 @@ export function CopilotPanel({
     setCandidateApplyFailure(null);
     setCandidateSaveStatus(null);
     try {
-      const candidate = recommendationState.candidates.find(
+      const candidate = request.recommendationCandidates.find(
         (entry) => entry.pokemonId === pokemonId,
       );
       if (!candidate) {
@@ -438,7 +444,7 @@ export function CopilotPanel({
     setCandidateApplyFailure(null);
     setCandidateSaveStatus(null);
     try {
-      const candidate = recommendationState.candidates.find(
+      const candidate = request.recommendationCandidates.find(
         (entry) => entry.pokemonId === pokemonId,
       );
       if (!candidate) {

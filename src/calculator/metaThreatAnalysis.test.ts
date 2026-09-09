@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { defaultEvs } from "../data/natures";
 import type { PokemonMove, PokemonType, TeamMember } from "../types";
+import type { ShowdownDataSnapshot } from "../api/showdownData";
+import type { CopilotRecommendationCandidateSnapshot } from "../utils/pokemonRecommendations";
+import { selectMetaThreatReplacementCandidates } from "../utils/metaThreatRecommendations";
 import {
   createCalculatorBattleState,
   getCalculatorMaxHp,
@@ -201,6 +204,152 @@ describe("meta threat analysis", () => {
         triggerAbilityId: "stamina",
         boostAffectedDamage: false,
       },
+    });
+  });
+
+  it("keeps only usage-backed replacements that verify against a structural threat", () => {
+    const flamethrower: PokemonMove = {
+      ...tackle,
+      id: "flamethrower",
+      name: "Flamethrower",
+      type: "fire",
+      category: "Special",
+      power: 90,
+    };
+    const hydroPump: PokemonMove = {
+      ...tackle,
+      id: "hydropump",
+      name: "Hydro Pump",
+      type: "water",
+      category: "Special",
+      power: 200,
+    };
+    const rosterMember = createMember({
+      id: "grass-roster",
+      types: ["grass"],
+      baseStats: {
+        hp: 60,
+        attack: 60,
+        defense: 50,
+        specialAttack: 60,
+        specialDefense: 50,
+        speed: 40,
+      },
+    });
+    const threatMember = createMember({
+      id: "fire-threat",
+      types: ["fire"],
+      moves: [flamethrower],
+      baseStats: {
+        hp: 80,
+        attack: 70,
+        defense: 80,
+        specialAttack: 150,
+        specialDefense: 80,
+        speed: 100,
+      },
+    });
+    const plan = createMetaThreatAnalysisPlan({
+      battleFormat: "singles",
+      roster: [{ ...createSide(rosterMember, [tackle]), slotIndex: 0 }],
+      candidates: [createCandidate(1, threatMember, [flamethrower])],
+    });
+    expect(plan.status).toBe("ready");
+    if (plan.status !== "ready") return;
+    expect(plan.threats[0].riskSignals).toMatchObject({
+      answerCount: 0,
+      checkCount: 0,
+    });
+
+    const candidate: CopilotRecommendationCandidateSnapshot = {
+      pokemonId: "water-answer",
+      displayName: "Water Answer",
+      target: {
+        mode: "replacement",
+        slotIndex: 0,
+        currentPokemonId: rosterMember.id,
+        currentDisplayName: rosterMember.name,
+        currentRoleIds: [],
+        currentSetterConceptIds: [],
+        currentAceConceptIds: [],
+        currentResponsibilityIds: [],
+        currentSupportElements: [],
+        megaOptionPokemonId: null,
+        allySupportLinks: [],
+      },
+      types: ["water"],
+      typeDisplayNames: ["Water"],
+      abilities: [{ id: "torrent", displayName: "Torrent" }],
+      baseStats: {
+        hp: 200,
+        attack: 60,
+        defense: 200,
+        specialAttack: 200,
+        specialDefense: 200,
+        speed: 200,
+      },
+      speedTier: "very-fast",
+      requiresMegaStone: false,
+      usageRank: 20,
+      commonSet: {
+        ability: "Torrent",
+        item: null,
+        nature: "Modest",
+        moves: [{
+          id: hydroPump.id,
+          displayName: hydroPump.name,
+          type: hydroPump.type,
+          category: "Special",
+          power: hydroPump.power,
+        }],
+      },
+      responsibilityIds: [],
+      fit: {
+        weakTo: ["electric", "grass"],
+        resistsTeamThreats: ["fire"],
+        amplifiesTeamThreats: [],
+        addsUnansweredWeaknesses: [],
+        coversTypes: ["fire"],
+        roleContributions: [],
+        roleRedundancies: [],
+        conceptSynergies: [],
+        conflicts: [],
+      },
+    };
+    const showdownData: ShowdownDataSnapshot = {
+      speciesById: {
+        wateranswer: {
+          id: "water-answer",
+          name: "Water Answer",
+          types: ["water"],
+          baseStats: candidate.baseStats!,
+          abilities: ["Torrent"],
+        },
+      },
+      movesById: { [hydroPump.id]: hydroPump },
+    };
+    const replacements = selectMetaThreatReplacementCandidates({
+      plan,
+      candidates: [candidate],
+      usageSets: [{
+        pokemonId: candidate.pokemonId,
+        pokemonName: candidate.displayName,
+        sourceMonth: "2026-08",
+        cutoff: 1630,
+        ability: "Torrent",
+        nature: "modest",
+        evs: { specialAttack: 32, speed: 32 },
+        moveIds: [hydroPump.id],
+      }],
+      showdownData,
+      itemIndex: [],
+    });
+
+    expect(replacements).toHaveLength(1);
+    expect(replacements[0]).toMatchObject({
+      candidate: { pokemonId: "water-answer" },
+      threatPokemonId: "fire-threat",
+      member: { responseTier: "answer" },
     });
   });
 });

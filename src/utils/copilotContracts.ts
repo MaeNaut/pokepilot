@@ -32,6 +32,7 @@ import type {
 import type { CopilotMechanicsSnapshot } from "./copilotMechanics";
 import type { CopilotResponsibilityId } from "./copilotResponsibilities";
 import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
+import type { MetaThreatReplacementCandidate } from "./metaThreatRecommendations";
 import type {
   DefensiveMatchup,
   PokemonDefensiveProfile,
@@ -388,6 +389,14 @@ export type CopilotMetaMatchupSnapshot = {
   evaluatedThreatCount: number;
   teamBaseline: "full-hp-neutral-stages";
   threats: CopilotMetaThreatSnapshot[];
+  replacementEvidence: CopilotMetaReplacementEvidenceSnapshot[];
+};
+
+export type CopilotMetaReplacementEvidenceSnapshot = {
+  candidatePokemonId: string;
+  targetSlotIndex: number;
+  threatPokemonId: string;
+  member: CopilotMetaMatchupMemberSnapshot;
 };
 
 export type CopilotMatchupSnapshot =
@@ -395,7 +404,7 @@ export type CopilotMatchupSnapshot =
   | CopilotMetaMatchupSnapshot;
 
 export type CopilotAnalysisRequest = {
-  version: 33;
+  version: 34;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -448,4 +457,5 @@ export type CreateCopilotRequestInput = {
   optimizationPlan?: SetOptimizationPlan | null;
   matchupPlan?: TeamMatchupPlan | null;
   threatPlan?: MetaThreatAnalysisPlan | null;
+  threatReplacementCandidates?: MetaThreatReplacementCandidate[];
 };

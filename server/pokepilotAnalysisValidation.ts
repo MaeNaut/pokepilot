@@ -110,6 +110,96 @@ function validateOptimizationMoveNarrative(
   }
 }
 
+function validateMetaReplacementNarrative(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  if (request.scope !== "matchup" || request.matchup?.mode !== "meta") return;
+  const candidates = new Map(
+    request.recommendationCandidates.map((candidate) => [
+      candidate.pokemonId,
+      candidate,
+    ]),
+  );
+
+  for (const recommendation of analysis.recommendations) {
+    const candidate = candidates.get(recommendation.id);
+    if (!candidate) continue;
+    const narrative = `${recommendation.title} ${recommendation.reason}`
+      .toLocaleLowerCase(request.locale);
+    const expectedNames = [
+      candidate.displayName,
+      candidate.target.currentDisplayName,
+    ].filter((name): name is string => Boolean(name));
+    if (expectedNames.some((name) =>
+      !narrative.includes(name.toLocaleLowerCase(request.locale)),
+    )) {
+      throw invalidAnalysis(
+        "Hosted meta replacement explanation does not match its exact target.",
+      );
+    }
+  }
+}
+
+function repairMetaReplacementNarrative(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  if (request.scope !== "matchup" || request.matchup?.mode !== "meta") {
+    return { analysis, repaired: false };
+  }
+  const candidates = new Map(
+    request.recommendationCandidates.map((candidate) => [
+      candidate.pokemonId,
+      candidate,
+    ]),
+  );
+  let repaired = false;
+  const recommendations = analysis.recommendations.map((recommendation) => {
+    const candidate = candidates.get(recommendation.id);
+    if (!candidate) return recommendation;
+    const currentName = candidate.target.currentDisplayName;
+    const narrative = `${recommendation.title} ${recommendation.reason}`
+      .toLocaleLowerCase(request.locale);
+    if (
+      narrative.includes(candidate.displayName.toLocaleLowerCase(request.locale)) &&
+      (!currentName ||
+        narrative.includes(currentName.toLocaleLowerCase(request.locale)))
+    ) {
+      return recommendation;
+    }
+
+    const evidence = request.matchup!.mode === "meta"
+      ? request.matchup!.replacementEvidence.find(
+          (entry) =>
+            entry.candidatePokemonId === candidate.pokemonId &&
+            entry.targetSlotIndex === candidate.target.slotIndex,
+        )
+      : undefined;
+    if (!evidence) return recommendation;
+    const threat = request.matchup!.mode === "meta"
+      ? request.matchup!.threats.find(
+          ({ opponent }) => opponent.pokemonId === evidence.threatPokemonId,
+        )
+      : undefined;
+    repaired = true;
+    return {
+      ...recommendation,
+      title: request.locale === "ko"
+        ? `${currentName ?? "현재 포켓몬"} 대신 ${candidate.displayName}을 검토해 보세요.`
+        : `Consider ${candidate.displayName} over ${currentName ?? "the current Pokemon"}.`,
+      reason: request.locale === "ko"
+        ? `${candidate.displayName}은(는) 대표 사용률 샘플 기준으로 ${threat?.opponent.displayName ?? "해당 위협"}에게 ${evidence.member.responseTier === "answer" ? "확실한 대응" : "조건부 견제"}이 됩니다. 다만 ${currentName ?? "현재 포켓몬"}의 역할과 지원 연계를 잃는 비용은 별도로 비교해야 합니다.`
+        : `${candidate.displayName} is a ${evidence.member.responseTier === "answer" ? "verified answer" : "conditional check"} to ${threat?.opponent.displayName ?? "the identified threat"} with its representative usage sample. Weigh that gain against losing ${currentName ?? "the current Pokemon"} and its supplied team responsibilities.`,
+    };
+  });
+
+  return {
+    analysis: repaired ? { ...analysis, recommendations } : analysis,
+    repaired,
+  };
+}
+
 function getActionableCandidateIds(request: CopilotAnalysisRequest) {
   if (request.scope === "recommendation") {
     return new Set(
@@ -442,6 +532,7 @@ export function validateHostedCopilotAnalysis(
   validateRecommendationIds(groundedOutput.analysis, request);
   validateOptimizationIds(groundedOutput.analysis, request);
   validateOptimizationMoveNarrative(groundedOutput.analysis, request);
+  validateMetaReplacementNarrative(groundedOutput.analysis, request);
 
   const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
     groundedOutput,
@@ -488,6 +579,9 @@ export function reviewHostedCopilotAnalysis(
   );
   let analysis = recovered.analysis;
   if (recovered.adjusted) warnings.add("recommendations-adjusted");
+  const replacementRepair = repairMetaReplacementNarrative(analysis, request);
+  analysis = replacementRepair.analysis;
+  if (replacementRepair.repaired) warnings.add("content-repaired");
 
   const groundedValidation = validateCopilotGroundedModelOutput(output);
   if (!groundedValidation.success) {

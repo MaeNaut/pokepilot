@@ -16,6 +16,12 @@ import {
 import { aiTeamDoublesFixtures } from "../src/test/fixtures/aiTeamFixtures";
 import { createAiFixtureAnalysisContext } from "../src/test/evaluation/aiModelEvaluation";
 import { createCopilotAnalysisRequest } from "../src/utils/copilotRequestBuilder";
+import {
+  createPokemonRecommendationOptions,
+  createPokemonRecommendationTargets,
+  rankUniversalPokemonRecommendationCandidates,
+} from "../src/utils/pokemonRecommendations";
+import { selectMetaThreatReplacementCandidates } from "../src/utils/metaThreatRecommendations";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract";
 import { serializePokePilotModelRequest } from "../server/pokepilotModelInput";
 import { resolveOpenAiApiKey } from "../server/openAiEnvironment";
@@ -70,6 +76,41 @@ async function main() {
     if (plan.status !== "ready") {
       throw new Error(`Meta threat plan unavailable: ${plan.reason}`);
     }
+    const replacementStartedAt = performance.now();
+    const recommendationOptions = createPokemonRecommendationOptions({
+      pokemonIndex,
+      abilityIndex,
+      legality,
+      getPokemonDisplayName: (entry) => entry.displayName,
+      getTypeDisplayName: (type) => type,
+      getAbilityDisplayName: (_id, fallback) => fallback,
+    });
+    const recommendationTargets = createPokemonRecommendationTargets({
+      team,
+      selectedSlot: Math.max(0, team.findIndex(Boolean)),
+      buildState,
+      diagnostics,
+      pokemonIndex,
+      getCurrentPokemonDisplayName: (member, entry) =>
+        entry?.displayName ?? member.name,
+    });
+    const rankedReplacementCandidates =
+      rankUniversalPokemonRecommendationCandidates({
+        options: recommendationOptions,
+        targets: recommendationTargets,
+        usageIds: usageSets.map(({ pokemonId }) => pokemonId),
+        usageSets,
+        showdownData,
+        limit: 60,
+      });
+    const replacementCandidates = selectMetaThreatReplacementCandidates({
+      plan,
+      candidates: rankedReplacementCandidates,
+      usageSets,
+      showdownData,
+      itemIndex,
+    });
+    const replacementCompletedAt = performance.now();
     const selectedSlot = Math.max(0, team.findIndex(Boolean));
     const request = createCopilotAnalysisRequest({
       scope: "matchup",
@@ -85,6 +126,7 @@ async function main() {
       validity,
       optimizationPlan: null,
       threatPlan: plan,
+      threatReplacementCandidates: replacementCandidates,
     });
     const baseRequest = createCopilotAnalysisRequest({
       scope: "team",
@@ -117,10 +159,39 @@ async function main() {
         optimizationContext: null,
         optimizationPlan: null,
       },
+      threatReplacementCandidates: replacementCandidates,
+    });
+    const requestWithoutInterventions = createCopilotAnalysisRequest({
+      scope: "matchup",
+      locale: "en",
+      battleFormat: fixture.battleFormat,
+      teamName: fixture.title,
+      team,
+      pokemonIndex,
+      abilityIndex,
+      selectedSlot,
+      buildState,
+      diagnostics,
+      validity,
+      optimizationPlan: null,
+      threatPlan: {
+        ...plan,
+        optimizationContext: null,
+        optimizationPlan: null,
+      },
+      threatReplacementCandidates: [],
     });
     const validation = validateCopilotAnalysisRequest(request);
     if (!validation.success) {
-      throw new Error(validation.errors.join(" "));
+      throw new Error(`${validation.errors.join(" ")}\n${JSON.stringify({
+        replacements: request.recommendationCandidates.map((candidate) => ({
+          id: candidate.pokemonId,
+          slot: candidate.target.slotIndex,
+        })),
+        evidence: request.matchup?.mode === "meta"
+          ? request.matchup.replacementEvidence
+          : [],
+      }, null, 2)}`);
     }
     const serializedRequest = serializePokePilotModelRequest(request);
     const runAi = process.argv.includes("--ai");
@@ -137,10 +208,14 @@ async function main() {
       evaluatedThreats: plan.evaluatedThreatCount,
       inputPreparationMs: Math.round((planStartedAt - inputStartedAt) * 10) / 10,
       calculationMs: Math.round((completedAt - planStartedAt) * 10) / 10,
+      replacementCalculationMs:
+        Math.round((replacementCompletedAt - replacementStartedAt) * 10) / 10,
       requestCharacters: JSON.stringify(request).length,
       modelInputCharacters: serializedRequest.text.length,
       modelInputCharactersWithoutOptimization:
         serializePokePilotModelRequest(requestWithoutOptimization).text.length,
+      modelInputCharactersWithoutInterventions:
+        serializePokePilotModelRequest(requestWithoutInterventions).text.length,
       baseTeamModelInputCharacters:
         serializePokePilotModelRequest(baseRequest).text.length,
       optimization: request.optimization
@@ -158,6 +233,14 @@ async function main() {
             })),
           }
         : null,
+      replacements: replacementCandidates.map(({ candidate, threatDisplayName, member }) => ({
+        pokemon: candidate.displayName,
+        replaces: candidate.target.currentDisplayName,
+        threat: threatDisplayName,
+        tier: member.responseTier,
+        move: member.offenseBenchmarks[0]?.moveName ?? null,
+      })),
+      screenedReplacementCount: rankedReplacementCandidates.length,
       ...(aiResult
         ? {
             ai: {

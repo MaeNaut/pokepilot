@@ -19,7 +19,11 @@ describe("PokePilot matchup prompt", () => {
     expect(instructions).toContain("up to three when no answer exists");
     expect(instructions).toContain("at most three verified candidates");
     expect(instructions).toContain("complete supplied loadout");
-    expect(instructions).toContain("No replacement Pokemon candidate pool");
+    expect(instructions).toContain("at most three legal replacement candidates");
+    expect(instructions).toContain("the sole deterministic matchup evidence");
+    expect(instructions).toContain(
+      "Never name a replacement Pokemon outside request.recommendationCandidates",
+    );
     expect(instructions).toContain("mutually exclusive Mega projections");
   });
 
