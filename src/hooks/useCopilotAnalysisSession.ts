@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { executeCopilotAnalysis } from "../utils/copilotAnalysisExecution";
 import {
+  consumeAnalysisReveal,
   createReadyAnalysisState,
   restoreAnalysisHistory,
   type AnalysisState,
@@ -194,6 +195,14 @@ export function useCopilotAnalysisSession({
     });
   }
 
+  const consumeReveal = useCallback(() => {
+    const historyEntryId = analysisState.historyEntryId;
+    if (!historyEntryId) return;
+    setAnalysisByContext((current) =>
+      consumeAnalysisReveal(current, analysisContextKey, historyEntryId),
+    );
+  }, [analysisContextKey, analysisState.historyEntryId]);
+
   return {
     analysisContextKey,
     analysisState,
@@ -205,6 +214,7 @@ export function useCopilotAnalysisSession({
     teamHistory,
     analyze,
     clearHistory,
+    consumeReveal,
     selectHistory,
   };
 }

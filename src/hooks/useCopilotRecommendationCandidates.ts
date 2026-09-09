@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { useLocalization } from "../i18n/useLocalization";
@@ -60,89 +60,106 @@ export function useCopilotRecommendationCandidates({
   const [state, setState] = useState<RecommendationCandidateState>(
     idleRecommendationState,
   );
-  const options = useMemo<PokemonRecommendationOption[]>(
-    () =>
-      createPokemonRecommendationOptions({
-        pokemonIndex,
-        abilityIndex,
-        legality: showdownLegality,
-        getPokemonDisplayName: (entry, includeForm) =>
-          pokemonName({
-            id: entry.name,
-            speciesId: entry.speciesKey,
-            fallback: entry.displayName,
-            includeForm,
-            formLabel: entry.formLabel,
-            formKind: entry.formKind,
-          }),
-        getTypeDisplayName: (type) => gameName("types", type, type),
-        getAbilityDisplayName: (id, fallback) =>
-          gameName("abilities", id, fallback),
-      }),
-    [abilityIndex, gameName, pokemonIndex, pokemonName, showdownLegality],
-  );
-  const targets = useMemo(
-    () => createPokemonRecommendationTargets({
-      team,
-      selectedSlot,
-      buildState,
-      diagnostics,
-      pokemonIndex,
-      getCurrentPokemonDisplayName: (member, entry) =>
-        pokemonName({
-          id: entry?.name ?? member.id,
-          speciesId: entry?.speciesKey,
-          fallback: entry?.displayName ?? member.name,
-          includeForm: false,
-          formLabel: entry?.formLabel,
-          formKind: entry?.formKind,
-        }),
-    }),
-    [buildState, diagnostics, pokemonIndex, pokemonName, selectedSlot, team],
-  );
+  const runIdRef = useRef(0);
 
   useEffect(() => {
-    if (scope !== "recommendation") {
-      setState(idleRecommendationState);
-      return;
-    }
+    runIdRef.current += 1;
+    setState(idleRecommendationState);
+  }, [
+    abilityIndex,
+    battleFormat,
+    buildState,
+    diagnostics,
+    gameName,
+    pokemonIndex,
+    pokemonName,
+    selectedSlot,
+    showdownLegality,
+    team,
+  ]);
+
+  const run = useCallback(async () => {
     if (
+      scope !== "recommendation" ||
       abilityIndexStatus === "loading" ||
       showdownLegalityStatus === "loading"
     ) {
-      setState({ status: "loading", candidates: [] });
-      return;
+      return null;
     }
 
-    let isCancelled = false;
+    const runId = ++runIdRef.current;
     setState({ status: "loading", candidates: [] });
-    void createUniversalPokemonRecommendationCandidates({
-      options,
-      targets,
-      battleFormat,
-    })
-      .then((candidates) => {
-        if (!isCancelled) {
-          setState({ status: "ready", candidates });
-        }
-      })
-      .catch(() => {
-        if (!isCancelled) {
-          setState({ status: "error", candidates: [] });
-        }
+
+    // Give React a frame to paint the loading state before ranking candidates.
+    await new Promise<void>((resolve) => {
+      window.requestAnimationFrame(() => resolve());
+    });
+
+    try {
+      const options: PokemonRecommendationOption[] =
+        createPokemonRecommendationOptions({
+          pokemonIndex,
+          abilityIndex,
+          legality: showdownLegality,
+          getPokemonDisplayName: (entry, includeForm) =>
+            pokemonName({
+              id: entry.name,
+              speciesId: entry.speciesKey,
+              fallback: entry.displayName,
+              includeForm,
+              formLabel: entry.formLabel,
+              formKind: entry.formKind,
+            }),
+          getTypeDisplayName: (type) => gameName("types", type, type),
+          getAbilityDisplayName: (id, fallback) =>
+            gameName("abilities", id, fallback),
+        });
+      const targets = createPokemonRecommendationTargets({
+        team,
+        selectedSlot,
+        buildState,
+        diagnostics,
+        pokemonIndex,
+        getCurrentPokemonDisplayName: (member, entry) =>
+          pokemonName({
+            id: entry?.name ?? member.id,
+            speciesId: entry?.speciesKey,
+            fallback: entry?.displayName ?? member.name,
+            includeForm: false,
+            formLabel: entry?.formLabel,
+            formKind: entry?.formKind,
+          }),
+      });
+      const candidates = await createUniversalPokemonRecommendationCandidates({
+        options,
+        targets,
+        battleFormat,
       });
 
-    return () => {
-      isCancelled = true;
-    };
+      if (runIdRef.current !== runId) return null;
+      setState({ status: "ready", candidates });
+      return candidates;
+    } catch {
+      if (runIdRef.current === runId) {
+        setState({ status: "error", candidates: [] });
+      }
+      return null;
+    }
   }, [
+    abilityIndex,
     abilityIndexStatus,
     battleFormat,
-    options,
+    buildState,
+    diagnostics,
+    gameName,
+    pokemonIndex,
+    pokemonName,
     scope,
+    selectedSlot,
+    showdownLegality,
     showdownLegalityStatus,
-    targets,
+    team,
   ]);
 
-  return state;
+  return { ...state, run };
 }

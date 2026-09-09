@@ -416,8 +416,8 @@
 }
 
 .copilot-empty-state > svg {
-  width: 22px;
-  height: 22px;
+  width: 34px;
+  height: 34px;
   margin-bottom: 6px;
   color: var(--copilot-accent);
 }
@@ -429,7 +429,9 @@
 }
 
 .copilot-empty-state span {
+  max-width: 260px;
   font-size: 0.72rem;
+  line-height: 1.55;
 }
 
 .copilot-empty-state.is-error > svg {

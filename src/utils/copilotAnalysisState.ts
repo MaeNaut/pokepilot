@@ -52,3 +52,19 @@ export function restoreAnalysisHistory(
     [contextKey]: createReadyAnalysisState(entry, "restore"),
   };
 }
+
+export function consumeAnalysisReveal(
+  current: Record<string, AnalysisState>,
+  contextKey: string,
+  historyEntryId: string,
+) {
+  const state = current[contextKey];
+  if (state?.historyEntryId !== historyEntryId || !state.shouldReveal) {
+    return current;
+  }
+
+  return {
+    ...current,
+    [contextKey]: { ...state, shouldReveal: false },
+  };
+}

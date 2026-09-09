@@ -45,6 +45,7 @@ import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
 import { CopilotHistoryControl } from "./CopilotHistoryControl";
 import { defaultEvs } from "../data/natures";
 import { normalizeShowdownId } from "../api/showdownIds";
+import { PokePilotMark } from "./PokePilotMark";
 
 type CopilotPanelProps = {
   savedTeamId: string | null;
@@ -103,6 +104,32 @@ const fallbackTranslationKeys: Record<
   unavailable: "copilot.hostedUnavailableFallback",
 };
 
+const emptyStateCopy: Record<
+  CopilotAnalysisScope,
+  { title: TranslationKey; description: TranslationKey }
+> = {
+  team: {
+    title: "copilot.empty.teamTitle",
+    description: "copilot.empty.teamDescription",
+  },
+  pokemon: {
+    title: "copilot.empty.pokemonTitle",
+    description: "copilot.empty.pokemonDescription",
+  },
+  recommendation: {
+    title: "copilot.empty.recommendationTitle",
+    description: "copilot.empty.recommendationDescription",
+  },
+  matchup: {
+    title: "copilot.empty.matchupTitle",
+    description: "copilot.empty.matchupDescription",
+  },
+  optimization: {
+    title: "copilot.empty.optimizationTitle",
+    description: "copilot.empty.optimizationDescription",
+  },
+};
+
 export function CopilotPanel({
   savedTeamId,
   teamName,
@@ -125,7 +152,7 @@ export function CopilotPanel({
   onApplyOptimizationCandidate,
   onSaveOptimizationCandidate,
 }: CopilotPanelProps) {
-  const { locale, pokemonName, t } = useLocalization();
+  const { locale, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
@@ -246,11 +273,17 @@ export function CopilotPanel({
     : optimizationState.plan?.status === "unavailable"
       ? t("copilot.noOptimizationCandidates")
       : null;
+  const recommendationNotice =
+    recommendationState.status === "error"
+      ? t("copilot.candidateLoadFailed")
+      : null;
   const matchupNotice = matchupState.error
     ? t("copilot.matchupLoadFailed")
     : null;
   const isAnalysisPreparing =
-    optimizationState.loading || matchupState.loading;
+    recommendationState.status === "loading" ||
+    optimizationState.loading ||
+    matchupState.loading;
   const {
     analysisContextKey,
     analysisState,
@@ -262,6 +295,7 @@ export function CopilotPanel({
     teamHistory,
     analyze,
     clearHistory,
+    consumeReveal,
     selectHistory,
   } = useCopilotAnalysisSession({
     savedTeamId,
@@ -270,7 +304,6 @@ export function CopilotPanel({
     battleFormat,
     failedMessage: t("copilot.failed"),
   });
-  const selectedSet = request.sets.find((set) => set.slotIndex === selectedSlot);
   const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
   const fallbackMessage =
     analysisState.fallbackReason === "cooldown"
@@ -304,8 +337,7 @@ export function CopilotPanel({
     abilityIndexStatus === "loading" ||
     cooldownRemainingSeconds > 0 ||
     (scope === "recommendation" &&
-      (recommendationState.status !== "ready" ||
-        recommendationState.candidates.length === 0)) ||
+      showdownLegalityStatus === "loading") ||
     (scope === "optimization" &&
       !optimizationInput) ||
     (scope === "matchup" &&
@@ -331,6 +363,15 @@ export function CopilotPanel({
   async function handleAnalyze() {
     if (isAnalyzeDisabled) return;
     setOptimizationActionStatus(null);
+    if (scope === "recommendation") {
+      const candidates = await recommendationState.run();
+      if (!candidates?.length) return;
+      await analyze(createCopilotAnalysisRequest({
+        ...requestInput,
+        recommendationCandidates: candidates,
+      }));
+      return;
+    }
     if (scope === "optimization") {
       const plan = await optimizationState.run();
       if (!plan || plan.status !== "ready" || plan.candidates.length === 0) return;
@@ -559,6 +600,7 @@ export function CopilotPanel({
       </div>
 
       <div ref={contentRef} className="copilot-content" aria-live="polite">
+        {recommendationNotice ? <p role="status">{recommendationNotice}</p> : null}
         {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
         {matchupNotice ? <p role="status">{matchupNotice}</p> : null}
         {analysisState.status === "error" ? (
@@ -581,6 +623,7 @@ export function CopilotPanel({
             isLanguageMismatch={isLanguageMismatch}
             isAnalyzeDisabled={isAnalyzeDisabled}
             shouldReveal={Boolean(analysisState.shouldReveal)}
+            onRevealStart={consumeReveal}
             recommendationCandidates={request.recommendationCandidates}
             selectingCandidateId={selectingCandidateId}
             savingCandidateId={savingCandidateId}
@@ -605,51 +648,9 @@ export function CopilotPanel({
           />
         ) : (
           <div className="copilot-empty-state">
-            <FontAwesomeIcon icon={faWandMagicSparkles} aria-hidden="true" />
-            <strong>{t("copilot.noAnalysis")}</strong>
-            <span>
-              {scope === "team"
-                ? t("copilot.activeSets", { count: diagnostics.filledSlots })
-                : scope === "pokemon"
-                  ? selectedSet
-                    ? pokemonName({
-                        id: selectedSet.pokemonId,
-                        fallback: selectedSet.pokemonName,
-                        includeForm: false,
-                      })
-                    : t("copilot.emptySlot", { slot: selectedSlot + 1 })
-                  : scope === "recommendation"
-                    ? recommendationState.status === "loading"
-                        ? t("copilot.loadingCandidates")
-                        : recommendationState.status === "error"
-                          ? t("copilot.candidateLoadFailed")
-                          : recommendationState.candidates.length > 0
-                            ? t("copilot.candidatePoolReady", {
-                                count: recommendationState.candidates.length,
-                              })
-                            : t("copilot.noCandidates")
-                    : scope === "matchup"
-                      ? !isCalculatorActive
-                        ? t("copilot.openCalculatorForMatchup")
-                        : !calculatorContext?.opponent.member
-                          ? t("copilot.configureMatchup")
-                          : t("copilot.matchupReady", {
-                              count: calculatorContext.roster?.length ?? 0,
-                            })
-                      : scope === "optimization"
-                        ? !optimizationInput
-                          ? t("copilot.emptySlot", { slot: selectedSlot + 1 })
-                          : optimizationState.loading
-                            ? t("copilot.loadingCandidates")
-                            : optimizationState.error
-                              ? t("copilot.candidateLoadFailed")
-                              : request.optimization
-                                ? t("copilot.optimizationReady", {
-                                    count: request.optimization.candidates.length,
-                                  })
-                                : t("copilot.configureOptimization")
-                        : t("copilot.emptySlot", { slot: selectedSlot + 1 })}
-            </span>
+            <PokePilotMark aria-hidden="true" />
+            <strong>{t(emptyStateCopy[scope].title)}</strong>
+            <span>{t(emptyStateCopy[scope].description)}</span>
           </div>
         )}
       </div>

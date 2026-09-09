@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CopilotHistoryEntry } from "./copilotHistory";
 import {
+  consumeAnalysisReveal,
   createReadyAnalysisState,
   restoreAnalysisHistory,
   type AnalysisState,
@@ -78,5 +79,22 @@ describe("analysis presentation state", () => {
     const next = restoreAnalysisHistory({ context: createReadyAnalysisState(entry, "restore") }, "context", hosted);
     expect(next.context.usedFallback).toBe(false);
     expect(next.context.fallbackReason).toBeUndefined();
+  });
+
+  it("consumes a fresh result's reveal flag without changing other contexts", () => {
+    const ready = createReadyAnalysisState(entry, "analysis");
+    const other: AnalysisState = { status: "idle" };
+    const current = { context: ready, other };
+    const next = consumeAnalysisReveal(current, "context", entry.id);
+
+    expect(next.context.shouldReveal).toBe(false);
+    expect(next.context.historyEntryId).toBe(entry.id);
+    expect(next.other).toBe(other);
+    expect(current.context.shouldReveal).toBe(true);
+  });
+
+  it("does not consume the reveal flag for a different history entry", () => {
+    const current = { context: createReadyAnalysisState(entry, "analysis") };
+    expect(consumeAnalysisReveal(current, "context", "another-entry")).toBe(current);
   });
 });

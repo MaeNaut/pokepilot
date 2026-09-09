@@ -427,6 +427,21 @@ export const en = {
     "Candidate data could not be verified. Nothing was applied.",
   "copilot.noConcerns": "No priority concerns found.",
   "copilot.noAnalysis": "No analysis yet",
+  "copilot.empty.teamTitle": "Team analysis",
+  "copilot.empty.teamDescription":
+    "Review the team's game plan, interactions, strengths, and concerns.",
+  "copilot.empty.pokemonTitle": "Pokemon analysis",
+  "copilot.empty.pokemonDescription":
+    "Review the selected Pokemon's role, sample, and fit with the team.",
+  "copilot.empty.recommendationTitle": "Pokemon recommendations",
+  "copilot.empty.recommendationDescription":
+    "Find Pokemon that complement the current team and its strategy.",
+  "copilot.empty.matchupTitle": "Matchup analysis",
+  "copilot.empty.matchupDescription":
+    "See how the current team can respond to the configured opponent.",
+  "copilot.empty.optimizationTitle": "Sample recommendations",
+  "copilot.empty.optimizationDescription":
+    "Compare the selected Pokemon's current sample with general alternatives.",
   "copilot.activeSets": "{count}/6 active sets",
   "copilot.emptySlot": "Slot {slot} is empty",
   "copilot.chooseEmptySlot": "Select an empty team slot first",
@@ -922,6 +937,21 @@ export const ko = {
     "후보 데이터 검증 실패 · 적용 취소",
   "copilot.noConcerns": "우선 확인할 문제 없음",
   "copilot.noAnalysis": "분석 전",
+  "copilot.empty.teamTitle": "팀 분석",
+  "copilot.empty.teamDescription":
+    "팀의 운영 계획과 상호작용, 강점과 주의할 점을 살펴봅니다.",
+  "copilot.empty.pokemonTitle": "포켓몬 분석",
+  "copilot.empty.pokemonDescription":
+    "선택한 포켓몬의 역할과 샘플, 팀과의 조화를 살펴봅니다.",
+  "copilot.empty.recommendationTitle": "포켓몬 추천",
+  "copilot.empty.recommendationDescription":
+    "현재 팀의 전략과 구성을 보완할 포켓몬을 찾아봅니다.",
+  "copilot.empty.matchupTitle": "대응 분석",
+  "copilot.empty.matchupDescription":
+    "현재 팀이 설정한 상대에게 어떻게 대응할 수 있는지 살펴봅니다.",
+  "copilot.empty.optimizationTitle": "샘플 추천",
+  "copilot.empty.optimizationDescription":
+    "선택한 포켓몬의 현재 샘플과 범용 대안을 비교합니다.",
   "copilot.activeSets": "활성 샘플 {count}/6",
   "copilot.emptySlot": "{slot}번 슬롯 비어 있음",
   "copilot.chooseEmptySlot": "빈 팀 슬롯 선택 필요",

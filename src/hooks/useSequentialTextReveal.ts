@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMediaQuery } from "./useMediaQuery";
 
-const INITIAL_DELAY_MS = 180;
-const BLOCK_PAUSE_MS = 220;
-const MIN_TYPING_DURATION_MS = 2_600;
-const MAX_TYPING_DURATION_MS = 6_500;
-const TYPING_MS_PER_CHARACTER = 13;
+const INITIAL_DELAY_MS = 100;
+const BLOCK_PAUSE_MS = 120;
+const MIN_TYPING_DURATION_MS = 280;
+const MAX_TYPING_DURATION_MS = 4_200;
+const TYPING_MS_PER_CHARACTER = 7;
 const RENDER_INTERVAL_MS = 32;
 
 type RevealBlock = {

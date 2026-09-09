@@ -41,6 +41,7 @@ type CopilotAnalysisResultProps = {
   isLanguageMismatch: boolean;
   isAnalyzeDisabled: boolean;
   shouldReveal: boolean;
+  onRevealStart: () => void;
   recommendationCandidates: CopilotRecommendationCandidateSnapshot[];
   selectingCandidateId: string | null;
   savingCandidateId: string | null;
@@ -131,6 +132,7 @@ export function CopilotAnalysisResult({
   isLanguageMismatch,
   isAnalyzeDisabled,
   shouldReveal,
+  onRevealStart,
   recommendationCandidates,
   selectingCandidateId,
   savingCandidateId,
@@ -176,10 +178,15 @@ export function CopilotAnalysisResult({
     () => [response.title, ...response.paragraphs],
     [response.paragraphs, response.title],
   );
+  const [revealOnThisMount] = useState(shouldReveal);
   const narrativeReveal = useSequentialTextReveal(
     narrativeTexts,
-    shouldReveal,
+    revealOnThisMount,
   );
+
+  useEffect(() => {
+    if (revealOnThisMount) onRevealStart();
+  }, [onRevealStart, revealOnThisMount]);
 
   const renderNarrativeText = (text: string, index: number) => {
     if (!narrativeReveal.isAnimated) {
@@ -201,7 +208,7 @@ export function CopilotAnalysisResult({
 
   return (
     <div
-      className={`copilot-result${shouldReveal ? " is-revealing" : ""}${
+      className={`copilot-result${revealOnThisMount ? " is-revealing" : ""}${
         narrativeReveal.isComplete ? " is-narrative-complete" : ""
       }`}
     >
