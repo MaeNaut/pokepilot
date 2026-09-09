@@ -130,7 +130,7 @@ type AiEvaluationCaseMetadata = {
   recommendationMode?: "addition" | "replacement";
 };
 
-async function createAiFixtureAnalysisContext(
+export async function createAiFixtureAnalysisContext(
   fixture: AiTeamFixture,
   {
     pokemonIndex,

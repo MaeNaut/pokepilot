@@ -53,15 +53,39 @@ export function serializePokePilotModelRequest(request: CopilotAnalysisRequest) 
       collect("speed", candidate.speedBenchmark.optimized);
     }
   }
-  for (const move of request.matchup?.opponent.moves ?? []) collect("move", move);
-  for (const member of request.matchup?.members ?? []) {
-    for (const benchmark of [
-      ...member.offenseBenchmarks,
-      ...member.defenseBenchmarks,
-    ]) {
-      collect("damage", benchmark.result);
+  if (request.matchup?.mode === "meta") {
+    for (const threat of request.matchup.threats) {
+      for (const move of threat.opponent.moves) collect("move", move);
+      for (const member of threat.members) {
+        for (const benchmark of [
+          ...member.offenseBenchmarks,
+          ...member.defenseBenchmarks,
+        ]) {
+          collect("damage", benchmark.outcome);
+        }
+        collect("speed", member.speed);
+      }
     }
-    collect("speed", member.speed);
+    for (const evidence of request.matchup.replacementEvidence) {
+      for (const benchmark of [
+        ...evidence.member.offenseBenchmarks,
+        ...evidence.member.defenseBenchmarks,
+      ]) {
+        collect("damage", benchmark.outcome);
+      }
+      collect("speed", evidence.member.speed);
+    }
+  } else if (request.matchup?.mode === "exact") {
+    for (const move of request.matchup.opponent.moves) collect("move", move);
+    for (const member of request.matchup.members) {
+      for (const benchmark of [
+        ...member.offenseBenchmarks,
+        ...member.defenseBenchmarks,
+      ]) {
+        collect("damage", benchmark.result);
+      }
+      collect("speed", member.speed);
+    }
   }
 
   const references = new WeakMap<object, { dataRef: string }>();

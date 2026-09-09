@@ -55,7 +55,6 @@ import {
   getPokemonBuildSnapshot,
   type BenchPokemon,
 } from "./utils/benchPokemon";
-import type { CalculatorAnalysisContext } from "./calculator/setOptimizer";
 import type { CopilotSetOptimizationCandidateSnapshot } from "./utils/copilotContracts";
 import { resolveOptimizationCandidatePatch } from "./utils/optimizationCandidateApplication";
 import { createTeamAnalysisContext } from "./utils/teamAnalysisContext";
@@ -145,8 +144,6 @@ function App() {
   const [hasOpenedCalculator, setHasOpenedCalculator] = useState(
     appMode === "calculator",
   );
-  const [calculatorAnalysisContext, setCalculatorAnalysisContext] =
-    useState<CalculatorAnalysisContext | null>(null);
   const [bench, setBench] = useState<BenchPokemon[]>([]);
   const [selectedTeamSlot, setSelectedTeamSlot] = useState(0);
   const teamBuildState = useTeamBuildState();
@@ -1798,7 +1795,6 @@ function App() {
               onSelectedSlotChange={setSelectedTeamSlot}
               onReorderSlots={handleReorderSlots}
               onSelectPokemon={handleEditorSelectPokemon}
-              onAnalysisContextChange={setCalculatorAnalysisContext}
               isVisible={appMode === "calculator"}
             />
           </Suspense>
@@ -1829,8 +1825,6 @@ function App() {
               buildState={teamBuildState}
               diagnostics={teamDiagnostics}
               validity={teamValidity}
-              isCalculatorActive={appMode === "calculator"}
-              calculatorContext={calculatorAnalysisContext}
               onSelectRecommendedPokemon={async (
                 slotIndex,
                 pokemonId,

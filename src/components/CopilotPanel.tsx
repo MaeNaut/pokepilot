@@ -25,7 +25,6 @@ import type {
   CopilotAnalysisScope,
   CopilotSetOptimizationCandidateSnapshot,
 } from "../utils/copilotContracts";
-import type { CalculatorAnalysisContext } from "../calculator/setOptimizer";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
 import type { TeamValidityResult } from "../utils/teamValidity";
 import { useLocalization } from "../i18n/useLocalization";
@@ -40,7 +39,7 @@ import type {
 import { useCopilotRecommendationCandidates } from "../hooks/useCopilotRecommendationCandidates";
 import { useCopilotAnalysisSession } from "../hooks/useCopilotAnalysisSession";
 import { useSetOptimizationPlan } from "../hooks/useSetOptimizationPlan";
-import { useTeamMatchupPlan } from "../hooks/useTeamMatchupPlan";
+import { useMetaThreatAnalysisPlan } from "../hooks/useMetaThreatAnalysisPlan";
 import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
 import { CopilotHistoryControl } from "./CopilotHistoryControl";
 import { defaultEvs } from "../data/natures";
@@ -62,8 +61,6 @@ type CopilotPanelProps = {
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;
   validity: TeamValidityResult;
-  isCalculatorActive: boolean;
-  calculatorContext: CalculatorAnalysisContext | null;
   onSelectRecommendedPokemon: (
     slotIndex: number,
     pokemonId: string,
@@ -145,8 +142,6 @@ export function CopilotPanel({
   buildState,
   diagnostics,
   validity,
-  isCalculatorActive,
-  calculatorContext,
   onSelectRecommendedPokemon,
   onSaveRecommendedPokemon,
   onApplyOptimizationCandidate,
@@ -218,10 +213,17 @@ export function CopilotPanel({
     itemIndex,
     scope === "optimization",
   );
-  const matchupState = useTeamMatchupPlan(
-    calculatorContext,
-    scope === "matchup" && isCalculatorActive,
-  );
+  const matchupState = useMetaThreatAnalysisPlan({
+    team,
+    buildState,
+    battleFormat,
+    pokemonIndex,
+    itemIndex,
+    abilityIndex,
+    diagnostics,
+    showdownLegality,
+    enabled: scope === "matchup",
+  });
   const requestInput = useMemo(
     () => ({
         scope,
@@ -236,7 +238,6 @@ export function CopilotPanel({
         diagnostics,
         validity,
         recommendationCandidates: recommendationState.candidates,
-        calculatorContext,
       }),
     [
       battleFormat,
@@ -251,22 +252,20 @@ export function CopilotPanel({
       teamName,
       validity,
       recommendationState.candidates,
-      calculatorContext,
     ],
   );
   const request = useMemo(() => createCopilotAnalysisRequest({
     ...requestInput,
     optimizationPlan:
-      scope === "matchup"
-        ? matchupState.optimizationPlan
-        : optimizationState.plan,
-    matchupPlan: matchupState.matchupPlan,
+      scope === "matchup" ? null : optimizationState.plan,
+    threatPlan: matchupState.plan,
+    threatReplacementCandidates: matchupState.replacementCandidates,
   }), [
     requestInput,
     scope,
     optimizationState.plan,
-    matchupState.optimizationPlan,
-    matchupState.matchupPlan,
+    matchupState.plan,
+    matchupState.replacementCandidates,
   ]);
   const optimizationNotice = optimizationState.error
     ? t("copilot.candidateLoadFailed")
@@ -279,7 +278,9 @@ export function CopilotPanel({
       : null;
   const matchupNotice = matchupState.error
     ? t("copilot.matchupLoadFailed")
-    : null;
+    : matchupState.plan?.status === "unavailable"
+      ? t("copilot.noMetaThreats")
+      : null;
   const isAnalysisPreparing =
     recommendationState.status === "loading" ||
     optimizationState.loading ||
@@ -340,10 +341,7 @@ export function CopilotPanel({
       showdownLegalityStatus === "loading") ||
     (scope === "optimization" &&
       !optimizationInput) ||
-    (scope === "matchup" &&
-      (!isCalculatorActive ||
-        !calculatorContext?.opponent.member ||
-        !calculatorContext.roster?.length));
+    (scope === "matchup" && !team.some(Boolean));
 
   useEffect(() => {
     setCandidateApplyFailure(null);
@@ -379,12 +377,13 @@ export function CopilotPanel({
       return;
     }
     if (scope === "matchup") {
-      const plans = await matchupState.run();
-      if (!plans || plans.matchupPlan.status !== "ready") return;
+      const result = await matchupState.run();
+      if (!result || result.plan.status !== "ready") return;
       await analyze(createCopilotAnalysisRequest({
         ...requestInput,
-        optimizationPlan: plans.optimizationPlan,
-        matchupPlan: plans.matchupPlan,
+        optimizationPlan: null,
+        threatPlan: result.plan,
+        threatReplacementCandidates: result.replacementCandidates,
       }));
       return;
     }
@@ -405,7 +404,7 @@ export function CopilotPanel({
     setCandidateApplyFailure(null);
     setCandidateSaveStatus(null);
     try {
-      const candidate = recommendationState.candidates.find(
+      const candidate = request.recommendationCandidates.find(
         (entry) => entry.pokemonId === pokemonId,
       );
       if (!candidate) {
@@ -445,7 +444,7 @@ export function CopilotPanel({
     setCandidateApplyFailure(null);
     setCandidateSaveStatus(null);
     try {
-      const candidate = recommendationState.candidates.find(
+      const candidate = request.recommendationCandidates.find(
         (entry) => entry.pokemonId === pokemonId,
       );
       if (!candidate) {

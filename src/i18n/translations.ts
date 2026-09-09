@@ -322,7 +322,7 @@ export const en = {
   "copilot.analyzePokemon": "Analyze Pokemon",
   "copilot.findRecommendations": "Find Pokemon",
   "copilot.optimizeSet": "Recommend Sample",
-  "copilot.analyzeMatchup": "Analyze Matchup",
+  "copilot.analyzeMatchup": "Analyze Threats",
   "copilot.analyzing": "Analyzing",
   "copilot.refresh": "Refresh",
   "copilot.scope": "Analysis scope",
@@ -331,7 +331,7 @@ export const en = {
   "copilot.recommend": "Recommend",
   "copilot.recommendTab": "Find",
   "copilot.sample": "Sample",
-  "copilot.matchup": "Matchup",
+  "copilot.matchup": "Threats",
   "copilot.unavailable": "Analysis unavailable",
   "copilot.failed": "Analysis failed.",
   "copilot.hostedUnavailableFallback":
@@ -366,7 +366,7 @@ export const en = {
   "copilot.setChanged": "Set changed",
   "copilot.recommendationChanged": "Team or candidate filters changed",
   "copilot.optimizationChanged": "Selected sample or team changed",
-  "copilot.matchupChanged": "Team, opponent, or battle conditions changed",
+  "copilot.matchupChanged": "Team or metagame data changed",
   "copilot.refreshAnalysis": "Refresh analysis",
   "copilot.languageChanged": "Analysis language differs",
   "copilot.history": "Analysis history",
@@ -436,9 +436,9 @@ export const en = {
   "copilot.empty.recommendationTitle": "Pokemon recommendations",
   "copilot.empty.recommendationDescription":
     "Find Pokemon that complement the current team and its strategy.",
-  "copilot.empty.matchupTitle": "Matchup analysis",
+  "copilot.empty.matchupTitle": "Meta threat analysis",
   "copilot.empty.matchupDescription":
-    "See how the current team can respond to the configured opponent.",
+    "Find metagame threats that pressure the team and review its current answers.",
   "copilot.empty.optimizationTitle": "Sample recommendations",
   "copilot.empty.optimizationDescription":
     "Compare the selected Pokemon's current sample with general alternatives.",
@@ -456,7 +456,8 @@ export const en = {
   "copilot.configureMatchup": "Choose an opponent in the calculator first",
   "copilot.matchupReady":
     "{count} team members ready for an exact response check",
-  "copilot.matchupLoadFailed": "Team matchup calculations unavailable",
+  "copilot.matchupLoadFailed": "Metagame threat calculations unavailable",
+  "copilot.noMetaThreats": "No verified metagame threats could be calculated from the available data.",
   "copilot.configureOptimization":
     "Compare the selected Pokemon's current sample with general alternatives",
   "copilot.optimizationReady": "{count} sample candidates ready",
@@ -832,7 +833,7 @@ export const ko = {
   "copilot.analyzePokemon": "포켓몬 분석",
   "copilot.findRecommendations": "포켓몬 찾기",
   "copilot.optimizeSet": "샘플 추천",
-  "copilot.analyzeMatchup": "대응 분석",
+  "copilot.analyzeMatchup": "위협 분석",
   "copilot.analyzing": "분석 중",
   "copilot.refresh": "새로고침",
   "copilot.scope": "분석 대상",
@@ -841,7 +842,7 @@ export const ko = {
   "copilot.recommend": "추천",
   "copilot.recommendTab": "추천",
   "copilot.sample": "샘플",
-  "copilot.matchup": "대응",
+  "copilot.matchup": "위협",
   "copilot.unavailable": "분석 사용 불가",
   "copilot.failed": "분석 실패",
   "copilot.hostedUnavailableFallback":
@@ -876,7 +877,7 @@ export const ko = {
   "copilot.setChanged": "샘플이 변경됨",
   "copilot.recommendationChanged": "팀 또는 후보 필터 변경됨",
   "copilot.optimizationChanged": "선택한 샘플 또는 팀이 변경됨",
-  "copilot.matchupChanged": "팀, 상대 또는 배틀 조건이 변경됨",
+  "copilot.matchupChanged": "팀 또는 메타 데이터가 변경됨",
   "copilot.refreshAnalysis": "분석 새로고침",
   "copilot.languageChanged": "분석 언어 다름",
   "copilot.history": "분석 기록",
@@ -946,9 +947,9 @@ export const ko = {
   "copilot.empty.recommendationTitle": "포켓몬 추천",
   "copilot.empty.recommendationDescription":
     "현재 팀의 전략과 구성을 보완할 포켓몬을 찾아봅니다.",
-  "copilot.empty.matchupTitle": "대응 분석",
+  "copilot.empty.matchupTitle": "메타 위협 분석",
   "copilot.empty.matchupDescription":
-    "현재 팀이 설정한 상대에게 어떻게 대응할 수 있는지 살펴봅니다.",
+    "현재 팀을 압박하는 메타 위협과 팀이 가진 대응책을 살펴봅니다.",
   "copilot.empty.optimizationTitle": "샘플 추천",
   "copilot.empty.optimizationDescription":
     "선택한 포켓몬의 현재 샘플과 범용 대안을 비교합니다.",
@@ -965,7 +966,8 @@ export const ko = {
     "상대 대응을 분석하려면 계산기 열기 필요",
   "copilot.configureMatchup": "계산기에서 상대 포켓몬을 먼저 선택",
   "copilot.matchupReady": "팀원 {count}마리의 대응 분석 준비 완료",
-  "copilot.matchupLoadFailed": "팀 대응 계산을 불러오지 못했습니다",
+  "copilot.matchupLoadFailed": "메타 위협 계산을 불러오지 못했습니다",
+  "copilot.noMetaThreats": "현재 데이터에서 검증 가능한 메타 위협을 계산하지 못했습니다.",
   "copilot.configureOptimization":
     "선택한 포켓몬의 현재 샘플과 범용 후보를 비교할 수 있습니다",
   "copilot.optimizationReady": "샘플 후보 {count}개 준비 완료",

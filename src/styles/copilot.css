@@ -631,6 +631,15 @@
   gap: 10px;
 }
 
+.copilot-recommendations.is-strategy li.is-candidate-card {
+  display: grid;
+  gap: 10px;
+}
+
+.copilot-recommendations.is-strategy li.is-candidate-card > .copilot-candidate-actions {
+  display: grid;
+}
+
 .copilot-recommendations.is-candidates p {
   margin: 0;
 }
