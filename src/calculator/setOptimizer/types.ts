@@ -93,7 +93,14 @@ export type SetOptimizationSpeedBenchmark = {
 
 export type SetOptimizationGeneralEvidence = {
   source: "current" | "usage" | "matchup";
-  variant: "current" | "standard" | "spread" | "item" | "move" | "matchup";
+  variant:
+    | "current"
+    | "standard"
+    | "spread"
+    | "item"
+    | "move"
+    | "loadout"
+    | "matchup";
   sourceMonth?: string;
   cutoff?: number;
   usageRank?: number;

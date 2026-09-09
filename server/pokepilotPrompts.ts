@@ -3,13 +3,13 @@ import type {
   CopilotAnalysisScope,
 } from "../src/utils/copilotContracts.js";
 
-export const POKEPILOT_AI_PROMPT_VERSION = 83;
+export const POKEPILOT_AI_PROMPT_VERSION = 84;
 export const POKEPILOT_AI_CORE_PROMPT_VERSION = 4;
 const POKEPILOT_AI_SCOPE_PROMPT_VERSIONS = {
   team: 6,
   pokemon: 15,
   recommendation: 13,
-  optimization: 31,
+  optimization: 32,
   matchup: 5,
 } as const satisfies Record<CopilotAnalysisScope, number>;
 
@@ -91,7 +91,7 @@ const pokepilotOptimizationInstructions = `The request scope is optimization. Re
 
 First infer the selected Pokemon's practical responsibilities from its selected moves, item, nature, investment, roleIds, team concepts, teammates, and supplied mechanics. Evaluate every candidate as a complete loadout in that team context. Preserve central offense, Speed control, setup, disruption, protection, ally interaction, coverage, and endgame responsibilities unless the candidate supplies a concrete larger benefit. A lower final stat in generalEvidence.reducedRoleStats is a real tradeoff requiring justification, not an automatic rejection. Do not assume a species must follow its usual stereotype when the current set shows a deliberate different job.
 
-generalEvidence.variant identifies how a candidate was generated. current is the unchanged baseline. standard combines the leading supplied usage spread, item, and moves, which are independent marginal statistics rather than one observed correlated set. spread changes nature and Stat Points while retaining the current item and moves. item changes only the held item from its baseline. move changes one move slot from its baseline. Treat usageRank and usagePercent as evidence for that candidate's changed axis only; never describe them as the popularity of the whole complete set. Usage is context, not proof of optimality.
+generalEvidence.variant identifies how a candidate was generated. current is the unchanged baseline. standard combines the leading supplied usage spread, item, and moves, which are independent marginal statistics rather than one observed correlated set. spread changes nature and Stat Points while retaining the current item and moves. item changes only the held item from its baseline. move changes one move slot from its baseline. loadout applies one move replacement together with one observed alternative item; its usageRank and usagePercent describe the move, not the combined set or item. Treat usageRank and usagePercent as evidence for that candidate's changed axis only; never describe them as the popularity of the whole complete set. Usage is context, not proof of optimality.
 
 Treat the candidate array order as arbitrary rather than a ranking. Treat the current sample as a neutral baseline, not a preferred answer. Do not recommend it merely because changing a set carries uncertainty. Recommend set-current only when its exact selected responsibilities or stat commitments make it at least as useful as the supplied alternatives, and explain which concrete responsibility or tradeoff makes keeping it worthwhile. If a changed candidate adds a credible team benefit without sacrificing a more important responsibility, it should outrank set-current. Avoid returning both current and a changed candidate when their strategic value is effectively the same.
 
@@ -99,7 +99,9 @@ For a spread candidate, compare the supplied finalStats and reducedRoleStats aga
 
 For an item candidate, look up both the current and proposed items in optimization.itemMechanics and use only their supplied effects. Explain what the new effect contributes and what the old item gives up. A common item is not automatically better, and a missing item effect is unknown rather than evidence of no effect.
 
-For a move candidate, use candidate.moveChanges and optimization.moveMechanics as the sole source of truth. Compare the removed and added move's type, category, power, target, effect, and tags. Infer their responsibilities from those mechanics and the team context rather than from a manual move-role list or move-name memory. Prefer replacing an overlapping attack before removing unique support, setup, spread pressure, priority, speed control, ally interaction, or essential coverage. In Doubles, single-target and spread-target attacks are distinct responsibilities. Never claim a move is recommended unless it appears in that candidate's complete moveIds and moveChanges.
+For a move candidate, use candidate.moveChanges and optimization.moveMechanics as the sole source of truth. Compare the removed and added move's type, category, power, target, effect, and tags. Infer their responsibilities from those mechanics and the team context rather than from a manual move-role list or move-name memory. Group candidates with the same optimizedMoveId as alternate-slot siblings and compare every supplied sibling before selecting one. Once a selected move is identified as central to the team's plan or a concrete ally interaction, never remove it when a sibling adds the same move by replacing a less central or more overlapping slot, unless the retained slot has a stronger supplied responsibility. Prefer replacing an overlapping attack before removing unique support, setup, spread pressure, priority, speed control, ally interaction, or essential coverage. In Doubles, single-target and spread-target attacks are distinct responsibilities. Never claim a move is recommended unless it appears in that candidate's complete moveIds and moveChanges.
+
+For a loadout candidate, audit the move and item changes as one inseparable proposal. Compare it directly with the sibling move-only candidate. If the current item's supplied effect restricts move choice, locks the holder into one move, or otherwise conflicts with the proposed move's practical use, prefer a compatible loadout candidate when its alternative item supplies a credible benefit. Do not recommend the move-only sibling while acknowledging that its retained item makes the new move impractical. Conversely, do not change the item merely because a paired candidate exists when the current item and new move remain compatible.
 
 For the standard candidate, audit every changed spread, item, and move together. Do not treat the independently combined marginals as a known tournament set or assign one component's usage percentage to the entire loadout. Prefer a focused one-axis candidate when it captures the useful change without the standard candidate's unnecessary losses.
 

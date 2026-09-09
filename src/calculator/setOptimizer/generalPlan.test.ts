@@ -49,6 +49,44 @@ const taunt: PokemonMove = {
   category: "Status",
   power: null,
 };
+const round: PokemonMove = {
+  ...fakeOut,
+  id: "round",
+  name: "Round",
+  type: "normal",
+  category: "Special",
+  power: 60,
+  description: "Power doubles if another Pokemon used Round earlier this turn.",
+};
+const snarl: PokemonMove = {
+  ...round,
+  id: "snarl",
+  name: "Snarl",
+  type: "dark",
+  power: 55,
+  description: "Lowers both opposing Pokemon's Special Attack.",
+};
+const bitterMalice: PokemonMove = {
+  ...round,
+  id: "bittermalice",
+  name: "Bitter Malice",
+  type: "ghost",
+  power: 75,
+};
+const hyperVoice: PokemonMove = {
+  ...round,
+  id: "hypervoice",
+  name: "Hyper Voice",
+  power: 90,
+};
+const icyWind: PokemonMove = {
+  ...round,
+  id: "icywind",
+  name: "Icy Wind",
+  type: "ice",
+  power: 55,
+  description: "Lowers both opposing Pokemon's Speed.",
+};
 const member: TeamMember = {
   id: "weavile",
   name: "Weavile",
@@ -157,7 +195,7 @@ describe("general sample recommendation candidates", () => {
     expect(plan.candidates.length).toBeGreaterThan(3);
     expect(plan.candidates.length).toBeLessThanOrEqual(12);
     expect(new Set(plan.candidates.map((candidate) => candidate.generalEvidence?.variant)))
-      .toEqual(new Set(["current", "standard", "spread", "item", "move"]));
+      .toEqual(new Set(["current", "standard", "spread", "item", "move", "loadout"]));
     expect(plan.candidates.every(
       (candidate) => candidate.generalEvidence?.source !== "matchup",
     )).toBe(true);
@@ -285,5 +323,139 @@ describe("general sample recommendation candidates", () => {
     ]));
     expect(new Set(keys).size).toBe(keys.length);
     expect(plan.candidates.some(({ id }) => id === "usage-standard")).toBe(false);
+  });
+
+  it("keeps every replacement slot and pairs a new move with an alternative item", () => {
+    const zoroark: TeamMember = {
+      ...member,
+      id: "zoroarkhisui",
+      name: "Zoroark-Hisui",
+      types: ["normal", "ghost"],
+      abilities: ["Illusion"],
+      moves: [round, snarl, bitterMalice, hyperVoice, icyWind, taunt],
+      baseStats: {
+        hp: 55,
+        attack: 100,
+        defense: 60,
+        specialAttack: 125,
+        specialDefense: 60,
+        speed: 110,
+      },
+    };
+    const createZoroarkContext = (
+      proposedMove: PokemonMove,
+    ): GeneralSetOptimizationContext => ({
+      selectedSlot: 0,
+      member: zoroark,
+      build: {
+        item: {
+          id: "choicescarf",
+          showdownId: "choicescarf",
+          name: "Choice Scarf",
+          effect: "Raises Speed but locks the holder into its first selected move.",
+        },
+        ability: "Illusion",
+        natureId: "modest",
+        evs: {
+          hp: 2,
+          attack: 0,
+          defense: 0,
+          specialAttack: 32,
+          specialDefense: 0,
+          speed: 32,
+        },
+        moveIds: ["round", "snarl", "bittermalice", "hypervoice"],
+      },
+      reservedItemIds: [],
+      usageSet: {
+        pokemonId: "zoroarkhisui",
+        pokemonName: "Zoroark-Hisui",
+        sourceMonth: "2026-08",
+        cutoff: 1630,
+        itemName: "Choice Scarf",
+        itemNames: ["Choice Scarf", "Focus Sash"],
+        itemOptions: [
+          { id: "choicescarf", usagePercent: 60 },
+          { id: "focussash", usagePercent: 30 },
+        ],
+        moveIds: ["round", proposedMove.id, "snarl", "bittermalice", "hypervoice"],
+        moveOptions: [
+          { id: "round", usagePercent: 90 },
+          { id: proposedMove.id, usagePercent: 70 },
+          { id: "snarl", usagePercent: 65 },
+          { id: "bittermalice", usagePercent: 60 },
+          { id: "hypervoice", usagePercent: 50 },
+        ],
+        spreads: [{
+          nature: "modest",
+          evs: { hp: 2, specialAttack: 32, speed: 32 },
+          usagePercent: 80,
+        }],
+      },
+      usageItems: [{
+        id: "choicescarf",
+        showdownId: "choicescarf",
+        name: "Choice Scarf",
+        effect: "Raises Speed but locks the holder into its first selected move.",
+      }, {
+        id: "focussash",
+        showdownId: "focussash",
+        name: "Focus Sash",
+        effect: "At full HP, the holder survives one attack that would knock it out.",
+      }],
+    });
+
+    const icyWindPlan = createGeneralSetOptimizationPlan(
+      createZoroarkContext(icyWind),
+    );
+    const icyWindRemovedMoves = icyWindPlan.candidates.flatMap((candidate) =>
+      candidate.moveChanges[0]?.optimizedMoveId === "icywind"
+        ? [candidate.moveChanges[0].currentMoveId]
+        : [],
+    );
+    expect(new Set(icyWindRemovedMoves)).toEqual(
+      new Set(["round", "snarl", "bittermalice", "hypervoice"]),
+    );
+
+    const tauntPlan = createGeneralSetOptimizationPlan(createZoroarkContext(taunt));
+    expect(tauntPlan.candidates).toContainEqual(expect.objectContaining({
+      itemId: "focussash",
+      itemChanged: true,
+      generalEvidence: expect.objectContaining({ variant: "loadout" }),
+      moveChanges: [expect.objectContaining({
+        currentMoveId: "snarl",
+        optimizedMoveId: "taunt",
+      })],
+    }));
+
+    const combinedContext = createZoroarkContext(icyWind);
+    combinedContext.usageSet = {
+      ...combinedContext.usageSet!,
+      moveIds: ["round", "icywind", "taunt", "snarl", "bittermalice", "hypervoice"],
+      moveOptions: [
+        { id: "round", usagePercent: 90 },
+        { id: "icywind", usagePercent: 70 },
+        { id: "taunt", usagePercent: 68 },
+        { id: "snarl", usagePercent: 65 },
+        { id: "bittermalice", usagePercent: 60 },
+        { id: "hypervoice", usagePercent: 50 },
+      ],
+    };
+    const combinedPlan = createGeneralSetOptimizationPlan(combinedContext);
+    expect(combinedPlan.candidates).toContainEqual(expect.objectContaining({
+      itemId: "choicescarf",
+      moveChanges: [expect.objectContaining({
+        currentMoveId: "snarl",
+        optimizedMoveId: "icywind",
+      })],
+    }));
+    expect(combinedPlan.candidates).toContainEqual(expect.objectContaining({
+      itemId: "focussash",
+      generalEvidence: expect.objectContaining({ variant: "loadout" }),
+      moveChanges: [expect.objectContaining({
+        currentMoveId: "snarl",
+        optimizedMoveId: "taunt",
+      })],
+    }));
   });
 });

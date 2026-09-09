@@ -434,15 +434,19 @@ Cartesian product of every component.
 
 Candidates deliberately cover distinct axes: the unchanged current set, one
 usage-derived standard combination, spread-only alternatives, item-only
-alternatives, and one-slot move alternatives. Smogon spreads, items, and moves are
-independent marginal statistics, so the standard combination is not represented as
-an observed correlated full set. Observed moves are aligned to the current slots so
-ordering differences do not become fake replacements. Empty move slots are not
-filled as unverified changes, Item Clause conflicts are skipped, and held-item
-alternatives include their local catalog effect for model grounding. Identical
-complete candidates are collapsed without consuming the 12-candidate budget.
+alternatives, one-slot move alternatives, and paired move-plus-item loadouts.
+Every supplied move alternative is checked against all four occupied slots before
+the diverse 12-candidate cap is applied. The paired loadout lets the model reject a
+move-only option when the retained item conflicts with that move, such as adding a
+status move to a Choice-locked set. Smogon spreads, items, and moves are independent
+marginal statistics, so the standard combination is not represented as an observed
+correlated full set. Observed moves are aligned to the current slots so ordering
+differences do not become fake replacements. Empty move slots are not filled as
+unverified changes, Item Clause conflicts are skipped, and held-item alternatives
+include their local catalog effect for model grounding. Identical complete
+candidates are collapsed without consuming the 12-candidate budget.
 
-The request contract is version 31 and the optimization scope prompt is version 31.
+The request contract is version 32 and the optimization scope prompt is version 32.
 General candidates carry current or usage provenance, their generation axis, the
 relevant usage rank and percentage, and role-stat reductions. Validation rejects
 malformed provenance and unmatched move changes. Private candidate IDs are

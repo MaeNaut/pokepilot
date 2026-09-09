@@ -18,7 +18,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 31,
+  version: 32,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -287,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 83,
+        promptVersion: 84,
       },
       usage: {
         totalTokens: 150,
@@ -488,6 +488,15 @@ describe("OpenAI Luna evaluation adapter", () => {
     );
     expect(optimizationInstructions).toContain(
       "use candidate.moveChanges and optimization.moveMechanics",
+    );
+    expect(optimizationInstructions).toContain(
+      "compare every supplied sibling before selecting one",
+    );
+    expect(optimizationInstructions).toContain(
+      "audit the move and item changes as one inseparable proposal",
+    );
+    expect(optimizationInstructions).toContain(
+      "locks the holder into one move",
     );
     expect(optimizationInstructions).toContain(
       "rather than from a manual move-role list",

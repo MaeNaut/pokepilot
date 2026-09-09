@@ -342,7 +342,7 @@ export type CopilotMatchupSnapshot = {
 };
 
 export type CopilotAnalysisRequest = {
-  version: 31;
+  version: 32;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;

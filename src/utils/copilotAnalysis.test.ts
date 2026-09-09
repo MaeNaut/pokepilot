@@ -154,7 +154,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 31,
+      version: 32,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",

@@ -149,7 +149,7 @@ function hasValidGeneralEvidence(value: unknown) {
       "reducedRoleStats",
     ]) ||
     !["current", "usage", "matchup"].includes(String(value.source)) ||
-    !["current", "standard", "spread", "item", "move", "matchup"].includes(
+    !["current", "standard", "spread", "item", "move", "loadout", "matchup"].includes(
       String(value.variant),
     ) ||
     !isUniqueEnumArray(value.roleStats, statIdSet, 6) ||
@@ -173,7 +173,9 @@ function hasValidGeneralEvidence(value: unknown) {
     );
   }
   return (
-    ["standard", "spread", "item", "move"].includes(String(value.variant)) &&
+    ["standard", "spread", "item", "move", "loadout"].includes(
+      String(value.variant),
+    ) &&
     isNonEmptyString(value.sourceMonth) &&
     isBoundedInteger(value.cutoff, 0, 100_000) &&
     isBoundedInteger(value.usageRank, 1, 20) &&
@@ -220,7 +222,7 @@ function hasValidOptimizationMoveMechanics(value: unknown) {
 function hasValidOptimizationItemMechanics(value: unknown) {
   return (
     Array.isArray(value) &&
-    value.length <= 4 &&
+    value.length <= 5 &&
     value.every((item) =>
       isRecord(item) &&
       hasOnlyKeys(item, ["id", "displayName", "effect"]) &&

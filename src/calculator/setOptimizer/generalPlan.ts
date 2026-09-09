@@ -26,7 +26,9 @@ const MIN_MOVE_COVERAGE = 4;
 const SPREAD_USAGE_TARGET = 80;
 const ITEM_USAGE_TARGET = 80;
 const MOVE_USAGE_TARGET_RATIO = 0.85;
-const MOVE_SLOT_VARIANTS = 2;
+const MOVE_SLOT_VARIANTS = 4;
+const PRIORITY_MOVE_CANDIDATES = 4;
+const PRIORITY_LOADOUT_CANDIDATES = 4;
 
 type UsageMeta = {
   rank: number;
@@ -39,6 +41,7 @@ type CandidateBuckets = {
   spread: SetOptimizationCandidate[];
   item: SetOptimizationCandidate[];
   move: SetOptimizationCandidate[];
+  loadout: SetOptimizationCandidate[];
 };
 
 function getItemId(item: PokemonItem | null | undefined) {
@@ -357,9 +360,13 @@ function moveReplacementScore(
   return score;
 }
 
+function flattenCandidateGroups(groups: SetOptimizationCandidate[][]) {
+  return groups.flat();
+}
+
 function createGeneralCandidates(context: GeneralSetOptimizationContext) {
   const buckets: CandidateBuckets = {
-    current: [], standard: [], spread: [], item: [], move: [],
+    current: [], standard: [], spread: [], item: [], move: [], loadout: [],
   };
   const currentMoves = getCurrentMoveIds(context);
   const currentSpread = getCurrentSpread(context);
@@ -439,6 +446,8 @@ function createGeneralCandidates(context: GeneralSetOptimizationContext) {
   if (baselineEvs && baselineNature && currentMoves.every(Boolean)) {
     const moveById = getMoveById(context);
     const currentSet = new Set(currentMoves);
+    const moveGroups: SetOptimizationCandidate[][] = [];
+    const loadoutGroups: SetOptimizationCandidate[][] = [];
     const usageById = new Map(
       getMoveOptions(context).map((option, index) => [
         normalizeShowdownId(option.id),
@@ -459,11 +468,13 @@ function createGeneralCandidates(context: GeneralSetOptimizationContext) {
         };
       }).sort((left, right) => right.score - left.score)
         .slice(0, MOVE_SLOT_VARIANTS);
+      const moveCandidates: SetOptimizationCandidate[] = [];
+      const loadoutCandidates: SetOptimizationCandidate[] = [];
 
       for (const { slotIndex } of slots) {
         const moveIds = [...currentMoves];
         moveIds[slotIndex] = proposed.id;
-        buckets.move.push(createCandidate(
+        moveCandidates.push(createCandidate(
           context,
           `usage-move-${proposed.id}-${slotIndex}`,
           baselineNature,
@@ -475,8 +486,27 @@ function createGeneralCandidates(context: GeneralSetOptimizationContext) {
             percent: option.usagePercent,
           }),
         ));
+        const pairedItem = alternativeItems[0];
+        if (pairedItem && proposed.category === "Status") {
+          loadoutCandidates.push(createCandidate(
+            context,
+            `usage-loadout-${proposed.id}-${slotIndex}-${getItemId(pairedItem.item)}`,
+            baselineNature,
+            baselineEvs,
+            pairedItem.item,
+            moveIds,
+            createEvidence(context, "usage", "loadout", baselineEvs, baselineNature, {
+              rank: option.rank,
+              percent: option.usagePercent,
+            }),
+          ));
+        }
       }
+      moveGroups.push(moveCandidates);
+      if (loadoutCandidates.length > 0) loadoutGroups.push(loadoutCandidates);
     }
+    buckets.move = flattenCandidateGroups(moveGroups);
+    buckets.loadout = flattenCandidateGroups(loadoutGroups);
   }
   return buckets;
 }
@@ -495,7 +525,12 @@ function selectDiverseCandidates(buckets: CandidateBuckets) {
 
   buckets.current.forEach(append);
   buckets.standard.forEach(append);
-  const rotating = [buckets.spread, buckets.item, buckets.move];
+  buckets.move.slice(0, PRIORITY_MOVE_CANDIDATES).forEach(append);
+  buckets.loadout.slice(0, PRIORITY_LOADOUT_CANDIDATES).forEach(append);
+  append(buckets.spread[0]);
+  append(buckets.item[0]);
+
+  const rotating = [buckets.move, buckets.loadout, buckets.spread, buckets.item];
   let depth = 0;
   while (selected.length < MAX_GENERAL_CANDIDATES) {
     let visited = false;
