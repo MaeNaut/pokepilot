@@ -1,25 +1,15 @@
-import { createSetOptimizationPlan } from "./setOptimizer/plan";
-import {
-  createGeneralSetOptimizationPlan,
-  mergeGeneralAndMatchupPlans,
-} from "./setOptimizer/generalPlan";
-import type {
-  CalculatorAnalysisContext,
-  GeneralSetOptimizationContext,
-} from "./setOptimizer/types";
+import { createGeneralSetOptimizationPlan } from "./setOptimizer/generalPlan";
+import type { GeneralSetOptimizationContext } from "./setOptimizer/types";
 
 type SetOptimizationWorkerRequest = {
   generalContext: GeneralSetOptimizationContext;
-  matchupContext: CalculatorAnalysisContext | null;
 };
 
 self.onmessage = (event: MessageEvent<SetOptimizationWorkerRequest>) => {
   try {
-    const general = createGeneralSetOptimizationPlan(event.data.generalContext);
-    const matchup = event.data.matchupContext
-      ? createSetOptimizationPlan(event.data.matchupContext)
-      : null;
-    self.postMessage({ plan: mergeGeneralAndMatchupPlans(general, matchup) });
+    self.postMessage({
+      plan: createGeneralSetOptimizationPlan(event.data.generalContext),
+    });
   } catch {
     self.postMessage({ error: true });
   }

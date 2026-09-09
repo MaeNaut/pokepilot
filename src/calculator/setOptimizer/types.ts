@@ -93,9 +93,10 @@ export type SetOptimizationSpeedBenchmark = {
 
 export type SetOptimizationGeneralEvidence = {
   source: "current" | "usage" | "matchup";
+  variant: "current" | "standard" | "spread" | "item" | "move" | "matchup";
   sourceMonth?: string;
   cutoff?: number;
-  spreadRank?: number;
+  usageRank?: number;
   usagePercent?: number;
   roleStats: StatKey[];
   reducedRoleStats: StatKey[];

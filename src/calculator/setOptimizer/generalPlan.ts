@@ -1,4 +1,5 @@
 import { normalizeShowdownId } from "../../api/showdownIds";
+import type { SmogonUsageSpread } from "../../api/smogonUsage";
 import {
   calculateChampionsStats,
   CHAMPIONS_MAX_EV_PER_STAT,
@@ -7,7 +8,7 @@ import {
   normalizeStatPointSpread,
   statKeys,
 } from "../../data/natures";
-import type { StatBlock, StatKey } from "../../types";
+import type { PokemonItem, PokemonMove, StatBlock, StatKey } from "../../types";
 import type {
   GeneralSetOptimizationContext,
   SetOptimizationCandidate,
@@ -15,11 +16,50 @@ import type {
   SetOptimizationPlan,
 } from "./types";
 
-const MAX_GENERAL_USAGE_CANDIDATES = 3;
-const MAX_COMBINED_CANDIDATES = 8;
+const MAX_GENERAL_CANDIDATES = 12;
+const MAX_SPREAD_CANDIDATES = 6;
+const MAX_ITEM_CANDIDATES = 4;
+const MAX_MOVE_OPTIONS = 8;
+const MIN_SPREAD_COVERAGE = 3;
+const MIN_ITEM_COVERAGE = 2;
+const MIN_MOVE_COVERAGE = 4;
+const SPREAD_USAGE_TARGET = 80;
+const ITEM_USAGE_TARGET = 80;
+const MOVE_USAGE_TARGET_RATIO = 0.85;
+const MOVE_SLOT_VARIANTS = 2;
 
-function getItemId(item: GeneralSetOptimizationContext["build"]["item"]) {
+type UsageMeta = {
+  rank: number;
+  percent: number;
+};
+
+type CandidateBuckets = {
+  current: SetOptimizationCandidate[];
+  standard: SetOptimizationCandidate[];
+  spread: SetOptimizationCandidate[];
+  item: SetOptimizationCandidate[];
+  move: SetOptimizationCandidate[];
+};
+
+function getItemId(item: PokemonItem | null | undefined) {
   return normalizeShowdownId(item?.showdownId ?? item?.id ?? item?.name ?? "");
+}
+
+function selectUsageCoverage<T extends { usagePercent: number }>(
+  values: readonly T[],
+  minimum: number,
+  maximum: number,
+  target: number,
+) {
+  const selected: T[] = [];
+  let cumulative = 0;
+  for (const value of values) {
+    if (selected.length >= maximum) break;
+    selected.push(value);
+    cumulative += value.usagePercent;
+    if (selected.length >= minimum && cumulative >= target) break;
+  }
+  return selected;
 }
 
 function completeSpread(partial: Partial<StatBlock>) {
@@ -38,8 +78,18 @@ function completeSpread(partial: Partial<StatBlock>) {
     spread[stat] += added;
     remaining -= added;
   }
-
   return remaining === 0 ? spread : null;
+}
+
+function getMoveById(context: GeneralSetOptimizationContext) {
+  return new Map(
+    (context.member.moves ?? []).flatMap((move) =>
+      [move.id, move.name]
+        .map(normalizeShowdownId)
+        .filter(Boolean)
+        .map((key) => [key, move] as const),
+    ),
+  );
 }
 
 function getCurrentMoveIds(context: GeneralSetOptimizationContext) {
@@ -49,59 +99,59 @@ function getCurrentMoveIds(context: GeneralSetOptimizationContext) {
   );
 }
 
-function getMoveById(context: GeneralSetOptimizationContext) {
-  return new Map(
-    (context.member.moves ?? []).flatMap((move) => {
-      const keys = [move.id, move.name].map(normalizeShowdownId).filter(Boolean);
-      return keys.map((key) => [key, move] as const);
-    }),
+function getMoveOptions(context: GeneralSetOptimizationContext) {
+  const raw = context.usageSet?.moveOptions?.length
+    ? context.usageSet.moveOptions
+    : (context.usageSet?.moveIds ?? []).map((id) => ({ id, usagePercent: 0 }));
+  const bounded = raw.slice(0, MAX_MOVE_OPTIONS);
+  const usageTarget = bounded.reduce(
+    (total, option) => total + option.usagePercent,
+    0,
+  ) * MOVE_USAGE_TARGET_RATIO;
+  return selectUsageCoverage(
+    bounded,
+    MIN_MOVE_COVERAGE,
+    MAX_MOVE_OPTIONS,
+    usageTarget,
   );
 }
 
-function resolveUsageMoveIds(context: GeneralSetOptimizationContext) {
+function resolveStandardMoveIds(context: GeneralSetOptimizationContext) {
   const moveById = getMoveById(context);
   const currentMoveIds = getCurrentMoveIds(context);
-  if (
-    currentMoveIds.some((moveId) =>
-      !moveId || !moveById.has(normalizeShowdownId(moveId)),
-    )
-  ) {
+  if (currentMoveIds.some((id) => !id || !moveById.has(normalizeShowdownId(id)))) {
     return currentMoveIds;
   }
-  const resolved: string[] = [];
-  for (const usageMoveId of context.usageSet?.moveIds ?? []) {
-    const move = moveById.get(normalizeShowdownId(usageMoveId));
-    if (move && !resolved.includes(move.id)) resolved.push(move.id);
-    if (resolved.length === 4) break;
-  }
+
+  const resolved = getMoveOptions(context).flatMap(({ id }) => {
+    const move = moveById.get(normalizeShowdownId(id));
+    return move ? [move.id] : [];
+  }).filter((id, index, all) => all.indexOf(id) === index).slice(0, 4);
   if (resolved.length !== 4) return currentMoveIds;
 
   const resolvedSet = new Set(resolved);
   const currentSet = new Set(currentMoveIds);
-  const replacementSlots = currentMoveIds.flatMap((moveId, slotIndex) =>
-    resolvedSet.has(moveId) ? [] : [slotIndex],
+  const replacementSlots = currentMoveIds.flatMap((id, slotIndex) =>
+    resolvedSet.has(id) ? [] : [slotIndex],
   );
-  const replacementMoves = resolved.filter((moveId) => !currentSet.has(moveId));
-  if (replacementSlots.length !== replacementMoves.length) return currentMoveIds;
+  const replacements = resolved.filter((id) => !currentSet.has(id));
+  if (replacementSlots.length !== replacements.length) return currentMoveIds;
 
   const aligned = [...currentMoveIds];
   replacementSlots.forEach((slotIndex, index) => {
-    aligned[slotIndex] = replacementMoves[index];
+    aligned[slotIndex] = replacements[index];
   });
   return aligned;
 }
 
 function getRoleStats(context: GeneralSetOptimizationContext) {
-  const currentMoves = getCurrentMoveIds(context);
   const moveById = getMoveById(context);
   const stats = new Set<StatKey>();
-
-  for (const moveId of currentMoves) {
+  for (const moveId of getCurrentMoveIds(context)) {
     const move = moveById.get(normalizeShowdownId(moveId));
-    if (move?.power && move.power > 0) {
-      if (move.category === "Physical") stats.add("attack");
-      if (move.category === "Special") stats.add("specialAttack");
-    }
+    if (!move?.power || move.power <= 0) continue;
+    if (move.category === "Physical") stats.add("attack");
+    if (move.category === "Special") stats.add("specialAttack");
   }
 
   const nature = getNatureById(context.build.natureId);
@@ -115,9 +165,10 @@ function getRoleStats(context: GeneralSetOptimizationContext) {
 function createEvidence(
   context: GeneralSetOptimizationContext,
   source: SetOptimizationGeneralEvidence["source"],
+  variant: SetOptimizationGeneralEvidence["variant"],
   evs: StatBlock,
   natureId: string,
-  usage?: { rank: number; percent: number },
+  usage?: UsageMeta,
 ): SetOptimizationGeneralEvidence {
   const roleStats = getRoleStats(context);
   const baseStats = context.member.baseStats!;
@@ -126,11 +177,7 @@ function createEvidence(
     context.build.evs,
     getNatureById(context.build.natureId),
   );
-  const candidateStats = calculateChampionsStats(
-    baseStats,
-    evs,
-    getNatureById(natureId),
-  );
+  const candidateStats = calculateChampionsStats(baseStats, evs, getNatureById(natureId));
   const reducedRoleStats = roleStats.filter((stat) => {
     if (
       stat === "speed" &&
@@ -144,12 +191,13 @@ function createEvidence(
 
   return {
     source,
-    ...(source === "usage" && context.usageSet
+    variant,
+    ...(source === "usage" && context.usageSet && usage
       ? {
           sourceMonth: context.usageSet.sourceMonth,
           cutoff: context.usageSet.cutoff,
-          spreadRank: usage?.rank,
-          usagePercent: usage?.percent,
+          usageRank: usage.rank,
+          usagePercent: usage.percent,
         }
       : {}),
     roleStats,
@@ -157,10 +205,7 @@ function createEvidence(
   };
 }
 
-function createMoveChanges(
-  context: GeneralSetOptimizationContext,
-  moveIds: string[],
-) {
+function createMoveChanges(context: GeneralSetOptimizationContext, moveIds: string[]) {
   const currentMoveIds = getCurrentMoveIds(context);
   const moveById = getMoveById(context);
   return moveIds.flatMap((moveId, slotIndex) => {
@@ -187,14 +232,12 @@ function createCandidate(
   id: string,
   natureId: string,
   evs: StatBlock,
-  item: { id: string | null; name: string | null },
+  item: PokemonItem | null,
   moveIds: string[],
   evidence: SetOptimizationGeneralEvidence,
 ): SetOptimizationCandidate {
   const currentItemId = getItemId(context.build.item) || null;
-  const statPointChanges = Object.fromEntries(
-    statKeys.map((stat) => [stat, evs[stat] - context.build.evs[stat]]),
-  ) as StatBlock;
+  const itemId = getItemId(item) || null;
   const currentStats = calculateChampionsStats(
     context.member.baseStats!,
     context.build.evs,
@@ -205,6 +248,9 @@ function createCandidate(
     evs,
     getNatureById(natureId),
   );
+  const statPointChanges = Object.fromEntries(
+    statKeys.map((stat) => [stat, evs[stat] - context.build.evs[stat]]),
+  ) as StatBlock;
   return {
     id,
     slotIndex: context.selectedSlot,
@@ -215,9 +261,9 @@ function createCandidate(
     evs,
     evTotal: CHAMPIONS_MAX_EV_TOTAL,
     finalStats,
-    itemId: item.id,
-    itemName: item.name,
-    itemChanged: item.id !== currentItemId,
+    itemId,
+    itemName: item?.name ?? null,
+    itemChanged: itemId !== currentItemId,
     moveIds,
     moveChanges: createMoveChanges(context, moveIds),
     changedStatPoints: statKeys.reduce(
@@ -227,7 +273,6 @@ function createCandidate(
     statPointChanges,
     offenseBenchmarks: [],
     defenseBenchmarks: [],
-    // General candidates do not expose this placeholder in the API snapshot.
     speedBenchmark: {
       current: { playerSpeed: currentStats.speed, opponentSpeed: 1, relation: "faster" },
       optimized: { playerSpeed: finalStats.speed, opponentSpeed: 1, relation: "faster" },
@@ -243,6 +288,228 @@ function candidateKey(candidate: SetOptimizationCandidate) {
     normalizeShowdownId(candidate.itemId ?? ""),
     candidate.moveIds.map(normalizeShowdownId),
   ]);
+}
+
+function getCurrentSpread(context: GeneralSetOptimizationContext) {
+  const total = statKeys.reduce((sum, stat) => sum + context.build.evs[stat], 0);
+  return total === CHAMPIONS_MAX_EV_TOTAL ? { ...context.build.evs } : null;
+}
+
+function getUsageSpreads(context: GeneralSetOptimizationContext) {
+  const raw: SmogonUsageSpread[] = context.usageSet?.spreads?.length
+    ? context.usageSet.spreads
+    : context.usageSet?.evs && context.usageSet.nature
+      ? [{
+          nature: context.usageSet.nature,
+          evs: context.usageSet.evs,
+          usagePercent: 0,
+        }]
+      : [];
+  return selectUsageCoverage(
+    raw,
+    MIN_SPREAD_COVERAGE,
+    MAX_SPREAD_CANDIDATES,
+    SPREAD_USAGE_TARGET,
+  );
+}
+
+function getUsageItems(context: GeneralSetOptimizationContext) {
+  if (context.build.item?.category === "Mega Stones") return [];
+  const currentItemId = getItemId(context.build.item);
+  const reservedItemIds = new Set(context.reservedItemIds.map(normalizeShowdownId));
+  const optionById = new Map(
+    (context.usageSet?.itemOptions ?? []).map((option, index) => [
+      option.id,
+      { ...option, rank: index + 1 },
+    ]),
+  );
+  const entries = context.usageItems.flatMap((item, index) => {
+    if (item.category === "Mega Stones") return [];
+    const id = getItemId(item);
+    if (!id || (id !== currentItemId && reservedItemIds.has(id))) return [];
+    const option = optionById.get(id);
+    return [{
+      item,
+      rank: option?.rank ?? index + 1,
+      usagePercent: option?.usagePercent ?? 0,
+    }];
+  });
+  return selectUsageCoverage(
+    entries,
+    MIN_ITEM_COVERAGE,
+    MAX_ITEM_CANDIDATES,
+    ITEM_USAGE_TARGET,
+  );
+}
+
+function moveReplacementScore(
+  current: PokemonMove,
+  proposed: PokemonMove,
+  currentUsagePercent: number,
+) {
+  const currentDamaging = Boolean(current.power && current.power > 0);
+  const proposedDamaging = Boolean(proposed.power && proposed.power > 0);
+  let score = 0;
+  if (current.type === proposed.type) score += 8;
+  if (current.category === proposed.category) score += 6;
+  if (currentDamaging === proposedDamaging) score += 4;
+  score -= currentUsagePercent / 20;
+  return score;
+}
+
+function createGeneralCandidates(context: GeneralSetOptimizationContext) {
+  const buckets: CandidateBuckets = {
+    current: [], standard: [], spread: [], item: [], move: [],
+  };
+  const currentMoves = getCurrentMoveIds(context);
+  const currentSpread = getCurrentSpread(context);
+  const usageSpreads = getUsageSpreads(context);
+  const usageItems = getUsageItems(context);
+  const alternativeItems = usageItems.filter(
+    ({ item }) => getItemId(item) !== getItemId(context.build.item),
+  );
+  const topSpread = usageSpreads[0];
+  const topEvs = topSpread ? completeSpread(topSpread.evs) : null;
+  const baselineEvs = currentSpread ?? topEvs;
+  const baselineNature = currentSpread
+    ? context.build.natureId
+    : topSpread?.nature.toLowerCase();
+
+  if (currentSpread) {
+    buckets.current.push(createCandidate(
+      context,
+      "set-current",
+      context.build.natureId,
+      currentSpread,
+      context.build.item,
+      currentMoves,
+      createEvidence(context, "current", "current", currentSpread, context.build.natureId),
+    ));
+  }
+
+  if (topSpread && topEvs) {
+    buckets.standard.push(createCandidate(
+      context,
+      "usage-standard",
+      topSpread.nature.toLowerCase(),
+      topEvs,
+      usageItems[0]?.item ?? context.build.item,
+      resolveStandardMoveIds(context),
+      createEvidence(context, "usage", "standard", topEvs, topSpread.nature, {
+        rank: 1,
+        percent: topSpread.usagePercent,
+      }),
+    ));
+  }
+
+  usageSpreads.forEach((spread, index) => {
+    const evs = completeSpread(spread.evs);
+    if (!evs) return;
+    buckets.spread.push(createCandidate(
+      context,
+      `usage-spread-${index + 1}`,
+      spread.nature.toLowerCase(),
+      evs,
+      context.build.item,
+      currentMoves,
+      createEvidence(context, "usage", "spread", evs, spread.nature, {
+        rank: index + 1,
+        percent: spread.usagePercent,
+      }),
+    ));
+  });
+
+  if (baselineEvs && baselineNature) {
+    alternativeItems.forEach(({ item, rank, usagePercent }) => {
+      buckets.item.push(createCandidate(
+        context,
+        `usage-item-${rank}`,
+        baselineNature,
+        baselineEvs,
+        item,
+        currentMoves,
+        createEvidence(context, "usage", "item", baselineEvs, baselineNature, {
+          rank,
+          percent: usagePercent,
+        }),
+      ));
+    });
+  }
+
+  if (baselineEvs && baselineNature && currentMoves.every(Boolean)) {
+    const moveById = getMoveById(context);
+    const currentSet = new Set(currentMoves);
+    const usageById = new Map(
+      getMoveOptions(context).map((option, index) => [
+        normalizeShowdownId(option.id),
+        { ...option, rank: index + 1 },
+      ]),
+    );
+    for (const [moveId, option] of usageById) {
+      const proposed = moveById.get(moveId);
+      if (!proposed || currentSet.has(proposed.id)) continue;
+      const slots = currentMoves.map((currentMoveId, slotIndex) => {
+        const current = moveById.get(normalizeShowdownId(currentMoveId));
+        const currentUsage = usageById.get(normalizeShowdownId(currentMoveId));
+        return {
+          slotIndex,
+          score: current
+            ? moveReplacementScore(current, proposed, currentUsage?.usagePercent ?? 0)
+            : Number.NEGATIVE_INFINITY,
+        };
+      }).sort((left, right) => right.score - left.score)
+        .slice(0, MOVE_SLOT_VARIANTS);
+
+      for (const { slotIndex } of slots) {
+        const moveIds = [...currentMoves];
+        moveIds[slotIndex] = proposed.id;
+        buckets.move.push(createCandidate(
+          context,
+          `usage-move-${proposed.id}-${slotIndex}`,
+          baselineNature,
+          baselineEvs,
+          context.build.item,
+          moveIds,
+          createEvidence(context, "usage", "move", baselineEvs, baselineNature, {
+            rank: option.rank,
+            percent: option.usagePercent,
+          }),
+        ));
+      }
+    }
+  }
+  return buckets;
+}
+
+function selectDiverseCandidates(buckets: CandidateBuckets) {
+  const selected: SetOptimizationCandidate[] = [];
+  const keys = new Set<string>();
+  const append = (candidate: SetOptimizationCandidate | undefined) => {
+    if (!candidate) return false;
+    const key = candidateKey(candidate);
+    if (keys.has(key)) return false;
+    keys.add(key);
+    selected.push(candidate);
+    return true;
+  };
+
+  buckets.current.forEach(append);
+  buckets.standard.forEach(append);
+  const rotating = [buckets.spread, buckets.item, buckets.move];
+  let depth = 0;
+  while (selected.length < MAX_GENERAL_CANDIDATES) {
+    let visited = false;
+    for (const bucket of rotating) {
+      const candidate = bucket[depth];
+      if (!candidate) continue;
+      visited = true;
+      append(candidate);
+      if (selected.length >= MAX_GENERAL_CANDIDATES) break;
+    }
+    if (!visited) break;
+    depth += 1;
+  }
+  return selected;
 }
 
 export function createGeneralSetOptimizationPlan(
@@ -261,113 +528,16 @@ export function createGeneralSetOptimizationPlan(
     return { ...identity, status: "unavailable", candidates: [], reason: "missing-stats" };
   }
 
-  const candidates: SetOptimizationCandidate[] = [];
-  const currentTotal = statKeys.reduce(
-    (total, stat) => total + context.build.evs[stat],
-    0,
-  );
-  const currentEvs = currentTotal === CHAMPIONS_MAX_EV_TOTAL
-    ? { ...context.build.evs }
-    : null;
-  const currentItemId = getItemId(context.build.item) || null;
-  const currentItem = {
-    id: currentItemId,
-    name: context.build.item?.name ?? null,
-  };
-  if (currentEvs) {
-    candidates.push(createCandidate(
-      context,
-      "set-current",
-      context.build.natureId,
-      currentEvs,
-      currentItem,
-      getCurrentMoveIds(context),
-      createEvidence(context, "current", currentEvs, context.build.natureId),
-    ));
-  }
-
-  const spreads = context.usageSet?.spreads?.length
-    ? context.usageSet.spreads
-    : context.usageSet?.evs && context.usageSet.nature
-      ? [{
-          nature: context.usageSet.nature,
-          evs: context.usageSet.evs,
-          usagePercent: 0,
-        }]
-      : [];
-  const usageItem = context.usageItems.find((item) => {
-    const id = getItemId(item);
-    return id && !context.reservedItemIds.includes(id);
-  }) ?? null;
-  const usageItemId = getItemId(usageItem) || null;
-  const canUseUsageItem = Boolean(
-    usageItem && context.build.item?.category !== "Mega Stones",
-  );
-  const usageMoves = resolveUsageMoveIds(context);
-
-  for (const [index, spread] of spreads.slice(0, MAX_GENERAL_USAGE_CANDIDATES).entries()) {
-    const evs = completeSpread(spread.evs);
-    if (!evs) continue;
-    const natureId = spread.nature.toLowerCase();
-    candidates.push(createCandidate(
-      context,
-      `usage-standard-${index + 1}`,
-      natureId,
-      evs,
-      index === 0 && canUseUsageItem
-        ? { id: usageItemId, name: usageItem?.name ?? null }
-        : currentItem,
-      index === 0 ? usageMoves : getCurrentMoveIds(context),
-      createEvidence(context, "usage", evs, natureId, {
-        rank: index + 1,
-        percent: spread.usagePercent,
-      }),
-    ));
-  }
-
-  const unique = candidates.filter((candidate, index, all) =>
-    all.findIndex((entry) => candidateKey(entry) === candidateKey(candidate)) === index,
-  );
+  const candidates = selectDiverseCandidates(createGeneralCandidates(context));
   return {
     ...identity,
-    status: unique.length > 0 ? "ready" : "unavailable",
-    candidates: unique,
-    itemMechanics: [context.build.item, ...context.usageItems].filter(
-      (item): item is NonNullable<typeof item> => Boolean(item),
-    ),
-    ...(unique.length > 0 ? {} : { reason: "no-meaningful-candidate" as const }),
-  };
-}
-
-export function mergeGeneralAndMatchupPlans(
-  general: SetOptimizationPlan,
-  matchup: SetOptimizationPlan | null,
-): SetOptimizationPlan {
-  if (general.status !== "ready" || !matchup || matchup.status !== "ready") {
-    return general;
-  }
-  const matchupCandidates = matchup.candidates
-    .filter((candidate) => candidate.id !== "set-current")
-    .map((candidate) => ({
-      ...candidate,
-      generalEvidence: {
-        source: "matchup" as const,
-        roleStats: general.candidates[0]?.generalEvidence?.roleStats ?? [],
-        reducedRoleStats: general.candidates[0]?.generalEvidence?.roleStats.filter(
-          (stat) => candidate.finalStats[stat] < general.candidates[0].finalStats[stat],
-        ) ?? [],
-      },
-    }));
-  const candidates = [...general.candidates, ...matchupCandidates]
-    .filter((candidate, index, all) =>
-      all.findIndex((entry) => candidateKey(entry) === candidateKey(candidate)) === index,
-    )
-    .slice(0, MAX_COMBINED_CANDIDATES);
-  return {
-    ...general,
-    opponentId: matchup.opponentId,
-    opponentName: matchup.opponentName,
-    configuredDirection: matchup.configuredDirection,
+    status: candidates.length > 0 ? "ready" : "unavailable",
     candidates,
+    itemMechanics: [context.build.item, ...context.usageItems].filter(
+      (item): item is PokemonItem => Boolean(item),
+    ),
+    ...(candidates.length > 0
+      ? {}
+      : { reason: "no-meaningful-candidate" as const }),
   };
 }

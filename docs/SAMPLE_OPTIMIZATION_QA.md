@@ -424,31 +424,38 @@ the original output schema and the shared core-v3 cache key.
 
 Date: 2026-09-08. Working branch: `feature/general-sample-recommendations`.
 
-Sample recommendations no longer require a configured Calculator opponent. The
-selected Pokemon's current set is compared with up to three observed Smogon usage
-spreads, while its selected moves, item, invested offensive axes, Speed commitment,
-team roles, and active concepts remain the primary fit criteria. The usage snapshot
-now retains each bounded spread's rank and percentage instead of discarding every
-spread after the first one.
+Sample recommendations no longer require or consume a configured Calculator
+opponent. The selected Pokemon's current set is compared with an adaptive,
+diversified Smogon pool: at least three and up to six spreads covering roughly 80%
+of observed spread usage, at least two and up to four items covering roughly 80%,
+and at least four and up to eight moves covering roughly 85% of the retained move
+usage mass. The request contains at most 12 complete candidates rather than a
+Cartesian product of every component.
 
-Observed moves are aligned to the current slots so ordering differences do not
-become fake replacements. Empty move slots are not filled as unverified changes,
-Item Clause conflicts are skipped, and held-item alternatives include their local
-catalog effect for model grounding. A usage sample identical to the current sample
-is collapsed into `set-current`. When a Calculator opponent is present, the existing
-deterministic matchup candidates are appended as optional evidence; only those
-candidates render damage and Speed calculations.
+Candidates deliberately cover distinct axes: the unchanged current set, one
+usage-derived standard combination, spread-only alternatives, item-only
+alternatives, and one-slot move alternatives. Smogon spreads, items, and moves are
+independent marginal statistics, so the standard combination is not represented as
+an observed correlated full set. Observed moves are aligned to the current slots so
+ordering differences do not become fake replacements. Empty move slots are not
+filled as unverified changes, Item Clause conflicts are skipped, and held-item
+alternatives include their local catalog effect for model grounding. Identical
+complete candidates are collapsed without consuming the 12-candidate budget.
 
-The request contract is version 30 and the optimization scope prompt is version 30.
-General candidates explicitly carry current, usage, or matchup provenance and role
-stat reductions. Validation rejects malformed provenance and unmatched move changes.
-Private candidate IDs are forbidden in public prose and repaired server-side if a
-model emits one. Rules-based fallback now describes general samples without a fake
-opponent title or unsupported calculator claims.
+The request contract is version 31 and the optimization scope prompt is version 31.
+General candidates carry current or usage provenance, their generation axis, the
+relevant usage rank and percentage, and role-stat reductions. Validation rejects
+malformed provenance and unmatched move changes. Private candidate IDs are
+forbidden in public prose and repaired server-side if a model emits one. The prompt
+treats candidate order and the current set as neutral, requires a concrete reason to
+prefer retaining the current set over useful alternatives, and forbids exact
+matchup claims in this scope. Exact opponent optimization remains available only
+through the separate Matchup analysis.
 
-Browser QA selected Weavile directly in the team builder and completed a hosted
-sample request without opening the Calculator. The response retained its Jolly,
-maximum-Attack, maximum-Speed, Focus Sash set because the alternatives reduced its
-fast-attacker role without verified benefit. No page errors occurred. The final
-automated check passed lint, TypeScript, production build, and the complete test
-suite; the existing large-chunk build warning remains.
+Browser QA selected Incineroar directly in the team builder and opened Sample
+without the Calculator. The panel presented the general-alternatives flow and the
+browser console had no application errors. Automated request coverage additionally
+supplies a configured Calculator opponent and verifies that the general snapshot
+still contains no opponent, field, matchup snapshot, or matchup candidate. The
+final automated check passed lint, TypeScript, production build, and the complete
+test suite; the existing large-chunk build warning remains.

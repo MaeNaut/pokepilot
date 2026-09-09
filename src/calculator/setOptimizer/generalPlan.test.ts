@@ -42,13 +42,20 @@ const lowKick: PokemonMove = {
   type: "fighting",
   power: 80,
 };
+const taunt: PokemonMove = {
+  ...fakeOut,
+  id: "taunt",
+  name: "Taunt",
+  category: "Status",
+  power: null,
+};
 const member: TeamMember = {
   id: "weavile",
   name: "Weavile",
   types: ["dark", "ice"],
   roles: [],
   abilities: ["Pressure"],
-  moves: [fakeOut, icePunch, protect, knockOff, lowKick],
+  moves: [fakeOut, icePunch, protect, knockOff, lowKick, taunt],
   baseStats: {
     hp: 70,
     attack: 120,
@@ -64,7 +71,22 @@ const usageSet: SmogonUsageSet = {
   sourceMonth: "2026-08",
   cutoff: 1630,
   itemName: "Focus Sash",
-  moveIds: ["protect", "knockoff", "fakeout", "icepunch"],
+  itemNames: ["Focus Sash", "Life Orb", "Clear Amulet", "Covert Cloak"],
+  itemOptions: [
+    { id: "focussash", usagePercent: 50 },
+    { id: "lifeorb", usagePercent: 25 },
+    { id: "clearamulet", usagePercent: 15 },
+    { id: "covertcloak", usagePercent: 10 },
+  ],
+  moveIds: ["fakeout", "lowkick", "knockoff", "protect", "taunt", "icepunch"],
+  moveOptions: [
+    { id: "fakeout", usagePercent: 90 },
+    { id: "lowkick", usagePercent: 70 },
+    { id: "knockoff", usagePercent: 65 },
+    { id: "protect", usagePercent: 60 },
+    { id: "taunt", usagePercent: 50 },
+    { id: "icepunch", usagePercent: 40 },
+  ],
   spreads: [
     {
       nature: "jolly",
@@ -75,6 +97,16 @@ const usageSet: SmogonUsageSet = {
       nature: "adamant",
       evs: { hp: 2, attack: 32, speed: 32 },
       usagePercent: 21.25,
+    },
+    {
+      nature: "jolly",
+      evs: { hp: 32, attack: 32, speed: 2 },
+      usagePercent: 11,
+    },
+    {
+      nature: "careful",
+      evs: { hp: 32, specialDefense: 32, speed: 2 },
+      usagePercent: 5,
     },
   ],
 };
@@ -97,33 +129,57 @@ function createContext(overrides: Partial<GeneralSetOptimizationContext> = {}) {
       showdownId: "focussash",
       name: "Focus Sash",
       effect: "At full HP, the holder survives one attack that would knock it out.",
+    }, {
+      id: "lifeorb",
+      showdownId: "lifeorb",
+      name: "Life Orb",
+      effect: "Boosts damage at the cost of recoil.",
+    }, {
+      id: "clearamulet",
+      showdownId: "clearamulet",
+      name: "Clear Amulet",
+      effect: "Prevents stat drops.",
+    }, {
+      id: "covertcloak",
+      showdownId: "covertcloak",
+      name: "Covert Cloak",
+      effect: "Blocks additional move effects.",
     }],
     ...overrides,
   } satisfies GeneralSetOptimizationContext;
 }
 
 describe("general sample recommendation candidates", () => {
-  it("keeps the current sample and observed alternatives without inventing matchup evidence", () => {
+  it("builds a bounded, diverse general pool without matchup candidates", () => {
     const plan = createGeneralSetOptimizationPlan(createContext());
 
     expect(plan).toMatchObject({ mode: "general", status: "ready", opponentId: null });
-    expect(plan.candidates.map(({ id }) => id)).toEqual([
-      "set-current",
-      "usage-standard-1",
-      "usage-standard-2",
-    ]);
-    expect(plan.candidates[1]).toMatchObject({
+    expect(plan.candidates.length).toBeGreaterThan(3);
+    expect(plan.candidates.length).toBeLessThanOrEqual(12);
+    expect(new Set(plan.candidates.map((candidate) => candidate.generalEvidence?.variant)))
+      .toEqual(new Set(["current", "standard", "spread", "item", "move"]));
+    expect(plan.candidates.every(
+      (candidate) => candidate.generalEvidence?.source !== "matchup",
+    )).toBe(true);
+    expect(plan.candidates.some((candidate) =>
+      candidate.moveChanges.some(({ optimizedMoveId }) => optimizedMoveId === "taunt"),
+    )).toBe(true);
+    expect(plan.candidates.find(({ id }) => id === "usage-standard")).toMatchObject({
       itemId: "focussash",
       generalEvidence: {
         source: "usage",
-        spreadRank: 1,
+        variant: "standard",
+        usageRank: 1,
         usagePercent: 48.5,
         reducedRoleStats: [],
       },
       offenseBenchmarks: [],
       defenseBenchmarks: [],
-      moveIds: ["fakeout", "icepunch", "protect", "knockoff"],
-      moveChanges: [],
+      moveIds: ["fakeout", "lowkick", "protect", "knockoff"],
+      moveChanges: [expect.objectContaining({
+        currentMoveId: "icepunch",
+        optimizedMoveId: "lowkick",
+      })],
     });
   });
 
@@ -137,7 +193,7 @@ describe("general sample recommendation candidates", () => {
       },
     });
     const plan = createGeneralSetOptimizationPlan(context);
-    const usage = plan.candidates.find(({ id }) => id === "usage-standard-1");
+    const usage = plan.candidates.find(({ id }) => id === "usage-standard");
 
     expect(usage).toMatchObject({
       itemId: "lifeorb",
@@ -154,7 +210,7 @@ describe("general sample recommendation candidates", () => {
       },
     });
     const plan = createGeneralSetOptimizationPlan(context);
-    const usage = plan.candidates.find(({ id }) => id === "usage-standard-1");
+    const usage = plan.candidates.find(({ id }) => id === "usage-standard");
 
     expect(usage?.moveIds).toEqual(["", "", "", ""]);
     expect(usage?.moveChanges).toEqual([]);
@@ -165,10 +221,16 @@ describe("general sample recommendation candidates", () => {
       usageSet: {
         ...usageSet,
         moveIds: ["protect", "knockoff", "fakeout", "lowkick"],
+        moveOptions: [
+          { id: "protect", usagePercent: 90 },
+          { id: "knockoff", usagePercent: 85 },
+          { id: "fakeout", usagePercent: 80 },
+          { id: "lowkick", usagePercent: 75 },
+        ],
       },
     });
     const plan = createGeneralSetOptimizationPlan(context);
-    const usage = plan.candidates.find(({ id }) => id === "usage-standard-1");
+    const usage = plan.candidates.find(({ id }) => id === "usage-standard");
 
     expect(usage?.moveIds).toEqual([
       "fakeout",
@@ -195,12 +257,33 @@ describe("general sample recommendation candidates", () => {
           name: "Focus Sash",
         },
       },
+      usageSet: {
+        ...usageSet,
+        moveIds: ["fakeout", "icepunch", "protect", "knockoff"],
+        moveOptions: [
+          { id: "fakeout", usagePercent: 90 },
+          { id: "icepunch", usagePercent: 80 },
+          { id: "protect", usagePercent: 75 },
+          { id: "knockoff", usagePercent: 70 },
+        ],
+      },
+      usageItems: [{
+        id: "focussash",
+        showdownId: "focussash",
+        name: "Focus Sash",
+        effect: "At full HP, the holder survives one attack that would knock it out.",
+      }],
     });
     const plan = createGeneralSetOptimizationPlan(context);
 
-    expect(plan.candidates.map(({ id }) => id)).toEqual([
-      "set-current",
-      "usage-standard-2",
-    ]);
+    expect(plan.candidates[0].id).toBe("set-current");
+    const keys = plan.candidates.map((candidate) => JSON.stringify([
+      candidate.natureId,
+      candidate.evs,
+      candidate.itemId,
+      candidate.moveIds,
+    ]));
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(plan.candidates.some(({ id }) => id === "usage-standard")).toBe(false);
   });
 });

@@ -4,7 +4,6 @@ import type { BattleFormat } from "../battleFormat/battleFormat";
 import { resolveUsageCalculatorItems } from "../calculator/calculatorUsageBuild";
 import type { ItemIndexEntry } from "../types";
 import type {
-  CalculatorAnalysisContext,
   GeneralSetOptimizationContext,
   SetOptimizationPlan,
 } from "../calculator/setOptimizer/types";
@@ -12,7 +11,6 @@ import type {
 type GeneralInput = Omit<GeneralSetOptimizationContext, "usageSet" | "usageItems">;
 type Result = {
   context: GeneralInput;
-  matchupContext: CalculatorAnalysisContext | null;
   battleFormat: BattleFormat;
   itemOptions: readonly ItemIndexEntry[];
   plan: SetOptimizationPlan | null;
@@ -21,7 +19,6 @@ type Result = {
 
 export function useSetOptimizationPlan(
   context: GeneralInput | null,
-  matchupContext: CalculatorAnalysisContext | null,
   battleFormat: BattleFormat,
   itemOptions: readonly ItemIndexEntry[],
   enabled: boolean,
@@ -32,7 +29,7 @@ export function useSetOptimizationPlan(
 
   useEffect(
     () => () => cancel.current?.(),
-    [active, battleFormat, context, itemOptions, matchupContext],
+    [active, battleFormat, context, itemOptions],
   );
 
   const run = useCallback((): Promise<SetOptimizationPlan | null> => {
@@ -40,7 +37,6 @@ export function useSetOptimizationPlan(
     if (!active || !context) return Promise.resolve(null);
     setResult({
       context,
-      matchupContext,
       battleFormat,
       itemOptions,
       plan: null,
@@ -56,7 +52,6 @@ export function useSetOptimizationPlan(
         if (status) {
           setResult({
             context,
-            matchupContext,
             battleFormat,
             itemOptions,
             plan,
@@ -82,26 +77,20 @@ export function useSetOptimizationPlan(
                 ...context,
                 usageSet,
                 usageItems: usageSet
-                  ? resolveUsageCalculatorItems(usageSet, itemOptions)
+                  ? resolveUsageCalculatorItems(usageSet, itemOptions, 4)
                   : [],
               },
-              matchupContext:
-                matchupContext?.player.member?.id === context.member.id &&
-                matchupContext.opponent.member
-                  ? matchupContext
-                  : null,
             });
           } catch {
             finish(null, "error");
           }
         });
     });
-  }, [active, battleFormat, context, itemOptions, matchupContext]);
+  }, [active, battleFormat, context, itemOptions]);
 
   const current =
     active &&
     result?.context === context &&
-    result.matchupContext === matchupContext &&
     result.battleFormat === battleFormat &&
     result.itemOptions === itemOptions
       ? result

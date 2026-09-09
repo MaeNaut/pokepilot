@@ -187,7 +187,6 @@ export function CopilotPanel({
   }, [buildState, selectedSlot, team]);
   const optimizationState = useSetOptimizationPlan(
     optimizationInput,
-    isCalculatorActive ? calculatorContext : null,
     battleFormat,
     itemIndex,
     scope === "optimization",

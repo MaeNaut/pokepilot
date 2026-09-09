@@ -47,7 +47,12 @@ function sampleCandidate(index: number): CopilotSetOptimizationCandidateSnapshot
     offenseBenchmarks: [{ ...benchmark, relevantStat: "attack" }],
     defenseBenchmarks: [benchmark],
     speedBenchmark: { current: { ...speed }, optimized: { ...speed } },
-    generalEvidence: { source: "matchup", roleStats: [], reducedRoleStats: [] },
+    generalEvidence: {
+      source: "matchup",
+      variant: "matchup",
+      roleStats: [],
+      reducedRoleStats: [],
+    },
   };
 }
 

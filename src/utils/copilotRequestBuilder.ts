@@ -384,6 +384,7 @@ function createCopilotOptimizationSnapshot(
           }),
       generalEvidence: candidate.generalEvidence ?? {
         source: "matchup",
+        variant: "matchup",
         roleStats: [],
         reducedRoleStats: [],
       },
@@ -1164,7 +1165,8 @@ export function createCopilotAnalysisRequest({
   const unfilteredOptimization =
     scope === "optimization" || scope === "matchup"
       ? createCopilotOptimizationSnapshot(
-          calculatorContext?.selectedSlot === selectedSlot &&
+          optimizationPlan?.mode !== "general" &&
+            calculatorContext?.selectedSlot === selectedSlot &&
             calculatorContext.player.member?.id === team[selectedSlot]?.id
             ? calculatorContext
             : null,
@@ -1193,7 +1195,7 @@ export function createCopilotAnalysisRequest({
     : unfilteredOptimization;
 
   return {
-    version: 30,
+    version: 31,
     locale,
     scope,
     battleFormat,

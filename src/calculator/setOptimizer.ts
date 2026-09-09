@@ -1,7 +1,6 @@
 export { createSetOptimizationPlan } from "./setOptimizer/plan";
 export {
   createGeneralSetOptimizationPlan,
-  mergeGeneralAndMatchupPlans,
 } from "./setOptimizer/generalPlan";
 export type {
   CalculatorAnalysisContext,

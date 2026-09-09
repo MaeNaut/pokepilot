@@ -97,6 +97,13 @@ describe("Smogon usage formats", () => {
         "Safety Goggles",
         "Leftovers",
       ],
+      itemOptions: [
+        { id: "sitrusberry", usagePercent: 50 },
+        { id: "assaultvest", usagePercent: 25 },
+        { id: "safetygoggles", usagePercent: 15 },
+        { id: "leftovers", usagePercent: 5 },
+      ],
+      moveOptions: [{ id: "fakeout", usagePercent: 90 }],
     });
   });
 

@@ -12,10 +12,17 @@ export type SmogonUsageSet = {
   ability?: string;
   itemName?: string;
   itemNames?: string[];
+  itemOptions?: SmogonUsageOption[];
   nature?: string;
   evs?: Partial<StatBlock>;
   spreads?: SmogonUsageSpread[];
   moveIds: string[];
+  moveOptions?: SmogonUsageOption[];
+};
+
+export type SmogonUsageOption = {
+  id: string;
+  usagePercent: number;
 };
 
 export type SmogonUsageSpread = {
@@ -50,7 +57,7 @@ const SMOGON_FORMAT_IDS: Record<BattleFormat, string> = {
   singles: "gen9championsbssregmb",
   doubles: "gen9championsvgc2026regmb",
 };
-const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v5";
+const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v6";
 const SMOGON_USAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 const SMOGON_MOVE_CANDIDATE_LIMIT = 8;
 const SMOGON_ITEM_CANDIDATE_LIMIT = 4;
@@ -158,8 +165,10 @@ function parsePokemonBlock(
     sourceMonth,
     cutoff,
     itemNames: [],
+    itemOptions: [],
     spreads: [],
     moveIds: [],
+    moveOptions: [],
   };
   let activeSection: string | null = null;
 
@@ -195,6 +204,10 @@ function parsePokemonBlock(
       if (!set.itemName) set.itemName = label;
       if ((set.itemNames?.length ?? 0) < SMOGON_ITEM_CANDIDATE_LIMIT) {
         set.itemNames?.push(label);
+        set.itemOptions?.push({
+          id: normalizeShowdownId(label),
+          usagePercent: percentEntry?.usagePercent ?? 0,
+        });
       }
       continue;
     }
@@ -223,7 +236,12 @@ function parsePokemonBlock(
       label !== "Nothing" &&
       set.moveIds.length < SMOGON_MOVE_CANDIDATE_LIMIT
     ) {
-      set.moveIds.push(normalizeShowdownId(label));
+      const moveId = normalizeShowdownId(label);
+      set.moveIds.push(moveId);
+      set.moveOptions?.push({
+        id: moveId,
+        usagePercent: percentEntry?.usagePercent ?? 0,
+      });
     }
   }
 

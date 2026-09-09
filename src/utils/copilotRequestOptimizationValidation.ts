@@ -140,14 +140,18 @@ function hasValidGeneralEvidence(value: unknown) {
     !isRecord(value) ||
     !hasOnlyKeys(value, [
       "source",
+      "variant",
       "sourceMonth",
       "cutoff",
-      "spreadRank",
+      "usageRank",
       "usagePercent",
       "roleStats",
       "reducedRoleStats",
     ]) ||
     !["current", "usage", "matchup"].includes(String(value.source)) ||
+    !["current", "standard", "spread", "item", "move", "matchup"].includes(
+      String(value.variant),
+    ) ||
     !isUniqueEnumArray(value.roleStats, statIdSet, 6) ||
     !isUniqueEnumArray(value.reducedRoleStats, statIdSet, 6)
   ) {
@@ -158,17 +162,21 @@ function hasValidGeneralEvidence(value: unknown) {
     return false;
   }
   if (value.source !== "usage") {
-    return !(
+    const variantMatchesSource =
+      (value.source === "current" && value.variant === "current") ||
+      (value.source === "matchup" && value.variant === "matchup");
+    return variantMatchesSource && !(
       "sourceMonth" in value ||
       "cutoff" in value ||
-      "spreadRank" in value ||
+      "usageRank" in value ||
       "usagePercent" in value
     );
   }
   return (
+    ["standard", "spread", "item", "move"].includes(String(value.variant)) &&
     isNonEmptyString(value.sourceMonth) &&
     isBoundedInteger(value.cutoff, 0, 100_000) &&
-    isBoundedInteger(value.spreadRank, 1, 20) &&
+    isBoundedInteger(value.usageRank, 1, 20) &&
     isFiniteNumber(value.usagePercent, 0, 100)
   );
 }

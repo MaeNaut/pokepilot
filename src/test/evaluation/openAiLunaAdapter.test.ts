@@ -18,7 +18,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 30,
+  version: 31,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -287,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 82,
+        promptVersion: 83,
       },
       usage: {
         totalTokens: 150,
@@ -466,126 +466,42 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(getPokePilotScopeInstructions("recommendation")).not.toContain(
       "inspect every unordered pair of filled sets",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "general sample recommendation",
+    const optimizationInstructions = getPokePilotScopeInstructions("optimization");
+    expect(optimizationInstructions).toContain("broadly useful sample");
+    expect(optimizationInstructions).toContain(
+      "without using a configured opponent or exact matchup",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "usage means it came from the observed high-usage move list",
+    expect(optimizationInstructions).toContain(
+      "independent marginal statistics rather than one observed correlated set",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "When it does not appear in moveChanges, it is calculation-only evidence",
+    expect(optimizationInstructions).toContain(
+      "candidate array order as arbitrary rather than a ranking",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "look up both move ids in optimization.moveMechanics",
+    expect(optimizationInstructions).toContain(
+      "current sample as a neutral baseline, not a preferred answer",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Infer each move's offensive and strategic responsibilities directly",
+    expect(optimizationInstructions).toContain(
+      "move changes one move slot from its baseline",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Complete a mandatory replacement audit",
+    expect(optimizationInstructions).toContain(
+      "look up both the current and proposed items",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "one observed complete loadout",
+    expect(optimizationInstructions).toContain(
+      "use candidate.moveChanges and optimization.moveMechanics",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "rather than a fixed list",
+    expect(optimizationInstructions).toContain(
+      "rather than from a manual move-role list",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "whose type, category, target, and strategic purpose overlap with it most",
+    expect(optimizationInstructions).toContain(
+      "Return one to three unique and strategically distinct supplied candidate ids",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "generic stability or unchanged-results language is insufficient",
+    expect(optimizationInstructions).toContain(
+      "Do not claim exact damage, KO, survival, or turn-order results",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "chance-based secondary effect alone is not enough",
+    expect(optimizationInstructions).not.toContain(
+      "optional exact-matchup candidates",
     );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Preserve the set's only supplied spread-target attack",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Do not discard a deterministic utility effect or STAB attack",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "do not translate them back into English competitive jargon",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).not.toContain(
-      "currentResponsibilityIds",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).not.toContain(
-      "roleLossCost",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "candidate.itemChanged states whether the held item differs",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Return one to three unique, genuinely useful",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Do not fill three slots merely because three candidates are available",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Evaluate each candidate as one complete set",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "a meaningfully higher koChance or oneHitKoChance is still a real probabilistic gain",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "minimum Stat Points that reach each supplied probability boundary",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "while also retaining alternatives that keep more of the starting investment",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "it is a comparison baseline, not a user-locked constraint",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Maximum Speed investment together with a Speed-raising nature",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "already preserves a full-HP user from a one-hit knockout",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).not.toContain(
-      "Prefer reallocating unnecessary offense",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "optimizedVsCurrent is the calculator's authoritative comparison",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "candidate.maxedStats is the exact list",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Never describe a lower defensive hit count as an improvement",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "do not establish move frequency",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "must outrank an otherwise equivalent candidate that raises it",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "A priority move alone is not evidence",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "A Speed tie is nondeterministic",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "candidate.profiles records verified outcome shapes",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "never copy an id or the English word breakpoint",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "selecting at least one from each profile is required",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "general reserve bulk",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Omit unrelated whole-team coverage",
-    );
-    expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Do not repeat any exact damage percentage, hit-count classification",
-    );
+    expect(optimizationInstructions).not.toContain("speedBenchmark");
   });
 
   it("uses one explicit output language without adding Hangul to English prompts", () => {

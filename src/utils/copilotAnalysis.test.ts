@@ -154,7 +154,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 30,
+      version: 31,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -695,7 +695,46 @@ describe("Copilot analysis", () => {
     }
   });
 
-  it("builds and validates general sample candidates without a calculator opponent", () => {
+  it("does not leak a selected calculator opponent into general sample candidates", () => {
+    const damagingMove = { ...closeCombat, category: "Physical" as const };
+    const opponent = {
+      ...member,
+      id: "unrelated-opponent",
+      name: "Unrelated Opponent",
+      moves: [damagingMove],
+    };
+    const calculatorContext: NonNullable<CreateCopilotRequestInput["calculatorContext"]> = {
+      battleFormat: "doubles",
+      selectedSlot: 0,
+      direction: "player-to-opponent",
+      player: {
+        member: { ...member, moves: [damagingMove] },
+        build: {
+          item: buildState.itemBySlot[0] ?? null,
+          ability: "Intimidate",
+          natureId: "adamant",
+          evs: buildState.evsBySlot[0],
+          moveIds: [damagingMove.id],
+        },
+        battle: createCalculatorBattleState(172),
+        moves: [damagingMove],
+        maxHp: 172,
+      },
+      opponent: {
+        member: opponent,
+        build: {
+          item: null,
+          ability: "Intimidate",
+          natureId: "hardy",
+          evs: { ...defaultEvs },
+          moveIds: [damagingMove.id],
+        },
+        battle: createCalculatorBattleState(140),
+        moves: [damagingMove],
+        maxHp: 140,
+      },
+      field: createDefaultCalculatorField("doubles"),
+    };
     const plan = optimizer.createGeneralSetOptimizationPlan({
       selectedSlot: 0,
       member,
@@ -719,7 +758,7 @@ describe("Copilot analysis", () => {
       buildState,
       diagnostics,
       validity,
-      calculatorContext: null,
+      calculatorContext,
       optimizationPlan: plan,
     });
 
@@ -730,10 +769,11 @@ describe("Copilot analysis", () => {
       opponentDisplayName: null,
       field: null,
     });
+    expect(request.matchup).toBeNull();
     expect(request.optimization?.candidates).toHaveLength(1);
     expect(request.optimization?.candidates[0]).toMatchObject({
       id: "set-current",
-      generalEvidence: { source: "current" },
+      generalEvidence: { source: "current", variant: "current" },
     });
     expect(request.optimization?.candidates[0].speedBenchmark).toBeUndefined();
     const validation = validateCopilotAnalysisRequest(request);
