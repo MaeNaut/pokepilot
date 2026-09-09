@@ -16,6 +16,7 @@ import type {
   TeamMatchupPlan,
   TeamMatchupResponseTier,
 } from "../calculator/teamMatchup";
+import type { MetaThreatAnalysisPlan } from "../calculator/metaThreatAnalysis";
 import type { TeamConceptId } from "../data/teamConcepts";
 import type { Locale } from "../i18n/gameTranslations";
 import type {
@@ -317,32 +318,84 @@ export type CopilotMatchupMemberSnapshot = {
   speed: SetOptimizationSpeedState;
 };
 
-export type CopilotMatchupSnapshot = {
-  opponent: {
-    pokemonId: string;
-    displayName: string;
-    types: PokemonType[];
-    typeDisplayNames: string[];
-    itemId: string | null;
-    itemDisplayName: string | null;
-    itemEffect: string | null;
-    abilityId: string | null;
-    abilityDisplayName: string | null;
-    abilityEffect: string | null;
-    natureId: string;
-    natureDisplayName: string;
-    evs: StatBlock;
-    finalStats: StatBlock;
-    selectedMoveIds: string[];
-    moves: CopilotOptimizationMoveMechanicSnapshot[];
-  };
+export type CopilotMatchupOpponentSnapshot = {
+  pokemonId: string;
+  displayName: string;
+  types: PokemonType[];
+  typeDisplayNames: string[];
+  itemId: string | null;
+  itemDisplayName: string | null;
+  itemEffect: string | null;
+  abilityId: string | null;
+  abilityDisplayName: string | null;
+  abilityEffect: string | null;
+  natureId: string;
+  natureDisplayName: string;
+  evs: StatBlock;
+  finalStats: StatBlock;
+  selectedMoveIds: string[];
+  moves: CopilotOptimizationMoveMechanicSnapshot[];
+};
+
+export type CopilotExactMatchupSnapshot = {
+  mode: "exact";
+  opponent: CopilotMatchupOpponentSnapshot;
   field: CalculatorAnalysisContext["field"];
   teamBaseline: "full-hp-neutral-stages";
   members: CopilotMatchupMemberSnapshot[];
 };
 
+export type CopilotMetaThreatSnapshot = {
+  usageRank: number;
+  opponent: Omit<CopilotMatchupOpponentSnapshot, "selectedMoveIds">;
+  field: Pick<
+    CalculatorAnalysisContext["field"],
+    "weather" | "terrain" | "room" | "gameType"
+  >;
+  testedMemberCount: number;
+  answerCount: number;
+  checkCount: number;
+  fastPressureCount: number;
+  oneHitThreatCount: number;
+  hardToBreakCount: number;
+  members: CopilotMetaMatchupMemberSnapshot[];
+};
+
+export type CopilotMetaMatchupOutcomeSnapshot = Pick<
+  SetOptimizationBenchmark,
+  "minPercent" | "maxPercent" | "possibleKoHits" | "guaranteedKoHits"
+>;
+
+export type CopilotMetaMatchupMoveBenchmarkSnapshot = Omit<
+  CopilotMatchupMoveBenchmarkSnapshot,
+  "result"
+> & {
+  outcome: CopilotMetaMatchupOutcomeSnapshot;
+};
+
+export type CopilotMetaMatchupMemberSnapshot = Omit<
+  CopilotMatchupMemberSnapshot,
+  "roleIds" | "offenseBenchmarks" | "defenseBenchmarks"
+> & {
+  offenseBenchmarks: CopilotMetaMatchupMoveBenchmarkSnapshot[];
+  defenseBenchmarks: CopilotMetaMatchupMoveBenchmarkSnapshot[];
+};
+
+export type CopilotMetaMatchupSnapshot = {
+  mode: "meta";
+  sourceMonth: string;
+  cutoff: number;
+  evaluatedThreatCount: number;
+  teamBaseline: "full-hp-neutral-stages";
+  threats: CopilotMetaThreatSnapshot[];
+};
+
+export type CopilotMatchupSnapshot =
+  | CopilotExactMatchupSnapshot
+  | CopilotMetaMatchupSnapshot;
+
 export type CopilotAnalysisRequest = {
-  version: 32;
+  version: 33;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -394,4 +447,5 @@ export type CreateCopilotRequestInput = {
   // Undefined keeps the synchronous path for evaluation scripts; null skips search.
   optimizationPlan?: SetOptimizationPlan | null;
   matchupPlan?: TeamMatchupPlan | null;
+  threatPlan?: MetaThreatAnalysisPlan | null;
 };

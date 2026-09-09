@@ -726,7 +726,7 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 32) errors.push("version must be 32.");
+  if (value.version !== 33) errors.push("version must be 33.");
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
@@ -951,7 +951,7 @@ export function validateCopilotAnalysisRequest(
     value.matchup !== null &&
     !hasValidMatchupShape(value.matchup)
   ) {
-    errors.push("matchup must match the exact team matchup contract.");
+    errors.push("matchup must match the verified exact or meta threat contract.");
   }
   if (value.scope === "matchup" && !hasValidMatchupShape(value.matchup)) {
     errors.push("matchup scope requires verified team matchup evidence.");
@@ -991,7 +991,12 @@ export function validateCopilotAnalysisRequest(
   if (
     (value.scope === "optimization" || value.scope === "matchup") &&
     isRecord(value.optimization) &&
-    value.optimization.slotIndex !== value.selectedSlot
+    value.optimization.slotIndex !== value.selectedSlot &&
+    !(
+      value.scope === "matchup" &&
+      isRecord(value.matchup) &&
+      value.matchup.mode === "meta"
+    )
   ) {
     errors.push("optimization slotIndex must match selectedSlot.");
   }
@@ -1011,13 +1016,6 @@ export function validateCopilotAnalysisRequest(
     }
   }
   if (value.scope === "matchup" && isRecord(value.matchup)) {
-    const matchupField = isRecord(value.matchup.field)
-      ? value.matchup.field
-      : null;
-    if (matchupField?.gameType !== value.battleFormat) {
-      errors.push("matchup field gameType must match battleFormat.");
-    }
-
     const setBySlot = new Map(
       Array.isArray(value.sets)
         ? value.sets.flatMap((set) =>
@@ -1027,11 +1025,24 @@ export function validateCopilotAnalysisRequest(
           )
         : [],
     );
-    const matchupMembers = Array.isArray(value.matchup.members)
-      ? value.matchup.members
-      : [];
-    if (
-      matchupMembers.some((member) => {
+    const matchupEntries = value.matchup.mode === "meta" &&
+      Array.isArray(value.matchup.threats)
+      ? value.matchup.threats.filter(isRecord)
+      : [value.matchup];
+
+    for (const matchupEntry of matchupEntries) {
+      const matchupField = isRecord(matchupEntry.field)
+        ? matchupEntry.field
+        : null;
+      if (matchupField?.gameType !== value.battleFormat) {
+        errors.push("matchup field gameType must match battleFormat.");
+        break;
+      }
+
+      const matchupMembers = Array.isArray(matchupEntry.members)
+        ? matchupEntry.members
+        : [];
+      if (matchupMembers.some((member) => {
         if (!isRecord(member)) return true;
         const set = setBySlot.get(member.slotIndex);
         if (!set) return true;
@@ -1042,16 +1053,56 @@ export function validateCopilotAnalysisRequest(
         return member.state !== "mega" ||
           !isRecord(set.megaEvolution) ||
           set.megaEvolution.pokemonId !== member.pokemonId;
-      })
-    ) {
-      errors.push("matchup members must match the supplied team sets.");
+      })) {
+        errors.push("matchup members must match the supplied team sets.");
+        break;
+      }
     }
+
     if (
+      value.matchup.mode === "exact" &&
       isRecord(value.optimization) &&
       isRecord(value.matchup.opponent) &&
       value.optimization.opponentPokemonId !== value.matchup.opponent.pokemonId
     ) {
       errors.push("optimization and matchup must use the same opponent.");
+    }
+    if (value.matchup.mode === "meta" && isRecord(value.optimization)) {
+      const optimization = value.optimization;
+      const optimizationOpponentId =
+        typeof optimization.opponentPokemonId === "string"
+        ? normalizeShowdownId(optimization.opponentPokemonId)
+        : "";
+      const optimizationPlayerId =
+        typeof optimization.playerPokemonId === "string"
+        ? normalizeShowdownId(optimization.playerPokemonId)
+        : "";
+      const matchingThreat = Array.isArray(value.matchup.threats)
+        ? value.matchup.threats.find(
+            (threat) =>
+              isRecord(threat) &&
+              isRecord(threat.opponent) &&
+              typeof threat.opponent.pokemonId === "string" &&
+              normalizeShowdownId(threat.opponent.pokemonId) ===
+                optimizationOpponentId,
+          )
+        : undefined;
+      const matchingMember =
+        isRecord(matchingThreat) && Array.isArray(matchingThreat.members)
+          ? matchingThreat.members.find(
+              (member) =>
+                isRecord(member) &&
+                member.slotIndex === optimization.slotIndex &&
+                typeof member.pokemonId === "string" &&
+                normalizeShowdownId(member.pokemonId) === optimizationPlayerId,
+            )
+          : undefined;
+
+      if (!matchingThreat || !matchingMember) {
+        errors.push(
+          "meta matchup optimization must target a retained member of the same threat.",
+        );
+      }
     }
   }
 

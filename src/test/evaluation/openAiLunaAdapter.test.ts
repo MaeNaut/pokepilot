@@ -18,7 +18,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 32,
+  version: 33,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -287,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 84,
+        promptVersion: 88,
       },
       usage: {
         totalTokens: 150,

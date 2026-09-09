@@ -461,8 +461,9 @@ export function Calculator({
     selectedMember,
   ]);
 
-  const analysisContext = useMemo<CalculatorAnalysisContext>(
+  const analysisContext = useMemo<CalculatorAnalysisContext | null>(
     () => {
+      if (!onAnalysisContextChange) return null;
       const createMegaEvolution = (
         member: TeamMember | null,
         build: CalculatorBuildValues,
@@ -556,11 +557,12 @@ export function Calculator({
       team,
       buildState,
       candidateMoveIndex,
+      onAnalysisContextChange,
     ],
   );
 
   useEffect(() => {
-    onAnalysisContextChange?.(analysisContext);
+    if (analysisContext) onAnalysisContextChange?.(analysisContext);
   }, [analysisContext, onAnalysisContextChange]);
 
   const opponentItemOptions = useMemo(() => {

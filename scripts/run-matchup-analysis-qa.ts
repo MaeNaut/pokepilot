@@ -416,13 +416,16 @@ async function createRequest(
     optimizationPlan: plans.optimizationPlan,
     matchupPlan: plans.matchupPlan,
   });
+  const exactMatchup = request.matchup?.mode === "exact"
+    ? request.matchup
+    : null;
   const validation = validateCopilotAnalysisRequest(request);
   if (!validation.success) {
     throw new Error(
       `${qaCase.id} request invalid: ${validation.errors.join(" ")}\n` +
       JSON.stringify({
         megaOptions: request.megaOptions,
-        matchupMembers: request.matchup?.members.map((member) => ({
+        matchupMembers: exactMatchup?.members.map((member) => ({
           slotIndex: member.slotIndex,
           pokemonId: member.pokemonId,
           state: member.state,
@@ -462,13 +465,16 @@ async function main() {
     if (prepareOnly) {
       for (const qaCase of selectedCases) {
         const request = await createRequest(qaCase, resources);
+        const exactMatchup = request.matchup?.mode === "exact"
+          ? request.matchup
+          : null;
         console.log(JSON.stringify({
           id: qaCase.id,
-          opponent: request.matchup?.opponent.displayName,
+          opponent: exactMatchup?.opponent.displayName,
           optimizationCandidates: request.optimization?.candidates.map(
             ({ id }) => id,
           ) ?? [],
-          members: request.matchup?.members.map((member) => ({
+          members: exactMatchup?.members.map((member) => ({
             pokemon: member.displayName,
             tier: member.responseTier,
             moves: member.offenseBenchmarks.map((benchmark) => ({

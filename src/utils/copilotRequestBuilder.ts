@@ -49,12 +49,15 @@ import {
   type SetOptimizationPlan,
 } from "../calculator/setOptimizer";
 import type { TeamMatchupPlan } from "../calculator/teamMatchup";
+import type { MetaThreatAnalysisPlan } from "../calculator/metaThreatAnalysis";
 import { projectCalculatorSideToMega } from "../calculator/megaProjection";
 import type {
   CopilotAnalysisRequest,
   CopilotCandidateFilterSnapshot,
+  CopilotExactMatchupSnapshot,
   CopilotMegaEvolutionSnapshot,
   CopilotMegaOptionSnapshot,
+  CopilotMetaMatchupSnapshot,
   CopilotMatchupSnapshot,
   CopilotMoveCategory,
   CopilotMoveSnapshot,
@@ -392,14 +395,14 @@ function createCopilotOptimizationSnapshot(
   };
 }
 
-function createCopilotMatchupSnapshot(
+function createCopilotExactMatchupSnapshot(
   context: CalculatorAnalysisContext | null | undefined,
   plan: TeamMatchupPlan | null | undefined,
   locale: Locale,
   pokemonIndex: PokemonIndexEntry[],
   sets: CopilotSetSnapshot[],
   abilityById: Map<string, PokemonAbility>,
-): CopilotMatchupSnapshot | null {
+): CopilotExactMatchupSnapshot | null {
   const opponent = context?.opponent.member;
   if (!context || !opponent?.baseStats || !plan || plan.status !== "ready") {
     return null;
@@ -439,6 +442,7 @@ function createCopilotMatchupSnapshot(
   const setBySlot = new Map(sets.map((set) => [set.slotIndex, set]));
 
   return {
+    mode: "exact",
     opponent: {
       pokemonId: opponent.id,
       displayName: getOptimizationPokemonDisplayName(
@@ -539,15 +543,123 @@ function createCopilotMatchupSnapshot(
   };
 }
 
+function createCopilotMetaMatchupSnapshot(
+  plan: MetaThreatAnalysisPlan | null | undefined,
+  locale: Locale,
+  pokemonIndex: PokemonIndexEntry[],
+  sets: CopilotSetSnapshot[],
+  abilityById: Map<string, PokemonAbility>,
+): CopilotMetaMatchupSnapshot | null {
+  if (!plan || plan.status !== "ready") return null;
+
+  const threats = plan.threats.flatMap((threat) => {
+    const exact = createCopilotExactMatchupSnapshot(
+      threat.context,
+      threat.matchup,
+      locale,
+      pokemonIndex,
+      sets,
+      abilityById,
+    );
+    if (!exact) return [];
+
+    const compactBenchmark = (
+      benchmark: (typeof exact.members)[number]["offenseBenchmarks"][number],
+    ) => ({
+      moveId: benchmark.moveId,
+      moveDisplayName: benchmark.moveDisplayName,
+      moveCategory: benchmark.moveCategory,
+      source: benchmark.source,
+      requiresRecharge: benchmark.requiresRecharge,
+      possibleActionTurns: benchmark.possibleActionTurns,
+      guaranteedActionTurns: benchmark.guaranteedActionTurns,
+      outcome: {
+        minPercent: benchmark.result.minPercent,
+        maxPercent: benchmark.result.maxPercent,
+        possibleKoHits: benchmark.result.possibleKoHits,
+        guaranteedKoHits: benchmark.result.guaranteedKoHits,
+      },
+      ...(benchmark.persistentSequence
+        ? { persistentSequence: benchmark.persistentSequence }
+        : {}),
+    });
+    const { selectedMoveIds: _selectedMoveIds, ...opponent } = exact.opponent;
+    void _selectedMoveIds;
+    const retainedMemberCount = threat.riskSignals.answerCount === 0 ? 3 : 2;
+    const members = exact.members.slice(0, retainedMemberCount).map((member) => ({
+      slotIndex: member.slotIndex,
+      pokemonId: member.pokemonId,
+      displayName: member.displayName,
+      state: member.state,
+      responseTier: member.responseTier,
+      offenseBenchmarks: member.offenseBenchmarks
+        .slice(0, 2)
+        .map(compactBenchmark),
+      defenseBenchmarks: member.defenseBenchmarks
+        .slice(0, 2)
+        .map(compactBenchmark),
+      speed: member.speed,
+    }));
+    const retainedOpponentMoveIds = new Set(
+      members.flatMap((member) =>
+        member.defenseBenchmarks.map((benchmark) => benchmark.moveId),
+      ),
+    );
+
+    return [{
+      usageRank: threat.usageRank,
+      opponent: {
+        ...opponent,
+        moves: opponent.moves.filter((move) =>
+          retainedOpponentMoveIds.has(move.id),
+        ),
+      },
+      field: {
+        weather: exact.field.weather,
+        terrain: exact.field.terrain,
+        room: exact.field.room,
+        gameType: exact.field.gameType,
+      },
+      testedMemberCount: threat.matchup.members.length,
+      answerCount: threat.riskSignals.answerCount,
+      checkCount: threat.riskSignals.checkCount,
+      fastPressureCount: threat.riskSignals.fastPressureCount,
+      oneHitThreatCount: threat.riskSignals.oneHitThreatCount,
+      hardToBreakCount: threat.riskSignals.hardToBreakCount,
+      members,
+    }];
+  });
+
+  if (threats.length === 0) return null;
+  return {
+    mode: "meta",
+    sourceMonth: plan.sourceMonth,
+    cutoff: plan.cutoff,
+    evaluatedThreatCount: plan.evaluatedThreatCount,
+    teamBaseline: "full-hp-neutral-stages",
+    threats,
+  };
+}
+
 function filterPersistentMatchupOptimization(
   optimization: CopilotSetOptimizationSnapshot | null,
   matchup: CopilotMatchupSnapshot | null,
 ) {
   if (!optimization || !matchup) return optimization;
 
-  const selectedMember = matchup.members.find(
-    ({ slotIndex }) => slotIndex === optimization.slotIndex,
-  );
+  const selectedMember = matchup.mode === "exact"
+    ? matchup.members.find(
+        ({ slotIndex }) => slotIndex === optimization.slotIndex,
+      )
+    : matchup.threats
+        .find(
+          ({ opponent }) =>
+            normalizeShowdownId(opponent.pokemonId) ===
+            normalizeShowdownId(optimization.opponentPokemonId ?? ""),
+        )
+        ?.members.find(
+          ({ slotIndex }) => slotIndex === optimization.slotIndex,
+        );
   const persistentMoveIds = new Set(
     selectedMember?.offenseBenchmarks.flatMap((benchmark) =>
       benchmark.persistentSequence ? [benchmark.moveId] : [],
@@ -564,7 +676,15 @@ function filterPersistentMatchupOptimization(
     ),
   );
 
-  return candidates.length > 0 ? { ...optimization, candidates } : null;
+  if (matchup.mode === "exact") {
+    return candidates.length > 0 ? { ...optimization, candidates } : null;
+  }
+  const changedCandidates = candidates.filter(
+    (candidate) => candidate.id !== "set-current",
+  );
+  return changedCandidates.length > 0
+    ? { ...optimization, candidates: changedCandidates.slice(0, 3) }
+    : null;
 }
 
 export function formatList(values: string[], locale: Locale) {
@@ -979,6 +1099,7 @@ export function createCopilotAnalysisRequest({
   calculatorContext,
   optimizationPlan,
   matchupPlan,
+  threatPlan,
 }: CreateCopilotRequestInput): CopilotAnalysisRequest {
   const mechanicsSets: CopilotMechanicsSetInput[] = [];
   const responsibilityGroups: CopilotResponsibilityId[][] = [];
@@ -1153,33 +1274,48 @@ export function createCopilotAnalysisRequest({
   );
 
   const matchup = scope === "matchup"
-    ? createCopilotMatchupSnapshot(
-        calculatorContext,
-        matchupPlan,
+    ? createCopilotMetaMatchupSnapshot(
+        threatPlan,
         locale,
         pokemonIndex,
         sets,
         abilityById,
-      )
+      ) ?? createCopilotExactMatchupSnapshot(
+          calculatorContext,
+          matchupPlan,
+          locale,
+          pokemonIndex,
+          sets,
+          abilityById,
+        )
     : null;
+  const metaOptimizationContext =
+    scope === "matchup" && threatPlan?.status === "ready"
+      ? threatPlan.optimizationContext
+      : null;
+  const preparedOptimizationPlan =
+    scope === "matchup" && threatPlan?.status === "ready"
+      ? threatPlan.optimizationPlan
+      : optimizationPlan;
+  const preparedOptimizationContext = metaOptimizationContext ?? calculatorContext;
+  const optimizationSlot = preparedOptimizationPlan?.slotIndex ?? selectedSlot;
   const unfilteredOptimization =
     scope === "optimization" || scope === "matchup"
       ? createCopilotOptimizationSnapshot(
-          optimizationPlan?.mode !== "general" &&
-            calculatorContext?.selectedSlot === selectedSlot &&
-            calculatorContext.player.member?.id === team[selectedSlot]?.id
-            ? calculatorContext
+          preparedOptimizationPlan?.mode !== "general" &&
+            preparedOptimizationContext?.selectedSlot === optimizationSlot
+            ? preparedOptimizationContext
             : null,
           locale,
           pokemonIndex,
-          optimizationPlan,
+          preparedOptimizationPlan,
           {
-            member: team[selectedSlot],
-            item: buildState.itemBySlot[selectedSlot] ?? null,
-            natureId: buildState.natureBySlot[selectedSlot] ?? "hardy",
-            evs: buildState.evsBySlot[selectedSlot] ?? defaultEvs,
+            member: team[optimizationSlot],
+            item: buildState.itemBySlot[optimizationSlot] ?? null,
+            natureId: buildState.natureBySlot[optimizationSlot] ?? "hardy",
+            evs: buildState.evsBySlot[optimizationSlot] ?? defaultEvs,
             moveIds: [
-              ...(sets.find((set) => set.slotIndex === selectedSlot)?.moves.map(
+              ...(sets.find((set) => set.slotIndex === optimizationSlot)?.moves.map(
                 (move) => move.id,
               ) ?? []),
               "",
@@ -1195,7 +1331,7 @@ export function createCopilotAnalysisRequest({
     : unfilteredOptimization;
 
   return {
-    version: 32,
+    version: 33,
     locale,
     scope,
     battleFormat,

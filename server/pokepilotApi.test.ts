@@ -9,7 +9,7 @@ import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 32,
+  version: 33,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -352,7 +352,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 84,
+        promptVersion: 88,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

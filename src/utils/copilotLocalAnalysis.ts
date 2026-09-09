@@ -18,6 +18,8 @@ import type { ValidityIssue } from "./teamValidity";
 import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
+  CopilotMatchupMemberSnapshot,
+  CopilotMetaMatchupMemberSnapshot,
   CopilotRecommendation,
   CopilotSetOptimizationCandidateSnapshot,
 } from "./copilotContracts";
@@ -718,6 +720,26 @@ function formatLocalOptimizationReason(
   return change ? `${base} ${change}` : base;
 }
 
+function isSafeLocalMetaOptimizationCandidate(
+  candidate: CopilotSetOptimizationCandidateSnapshot,
+) {
+  const speed = candidate.speedBenchmark;
+  if (
+    speed?.current.relation === "faster" &&
+    speed.optimized.relation !== "faster"
+  ) {
+    return false;
+  }
+
+  return [
+    ...candidate.offenseBenchmarks,
+    ...candidate.defenseBenchmarks,
+  ].some(({ optimizedVsCurrent }) => optimizedVsCurrent === "better") ||
+    (speed !== undefined &&
+      speed.current.relation !== "faster" &&
+      speed.optimized.relation === "faster");
+}
+
 function formatCurrentSampleReason(candidate: CopilotSetOptimizationCandidateSnapshot, locale: Locale) {
   if (candidate.generalEvidence?.source === "current") {
     return locale === "ko"
@@ -810,7 +832,7 @@ function analyzeOptimizationRequest(
 }
 
 function describeMatchupMember(
-  member: NonNullable<CopilotAnalysisRequest["matchup"]>["members"][number],
+  member: CopilotMatchupMemberSnapshot | CopilotMetaMatchupMemberSnapshot,
   locale: Locale,
 ) {
   const offense = member.offenseBenchmarks[0];
@@ -832,6 +854,11 @@ function describeMatchupMember(
     : null;
   const persistentSequence = offense?.persistentSequence;
   const persistentHits = persistentSequence?.guaranteedKoHits;
+  const defenseOutcome = defense
+    ? "outcome" in defense
+      ? defense.outcome
+      : defense.result
+    : null;
   const persistentNote = persistentSequence
     ? locale === "ko"
       ? persistentSequence.boostAffectedDamage
@@ -847,7 +874,7 @@ function describeMatchupMember(
       offense
         ? `${offenseName}(으)로 실질적인 반격이 가능합니다.`
         : "확인된 공격 기술만으로는 직접 압박하기 어렵습니다.",
-      defense && (defense.result.possibleKoHits ?? 0) >= 2
+      defense && (defenseOutcome?.possibleKoHits ?? 0) >= 2
         ? `${defenseName}을 한 번 견딜 수 있습니다.`
         : defense
           ? `${defenseName}을 직접 받아내기는 불안정합니다.`
@@ -862,7 +889,7 @@ function describeMatchupMember(
     offense
       ? `${offenseName} provides its clearest verified pressure.`
       : "The selected attacks do not provide direct verified pressure.",
-    defense && (defense.result.possibleKoHits ?? 0) >= 2
+    defense && (defenseOutcome?.possibleKoHits ?? 0) >= 2
       ? `It can survive one ${defenseName}.`
       : defense
         ? `Switching directly into ${defenseName} is unreliable.`
@@ -894,6 +921,89 @@ function analyzeMatchupRequest(
           : "Configure an opponent and attacking moves in the calculator before running this analysis.",
       ],
       recommendations: [],
+    };
+  }
+
+  if (matchup.mode === "meta") {
+    const primaryThreat = matchup.threats[0];
+    const threatNames = matchup.threats.map(
+      (threat) => threat.opponent.displayName,
+    );
+    const optimizationCandidate = request.optimization?.candidates.find(
+      isSafeLocalMetaOptimizationCandidate,
+    );
+    const recommendations = matchup.threats.slice(0, 3).map((threat) => {
+      const answer = threat.members.find(
+        (member) => member.responseTier === "answer",
+      );
+      const check = threat.members.find(
+        (member) => member.responseTier === "check",
+      );
+      const response = answer ?? check;
+      const isOptimizationThreat = Boolean(
+        optimizationCandidate &&
+        request.optimization?.opponentPokemonId === threat.opponent.pokemonId &&
+        threat.answerCount === 0,
+      );
+      if (isOptimizationThreat && optimizationCandidate) {
+        const addedMove = optimizationCandidate.moveChanges[0]
+          ?.optimizedMoveDisplayName;
+        return {
+          id: optimizationCandidate.id,
+          title: isKorean
+            ? addedMove
+              ? `${addedMove}을 포함한 ${optimizationCandidate.natureDisplayName} 조정 샘플을 검토해 보세요.`
+              : `${optimizationCandidate.natureDisplayName} 조정 샘플을 검토해 보세요.`
+            : addedMove
+              ? `Consider the ${optimizationCandidate.natureDisplayName} tuned sample with ${addedMove}.`
+              : `Consider the ${optimizationCandidate.natureDisplayName} tuned sample.`,
+          reason: formatLocalOptimizationReason(optimizationCandidate, locale),
+          priority: "high" as const,
+        };
+      }
+      if (!response) {
+        return {
+          id: `review-roster-${threat.opponent.pokemonId}`,
+          title: isKorean
+            ? `${threat.opponent.displayName} 대응책을 보강하는 편이 좋습니다.`
+            : `Strengthen the roster's answer to ${threat.opponent.displayName}.`,
+          reason: isKorean
+            ? `현재 샘플을 기준으로 확실한 대응이나 조건부 견제가 확인되지 않았으므로, 역할을 유지하면서 기술이나 포켓몬 구성을 다시 검토할 필요가 있습니다.`
+            : `The current samples provide neither a verified answer nor a conditional check, so review a move or roster change that preserves the team's core roles.`,
+          priority: "high" as const,
+        };
+      }
+
+      return {
+        id: `use-slot-${response.slotIndex}-${threat.opponent.pokemonId}`,
+        title: isKorean
+          ? `${threat.opponent.displayName} 상대로 ${response.displayName}을 중심으로 대응해 보세요.`
+          : `Use ${response.displayName} as the main response to ${threat.opponent.displayName}.`,
+        reason: describeMatchupMember(response, locale),
+        priority: answer ? "high" as const : "medium" as const,
+      };
+    });
+
+    return {
+      version: 2,
+      source: "local",
+      scope: "matchup",
+      title: isKorean
+        ? `${request.teamName}의 메타 위협 분석`
+        : `${request.teamName} meta threat analysis`,
+      paragraphs: [
+        primaryThreat
+          ? isKorean
+            ? `${matchup.evaluatedThreatCount}마리의 메타 후보를 비교했으며, 현재 팀에서는 ${primaryThreat.opponent.displayName}을 가장 먼저 점검할 필요가 있습니다.`
+            : `${matchup.evaluatedThreatCount} metagame candidates were compared, with ${primaryThreat.opponent.displayName} standing out as the first threat to address.`
+          : isKorean
+            ? "현재 데이터에서 우선할 메타 위협을 찾지 못했습니다."
+            : "No priority metagame threat was identified from the available data.",
+        isKorean
+          ? `상위 점검 대상은 ${threatNames.join(", ")}이며, 모든 결과는 대표 사용률 샘플과 체력이 가득 찬 중립 랭크 상태를 기준으로 계산했습니다.`
+          : `The leading checks are ${threatNames.join(", ")}; every result uses representative usage sets at full HP and neutral stat stages.`,
+      ],
+      recommendations,
     };
   }
 

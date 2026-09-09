@@ -154,7 +154,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 32,
+      version: 33,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -419,6 +419,7 @@ describe("Copilot analysis", () => {
       matchupPlan,
     });
     expect(matchupRequest.matchup).toMatchObject({
+      mode: "exact",
       opponent: {
         pokemonId: "test-opponent",
         selectedMoveIds: [damagingMove.id],
@@ -435,13 +436,111 @@ describe("Copilot analysis", () => {
     expect(validateCopilotAnalysisRequest(matchupRequest)).toMatchObject({
       success: true,
     });
+    const exactMatchup = matchupRequest.matchup?.mode === "exact"
+      ? matchupRequest.matchup
+      : null;
     expect(
-      matchupRequest.matchup?.members[0]?.offenseBenchmarks[0],
+      exactMatchup?.members[0]?.offenseBenchmarks[0],
     ).toEqual(expect.objectContaining({
       requiresRecharge: false,
       possibleActionTurns: expect.any(Number),
       guaranteedActionTurns: expect.any(Number),
     }));
+
+    if (matchupPlan.status === "ready") {
+      const metaRequest = createCopilotAnalysisRequest({
+        ...input,
+        scope: "matchup",
+        optimizationPlan: null,
+        threatPlan: {
+          status: "ready",
+          sourceMonth: "2026-08",
+          cutoff: 1630,
+          evaluatedThreatCount: 40,
+          optimizationContext: null,
+          optimizationPlan: null,
+          threats: [{
+            usageRank: 12,
+            sourceMonth: "2026-08",
+            cutoff: 1630,
+            context: input.calculatorContext!,
+            matchup: matchupPlan,
+            riskSignals: {
+              answerCount: 1,
+              checkCount: 0,
+              fastPressureCount: 0,
+              oneHitThreatCount: 0,
+              hardToBreakCount: 0,
+            },
+          }],
+        },
+      });
+
+      expect(metaRequest.matchup).toMatchObject({
+        mode: "meta",
+        sourceMonth: "2026-08",
+        cutoff: 1630,
+        evaluatedThreatCount: 40,
+        threats: [{
+          usageRank: 12,
+          testedMemberCount: 1,
+          answerCount: 1,
+          opponent: { pokemonId: "test-opponent" },
+        }],
+      });
+      expect(validateCopilotAnalysisRequest(metaRequest)).toMatchObject({
+        success: true,
+      });
+      expect(createLocalCopilotAnalysis(metaRequest)).toMatchObject({
+        scope: "matchup",
+        title: "Test Team meta threat analysis",
+        recommendations: expect.any(Array),
+      });
+
+      const metaOptimizationRequest = createCopilotAnalysisRequest({
+        ...input,
+        selectedSlot: 1,
+        scope: "matchup",
+        optimizationPlan: null,
+        threatPlan: {
+          status: "ready",
+          sourceMonth: "2026-08",
+          cutoff: 1630,
+          evaluatedThreatCount: 40,
+          optimizationContext: input.calculatorContext!,
+          optimizationPlan: preparedPlan,
+          threats: [{
+            usageRank: 12,
+            sourceMonth: "2026-08",
+            cutoff: 1630,
+            context: input.calculatorContext!,
+            matchup: matchupPlan,
+            riskSignals: {
+              answerCount: 0,
+              checkCount: 1,
+              fastPressureCount: 0,
+              oneHitThreatCount: 0,
+              hardToBreakCount: 1,
+            },
+          }],
+        },
+      });
+      expect(metaOptimizationRequest.optimization).toMatchObject({
+        slotIndex: 0,
+        opponentPokemonId: "test-opponent",
+      });
+      expect(validateCopilotAnalysisRequest(metaOptimizationRequest)).toMatchObject({
+        success: true,
+      });
+      const changedCandidate = metaOptimizationRequest.optimization?.candidates.find(
+        (candidate) => candidate.id !== "set-current",
+      );
+      expect(changedCandidate).toBeDefined();
+      expect(
+        createLocalCopilotAnalysis(metaOptimizationRequest).recommendations
+          .map(({ id }) => id),
+      ).toContain(changedCandidate?.id);
+    }
 
     if (matchupPlan.status === "ready") {
       const persistentPlan = structuredClone(matchupPlan);
@@ -495,7 +594,9 @@ describe("Copilot analysis", () => {
 
     const persistentMatchupRequest = structuredClone(matchupRequest);
     const persistentBenchmark =
-      persistentMatchupRequest.matchup?.members[0]?.offenseBenchmarks[0];
+      persistentMatchupRequest.matchup?.mode === "exact"
+        ? persistentMatchupRequest.matchup.members[0]?.offenseBenchmarks[0]
+        : undefined;
     if (persistentBenchmark) {
       persistentBenchmark.persistentSequence = {
         triggerAbilityId: "stamina",
@@ -528,7 +629,7 @@ describe("Copilot analysis", () => {
       recommendations: expect.any(Array),
     });
     const mismatchedMatchup = structuredClone(matchupRequest);
-    if (mismatchedMatchup.matchup) {
+    if (mismatchedMatchup.matchup?.mode === "exact") {
       mismatchedMatchup.matchup.members[0].pokemonId = "wrong-pokemon";
     }
     expect(validateCopilotAnalysisRequest(mismatchedMatchup)).toMatchObject({

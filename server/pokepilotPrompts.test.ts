@@ -5,20 +5,22 @@ import {
 } from "./pokepilotPrompts";
 
 describe("PokePilot matchup prompt", () => {
-  it("requires persistent-defense and conditional-power checks", () => {
+  it("requires bounded meta-threat and persistent-mechanics checks", () => {
     const instructions = getPokePilotScopeInstructions("matchup");
 
     expect(instructions).toContain("persistentSequence");
     expect(instructions).toContain("first paragraph and first recommendation");
     expect(instructions).toContain("ignores the target's defensive stat changes");
     expect(instructions).toContain("Audit conditional power");
-    expect(instructions).toContain("selectedMoveIds is empty");
     expect(instructions).toContain("guaranteedActionTurns");
-    expect(instructions).toContain("If every member is limited");
-    expect(instructions).toContain("does not block damaging moves");
-    expect(instructions).toContain("never expose them");
-    expect(instructions).toContain("Every matchup member has a state");
-    expect(instructions).toContain("mutually exclusive Mega option");
+    expect(instructions).toContain("representative aggregate usage profile");
+    expect(instructions).toContain("usageRank is context");
+    expect(instructions).toContain("answerCount and checkCount");
+    expect(instructions).toContain("up to three when no answer exists");
+    expect(instructions).toContain("at most three verified candidates");
+    expect(instructions).toContain("complete supplied loadout");
+    expect(instructions).toContain("No replacement Pokemon candidate pool");
+    expect(instructions).toContain("mutually exclusive Mega projections");
   });
 
   it("protects compatible supported Mega axes during replacement analysis", () => {
