@@ -14,7 +14,14 @@ export type SmogonUsageSet = {
   itemNames?: string[];
   nature?: string;
   evs?: Partial<StatBlock>;
+  spreads?: SmogonUsageSpread[];
   moveIds: string[];
+};
+
+export type SmogonUsageSpread = {
+  nature: string;
+  evs: Partial<StatBlock>;
+  usagePercent: number;
 };
 
 export function resolveSmogonUsageAbility(
@@ -43,10 +50,11 @@ const SMOGON_FORMAT_IDS: Record<BattleFormat, string> = {
   singles: "gen9championsbssregmb",
   doubles: "gen9championsvgc2026regmb",
 };
-const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v4";
+const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v5";
 const SMOGON_USAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 const SMOGON_MOVE_CANDIDATE_LIMIT = 8;
 const SMOGON_ITEM_CANDIDATE_LIMIT = 4;
+const SMOGON_SPREAD_CANDIDATE_LIMIT = 6;
 const preferredCutoffs = [1630, 1500, 0];
 const sectionLabels = new Set([
   "Abilities",
@@ -99,7 +107,7 @@ function cleanTableRow(line: string) {
   return match?.[1].trim();
 }
 
-function parsePercentLine(line: string) {
+function parsePercentEntry(line: string) {
   const match = line.match(/^(.+?)\s+([\d.]+)%$/);
 
   if (!match) {
@@ -112,7 +120,10 @@ function parsePercentLine(line: string) {
     return null;
   }
 
-  return label;
+  return {
+    label,
+    usagePercent: Number.parseFloat(match[2]),
+  };
 }
 
 function parseSpread(value: string) {
@@ -147,6 +158,7 @@ function parsePokemonBlock(
     sourceMonth,
     cutoff,
     itemNames: [],
+    spreads: [],
     moveIds: [],
   };
   let activeSection: string | null = null;
@@ -167,7 +179,8 @@ function parsePokemonBlock(
       continue;
     }
 
-    const label = parsePercentLine(row);
+    const percentEntry = parsePercentEntry(row);
+    const label = percentEntry?.label ?? null;
 
     if (!label) {
       continue;
@@ -186,12 +199,20 @@ function parsePokemonBlock(
       continue;
     }
 
-    if (activeSection === "Spreads" && !set.evs) {
+    if (activeSection === "Spreads") {
       const spread = parseSpread(label);
 
       if (spread) {
-        set.nature = spread.nature;
-        set.evs = spread.evs;
+        if (!set.evs) {
+          set.nature = spread.nature;
+          set.evs = spread.evs;
+        }
+        if ((set.spreads?.length ?? 0) < SMOGON_SPREAD_CANDIDATE_LIMIT) {
+          set.spreads?.push({
+            ...spread,
+            usagePercent: percentEntry?.usagePercent ?? 0,
+          });
+        }
       }
 
       continue;

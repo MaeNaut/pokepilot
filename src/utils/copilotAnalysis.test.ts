@@ -154,7 +154,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 29,
+      version: 30,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -393,8 +393,8 @@ describe("Copilot analysis", () => {
                 "speed",
               ].includes(benchmark.relevantStat),
           ) &&
-          candidate.speedBenchmark.current.opponentSpeed ===
-            candidate.speedBenchmark.optimized.opponentSpeed &&
+          candidate.speedBenchmark!.current.opponentSpeed ===
+            candidate.speedBenchmark!.optimized.opponentSpeed &&
           candidate.moveIds.length === 4 &&
           candidate.itemChanged === false &&
           candidate.moveChanges.length === 0,
@@ -545,7 +545,7 @@ describe("Copilot analysis", () => {
 
     const tamperedSpeedRequest = structuredClone(request);
     if (tamperedSpeedRequest.optimization) {
-      tamperedSpeedRequest.optimization.candidates[0].speedBenchmark.optimized.opponentSpeed +=
+      tamperedSpeedRequest.optimization.candidates[0].speedBenchmark!.optimized.opponentSpeed +=
         1;
     }
     expect(validateCopilotAnalysisRequest(tamperedSpeedRequest)).toMatchObject({
@@ -693,6 +693,52 @@ describe("Copilot analysis", () => {
         ),
       ).toEqual(["set-current"]);
     }
+  });
+
+  it("builds and validates general sample candidates without a calculator opponent", () => {
+    const plan = optimizer.createGeneralSetOptimizationPlan({
+      selectedSlot: 0,
+      member,
+      build: {
+        item: buildState.itemBySlot[0] ?? null,
+        ability: "Intimidate",
+        natureId: "adamant",
+        evs: buildState.evsBySlot[0],
+        moveIds: buildState.moveIdsBySlot[0],
+      },
+      reservedItemIds: [],
+      usageSet: null,
+      usageItems: [],
+    });
+    const request = createCopilotAnalysisRequest({
+      scope: "optimization",
+      battleFormat: "doubles",
+      teamName: "General sample team",
+      team: [member, null, null, null, null, null],
+      selectedSlot: 0,
+      buildState,
+      diagnostics,
+      validity,
+      calculatorContext: null,
+      optimizationPlan: plan,
+    });
+
+    expect(request.optimization).toMatchObject({
+      mode: "general",
+      playerPokemonId: "test-pokemon",
+      opponentPokemonId: null,
+      opponentDisplayName: null,
+      field: null,
+    });
+    expect(request.optimization?.candidates).toHaveLength(1);
+    expect(request.optimization?.candidates[0]).toMatchObject({
+      id: "set-current",
+      generalEvidence: { source: "current" },
+    });
+    expect(request.optimization?.candidates[0].speedBenchmark).toBeUndefined();
+    const validation = validateCopilotAnalysisRequest(request);
+    expect(validation.errors).toEqual([]);
+    expect(validation).toMatchObject({ success: true });
   });
 
   it("projects the post-Mega state from the held Mega Stone", () => {

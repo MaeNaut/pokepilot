@@ -9,7 +9,7 @@ import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
 const validRequest = {
-  version: 29,
+  version: 30,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",

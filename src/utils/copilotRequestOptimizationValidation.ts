@@ -112,7 +112,7 @@ function hasValidMoveIdSlots(value: unknown) {
 function hasValidOptimizationMoveChanges(value: unknown) {
   return (
     Array.isArray(value) &&
-    value.length <= 1 &&
+    value.length <= 4 &&
     value.every(
       (change) =>
         isRecord(change) &&
@@ -132,6 +132,44 @@ function hasValidOptimizationMoveChanges(value: unknown) {
         change.currentMoveId !== change.optimizedMoveId &&
         typeof change.sameTypeAndCategory === "boolean",
     )
+  );
+}
+
+function hasValidGeneralEvidence(value: unknown) {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, [
+      "source",
+      "sourceMonth",
+      "cutoff",
+      "spreadRank",
+      "usagePercent",
+      "roleStats",
+      "reducedRoleStats",
+    ]) ||
+    !["current", "usage", "matchup"].includes(String(value.source)) ||
+    !isUniqueEnumArray(value.roleStats, statIdSet, 6) ||
+    !isUniqueEnumArray(value.reducedRoleStats, statIdSet, 6)
+  ) {
+    return false;
+  }
+  const roleStats = new Set(value.roleStats as string[]);
+  if (!(value.reducedRoleStats as string[]).every((stat) => roleStats.has(stat))) {
+    return false;
+  }
+  if (value.source !== "usage") {
+    return !(
+      "sourceMonth" in value ||
+      "cutoff" in value ||
+      "spreadRank" in value ||
+      "usagePercent" in value
+    );
+  }
+  return (
+    isNonEmptyString(value.sourceMonth) &&
+    isBoundedInteger(value.cutoff, 0, 100_000) &&
+    isBoundedInteger(value.spreadRank, 1, 20) &&
+    isFiniteNumber(value.usagePercent, 0, 100)
   );
 }
 
@@ -171,6 +209,22 @@ function hasValidOptimizationMoveMechanics(value: unknown) {
   );
 }
 
+function hasValidOptimizationItemMechanics(value: unknown) {
+  return (
+    Array.isArray(value) &&
+    value.length <= 4 &&
+    value.every((item) =>
+      isRecord(item) &&
+      hasOnlyKeys(item, ["id", "displayName", "effect"]) &&
+      isNonEmptyString(item.id) &&
+      isNonEmptyString(item.displayName) &&
+      (!("effect" in item) ||
+        (isNonEmptyString(item.effect) && String(item.effect).length <= 500)),
+    ) &&
+    new Set(value.map((item) => isRecord(item) ? item.id : null)).size === value.length
+  );
+}
+
 export function isValidCopilotOptimizationCandidateSnapshot(
   value: unknown,
 ): value is CopilotSetOptimizationCandidateSnapshot {
@@ -197,6 +251,7 @@ export function isValidCopilotOptimizationCandidateSnapshot(
       "offenseBenchmarks",
       "defenseBenchmarks",
       "speedBenchmark",
+      "generalEvidence",
     ]) &&
     isNonEmptyString(value.id) &&
     isSlotIndex(value.slotIndex) &&
@@ -228,7 +283,9 @@ export function isValidCopilotOptimizationCandidateSnapshot(
     isBoundedIntegerStatBlock(value.statPointChanges, -32, 32) &&
     hasValidOptimizationMoveBenchmarks(value.offenseBenchmarks) &&
     hasValidOptimizationMoveBenchmarks(value.defenseBenchmarks) &&
-    hasValidOptimizationSpeedBenchmark(value.speedBenchmark)
+    (!("speedBenchmark" in value) ||
+      hasValidOptimizationSpeedBenchmark(value.speedBenchmark)) &&
+    hasValidGeneralEvidence(value.generalEvidence)
   );
 }
 
@@ -308,6 +365,7 @@ export function hasValidOptimizationShape(value: unknown) {
     isRecord(value) &&
     hasOnlyKeys(value, [
       "slotIndex",
+      "mode",
       "configuredDirection",
       "playerPokemonId",
       "playerDisplayName",
@@ -316,17 +374,24 @@ export function hasValidOptimizationShape(value: unknown) {
       "field",
       "currentBuild",
       "moveMechanics",
+      "itemMechanics",
       "candidates",
     ]) &&
+    ["general", "matchup"].includes(String(value.mode)) &&
     isSlotIndex(value.slotIndex) &&
     ["player-to-opponent", "opponent-to-player"].includes(
       String(value.configuredDirection),
     ) &&
     isNonEmptyString(value.playerPokemonId) &&
     isNonEmptyString(value.playerDisplayName) &&
-    isNonEmptyString(value.opponentPokemonId) &&
-    isNonEmptyString(value.opponentDisplayName) &&
-    hasValidOptimizationField(value.field) &&
+    isNullableString(value.opponentPokemonId) &&
+    isNullableString(value.opponentDisplayName) &&
+    (value.opponentPokemonId === null) === (value.opponentDisplayName === null) &&
+    (value.field === null || hasValidOptimizationField(value.field)) &&
+    (value.mode !== "matchup" ||
+      (isNonEmptyString(value.opponentPokemonId) &&
+        isNonEmptyString(value.opponentDisplayName) &&
+        hasValidOptimizationField(value.field))) &&
     isRecord(value.currentBuild) &&
     hasOnlyKeys(value.currentBuild, [
       "natureId",
@@ -346,12 +411,17 @@ export function hasValidOptimizationShape(value: unknown) {
     isNullableString(value.currentBuild.itemDisplayName) &&
     hasValidMoveIdSlots(value.currentBuild.moveIds) &&
     hasValidOptimizationMoveMechanics(value.moveMechanics) &&
+    hasValidOptimizationItemMechanics(value.itemMechanics) &&
     Array.isArray(value.candidates) &&
     value.candidates.length > 0 &&
     value.candidates.length <= 12 &&
     value.candidates.every(isValidCopilotOptimizationCandidateSnapshot) &&
     value.candidates.every(
       (candidate) => candidate.slotIndex === value.slotIndex,
+    ) &&
+    value.candidates.every((candidate) =>
+      candidate.generalEvidence?.source !== "matchup" ||
+      Boolean(candidate.speedBenchmark),
     ) &&
     value.candidates.every((candidate) => {
       if (

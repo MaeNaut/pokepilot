@@ -99,4 +99,31 @@ describe("Smogon usage formats", () => {
       ],
     });
   });
+
+  it("keeps bounded spread variants with their observed percentages", () => {
+    const snapshot = parseSmogonMovesetText(
+      `
+ +----------+
+ | Weavile  |
+ +----------+
+ | Raw count: 100
+ | Spreads |
+ | Jolly:2/32/0/0/0/32 48.500% |
+ | Adamant:2/32/0/0/0/32 21.250% |
+ | Jolly:32/32/0/0/0/2 10.000% |
+`,
+      "2026-08",
+      1630,
+    );
+
+    expect(snapshot.sets[0].spreads).toEqual([
+      expect.objectContaining({ nature: "jolly", usagePercent: 48.5 }),
+      expect.objectContaining({ nature: "adamant", usagePercent: 21.25 }),
+      expect.objectContaining({ nature: "jolly", usagePercent: 10 }),
+    ]);
+    expect(snapshot.sets[0]).toMatchObject({
+      nature: "jolly",
+      evs: { hp: 2, attack: 32, speed: 32 },
+    });
+  });
 });

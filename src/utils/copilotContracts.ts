@@ -5,6 +5,7 @@ import type {
   SetOptimizationPlan,
   SetOptimizationCandidateProfile,
   SetOptimizationFocus,
+  SetOptimizationGeneralEvidence,
   SetOptimizationMoveSource,
   SetOptimizationOutcomeComparison,
   SetOptimizationSpeedBenchmark,
@@ -249,7 +250,8 @@ export type CopilotSetOptimizationCandidateSnapshot = {
     current: SetOptimizationBenchmark;
     optimized: SetOptimizationBenchmark;
   }>;
-  speedBenchmark: SetOptimizationSpeedBenchmark;
+  speedBenchmark?: SetOptimizationSpeedBenchmark;
+  generalEvidence?: SetOptimizationGeneralEvidence;
 };
 
 export type CopilotOptimizationMoveMechanicSnapshot = {
@@ -262,14 +264,21 @@ export type CopilotOptimizationMoveMechanicSnapshot = {
   tags?: string[];
 };
 
+export type CopilotOptimizationItemMechanicSnapshot = {
+  id: string;
+  displayName: string;
+  effect?: string;
+};
+
 export type CopilotSetOptimizationSnapshot = {
+  mode: "general" | "matchup";
   slotIndex: number;
   configuredDirection: CalculatorAnalysisContext["direction"];
   playerPokemonId: string;
   playerDisplayName: string;
-  opponentPokemonId: string;
-  opponentDisplayName: string;
-  field: CalculatorAnalysisContext["field"];
+  opponentPokemonId: string | null;
+  opponentDisplayName: string | null;
+  field: CalculatorAnalysisContext["field"] | null;
   currentBuild: {
     natureId: string;
     natureDisplayName: string;
@@ -280,6 +289,7 @@ export type CopilotSetOptimizationSnapshot = {
     moveIds: string[];
   };
   moveMechanics: CopilotOptimizationMoveMechanicSnapshot[];
+  itemMechanics: CopilotOptimizationItemMechanicSnapshot[];
   candidates: CopilotSetOptimizationCandidateSnapshot[];
 };
 
@@ -332,7 +342,7 @@ export type CopilotMatchupSnapshot = {
 };
 
 export type CopilotAnalysisRequest = {
-  version: 29;
+  version: 30;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;

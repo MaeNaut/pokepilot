@@ -1820,6 +1820,7 @@ function App() {
               battleFormat={battleFormat}
               team={team}
               pokemonIndex={pokemonIndex}
+              itemIndex={itemIndex}
               abilityIndex={abilityIndex}
               abilityIndexStatus={abilityIndexStatus}
               showdownLegality={showdownLegality}

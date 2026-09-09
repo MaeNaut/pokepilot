@@ -42,13 +42,16 @@ export function serializePokePilotModelRequest(request: CopilotAnalysisRequest) 
   for (const ability of request.mechanics.abilities) collect("ability", ability);
   for (const item of request.mechanics.items) collect("item", item);
   for (const move of request.optimization?.moveMechanics ?? []) collect("move", move);
+  for (const item of request.optimization?.itemMechanics ?? []) collect("item", item);
   for (const candidate of request.optimization?.candidates ?? []) {
     for (const benchmark of [...candidate.offenseBenchmarks, ...candidate.defenseBenchmarks]) {
       collect("damage", benchmark.current);
       collect("damage", benchmark.optimized);
     }
-    collect("speed", candidate.speedBenchmark.current);
-    collect("speed", candidate.speedBenchmark.optimized);
+    if (candidate.speedBenchmark) {
+      collect("speed", candidate.speedBenchmark.current);
+      collect("speed", candidate.speedBenchmark.optimized);
+    }
   }
   for (const move of request.matchup?.opponent.moves ?? []) collect("move", move);
   for (const member of request.matchup?.members ?? []) {

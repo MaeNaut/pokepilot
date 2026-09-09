@@ -14,6 +14,7 @@ import type {
   StatKey,
   TeamMember,
 } from "../../types";
+import type { SmogonUsageSet } from "../../api/smogonUsage";
 
 export type CalculatorAnalysisSide = {
   member: TeamMember | null;
@@ -90,6 +91,16 @@ export type SetOptimizationSpeedBenchmark = {
   optimized: SetOptimizationSpeedState;
 };
 
+export type SetOptimizationGeneralEvidence = {
+  source: "current" | "usage" | "matchup";
+  sourceMonth?: string;
+  cutoff?: number;
+  spreadRank?: number;
+  usagePercent?: number;
+  roleStats: StatKey[];
+  reducedRoleStats: StatKey[];
+};
+
 export type SetOptimizationCandidate = {
   id: string;
   slotIndex: number;
@@ -110,9 +121,11 @@ export type SetOptimizationCandidate = {
   offenseBenchmarks: SetOptimizationMoveBenchmark[];
   defenseBenchmarks: SetOptimizationMoveBenchmark[];
   speedBenchmark: SetOptimizationSpeedBenchmark;
+  generalEvidence?: SetOptimizationGeneralEvidence;
 };
 
 export type SetOptimizationPlan = {
+  mode: "general" | "matchup";
   status: "ready" | "unavailable";
   slotIndex: number;
   playerId: string | null;
@@ -121,11 +134,21 @@ export type SetOptimizationPlan = {
   opponentName: string | null;
   configuredDirection: DamageDirection;
   candidates: SetOptimizationCandidate[];
+  itemMechanics?: PokemonItem[];
   reason?:
     | "missing-pokemon"
     | "missing-stats"
     | "missing-damaging-move"
     | "no-meaningful-candidate";
+};
+
+export type GeneralSetOptimizationContext = {
+  selectedSlot: number;
+  member: TeamMember;
+  build: CalculatorBuildValues;
+  reservedItemIds: string[];
+  usageSet: SmogonUsageSet | null;
+  usageItems: PokemonItem[];
 };
 
 export type ReadyDamageResult = Extract<

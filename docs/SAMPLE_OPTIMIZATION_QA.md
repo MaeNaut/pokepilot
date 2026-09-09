@@ -419,3 +419,36 @@ core-v3 cache identity. Only the lossless v73 input sharing above is retained.
 Post-revert verification passed lint, 548 tests across 77 files, TypeScript, and
 production build. All four scopes have explicit regression coverage for retaining
 the original output schema and the shared core-v3 cache key.
+
+## General Sample Recommendations
+
+Date: 2026-09-08. Working branch: `feature/general-sample-recommendations`.
+
+Sample recommendations no longer require a configured Calculator opponent. The
+selected Pokemon's current set is compared with up to three observed Smogon usage
+spreads, while its selected moves, item, invested offensive axes, Speed commitment,
+team roles, and active concepts remain the primary fit criteria. The usage snapshot
+now retains each bounded spread's rank and percentage instead of discarding every
+spread after the first one.
+
+Observed moves are aligned to the current slots so ordering differences do not
+become fake replacements. Empty move slots are not filled as unverified changes,
+Item Clause conflicts are skipped, and held-item alternatives include their local
+catalog effect for model grounding. A usage sample identical to the current sample
+is collapsed into `set-current`. When a Calculator opponent is present, the existing
+deterministic matchup candidates are appended as optional evidence; only those
+candidates render damage and Speed calculations.
+
+The request contract is version 30 and the optimization scope prompt is version 30.
+General candidates explicitly carry current, usage, or matchup provenance and role
+stat reductions. Validation rejects malformed provenance and unmatched move changes.
+Private candidate IDs are forbidden in public prose and repaired server-side if a
+model emits one. Rules-based fallback now describes general samples without a fake
+opponent title or unsupported calculator claims.
+
+Browser QA selected Weavile directly in the team builder and completed a hosted
+sample request without opening the Calculator. The response retained its Jolly,
+maximum-Attack, maximum-Speed, Focus Sash set because the alternatives reduced its
+fast-attacker role without verified benefit. No page errors occurred. The final
+automated check passed lint, TypeScript, production build, and the complete test
+suite; the existing large-chunk build warning remains.

@@ -199,16 +199,37 @@ const optimizationOutcomePattern = new RegExp(
   "iu",
 );
 
+function leaksOptimizationCandidateId(
+  text: string,
+  request: CopilotAnalysisRequest,
+) {
+  const normalized = text.toLocaleLowerCase(request.locale);
+  return (request.optimization?.candidates ?? []).some((candidate) =>
+    normalized.includes(candidate.id.toLocaleLowerCase(request.locale)),
+  );
+}
+
 function verifiedOptimizationReason(id: string, request: CopilotAnalysisRequest) {
   const candidate = request.optimization?.candidates.find((entry) => entry.id === id);
   const ko = request.locale === "ko";
+  const isGeneral = request.optimization?.mode === "general";
   if (id === "set-current") {
+    if (isGeneral) {
+      return ko
+        ? "현재 샘플은 선택된 기술, 도구, 공격 및 스피드 역할을 그대로 유지하므로 사용률 후보가 팀의 구체적인 이점을 만들지 못한다면 충분히 좋은 선택입니다."
+        : "The current sample preserves its selected moves, item, offense, and Speed role, so it remains a sound choice when the usage alternatives do not add a concrete team benefit.";
+    }
     return ko
       ? "현재 샘플의 화력, 스피드, 내구, 도구와 기술 구성을 그대로 유지하는 선택입니다. 확인한 조정안의 이득과 기존 성능을 바꾸는 비용을 비교할 수 있으며, 다른 상대까지 검증한 결과는 아닙니다."
       : "Keeping the current sample preserves its damage, Speed, bulk, item, and moves. The checked adjustments can be weighed against the cost of changing that performance; other opponents have not been verified.";
   }
 
   const parts: string[] = [];
+  if (candidate?.generalEvidence?.source === "usage") {
+    parts.push(ko
+      ? "이 구성은 현재 사용률 자료에서 관찰된 범용 샘플입니다."
+      : "This is an observed general-purpose sample from the current usage data.");
+  }
   for (const [direction, benchmarks] of [
     ["offense", candidate?.offenseBenchmarks ?? []],
     ["defense", candidate?.defenseBenchmarks ?? []],
@@ -256,9 +277,13 @@ function verifiedOptimizationReason(id: string, request: CopilotAnalysisRequest)
       ? `기술 구성은 다음과 같이 변경됩니다: ${change.currentMoveDisplayName} → ${change.optimizedMoveDisplayName}.`
       : `${change.optimizedMoveDisplayName} replaces ${change.currentMoveDisplayName}.`);
   }
-  parts.push(ko
-    ? "이 결과는 설정된 상대와 전투 조건에 한정되며, 다른 상대에 대한 성능은 검증하지 않았습니다."
-    : "These results are limited to the configured opponent and battle conditions; performance against other opponents has not been verified.");
+  parts.push(isGeneral
+    ? (ko
+        ? "사용률은 이 팀에서의 최적성을 보장하지 않으므로 현재 역할과의 교환 비용을 함께 확인해야 합니다."
+        : "Usage does not guarantee that this is optimal for the team, so weigh it against the current role and loadout.")
+    : (ko
+        ? "이 결과는 설정된 상대와 전투 조건에 한정되며, 다른 상대에 대한 성능은 검증하지 않았습니다."
+        : "These results are limited to the configured opponent and battle conditions; performance against other opponents has not been verified."));
   return parts.join(" ");
 }
 
@@ -269,26 +294,38 @@ function sanitizeOptimizationNarrative(
   if (request.scope !== "optimization") return analysis;
 
   const isKorean = request.locale === "ko";
-  const fallbackParagraph = isKorean
-    ? "표시된 계산 결과와 현재 팀에서 맡는 역할을 함께 고려한 상대 조정입니다."
-    : "This matchup tuning weighs the displayed calculator results against the set's current team role.";
+  const fallbackParagraph = request.optimization?.mode === "general"
+    ? (isKorean
+        ? "현재 역할과 팀 구성을 기준으로 현재 샘플과 관찰된 사용률 후보를 함께 비교했습니다."
+        : "The current sample and observed usage alternatives were compared against this Pokemon's role on the team.")
+    : isKorean
+      ? "표시된 계산 결과와 현재 팀에서 맡는 역할을 함께 고려한 상대 조정입니다."
+      : "This matchup tuning weighs the displayed calculator results against the set's current team role.";
   const fallbackTitle = isKorean
     ? "검증된 상대 조정을 사용해 보세요."
     : "Use the verified matchup option.";
   // Sentence deletion can leave a conclusion without its premise or only a drawback.
   // Replace the complete affected block with calculator-grounded prose instead.
   const hasRepeatedOutcomes = analysis.paragraphs.some((paragraph) => optimizationOutcomePattern.test(paragraph));
-
   return {
     ...analysis,
-    paragraphs:
-      hasRepeatedOutcomes ? [fallbackParagraph] : analysis.paragraphs,
+    paragraphs: hasRepeatedOutcomes
+      ? [fallbackParagraph]
+      : analysis.paragraphs.map((paragraph) =>
+          leaksOptimizationCandidateId(paragraph, request)
+            ? fallbackParagraph
+            : paragraph,
+        ),
     recommendations: analysis.recommendations.map((recommendation) => ({
       ...recommendation,
       title:
-        optimizationOutcomePattern.test(recommendation.title) ? fallbackTitle : recommendation.title,
+        optimizationOutcomePattern.test(recommendation.title) ||
+        leaksOptimizationCandidateId(recommendation.title, request)
+          ? fallbackTitle
+          : recommendation.title,
       reason:
-        optimizationOutcomePattern.test(recommendation.reason)
+        optimizationOutcomePattern.test(recommendation.reason) ||
+        leaksOptimizationCandidateId(recommendation.reason, request)
           ? verifiedOptimizationReason(recommendation.id, request)
           : recommendation.reason,
     })),
@@ -352,12 +389,15 @@ function hasOptimizationNarrativeRepair(
 ) {
   return request.scope === "optimization" && (
     analysis.paragraphs.some((paragraph) =>
-      optimizationOutcomePattern.test(paragraph),
+      optimizationOutcomePattern.test(paragraph) ||
+      leaksOptimizationCandidateId(paragraph, request),
     ) ||
     analysis.recommendations.some(
       (recommendation) =>
         optimizationOutcomePattern.test(recommendation.title) ||
-        optimizationOutcomePattern.test(recommendation.reason),
+        optimizationOutcomePattern.test(recommendation.reason) ||
+        leaksOptimizationCandidateId(recommendation.title, request) ||
+        leaksOptimizationCandidateId(recommendation.reason, request),
     )
   );
 }

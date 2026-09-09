@@ -47,12 +47,14 @@ function sampleCandidate(index: number): CopilotSetOptimizationCandidateSnapshot
     offenseBenchmarks: [{ ...benchmark, relevantStat: "attack" }],
     defenseBenchmarks: [benchmark],
     speedBenchmark: { current: { ...speed }, optimized: { ...speed } },
+    generalEvidence: { source: "matchup", roleStats: [], reducedRoleStats: [] },
   };
 }
 
 function createSampleRequest() {
   const request = createRequest("optimization");
   request.optimization = {
+    mode: "matchup",
     slotIndex: 0, configuredDirection: "opponent-to-player",
     playerPokemonId: "farigiraf", playerDisplayName: "Farigiraf",
     opponentPokemonId: "scizor", opponentDisplayName: "Scizor",
@@ -60,7 +62,7 @@ function createSampleRequest() {
     currentBuild: { natureId: "serious", natureDisplayName: "Serious",
       evs: { ...defaultEvs }, finalStats: { ...defaultEvs },
       itemId: null, itemDisplayName: null, moveIds: ["protect"] },
-    moveMechanics: [], candidates: Array.from({ length: 12 }, (_, i) => sampleCandidate(i)),
+    moveMechanics: [], itemMechanics: [], candidates: Array.from({ length: 12 }, (_, i) => sampleCandidate(i)),
   };
   return request;
 }

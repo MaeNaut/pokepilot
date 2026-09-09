@@ -18,7 +18,7 @@ import {
 } from "./openAiLunaAdapter";
 
 const request = {
-  version: 29,
+  version: 30,
   locale: "ko",
   scope: "team",
   battleFormat: "doubles",
@@ -467,7 +467,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       "inspect every unordered pair of filled sets",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "evaluated in both directions",
+      "general sample recommendation",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
       "usage means it came from the observed high-usage move list",
@@ -482,10 +482,10 @@ describe("OpenAI Luna evaluation adapter", () => {
       "Infer each move's offensive and strategic responsibilities directly",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "Complete a mandatory replacement-slot audit",
+      "Complete a mandatory replacement audit",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
-      "compare every supplied slot sibling",
+      "one observed complete loadout",
     );
     expect(getPokePilotScopeInstructions("optimization")).toContain(
       "rather than a fixed list",

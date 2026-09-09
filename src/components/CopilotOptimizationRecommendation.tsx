@@ -182,13 +182,13 @@ export function CopilotOptimizationRecommendation({
   const isCurrent = candidate.id === "set-current";
   const evidence = selectOptimizationEvidence(candidate);
   const hasEvidence = !isCurrent && (evidence.offense.length > 0 || evidence.defense.length > 0 || evidence.showSpeed);
-
-  const speedRelationLabel = t(
-    `copilot.optimization.speed-${candidate.speedBenchmark.optimized.relation}` as TranslationKey,
-  );
-  const currentSpeedRelationLabel = t(
-    `copilot.optimization.speed-${candidate.speedBenchmark.current.relation}` as TranslationKey,
-  );
+  const speedBenchmark = candidate.speedBenchmark;
+  const speedRelationLabel = speedBenchmark
+    ? t(`copilot.optimization.speed-${speedBenchmark.optimized.relation}` as TranslationKey)
+    : "";
+  const currentSpeedRelationLabel = speedBenchmark
+    ? t(`copilot.optimization.speed-${speedBenchmark.current.relation}` as TranslationKey)
+    : "";
 
   return (
     <>
@@ -271,7 +271,7 @@ export function CopilotOptimizationRecommendation({
               focus="defense"
             />
           ))}
-          {evidence.showSpeed ? <div className="copilot-optimization-benchmark is-speed">
+          {evidence.showSpeed && speedBenchmark ? <div className="copilot-optimization-benchmark is-speed">
             <div className="copilot-optimization-benchmark-title">
               <strong>
                 <FontAwesomeIcon icon={faPersonRunning} aria-hidden="true" />
@@ -279,7 +279,7 @@ export function CopilotOptimizationRecommendation({
               </strong>
               <small className="copilot-optimization-opponent-speed">
                 {t("copilot.optimization.opponent-speed", {
-                  speed: candidate.speedBenchmark.optimized.opponentSpeed,
+                  speed: speedBenchmark.optimized.opponentSpeed,
                 })}
               </small>
             </div>
@@ -289,9 +289,9 @@ export function CopilotOptimizationRecommendation({
               <strong>{speedRelationLabel}</strong>
             </div>
             <span className="copilot-optimization-range">
-              <span>{candidate.speedBenchmark.current.playerSpeed}</span>
+              <span>{speedBenchmark.current.playerSpeed}</span>
               <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
-              <strong>{candidate.speedBenchmark.optimized.playerSpeed}</strong>
+              <strong>{speedBenchmark.optimized.playerSpeed}</strong>
             </span>
           </div> : null}
         </div>

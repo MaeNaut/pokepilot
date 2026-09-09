@@ -692,6 +692,16 @@ function formatLocalOptimizationReason(
   candidate: CopilotSetOptimizationCandidateSnapshot,
   locale: Locale,
 ) {
+  if (candidate.generalEvidence?.source === "usage") {
+    const reduced = candidate.generalEvidence.reducedRoleStats.length > 0;
+    return locale === "ko"
+      ? reduced
+        ? "사용률 자료에서 관찰된 구성이지만, 현재 역할의 일부 실수치가 낮아지는 만큼 팀 운용과의 교환 비용을 확인해야 합니다."
+        : "사용률 자료에서 관찰된 구성이며, 현재 포켓몬의 주요 역할 실수치를 낮추지 않는 범용 후보입니다."
+      : reduced
+        ? "This observed usage sample lowers part of the current role profile, so its broader familiarity must be weighed against that team-specific cost."
+        : "This observed usage sample keeps the current role profile intact and provides a broadly used alternative.";
+  }
   const moveChange = candidate.moveChanges[0];
   const change = moveChange
     ? locale === "ko"
@@ -709,6 +719,11 @@ function formatLocalOptimizationReason(
 }
 
 function formatCurrentSampleReason(candidate: CopilotSetOptimizationCandidateSnapshot, locale: Locale) {
+  if (candidate.generalEvidence?.source === "current") {
+    return locale === "ko"
+      ? "현재 샘플은 선택된 기술, 도구, 공격 및 스피드 역할을 그대로 유지하므로 사용률 후보가 팀의 구체적인 이점을 만들지 못한다면 충분히 좋은 선택입니다."
+      : "The current sample preserves its selected moves, item, offense, and Speed role, so it remains a sound choice when the usage alternatives do not add a concrete team benefit.";
+  }
   const attack = candidate.offenseBenchmarks.find(({ current }) =>
     current.guaranteedKoHits !== null && current.guaranteedKoHits <= 3,
   );
@@ -752,9 +767,11 @@ function analyzeOptimizationRequest(
   const currentCandidate = optimization.candidates.find(
     (candidate) => candidate.id === "set-current",
   );
-  const candidates = currentCandidate
-    ? [currentCandidate]
-    : optimization.candidates
+  const candidates = optimization.mode === "general"
+    ? optimization.candidates.slice(0, 3)
+    : currentCandidate
+      ? [currentCandidate]
+      : optimization.candidates
         .filter((candidate) =>
           !candidate.itemChanged && candidate.moveChanges.length === 0,
         )
@@ -763,15 +780,21 @@ function analyzeOptimizationRequest(
     version: 2,
     source: "local",
     scope: "optimization",
-    title: `${optimization.playerDisplayName} vs. ${optimization.opponentDisplayName}`,
-    paragraphs: [
-      isKorean
-        ? `계산기에 설정된 조건을 그대로 사용해 ${optimization.playerDisplayName}의 성격, 노력치, 기술과 도구 후보를 검증했습니다.`
-        : `The nature, Stat Point, move, and item options for ${optimization.playerDisplayName} were verified under the exact calculator conditions.`,
-      isKorean
-        ? "표시된 대미지는 계산기 엔진으로 다시 검증했지만, 입력한 상대와 전투 조건에 한정된 결과이므로 다른 상대에게도 같은 성능을 보장하지는 않습니다."
-        : "The displayed damage was rechecked by the calculator engine, but the result is limited to the entered opponent and battle conditions and does not guarantee the same performance in other matchups.",
-    ],
+    title: optimization.mode === "general"
+      ? optimization.playerDisplayName
+      : `${optimization.playerDisplayName} vs. ${optimization.opponentDisplayName}`,
+    paragraphs: optimization.mode === "general"
+      ? [isKorean
+          ? `${optimization.playerDisplayName}의 현재 역할과 팀 구성을 기준으로 현재 샘플과 관찰된 사용률 후보를 비교했습니다.`
+          : `The current sample and observed usage alternatives for ${optimization.playerDisplayName} were compared against its role on this team.`]
+      : [
+          isKorean
+            ? `계산기에 설정된 조건을 그대로 사용해 ${optimization.playerDisplayName}의 성격, 노력치, 기술과 도구 후보를 검증했습니다.`
+            : `The nature, Stat Point, move, and item options for ${optimization.playerDisplayName} were verified under the exact calculator conditions.`,
+          isKorean
+            ? "표시된 대미지는 계산기 엔진으로 다시 검증했지만, 입력한 상대와 전투 조건에 한정된 결과이므로 다른 상대에게도 같은 성능을 보장하지는 않습니다."
+            : "The displayed damage was rechecked by the calculator engine, but the result is limited to the entered opponent and battle conditions and does not guarantee the same performance in other matchups.",
+        ],
     recommendations: candidates.map((candidate, index) => ({
       id: candidate.id,
       title: candidate.id === "set-current"

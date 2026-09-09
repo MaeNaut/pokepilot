@@ -39,12 +39,14 @@ function selectMoveEvidence(benchmarks: MoveBenchmark[]): MoveBenchmark[] {
 }
 
 export function selectOptimizationEvidence(candidate: EvidenceCandidate) {
-  const { current, optimized } = candidate.speedBenchmark;
+  const speed = candidate.speedBenchmark;
   return {
     offense: selectMoveEvidence(candidate.offenseBenchmarks),
     defense: selectMoveEvidence(candidate.defenseBenchmarks),
-    showSpeed: current.playerSpeed !== optimized.playerSpeed
-      || current.opponentSpeed !== optimized.opponentSpeed
-      || current.relation !== optimized.relation,
+    showSpeed: Boolean(speed && (
+      speed.current.playerSpeed !== speed.optimized.playerSpeed
+      || speed.current.opponentSpeed !== speed.optimized.opponentSpeed
+      || speed.current.relation !== speed.optimized.relation
+    )),
   };
 }

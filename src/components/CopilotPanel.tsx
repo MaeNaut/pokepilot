@@ -16,6 +16,7 @@ import type {
   DataLoadStatus,
   PokemonAbility,
   PokemonIndexEntry,
+  ItemIndexEntry,
   TeamSlot,
 } from "../types";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
@@ -42,6 +43,8 @@ import { useSetOptimizationPlan } from "../hooks/useSetOptimizationPlan";
 import { useTeamMatchupPlan } from "../hooks/useTeamMatchupPlan";
 import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
 import { CopilotHistoryControl } from "./CopilotHistoryControl";
+import { defaultEvs } from "../data/natures";
+import { normalizeShowdownId } from "../api/showdownIds";
 
 type CopilotPanelProps = {
   savedTeamId: string | null;
@@ -49,6 +52,7 @@ type CopilotPanelProps = {
   battleFormat: BattleFormat;
   team: TeamSlot[];
   pokemonIndex: PokemonIndexEntry[];
+  itemIndex: ItemIndexEntry[];
   abilityIndex: PokemonAbility[];
   abilityIndexStatus: DataLoadStatus;
   showdownLegality: ShowdownLegalitySnapshot | null;
@@ -105,6 +109,7 @@ export function CopilotPanel({
   battleFormat,
   team,
   pokemonIndex,
+  itemIndex,
   abilityIndex,
   abilityIndexStatus,
   showdownLegality,
@@ -150,9 +155,42 @@ export function CopilotPanel({
     showdownLegalityStatus,
   });
 
+  const optimizationInput = useMemo(() => {
+    const member = team[selectedSlot];
+    if (!member) return null;
+    return {
+      selectedSlot,
+      member,
+      build: {
+        item: buildState.itemBySlot[selectedSlot] ?? null,
+        ability:
+          buildState.abilityBySlot[selectedSlot] ?? member.abilities?.[0] ?? "",
+        natureId: buildState.natureBySlot[selectedSlot] ?? "hardy",
+        evs: buildState.evsBySlot[selectedSlot] ?? { ...defaultEvs },
+        moveIds: [
+          ...(buildState.moveIdsBySlot[selectedSlot] ?? []),
+          "",
+          "",
+          "",
+          "",
+        ].slice(0, 4),
+      },
+      reservedItemIds: team.flatMap((entry, slotIndex) => {
+        if (!entry || slotIndex === selectedSlot) return [];
+        const item = buildState.itemBySlot[slotIndex];
+        const id = normalizeShowdownId(
+          item?.showdownId ?? item?.id ?? item?.name ?? "",
+        );
+        return id ? [id] : [];
+      }),
+    };
+  }, [buildState, selectedSlot, team]);
   const optimizationState = useSetOptimizationPlan(
-    calculatorContext,
-    scope === "optimization" && isCalculatorActive,
+    optimizationInput,
+    isCalculatorActive ? calculatorContext : null,
+    battleFormat,
+    itemIndex,
+    scope === "optimization",
   );
   const matchupState = useTeamMatchupPlan(
     calculatorContext,
@@ -270,9 +308,7 @@ export function CopilotPanel({
       (recommendationState.status !== "ready" ||
         recommendationState.candidates.length === 0)) ||
     (scope === "optimization" &&
-      (!isCalculatorActive ||
-        !calculatorContext?.player.member ||
-        !calculatorContext.opponent.member)) ||
+      !optimizationInput) ||
     (scope === "matchup" &&
       (!isCalculatorActive ||
         !calculatorContext?.opponent.member ||
@@ -602,8 +638,8 @@ export function CopilotPanel({
                               count: calculatorContext.roster?.length ?? 0,
                             })
                       : scope === "optimization"
-                        ? !isCalculatorActive
-                          ? t("copilot.openCalculatorForOptimization")
+                        ? !optimizationInput
+                          ? t("copilot.emptySlot", { slot: selectedSlot + 1 })
                           : optimizationState.loading
                             ? t("copilot.loadingCandidates")
                             : optimizationState.error

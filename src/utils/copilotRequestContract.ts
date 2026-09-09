@@ -726,7 +726,7 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 29) errors.push("version must be 29.");
+  if (value.version !== 30) errors.push("version must be 30.");
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
@@ -933,10 +933,10 @@ export function validateCopilotAnalysisRequest(
     value.optimization !== null &&
     !hasValidOptimizationShape(value.optimization)
   ) {
-    errors.push("optimization must match the exact-target optimization contract.");
+    errors.push("optimization must match the sample recommendation contract.");
   }
   if (value.scope === "optimization" && !hasValidOptimizationShape(value.optimization)) {
-    errors.push("optimization scope requires verified calculator candidates.");
+    errors.push("optimization scope requires verified sample candidates.");
   }
   if (
     value.scope !== "optimization" &&
@@ -1003,7 +1003,10 @@ export function validateCopilotAnalysisRequest(
       ? value.optimization.field
       : null;
 
-    if (optimizationField?.gameType !== value.battleFormat) {
+    if (
+      value.optimization.field !== null &&
+      optimizationField?.gameType !== value.battleFormat
+    ) {
       errors.push("optimization field gameType must match battleFormat.");
     }
   }

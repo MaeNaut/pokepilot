@@ -1,19 +1,51 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CalculatorAnalysisContext, SetOptimizationPlan } from "../calculator/setOptimizer/types";
+import { loadPopularSmogonSet } from "../api/smogonUsage";
+import type { BattleFormat } from "../battleFormat/battleFormat";
+import { resolveUsageCalculatorItems } from "../calculator/calculatorUsageBuild";
+import type { ItemIndexEntry } from "../types";
+import type {
+  CalculatorAnalysisContext,
+  GeneralSetOptimizationContext,
+  SetOptimizationPlan,
+} from "../calculator/setOptimizer/types";
 
-type Result = { context: CalculatorAnalysisContext; plan: SetOptimizationPlan | null; status: "loading" | "ready" | "error" };
+type GeneralInput = Omit<GeneralSetOptimizationContext, "usageSet" | "usageItems">;
+type Result = {
+  context: GeneralInput;
+  matchupContext: CalculatorAnalysisContext | null;
+  battleFormat: BattleFormat;
+  itemOptions: readonly ItemIndexEntry[];
+  plan: SetOptimizationPlan | null;
+  status: "loading" | "ready" | "error";
+};
 
-export function useSetOptimizationPlan(context: CalculatorAnalysisContext | null, enabled: boolean) {
+export function useSetOptimizationPlan(
+  context: GeneralInput | null,
+  matchupContext: CalculatorAnalysisContext | null,
+  battleFormat: BattleFormat,
+  itemOptions: readonly ItemIndexEntry[],
+  enabled: boolean,
+) {
   const [result, setResult] = useState<Result | null>(null);
   const cancel = useRef<(() => void) | null>(null);
-  const active = enabled && Boolean(context?.player.member && context.opponent.member);
+  const active = enabled && Boolean(context?.member);
 
-  useEffect(() => () => cancel.current?.(), [active, context]);
+  useEffect(
+    () => () => cancel.current?.(),
+    [active, battleFormat, context, itemOptions, matchupContext],
+  );
 
   const run = useCallback((): Promise<SetOptimizationPlan | null> => {
     cancel.current?.();
     if (!active || !context) return Promise.resolve(null);
-    setResult({ context, plan: null, status: "loading" });
+    setResult({
+      context,
+      matchupContext,
+      battleFormat,
+      itemOptions,
+      plan: null,
+      status: "loading",
+    });
     return new Promise((resolve) => {
       let settled = false;
       let worker: Worker | undefined;
@@ -21,24 +53,58 @@ export function useSetOptimizationPlan(context: CalculatorAnalysisContext | null
         if (settled) return;
         settled = true;
         worker?.terminate();
-        if (status) setResult({ context, plan, status });
+        if (status) {
+          setResult({
+            context,
+            matchupContext,
+            battleFormat,
+            itemOptions,
+            plan,
+            status,
+          });
+        }
         else setResult(null);
         resolve(plan);
       };
       cancel.current = () => finish(null);
-      try {
-        worker = new Worker(new URL("../calculator/setOptimizer.worker.ts", import.meta.url), { type: "module" });
-        worker.onmessage = (event: MessageEvent<{ plan?: SetOptimizationPlan; error?: boolean }>) => {
-          finish(event.data.plan ?? null, event.data.error ? "error" : "ready");
-        };
-        worker.onerror = () => finish(null, "error");
-        worker.postMessage(context);
-      } catch {
-        finish(null, "error");
-      }
+      void loadPopularSmogonSet(context.member.id, battleFormat)
+        .catch(() => null)
+        .then((usageSet) => {
+          if (settled) return;
+          try {
+            worker = new Worker(new URL("../calculator/setOptimizer.worker.ts", import.meta.url), { type: "module" });
+            worker.onmessage = (event: MessageEvent<{ plan?: SetOptimizationPlan; error?: boolean }>) => {
+              finish(event.data.plan ?? null, event.data.error ? "error" : "ready");
+            };
+            worker.onerror = () => finish(null, "error");
+            worker.postMessage({
+              generalContext: {
+                ...context,
+                usageSet,
+                usageItems: usageSet
+                  ? resolveUsageCalculatorItems(usageSet, itemOptions)
+                  : [],
+              },
+              matchupContext:
+                matchupContext?.player.member?.id === context.member.id &&
+                matchupContext.opponent.member
+                  ? matchupContext
+                  : null,
+            });
+          } catch {
+            finish(null, "error");
+          }
+        });
     });
-  }, [active, context]);
+  }, [active, battleFormat, context, itemOptions, matchupContext]);
 
-  const current = active && result?.context === context ? result : null;
+  const current =
+    active &&
+    result?.context === context &&
+    result.matchupContext === matchupContext &&
+    result.battleFormat === battleFormat &&
+    result.itemOptions === itemOptions
+      ? result
+      : null;
   return { run, plan: current?.plan ?? null, loading: current?.status === "loading", error: current?.status === "error" };
 }

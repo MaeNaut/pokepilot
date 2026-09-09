@@ -1,9 +1,25 @@
 import { createSetOptimizationPlan } from "./setOptimizer/plan";
-import type { CalculatorAnalysisContext } from "./setOptimizer/types";
+import {
+  createGeneralSetOptimizationPlan,
+  mergeGeneralAndMatchupPlans,
+} from "./setOptimizer/generalPlan";
+import type {
+  CalculatorAnalysisContext,
+  GeneralSetOptimizationContext,
+} from "./setOptimizer/types";
 
-self.onmessage = (event: MessageEvent<CalculatorAnalysisContext>) => {
+type SetOptimizationWorkerRequest = {
+  generalContext: GeneralSetOptimizationContext;
+  matchupContext: CalculatorAnalysisContext | null;
+};
+
+self.onmessage = (event: MessageEvent<SetOptimizationWorkerRequest>) => {
   try {
-    self.postMessage({ plan: createSetOptimizationPlan(event.data) });
+    const general = createGeneralSetOptimizationPlan(event.data.generalContext);
+    const matchup = event.data.matchupContext
+      ? createSetOptimizationPlan(event.data.matchupContext)
+      : null;
+    self.postMessage({ plan: mergeGeneralAndMatchupPlans(general, matchup) });
   } catch {
     self.postMessage({ error: true });
   }

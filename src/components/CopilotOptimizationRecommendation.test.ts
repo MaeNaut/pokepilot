@@ -100,7 +100,7 @@ describe("optimization evidence selection", () => {
     { playerSpeed: 70, opponentSpeed: 100, relation: "faster" as const },
   ])("shows changed speed values or turn order: %o", (optimized) => {
     const input = candidate();
-    input.speedBenchmark.optimized = optimized;
+    input.speedBenchmark!.optimized = optimized;
     expect(selectOptimizationEvidence(input).showSpeed).toBe(true);
   });
 });
@@ -138,7 +138,7 @@ describe("optimization evidence card", () => {
 
   it("allows a speed-only disclosure", () => {
     const input = candidate();
-    input.speedBenchmark.optimized.playerSpeed = 80;
+    input.speedBenchmark!.optimized.playerSpeed = 80;
     const html = render(input);
     expect(html).toContain("<details");
     expect(html).toContain("is-speed");

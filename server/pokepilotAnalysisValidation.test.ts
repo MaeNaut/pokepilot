@@ -173,6 +173,20 @@ describe("hosted optimization validation", () => {
     expect(analysis.recommendations[0].reason).not.toContain("밀로틱보다");
   });
 
+  it("removes private sample candidate ids from public prose", () => {
+    const output = createOutput(["set-balanced"]);
+    output.analysis.paragraphs = [
+      "The set-balanced candidate keeps this role intact.",
+    ];
+
+    const analysis = validateHostedCopilotAnalysis(output, request);
+
+    expect(analysis.paragraphs).toEqual([
+      "This matchup tuning weighs the displayed calculator results against the set's current team role.",
+    ]);
+    expect(analysis.paragraphs.join(" ")).not.toContain("set-balanced");
+  });
+
   it("retains the verified benefit and stat cost when replacing a numeric reason", () => {
     const output = createOutput(["set-adjusted"]);
     output.analysis.recommendations[0].reason =

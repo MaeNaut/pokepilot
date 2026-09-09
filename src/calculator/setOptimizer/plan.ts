@@ -50,6 +50,7 @@ function createUnavailablePlan(
   reason: NonNullable<SetOptimizationPlan["reason"]>,
 ): SetOptimizationPlan {
   return {
+    mode: "matchup",
     ...createPlanIdentity(context),
     status: "unavailable",
     candidates: [],
@@ -220,6 +221,7 @@ export function createSetOptimizationPlan(
   }
 
   return {
+    mode: "matchup",
     ...createPlanIdentity(context),
     status: candidates.length > 0 ? "ready" : "unavailable",
     candidates,
