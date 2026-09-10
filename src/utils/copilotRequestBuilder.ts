@@ -31,6 +31,9 @@ import {
   type TeamRoleId,
 } from "./teamDiagnostics";
 import { hasPokemonCandidateFilters } from "./pokemonCandidateFilters";
+import {
+  getPokemonNameFallback,
+} from "./pokemonDisplay";
 import { getMegaEvolutionIndexEntry } from "./megaEvolution";
 import {
   compactCopilotMechanicEffect,
@@ -113,14 +116,17 @@ function getOptimizationPokemonDisplayName(
   pokemonIndex: PokemonIndexEntry[],
 ) {
   const entry = pokemonIndex.find((candidate) => candidate.name === member.id);
+  const includeForm = true;
 
   return translatePokemonName(locale, {
     id: entry?.name ?? member.id,
-    fallback: entry?.displayName ?? member.name,
+    fallback: entry
+      ? getPokemonNameFallback(entry, includeForm)
+      : member.name,
     speciesId: entry?.speciesKey,
     formLabel: entry?.formLabel,
     formKind: entry?.formKind,
-    includeForm: true,
+    includeForm,
   });
 }
 
@@ -1177,10 +1183,10 @@ export function createCopilotAnalysisRequest({
     const evs = buildState.evsBySlot[slotIndex] ?? defaultEvs;
     const slotValidity = validity.slotResults[slotIndex];
     const pokemonEntry = pokemonIndex.find((entry) => entry.name === member.id);
-    const pokemonName = pokemonEntry?.displayName ?? member.name;
-    const includeForm = pokemonEntry
-      ? pokemonEntry.displayName !== formatLookup(pokemonEntry.speciesKey)
-      : true;
+    const includeForm = true;
+    const pokemonName = pokemonEntry
+      ? getPokemonNameFallback(pokemonEntry, includeForm)
+      : member.name;
     const displayName = translatePokemonName(locale, {
       id: pokemonEntry?.name ?? member.id,
       fallback: pokemonName,

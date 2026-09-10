@@ -5,7 +5,7 @@ import {
   type SmogonUsageSet,
 } from "../api/smogonUsage";
 import { getPokemonLookupAliases } from "./pokemonAliases";
-import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
+import { normalizeShowdownId } from "../api/showdownIds";
 import { loadShowdownData } from "../api/showdownData";
 import type {
   ShowdownDataSnapshot,
@@ -21,6 +21,7 @@ import {
   teamConceptDefinitions,
   type TeamConceptId,
 } from "../data/teamConcepts";
+import { shouldIncludePokemonForm } from "./pokemonDisplay";
 import {
   defensiveMoveIds,
   supportMoveIds,
@@ -253,10 +254,7 @@ export function createPokemonRecommendationOptions({
       isPokemonLegal(legality, entry.showdownId, entry.speciesKey),
     )
     .map((entry) => {
-      const includeForm =
-        entry.formKind === "gender" ||
-        entry.formKind === "regional" ||
-        entry.displayName !== formatIdLabel(entry.speciesKey);
+      const includeForm = shouldIncludePokemonForm(entry);
 
       return {
         id: entry.name,

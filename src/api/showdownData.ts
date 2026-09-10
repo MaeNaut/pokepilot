@@ -86,9 +86,7 @@ type ShowdownDataCachePayload = ShowdownDataSnapshot & {
   cachedAt: number;
 };
 
-const SHOWDOWN_POKEDEX_URL = "https://play.pokemonshowdown.com/data/pokedex.json";
-const SHOWDOWN_MOVES_URL = "https://play.pokemonshowdown.com/data/moves.json";
-const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:v1";
+const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:mc-v1";
 const SHOWDOWN_DATA_CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 
 const MOVE_FLAG_TAG_LABELS: Record<string, string> = {
@@ -433,11 +431,8 @@ export async function loadShowdownData(): Promise<ShowdownDataSnapshot> {
       return cached;
     }
 
-    const [rawSpecies, rawMoves] = await Promise.all([
-      fetchJson<Record<string, RawShowdownSpecies>>(SHOWDOWN_POKEDEX_URL),
-      fetchJson<Record<string, RawShowdownMove>>(SHOWDOWN_MOVES_URL),
-    ]);
-    const snapshot = normalizeSnapshot(rawSpecies, rawMoves);
+    const data = await fetchJson<{ species: Record<string, RawShowdownSpecies>; moves: Record<string, RawShowdownMove> }>("/data/showdown-battle-mc.json");
+    const snapshot = normalizeSnapshot(data.species, data.moves);
 
     saveSnapshot(snapshot);
     return snapshot;

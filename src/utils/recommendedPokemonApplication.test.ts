@@ -95,7 +95,7 @@ function createLegality(
       ["pelipper", new Set(["hurricane"])],
       ["swampert", new Set(["earthquake"])],
     ]),
-    loadedFormatId: "gen9-regulation-mb",
+    loadedFormatId: "gen9-regulation-mc",
     dataMod: "champions",
     generatedAt: 1,
     source: "showdown",

@@ -67,6 +67,12 @@ describe("Showdown text", () => {
     ["tauros-paldea-aqua-breed", "Tauros Paldea Aqua Breed", "Tauros-Paldea-Aqua"],
     ["indeedee-female", "Indeedee Female", "Indeedee-F"],
     ["aegislash-shield", "Aegislash", "Aegislash"],
+    ["absol-mega-z", "Absol Mega Z", "Absol-Mega-Z"],
+    ["baxcalibur-mega", "Baxcalibur Mega", "Baxcalibur-Mega"],
+    ["garchomp-mega-z", "Garchomp Mega Z", "Garchomp-Mega-Z"],
+    ["golisopod-mega", "Golisopod Mega", "Golisopod-Mega"],
+    ["lucario-mega-z", "Lucario Mega Z", "Lucario-Mega-Z"],
+    ["salamence-mega", "Salamence Mega", "Salamence-Mega"],
   ])("exports canonical Showdown form names for %s", (id, name, showdownName) => {
     const member: TeamMember = {
       id,

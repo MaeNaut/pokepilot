@@ -7,7 +7,9 @@ import {
 } from "../types";
 import {
   getPokemonLookupAliases,
+  getPokeApiLookupId,
   getPreferredPokeApiId,
+  toPokemonLookupId,
 } from "../utils/pokemonAliases";
 import {
   getLegalMoves,
@@ -28,7 +30,7 @@ import { formatIdLabel, normalizeShowdownId } from "./showdownIds";
 import { getPokeApiChampionsSpriteUrl } from "../utils/pokemonSprites";
 
 const POKEAPI_BASE_URL = "https://pokeapi.co/api/v2";
-const SHOWDOWN_FORMAT_ID = "gen9-regulation-mb";
+const SHOWDOWN_FORMAT_ID = "gen9-regulation-mc";
 type PokeApiPokemon = {
   id: number;
   name: string;
@@ -210,7 +212,7 @@ function getPokeApiChampionsIconSpriteUrl(
   data: PokeApiPokemon,
   spriteGender?: "female",
 ) {
-  if (spriteGender === "female") {
+  if (spriteGender === "female" || !data.id) {
     return undefined;
   }
 
@@ -352,7 +354,7 @@ export async function fetchPokemon(nameOrId: string): Promise<TeamMember> {
   const requestedLookup = nameOrId.trim().toLowerCase().replace(/\s+/g, "-");
   const lookup = getPreferredPokeApiId(requestedLookup) ?? requestedLookup;
   const syntheticGenderForm = syntheticGenderFormSources[lookup];
-  const apiLookup = syntheticGenderForm?.sourceName ?? lookup;
+  const apiLookup = syntheticGenderForm?.sourceName ?? getPokeApiLookupId(lookup);
 
   if (!lookup) {
     throw new Error("Enter a Pokemon name or Pokedex number.");
@@ -395,28 +397,51 @@ async function fetchPokemonFromSources(
   cacheKey: string,
 ) {
   const [response, showdownData, showdownLegality] = await Promise.all([
-    fetch(`${POKEAPI_BASE_URL}/pokemon/${apiLookup}`),
-    loadShowdownData().catch(() => null),
+    fetch(`${POKEAPI_BASE_URL}/pokemon/${apiLookup}`, { signal: AbortSignal.timeout(4000) }).catch(() => null),
+    loadShowdownData(),
     loadShowdownLegality(SHOWDOWN_FORMAT_ID).catch(() => null),
   ]);
 
-  if (!response.ok) {
+  const species = findShowdownSpecies(showdownData, getPokemonLookupAliases(lookup)) ??
+    (/^\d+$/.test(lookup) ? Object.values(showdownData.speciesById).find((entry) => entry.num === Number(lookup) && !entry.forme) : undefined);
+  if (!species?.baseStats || !species.types) {
     throw new Error(`Could not find "${requestedName}".`);
   }
 
-  const data = (await response.json()) as PokeApiPokemon;
+  const imageData = response?.ok
+    ? await response.json().catch(() => null) as PokeApiPokemon | null
+    : null;
+  const data: PokeApiPokemon = {
+    id: imageData?.id ?? 0,
+    name: /^\d+$/.test(lookup) ? species.name.toLowerCase().replace(/\s+/g, "-") : lookup,
+    sprites: imageData?.sprites ?? { front_default: null },
+    stats: [],
+    types: [],
+    abilities: [],
+    moves: [],
+  };
+  const speciesLookup = toPokemonLookupId(species.name);
+  const canonicalPokemonId = /^\d+$/.test(lookup)
+    ? (getPreferredPokeApiId(speciesLookup) ?? speciesLookup)
+    : lookup;
   const pokemon = normalizePokemon(
     data,
     showdownData,
     showdownLegality,
-    syntheticGenderForm
-      ? {
-          id: lookup,
-          name: formatIdLabel(lookup),
-          spriteGender: syntheticGenderForm.spriteGender,
-        }
-      : undefined,
+    {
+      id: canonicalPokemonId,
+      name: syntheticGenderForm ? formatIdLabel(lookup) : species.name,
+      ...(syntheticGenderForm
+        ? { spriteGender: syntheticGenderForm.spriteGender }
+        : {}),
+    },
   );
+
+  const spriteId = species.name.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  const fallbackSprite = `https://play.pokemonshowdown.com/sprites/gen5/${spriteId}.png`;
+  pokemon.iconFallbackSpriteUrls = [...(pokemon.iconFallbackSpriteUrls ?? []), fallbackSprite];
+  pokemon.iconSpriteUrl ||= fallbackSprite;
+  pokemon.spriteUrl ||= fallbackSprite;
 
   cachePokemon(cacheKey, pokemon);
 

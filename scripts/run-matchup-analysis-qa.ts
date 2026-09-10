@@ -59,7 +59,7 @@ const coachScraftyFixture: AiTeamFixture = {
   schemaVersion: 1,
   id: "doubles-constructed-coach-scrafty",
   title: "Coach Scrafty",
-  regulation: "M-B",
+  regulation: "M-C",
   battleFormat: "doubles",
   source: {
     origin: "constructed",

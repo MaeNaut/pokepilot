@@ -104,7 +104,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       });
       expect(result.output).toEqual(groundedModelOutput);
       expect(create).toHaveBeenCalledWith(expect.objectContaining({
-        prompt_cache_key: "pokepilot-production-core-v4-low",
+        prompt_cache_key: "pokepilot-production-core-v5-low",
         text: expect.objectContaining({ format: expect.objectContaining({
           schema: copilotGroundedModelOutputJsonSchema,
         }) }),
@@ -224,7 +224,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-5.6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-core-v4-low",
+        prompt_cache_key: "pokepilot-evaluation-core-v5-low",
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -287,7 +287,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 89,
+        promptVersion: 90,
       },
       usage: {
         totalTokens: 150,
@@ -383,7 +383,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(create).toHaveBeenCalledOnce();
     const modelRequest = create.mock.calls[0]![0];
     expect(modelRequest.prompt_cache_key).toBe(
-      "pokepilot-evaluation-core-v4-low",
+      "pokepilot-evaluation-core-v5-low",
     );
     expect(modelRequest.input[0].content[0].text).toBe(
       pokepilotCommonInstructions,

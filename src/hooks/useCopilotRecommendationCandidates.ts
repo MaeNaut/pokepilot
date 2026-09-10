@@ -18,6 +18,9 @@ import {
 import type { TeamBuildState } from "../utils/teamBuildState";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
 import type { CopilotAnalysisScope } from "../utils/copilotContracts";
+import {
+  getPokemonNameFallback,
+} from "../utils/pokemonDisplay";
 
 type RecommendationCandidateState = {
   status: "idle" | "loading" | "ready" | "error";
@@ -105,7 +108,7 @@ export function useCopilotRecommendationCandidates({
             pokemonName({
               id: entry.name,
               speciesId: entry.speciesKey,
-              fallback: entry.displayName,
+              fallback: getPokemonNameFallback(entry, includeForm),
               includeForm,
               formLabel: entry.formLabel,
               formKind: entry.formKind,
@@ -120,15 +123,20 @@ export function useCopilotRecommendationCandidates({
         buildState,
         diagnostics,
         pokemonIndex,
-        getCurrentPokemonDisplayName: (member, entry) =>
-          pokemonName({
-            id: entry?.name ?? member.id,
-            speciesId: entry?.speciesKey,
-            fallback: entry?.displayName ?? member.name,
-            includeForm: false,
-            formLabel: entry?.formLabel,
-            formKind: entry?.formKind,
-          }),
+          getCurrentPokemonDisplayName: (member, entry) => {
+            const includeForm = Boolean(entry);
+
+            return pokemonName({
+              id: entry?.name ?? member.id,
+              speciesId: entry?.speciesKey,
+              fallback: entry
+                ? getPokemonNameFallback(entry, includeForm)
+                : member.name,
+              includeForm,
+              formLabel: entry?.formLabel,
+              formKind: entry?.formKind,
+            });
+          },
       });
       const candidates = await createUniversalPokemonRecommendationCandidates({
         options,

@@ -4,7 +4,9 @@ import type {
 } from "../gameTranslations";
 
 const koChampionsMegaStoneNames = {
+  absolitez: "앱솔나이트Z",
   barbaracite: "거북손데스나이트",
+  baxcalibrite: "드닐레이브나이트",
   chandelurite: "샹델라나이트",
   chesnaughtite: "브리가론나이트",
   chimechite: "치렁나이트",
@@ -21,11 +23,14 @@ const koChampionsMegaStoneNames = {
   feraligite: "장크로다일나이트",
   floettite: "플라엣테나이트",
   froslassite: "눈여아나이트",
+  garchompitez: "한카리아스나이트Z",
   glimmoranite: "킬라플로르나이트",
+  golisopite: "갑주무사나이트",
   golurkite: "골루그나이트",
   greninjite: "개굴닌자나이트",
   hawluchanite: "루차불나이트",
   malamarite: "칼라마네로나이트",
+  lucarionitez: "루카리오나이트Z",
   meganiumite: "메가니움나이트",
   meowsticite: "냐오닉스나이트",
   pyroarite: "화염레오나이트",
@@ -53,12 +58,10 @@ export const koGameOverrides: Partial<
   // Keep intentional PokePilot terminology changes here so regenerating the
   // PokeAPI snapshot never overwrites them.
   abilities: {
-    eelevate: "천정부지",
-    firemane: "불꽃의갈기",
+    auraguard: "파동의방호",
   },
   items: {
     ...koChampionsMegaStoneNames,
-    fairyfeather: "요정의깃털",
   },
 };
 
@@ -68,6 +71,7 @@ export const koGameDescriptionOverrides: Partial<
   // Description corrections use the same normalized canonical IDs as names.
   abilities: {
     armortail: "자신과 같은 편의 포켓몬은 상대의 우선도 기술을 받지 않는다.",
+    auraguard: "접촉 기술로 받는 데미지가 절반이 된다.",
     cudchew:
       "나무열매를 먹으면 다음 턴이 끝날 때 같은 나무열매를 한 번 더 먹는다.",
     dragonize: "노말타입 기술이 드래곤타입이 되고 위력이 1.2배가 된다.",
@@ -78,6 +82,8 @@ export const koGameDescriptionOverrides: Partial<
     electromorphosis: "공격 기술을 받으면 충전 상태가 된다.",
     firemane: "불꽃타입 기술의 위력이 1.5배가 된다.",
     goodasgold: "변화 기술의 효과를 받지 않는다.",
+    guarddog:
+      "위협을 받지 않고 오히려 공격이 1단계 올라간다. 상대의 기술이나 도구로 강제 교체되지 않는다.",
     hospitality:
       "등장했을 때 같은 편 포켓몬의 최대 HP를 4분의 1만큼 회복한다.",
     megasol: "자신이 사용하는 기술은 쾌청 상태인 것처럼 효과가 적용된다.",
@@ -86,12 +92,15 @@ export const koGameDescriptionOverrides: Partial<
       "상대가 방어 중이어도 접촉 기술이 적중하며 이때 데미지는 평소의 4분의 1이 된다.",
     purifyingsalt:
       "상태 이상이 되지 않으며 고스트타입 기술로 받는 데미지가 절반이 된다.",
+    seedsower: "공격 기술로 데미지를 받으면 그래스필드를 전개한다.",
     sharpness: "베기 기술의 위력이 1.5배가 된다.",
     spicyspray: "공격 기술을 받으면 공격한 상대를 화상 상태로 만든다.",
     supersweetsyrup:
       "배틀에서 처음 등장했을 때 한 번만 상대 전체의 회피율을 1단계 떨어뜨린다.",
     supremeoverlord:
       "쓰러진 같은 편 포켓몬 1마리마다 기술의 위력이 10%씩 올라간다. 최대 5마리까지 적용된다.",
+    thermalexchange:
+      "불꽃타입 기술로 데미지를 받으면 공격이 1단계 올라간다. 화상 상태가 되지 않는다.",
     toxicdebris:
       "물리 기술로 데미지를 받으면 상대 진영에 독압정을 설치한다.",
     zerotohero:
@@ -100,6 +109,7 @@ export const koGameDescriptionOverrides: Partial<
   items: {
     ...koChampionsMegaStoneDescriptions,
     fairyfeather: "지니게 하면 페어리타입 기술의 위력이 1.2배가 된다.",
+    leek: "파오리 또는 창파나이트에게 지니게 하면 급소율이 2단계 올라간다.",
   },
   moves: {
     alluringvoice:
@@ -120,6 +130,8 @@ export const koGameDescriptionOverrides: Partial<
       "그 턴에 공격 기술로 받은 데미지의 1.5배를 상대에게 되돌려준다.",
     direclaw:
       "50% 확률로 상대를 독, 마비, 잠듦 중 하나의 상태로 만든다.",
+    doubleshock:
+      "사용자가 전기타입일 때만 성공한다. 성공하면 교체할 때까지 사용자의 전기타입이 사라진다.",
     dragoncheer:
       "같은 편의 급소율을 1단계 올린다. 대상이 드래곤타입이면 2단계 올린다.",
     electroshot:
@@ -127,6 +139,8 @@ export const koGameDescriptionOverrides: Partial<
     ficklebeam: "30% 확률로 위력이 2배가 된다.",
     flowertrick: "반드시 급소에 맞으며 명중률 검사를 하지 않는다.",
     gigatonhammer: "사용한 다음 턴에는 선택할 수 없다.",
+    glaiverush:
+      "기술이 성공하면 다음 자신의 턴까지 자신을 대상으로 하는 기술이 반드시 명중하고 데미지가 2배가 된다.",
     hardpress: "상대의 남은 HP가 많을수록 위력이 올라간다.",
     headlongrush: "자신의 방어와 특수방어가 1단계 떨어진다.",
     icespinner: "필드의 효과를 없앤다.",
@@ -153,6 +167,8 @@ export const koGameDescriptionOverrides: Partial<
       "상대 진영의 장막을 없앤다. 사용자의 모습에 따라 타입이 바뀐다.",
     ragingfury:
       "2~3턴 동안 계속 사용한 뒤 자신이 혼란 상태가 된다.",
+    revivalblessing:
+      "기절한 같은 편 포켓몬 한 마리를 최대 HP의 절반으로 되살린다. 기절한 포켓몬이 없으면 실패한다.",
     saltcure:
       "매 턴 상대 최대 HP의 8분의 1만큼 데미지를 준다. 강철타입과 물타입에게는 4분의 1만큼 준다.",
     shedtail:

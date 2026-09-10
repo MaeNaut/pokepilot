@@ -239,7 +239,7 @@ async function main() {
   const restoreRuntime = installAiEvaluationRuntime(projectRoot);
 
   try {
-    console.log("Loading production Pokemon, item, and Regulation M-B data...");
+    console.log("Loading production Pokemon, item, and Regulation M-C data...");
     const [pokemonIndex, itemIndex, abilityIndex, legality] = await Promise.all([
       fetchPokemonIndex(),
       fetchItemIndex(),

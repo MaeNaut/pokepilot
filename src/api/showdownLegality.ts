@@ -31,19 +31,19 @@ export type ShowdownLegalityPayload = {
   moveByPokemon: Array<[string, string[]]>;
 };
 
-const SHOWDOWN_DEFAULT_FORMAT_ID = "gen9-regulation-mb";
-const REGULATION_MB_SNAPSHOT_URL = "/data/showdown-regulation-mb.json";
-let regulationMbSnapshotPromise: Promise<ShowdownLegalitySnapshot> | null = null;
+const SHOWDOWN_DEFAULT_FORMAT_ID = "gen9-regulation-mc";
+const REGULATION_MC_SNAPSHOT_URL = "/data/showdown-regulation-mc.json";
+let regulationMcSnapshotPromise: Promise<ShowdownLegalitySnapshot> | null = null;
 
-function isRegulationMbFormat(formatId: string) {
+function isRegulationMcFormat(formatId: string) {
   const normalized = normalizeShowdownId(formatId);
 
   return (
-    normalized === "gen9regulationmb" ||
-    normalized === "gen9championsbssregmb" ||
-    normalized === "gen9championsvgc2026regmb" ||
-    normalized.includes("championsregmb") ||
-    normalized.includes("regulationmb")
+    normalized === "gen9regulationmc" ||
+    normalized === "gen9championsbssregmc" ||
+    normalized === "gen9championsvgc2026regmc" ||
+    normalized.includes("championsregmc") ||
+    normalized.includes("regulationmc")
   );
 }
 
@@ -67,6 +67,10 @@ function findSetByPokemonKey(
   pokemonId: string,
   speciesKey?: string,
 ) {
+  for (const key of getShowdownLookupKeys(pokemonId)) {
+    const exact = source.get(key);
+    if (exact?.size) return new Set(exact);
+  }
   const candidates = collectCandidateLookupKeys(pokemonId, speciesKey);
   const result = new Set<string>();
 
@@ -114,8 +118,8 @@ export function hydrateShowdownLegalitySnapshot(
   payload: Partial<ShowdownLegalityPayload>,
   loadedFormatId: string = SHOWDOWN_DEFAULT_FORMAT_ID,
 ): ShowdownLegalitySnapshot {
-  if (!hasSnapshotArrays(payload)) {
-    throw new Error("Unsupported Regulation M-B legality snapshot.");
+  if (!hasSnapshotArrays(payload) || payload.formatId !== SHOWDOWN_DEFAULT_FORMAT_ID || payload.dataMod !== "champions") {
+    throw new Error("Unsupported Regulation M-C legality snapshot.");
   }
 
   return {
@@ -136,11 +140,11 @@ export function hydrateShowdownLegalitySnapshot(
 }
 
 async function fetchSnapshotPayload() {
-  const response = await fetch(REGULATION_MB_SNAPSHOT_URL);
+  const response = await fetch(REGULATION_MC_SNAPSHOT_URL);
 
   if (!response.ok) {
     throw new Error(
-      `Regulation M-B snapshot request failed (${response.status}).`,
+      `Regulation M-C snapshot request failed (${response.status}).`,
     );
   }
 
@@ -167,23 +171,23 @@ export async function loadShowdownLegality(
 ): Promise<ShowdownLegalitySnapshot> {
   cleanLegacyDataCaches();
 
-  if (!isRegulationMbFormat(formatId)) {
+  if (!isRegulationMcFormat(formatId)) {
     return createUnavailableSnapshot(
       formatId,
       new Error(`Unsupported Showdown format "${formatId}".`),
     );
   }
 
-  if (!regulationMbSnapshotPromise) {
-    regulationMbSnapshotPromise = fetchSnapshotPayload()
+  if (!regulationMcSnapshotPromise) {
+    regulationMcSnapshotPromise = fetchSnapshotPayload()
       .then((payload) => hydrateShowdownLegalitySnapshot(payload))
       .catch((error) => {
-        regulationMbSnapshotPromise = null;
+        regulationMcSnapshotPromise = null;
         return createUnavailableSnapshot(formatId, error);
       });
   }
 
-  const snapshot = await regulationMbSnapshotPromise;
+  const snapshot = await regulationMcSnapshotPromise;
 
   return snapshot.loadedFormatId === formatId
     ? snapshot

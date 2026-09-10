@@ -661,10 +661,10 @@ function analyzeRecommendationRequest(
         ? isKorean
           ? replacementMode
             ? "현재 여섯 마리의 역할과 상성을 비교해 교체 가능한 후보를 골랐습니다."
-            : "레귤레이션 M-B 적법성, 선택한 필터, 사용률과 현재 팀의 타입 구조를 함께 반영한 후보입니다."
+            : "레귤레이션 M-C 적법성, 선택한 필터, 사용률과 현재 팀의 타입 구조를 함께 반영한 후보입니다."
           : replacementMode
             ? "These candidates compare possible replacements against the roles and matchups of the current six."
-            : "These candidates reflect Regulation M-B legality, the selected filters, usage, and the current team's type profile."
+            : "These candidates reflect Regulation M-C legality, the selected filters, usage, and the current team's type profile."
         : isKorean
           ? "현재 조건을 모두 만족하는 후보가 없습니다."
           : "No candidate satisfies every current requirement.",

@@ -15,7 +15,7 @@ import { usePokemonArtworkPreview } from "../hooks/usePokemonArtworkPreview";
 import {
   itemFromIndexEntry,
 } from "../api/showdownCatalog";
-import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
+import { normalizeShowdownId } from "../api/showdownIds";
 import {
   getLegalAbilities,
   getLegalMoves,
@@ -49,6 +49,11 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useScrubbableNumberInput } from "../hooks/useScrubbableNumberInput";
 import { useLocalization } from "../i18n/useLocalization";
 import { getNextCircularIndex } from "../utils/optionNavigation";
+import {
+  getPokemonNameFallback,
+  shouldIncludePokemonForm,
+} from "../utils/pokemonDisplay";
+import { matchesSearchText, normalizeSearchText } from "../utils/searchText";
 import type {
   ItemIndexEntry,
   PokemonIndexEntry,
@@ -411,16 +416,19 @@ export function CalculatorPokemonEditor({
       ),
   });
 
-  const normalizedPokemonQuery = pokemonQuery.trim().toLowerCase();
+  const normalizedPokemonQuery = normalizeSearchText(pokemonQuery);
   const matchingPokemonOptions = useMemo(
     () =>
       candidateFilteredPokemonOptions.filter(
         (option) =>
           !normalizedPokemonQuery ||
-          option.label.toLowerCase().includes(normalizedPokemonQuery) ||
-          option.englishName.toLowerCase().includes(normalizedPokemonQuery) ||
-          option.id.toLowerCase().includes(normalizedPokemonQuery) ||
-          String(option.number).includes(normalizedPokemonQuery),
+          matchesSearchText(
+            normalizedPokemonQuery,
+            option.label,
+            option.englishName,
+            option.id,
+            String(option.number),
+          ),
       ),
     [candidateFilteredPokemonOptions, normalizedPokemonQuery],
   );
@@ -1255,13 +1263,18 @@ export function CalculatorPokemonEditor({
     const indexEntry = pokemonIndex.find(
       (entry) => entry.name === targetMember.id,
     );
+    const includeForm = indexEntry
+      ? shouldIncludePokemonForm(indexEntry)
+      : false;
 
     return indexEntry
       ? pokemonName({
           id: indexEntry.name,
           speciesId: indexEntry.speciesKey,
-          fallback: formatIdLabel(indexEntry.speciesKey),
-          includeForm: false,
+          fallback: getPokemonNameFallback(indexEntry, includeForm),
+          includeForm,
+          formLabel: indexEntry.formLabel,
+          formKind: indexEntry.formKind,
         })
       : pokemonName({
           id: targetMember.id,
@@ -1404,6 +1417,7 @@ export function CalculatorPokemonEditor({
                       speciesId: option.speciesKey,
                       fallback: option.displayName,
                       formLabel: option.formLabel,
+                      formKind: option.formKind,
                     });
 
                     return (

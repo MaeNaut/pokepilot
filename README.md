@@ -1,7 +1,7 @@
 # PokePilot
 
 PokePilot is an unofficial AI-assisted team builder and damage calculator for
-Pokemon-style turn-based battles. It combines Regulation M-B legality, usage
+Pokemon-style turn-based battles. It combines Regulation M-C legality, usage
 data, matchup diagnostics, and AI strategy guidance in one responsive web app.
 
 [Open the live app](https://pokepilot-ai.vercel.app)
@@ -13,7 +13,7 @@ data, matchup diagnostics, and AI strategy guidance in one responsive web app.
 
 - Build, reorder, save, duplicate, and manage six-Pokemon teams with a six-slot bench.
 - Edit forms, items, abilities, natures, EVs, moves, Mega Evolution, and current HP.
-- Filter Pokemon, items, abilities, and moves against Regulation M-B legality.
+- Filter Pokemon, items, abilities, and moves against Regulation M-C legality.
 - Import and export Pokemon Showdown text for individual sets and complete teams.
 - Load usage-ranked Pokemon and popular sets from monthly Smogon statistics.
 - Inspect defensive matchups, offensive coverage, validity, and damage ranges.

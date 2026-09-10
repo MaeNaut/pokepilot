@@ -12,7 +12,7 @@ import type {
   PokemonIndexEntry,
 } from "../types";
 
-const regulationFormat = "gen9-regulation-mb";
+const regulationFormat = "gen9-regulation-mc";
 
 function useCatalogData<T>(loadCatalog: () => Promise<T>, initialData: T) {
   const [data, setData] = useState(initialData);

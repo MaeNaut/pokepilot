@@ -1,4 +1,4 @@
-export const POKEMON_CACHE_PREFIX = "pokepilot:pokemon:v21:";
+export const POKEMON_CACHE_PREFIX = "pokepilot:pokemon:v23:";
 
 const LEGACY_DATA_CACHE_PREFIXES = [
   "pokepilot:move:",
