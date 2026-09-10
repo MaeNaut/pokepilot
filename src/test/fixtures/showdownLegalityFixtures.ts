@@ -97,9 +97,9 @@ export const showdownMovesFixture = {
   },
 };
 
-export const regulationMbSnapshotFixture = {
+export const regulationMcSnapshotFixture = {
   schemaVersion: 1,
-  formatId: "gen9-regulation-mb",
+  formatId: "gen9-regulation-mc",
   dataMod: "champions",
   generatedAt: 1_788_835_200_000,
   pokemonIds: ["floetteeternal", "rotomwash"],

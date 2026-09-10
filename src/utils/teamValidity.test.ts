@@ -35,7 +35,7 @@ function createSnapshot(
     itemIds: new Set(["leftovers", "charizarditey"]),
     abilityByPokemon: new Map([["charizard", new Set(["blaze"])]]),
     moveByPokemon: new Map([["charizard", new Set(["flamethrower"])]]),
-    loadedFormatId: "gen9-regulation-mb",
+    loadedFormatId: "gen9-regulation-mc",
     dataMod: "champions",
     generatedAt: 1,
     source: "showdown",

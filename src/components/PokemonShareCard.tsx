@@ -15,6 +15,7 @@ import { TypeBadge } from "./TypeBadge";
 export type PokemonShareBuild = {
   member: TeamMember;
   displayName: string;
+  fullDisplayName?: string;
   formLabel?: string;
   item: PokemonItem | null;
   ability: string;

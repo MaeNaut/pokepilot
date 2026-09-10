@@ -83,6 +83,8 @@ const BASE_DISPLAY_NAME_FOR_DEFAULT_FORMS = new Set(
   Object.values(DEFAULT_FORM_IDS_BY_SHOWDOWN_ID),
 );
 const MAIN_PICKER_HIDDEN_FORMS = new Set([
+  "squawkabilly-blue",
+  "squawkabilly-white",
   "mimikyu-busted",
   "pyroar-female",
   "sinistcha-masterpiece",
@@ -163,6 +165,8 @@ function getFormLabel(
   pokemonId: string,
   speciesKey: string,
 ) {
+  if (species.id === "toxtricity") return "Amped";
+  if (species.id === "squawkabilly") return "Green";
   const genderMeta = GENDER_FORMS_BY_SHOWDOWN_ID[species.id];
 
   if (genderMeta) {
@@ -178,6 +182,7 @@ function getFormLabel(
 }
 
 function getDisplayName(
+  species: ShowdownSpeciesData,
   pokemonId: string,
   speciesKey: string,
   genderMeta?: GenderFormMeta,
@@ -191,6 +196,10 @@ function getDisplayName(
 
   if (genderMeta) {
     return `${formatIdLabel(speciesKey)} ${genderMeta.label}`;
+  }
+
+  if (!species.baseSpecies && !species.forme && pokemonId === speciesKey) {
+    return species.name;
   }
 
   return formatIdLabel(pokemonId);
@@ -225,6 +234,7 @@ function createIndexEntry(species: ShowdownSpeciesData): PokemonIndexEntry | nul
     showdownId: species.id,
     showdownName: species.name,
     displayName: getDisplayName(
+      species,
       pokemonId,
       speciesKey,
       GENDER_FORMS_BY_SHOWDOWN_ID[species.id],

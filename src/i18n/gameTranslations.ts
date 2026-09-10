@@ -67,6 +67,11 @@ const descriptionCatalogKeys: Record<
   abilities: "abilityDescriptions",
 };
 
+export function hasKoreanGameDescription(category: GameDescriptionCategory, id: string) {
+  const key = normalizeTranslationId(id);
+  return Boolean(koGameDescriptionOverrides[category]?.[key] ?? koreanCatalog[descriptionCatalogKeys[category]][key]);
+}
+
 export function translateGameDescription(
   locale: Locale,
   category: GameDescriptionCategory,
@@ -83,7 +88,7 @@ export function translateGameDescription(
   return (
     koGameDescriptionOverrides[category]?.[key] ??
     koreanCatalog[catalogKey][key] ??
-    fallback
+    (fallback ? `${fallback} (한국어 설명이 없어 영어로 표시합니다.)` : fallback)
   );
 }
 
@@ -140,6 +145,10 @@ type PokemonNameOptions = {
 };
 
 const koreanFormLabels: Record<string, string> = {
+  amped: "하이한 모습",
+  "low key": "로우한 모습",
+  green: "초록 깃털",
+  yellow: "노랑 깃털",
   m: "수컷",
   male: "수컷",
   f: "암컷",
@@ -147,6 +156,9 @@ const koreanFormLabels: Record<string, string> = {
   mega: "메가",
   "mega x": "메가 X",
   "mega y": "메가 Y",
+  "mega z": "메가 Z",
+  zero: "나이브폼",
+  hero: "마이티폼",
 };
 
 const koreanRegionalPrefixes: Record<string, string> = {
@@ -236,14 +248,23 @@ export function translatePokemonName(locale: Locale, options: PokemonNameOptions
     return `${baseName} ${formName}`;
   }
 
+  if (baseName && options.formLabel) {
+    const megaMatch =
+      options.formKind === "mega"
+        ? /^mega(?:\s+([xyz]))?$/i.exec(options.formLabel.trim())
+        : null;
+
+    if (megaMatch) {
+      return `메가${baseName}${megaMatch[1]?.toUpperCase() ?? ""}`;
+    }
+
+    return `${baseName} ${translateFallbackFormLabel(options.formLabel)}`;
+  }
+
   const exactName = koreanCatalog.pokemon[exactKey];
 
   if (exactName) {
     return exactName;
-  }
-
-  if (baseName && options.formLabel) {
-    return `${baseName} ${translateFallbackFormLabel(options.formLabel)}`;
   }
 
   return baseName ?? options.fallback;
@@ -256,6 +277,12 @@ export function translatePokemonFormName(
 ) {
   if (locale === "en") {
     return fallback;
+  }
+
+  const megaMatch = /^mega(?:\s+([xyz]))?$/i.exec(fallback.trim());
+
+  if (megaMatch) {
+    return `메가${megaMatch[1] ? ` ${megaMatch[1].toUpperCase()}` : ""}`;
   }
 
   const form = koreanCatalog.pokemonForms[normalizeTranslationId(pokemonId)];

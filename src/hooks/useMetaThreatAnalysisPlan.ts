@@ -25,6 +25,9 @@ import {
 } from "../utils/metaThreatRecommendations";
 import type { TeamBuildState } from "../utils/teamBuildState";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
+import {
+  getPokemonNameFallback,
+} from "../utils/pokemonDisplay";
 
 type Result = {
   team: TeamSlot[];
@@ -167,7 +170,7 @@ export function useMetaThreatAnalysisPlan({
                       pokemonName({
                         id: entry.name,
                         speciesId: entry.speciesKey,
-                        fallback: entry.displayName,
+                        fallback: getPokemonNameFallback(entry, includeForm),
                         includeForm,
                         formLabel: entry.formLabel,
                         formKind: entry.formKind,
@@ -183,15 +186,20 @@ export function useMetaThreatAnalysisPlan({
                     buildState,
                     diagnostics,
                     pokemonIndex,
-                    getCurrentPokemonDisplayName: (member, entry) =>
-                      pokemonName({
+                    getCurrentPokemonDisplayName: (member, entry) => {
+                      const includeForm = Boolean(entry);
+
+                      return pokemonName({
                         id: entry?.name ?? member.id,
                         speciesId: entry?.speciesKey,
-                        fallback: entry?.displayName ?? member.name,
-                        includeForm: false,
+                        fallback: entry
+                          ? getPokemonNameFallback(entry, includeForm)
+                          : member.name,
+                        includeForm,
                         formLabel: entry?.formLabel,
                         formKind: entry?.formKind,
-                      }),
+                      });
+                    },
                   });
                   const rankedCandidates =
                     rankUniversalPokemonRecommendationCandidates({

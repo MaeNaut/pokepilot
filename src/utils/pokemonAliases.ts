@@ -1,6 +1,16 @@
 import { areEquivalentBattleForms } from "../data/battleForms";
 
 const SPECIAL_POKEMON_LOOKUP_ALIASES: Record<string, string[]> = {
+  "toxtricity-amped": ["toxtricity"],
+  "squawkabilly-green-plumage": ["squawkabilly"],
+  "squawkabilly-blue-plumage": ["squawkabillyblue", "squawkabilly"],
+  "squawkabilly-white-plumage": [
+    "squawkabillywhite",
+    "squawkabilly-yellow",
+  ],
+  "squawkabilly-yellow-plumage": ["squawkabillyyellow"],
+  "squawkabilly-blue": ["squawkabilly"],
+  "squawkabilly-white": ["squawkabilly-yellow"],
   "aegislash-blade": ["aegislash"],
   "aegislash-shield": ["aegislash"],
   "maushold-family-of-four": ["maushold"],
@@ -14,10 +24,22 @@ const SPECIAL_POKEMON_LOOKUP_ALIASES: Record<string, string[]> = {
 };
 
 const PREFERRED_POKEAPI_IDS: Record<string, string> = {
+  "farfetch-d": "farfetchd",
+  "sirfetch-d": "sirfetchd",
+  indeedee: "indeedee-male",
+  "indeedee-f": "indeedee-female",
   aegislash: "aegislash-shield",
   mimikyu: "mimikyu-disguised",
   morpeko: "morpeko-full-belly",
   palafin: "palafin-zero",
+};
+
+const POKEAPI_LOOKUP_IDS: Record<string, string> = {
+  toxtricity: "toxtricity-amped",
+  squawkabilly: "squawkabilly-green-plumage",
+  "squawkabilly-blue": "squawkabilly-blue-plumage",
+  "squawkabilly-white": "squawkabilly-white-plumage",
+  "squawkabilly-yellow": "squawkabilly-yellow-plumage",
 };
 
 export function toPokemonLookupId(value: string) {
@@ -77,6 +99,11 @@ export function getPokemonLookupAliases(value: string) {
 
 export function getPreferredPokeApiId(value: string) {
   return PREFERRED_POKEAPI_IDS[toPokemonLookupId(value)];
+}
+
+export function getPokeApiLookupId(value: string) {
+  const id = toPokemonLookupId(value);
+  return POKEAPI_LOOKUP_IDS[id] ?? id;
 }
 
 export function shouldKeepSelectedPokemonForUsageTarget(

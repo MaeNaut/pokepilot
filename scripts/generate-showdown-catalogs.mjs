@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseShowdownStaticExport } from "./lib/showdownStaticExport.mjs";
+import { readModData, mergeModData } from "./lib/showdownModData.mjs";
 
 const SHOWDOWN_DATA_URL = "https://play.pokemonshowdown.com/data";
 const SHOWDOWN_MODS_URL =
@@ -16,7 +17,7 @@ const SOURCES = {
   pokedex: `${SHOWDOWN_DATA_URL}/pokedex.json`,
   teambuilderTables: `${SHOWDOWN_DATA_URL}/teambuilder-tables.js`,
 };
-const REGULATION_MB_FORMAT_ID = "gen9-regulation-mb";
+const REGULATION_MC_FORMAT_ID = "gen9-regulation-mc";
 const LEGALITY_EXCLUDED_TIERS = new Set(["illegal"]);
 const FLAT_RULE_BANNED_TAGS = new Set(["mythical", "restricted legendary"]);
 const LEARNSET_PARENT_OVERRIDES = new Map([
@@ -300,7 +301,7 @@ function sortedSetEntries(entries) {
     .map(([key, values]) => [key, sortedValues(values)]);
 }
 
-function buildRegulationMbSnapshot({
+function buildRegulationMcSnapshot({
   baseLearnsets,
   championsFormatsText,
   championsItemsText,
@@ -376,7 +377,7 @@ function buildRegulationMbSnapshot({
     tableItems.size > 0 ? tableItems : parseItems(championsItemsText);
   const snapshot = {
     schemaVersion: 1,
-    formatId: REGULATION_MB_FORMAT_ID,
+    formatId: REGULATION_MC_FORMAT_ID,
     dataMod: "champions",
     generatedAt: Date.now(),
     sources: {
@@ -401,7 +402,7 @@ function buildRegulationMbSnapshot({
     snapshot.abilityByPokemon.length < 50 ||
     snapshot.moveByPokemon.length < 50
   ) {
-    throw new Error("Generated Regulation M-B snapshot failed its sanity checks.");
+    throw new Error("Generated Regulation M-C snapshot failed its sanity checks.");
   }
 
   return snapshot;
@@ -441,9 +442,18 @@ const rawAbilities = readShowdownExport(
   SOURCES.abilities,
 );
 const generatedAt = new Date().toISOString();
+const [baseMoves, modMoves] = await Promise.all([
+  fetchJson(`${SHOWDOWN_DATA_URL}/moves.json`),
+  fetchSource(`${SHOWDOWN_MODS_URL}/champions/moves.ts`).then(readModData),
+]);
+const battleSpecies = pokedex;
 
 await mkdir(outputDirectory, { recursive: true });
 await Promise.all([
+  writeDataFile("showdown-battle-mc.json", {
+    species: battleSpecies,
+    moves: mergeModData(baseMoves, modMoves),
+  }),
   writeDataFile("showdown-items.json", {
     schemaVersion: 1,
     generatedAt,
@@ -457,16 +467,16 @@ await Promise.all([
     abilities: normalizeAbilities(rawAbilities),
   }),
   writeDataFile(
-    "showdown-regulation-mb.json",
-    buildRegulationMbSnapshot({
+    "showdown-regulation-mc.json",
+    buildRegulationMcSnapshot({
       baseLearnsets,
       championsFormatsText,
       championsItemsText,
       championsLearnsetsText,
-      pokedex,
+      pokedex: battleSpecies,
       teambuilderTablesText,
     }),
   ),
 ]);
 
-console.log("Generated compact Showdown catalogs and Regulation M-B snapshot.");
+console.log("Generated compact Showdown catalogs and Regulation M-C snapshot.");

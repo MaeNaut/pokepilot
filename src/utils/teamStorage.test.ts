@@ -37,7 +37,7 @@ describe("team storage normalization", () => {
     expect(normalized).toMatchObject({
       version: SAVED_TEAM_SCHEMA_VERSION,
       id: "legacy-team",
-      battleFormat: "doubles",
+      battleFormat: "singles",
       bench: [],
     });
   });
@@ -105,5 +105,65 @@ describe("saved-team helpers", () => {
       moves: [{ id: "fakeout", name: "Fake Out" }],
     });
     expect(JSON.parse(serialized).battleFormat).toBe("singles");
+  });
+
+  it("ignores refreshed catalog metadata when comparing team snapshots", () => {
+    const buildState = createEmptyBuildState();
+    buildState.itemBySlot[0] = {
+      id: "life-orb",
+      name: "Life Orb",
+      spriteUrl: "old-item.png",
+    };
+    const first = serializeTeamSnapshot({
+      name: "Team",
+      battleFormat: "doubles",
+      slots: [
+        { pokemonId: "kingambit", name: "Kingambit", spriteUrl: "old.png" },
+      ],
+      bench: [],
+      buildState,
+    });
+    const refreshedBuildState = createEmptyBuildState();
+    refreshedBuildState.itemBySlot[0] = {
+      id: "life-orb",
+      name: "Life Orb",
+      spriteUrl: "new-item.png",
+      effect: "Updated catalog text",
+    };
+    const refreshed = serializeTeamSnapshot({
+      name: "Team",
+      battleFormat: "doubles",
+      slots: [
+        {
+          pokemonId: "kingambit",
+          name: "Kingambit",
+          spriteUrl: "new.png",
+          iconSpriteUrl: "new-icon.png",
+        },
+      ],
+      bench: [],
+      buildState: refreshedBuildState,
+    });
+
+    expect(refreshed).toBe(first);
+  });
+
+  it("still detects user-editable team changes", () => {
+    const original = serializeTeamSnapshot({
+      name: "Team",
+      battleFormat: "doubles",
+      slots: [{ pokemonId: "kingambit", name: "Kingambit" }],
+      bench: [],
+      buildState: createEmptyBuildState(),
+    });
+    const changed = serializeTeamSnapshot({
+      name: "Team",
+      battleFormat: "doubles",
+      slots: [{ pokemonId: "garchomp", name: "Garchomp" }],
+      bench: [],
+      buildState: createEmptyBuildState(),
+    });
+
+    expect(changed).not.toBe(original);
   });
 });

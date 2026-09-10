@@ -4,7 +4,6 @@ import {
   faMagnifyingGlass,
   faRotateRight,
   faSliders,
-  faShieldHalved,
   faSpinner,
   faTriangleExclamation,
   faUser,
@@ -45,6 +44,10 @@ import { CopilotHistoryControl } from "./CopilotHistoryControl";
 import { defaultEvs } from "../data/natures";
 import { normalizeShowdownId } from "../api/showdownIds";
 import { PokePilotMark } from "./PokePilotMark";
+import {
+  isVisibleCopilotScope,
+  usesHistoricalUsageData,
+} from "../utils/copilotScopeAvailability";
 
 type CopilotPanelProps = {
   savedTeamId: string | null;
@@ -306,6 +309,10 @@ export function CopilotPanel({
     failedMessage: t("copilot.failed"),
   });
   const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
+  const isUsageDataScope = usesHistoricalUsageData(scope);
+  const visibleTeamHistory = teamHistory.filter((entry) =>
+    isVisibleCopilotScope(entry.scope),
+  );
   const fallbackMessage =
     analysisState.fallbackReason === "cooldown"
       ? cooldownRemainingSeconds > 0
@@ -513,7 +520,7 @@ export function CopilotPanel({
         <h2 id="copilot-title">PokePilot</h2>
         <div className="copilot-header-actions">
           <CopilotHistoryControl
-            entries={teamHistory}
+            entries={visibleTeamHistory}
             activeEntryId={analysisState.historyEntryId}
             onSelect={handleSelectHistory}
             onClear={handleClearHistory}
@@ -565,16 +572,6 @@ export function CopilotPanel({
         >
           <FontAwesomeIcon icon={faUser} aria-hidden="true" />
           {t("copilot.pokemon")}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={scope === "matchup"}
-          className={scope === "matchup" ? "is-active" : ""}
-          onClick={() => setScope("matchup")}
-        >
-          <FontAwesomeIcon icon={faShieldHalved} aria-hidden="true" />
-          {t("copilot.matchup")}
         </button>
         <button
           type="button"
@@ -646,8 +643,16 @@ export function CopilotPanel({
             onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
           />
         ) : (
-          <div className="copilot-empty-state">
-            <PokePilotMark aria-hidden="true" />
+          <div
+            className={`copilot-empty-state${
+              isUsageDataScope ? " is-usage-warning" : ""
+            }`}
+          >
+            {isUsageDataScope ? (
+              <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
+            ) : (
+              <PokePilotMark aria-hidden="true" />
+            )}
             <strong>{t(emptyStateCopy[scope].title)}</strong>
             <span>{t(emptyStateCopy[scope].description)}</span>
           </div>
@@ -656,7 +661,7 @@ export function CopilotPanel({
 
       <footer className="copilot-footer">
         <span>
-          {t("toolbar.regulation")} ·{" "}
+          {t(isUsageDataScope ? "copilot.regulationMB" : "toolbar.regulation")} ·{" "}
           {t(
             battleFormat === "singles"
               ? "battleFormat.singles"

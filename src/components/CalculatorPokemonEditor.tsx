@@ -15,7 +15,7 @@ import { usePokemonArtworkPreview } from "../hooks/usePokemonArtworkPreview";
 import {
   itemFromIndexEntry,
 } from "../api/showdownCatalog";
-import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
+import { normalizeShowdownId } from "../api/showdownIds";
 import {
   getLegalAbilities,
   getLegalMoves,
@@ -49,6 +49,11 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useScrubbableNumberInput } from "../hooks/useScrubbableNumberInput";
 import { useLocalization } from "../i18n/useLocalization";
 import { getNextCircularIndex } from "../utils/optionNavigation";
+import {
+  getPokemonNameFallback,
+  shouldIncludePokemonForm,
+} from "../utils/pokemonDisplay";
+import { matchesSearchText, normalizeSearchText } from "../utils/searchText";
 import type {
   ItemIndexEntry,
   PokemonIndexEntry,
@@ -411,16 +416,19 @@ export function CalculatorPokemonEditor({
       ),
   });
 
-  const normalizedPokemonQuery = pokemonQuery.trim().toLowerCase();
+  const normalizedPokemonQuery = normalizeSearchText(pokemonQuery);
   const matchingPokemonOptions = useMemo(
     () =>
       candidateFilteredPokemonOptions.filter(
         (option) =>
           !normalizedPokemonQuery ||
-          option.label.toLowerCase().includes(normalizedPokemonQuery) ||
-          option.englishName.toLowerCase().includes(normalizedPokemonQuery) ||
-          option.id.toLowerCase().includes(normalizedPokemonQuery) ||
-          String(option.number).includes(normalizedPokemonQuery),
+          matchesSearchText(
+            normalizedPokemonQuery,
+            option.label,
+            option.englishName,
+            option.id,
+            String(option.number),
+          ),
       ),
     [candidateFilteredPokemonOptions, normalizedPokemonQuery],
   );
@@ -765,7 +773,15 @@ export function CalculatorPokemonEditor({
   }
 
   function selectActiveItem() {
+    if (activeItemIndex < 0) {
+      return;
+    }
+
     const option = displayedItemOptions[activeItemIndex];
+    if (option === undefined) {
+      return;
+    }
+
     onBuildChange({ item: option ? itemFromIndexEntry(option) : null });
     closePicker();
   }
@@ -802,17 +818,35 @@ export function CalculatorPokemonEditor({
   }
 
   function selectActiveMove() {
-    if (openMoveSlot === null) {
+    if (openMoveSlot === null || activeMoveIndex < 0) {
       return;
     }
 
-    onMoveChange(
-      openMoveSlot,
+    const moveId =
       activeMoveIndex === 0
         ? ""
-        : matchingMoveOptions[activeMoveIndex - 1]?.id ?? "",
-    );
+        : matchingMoveOptions[activeMoveIndex - 1]?.id;
+
+    if (moveId === undefined) {
+      return;
+    }
+
+    onMoveChange(openMoveSlot, moveId);
     closePicker();
+  }
+
+  function changeItemSearchQuery(value: string) {
+    setItemQuery(value);
+    resetItemOptions();
+    setActiveItemIndex(value.trim() && build.item ? 1 : 0);
+    setHoveredItem(null);
+  }
+
+  function changeMoveSearchQuery(value: string) {
+    setMoveQuery(value);
+    resetMoveOptions();
+    setActiveMoveIndex(value.trim() ? 1 : 0);
+    setHoveredMove(null);
   }
 
   function handlePickerKeyDown(
@@ -1102,11 +1136,7 @@ export function CalculatorPokemonEditor({
               value={itemQuery}
               label={t("builder.searchItem")}
               placeholder={t("builder.searchItem")}
-              onChange={(value) => {
-                setItemQuery(value);
-                resetItemOptions();
-                setActiveItemIndex(0);
-              }}
+              onChange={changeItemSearchQuery}
               onMove={(direction) => moveActiveIndex("item", direction)}
               onSubmit={selectActiveItem}
             />
@@ -1219,11 +1249,7 @@ export function CalculatorPokemonEditor({
             value={moveQuery}
             label={t("builder.searchAvailableMoves")}
             placeholder={t("filter.searchMoves")}
-            onChange={(value) => {
-              setMoveQuery(value);
-              resetMoveOptions();
-              setActiveMoveIndex(0);
-            }}
+            onChange={changeMoveSearchQuery}
             onMove={(direction) => moveActiveIndex("move", direction)}
             onSubmit={selectActiveMove}
           />
@@ -1255,13 +1281,18 @@ export function CalculatorPokemonEditor({
     const indexEntry = pokemonIndex.find(
       (entry) => entry.name === targetMember.id,
     );
+    const includeForm = indexEntry
+      ? shouldIncludePokemonForm(indexEntry)
+      : false;
 
     return indexEntry
       ? pokemonName({
           id: indexEntry.name,
           speciesId: indexEntry.speciesKey,
-          fallback: formatIdLabel(indexEntry.speciesKey),
-          includeForm: false,
+          fallback: getPokemonNameFallback(indexEntry, includeForm),
+          includeForm,
+          formLabel: indexEntry.formLabel,
+          formKind: indexEntry.formKind,
         })
       : pokemonName({
           id: targetMember.id,
@@ -1404,6 +1435,7 @@ export function CalculatorPokemonEditor({
                       speciesId: option.speciesKey,
                       fallback: option.displayName,
                       formLabel: option.formLabel,
+                      formKind: option.formKind,
                     });
 
                     return (
@@ -1502,11 +1534,9 @@ export function CalculatorPokemonEditor({
                             aria-label={t("builder.searchItem")}
                             value={itemQuery}
                             placeholder={t("builder.searchItem")}
-                            onChange={(event) => {
-                              setItemQuery(event.target.value);
-                              resetItemOptions();
-                              setActiveItemIndex(0);
-                            }}
+                            onChange={(event) =>
+                              changeItemSearchQuery(event.target.value)
+                            }
                             onKeyDown={(event) =>
                               handlePickerKeyDown(event, "item")
                             }
@@ -1924,11 +1954,9 @@ export function CalculatorPokemonEditor({
                                   placeholder={t(
                                     "filter.searchMoves",
                                   )}
-                                  onChange={(event) => {
-                                    setMoveQuery(event.target.value);
-                                    resetMoveOptions();
-                                    setActiveMoveIndex(0);
-                                  }}
+                                  onChange={(event) =>
+                                    changeMoveSearchQuery(event.target.value)
+                                  }
                                   onKeyDown={(event) =>
                                     handlePickerKeyDown(
                                       event,

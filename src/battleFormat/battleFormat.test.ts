@@ -12,8 +12,9 @@ describe("battle format", () => {
     expect(isBattleFormat("triples")).toBe(false);
   });
 
-  it("falls back to doubles for missing or unsupported values", () => {
+  it("falls back to singles for missing or unsupported values", () => {
     expect(resolveBattleFormat(null)).toBe(DEFAULT_BATTLE_FORMAT);
     expect(resolveBattleFormat("unknown")).toBe(DEFAULT_BATTLE_FORMAT);
+    expect(DEFAULT_BATTLE_FORMAT).toBe("singles");
   });
 });

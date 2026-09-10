@@ -1,10 +1,13 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readModData } from "./lib/showdownModData.mjs";
 
 const POKEAPI_CSV_ROOT =
   "https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv";
 const KOREAN_LANGUAGE_ID = "3";
+const SHOWDOWN_KO_ROOT =
+  "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/data/text/ko";
 const SOURCES = {
   abilities: "abilities.csv",
   abilityFlavorText: "ability_flavor_text.csv",
@@ -100,6 +103,37 @@ async function fetchCsv(filename) {
   return parseCsv(await response.text());
 }
 
+async function fetchShowdownText(category) {
+  const url = `${SHOWDOWN_KO_ROOT}/${category}.ts`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Could not fetch ${url} (${response.status}).`);
+  }
+
+  return readModData(await response.text());
+}
+
+function createShowdownNames(entries) {
+  return Object.fromEntries(
+    Object.entries(entries)
+      .filter(([, entry]) => typeof entry?.name === "string" && entry.name)
+      .map(([id, entry]) => [normalizeId(id), entry.name]),
+  );
+}
+
+function createShowdownDescriptions(entries) {
+  return Object.fromEntries(
+    Object.entries(entries)
+      .map(([id, entry]) => [normalizeId(id), entry?.shortDesc ?? entry?.desc])
+      .filter(([, description]) => typeof description === "string" && description),
+  );
+}
+
+function withShowdownFallback(pokeApiEntries, showdownEntries) {
+  return { ...showdownEntries, ...pokeApiEntries };
+}
+
 function createIdentifierById(rows) {
   return new Map(rows.map((row) => [row.id, row.identifier]));
 }
@@ -183,9 +217,15 @@ function sortRecord(record) {
   );
 }
 
-const sourceEntries = await Promise.all(
-  Object.entries(SOURCES).map(async ([key, filename]) => [key, await fetchCsv(filename)]),
-);
+const [sourceEntries, showdownMoves, showdownItems, showdownAbilities] =
+  await Promise.all([
+    Promise.all(
+      Object.entries(SOURCES).map(async ([key, filename]) => [key, await fetchCsv(filename)]),
+    ),
+    fetchShowdownText("moves"),
+    fetchShowdownText("items"),
+    fetchShowdownText("abilities"),
+  ]);
 const data = Object.fromEntries(sourceEntries);
 const pokemonNames = createLocalizedNames(
   data.pokemonSpeciesNames,
@@ -204,48 +244,67 @@ const catalog = {
   locale: "ko",
   generatedAt: new Date().toISOString(),
   source: POKEAPI_CSV_ROOT,
+  fallbackSource: SHOWDOWN_KO_ROOT,
   pokemon: sortRecord(pokemonNames),
   pokemonForms: sortRecord(pokemonFormNames),
   moves: sortRecord(
-    createLocalizedNames(
-      data.moveNames,
-      createIdentifierById(data.moves),
-      "move_id",
+    withShowdownFallback(
+      createLocalizedNames(
+        data.moveNames,
+        createIdentifierById(data.moves),
+        "move_id",
+      ),
+      createShowdownNames(showdownMoves),
     ),
   ),
   moveDescriptions: sortRecord(
-    createLocalizedDescriptions(
-      data.moveFlavorText,
-      createIdentifierById(data.moves),
-      "move_id",
+    withShowdownFallback(
+      createLocalizedDescriptions(
+        data.moveFlavorText,
+        createIdentifierById(data.moves),
+        "move_id",
+      ),
+      createShowdownDescriptions(showdownMoves),
     ),
   ),
   items: sortRecord(
-    createLocalizedNames(
-      data.itemNames,
-      createIdentifierById(data.items),
-      "item_id",
+    withShowdownFallback(
+      createLocalizedNames(
+        data.itemNames,
+        createIdentifierById(data.items),
+        "item_id",
+      ),
+      createShowdownNames(showdownItems),
     ),
   ),
   itemDescriptions: sortRecord(
-    createLocalizedDescriptions(
-      data.itemFlavorText,
-      createIdentifierById(data.items),
-      "item_id",
+    withShowdownFallback(
+      createLocalizedDescriptions(
+        data.itemFlavorText,
+        createIdentifierById(data.items),
+        "item_id",
+      ),
+      createShowdownDescriptions(showdownItems),
     ),
   ),
   abilities: sortRecord(
-    createLocalizedNames(
-      data.abilityNames,
-      createIdentifierById(data.abilities),
-      "ability_id",
+    withShowdownFallback(
+      createLocalizedNames(
+        data.abilityNames,
+        createIdentifierById(data.abilities),
+        "ability_id",
+      ),
+      createShowdownNames(showdownAbilities),
     ),
   ),
   abilityDescriptions: sortRecord(
-    createLocalizedDescriptions(
-      data.abilityFlavorText,
-      createIdentifierById(data.abilities),
-      "ability_id",
+    withShowdownFallback(
+      createLocalizedDescriptions(
+        data.abilityFlavorText,
+        createIdentifierById(data.abilities),
+        "ability_id",
+      ),
+      createShowdownDescriptions(showdownAbilities),
     ),
   ),
   types: sortRecord(
@@ -272,7 +331,7 @@ await writeFile(
 );
 
 console.log(
-  `Generated Korean PokeAPI catalog: ${Object.entries(catalog)
+  `Generated Korean game catalog: ${Object.entries(catalog)
     .filter(([, value]) => value && typeof value === "object" && !Array.isArray(value))
     .map(([key, value]) => `${key}=${Object.keys(value).length}`)
     .join(", ")}`,

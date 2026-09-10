@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { formatIdLabel } from "../api/showdownIds";
 import {
   getLegalMoves,
   getPokemonCandidateAbilities,
@@ -18,6 +17,10 @@ import type {
   PokemonMove,
 } from "../types";
 import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
+import {
+  getPokemonNameFallback,
+  shouldIncludePokemonForm,
+} from "../utils/pokemonDisplay";
 
 type UseCalculatorCatalogOptions = {
   battleFormat: BattleFormat;
@@ -103,17 +106,14 @@ export function useCalculatorCatalog({
             entry.showdownId,
             entry.speciesKey,
           );
-          const includeForm =
-            entry.formKind === "gender" ||
-            entry.formKind === "regional" ||
-            entry.displayName !== formatIdLabel(entry.speciesKey);
+          const includeForm = shouldIncludePokemonForm(entry);
 
           return {
             id: entry.name,
             label: pokemonName({
               id: entry.name,
               speciesId: entry.speciesKey,
-              fallback: entry.displayName,
+              fallback: getPokemonNameFallback(entry, includeForm),
               includeForm,
               formLabel: entry.formLabel,
               formKind: entry.formKind,

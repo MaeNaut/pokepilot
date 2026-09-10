@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { regulationMbSnapshotFixture } from "../test/fixtures/showdownLegalityFixtures";
+import { regulationMcSnapshotFixture } from "../test/fixtures/showdownLegalityFixtures";
 import {
   getPokemonCandidateAbilities,
   getLegalAbilities,
@@ -33,7 +33,7 @@ function createFetchResponse(payload: unknown) {
   } as Response;
 }
 
-describe("Showdown Regulation M-B compact snapshot", () => {
+describe("Showdown Regulation M-C compact snapshot", () => {
   beforeEach(() => {
     vi.stubGlobal("localStorage", createMemoryStorage());
     vi.stubGlobal(
@@ -41,8 +41,8 @@ describe("Showdown Regulation M-B compact snapshot", () => {
       vi.fn(async (input: string | URL | Request) => {
         const url = String(input);
 
-        if (url.endsWith("/data/showdown-regulation-mb.json")) {
-          return createFetchResponse(regulationMbSnapshotFixture);
+        if (url.endsWith("/data/showdown-regulation-mc.json")) {
+          return createFetchResponse(regulationMcSnapshotFixture);
         }
 
         throw new Error(`Unexpected fixture URL: ${url}`);
@@ -56,10 +56,10 @@ describe("Showdown Regulation M-B compact snapshot", () => {
 
   it("loads the compact snapshot once and reuses it for the session", async () => {
     const [snapshot, duplicateSnapshot] = await Promise.all([
-      loadShowdownLegality("gen9championsvgc2026regmb"),
-      loadShowdownLegality("gen9championsvgc2026regmb"),
+      loadShowdownLegality("gen9championsvgc2026regmc"),
+      loadShowdownLegality("gen9championsvgc2026regmc"),
     ]);
-    const reusedSnapshot = await loadShowdownLegality("gen9-regulation-mb");
+    const reusedSnapshot = await loadShowdownLegality("gen9-regulation-mc");
 
     expect(snapshot.error).toBeUndefined();
     expect(snapshot.dataMod).toBe("champions");
@@ -74,14 +74,14 @@ describe("Showdown Regulation M-B compact snapshot", () => {
     expect(isItemLegal(snapshot, "choice-band")).toBe(false);
   });
 
-  it("combines form-specific moves with the base species map", () => {
+  it("prefers an explicit form learnset over the base species map", () => {
     const snapshot = hydrateShowdownLegalitySnapshot(
-      regulationMbSnapshotFixture,
+      regulationMcSnapshotFixture,
     );
     const moves = getLegalMoves(snapshot, "rotom-wash", "rotom");
 
     expect(moves).toEqual(
-      new Set(["hydropump", "thunderbolt", "protect", "shadowball"]),
+      new Set(["hydropump", "thunderbolt"]),
     );
     expect(getLegalAbilities(snapshot, "rotom-wash", "rotom")).toEqual(
       new Set(["levitate"]),
@@ -90,7 +90,7 @@ describe("Showdown Regulation M-B compact snapshot", () => {
 
   it("preserves Champions-only signature moves for exceptional forms", () => {
     const snapshot = hydrateShowdownLegalitySnapshot(
-      regulationMbSnapshotFixture,
+      regulationMcSnapshotFixture,
     );
     const moves = getLegalMoves(snapshot, "floette-eternal", "floette");
 
@@ -102,9 +102,9 @@ describe("Showdown Regulation M-B compact snapshot", () => {
 
   it("does not truncate hyphenated base species into a false lookup key", () => {
     const snapshot = hydrateShowdownLegalitySnapshot({
-      ...regulationMbSnapshotFixture,
+      ...regulationMcSnapshotFixture,
       moveByPokemon: [
-        ...regulationMbSnapshotFixture.moveByPokemon,
+        ...regulationMcSnapshotFixture.moveByPokemon,
         ["mrmime", ["protect"]],
         ["mr", ["shadowball"]],
       ],
@@ -117,9 +117,9 @@ describe("Showdown Regulation M-B compact snapshot", () => {
 
   it("exposes legal Mega-only abilities through base Pokemon candidate filters", () => {
     const snapshot = hydrateShowdownLegalitySnapshot({
-      ...regulationMbSnapshotFixture,
+      ...regulationMcSnapshotFixture,
       pokemonIds: [
-        ...regulationMbSnapshotFixture.pokemonIds,
+        ...regulationMcSnapshotFixture.pokemonIds,
         "eelektross",
         "eelektrossmega",
         "slowbrogalar",
@@ -128,7 +128,7 @@ describe("Showdown Regulation M-B compact snapshot", () => {
         "victreebelmega",
       ],
       knownPokemonIds: [
-        ...regulationMbSnapshotFixture.knownPokemonIds,
+        ...regulationMcSnapshotFixture.knownPokemonIds,
         "eelektross",
         "eelektrossmega",
         "slowbrogalar",
@@ -137,7 +137,7 @@ describe("Showdown Regulation M-B compact snapshot", () => {
         "victreebelmega",
       ],
       abilityByPokemon: [
-        ...regulationMbSnapshotFixture.abilityByPokemon,
+        ...regulationMcSnapshotFixture.abilityByPokemon,
         ["eelektross", ["levitate"]],
         ["eelektrossmega", ["eelevate"]],
         ["slowbrogalar", ["quickdraw"]],

@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import regulationMbSnapshotJson from "../../public/data/showdown-regulation-mb.json";
+import regulationMcSnapshotJson from "../../public/data/showdown-regulation-mc.json";
 import {
-  translateGameDescription,
+  hasKoreanGameDescription,
   translateGameName,
   type GameDescriptionCategory,
   type GameTranslationCategory,
 } from "./gameTranslations";
 
-type RegulationMbSnapshot = {
+type RegulationMcSnapshot = {
   itemIds: string[];
   abilityByPokemon: Array<[string, string[]]>;
   moveByPokemon: Array<[string, string[]]>;
 };
 
-const regulationMbSnapshot =
-  regulationMbSnapshotJson as unknown as RegulationMbSnapshot;
+const regulationMcSnapshot =
+  regulationMcSnapshotJson as unknown as RegulationMcSnapshot;
 const missingFallback = "__MISSING_KOREAN_TRANSLATION__";
 const koreanTextPattern = /[가-힣]/;
 
@@ -38,22 +38,19 @@ function expectKoreanDescriptions(
   ids: string[],
 ) {
   const missing = ids.filter(
-    (id) =>
-      !koreanTextPattern.test(
-        translateGameDescription("ko", category, id, missingFallback),
-      ),
+    (id) => !hasKoreanGameDescription(category, id),
   );
 
   expect(missing).toEqual([]);
 }
 
-describe("Regulation M-B Korean translation coverage", () => {
+describe("Regulation M-C Korean translation coverage", () => {
   const moveIds = unique(
-    regulationMbSnapshot.moveByPokemon.flatMap(([, ids]) => ids),
+    regulationMcSnapshot.moveByPokemon.flatMap(([, ids]) => ids),
   );
-  const itemIds = unique(regulationMbSnapshot.itemIds);
+  const itemIds = unique(regulationMcSnapshot.itemIds);
   const abilityIds = unique(
-    regulationMbSnapshot.abilityByPokemon.flatMap(([, ids]) => ids),
+    regulationMcSnapshot.abilityByPokemon.flatMap(([, ids]) => ids),
   );
 
   it("has Korean names for every selectable move, item, and ability", () => {

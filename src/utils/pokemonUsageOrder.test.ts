@@ -20,6 +20,12 @@ describe("orderPokemonOptionsByUsage", () => {
     { id: "raichu-alola", label: "Raichu-Alola" },
     { id: "maushold-family-of-four", label: "Maushold" },
     { id: "mimikyu-disguised", label: "Mimikyu" },
+    { id: "indeedee-male", label: "Indeedee Male" },
+    { id: "indeedee-female", label: "Indeedee Female" },
+    { id: "toxtricity", label: "Toxtricity Amped" },
+    { id: "toxtricity-low-key", label: "Toxtricity Low Key" },
+    { id: "squawkabilly", label: "Squawkabilly Green" },
+    { id: "squawkabilly-yellow", label: "Squawkabilly Yellow" },
   ];
 
   it("orders exact forms first and retains unmatched options", () => {
@@ -28,7 +34,7 @@ describe("orderPokemonOptionsByUsage", () => {
       "mimikyu",
     ]);
 
-    expect(result.orderedOptions.map((option) => option.id)).toEqual([
+    expect(result.orderedOptions.slice(0, 4).map((option) => option.id)).toEqual([
       "raichu-alola",
       "mimikyu-disguised",
       "charizard",
@@ -64,5 +70,25 @@ describe("orderPokemonOptionsByUsage", () => {
       result.orderedOptions.filter((option) => option.id === "mimikyu-disguised"),
     ).toHaveLength(1);
     expect(result.rankByOptionId.get("mimikyu-disguised")).toBe(1);
+  });
+
+  it("keeps fixed-form usage entries separate", () => {
+    const result = orderPokemonOptionsByUsage(options, [
+      "indeedee-f",
+      "indeedee",
+      "toxtricity-low-key",
+      "toxtricity",
+      "squawkabilly-white",
+      "squawkabilly-blue",
+    ]);
+
+    expect(result.orderedOptions.slice(0, 6).map(option => option.id)).toEqual([
+      "indeedee-female",
+      "indeedee-male",
+      "toxtricity-low-key",
+      "toxtricity",
+      "squawkabilly-yellow",
+      "squawkabilly",
+    ]);
   });
 });

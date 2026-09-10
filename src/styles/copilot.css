@@ -118,6 +118,7 @@
   font-size: 1.55rem;
   font-weight: var(--font-semibold);
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .copilot-header-actions {
@@ -299,7 +300,8 @@
 
 .copilot-analyze-button {
   display: inline-flex;
-  min-width: 118px;
+  width: 118px;
+  flex: 0 0 118px;
   height: 34px;
   align-items: center;
   justify-content: center;
@@ -312,6 +314,7 @@
   font: inherit;
   font-size: 0.72rem;
   font-weight: var(--font-medium);
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background 120ms ease,
@@ -337,7 +340,7 @@
 
 .copilot-scope-tabs {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 16px;
   border: 1px solid var(--copilot-border);
   border-radius: var(--radius-sm);
@@ -435,6 +438,15 @@
 }
 
 .copilot-empty-state.is-error > svg {
+  color: var(--copilot-danger);
+}
+
+:root[lang="en"] .copilot-analyze-button {
+  width: 174px;
+  flex-basis: 174px;
+}
+
+.copilot-empty-state.is-usage-warning > svg {
   color: var(--copilot-danger);
 }
 

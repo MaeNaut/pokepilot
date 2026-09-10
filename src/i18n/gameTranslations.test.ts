@@ -34,7 +34,7 @@ describe("Korean game translations", () => {
     expect(translateGameName("ko", "types", "fire", "Fire")).toBe("불꽃");
   });
 
-  it("translates post-PokeAPI override data", () => {
+  it("translates Showdown fallback and local override data", () => {
     expect(translateGameName("ko", "abilities", "eelevate", "Eelevate")).toBe(
       "천정부지",
     );
@@ -63,6 +63,16 @@ describe("Korean game translations", () => {
     expect(translateGameName("ko", "items", "fairyfeather", "Fairy Feather")).toBe(
       "요정의깃털",
     );
+    expect(translateGameName("ko", "items", "leek", "Leek")).toBe("대파");
+    expect(translateGameName("ko", "abilities", "auraguard", "Aura Guard")).toBe(
+      "파동의방호",
+    );
+    expect(
+      translateGameDescription("ko", "moves", "glaiverush", "Glaive Rush effect"),
+    ).toContain("데미지가 2배");
+    expect(
+      translateGameDescription("ko", "abilities", "guarddog", "Guard Dog effect"),
+    ).toContain("강제 교체되지 않는다");
     expect(
       translateGameDescription(
         "ko",
@@ -160,10 +170,66 @@ describe("Korean game translations", () => {
     ).toBe("킬가르도");
   });
 
+  it("formats new Mega forms when upstream Korean form data is unavailable", () => {
+    expect(
+      translatePokemonName("ko", {
+        id: "lucario-mega-z",
+        speciesId: "lucario",
+        fallback: "Lucario Mega Z",
+        formLabel: "Mega Z",
+        formKind: "mega",
+      }),
+    ).toBe("메가루카리오Z");
+    expect(translatePokemonFormName("ko", "lucario-mega-z", "Mega Z")).toBe(
+      "메가 Z",
+    );
+    expect(translatePokemonFormName("ko", "salamence-mega", "Mega")).toBe(
+      "메가",
+    );
+  });
+
+  it("keeps named default forms distinct from their base species", () => {
+    expect(
+      translatePokemonName("ko", {
+        id: "toxtricity",
+        speciesId: "toxtricity",
+        fallback: "Toxtricity Amped",
+        formLabel: "Amped",
+        formKind: "base",
+      }),
+    ).toBe("스트린더 하이한 모습");
+    expect(
+      translatePokemonName("ko", {
+        id: "squawkabilly",
+        speciesId: "squawkabilly",
+        fallback: "Squawkabilly Green",
+        formLabel: "Green",
+        formKind: "base",
+      }),
+    ).toBe("시비꼬 초록 깃털");
+  });
+
+  it("localizes battle-state labels that are absent upstream", () => {
+    expect(translatePokemonFormName("ko", "palafin-zero", "Zero")).toBe(
+      "나이브폼",
+    );
+    expect(translatePokemonFormName("ko", "palafin-hero", "Hero")).toBe(
+      "마이티폼",
+    );
+  });
+
   it("leaves English and missing entries unchanged", () => {
     expect(translateGameName("en", "moves", "protect", "Protect")).toBe("Protect");
     expect(translateGameName("ko", "moves", "future-custom-move", "Future Move")).toBe(
       "Future Move",
     );
+    expect(
+      translateGameDescription(
+        "ko",
+        "moves",
+        "future-custom-move",
+        "English effect",
+      ),
+    ).toBe("English effect (한국어 설명이 없어 영어로 표시합니다.)");
   });
 });

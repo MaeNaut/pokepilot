@@ -15,3 +15,15 @@ export function getNextCircularIndex(
 
   return (currentIndex + direction + optionCount) % optionCount;
 }
+
+export function getSearchActiveIndex(
+  query: string,
+  resultCount: number,
+  resultOffset = 0,
+) {
+  if (!query.trim()) {
+    return 0;
+  }
+
+  return resultCount > 0 ? resultOffset : -1;
+}

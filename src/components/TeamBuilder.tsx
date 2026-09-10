@@ -55,6 +55,11 @@ import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
 import { getIndexAfterSwap } from "../utils/reorder";
 import { getNextCircularIndex } from "../utils/optionNavigation";
 import {
+  getPokemonNameFallback,
+  shouldIncludePokemonForm,
+} from "../utils/pokemonDisplay";
+import { matchesSearchText, normalizeSearchText } from "../utils/searchText";
+import {
   emptyPokemonCandidateFilters,
   hasPokemonCandidateFilters,
 } from "../utils/pokemonCandidateFilters";
@@ -193,7 +198,7 @@ function fallbackMoves(types: PokemonType[]): PokemonMove[] {
       accuracy: null,
       pp: 10,
       category: "Status",
-      description: "Move details will come from the Champions M-B legal move dataset.",
+      description: "Move details will come from the Champions M-C legal move dataset.",
     },
     {
       id: "secondary-attack",
@@ -203,7 +208,7 @@ function fallbackMoves(types: PokemonType[]): PokemonMove[] {
       accuracy: null,
       pp: 10,
       category: "Status",
-      description: "Move details will come from the Champions M-B legal move dataset.",
+      description: "Move details will come from the Champions M-C legal move dataset.",
     },
     {
       id: "protect",
@@ -545,12 +550,20 @@ export function TeamBuilder({
       new Set(itemIndex.filter((item) => item.isMegaStone).map((item) => item.name)),
     [itemIndex],
   );
+  const activeHeaderIncludesForm = activeIndexEntry
+    ? shouldIncludePokemonForm(activeIndexEntry)
+    : false;
   const activeHeaderName = activeIndexEntry
     ? pokemonName({
         id: activeIndexEntry.name,
         speciesId: activeIndexEntry.speciesKey,
-        fallback: formatIdLabel(activeIndexEntry.speciesKey),
-        includeForm: false,
+        fallback: getPokemonNameFallback(
+          activeIndexEntry,
+          activeHeaderIncludesForm,
+        ),
+        includeForm: activeHeaderIncludesForm,
+        formLabel: activeIndexEntry.formLabel,
+        formKind: activeIndexEntry.formKind,
       })
     : activeMember
       ? pokemonName({ id: activeMember.id, fallback: activeMember.name, includeForm: false })
@@ -558,13 +571,18 @@ export function TeamBuilder({
 
   function getMemberDisplayName(member: TeamMember) {
     const indexEntry = pokemonIndexByName.get(member.id);
+    const includeForm = indexEntry
+      ? shouldIncludePokemonForm(indexEntry)
+      : false;
 
     return indexEntry
       ? pokemonName({
           id: indexEntry.name,
           speciesId: indexEntry.speciesKey,
-          fallback: formatIdLabel(indexEntry.speciesKey),
-          includeForm: false,
+          fallback: getPokemonNameFallback(indexEntry, includeForm),
+          includeForm,
+          formLabel: indexEntry.formLabel,
+          formKind: indexEntry.formKind,
         })
       : pokemonName({ id: member.id, fallback: member.name, includeForm: false });
   }
@@ -661,11 +679,27 @@ export function TeamBuilder({
         formKind === "mega"
           ? (indexEntry?.formLabel ?? "Mega")
           : battleFormOption?.label ??
-            (formKind === "form" ? indexEntry?.formLabel : undefined);
+            (!indexEntry || shouldIncludePokemonForm(indexEntry)
+              ? undefined
+              : formKind === "form"
+                ? indexEntry.formLabel
+                : undefined);
+      const includeFullForm = indexEntry?.speciesKey !== "pyroar";
+      const fullDisplayName = indexEntry
+        ? pokemonName({
+            id: indexEntry.name,
+            speciesId: indexEntry.speciesKey,
+            fallback: getPokemonNameFallback(indexEntry, includeFullForm),
+            includeForm: includeFullForm,
+            formLabel: indexEntry.formLabel,
+            formKind: indexEntry.formKind,
+          })
+        : getMemberDisplayName(member);
 
       return {
         member,
         displayName: getMemberDisplayName(member),
+        fullDisplayName,
         formLabel,
         item: itemBySlot[slotIndex] ?? null,
         ability:
@@ -761,17 +795,14 @@ export function TeamBuilder({
                 entry.showdownId,
                 entry.speciesKey,
               );
-              const includeForm =
-                entry.formKind === "gender" ||
-                entry.formKind === "regional" ||
-                entry.displayName !== formatIdLabel(entry.speciesKey);
+              const includeForm = shouldIncludePokemonForm(entry);
 
               return {
                 id: entry.name,
                 name: pokemonName({
                   id: entry.name,
                   speciesId: entry.speciesKey,
-                  fallback: entry.displayName,
+                  fallback: getPokemonNameFallback(entry, includeForm),
                   includeForm,
                   formLabel: entry.formLabel,
                   formKind: entry.formKind,
@@ -853,7 +884,7 @@ export function TeamBuilder({
       ),
     [itemIndex, knownMegaStoneNames, relevantMegaStoneNames, showdownLegality],
   );
-  const normalizedNameQuery = nameQuery.trim().toLowerCase();
+  const normalizedNameQuery = normalizeSearchText(nameQuery);
   const normalizedItemQuery = itemQuery.trim().toLowerCase();
   const normalizedMoveQuery = moveQuery.trim().toLowerCase();
   const matchingPokemonOptions = useMemo(
@@ -862,10 +893,13 @@ export function TeamBuilder({
         ? candidateFilteredSelectOptions
             .filter(
               (option) =>
-                option.name.toLowerCase().includes(normalizedNameQuery) ||
-                option.englishName.toLowerCase().includes(normalizedNameQuery) ||
-                option.id.toLowerCase().includes(normalizedNameQuery) ||
-                String(option.number).includes(normalizedNameQuery),
+                matchesSearchText(
+                  normalizedNameQuery,
+                  option.name,
+                  option.englishName,
+                  option.id,
+                  String(option.number),
+                ),
             )
         : popularSelectOptions,
     [candidateFilteredSelectOptions, normalizedNameQuery, popularSelectOptions],
@@ -1042,6 +1076,11 @@ export function TeamBuilder({
   );
 
   useEffect(() => {
+    if (normalizedItemQuery && filteredItemOptions.length === 0) {
+      setActiveItemOptionIndex(-1);
+      return;
+    }
+
     if (displayedItemOptions.length === 0) {
       setActiveItemOptionIndex(-1);
       return;
@@ -1084,7 +1123,7 @@ export function TeamBuilder({
 
   useEffect(() => {
     if (filteredMoveOptions.length === 0) {
-      setActiveMoveOptionIndex(0);
+      setActiveMoveOptionIndex(normalizedMoveQuery ? -1 : 0);
       setHoveredMoveOption(null);
       return;
     }
@@ -1110,6 +1149,7 @@ export function TeamBuilder({
     filteredMoveOptions,
     openMovePickerMoveId,
     openMoveSlot,
+    normalizedMoveQuery,
     selectedSlot,
     setMoveOptionLimit,
   ]);
@@ -1778,9 +1818,7 @@ export function TeamBuilder({
   }
 
   function selectActiveItemOption() {
-    const option = getItemOptionAt(
-      activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0,
-    );
+    const option = getItemOptionAt(activeItemOptionIndex);
 
     if (option === null) {
       clearItem();
@@ -1910,6 +1948,20 @@ export function TeamBuilder({
     if (move) {
       selectMove(slotIndex, move.id);
     }
+  }
+
+  function changeItemSearchQuery(value: string) {
+    setItemQuery(value);
+    resetItemOptions();
+    setActiveItemOptionIndex(value.trim() && activeItem ? 1 : 0);
+    setHoveredItemOption(null);
+  }
+
+  function changeMoveSearchQuery(value: string) {
+    setMoveQuery(value);
+    resetMoveOptions();
+    setActiveMoveOptionIndex(value.trim() ? 1 : 0);
+    setHoveredMoveOption(null);
   }
 
   function updateEv(stat: StatKey, value: string) {
@@ -2415,9 +2467,7 @@ export function TeamBuilder({
     }
 
     if (isItemPickerOpen) {
-      const activeItemEntry = getItemOptionAt(
-        activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0,
-      );
+      const activeItemEntry = getItemOptionAt(activeItemOptionIndex);
       const previewedItem = activeItemEntry
         ? itemFromIndexEntry(activeItemEntry)
         : null;
@@ -2432,7 +2482,7 @@ export function TeamBuilder({
               value={itemQuery}
               label={t("builder.searchItem")}
               placeholder={t("builder.searchItem")}
-              onChange={setItemQuery}
+              onChange={changeItemSearchQuery}
               onMove={moveItemKeyboardOption}
               onSubmit={
                 displayedItemOptions.length > 0
@@ -2448,7 +2498,11 @@ export function TeamBuilder({
               </div>
             ) : (
               <p className="touch-picker-empty-preview">
-                {t("builder.removeItem")}
+                {t(
+                  activeItemOptionIndex < 0
+                    ? "builder.noItems"
+                    : "builder.removeItem",
+                )}
               </p>
             )
           }
@@ -2580,10 +2634,7 @@ export function TeamBuilder({
               value={moveQuery}
               label={t("builder.searchAvailableMoves")}
               placeholder={t("filter.searchMoves")}
-              onChange={(value) => {
-                setMoveQuery(value);
-                resetMoveOptions();
-              }}
+              onChange={changeMoveSearchQuery}
               onMove={moveMoveKeyboardOption}
               onSubmit={() => selectActiveMoveOption(openMoveSlot)}
             />
@@ -2754,6 +2805,7 @@ export function TeamBuilder({
                       speciesId: option.speciesKey,
                       fallback: option.displayName,
                       formLabel: option.formLabel,
+                      formKind: option.formKind,
                     });
 
                     return (
@@ -2893,7 +2945,9 @@ export function TeamBuilder({
                       autoFocus
                       value={itemQuery}
                       placeholder={t("builder.searchItem")}
-                      onChange={(event) => setItemQuery(event.target.value)}
+                      onChange={(event) =>
+                        changeItemSearchQuery(event.target.value)
+                      }
                       onKeyDown={(event) => {
                         if (event.key === "Escape") {
                           closeItemPicker();
@@ -3195,10 +3249,9 @@ export function TeamBuilder({
                           autoFocus
                           value={moveQuery}
                           placeholder={t("filter.searchMoves")}
-                          onChange={(event) => {
-                            setMoveQuery(event.target.value);
-                            resetMoveOptions();
-                          }}
+                          onChange={(event) =>
+                            changeMoveSearchQuery(event.target.value)
+                          }
                           onKeyDown={(event) => {
                             if (event.key === "Escape") {
                               closeMovePicker();

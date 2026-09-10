@@ -352,7 +352,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-5.6-luna",
-        promptVersion: 89,
+        promptVersion: 90,
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

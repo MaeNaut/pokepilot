@@ -62,7 +62,17 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
             );
           }
 
-          const { member, displayName, item, ability, nature, evs, moves } = build;
+          const {
+            member,
+            displayName,
+            fullDisplayName,
+            item,
+            ability,
+            nature,
+            evs,
+            moves,
+          } = build;
+          const teamDisplayName = fullDisplayName ?? displayName;
           const primaryType = member.types[0] ?? "normal";
           const artworkUrl = member.spriteUrl ?? member.iconSpriteUrl;
           const investedEvs = statKeys.filter((stat) => evs[stat] > 0);
@@ -76,7 +86,9 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
               key={`${member.id}-${index}`}
             >
               <div className="team-share-member-heading">
-                <h3 className={getNameLengthClass(displayName)}>{displayName}</h3>
+                <h3 className={getNameLengthClass(teamDisplayName)}>
+                  {teamDisplayName}
+                </h3>
                 <div className="team-share-member-types" aria-label={t("share.pokemonTypes")}>
                   {member.types.map((type) => (
                     <TypeBadge type={type} key={type} />

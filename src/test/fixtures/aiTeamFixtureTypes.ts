@@ -34,7 +34,7 @@ export type AiTeamFixture = {
   schemaVersion: 1;
   id: string;
   title: string;
-  regulation: "M-B";
+  regulation: "M-B" | "M-C";
   battleFormat: BattleFormat;
   source: AiTeamFixtureSource;
   showdownText: string;

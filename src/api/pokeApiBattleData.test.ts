@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  regulationMbSnapshotFixture,
+  regulationMcSnapshotFixture,
   showdownMovesFixture,
   showdownPokedexFixture,
 } from "../test/fixtures/showdownLegalityFixtures";
@@ -90,16 +90,12 @@ describe("Showdown-primary Pokemon battle data", () => {
           return createResponse(pokeApiMegaScraftyFixture);
         }
 
-        if (url.endsWith("/pokedex.json")) {
-          return createResponse(showdownPokedexFixture);
+        if (url.endsWith("/showdown-battle-mc.json")) {
+          return createResponse({ species: { ...showdownPokedexFixture, scraftymega: { ...showdownPokedexFixture.rotom, name: "Scrafty-Mega" } }, moves: showdownMovesFixture });
         }
 
-        if (url.endsWith("/moves.json")) {
-          return createResponse(showdownMovesFixture);
-        }
-
-        if (url.endsWith("/data/showdown-regulation-mb.json")) {
-          return createResponse(regulationMbSnapshotFixture);
+        if (url.endsWith("/data/showdown-regulation-mc.json")) {
+          return createResponse(regulationMcSnapshotFixture);
         }
 
         throw new Error(`Unexpected fixture URL: ${url}`);
@@ -132,8 +128,6 @@ describe("Showdown-primary Pokemon battle data", () => {
     expect(pokemon.abilities).toEqual(["Levitate"]);
     expect(pokemon.moves?.map((move) => move.id).sort()).toEqual([
       "hydropump",
-      "protect",
-      "shadowball",
       "thunderbolt",
     ]);
     expect(pokemon.moves?.find((move) => move.id === "hydropump")).toMatchObject({
@@ -151,16 +145,16 @@ describe("Showdown-primary Pokemon battle data", () => {
     expect(pokemon.iconFallbackSpriteUrls).toEqual([
       "rotom-icon.png",
       "rotom-default.png",
+      "https://play.pokemonshowdown.com/sprites/gen5/rotom-wash.png",
     ]);
     expect(requestedUrls.some((url) => url.includes("/api/v2/move/"))).toBe(false);
     expect(
       requestedUrls.filter((url) => url.endsWith("/api/v2/pokemon/rotom-wash")),
     ).toHaveLength(1);
-    expect(requestedUrls.filter((url) => url.endsWith("/pokedex.json"))).toHaveLength(1);
-    expect(requestedUrls.filter((url) => url.endsWith("/moves.json"))).toHaveLength(1);
+    expect(requestedUrls.filter((url) => url.endsWith("/showdown-battle-mc.json"))).toHaveLength(1);
     expect(
       requestedUrls.filter((url) =>
-        url.endsWith("/data/showdown-regulation-mb.json"),
+        url.endsWith("/data/showdown-regulation-mc.json"),
       ),
     ).toHaveLength(1);
     expect(
@@ -177,6 +171,16 @@ describe("Showdown-primary Pokemon battle data", () => {
     );
     expect(pokemon.iconFallbackSpriteUrls).toEqual([
       "mega-scrafty-default.png",
+      "https://play.pokemonshowdown.com/sprites/gen5/scrafty-mega.png",
     ]);
+  });
+  it("loads battle data even when PokeAPI is unavailable", async () => {
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn((input: string | URL | Request) => String(input).includes("pokeapi.co")
+      ? Promise.reject(new Error("offline")) : originalFetch(input)));
+    const pokemon = await fetchPokemon("rotom-wash");
+    expect(pokemon.baseStats?.defense).toBe(107);
+    expect(pokemon.source).toBe("showdown");
+    expect(pokemon.spriteUrl).toContain("rotom-wash.png");
   });
 });

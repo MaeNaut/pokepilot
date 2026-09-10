@@ -141,7 +141,7 @@ function validateEvs(slotIndex: number, buildState: TeamBuildState) {
         "ev-total",
         "ev-total",
         "ev",
-        `EV total is ${total}; Regulation M-B allows ${CHAMPIONS_MAX_EV_TOTAL}.`,
+        `EV total is ${total}; Regulation M-C allows ${CHAMPIONS_MAX_EV_TOTAL}.`,
         { total, max: CHAMPIONS_MAX_EV_TOTAL },
       ),
     );
@@ -280,7 +280,7 @@ function validateSlot(
         "legality-unavailable",
         "legality-unavailable",
         "pokemon",
-        "Regulation M-B legality data is not available yet.",
+        "Regulation M-C legality data is not available yet.",
         undefined,
         "unavailable",
       ),
@@ -293,7 +293,7 @@ function validateSlot(
           "illegal-pokemon",
           "illegal-pokemon",
           "pokemon",
-          `${member.name} is not legal in Regulation M-B.`,
+          `${member.name} is not legal in Regulation M-C.`,
           { pokemonId: member.id, pokemonName: member.name },
         ),
       );
@@ -306,7 +306,7 @@ function validateSlot(
           "illegal-item",
           "illegal-item",
           "item",
-          `${activeItem.name} is not legal in Regulation M-B.`,
+          `${activeItem.name} is not legal in Regulation M-C.`,
           { itemId: activeItem.id || activeItem.name, itemName: activeItem.name },
         ),
       );
