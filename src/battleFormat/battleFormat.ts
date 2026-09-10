@@ -2,7 +2,7 @@ export const battleFormats = ["singles", "doubles"] as const;
 
 export type BattleFormat = (typeof battleFormats)[number];
 
-export const DEFAULT_BATTLE_FORMAT: BattleFormat = "doubles";
+export const DEFAULT_BATTLE_FORMAT: BattleFormat = "singles";
 export const BATTLE_FORMAT_STORAGE_KEY = "pokepilot:battle-format";
 
 export function isBattleFormat(value: string | null): value is BattleFormat {

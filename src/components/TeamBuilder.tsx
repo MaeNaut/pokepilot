@@ -1076,6 +1076,11 @@ export function TeamBuilder({
   );
 
   useEffect(() => {
+    if (normalizedItemQuery && filteredItemOptions.length === 0) {
+      setActiveItemOptionIndex(-1);
+      return;
+    }
+
     if (displayedItemOptions.length === 0) {
       setActiveItemOptionIndex(-1);
       return;
@@ -1118,7 +1123,7 @@ export function TeamBuilder({
 
   useEffect(() => {
     if (filteredMoveOptions.length === 0) {
-      setActiveMoveOptionIndex(0);
+      setActiveMoveOptionIndex(normalizedMoveQuery ? -1 : 0);
       setHoveredMoveOption(null);
       return;
     }
@@ -1144,6 +1149,7 @@ export function TeamBuilder({
     filteredMoveOptions,
     openMovePickerMoveId,
     openMoveSlot,
+    normalizedMoveQuery,
     selectedSlot,
     setMoveOptionLimit,
   ]);
@@ -1812,9 +1818,7 @@ export function TeamBuilder({
   }
 
   function selectActiveItemOption() {
-    const option = getItemOptionAt(
-      activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0,
-    );
+    const option = getItemOptionAt(activeItemOptionIndex);
 
     if (option === null) {
       clearItem();
@@ -1944,6 +1948,20 @@ export function TeamBuilder({
     if (move) {
       selectMove(slotIndex, move.id);
     }
+  }
+
+  function changeItemSearchQuery(value: string) {
+    setItemQuery(value);
+    resetItemOptions();
+    setActiveItemOptionIndex(value.trim() && activeItem ? 1 : 0);
+    setHoveredItemOption(null);
+  }
+
+  function changeMoveSearchQuery(value: string) {
+    setMoveQuery(value);
+    resetMoveOptions();
+    setActiveMoveOptionIndex(value.trim() ? 1 : 0);
+    setHoveredMoveOption(null);
   }
 
   function updateEv(stat: StatKey, value: string) {
@@ -2449,9 +2467,7 @@ export function TeamBuilder({
     }
 
     if (isItemPickerOpen) {
-      const activeItemEntry = getItemOptionAt(
-        activeItemOptionIndex >= 0 ? activeItemOptionIndex : 0,
-      );
+      const activeItemEntry = getItemOptionAt(activeItemOptionIndex);
       const previewedItem = activeItemEntry
         ? itemFromIndexEntry(activeItemEntry)
         : null;
@@ -2466,7 +2482,7 @@ export function TeamBuilder({
               value={itemQuery}
               label={t("builder.searchItem")}
               placeholder={t("builder.searchItem")}
-              onChange={setItemQuery}
+              onChange={changeItemSearchQuery}
               onMove={moveItemKeyboardOption}
               onSubmit={
                 displayedItemOptions.length > 0
@@ -2482,7 +2498,11 @@ export function TeamBuilder({
               </div>
             ) : (
               <p className="touch-picker-empty-preview">
-                {t("builder.removeItem")}
+                {t(
+                  activeItemOptionIndex < 0
+                    ? "builder.noItems"
+                    : "builder.removeItem",
+                )}
               </p>
             )
           }
@@ -2614,10 +2634,7 @@ export function TeamBuilder({
               value={moveQuery}
               label={t("builder.searchAvailableMoves")}
               placeholder={t("filter.searchMoves")}
-              onChange={(value) => {
-                setMoveQuery(value);
-                resetMoveOptions();
-              }}
+              onChange={changeMoveSearchQuery}
               onMove={moveMoveKeyboardOption}
               onSubmit={() => selectActiveMoveOption(openMoveSlot)}
             />
@@ -2928,7 +2945,9 @@ export function TeamBuilder({
                       autoFocus
                       value={itemQuery}
                       placeholder={t("builder.searchItem")}
-                      onChange={(event) => setItemQuery(event.target.value)}
+                      onChange={(event) =>
+                        changeItemSearchQuery(event.target.value)
+                      }
                       onKeyDown={(event) => {
                         if (event.key === "Escape") {
                           closeItemPicker();
@@ -3230,10 +3249,9 @@ export function TeamBuilder({
                           autoFocus
                           value={moveQuery}
                           placeholder={t("filter.searchMoves")}
-                          onChange={(event) => {
-                            setMoveQuery(event.target.value);
-                            resetMoveOptions();
-                          }}
+                          onChange={(event) =>
+                            changeMoveSearchQuery(event.target.value)
+                          }
                           onKeyDown={(event) => {
                             if (event.key === "Escape") {
                               closeMovePicker();

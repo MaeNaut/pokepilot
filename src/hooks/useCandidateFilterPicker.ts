@@ -19,7 +19,10 @@ import {
   matchesPokemonCandidateFilters,
   togglePokemonTypeFilter,
 } from "../utils/pokemonCandidateFilters";
-import { getNextCircularIndex } from "../utils/optionNavigation";
+import {
+  getNextCircularIndex,
+  getSearchActiveIndex,
+} from "../utils/optionNavigation";
 import { useDismissOnOutsidePointer } from "./useDismissOnOutsidePointer";
 import { useIncrementalOptions } from "./useIncrementalOptions";
 
@@ -119,9 +122,21 @@ export function useCandidateFilterPicker<
   );
 
   useEffect(() => {
+    const hasClearMoveOption =
+      openPicker === "move" &&
+      moveFilterSlot !== null &&
+      Boolean(filters.moves[moveFilterSlot]);
+
     resetOptions();
-    setActiveOptionIndex(matchingOptions.length > 0 ? 0 : -1);
+    setActiveOptionIndex(
+      getSearchActiveIndex(
+        query,
+        matchingOptions.length,
+        hasClearMoveOption ? 1 : 0,
+      ),
+    );
   }, [
+    filters.moves,
     matchingOptions.length,
     moveFilterSlot,
     openPicker,

@@ -1,10 +1,13 @@
-import type { TeamMember, TeamSlot } from "../types";
+import type { PokemonItem, TeamMember, TeamSlot } from "../types";
 import {
   resolveBattleFormat,
   type BattleFormat,
 } from "../battleFormat/battleFormat";
 import type { BenchPokemon, PokemonBuildSnapshot } from "./benchPokemon";
-import type { TeamBuildState } from "./teamBuildState";
+import {
+  normalizeBuildState,
+  type TeamBuildState,
+} from "./teamBuildState";
 export { createEmptyBuildState } from "./teamBuildState";
 
 const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
@@ -153,7 +156,43 @@ export function createSavedBenchPokemon(entry: BenchPokemon): SavedBenchPokemon 
 }
 
 export function serializeTeamSnapshot(snapshot: TeamSnapshot) {
-  return JSON.stringify(snapshot);
+  const itemIdentity = (item: PokemonItem | null) =>
+    item
+      ? {
+          id: item.id,
+          showdownId: item.showdownId,
+        }
+      : null;
+  const pokemonIdentity = (pokemon: SavedPokemon) => ({
+    pokemonId: pokemon.pokemonId,
+    showdownGender: pokemon.showdownGender,
+  });
+  const buildState = normalizeBuildState(snapshot.buildState);
+
+  return JSON.stringify({
+    name: snapshot.name,
+    battleFormat: snapshot.battleFormat,
+    slots: snapshot.slots.map((slot) =>
+      slot ? pokemonIdentity(slot) : null,
+    ),
+    bench: snapshot.bench.map((entry) => ({
+      id: entry.id,
+      pokemon: pokemonIdentity(entry.pokemon),
+      build: {
+        ...entry.build,
+        item: itemIdentity(entry.build.item),
+      },
+    })),
+    buildState: {
+      ...buildState,
+      itemBySlot: Object.fromEntries(
+        Object.entries(buildState.itemBySlot).map(([slotIndex, item]) => [
+          slotIndex,
+          itemIdentity(item),
+        ]),
+      ),
+    },
+  });
 }
 
 export function createFallbackMember(slot: SavedPokemon): TeamMember {

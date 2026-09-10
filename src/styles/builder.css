@@ -783,6 +783,16 @@
     gap: var(--team-rail-gap);
   }
 
+  .builder-card-layout > .pokemon-card {
+    height: 490px;
+    min-height: 0;
+  }
+
+  .builder-card-layout > .pokemon-card > .card-main {
+    height: 488px;
+    min-height: 0;
+  }
+
   .team-tabs {
     display: grid;
     width: var(--team-rail-width);

@@ -638,6 +638,18 @@
   }
 }
 
+@media (max-width: 599px) {
+  .copilot-header {
+    flex-wrap: wrap;
+    column-gap: 8px;
+    row-gap: 8px;
+  }
+
+  .copilot-header-actions {
+    margin-left: auto;
+  }
+}
+
 @media (min-width: 600px) and (max-width: 760px) and (min-height: 600px) {
   .header-builder-workspace,
   .builder-workspace {
@@ -660,6 +672,12 @@
     z-index: 110;
     width: auto;
     transform: translateY(-50%);
+  }
+}
+
+@media (min-width: 600px) and (max-width: 980px) and (orientation: portrait) {
+  .workspace {
+    --tablet-copilot-width: clamp(400px, 58vw, 520px);
   }
 }
 
