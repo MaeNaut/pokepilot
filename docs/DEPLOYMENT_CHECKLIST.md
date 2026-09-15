@@ -1,7 +1,7 @@
 # Deployment Checklist
 
-This checklist covers the first Vercel portfolio/beta deployment. It does not
-replace provider dashboards, legal review, or real-device testing.
+This checklist covers the Netlify public-beta deployment. It does not replace
+provider dashboards, legal review, or real-device testing.
 
 ## Audit Baseline - 2026-08-12
 
@@ -11,7 +11,7 @@ replace provider dashboards, legal review, or real-device testing.
   (134.12 KB gzip), main bundle 1,044.28 KB (294.01 KB gzip). The existing
   large-chunk warning remains a measured optimization target, not a release
   blocker.
-- Production smoke test at `https://pokepilot-ai.vercel.app`: Team Builder,
+- Historical Vercel production smoke test at `https://pokepilot-ai.vercel.app`: Team Builder,
   Calculator, usage-ranked defaults, save/restore, Showdown export, locale and
   theme persistence, bidirectional damage results, and PokePilot analysis all
   passed without application console errors.
@@ -28,7 +28,7 @@ replace provider dashboards, legal review, or real-device testing.
   and 390x844 mobile QA remain valid. The final 1920px release-candidate layout
   has no horizontal document overflow and keeps the footer at 32px.
 - Upstash remained negligible during QA (241 commands and 12 KB at the audit
-  snapshot), and Vercel logs showed the expected function invocations.
+  snapshot), and the prior Vercel logs showed the expected function invocations.
 - Still unverified: physical Safari and Android Chrome behavior. The local
   accessibility/privacy fixes also require one final deployment smoke test
   after they are pushed.
@@ -46,18 +46,19 @@ npm run audit:all
 The GitHub Actions workflow runs the same gate on pushes to `main` and pull
 requests. Do not deploy while any command or CI job is failing.
 
-## 2. Vercel Project
+## 2. Netlify Project
 
 - Import `MaeNaut/pokepilot` and keep the framework preset on Vite.
-- Use Node.js 22. The package currently requires Node.js 20 or newer.
-- Keep Preview and Production variables in separate Vercel scopes.
-- Confirm that `vercel.json` is detected. It configures the AI function's
-  60-second duration, the production Smogon stats rewrite, security headers,
-  and cache headers for generated static data.
+- Use Node.js 22. The package currently requires Node.js 20 or newer, and the
+  Netlify Functions SDK requires Node.js 22.12 or newer.
+- Keep Preview and Production variables in separate Netlify scopes.
+- Confirm that `netlify.toml` is detected. It configures the hosted AI route,
+  the production Smogon stats rewrite, security headers, and cache headers for
+  generated static data.
 
 ## 3. Server-Only Environment Variables
 
-Set these in Vercel without a `VITE_` prefix:
+Set these in Netlify without a `VITE_` prefix:
 
 | Variable | Preview | Production | Notes |
 | --- | --- | --- | --- |
@@ -96,9 +97,10 @@ Deploy a Preview build first and verify all of the following before promoting:
   permissions policy, and static cache policy.
 - Repeat one uncached and one cached PokePilot request.
 - Confirm that production uses the `:prod` Redis prefix.
-- Check Vercel function logs for errors without team contents, raw IPs, or secrets.
+- Check Netlify function logs for errors without team contents, raw IPs, or secrets.
 - Check a representative cold load and run Lighthouse once on desktop and mobile.
-- Keep the previous healthy Vercel deployment available for immediate rollback.
+- Keep the previous healthy Vercel deployment available for immediate rollback
+  until Netlify has passed the full production smoke test.
 
 ## 6. Public-Beta Follow-Ups
 
