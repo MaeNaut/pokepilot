@@ -2,9 +2,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const vercelRuntimeFiles = [
+const hostedRuntimeFiles = [
   "api/pokepilot/analyze.ts",
+  "netlify/functions/pokepilot-analyze.ts",
   "server/nodePokepilotApi.ts",
+  "server/webPokePilotApi.ts",
   "server/openAiLuna.ts",
   "server/pokepilotAnalysisValidation.ts",
   "server/pokepilotApi.ts",
@@ -21,8 +23,8 @@ const vercelRuntimeFiles = [
 
 const relativeImportPattern = /\bfrom\s+["'](\.{1,2}\/[^"']+)["']/g;
 
-describe("Vercel Node runtime imports", () => {
-  it.each(vercelRuntimeFiles)("uses Node-compatible ESM paths in %s", (file) => {
+describe("Hosted Node runtime imports", () => {
+  it.each(hostedRuntimeFiles)("uses Node-compatible ESM paths in %s", (file) => {
     const source = readFileSync(resolve(process.cwd(), file), "utf8");
     const relativeImports = [...source.matchAll(relativeImportPattern)].map(
       ([, specifier]) => specifier,

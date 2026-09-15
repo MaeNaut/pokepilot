@@ -3,12 +3,30 @@ import {
   randomBytes,
   timingSafeEqual,
 } from "node:crypto";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type {
+  IncomingHttpHeaders,
+  IncomingMessage,
+  ServerResponse,
+} from "node:http";
 import type { PokePilotRequester } from "./pokepilotOperations.js";
 
 export const POKEPILOT_CLIENT_COOKIE = "pokepilot_client";
 const clientCookieMaxAgeSeconds = 365 * 24 * 60 * 60;
 const fallbackClientSecret = randomBytes(32).toString("base64url");
+
+type RequestHeaders = Headers | IncomingHttpHeaders;
+
+export type PokePilotIdentityRequest = {
+  fallbackIp?: string;
+  headers: RequestHeaders;
+  isSecure?: boolean;
+  trustedIp?: string;
+};
+
+export type PokePilotIdentityResolution = {
+  requester: PokePilotRequester;
+  setCookie?: string;
+};
 
 function signClientId(clientId: string, secret: string) {
   return createHmac("sha256", secret).update(clientId).digest("base64url");
@@ -78,18 +96,29 @@ function getHeaderValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function getRequesterIp(request: IncomingMessage) {
-  const platformForwarded = getHeaderValue(
-    request.headers["x-vercel-forwarded-for"],
-  );
-  const realIp = getHeaderValue(request.headers["x-real-ip"]);
-  const forwarded = getHeaderValue(request.headers["x-forwarded-for"]);
+function readHeader(headers: RequestHeaders, name: string) {
+  if (typeof (headers as Headers).get === "function") {
+    return (headers as Headers).get(name) ?? undefined;
+  }
+
+  return getHeaderValue((headers as IncomingHttpHeaders)[name.toLowerCase()]);
+}
+
+function getRequesterIp(
+  headers: RequestHeaders,
+  trustedIp?: string,
+  fallbackIp?: string,
+) {
+  const platformForwarded = readHeader(headers, "x-vercel-forwarded-for");
+  const realIp = readHeader(headers, "x-real-ip");
+  const forwarded = readHeader(headers, "x-forwarded-for");
 
   return (
+    trustedIp?.trim() ||
     platformForwarded?.split(",")[0]?.trim() ||
     realIp?.trim() ||
     forwarded?.split(",")[0]?.trim() ||
-    request.socket.remoteAddress ||
+    fallbackIp?.trim() ||
     "unknown"
   );
 }
@@ -118,30 +147,57 @@ export function resolvePokePilotClientSecret(
   );
 }
 
+export function resolvePokePilotIdentity(
+  request: PokePilotIdentityRequest,
+  secret: string,
+): PokePilotIdentityResolution {
+  const cookieHeader = readHeader(request.headers, "cookie");
+  const storedToken = getCookieValue(cookieHeader, POKEPILOT_CLIENT_COOKIE);
+  let clientId = readSignedPokePilotClientToken(storedToken, secret);
+  let setCookie: string | undefined;
+
+  if (!clientId) {
+    clientId = randomBytes(18).toString("base64url");
+    const token = createSignedPokePilotClientToken(clientId, secret);
+    const secure =
+      request.isSecure ??
+      (process.env.NODE_ENV === "production" ||
+        readHeader(request.headers, "x-forwarded-proto") === "https");
+    setCookie = `${POKEPILOT_CLIENT_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${clientCookieMaxAgeSeconds}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
+  }
+
+  const ipHash = createHmac("sha256", secret)
+    .update(
+      `ip:${getRequesterIp(
+        request.headers,
+        request.trustedIp,
+        request.fallbackIp,
+      )}`,
+    )
+    .digest("base64url");
+
+  return {
+    requester: { clientId, ipHash },
+    ...(setCookie ? { setCookie } : {}),
+  };
+}
+
 export function resolvePokePilotRequester(
   request: IncomingMessage,
   response: ServerResponse,
   secret: string,
 ): PokePilotRequester {
-  const cookieHeader = getHeaderValue(request.headers.cookie);
-  const storedToken = getCookieValue(cookieHeader, POKEPILOT_CLIENT_COOKIE);
-  let clientId = readSignedPokePilotClientToken(storedToken, secret);
+  const resolution = resolvePokePilotIdentity(
+    {
+      fallbackIp: request.socket.remoteAddress,
+      headers: request.headers,
+    },
+    secret,
+  );
 
-  if (!clientId) {
-    clientId = randomBytes(18).toString("base64url");
-    const token = createSignedPokePilotClientToken(clientId, secret);
-    const forwardedProto = getHeaderValue(request.headers["x-forwarded-proto"]);
-    const secure =
-      process.env.NODE_ENV === "production" || forwardedProto === "https";
-    appendSetCookie(
-      response,
-      `${POKEPILOT_CLIENT_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${clientCookieMaxAgeSeconds}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`,
-    );
+  if (resolution.setCookie) {
+    appendSetCookie(response, resolution.setCookie);
   }
 
-  const ipHash = createHmac("sha256", secret)
-    .update(`ip:${getRequesterIp(request)}`)
-    .digest("base64url");
-
-  return { clientId, ipHash };
+  return resolution.requester;
 }

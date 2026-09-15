@@ -18,6 +18,7 @@
     "eslint.config.js",
     "scripts/**/*.ts",
     "server/**/*.ts",
-    "api/**/*.ts"
+    "api/**/*.ts",
+    "netlify/**/*.ts"
   ]
 }
