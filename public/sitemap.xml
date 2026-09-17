@@ -4,6 +4,9 @@
     <loc>https://pokepilot.app/</loc>
   </url>
   <url>
+    <loc>https://pokepilot.app/app</loc>
+  </url>
+  <url>
     <loc>https://pokepilot.app/privacy.html</loc>
   </url>
 </urlset>
