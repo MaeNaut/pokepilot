@@ -5,170 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="PokePilot is an unofficial AI-assisted Pokemon Champions team-building workspace with type coverage, damage calculation, and guided team analysis."
+      content="PokePilot is an unofficial AI-assisted team-building app for Pokemon-style turn-based battles."
     />
     <link rel="canonical" href="https://pokepilot.app/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="stylesheet" href="/guide.css" />
     <script
       async
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3154319590159225"
       crossorigin="anonymous"
     ></script>
-    <title>PokePilot | Pokemon Champions Team Builder</title>
+    <title>PokePilot</title>
   </head>
   <body>
-    <header class="site-header">
-      <a class="wordmark" href="/" aria-label="PokePilot home">PokePilot</a>
-      <nav aria-label="Primary navigation">
-        <a href="#how-it-works">How it works</a>
-        <a href="#analysis">Analysis</a>
-        <a href="/privacy.html">Privacy</a>
-        <a class="nav-launch" href="/app">Open app</a>
-      </nav>
-    </header>
-
-    <main>
-      <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">Pokemon Champions team workspace</p>
-        <h1 id="page-title">Build a clearer game plan before the match starts.</h1>
-        <p class="intro-copy">
-          PokePilot is an unofficial workspace for building and checking Pokemon
-          Champions teams. It keeps the useful parts of a team sheet, a damage
-          calculator, and a second opinion in one place, so a change to a move,
-          item, or effort-value spread can be checked in context.
-        </p>
-        <div class="intro-actions">
-          <a class="button button-primary" href="/app">Open team builder</a>
-          <a class="button button-secondary" href="#how-it-works">Read the guide</a>
-        </div>
-      </section>
-
-      <section class="quick-start" id="how-it-works" aria-labelledby="quick-start-title">
-        <div class="section-heading">
-          <p class="eyebrow">Start here</p>
-          <h2 id="quick-start-title">Four ways to use PokePilot</h2>
-        </div>
-        <ol class="workflow-list">
-          <li>
-            <strong>Start with a team or import a Showdown set.</strong>
-            Choose a Pokemon, then set its ability, item, nature, moves, and
-            effort values. Teams stay in your browser until you choose to save
-            or share them.
-          </li>
-          <li>
-            <strong>Check the shape of the team.</strong>
-            The builder tracks defensive type overlap and missing attacking
-            coverage while you edit. These are prompts for review, not rules
-            that every team must satisfy.
-          </li>
-          <li>
-            <strong>Test a concrete matchup.</strong>
-            Use the calculator when a damage range, a speed order, terrain,
-            weather, or a specific move interaction matters to the decision.
-          </li>
-          <li>
-            <strong>Ask for a second opinion.</strong>
-            PokePilot can summarize a team plan, examine a selected Pokemon, or
-            suggest additions and sample adjustments. Read the result alongside
-            the visible calculation evidence, then make the final call yourself.
-          </li>
-        </ol>
-      </section>
-
-      <section class="split-section" id="analysis" aria-labelledby="analysis-title">
-        <div class="section-heading">
-          <p class="eyebrow">What the app checks</p>
-          <h2 id="analysis-title">Analysis is grounded in the team you built.</h2>
-          <p>
-            PokePilot does not treat a Pokemon as a list of isolated stats. Team
-            analysis begins with the moves, abilities, items, and type coverage
-            currently selected in the builder. Calculator-based evidence is kept
-            separate from strategic suggestions so that a damage range never
-            pretends to answer a team-building question on its own.
-          </p>
-        </div>
-        <div class="analysis-list">
-          <article>
-            <h3>Team analysis</h3>
-            <p>
-              Reviews the team's likely game plan, role overlap, defensive
-              pressure, and interactions that deserve attention before play.
-            </p>
-          </article>
-          <article>
-            <h3>Pokemon analysis</h3>
-            <p>
-              Looks at one selected Pokemon in the context of its teammates,
-              rather than presenting a generic set without a reason to use it.
-            </p>
-          </article>
-          <article>
-            <h3>Recommendations</h3>
-            <p>
-              Suggests Pokemon or sample changes only after comparing the
-              existing team. Availability depends on the current usage data for
-              the regulation being analyzed.
-            </p>
-          </article>
-          <article>
-            <h3>Sample review</h3>
-            <p>
-              Compares viable natures, moves, items, and effort-value spreads
-              without discarding the original role just to optimize one matchup.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section class="data-section" aria-labelledby="data-title">
-        <div class="section-heading">
-          <p class="eyebrow">Scope and sources</p>
-          <h2 id="data-title">A fan tool with visible limits.</h2>
-        </div>
-        <div class="data-grid">
-          <p>
-            The builder currently follows Pokemon Champions Regulation M-C. It
-            uses structured battle data derived from Pokemon Showdown, localized
-            names and sprites from PokeAPI, and usage statistics where they are
-            available. Newly released Pokemon can appear in the builder before
-            public usage data is available, so usage-driven recommendations may
-            remain on an earlier regulation until the data catches up.
-          </p>
-          <p>
-            AI analysis is optional. It can make mistakes, and its suggestions
-            are not official battle advice or a substitute for checking game
-            rules. PokePilot labels calculation evidence separately, preserves
-            useful warnings when an analysis response is incomplete, and lets
-            you inspect the underlying team state before applying a suggestion.
-          </p>
-        </div>
-      </section>
-
-      <section class="closing" aria-labelledby="closing-title">
-        <div>
-          <p class="eyebrow">Ready when you are</p>
-          <h2 id="closing-title">Bring a team, a question, or a matchup.</h2>
-          <p>
-            Start from an empty slot, paste a Showdown export, or load a saved
-            team. PokePilot is designed to keep the next decision visible while
-            leaving the strategy in your hands.
-          </p>
-        </div>
-        <a class="button button-primary" href="/app">Open PokePilot</a>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <p>
-        PokePilot is an unofficial fan-made tool and is not affiliated with
-        Nintendo, Game Freak, Creatures, or The Pokemon Company.
-      </p>
-      <div>
-        <a href="/privacy.html">Privacy</a>
-        <a href="https://github.com/MaeNaut/pokepilot/issues">Feedback</a>
-        <a href="https://github.com/MaeNaut/pokepilot/security/policy">Security</a>
-      </div>
-    </footer>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

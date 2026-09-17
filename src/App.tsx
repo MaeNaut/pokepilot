@@ -1856,7 +1856,6 @@ function App() {
         <p>
           {t("footer.disclaimer")}
           <span className="footer-links">
-            <a href="/">{t("footer.guide")}</a>
             <PrivacyControl />
             <a
               href="https://github.com/MaeNaut/pokepilot/issues"
