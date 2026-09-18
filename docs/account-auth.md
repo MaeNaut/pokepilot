@@ -16,8 +16,11 @@ real Netlify Identity preview must be verified before rollout.
    Netlify. Do not enable production flags until preview acceptance is complete.
 
 The SDK uses localStorage and JavaScript-readable Secure cookies, NOT HttpOnly
-cookies. It restores and refreshes its own session; no custom 30-day session
-policy is claimed. Server authorization calls Identity `/user` every time and
+cookies. The app adds a rolling 30-day cookie retention period after login,
+token refresh, and successful server account verification. This survives browser
+restart but does not extend token validity or guarantee 30 days of authorization.
+Identity still controls expiry/revocation; logout removes the cookies. Server
+authorization calls Identity `/user` every time and
 fails closed if unavailable. No unverified JWT claims or body user IDs are used.
 
 Redis usage keys retain their current expiration and atomic reservations, but

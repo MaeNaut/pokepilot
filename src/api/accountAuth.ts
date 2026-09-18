@@ -1,9 +1,20 @@
+import { persistAccountCookies } from "./accountSession";
+
 export const accountAuthEnabled = import.meta.env.VITE_ACCOUNT_AUTH_ENABLED === "true";
 let initialization: Promise<void> | undefined;
+let subscribed = false;
 
 export function initializeAccountAuth() {
   if (!accountAuthEnabled) return Promise.resolve();
   return initialization ??= import("@netlify/identity").then(async sdk => {
+    if (!subscribed) {
+      sdk.onAuthChange((event, user) => {
+        if (user && (event === sdk.AUTH_EVENTS.LOGIN || event === sdk.AUTH_EVENTS.TOKEN_REFRESH)) {
+          persistAccountCookies();
+        }
+      });
+      subscribed = true;
+    }
     await sdk.handleAuthCallback();
     await sdk.getUser();
   }).catch(error => {
@@ -22,6 +33,7 @@ export async function readAccount() {
   if (!response.ok) throw new Error("AUTH_UNAVAILABLE");
   const body = await response.json();
   if (body.enabled !== true || typeof body.user?.id !== "string") throw new Error("AUTH_UNAVAILABLE");
+  persistAccountCookies();
   return body.user as { id: string };
 }
 
