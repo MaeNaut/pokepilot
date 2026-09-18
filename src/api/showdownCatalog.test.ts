@@ -6,6 +6,19 @@ import {
 } from "./showdownCatalog";
 
 describe("Showdown item and ability catalogs", () => {
+  it("uses the legacy PokeAPI sprite for Leek without changing its identity", () => {
+    const catalog = normalizeShowdownItemCatalog({
+      schemaVersion: 1,
+      items: [{ showdownId: "leek", assetId: "leek", name: "Leek", number: 236,
+        description: "", shortDescription: "", isMegaStone: false }],
+    });
+    const item = itemFromIndexEntry(catalog.index[0]);
+    expect(item.id).toBe("leek");
+    expect(item.showdownId).toBe("leek");
+    expect(item.fallbackSpriteUrl).toContain("/sprites/items/stick.png");
+    expect(catalog.itemByLookup.get("leek")).toEqual(item);
+  });
+
   it("normalizes Showdown items into asset-compatible picker entries", () => {
     const catalog = normalizeShowdownItemCatalog({
       schemaVersion: 1,

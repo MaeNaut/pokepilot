@@ -49,7 +49,8 @@ function getItemSpriteUrl(assetId: string) {
 }
 
 function getItemFallbackSpriteUrl(assetId: string) {
-  return `${POKEAPI_ITEM_SPRITES_URL}/${assetId}.png`;
+  const spriteId = assetId === "leek" ? "stick" : assetId;
+  return `${POKEAPI_ITEM_SPRITES_URL}/${spriteId}.png`;
 }
 
 function createPokemonItem(entry: RawShowdownItemEntry): PokemonItem {
