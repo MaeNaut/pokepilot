@@ -44,6 +44,8 @@ import { CopilotHistoryControl } from "./CopilotHistoryControl";
 import { defaultEvs } from "../data/natures";
 import { normalizeShowdownId } from "../api/showdownIds";
 import { PokePilotMark } from "./PokePilotMark";
+import { useAccount } from "../hooks/useAccount";
+import { AccountControl } from "./AccountControl";
 import {
   isVisibleCopilotScope,
   usesHistoricalUsageData,
@@ -151,6 +153,7 @@ export function CopilotPanel({
   onSaveOptimizationCandidate,
 }: CopilotPanelProps) {
   const { locale, t } = useLocalization();
+  const account = useAccount();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
@@ -367,6 +370,7 @@ export function CopilotPanel({
 
   async function handleAnalyze() {
     if (isAnalyzeDisabled) return;
+    if (!(await account.ensureAuthenticated())) return;
     setOptimizationActionStatus(null);
     if (scope === "recommendation") {
       const candidates = await recommendationState.run();
@@ -547,6 +551,8 @@ export function CopilotPanel({
           </button>
         </div>
       </header>
+
+      <AccountControl account={account} />
 
       <div
         className="copilot-scope-tabs"

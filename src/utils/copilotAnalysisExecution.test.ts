@@ -30,6 +30,12 @@ afterEach(() => {
 });
 
 describe("analysis execution", () => {
+  it.each(["AUTH_REQUIRED", "AUTH_UNAVAILABLE"])("does not disguise %s as a rule-based analysis", async code => {
+    const error = new CopilotApiError("Sign in required", code, 401);
+    vi.mocked(requestHostedCopilotAnalysis).mockRejectedValue(error);
+    await expect(executeCopilotAnalysis(request, "ko", vi.fn())).rejects.toBe(error);
+    expect(createLocalCopilotAnalysis).not.toHaveBeenCalled();
+  });
   it("forwards the request unchanged and avoids fallback on success", async () => {
     const cooldown = vi.fn();
     const result = await executeCopilotAnalysis(request, "en", cooldown);
