@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "@netlify/functions";
-import analyze from "./pokepilot-analyze";
-import account from "./pokepilot-account";
-import { handleWebPokePilotApi } from "../../server/webPokePilotApi";
+import analyze from "../netlify/functions/pokepilot-analyze";
+import account from "../netlify/functions/pokepilot-account";
+import { handleWebPokePilotApi } from "./webPokePilotApi";
 import { admin } from "@netlify/identity";
 
-vi.mock("../../server/webPokePilotApi", () => ({ handleWebPokePilotApi: vi.fn().mockResolvedValue(new Response(null, { status: 204 })) }));
+vi.mock("./webPokePilotApi", () => ({ handleWebPokePilotApi: vi.fn().mockResolvedValue(new Response(null, { status: 204 })) }));
 vi.mock("@netlify/identity", async importOriginal => ({
   ...await importOriginal<typeof import("@netlify/identity")>(),
   admin: { deleteUser: vi.fn().mockResolvedValue(undefined) },
