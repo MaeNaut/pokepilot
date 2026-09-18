@@ -137,6 +137,9 @@ button {
 }
 
 .app-wordmark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   position: absolute;
   left: 5vw;
   z-index: 2;
@@ -144,6 +147,10 @@ button {
   font-size: 1.12rem;
   font-weight: var(--font-bold);
   line-height: 1;
+}
+
+.app-wordmark img {
+  flex: 0 0 22px;
 }
 
 .app-header-layout {

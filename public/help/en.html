@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Help | PokePilot</title>
+  <meta name="description" content="Learn to build teams, interpret damage calculations, use PokePilot analysis, and save and share Pokemon builds." />
+  <link rel="canonical" href="https://pokepilot.app/help/en.html" />
+  <link rel="alternate" hreflang="ko" href="https://pokepilot.app/help/ko.html" />
+  <link rel="alternate" hreflang="en" href="https://pokepilot.app/help/en.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/help/help.css" />
+  <script src="/help/help.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header><div class="header-inner"><a class="brand" href="/">PokePilot</a><nav aria-label="Preferences">
+    <details class="preference-control"><summary aria-label="Theme" title="Theme"><span data-theme-icon><svg aria-hidden="true" viewBox="0 0 512 512" fill="currentColor"><!-- Font Awesome Free, CC BY 4.0 --><path d="M64 32C28.7 32 0 60.7 0 96L0 352c0 35.3 28.7 64 64 64l144 0-16 48-72 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l272 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-72 0-16-48 144 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 32zM96 96l320 0c17.7 0 32 14.3 32 32l0 160c0 17.7-14.3 32-32 32L96 320c-17.7 0-32-14.3-32-32l0-160c0-17.7 14.3-32 32-32z"></path></svg></span></summary><div class="preference-menu" aria-label="Choose theme">
+      <button type="button" data-theme-value="system" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 512 512" fill="currentColor"><!-- Font Awesome Free, CC BY 4.0 --><path d="M64 32C28.7 32 0 60.7 0 96L0 352c0 35.3 28.7 64 64 64l144 0-16 48-72 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l272 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-72 0-16-48 144 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 32zM96 96l320 0c17.7 0 32 14.3 32 32l0 160c0 17.7-14.3 32-32 32L96 320c-17.7 0-32-14.3-32-32l0-160c0-17.7 14.3-32 32-32z"></path></svg><span>System</span></button>
+      <button type="button" data-theme-value="light" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 576 512" fill="currentColor"><!-- Font Awesome Free, CC BY 4.0 --><path d="M288-32c8.4 0 16.3 4.4 20.6 11.7L364.1 72.3 468.9 46c8.2-2 16.9 .4 22.8 6.3S500 67 498 75.1l-26.3 104.7 92.7 55.5c7.2 4.3 11.7 12.2 11.7 20.6s-4.4 16.3-11.7 20.6L471.7 332.1 498 436.8c2 8.2-.4 16.9-6.3 22.8S477 468 468.9 466l-104.7-26.3-55.5 92.7c-4.3 7.2-12.2 11.7-20.6 11.7s-16.3-4.4-20.6-11.7L211.9 439.7 107.2 466c-8.2 2-16.8-.4-22.8-6.3S76 445 78 436.8l26.2-104.7-92.6-55.5C4.4 272.2 0 264.4 0 256s4.4-16.3 11.7-20.6L104.3 179.9 78 75.1c-2-8.2 .3-16.8 6.3-22.8S99 44 107.2 46l104.7 26.2 55.5-92.6 1.8-2.6c4.5-5.7 11.4-9.1 18.8-9.1zm0 144a144 144 0 1 0 0 288 144 144 0 1 0 0-288zm0 240a96 96 0 1 1 0-192 96 96 0 1 1 0 192z"></path></svg><span>Light</span></button>
+      <button type="button" data-theme-value="dark" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 512 512" fill="currentColor"><!-- Font Awesome Free, CC BY 4.0 --><path d="M256 0C114.6 0 0 114.6 0 256S114.6 512 256 512c68.8 0 131.3-27.2 177.3-71.4 7.3-7 9.4-17.9 5.3-27.1s-13.7-14.9-23.8-14.1c-4.9 .4-9.8 .6-14.8 .6-101.6 0-184-82.4-184-184 0-72.1 41.5-134.6 102.1-164.8 9.1-4.5 14.3-14.3 13.1-24.4S322.6 8.5 312.7 6.3C294.4 2.2 275.4 0 256 0z"></path></svg><span>Dark</span></button>
+    </div></details>
+    <details class="preference-control"><summary aria-label="Language" title="Language"><svg aria-hidden="true" viewBox="0 0 576 512" fill="currentColor"><!-- Font Awesome Free, CC BY 4.0 --><path d="M160 0c17.7 0 32 14.3 32 32l0 32 128 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-9.6 0-8.4 23.1c-16.4 45.2-41.1 86.5-72.2 122 14.2 8.8 29 16.6 44.4 23.5l50.4 22.4 62.2-140c5.1-11.6 16.6-19 29.2-19s24.1 7.4 29.2 19l128 288c7.2 16.2-.1 35.1-16.2 42.2s-35.1-.1-42.2-16.2l-20-45-157.5 0-20 45c-7.2 16.2-26.1 23.4-42.2 16.2s-23.4-26.1-16.2-42.2l39.8-89.5-50.4-22.4c-23-10.2-45-22.4-65.8-36.4-21.3 17.2-44.6 32.2-69.5 44.7L78.3 380.6c-15.8 7.9-35 1.5-42.9-14.3s-1.5-35 14.3-42.9l34.5-17.3c16.3-8.2 31.8-17.7 46.4-28.3-13.8-12.7-26.8-26.4-38.9-40.9L81.6 224.7c-11.3-13.6-9.5-33.8 4.1-45.1s33.8-9.5 45.1 4.1l10.2 12.2c11.5 13.9 24.1 26.8 37.4 38.7 27.5-30.4 49.2-66.1 63.5-105.4l.5-1.2-210.3 0C14.3 128 0 113.7 0 96S14.3 64 32 64l96 0 0-32c0-17.7 14.3-32 32-32zM416 270.8L365.7 384 466.3 384 416 270.8z"></path></svg></summary><div class="preference-menu" aria-label="Choose language"><a href="/help/ko.html" lang="ko" data-locale="ko">한국어</a><a href="/help/en.html" lang="en" data-locale="en" aria-current="page">English</a></div></details>
+  </nav></div></header>
+  <div class="layout">
+    <aside><details open><summary>Contents</summary><nav aria-label="Help contents"><ol>
+      <li><a href="#start">Getting started</a></li><li><a href="#builder">Teams and builds</a></li><li><a href="#coverage">Defenses and coverage</a></li><li><a href="#calculator">Damage calculator</a></li><li><a href="#analysis">PokePilot analysis</a></li><li><a href="#save">Saving and sharing</a></li><li><a href="#data">Data and regulations</a></li><li><a href="#faq">Common questions</a></li>
+    </ol></nav></details></aside>
+    <main id="content">
+      <h1>PokePilot Help</h1>
+      <p class="intro">Build a team, compare damage, and refine your sets with analysis. Calculations and recommendations support your decisions; they do not guarantee a win.</p>
+      <section id="start"><h2>1. Getting started</h2>
+        <p>Select an empty team slot, then search for a Pokemon in the selector. When usage data is available, the app fills in a sample build, including settings such as its item, nature, effort values, and moves. This is a starting point, not a mandatory set. Edit each field to suit your plan. Without usage data, review the defaults and fill in the build yourself.</p>
+        <p>Choose Singles or Doubles in the header before comparing sets. The format can affect calculation conditions and relevant usage statistics. Use the team builder/calculator toggle to switch workspaces.</p>
+        <p>First visits default to Singles and the system color theme. Without a saved language preference, browser language determines whether Korean or English is selected. This does not identify your nationality or location. Change language and theme in the header menus.</p>
+      </section>
+      <section id="builder"><h2>2. Teams and builds</h2>
+        <p>Switch Pokemon tabs to choose the member you are editing. Select an item, ability, nature, or move to change it. Items and moves can also be cleared. For Pokemon with supported forms, check the available form and its associated abilities, stats, and moves.</p>
+        <h3>Effort values and nature</h3><p>Adjust effort values with sliders or numeric inputs. The app uses Champions values: up to 32 in one stat and 66 in total. Do not compare these numbers directly with the older 252/510 EV notation. Read the nature's increase and decrease indicators alongside the resulting stats.</p>
+        <p>More Attack does not always change the number of hits needed to KO an opponent. However, the same hit-count range can still have a different KO probability. Speed investment should reflect the Pokemon's team role, not just the opponent currently selected in the calculator.</p>
+        <h3>Bench and ordering</h3><p>The active team holds up to six Pokemon, and the bench holds up to six alternatives separately. Save a recommendation to the bench when you want to compare it before replacing a team member. Drag Pokemon or moves to reorder them.</p>
+      </section>
+      <section id="coverage"><h2>3. Defenses and coverage</h2>
+        <p>The defensive type chart is a starting point for identifying shared weaknesses and useful resistances. Its resistance count includes immunities. If several members share a weakness, consider which teammate can realistically take that attack.</p>
+        <p>Offensive coverage describes which types your selected attacks can hit super effectively. Covering a type does not mean you beat every Pokemon of that type. Dual typing, abilities, items, actual damage, and turn order still matter.</p>
+        <div class="example"><h3>Example: does a shared weakness require a replacement?</h3><p>A team with multiple Ground weaknesses might still have a reliable switch-in or a way to defeat a threat before it attacks. Instead of only reducing a number in the chart, calculate who takes the hit. A resistant teammate with low HP or a weakness to the opponent's other move may not be a reliable answer.</p></div>
+      </section>
+      <section id="calculator"><h2>4. Damage calculator</h2>
+        <p>Select your Pokemon and an opponent, then match both builds to the situation you want to test. Use the attack/defense toggle to change whose moves are calculated. Check current HP, status, stat stages, weather, terrain, and the additional conditions available in the interface.</p>
+        <p>Weather- and terrain-setting abilities can update the environment automatically. Recheck the displayed environment after changing a Pokemon or ability. Spread attacks and support effects can affect Doubles calculations.</p>
+        <h3>Reading percentages and KO labels</h3><p>A damage range shows possible damage under the selected conditions. A guaranteed OHKO does not account for every way an attack can fail, such as missing, Protect, or a switch. A probabilistic OHKO means only some damage rolls reach the KO threshold.</p>
+        <div class="example"><h3>Example: 90-106% damage and a guaranteed 2HKO</h3><p>A hypothetical 90-106% range can KO a full-health target, but does not guarantee it. The exact chance depends on the actual damage rolls, not the length of the percentage interval. A guaranteed 2HKO also does not promise victory within two turns: healing, Defense increases, and turn order can change the outcome.</p></div>
+        <p>For example, Stamina can raise Defense after the first hit, so repeating first-hit damage may be misleading. A move that ignores Defense stages can behave differently. Last Respects also depends on battle history. Do not assume the calculator simulates conditions that are neither displayed nor configurable.</p>
+      </section>
+      <section id="analysis"><h2>5. PokePilot analysis</h2>
+        <p>Select an analysis tab and press its analysis button. After editing a team or build, refresh the analysis: an existing result may describe the old conditions. Use history to revisit previous results.</p>
+        <h3>Team and Pokemon analysis</h3><p>Team analysis discusses interactions, a game plan, strengths, and weaknesses. Pokemon analysis focuses on the selected member's role and how its current build works within the team.</p>
+        <h3>Pokemon recommendations</h3><p>With open slots, recommendations consider additions. With a full team, they consider replacement candidates. Check whether the proposed replacement would remove an essential role or combination, not just whether the newcomer is individually strong. Apply a candidate or save it to the bench for comparison.</p>
+        <h3>Build recommendations</h3><p>Build recommendations examine the selected Pokemon's item, nature, effort values, and moves. Keeping the current build can be a valid recommendation. Expand calculation evidence when available and compare the before-and-after conditions. A useful candidate is not necessarily superior against every opponent.</p>
+        <p>Evaluate moves and items together. For example, using a support move while retaining a Choice item creates a move-lock constraint. Replacing a move used in a team combination can also cost more than it gains. Review those tradeoffs before applying the build.</p>
+        <h3>Warnings, limits, and privacy</h3><p>If a result shows a warning or rule-based fallback label, do not treat it as an ordinary AI response. AI can misinterpret move interactions or battle plans. Follow any cooldown or server-limit notice before retrying. Analysis requests may send team, build, and battle-condition data to the server. See the <a href="/privacy.html">privacy notice</a> for details.</p>
+      </section>
+      <section id="save"><h2>6. Saving and sharing</h2>
+        <p>Name your team and use Save to keep it. Open the team menu to load and manage saved teams. Save edits before switching teams if you want to preserve them.</p>
+        <p>Teams use browser storage and do not automatically sync between devices or browsers. Clearing site data or ending a private-browsing session can remove saved data. Keep important teams separately as Showdown text.</p>
+        <p>Import Showdown text through the new-team menu and use the Showdown text control to export a build or team. After importing, verify forms, items, moves, effort values, and legality indicators. Image export is for visually sharing builds and teams; an image is not a substitute for an importable text backup.</p>
+      </section>
+      <section id="data"><h2>7. Data and regulations</h2>
+        <p>Eligibility data and usage statistics are different datasets. Supporting a new regulation does not mean usage statistics for that environment are available immediately.</p>
+        <p>Currently, Team and Pokemon analysis are labeled M-C. Pokemon and build recommendations rely on M-B usage data and are labeled accordingly. New M-C Pokemon may be limited in recommendation pools or build searches when statistics are missing. Read the regulation label and usage warnings shown in the analysis panel.</p>
+        <p>Game data and calculations use Pokemon Showdown-related resources. Korean data and images also use sources including PokeAPI. Missing translations or form images may fall back to English or an alternative image. App legality indicators do not replace the latest official tournament rules.</p>
+      </section>
+      <section id="faq"><h2>8. Common questions</h2>
+        <h3>Why was no sample loaded?</h3><p>Usage data may be unavailable for the Pokemon, form, or battle format, or a data request may have failed. Check loading and error notices. If statistics are missing, set up the build manually.</p>
+        <h3>Why does another calculator show different damage?</h3><p>First match the form, item, ability, nature, effort values, and resulting stats. Then compare HP, stat stages, weather, terrain, Singles/Doubles, and support effects. One item, such as Life Orb, can make a substantial difference. Report the full reproduction conditions if the results still disagree.</p>
+        <h3>Why does a recommendation keep my current build?</h3><p>A change may offer little benefit or compromise the member's role. Review the explanation and evidence in the context of your team rather than judging the result only by how much it changes.</p>
+        <h3>Where can I report an issue?</h3><p>Use <a href="https://github.com/MaeNaut/pokepilot/issues">GitHub feedback</a> and include reproduction steps, the battle format, builds, and expected result. Reports are public: do not include API keys or personal information.</p>
+      </section>
+    </main>
+  </div>
+  <footer>PokePilot is an unofficial fan tool. <a href="/privacy.html">Privacy</a> · <a href="/">Back to app</a></footer>
+</body>
+</html>

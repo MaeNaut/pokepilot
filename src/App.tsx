@@ -27,6 +27,7 @@ import { SavedTeamRow } from "./components/SavedTeamRow";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
 import { CopilotDrawer } from "./components/CopilotDrawer";
+import { WorkspaceTutorial } from "./components/WorkspaceTutorial";
 import {
   AppModeControl,
   BattleFormatControl,
@@ -1460,7 +1461,7 @@ function App() {
       }`}
     >
       <header className="app-header">
-        <span className="app-wordmark">PokePilot</span>
+        <span className="app-wordmark"><img src="/favicon.svg" width="22" height="22" alt="" />PokePilot</span>
         <div className="app-header-layout">
           <div className="header-builder-workspace">
             <nav className="team-actions" aria-label={t("team.actions")} ref={teamActionsRef}>
@@ -1855,7 +1856,10 @@ function App() {
       <footer className="footer">
         <p>
           {t("footer.disclaimer")}
+        </p>
           <span className="footer-links">
+            <a href={locale === "ko" ? "/help/ko.html" : "/help/en.html"} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "도움말" : "Help"}</a>
+            <button className="tutorial-restart" type="button" onClick={() => window.dispatchEvent(new Event("pokepilot:tutorial"))}>{locale === "ko" ? "튜토리얼" : "Tutorial"}</button>
             <PrivacyControl />
             <a
               href="https://github.com/MaeNaut/pokepilot/issues"
@@ -1872,8 +1876,8 @@ function App() {
               {t("footer.security")}
             </a>
           </span>
-        </p>
       </footer>
+      <WorkspaceTutorial />
     </main>
   );
 }

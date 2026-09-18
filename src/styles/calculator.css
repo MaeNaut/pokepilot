@@ -1585,7 +1585,8 @@
     flex: 0 0 100%;
     overflow-x: hidden;
     overflow-y: auto;
-    overscroll-behavior-y: contain;
+    /* Let vertical gestures reach the page/footer at panel boundaries. */
+    overscroll-behavior-y: auto;
     scroll-snap-align: start;
     scroll-snap-stop: always;
     scrollbar-width: none;

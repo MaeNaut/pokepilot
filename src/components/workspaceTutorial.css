@@ -1,0 +1,33 @@
+.tutorial-card { position: fixed; inset: 0; margin: auto; width: min(580px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; box-sizing: border-box; padding: 20px; background: #f5f7f6; color: #151918; border: 1px solid #c5cfca; border-radius: 8px; box-shadow: 0 12px 48px #00000030; }
+.tutorial-card::backdrop { background: #00000066; }
+.tutorial-top, .tutorial-actions, .tutorial-actions > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tutorial-top { color: #49755f; font-size: 12px; margin-bottom: 12px; }
+.tutorial-image { height: 260px; background: #e3e8e5; overflow: hidden; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.tutorial-image a { display: block; width: 100%; height: 100%; }
+.tutorial-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.tutorial-help-link { display: inline-block; margin-top: 10px; color: inherit; font-size: 14px; text-underline-offset: 3px; }
+.tutorial-copy { min-height: 132px; }
+.tutorial-card h2 { font-size: 22px; line-height: 1.4; margin: 20px 0 10px; letter-spacing: 0; overflow-wrap: anywhere; }
+.tutorial-card p { font-size: 14px; line-height: 1.7; color: #4b5550; margin: 0; overflow-wrap: anywhere; }
+.tutorial-card button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 40px; min-width: 40px; padding: 6px 8px; border: 0; border-radius: 4px; background: transparent; color: #4b5550; cursor: pointer; font-size: 13px; }
+.tutorial-card button:disabled { visibility: hidden; }
+.tutorial-card button:focus-visible { outline: 2px solid #387554; outline-offset: 2px; }
+.tutorial-card .tutorial-next { background: #17221c; color: white; padding: 8px 12px; min-width: 110px; }
+.tutorial-actions { margin-top: 16px; }
+.tutorial-restart { border: 0; padding: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+:root[data-theme="dark"] .tutorial-card { background: #202426; color: #f2f4f3; border-color: #49514d; }
+:root[data-theme="dark"] .tutorial-image { background: #151819; }
+:root[data-theme="dark"] .tutorial-card p, :root[data-theme="dark"] .tutorial-card button { color: #c3cdc7; }
+:root[data-theme="dark"] .tutorial-top { color: #a6cdb7; }
+:root[data-theme="dark"] .tutorial-card .tutorial-next { background: #e3eee7; color: #17221c; }
+@media (max-width: 599px) {
+  .tutorial-card { padding: 16px; }
+  .tutorial-image { height: 190px; }
+  .tutorial-card h2 { font-size: 20px; }
+  .tutorial-copy { min-height: 150px; }
+}
+@media (max-height: 600px) {
+  .tutorial-image { height: 130px; }
+  .tutorial-copy { min-height: 0; }
+  .tutorial-card h2 { margin-top: 12px; font-size: 18px; }
+}
