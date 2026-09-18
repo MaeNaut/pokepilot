@@ -32,11 +32,33 @@ describe("account session lifecycle", () => {
 
   it("refreshes before checking the server and retains only a verified session", async () => {
     const fetch = vi.fn().mockResolvedValue(Response.json({ enabled: true, user: { id: "account" } }));
+    sdk.getUser.mockResolvedValue({
+      id: "identity-account",
+      email: "trainer@example.com",
+      name: "Trainer",
+      pictureUrl: "https://lh3.googleusercontent.com/avatar",
+    });
+    vi.stubGlobal("fetch", fetch);
+    const { readAccount } = await import("./accountAuth");
+    expect(await readAccount()).toEqual({
+      id: "account",
+      email: "trainer@example.com",
+      name: "Trainer",
+      pictureUrl: "https://lh3.googleusercontent.com/avatar",
+    });
+    expect(sdk.refreshSession.mock.invocationCallOrder[0]).toBeLessThan(fetch.mock.invocationCallOrder[0]);
+    expect(persist).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps only secure profile pictures for the header avatar", async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json({ enabled: true, user: { id: "account" } }));
+    sdk.getUser.mockResolvedValue({
+      id: "identity-account",
+      pictureUrl: "http://example.com/avatar",
+    });
     vi.stubGlobal("fetch", fetch);
     const { readAccount } = await import("./accountAuth");
     expect(await readAccount()).toEqual({ id: "account" });
-    expect(sdk.refreshSession.mock.invocationCallOrder[0]).toBeLessThan(fetch.mock.invocationCallOrder[0]);
-    expect(persist).toHaveBeenCalledTimes(1);
   });
 
   it("does not accept an expired or revoked session when refresh cannot repair it", async () => {

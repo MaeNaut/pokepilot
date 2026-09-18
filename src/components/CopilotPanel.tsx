@@ -44,14 +44,14 @@ import { CopilotHistoryControl } from "./CopilotHistoryControl";
 import { defaultEvs } from "../data/natures";
 import { normalizeShowdownId } from "../api/showdownIds";
 import { PokePilotMark } from "./PokePilotMark";
-import { useAccount } from "../hooks/useAccount";
-import { AccountControl } from "./AccountControl";
+import type { useAccount } from "../hooks/useAccount";
 import {
   isVisibleCopilotScope,
   usesHistoricalUsageData,
 } from "../utils/copilotScopeAvailability";
 
 type CopilotPanelProps = {
+  account: ReturnType<typeof useAccount>;
   savedTeamId: string | null;
   teamName: string;
   battleFormat: BattleFormat;
@@ -133,6 +133,7 @@ const emptyStateCopy: Record<
 };
 
 export function CopilotPanel({
+  account,
   savedTeamId,
   teamName,
   battleFormat,
@@ -153,7 +154,6 @@ export function CopilotPanel({
   onSaveOptimizationCandidate,
 }: CopilotPanelProps) {
   const { locale, t } = useLocalization();
-  const account = useAccount();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
@@ -551,8 +551,6 @@ export function CopilotPanel({
           </button>
         </div>
       </header>
-
-      <AccountControl account={account} />
 
       <div
         className="copilot-scope-tabs"

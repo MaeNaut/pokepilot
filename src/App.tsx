@@ -11,12 +11,8 @@ import type { KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
-  faDesktop,
   faFloppyDisk,
-  faLanguage,
   faList,
-  faMoon,
-  faSun,
 } from "@fortawesome/free-solid-svg-icons";
 import { useSavedTeams } from "./hooks/useSavedTeams";
 import { hydrateSavedTeamMembers, hydrateSavedBench } from "./utils/savedTeamLibrary";
@@ -28,6 +24,7 @@ import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
 import { CopilotDrawer } from "./components/CopilotDrawer";
 import { WorkspaceTutorial } from "./components/WorkspaceTutorial";
+import { HeaderAccountMenu } from "./components/HeaderAccountMenu";
 import {
   AppModeControl,
   BattleFormatControl,
@@ -81,11 +78,10 @@ import {
 } from "./utils/teamStorage";
 import type { TeamMember, TeamSlot } from "./types";
 import { useLocalization } from "./i18n/useLocalization";
-import type { Locale } from "./i18n/gameTranslations";
 import { useTheme } from "./theme/useTheme";
-import type { ThemePreference } from "./theme/theme";
 import { useBattleFormat } from "./battleFormat/useBattleFormat";
 import { useAppMode } from "./appMode/useAppMode";
+import { useAccount } from "./hooks/useAccount";
 
 const Calculator = lazy(() =>
   import("./components/Calculator").then((module) => ({
@@ -136,6 +132,7 @@ function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
 function App() {
   const { locale, setLocale, t } = useLocalization();
   const { themePreference, setThemePreference } = useTheme();
+  const account = useAccount();
   const { battleFormat, setBattleFormat } = useBattleFormat();
   const { appMode, setAppMode } = useAppMode();
   const isCompactDrawerLayout = useMediaQuery("(max-width: 1420px)");
@@ -169,8 +166,6 @@ function App() {
   const [activeSavedTeamId, setActiveSavedTeamId] = useState<string | null>(null);
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
   const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
-  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
-  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
   const [newTeamShowdownDraft, setNewTeamShowdownDraft] = useState("");
   const [newTeamImportError, setNewTeamImportError] = useState<string | null>(null);
@@ -199,10 +194,6 @@ function App() {
     options: PokemonSelectionOptions;
   } | null>(null);
   const teamActionsRef = useRef<HTMLElement | null>(null);
-  const themeControlRef = useRef<HTMLDivElement | null>(null);
-  const themeTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const languageControlRef = useRef<HTMLDivElement | null>(null);
-  const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const savedTeamListRef = useRef<HTMLDivElement | null>(null);
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
@@ -362,65 +353,6 @@ function App() {
       setPendingTeamAction(null);
     },
   );
-
-  useEffect(() => {
-    if (!isThemeMenuOpen) {
-      return undefined;
-    }
-
-    function closeThemeMenu(event: PointerEvent) {
-      if (!themeControlRef.current?.contains(event.target as Node)) {
-        setIsThemeMenuOpen(false);
-      }
-    }
-
-    function handleThemeMenuKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key !== "Escape") {
-        return;
-      }
-
-      setIsThemeMenuOpen(false);
-      themeTriggerRef.current?.focus({ preventScroll: true });
-    }
-
-    document.addEventListener("pointerdown", closeThemeMenu);
-    document.addEventListener("keydown", handleThemeMenuKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", closeThemeMenu);
-      document.removeEventListener("keydown", handleThemeMenuKeyDown);
-    };
-  }, [isThemeMenuOpen]);
-
-  useEffect(() => {
-    if (!isLanguageMenuOpen) {
-      return undefined;
-    }
-
-    function closeLanguageMenu(event: PointerEvent) {
-      if (!languageControlRef.current?.contains(event.target as Node)) {
-        setIsLanguageMenuOpen(false);
-      }
-    }
-
-    function handleLanguageMenuKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key !== "Escape") {
-        return;
-      }
-
-      setIsLanguageMenuOpen(false);
-      languageTriggerRef.current?.focus({ preventScroll: true });
-    }
-
-    document.addEventListener("pointerdown", closeLanguageMenu);
-    document.addEventListener("keydown", handleLanguageMenuKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", closeLanguageMenu);
-      document.removeEventListener("keydown", handleLanguageMenuKeyDown);
-    };
-  }, [isLanguageMenuOpen]);
-
 
   function hasLegalityFilter() {
     return (
@@ -595,8 +527,6 @@ function App() {
 
   function toggleTeamManager() {
     closeNewTeamTools();
-    setIsThemeMenuOpen(false);
-    setIsLanguageMenuOpen(false);
     setPendingTeamAction(null);
 
     if (isTeamManagerOpen) {
@@ -608,8 +538,6 @@ function App() {
 
   function toggleNewTeamMenu() {
     closeTeamManager();
-    setIsThemeMenuOpen(false);
-    setIsLanguageMenuOpen(false);
     setPendingTeamAction(null);
     setNewTeamImportError(null);
 
@@ -619,34 +547,6 @@ function App() {
     }
 
     setIsNewTeamMenuOpen(true);
-  }
-
-  function toggleThemeMenu() {
-    closeTeamManager();
-    closeNewTeamTools();
-    setIsLanguageMenuOpen(false);
-    setPendingTeamAction(null);
-    setIsThemeMenuOpen((isOpen) => !isOpen);
-  }
-
-  function selectThemePreference(preference: ThemePreference) {
-    setThemePreference(preference);
-    setIsThemeMenuOpen(false);
-    themeTriggerRef.current?.focus({ preventScroll: true });
-  }
-
-  function toggleLanguageMenu() {
-    closeTeamManager();
-    closeNewTeamTools();
-    setIsThemeMenuOpen(false);
-    setPendingTeamAction(null);
-    setIsLanguageMenuOpen((isOpen) => !isOpen);
-  }
-
-  function selectLocale(nextLocale: Locale) {
-    setLocale(nextLocale);
-    setIsLanguageMenuOpen(false);
-    languageTriggerRef.current?.focus({ preventScroll: true });
   }
 
   function openNewTeamImport() {
@@ -1613,110 +1513,13 @@ function App() {
               setAppMode(nextMode);
             }}
           />
-          <div className="header-preferences">
-            <div className="preference-control theme-control" ref={themeControlRef}>
-              <button
-                className={`team-action-button preference-trigger theme-trigger ${
-                  isThemeMenuOpen ? "is-open" : ""
-                }`}
-                type="button"
-                aria-label={t("theme.label")}
-                title={t("theme.label")}
-                aria-haspopup="menu"
-                aria-expanded={isThemeMenuOpen}
-                ref={themeTriggerRef}
-                onClick={toggleThemeMenu}
-              >
-                <FontAwesomeIcon
-                  icon={
-                    themePreference === "system"
-                      ? faDesktop
-                      : themePreference === "dark"
-                        ? faMoon
-                        : faSun
-                  }
-                  aria-hidden="true"
-                />
-              </button>
-              {isThemeMenuOpen ? (
-                <div
-                  className="preference-menu theme-menu"
-                  role="menu"
-                  aria-label={t("theme.label")}
-                >
-                  {([
-                    ["system", "theme.system"],
-                    ["light", "theme.light"],
-                    ["dark", "theme.dark"],
-                  ] as const).map(([value, labelKey]) => (
-                    <button
-                      className={`preference-option theme-option ${
-                        themePreference === value ? "is-active" : ""
-                      }`}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={themePreference === value}
-                      key={value}
-                      onClick={() => selectThemePreference(value)}
-                    >
-                      <span>{t(labelKey)}</span>
-                      {themePreference === value ? (
-                        <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-            <div
-              className="preference-control language-control"
-              ref={languageControlRef}
-            >
-              <button
-                className={`team-action-button preference-trigger language-trigger ${
-                  isLanguageMenuOpen ? "is-open" : ""
-                }`}
-                type="button"
-                aria-label={t("language.label")}
-                title={t("language.label")}
-                aria-haspopup="menu"
-                aria-expanded={isLanguageMenuOpen}
-                ref={languageTriggerRef}
-                onClick={toggleLanguageMenu}
-              >
-                <FontAwesomeIcon icon={faLanguage} aria-hidden="true" />
-              </button>
-              {isLanguageMenuOpen ? (
-                <div
-                  className="preference-menu language-menu"
-                  role="menu"
-                  aria-label={t("language.label")}
-                >
-                  {([
-                    ["en", "language.english"],
-                    ["ko", "language.korean"],
-                  ] as const).map(([value, labelKey]) => (
-                    <button
-                      className={`preference-option language-option ${
-                        locale === value ? "is-active" : ""
-                      }`}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={locale === value}
-                      key={value}
-                      lang={value}
-                      onClick={() => selectLocale(value)}
-                    >
-                      <span>{t(labelKey)}</span>
-                      {locale === value ? (
-                        <FontAwesomeIcon icon={faCheck} aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
+          <HeaderAccountMenu
+            account={account}
+            locale={locale}
+            onLocaleChange={setLocale}
+            themePreference={themePreference}
+            onThemePreferenceChange={setThemePreference}
+          />
         </div>
       </header>
 
@@ -1812,6 +1615,7 @@ function App() {
             }
           >
             <CopilotPanel
+              account={account}
               savedTeamId={activeSavedTeamId}
               teamName={teamNameDraft}
               battleFormat={battleFormat}

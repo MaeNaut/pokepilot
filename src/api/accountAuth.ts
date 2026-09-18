@@ -4,6 +4,41 @@ export const accountAuthEnabled = import.meta.env.VITE_ACCOUNT_AUTH_ENABLED === 
 let initialization: Promise<void> | undefined;
 let subscribed = false;
 
+export type AccountProfile = {
+  id: string;
+  email?: string;
+  name?: string;
+  pictureUrl?: string;
+};
+
+function getSecurePictureUrl(value: string | undefined) {
+  if (!value) return undefined;
+
+  try {
+    return new URL(value).protocol === "https:" ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getAccountProfile(
+  id: string,
+  identityUser: {
+    email?: string;
+    name?: string;
+    pictureUrl?: string;
+  } | null,
+): AccountProfile {
+  const pictureUrl = getSecurePictureUrl(identityUser?.pictureUrl);
+
+  return {
+    id,
+    ...(identityUser?.email ? { email: identityUser.email } : {}),
+    ...(identityUser?.name ? { name: identityUser.name } : {}),
+    ...(pictureUrl ? { pictureUrl } : {}),
+  };
+}
+
 export function initializeAccountAuth() {
   if (!accountAuthEnabled) return Promise.resolve();
   return initialization ??= import("@netlify/identity").then(async sdk => {
@@ -26,15 +61,16 @@ export function initializeAccountAuth() {
 export async function readAccount() {
   await initializeAccountAuth();
   const sdk = await import("@netlify/identity");
-  await sdk.getUser();
+  const currentUser = await sdk.getUser();
   await sdk.refreshSession();
+  const identityUser = (await sdk.getUser()) ?? currentUser;
   const response = await fetch("/api/pokepilot/account", { cache: "no-store" });
   if (response.status === 401) return null;
   if (!response.ok) throw new Error("AUTH_UNAVAILABLE");
   const body = await response.json();
   if (body.enabled !== true || typeof body.user?.id !== "string") throw new Error("AUTH_UNAVAILABLE");
   persistAccountCookies();
-  return body.user as { id: string };
+  return getAccountProfile(body.user.id, identityUser);
 }
 
 export async function loginAccount() {
