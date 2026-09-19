@@ -12,7 +12,12 @@ import type { PokePilotRequester } from "./pokepilotOperations.js";
 
 export const POKEPILOT_CLIENT_COOKIE = "pokepilot_client";
 const clientCookieMaxAgeSeconds = 365 * 24 * 60 * 60;
-const fallbackClientSecret = randomBytes(32).toString("base64url");
+let fallbackClientSecret: string | undefined;
+
+function getFallbackClientSecret() {
+  fallbackClientSecret ??= randomBytes(32).toString("base64url");
+  return fallbackClientSecret;
+}
 
 type RequestHeaders = Headers | IncomingHttpHeaders;
 
@@ -143,7 +148,7 @@ export function resolvePokePilotClientSecret(
     explicitSecret?.trim() ||
     process.env.POKEPILOT_CLIENT_SECRET?.trim() ||
     apiKey?.trim() ||
-    fallbackClientSecret
+    getFallbackClientSecret()
   );
 }
 

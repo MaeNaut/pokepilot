@@ -1,37 +1,44 @@
 # Account authentication rollout
 
-Status: opt-in implementation, not enabled in production. Google OAuth and a
-real Netlify Identity preview must be verified before rollout.
+Status: Cloudflare Worker migration in progress. Google OAuth and a real
+Cloudflare Worker preview must be verified before rollout.
 
 ## Preview setup
 
-1. Enable Netlify Identity for the existing project. Enable Google as an external
-   provider, configure its OAuth client and exact callback URL in Google Cloud.
-   Disable email/password signups if Google is the only intended signup method.
-2. Set `VITE_ACCOUNT_AUTH_ENABLED=true` for the preview build and
-   `POKEPILOT_AUTH_REQUIRED=true` for its functions. Always enable both together.
-3. Set server-only `POKEPILOT_IDENTITY_URL` to the trusted Identity endpoint
-   (`https://<configured-identity-host>/.netlify/identity`), never a request header.
-4. Use Node >=22.12.0. Plain Vite has no Identity endpoint; test authentication on
-   Netlify. Do not enable production flags until preview acceptance is complete.
+1. Create the `pokepilot` D1 database, then add its generated ID as the `DB`
+   binding in `wrangler.jsonc`. Apply `migrations/0001_accounts_and_sessions.sql`.
+2. Build with `npm run build:cloudflare` so the committed `.env.cloudflare`
+   enables the account controls. Keep `POKEPILOT_AUTH_REQUIRED=true` in Worker
+   variables for preview and production.
+3. Set Worker secrets: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`,
+   `UPSTASH_REDIS_REST_TOKEN`, `POKEPILOT_CLIENT_SECRET`,
+   `POKEPILOT_SESSION_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, and
+   `GOOGLE_OAUTH_CLIENT_SECRET`. Set `GOOGLE_OAUTH_REDIRECT_URI` to the exact
+   Worker callback URL as a non-secret variable or secret.
+4. In Google Cloud, add the exact preview callback URL
+   `/api/auth/google/callback` before testing it. Do not publish the OAuth app
+   until the Cloudflare preview has passed acceptance checks.
 
-The SDK uses localStorage and JavaScript-readable Secure cookies, NOT HttpOnly
-cookies. The app adds a rolling 30-day cookie retention period after login,
-token refresh, and successful server account verification. This survives browser
-restart but does not extend token validity or guarantee 30 days of authorization.
-Identity still controls expiry/revocation; logout removes the cookies. Server
-authorization calls Identity `/user` every time and
-fails closed if unavailable. No unverified JWT claims or body user IDs are used.
+Google authorization happens on the Worker. The Worker verifies the Google ID
+token against Google's JWKS, creates a random session with a 30-day idle window
+and a 90-day maximum lifetime, stores only an HMAC of that session in D1, and
+returns it as a `Secure`, `HttpOnly`, `SameSite` cookie. When the session has
+seven days or less remaining, the next authenticated request rotates its token
+and renews the idle window without extending the 90-day maximum. JavaScript
+never reads the session cookie. Logout and deletion revoke the server-side
+session; expired sessions fail closed before any paid provider or cache
+operation. Existing Netlify Identity sessions intentionally do not migrate, so
+every account signs in again after the traffic switch.
 
 Redis usage keys retain their current expiration and atomic reservations, but
 use a namespaced hash of the verified account ID. IP safeguards and analysis
 caching remain. There is no new global spending cap. No team cloud sync or
 credit ledger is implemented. Existing local teams/history stay on the device.
 
-Account deletion requires same-origin DELETE and a verified session, deletes
-only the caller through Identity admin, then clears the browser session. Existing
-Redis usage entries expire normally. Re-registration abuse needs separate review;
-account deletion is not a promise to permanently blacklist that identity.
+Account deletion requires a same-origin DELETE and a verified session, deletes
+only the caller's D1 sessions and account, then clears the browser session.
+Existing Redis usage entries expire normally. Re-registration abuse needs separate
+review; account deletion is not a promise to permanently blacklist that identity.
 
 ## Required acceptance checks
 
