@@ -13,7 +13,7 @@ export const en = {
   "account.checking": "Checking sign-in...",
   "account.unavailable": "Unable to verify your account. Try again shortly.",
   "account.loginRequired": "Sign in to use AI analysis.",
-  "account.signInDescription": "Sign in to keep using AI analysis across browsers.",
+  "account.signInDescription": "Sign in to use PokePilot's AI analysis.",
   "account.signIn": "Sign in with Google",
   "account.signOut": "Sign out",
   "account.delete": "Delete account",
@@ -441,6 +441,12 @@ export const en = {
     "Candidate data could not be verified. Nothing was applied.",
   "copilot.noConcerns": "No priority concerns found.",
   "copilot.noAnalysis": "No analysis yet",
+  "copilot.requirement.teamTitle": "More team members needed",
+  "copilot.requirement.teamDescription":
+    "Team analysis and Pokemon recommendations need at least {required} active Pokemon in {format}. Add {remaining} more to continue.",
+  "copilot.requirement.pokemonTitle": "Select a Pokemon",
+  "copilot.requirement.pokemonDescription":
+    "Choose a team slot containing a Pokemon, then analyze that Pokemon's role and fit with the team.",
   "copilot.empty.teamTitle": "Team analysis",
   "copilot.empty.teamDescription":
     "Review the team's game plan, interactions, strengths, and concerns.",
@@ -538,7 +544,7 @@ export const ko = {
   "account.checking": "로그인 상태를 확인하는 중...",
   "account.unavailable": "계정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
   "account.loginRequired": "AI 분석을 이용하려면 로그인해 주세요.",
-  "account.signInDescription": "브라우저를 바꿔도 AI 분석을 이용하려면 로그인해 주세요.",
+  "account.signInDescription": "PokePilot의 AI 분석을 이용하려면 계정 로그인이 필요합니다.",
   "account.signIn": "Google로 로그인",
   "account.signOut": "로그아웃",
   "account.delete": "계정 삭제",
@@ -966,6 +972,12 @@ export const ko = {
     "후보 데이터 검증 실패 · 적용 취소",
   "copilot.noConcerns": "우선 확인할 문제 없음",
   "copilot.noAnalysis": "분석 전",
+  "copilot.requirement.teamTitle": "팀 인원이 더 필요합니다",
+  "copilot.requirement.teamDescription":
+    "팀 분석과 포켓몬 추천에는 {format} 기준 최소 {required}마리의 활성 포켓몬이 필요합니다. 포켓몬을 {remaining}마리 더 추가해 주세요.",
+  "copilot.requirement.pokemonTitle": "포켓몬을 선택해 주세요",
+  "copilot.requirement.pokemonDescription":
+    "포켓몬이 들어 있는 팀 탭을 선택한 뒤, 해당 포켓몬의 역할과 팀 내 조화를 분석할 수 있습니다.",
   "copilot.empty.teamTitle": "팀 분석",
   "copilot.empty.teamDescription":
     "팀의 운영 계획과 상호작용, 강점과 주의할 점을 살펴봅니다.",

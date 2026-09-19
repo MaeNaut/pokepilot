@@ -1,9 +1,15 @@
 .header-account-menu {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  right: 24px;
   display: grid;
-  align-self: center;
-  justify-self: end;
-  margin-right: 5vw;
+  transform: translateY(-50%);
+}
+
+@media (min-width: 1921px) {
+  .header-account-menu {
+    right: calc((100vw - 1920px) / 2 + 24px);
+  }
 }
 
 .header-account-trigger {
@@ -253,23 +259,13 @@
 
 @media (max-width: 1420px) {
   .header-account-menu {
-    position: absolute;
-    top: 50%;
-    right: 24px;
-    margin-right: 0;
-    transform: translateY(-50%);
+    right: 5vw;
   }
 }
 
 @media (max-width: 760px) {
   .header-account-menu {
-    right: 10px;
-  }
-}
-
-@media (max-width: 520px) {
-  .header-account-menu {
-    right: 6px;
+    right: 8px;
   }
 
   .header-account-popover {
@@ -277,8 +273,9 @@
   }
 }
 
-@media (max-width: 359px) {
-  .header-account-menu {
-    right: 4px;
+@media (max-width: 599px) {
+  .header-account-trigger {
+    width: 32px;
+    height: 32px;
   }
 }

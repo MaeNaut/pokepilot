@@ -106,6 +106,146 @@
   position: relative;
 }
 
+.copilot-panel-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.copilot-login-gate {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: transparent;
+  color: var(--copilot-text);
+  cursor: default;
+  opacity: 0;
+  pointer-events: auto;
+  transition:
+    background-color 180ms ease,
+    opacity 180ms ease;
+}
+
+.copilot-login-gate-card {
+  display: grid;
+  width: min(280px, 100%);
+  justify-items: center;
+  gap: 9px;
+  border: 1px solid var(--copilot-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 20px 18px;
+  background: var(--copilot-surface);
+  box-shadow: 0 16px 34px var(--copilot-panel-shadow);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.copilot-login-gate-card > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--copilot-accent);
+}
+
+.copilot-login-gate-card strong {
+  color: var(--copilot-heading);
+  font-size: 0.84rem;
+  font-weight: var(--font-semibold);
+}
+
+.copilot-login-gate-card span {
+  max-width: 230px;
+  color: var(--copilot-copy-muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.copilot-login-gate-card button {
+  min-height: 34px;
+  margin-top: 3px;
+  border: 1px solid var(--copilot-primary-border);
+  border-radius: var(--radius-sm);
+  padding: 0 13px;
+  background: var(--copilot-primary-background);
+  color: var(--copilot-primary-text);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: var(--font-medium);
+  cursor: pointer;
+}
+
+.copilot-login-gate-card button:hover:not(:disabled),
+.copilot-login-gate-card button:focus-visible {
+  border-color: var(--copilot-accent);
+  background: var(--copilot-primary-hover);
+  outline: none;
+}
+
+.copilot-login-gate-card button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.copilot-panel.is-account-locked.is-login-gate-revealed .copilot-panel-content,
+.copilot-panel.is-account-locked:has(.copilot-login-gate:focus-within)
+  .copilot-panel-content {
+  filter: blur(3px) saturate(0.88);
+  opacity: 0.72;
+  transform: scale(1.008);
+}
+
+.copilot-panel.is-account-locked.is-login-gate-revealed .copilot-login-gate,
+.copilot-panel.is-account-locked:has(.copilot-login-gate:focus-within)
+  .copilot-login-gate {
+  background-color: color-mix(
+    in srgb,
+    var(--copilot-panel-background) 58%,
+    transparent
+  );
+  opacity: 1;
+}
+
+.copilot-panel.is-account-locked.is-login-gate-revealed
+  .copilot-login-gate-card,
+.copilot-panel.is-account-locked:has(.copilot-login-gate:focus-within)
+  .copilot-login-gate-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .copilot-panel.is-account-locked .copilot-panel-content {
+    filter: blur(3px) saturate(0.88);
+    opacity: 0.72;
+    transform: scale(1.008);
+  }
+
+  .copilot-panel.is-account-locked .copilot-login-gate {
+    background-color: color-mix(
+      in srgb,
+      var(--copilot-panel-background) 58%,
+      transparent
+    );
+    opacity: 1;
+  }
+
+  .copilot-panel.is-account-locked .copilot-login-gate-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .copilot-header {
   display: flex;
   align-items: flex-start;
@@ -329,7 +469,7 @@
 }
 
 .copilot-analyze-button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.72;
 }
 
@@ -448,6 +588,10 @@
 
 .copilot-empty-state.is-usage-warning > svg {
   color: var(--copilot-danger);
+}
+
+.copilot-empty-state.is-requirement > svg {
+  color: var(--copilot-warning);
 }
 
 .copilot-stale-notice {

@@ -141,7 +141,7 @@ button {
   align-items: center;
   gap: 8px;
   position: absolute;
-  left: 5vw;
+  left: 24px;
   z-index: 2;
   color: var(--color-text);
   font-size: 1.12rem;
@@ -151,6 +151,12 @@ button {
 
 .app-wordmark img {
   flex: 0 0 22px;
+}
+
+@media (min-width: 1921px) {
+  .app-wordmark {
+    left: calc((100vw - 1920px) / 2 + 24px);
+  }
 }
 
 .app-header-layout {
