@@ -2,12 +2,14 @@
 
 PokePilot is an unofficial AI-assisted team builder and damage calculator for
 Pokemon-style turn-based battles. It combines Regulation M-C legality, usage
-data, matchup diagnostics, and AI strategy guidance in one responsive web app.
+data, matchup diagnostics, and structured AI strategy guidance in one
+responsive web app.
 
 [Open the live app](https://pokepilot.app)
 
-> Status: public beta. The core Team Builder, Calculator, and PokePilot analysis
-> workflows are live and under final production QA.
+> Status: public beta. PokePilot is served by a Cloudflare Worker at
+> `pokepilot.app`; Google sign-in, account-scoped saved-team sync, and PokePilot
+> analysis are live.
 
 ## Highlights
 
@@ -17,44 +19,48 @@ data, matchup diagnostics, and AI strategy guidance in one responsive web app.
 - Import and export Pokemon Showdown text for individual sets and complete teams.
 - Load usage-ranked Pokemon and popular sets from monthly Smogon statistics.
 - Inspect defensive matchups, offensive coverage, validity, and damage ranges.
-- Analyze teams and individual Pokemon, compare general samples, rank roster additions or replacements, and audit metagame threats with GPT-5.6.
-- Preserve bounded analysis history and fall back to deterministic guidance when AI is unavailable.
+- Analyze teams and individual Pokemon, compare samples, recommend roster additions, and audit metagame threats.
 - Export individual builds and full teams as shareable PNG images.
-- Use the interface in English or Korean with system, light, and dark themes.
-- Work across desktop, tablet, and mobile layouts with keyboard and touch controls.
+- Use English or Korean with system, light, and dark themes across desktop, tablet, and mobile layouts.
+- Sign in with Google to synchronize saved teams, bounded analysis history, language, theme, default battle format, and tutorial completion across devices.
 
 ## Stack
 
-- React 19, TypeScript, and Vite
-- Vitest and ESLint
+- React 19, TypeScript, Vite, Vitest, and ESLint
 - Pokemon Showdown data and `@smogon/calc`
 - PokeAPI sprites and localized source data
-- OpenAI Responses API for hosted PokePilot analysis
-- Upstash Redis for shared caching, request deduplication, and cooldown controls
-- Vercel serverless deployment configuration
+- OpenAI Responses API for requested PokePilot analysis
+- Upstash Redis for shared caching, request deduplication, cooldowns, and abuse controls
+- Cloudflare Workers for the static app and server API
+- Cloudflare D1 for account, session, and account-scoped synchronized data
+- Google OAuth with Secure, HttpOnly, SameSite session cookies
 
 ## Getting Started
 
-Requires Node.js 20 or newer.
+Requires Node.js 22.12 or newer.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Run the complete local verification suite:
+Run the normal local verification suite:
 
 ```bash
 npm run check
 npm run audit:all
 ```
 
-`npm run check` runs ESLint, the Vitest regression suite, and a production build.
+Run the Cloudflare production gate before deploying:
 
-Hosted AI analysis is optional during development. Add `OPENAI_API_KEY` to the
-ignored `.env.local` file to enable it; without a key, the app remains usable
-through its deterministic fallback. Never expose this key through a `VITE_`
-environment variable.
+```bash
+npm run check:cloudflare
+```
+
+Hosted AI analysis is optional during routine local development. Add
+`OPENAI_API_KEY` to ignored `.env.local` to enable it; without a key, the app
+continues to offer deterministic fallback guidance. Never expose a provider key
+through a `VITE_` environment variable.
 
 Useful development commands:
 
@@ -68,14 +74,17 @@ Useful development commands:
 | `npm run dev:shared` | Use the shared Upstash development adapter |
 | `npm run eval:ai` | Run the optional paid AI fixture evaluation |
 | `npm run verify:deployment` | Check the deployed API boundary without an OpenAI call |
+| `npm run build:cloudflare` | Build the Worker asset bundle |
+| `npm run deploy:cloudflare` | Build and deploy the configured Worker |
 | `npm run data:showdown` | Refresh checked-in Showdown catalogs |
 | `npm run data:locales` | Refresh checked-in localization data |
 
 For shared-storage QA, copy `.env.shared.example` to `.env.shared.local`, add
-the development Upstash credentials, and run `npm run dev:shared`.
-Add `-- --allow-paid-call` to `npm run verify:deployment` only when a live
-concurrency check is intended; it uses one fresh hosted analysis and verifies
-that identical followers share that result.
+development Upstash credentials, and run `npm run dev:shared`.
+`verify:deployment` checks guest rejection on the login-required production
+Worker. Authenticated contract and paid concurrency checks require browser QA.
+The optional `--allow-paid-call` CLI mode is for development endpoints without
+account authentication, and intentionally makes a fresh hosted analysis.
 
 ## Data
 
@@ -89,14 +98,19 @@ that identical followers share that result.
 
 Large source catalogs are converted into compact checked-in snapshots and
 cached locally so the browser does not repeatedly request or parse upstream data.
+Smogon usage is still historical Regulation M-B data until M-C statistics exist;
+it is not presented as measured M-C usage.
 
 ## Documentation
 
 - [Roadmap](./ROADMAP.md)
 - [Active TODO](./TODO.md)
 - [Technical notes](./TECH_NOTES.md)
-- [AI model evaluation](./docs/AI_MODEL_EVALUATION.md)
+- [Regulation M-C data](./docs/REGULATION_DATA.md)
+- [Account authentication](./docs/account-auth.md)
+- [Cloudflare deployment and migration record](./docs/CLOUDFLARE_MIGRATION.md)
 - [Deployment checklist](./docs/DEPLOYMENT_CHECKLIST.md)
+- [AI model evaluation](./docs/AI_MODEL_EVALUATION.md)
 - [Third-party notices](./THIRD_PARTY_NOTICES.md)
 - [Privacy notice](https://pokepilot.app/privacy.html)
 - [Security policy](./SECURITY.md)

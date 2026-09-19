@@ -1,3 +1,4 @@
+import { isSameOrigin } from "./http.js";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { WorkerEnvironment } from "./env.js";
 
@@ -126,11 +127,6 @@ function toProfile(row: AccountRow): AccountProfile {
     ...(row.name ? { name: row.name } : {}),
     ...(isHttpsUrl(row.picture_url) ? { pictureUrl: row.picture_url } : {}),
   };
-}
-
-function isSameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  return origin === new URL(request.url).origin;
 }
 
 function appRedirect(request: Request, error?: string) {
@@ -410,6 +406,7 @@ export async function deleteCurrentAccount(request: Request, env: WorkerEnvironm
   if (!isSameOrigin(request)) throw new AccountAuthError(403, "AUTH_FORBIDDEN");
   await env.DB.batch([
     env.DB.prepare("DELETE FROM account_sessions WHERE account_id = ?").bind(account.id),
+    env.DB.prepare("DELETE FROM account_storage WHERE account_id = ?").bind(account.id),
     env.DB.prepare("DELETE FROM accounts WHERE id = ?").bind(account.id),
   ]);
   return expireCookie(SESSION_COOKIE, request);

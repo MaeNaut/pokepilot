@@ -17,6 +17,7 @@ import { validateCopilotModelOutput } from "./copilotModelValidation";
 import { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestContract";
 
 const COPILOT_HISTORY_STORAGE_KEY = "pokepilot:analysis-history:v1";
+const COPILOT_HISTORY_ACCOUNT_STORAGE_KEY = "pokepilot:analysis-history.account.v1";
 const COPILOT_HISTORY_SCHEMA_VERSION = 1;
 const MAX_COPILOT_HISTORY_ENTRIES = 60;
 const MAX_COPILOT_HISTORY_PER_TEAM = 12;
@@ -126,7 +127,7 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
     : null;
 }
 
-function normalizeHistoryEntry(value: unknown): CopilotHistoryEntry | null {
+export function normalizeCopilotHistoryEntry(value: unknown): CopilotHistoryEntry | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -187,6 +188,17 @@ function limitHistory(entries: CopilotHistoryEntry[]) {
     .slice(0, MAX_COPILOT_HISTORY_ENTRIES);
 }
 
+export function normalizeCopilotHistoryEntries(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return limitHistory(
+    value
+      .map(normalizeCopilotHistoryEntry)
+      .filter((entry): entry is CopilotHistoryEntry => Boolean(entry))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+  );
+}
+
 export function getStoredCopilotHistory(): CopilotHistoryEntry[] {
   try {
     const rawPayload = localStorage.getItem(COPILOT_HISTORY_STORAGE_KEY);
@@ -205,12 +217,7 @@ export function getStoredCopilotHistory(): CopilotHistoryEntry[] {
       return [];
     }
 
-    return limitHistory(
-      payload.entries
-        .map(normalizeHistoryEntry)
-        .filter((entry): entry is CopilotHistoryEntry => Boolean(entry))
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
-    );
+    return normalizeCopilotHistoryEntries(payload.entries);
   } catch {
     return [];
   }
@@ -227,6 +234,19 @@ export function storeCopilotHistory(entries: CopilotHistoryEntry[]) {
   } catch {
     // Analysis remains available in memory when storage is unavailable or full.
   }
+}
+
+export function clearStoredCopilotHistory() {
+  localStorage.removeItem(COPILOT_HISTORY_STORAGE_KEY);
+  localStorage.removeItem(COPILOT_HISTORY_ACCOUNT_STORAGE_KEY);
+}
+
+export function getStoredCopilotHistoryAccountId() {
+  return localStorage.getItem(COPILOT_HISTORY_ACCOUNT_STORAGE_KEY);
+}
+
+export function storeCopilotHistoryAccountId(accountId: string) {
+  localStorage.setItem(COPILOT_HISTORY_ACCOUNT_STORAGE_KEY, accountId);
 }
 
 export function createCopilotHistoryEntry({

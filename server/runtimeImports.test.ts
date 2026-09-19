@@ -3,8 +3,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const hostedRuntimeFiles = [
-  "api/pokepilot/analyze.ts",
-  "netlify/functions/pokepilot-analyze.ts",
+  "worker/index.ts",
+  "worker/accountAuth.ts",
+  "worker/accountStorage.ts",
   "server/nodePokepilotApi.ts",
   "server/webPokePilotApi.ts",
   "server/openAiLuna.ts",
@@ -23,7 +24,7 @@ const hostedRuntimeFiles = [
 
 const relativeImportPattern = /\bfrom\s+["'](\.{1,2}\/[^"']+)["']/g;
 
-describe("Hosted Node runtime imports", () => {
+describe("Shared server and Worker runtime imports", () => {
   it.each(hostedRuntimeFiles)("uses Node-compatible ESM paths in %s", (file) => {
     const source = readFileSync(resolve(process.cwd(), file), "utf8");
     const relativeImports = [...source.matchAll(relativeImportPattern)].map(

@@ -52,8 +52,4 @@ describe("account session lifecycle", () => {
     await expect(readAccount()).rejects.toThrow("AUTH_UNAVAILABLE");
   });
 
-  it("does not need a client-side OAuth callback handler", async () => {
-    const { initializeAccountAuth } = await import("./accountAuth");
-    await expect(initializeAccountAuth()).resolves.toBeUndefined();
-  });
 });

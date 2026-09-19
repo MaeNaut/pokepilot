@@ -1,24 +1,33 @@
-import { useRef, useState } from "react";
+import { useAccountCollection } from "./useAccountCollection";
+import { readAccountTeams, writeAccountTeams } from "../api/accountStorage";
 import { canAddSavedTeam } from "../data/teamLimits";
 import { swapArrayItems } from "../utils/reorder";
 import { copySavedTeam, createSavedTeam, renameSavedTeam } from "../utils/savedTeamLibrary";
 import {
+  clearStoredTeams,
+  getStoredTeamsAccountId,
   getStoredTeams,
+  storeSavedTeamsAccountId,
   storeTeams,
   type SavedTeamSummary,
   type TeamSnapshot,
 } from "../utils/teamStorage";
+import { mergeAccountTeams } from "../utils/accountStorageSync";
 
-export function useSavedTeams() {
-  const [teams, setTeams] = useState(getStoredTeams);
-  const currentTeams = useRef(teams);
+const storage = {
+  readLocal: getStoredTeams,
+  writeLocal: storeTeams,
+  clearLocal: clearStoredTeams,
+  readOwner: getStoredTeamsAccountId,
+  writeOwner: storeSavedTeamsAccountId,
+  readRemote: readAccountTeams,
+  writeRemote: writeAccountTeams,
+  merge: mergeAccountTeams,
+};
 
-  function commit(next: SavedTeamSummary[]) {
-    // Persist once, outside React's replayable state updater.
-    storeTeams(next);
-    currentTeams.current = next;
-    setTeams(next);
-  }
+export function useSavedTeams(accountId: string | null) {
+  const { items: teams, current: currentTeams, commit, isHydrated } =
+    useAccountCollection(accountId, storage);
 
   function update(id: string, change: (team: SavedTeamSummary) => SavedTeamSummary) {
     commit(currentTeams.current.map((team) => team.id === id ? change(team) : team));
@@ -26,6 +35,7 @@ export function useSavedTeams() {
 
   return {
     teams,
+    isHydrated,
     save(snapshot: TeamSnapshot, id: string | null) {
       const existing = currentTeams.current.find((team) => team.id === id);
       if (!existing && !canAddSavedTeam(currentTeams.current.length)) return null;

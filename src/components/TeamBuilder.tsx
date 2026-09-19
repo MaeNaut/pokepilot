@@ -10,7 +10,7 @@ import {
 import { fetchPokemon } from "../api/pokeApi";
 import { loadShowdownData } from "../api/showdownData";
 import { itemFromIndexEntry } from "../api/showdownCatalog";
-import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
+import { normalizeShowdownId } from "../api/showdownIds";
 import {
   getPokemonCandidateAbilities,
   type ShowdownLegalitySnapshot,
@@ -86,7 +86,7 @@ import {
   type Nature,
 } from "../data/natures";
 import { ItemSprite } from "./ItemSprite";
-import type { PokemonShareBuild } from "./PokemonShareCard";
+import { createShareMoveCatalog, createTeamShareBuilds } from "../utils/teamShareBuilds";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
 import { CandidateFilterPanel } from "./CandidateFilterPanel";
@@ -233,38 +233,6 @@ function fallbackMoves(types: PokemonType[]): PokemonMove[] {
   ];
 }
 
-function resolveShareMoves(
-  member: TeamMember,
-  selectedMoveIds: string[] | undefined,
-  moveCatalog: Map<string, PokemonMove>,
-) {
-  const availableMoves = member.moves ?? [];
-
-  return [0, 1, 2, 3].map((index) => {
-    const selectedMoveId = selectedMoveIds?.[index];
-
-    if (selectedMoveId === "") {
-      return null;
-    }
-
-    if (selectedMoveId) {
-      return (
-        findMoveByLookup(availableMoves, selectedMoveId) ??
-        moveCatalog.get(normalizeShowdownId(selectedMoveId)) ?? {
-          id: selectedMoveId,
-          name: formatIdLabel(selectedMoveId),
-          type: "normal" as const,
-          power: null,
-          accuracy: null,
-          pp: 0,
-          description: "Move details are unavailable.",
-        }
-      );
-    }
-
-    return availableMoves[index] ?? null;
-  });
-}
 
 function getActiveOption<T>(options: T[], activeIndex: number) {
   return options[activeIndex >= 0 ? activeIndex : 0];
@@ -639,88 +607,15 @@ export function TeamBuilder({
     battleFormGroup?.options.findIndex((option) => option.pokemonId === activePokemonId) ?? 0,
   );
   const activeBattleFormOption = battleFormGroup?.options[activeBattleFormOptionIndexFromPokemon];
-  const shareMoveCatalog = useMemo(() => {
-    const catalog = new Map<string, PokemonMove>();
-    const teamMembers = team.filter((slot): slot is TeamMember => Boolean(slot));
-
-    for (const member of [...pool, ...teamMembers]) {
-      for (const move of member.moves ?? []) {
-        catalog.set(normalizeShowdownId(move.id), move);
-        catalog.set(normalizeShowdownId(move.name), move);
-      }
-    }
-
-    for (const cachedMoves of Object.values(preMegaMovesByPokemonId)) {
-      for (const move of cachedMoves) {
-        catalog.set(normalizeShowdownId(move.id), move);
-        catalog.set(normalizeShowdownId(move.name), move);
-      }
-    }
-
-    return catalog;
-  }, [pool, preMegaMovesByPokemonId, team]);
-
-  const sharePokemonBuilds: Array<PokemonShareBuild | null> = team.map(
-    (member, slotIndex) => {
-      if (!member) {
-        return null;
-      }
-
-      const indexEntry = pokemonIndexByName.get(member.id);
-      const formKind =
-        indexEntry?.formKind ?? (isMegaPokemonName(member.id) ? "mega" : "base");
-      const speciesKey =
-        indexEntry?.speciesKey ?? (member.id ? getMegaSpeciesKey(member.id) : "");
-      const memberBattleFormGroup = getBattleFormGroup(speciesKey || member.id);
-      const battleFormOption = memberBattleFormGroup?.options.find(
-        (option) => option.pokemonId === member.id,
-      );
-      const formLabel =
-        formKind === "mega"
-          ? (indexEntry?.formLabel ?? "Mega")
-          : battleFormOption?.label ??
-            (!indexEntry || shouldIncludePokemonForm(indexEntry)
-              ? undefined
-              : formKind === "form"
-                ? indexEntry.formLabel
-                : undefined);
-      const includeFullForm = indexEntry?.speciesKey !== "pyroar";
-      const fullDisplayName = indexEntry
-        ? pokemonName({
-            id: indexEntry.name,
-            speciesId: indexEntry.speciesKey,
-            fallback: getPokemonNameFallback(indexEntry, includeFullForm),
-            includeForm: includeFullForm,
-            formLabel: indexEntry.formLabel,
-            formKind: indexEntry.formKind,
-          })
-        : getMemberDisplayName(member);
-
-      return {
-        member,
-        displayName: getMemberDisplayName(member),
-        fullDisplayName,
-        formLabel,
-        item: itemBySlot[slotIndex] ?? null,
-        ability:
-          gameName(
-            "abilities",
-            abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? "",
-            abilityBySlot[slotIndex] ?? member.abilities?.[0] ?? t("builder.noAbility"),
-          ),
-        nature: getNatureById(natureBySlot[slotIndex] ?? "hardy"),
-        evs: evsBySlot[slotIndex] ?? defaultEvs,
-        moves:
-          slotIndex === selectedSlot
-            ? selectedMoves
-            : resolveShareMoves(
-                member,
-                moveIdsBySlot[slotIndex],
-                shareMoveCatalog,
-              ),
-      };
-    },
+  const shareMoveCatalog = useMemo(
+    () => createShareMoveCatalog([...pool, ...team], preMegaMovesByPokemonId),
+    [pool, preMegaMovesByPokemonId, team],
   );
+  const sharePokemonBuilds = createTeamShareBuilds({
+    team, buildState, pokemonIndexByName, selectedSlot, selectedMoves,
+    shareMoveCatalog, getMemberDisplayName,
+    localization: { pokemonName, gameName, t },
+  });
   const relevantMegaStoneNames = useMemo(
     () => {
       const names = new Set(

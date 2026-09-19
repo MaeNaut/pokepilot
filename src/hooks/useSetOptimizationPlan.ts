@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { runWorkerTask, waitForTask } from "../utils/workerTask";
 import { loadPopularSmogonSet } from "../api/smogonUsage";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { resolveUsageCalculatorItems } from "../calculator/calculatorUsageBuild";
@@ -24,68 +25,49 @@ export function useSetOptimizationPlan(
   enabled: boolean,
 ) {
   const [result, setResult] = useState<Result | null>(null);
-  const cancel = useRef<(() => void) | null>(null);
+  const cancel = useRef<AbortController | null>(null);
   const active = enabled && Boolean(context?.member);
 
   useEffect(
-    () => () => cancel.current?.(),
+    () => () => {
+      cancel.current?.abort();
+      setResult((current) => current?.status === "loading" ? null : current);
+    },
     [active, battleFormat, context, itemOptions],
   );
 
-  const run = useCallback((): Promise<SetOptimizationPlan | null> => {
-    cancel.current?.();
-    if (!active || !context) return Promise.resolve(null);
-    setResult({
-      context,
-      battleFormat,
-      itemOptions,
-      plan: null,
-      status: "loading",
-    });
-    return new Promise((resolve) => {
-      let settled = false;
-      let worker: Worker | undefined;
-      const finish = (plan: SetOptimizationPlan | null, status?: "ready" | "error") => {
-        if (settled) return;
-        settled = true;
-        worker?.terminate();
-        if (status) {
-          setResult({
-            context,
-            battleFormat,
-            itemOptions,
-            plan,
-            status,
-          });
-        }
-        else setResult(null);
-        resolve(plan);
-      };
-      cancel.current = () => finish(null);
-      void loadPopularSmogonSet(context.member.id, battleFormat)
-        .catch(() => null)
-        .then((usageSet) => {
-          if (settled) return;
-          try {
-            worker = new Worker(new URL("../calculator/setOptimizer.worker.ts", import.meta.url), { type: "module" });
-            worker.onmessage = (event: MessageEvent<{ plan?: SetOptimizationPlan; error?: boolean }>) => {
-              finish(event.data.plan ?? null, event.data.error ? "error" : "ready");
-            };
-            worker.onerror = () => finish(null, "error");
-            worker.postMessage({
-              generalContext: {
-                ...context,
-                usageSet,
-                usageItems: usageSet
-                  ? resolveUsageCalculatorItems(usageSet, itemOptions, 4)
-                  : [],
-              },
-            });
-          } catch {
-            finish(null, "error");
-          }
-        });
-    });
+  const run = useCallback(async (): Promise<SetOptimizationPlan | null> => {
+    cancel.current?.abort();
+    if (!active || !context) return null;
+    const controller = new AbortController();
+    cancel.current = controller;
+    const { signal } = controller;
+    const identity = { context, battleFormat, itemOptions };
+    setResult({ ...identity, plan: null, status: "loading" });
+    try {
+      const usageSet = await waitForTask(
+        loadPopularSmogonSet(context.member.id, battleFormat).catch(() => null), signal,
+      );
+      if (signal.aborted) return null;
+      const output = await runWorkerTask<{ plan?: SetOptimizationPlan; error?: boolean }>(
+        () => new Worker(new URL("../calculator/setOptimizer.worker.ts", import.meta.url), { type: "module" }),
+        {
+          generalContext: {
+            ...context,
+            usageSet,
+            usageItems: usageSet ? resolveUsageCalculatorItems(usageSet, itemOptions, 4) : [],
+          },
+        },
+        signal,
+      );
+      if (signal.aborted || !output) return null;
+      const plan = output.plan ?? null;
+      setResult({ ...identity, plan, status: output.error ? "error" : "ready" });
+      return plan;
+    } catch {
+      if (!signal.aborted) setResult({ ...identity, plan: null, status: "error" });
+      return null;
+    }
   }, [active, battleFormat, context, itemOptions]);
 
   const current =

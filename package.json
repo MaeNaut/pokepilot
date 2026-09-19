@@ -18,6 +18,7 @@
     "eval:matchup": "tsx scripts/run-matchup-analysis-qa.ts",
     "eval:threats": "tsx scripts/run-meta-threat-analysis-qa.ts",
     "verify:deployment": "tsx scripts/verify-deployment-safeguards.ts",
+    "metrics:report": "tsx scripts/report-metrics.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "build": "tsc -b && vite build",
@@ -33,7 +34,6 @@
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^7.3.0",
     "@fortawesome/react-fontawesome": "^3.4.0",
-    "@netlify/identity": "^2.0.0",
     "@smogon/calc": "^0.11.0",
     "@upstash/redis": "^1.38.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -48,8 +48,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260918.1",
     "@eslint/js": "^9.17.0",
-    "@napi-rs/keyring": "^1.3.0",
-    "@netlify/functions": "^6.0.0",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^26.1.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
@@ -58,6 +57,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "jsdom": "^29.1.1",
     "tsx": "^4.23.1",
     "typescript-eslint": "^8.18.2",
     "vitest": "^4.1.11",

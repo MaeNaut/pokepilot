@@ -27,7 +27,7 @@ describe("PokePilot anonymous client identity", () => {
     const resolution = resolvePokePilotIdentity(
       {
         fallbackIp: "10.0.0.1",
-        headers: { "x-vercel-forwarded-for": "203.0.113.10" },
+        headers: { "x-forwarded-for": "203.0.113.10" },
       },
       secret,
     );

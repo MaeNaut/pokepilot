@@ -1,5 +1,11 @@
 # PokePilot Model Evaluation
 
+> Historical evaluation record. Many fixtures below use Regulation M-B because
+> they were captured before the M-C launch. The current public app uses M-C
+> legality and serves hosted analysis through the Cloudflare Worker endpoint
+> `/api/pokepilot/analyze`; do not use legacy Vercel/Netlify references in this
+> document as deployment instructions.
+
 ## Purpose
 
 Use a stable offline team suite to compare hosted models without turning a

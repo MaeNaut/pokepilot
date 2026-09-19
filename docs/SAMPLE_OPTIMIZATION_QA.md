@@ -1,5 +1,9 @@
 # Sample Optimization QA
 
+> Historical QA record. URLs, deployment notes, test counts, and M-B data in
+> this document describe the revision that was tested. Current releases use the
+> Cloudflare Worker at `https://pokepilot.app` and Regulation M-C data.
+
 Date: 2026-09-07. Product revision: `d6f13ac`.
 
 ## Result

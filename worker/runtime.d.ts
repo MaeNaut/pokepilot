@@ -18,6 +18,16 @@ interface D1Database {
   prepare(query: string): D1PreparedStatement;
 }
 
+interface ExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+interface ScheduledController {
+  scheduledTime: number;
+  cron: string;
+}
+
 interface ExportedHandler<Env = unknown> {
-  fetch?(request: Request, env: Env): Response | Promise<Response>;
+  fetch?(request: Request, env: Env, ctx?: ExecutionContext): Response | Promise<Response>;
+  scheduled?(controller: ScheduledController, env: Env, ctx?: ExecutionContext): void | Promise<void>;
 }

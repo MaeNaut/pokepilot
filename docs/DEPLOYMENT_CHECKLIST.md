@@ -1,120 +1,84 @@
 # Deployment Checklist
 
-This checklist covers the Netlify public-beta deployment. It does not replace
-provider dashboards, legal review, or real-device testing.
+This is the current Cloudflare Workers release checklist for PokePilot. It does
+not replace Cloudflare, Google, OpenAI, Upstash, tax, advertising, or legal
+provider requirements.
 
-## Audit Baseline - 2026-08-12
-
-- `npm run check`: passed (57 test files, 312 tests).
-- `npm run audit:all`: passed with zero reported vulnerabilities.
-- Production build: CSS 202.41 KB (38.17 KB gzip), Calculator 542.29 KB
-  (134.12 KB gzip), main bundle 1,044.28 KB (294.01 KB gzip). The existing
-  large-chunk warning remains a measured optimization target, not a release
-  blocker.
-- Historical Vercel production smoke test at `https://pokepilot-ai.vercel.app`: Team Builder,
-  Calculator, usage-ranked defaults, save/restore, Showdown export, locale and
-  theme persistence, bidirectional damage results, and PokePilot analysis all
-  passed without application console errors.
-- Hosted infrastructure: security and cache headers, Smogon rewrite, separate
-  Preview/Production secret scopes and Redis prefixes, an uncached AI request,
-  a repeated server-cache hit, privacy-safe logs, and fail-closed invalid input
-  behavior were verified. The measured uncached team analysis cost about
-  USD 0.00266; its identical cache hit returned without another model call.
-- Local release-candidate Lighthouse: desktop 99 Performance / 100
-  Accessibility / 100 Best Practices / 100 SEO; mobile 77 / 100 / 100 / 100.
-  Desktop LCP was about 1.0 seconds with zero blocking time; emulated mobile LCP
-  was about 4.7 seconds with 185 ms blocking time and zero layout shift.
-- Responsive checks: prior 1920x1080 desktop, representative tablet layouts,
-  and 390x844 mobile QA remain valid. The final 1920px release-candidate layout
-  has no horizontal document overflow and keeps the footer at 32px.
-- Upstash remained negligible during QA (241 commands and 12 KB at the audit
-  snapshot), and the prior Vercel logs showed the expected function invocations.
-- Still unverified: physical Safari and Android Chrome behavior. The local
-  accessibility/privacy fixes also require one final deployment smoke test
-  after they are pushed.
-
-## 1. Automated Gate
+## 1. Automated gate
 
 Run from the repository root:
 
 ```bash
 npm ci
-npm run check
+npm run check:cloudflare
 npm run audit:all
 ```
 
-The GitHub Actions workflow runs the same gate on pushes to `main` and pull
-requests. Do not deploy while any command or CI job is failing.
+`check:cloudflare` runs lint, the complete Vitest suite, the Cloudflare asset
+build, and a Worker dry run. Do not deploy when any command or CI job fails.
 
-## 2. Netlify Project
+## 2. Cloudflare configuration
 
-- Import `MaeNaut/pokepilot` and keep the framework preset on Vite.
-- Use Node.js 22. The package currently requires Node.js 20 or newer, and the
-  Netlify Functions SDK requires Node.js 22.12 or newer.
-- Keep Preview and Production variables in separate Netlify scopes.
-- Confirm that `netlify.toml` is detected. It configures the hosted AI route,
-  the production Smogon stats rewrite, security headers, and cache headers for
-  generated static data.
+- Confirm `wrangler.jsonc` names the `pokepilot` Worker, the `ASSETS` binding,
+  the D1 `DB` binding, and the `pokepilot.app` route.
+- Confirm both D1 migrations have been applied: account/session tables and
+  `account_storage`.
+- Keep `POKEPILOT_AUTH_REQUIRED=true` and
+  `POKEPILOT_SHARED_STORE_REQUIRED=true` for production.
+- Use a production-specific `POKEPILOT_REDIS_PREFIX`. Change it intentionally
+  when invalidating all operational cache and rate-limit state.
 
-## 3. Server-Only Environment Variables
+## 3. Server-only secrets
 
-Set these in Netlify without a `VITE_` prefix:
+Set these in Cloudflare Worker secrets, never with a `VITE_` prefix or in Git:
 
-| Variable | Preview | Production | Notes |
-| --- | --- | --- | --- |
-| `OPENAI_API_KEY` | Preview key or intentionally omitted | Restricted production key | Responses write permission only |
-| `POKEPILOT_CLIENT_SECRET` | Separate random value | Separate random value | Signs anonymous client IDs; do not reuse the OpenAI key |
-| `UPSTASH_REDIS_REST_URL` | Required for hosted AI QA | Required | Server-only REST endpoint |
-| `UPSTASH_REDIS_REST_TOKEN` | Required for hosted AI QA | Required | Server-only token |
-| `POKEPILOT_REDIS_PREFIX` | `pokepilot:operations:preview` | `pokepilot:operations:prod` | Prevents preview traffic from consuming production state |
-| `POKEPILOT_SHARED_STORE_REQUIRED` | `true` | `true` | Fails closed instead of silently using per-instance memory |
+| Secret | Purpose |
+| --- | --- |
+| `OPENAI_API_KEY` | Hosted PokePilot analysis |
+| `UPSTASH_REDIS_REST_URL` | Shared cache, leases, cooldowns, and rate limits |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash authorization |
+| `POKEPILOT_CLIENT_SECRET` | Anonymous client and abuse-control signing |
+| `POKEPILOT_SESSION_SECRET` | Account session HMACs and account usage identifiers |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google sign-in client |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google sign-in authorization-code exchange |
+| `GOOGLE_OAUTH_REDIRECT_URI` | Exact Google OAuth callback URI |
 
-Keep the OpenAI project hard budget enabled. Never place provider secrets in
-client code, Git, or a `VITE_` variable.
+Keep the OpenAI project budget and alerting policy configured independently of
+this repository.
 
-## 4. Preview Verification
+## 4. Google OAuth verification
 
-Deploy a Preview build first and verify all of the following before promoting:
+- Confirm the production Google OAuth client permits
+  `https://pokepilot.app/api/auth/google/callback` exactly.
+- Test consent, cancellation, success, browser restart, logout, and account
+  deletion.
+- Confirm the session cookie is Secure, HttpOnly, and SameSite=Lax on HTTPS.
+- Test a second browser or device: saved teams, analysis history, language,
+  theme, default battle format, and tutorial completion should load after sign-in.
+- Confirm an account switch does not expose the prior account's local team,
+  history, or preferences.
 
-- Team Builder and Calculator load without console errors.
-- A blank team can select a Pokemon and receive usage-ranked defaults.
-- The `/smogon-stats/...` request succeeds through the same-origin rewrite.
-- Save, reload, rename, Showdown import/export, bench, and last-opened restore work.
-- English/Korean and system/light/dark preferences survive reloads.
-- Desktop, tablet, and mobile layouts have no accidental document overflow.
-- PokePilot succeeds with AI enabled and falls back clearly when AI is disabled.
-- A repeated identical analysis is served from cache without another model call.
-- Cooldown responses show a countdown and recover after `Retry-After`.
-- Two concurrent identical requests produce one model call through the shared lease.
-- A deliberately invalid Redis credential makes the AI route fail closed.
-- OpenAI and Upstash dashboards show the expected request, token, and command counts.
+## 5. Production smoke test
 
-## 5. Production Smoke Test
+- Load Team Builder and Calculator without console errors on desktop and mobile.
+- Select a Pokemon, apply a sample where usage data exists, edit moves/EVs, and
+  validate Showdown import and export.
+- Confirm M-C legal forms appear where intended and in-battle-only forms remain
+  post-selection controls.
+- Verify saved-team save, rename, duplicate, bench transfer, reload, and image export.
+- Confirm PokePilot gating when signed out, one successful signed-in analysis,
+  a deterministic fallback when the provider is unavailable, and a cached repeat.
+- Verify the privacy notice, help pages, `ads.txt`, `robots.txt`, and sitemap at
+  the production domain.
+- Review Cloudflare Worker errors and Upstash/OpenAI dashboards without exposing
+  team contents, identifiers, or secrets in logs.
 
-- Promote the exact verified Preview commit.
-- Confirm the custom/generated favicon, title, and description.
-- Verify response headers, especially CSP, frame denial, MIME sniffing denial,
-  permissions policy, and static cache policy.
-- Repeat one uncached and one cached PokePilot request.
-- Confirm that production uses the `:prod` Redis prefix.
-- Check Netlify function logs for errors without team contents, raw IPs, or secrets.
-- Check a representative cold load and run Lighthouse once on desktop and mobile.
-- Keep the previous healthy Vercel deployment available for immediate rollback
-  until Netlify has passed the full production smoke test.
+## 6. Rollback and follow-up
 
-## 6. Public-Beta Follow-Ups
-
-- Keep the published privacy notice aligned with localStorage, the anonymous
-  signed cookie, hashed-IP abuse controls, OpenAI processing, and bounded Redis
-  caching as those systems evolve.
-- Keep the visible feedback and security-reporting paths operational, and enable
-  GitHub private vulnerability reporting before a broader public launch.
-- Perform non-blocking real-device Safari and Android Chrome QA, including the
-  virtual keyboard, safe areas, long press, orientation changes, and image export.
-- Treat PokePilot guidance as advisory; legality and calculator output remain
-  deterministic product features.
-- Move category symbols now use ISC-licensed Lucide SVGs instead of the
-  personal/non-commercial icon font. Review all third-party notices again
-  before a broad launch.
-- Revisit the large JavaScript chunks if measured cold-load or interaction
-  performance is poor; the current build warning alone is not a release blocker.
+- Record the deployed Worker version ID from Wrangler output.
+- Roll back the Worker version in Cloudflare if an application regression is
+  confirmed; preserve the D1 schema unless a migration-specific recovery plan exists.
+- Keep the published privacy notice aligned with account storage, browser storage,
+  Google sign-in, OpenAI processing, Redis controls, and any advertising change.
+- Repeat representative real-device Safari and Android Chrome checks after major
+  layout, authentication, or browser-storage changes.

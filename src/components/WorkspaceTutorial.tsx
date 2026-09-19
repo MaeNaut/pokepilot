@@ -3,9 +3,12 @@ import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useLocalization } from "../i18n/useLocalization";
+import {
+  getWorkspaceTutorialCompleted,
+  storeWorkspaceTutorialCompleted,
+} from "../utils/tutorialStorage";
 import "./workspaceTutorial.css";
 
-const storageKey = "pokepilot.tutorial.introduction.v2";
 const steps = [
   {
     image: "builder",
@@ -29,23 +32,43 @@ const steps = [
   },
 ];
 
-function hasFinished() {
-  try { return localStorage.getItem(storageKey) === "done"; }
-  catch { return false; }
-}
+type WorkspaceTutorialProps = {
+  completed?: boolean;
+  onComplete?: () => void;
+};
 
-export function WorkspaceTutorial() {
+export function WorkspaceTutorial({
+  completed,
+  onComplete,
+}: WorkspaceTutorialProps) {
   const { locale } = useLocalization();
   const ko = locale === "ko";
-  const [open, setOpen] = useState(() => !hasFinished());
+  const [localCompleted, setLocalCompleted] = useState(
+    getWorkspaceTutorialCompleted,
+  );
+  const isCompleted = completed ?? localCompleted;
+  const [open, setOpen] = useState(() => !isCompleted);
   const [index, setIndex] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
+  const previousCompleted = useRef(isCompleted);
   const [title, description, alt] = ko ? steps[index].ko : steps[index].en;
 
   function finish() {
-    try { localStorage.setItem(storageKey, "done"); } catch { /* Storage is optional. */ }
+    storeWorkspaceTutorialCompleted();
+    setLocalCompleted(true);
+    onComplete?.();
     setOpen(false);
   }
+
+  useEffect(() => {
+    if (isCompleted) {
+      setOpen(false);
+    } else if (previousCompleted.current) {
+      setIndex(0);
+      setOpen(true);
+    }
+    previousCompleted.current = isCompleted;
+  }, [isCompleted]);
 
   useEffect(() => {
     function restart() { setIndex(0); setOpen(true); }

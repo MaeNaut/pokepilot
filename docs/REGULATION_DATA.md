@@ -56,5 +56,7 @@ states such as Aegislash, Palafin, and Morpeko use the post-selection form contr
   and damage-roll tests before claiming full M-C calculation support.
 - Chrome controller failed to start; VS Code browser was available. Rillaboom
   selection was exercised there, including the missing Champions icon fallback.
-- Final automated verification: 630 tests pass, lint passes, production build
-  passes. Paid AI quality evaluations were not run.
+- At the time of this 2026-09-09 QA run, 630 tests, lint, and the production
+  build passed. Paid AI quality evaluations were not run. Run the current
+  `npm run check:cloudflare` gate before treating this historical count as a
+  release signal.

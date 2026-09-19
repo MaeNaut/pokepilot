@@ -12,6 +12,7 @@ export { createEmptyBuildState } from "./teamBuildState";
 
 const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
 const lastActiveTeamStorageKey = "pokepilot.lastActiveTeam.v1";
+const savedTeamsAccountStorageKey = "pokepilot.savedTeams.account.v1";
 
 export const SAVED_TEAM_SCHEMA_VERSION = 1;
 
@@ -80,18 +81,18 @@ export function normalizeSavedTeam(
   };
 }
 
+export function normalizeSavedTeams(value: unknown): SavedTeamSummary[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((team) => normalizeSavedTeam(team as Partial<SavedTeamSummary>))
+    .filter((team): team is SavedTeamSummary => Boolean(team));
+}
+
 export function getStoredTeams(): SavedTeamSummary[] {
   try {
     const rawTeams = localStorage.getItem(savedTeamsStorageKey);
-    const parsedTeams = rawTeams ? JSON.parse(rawTeams) : [];
-
-    if (!Array.isArray(parsedTeams)) {
-      return [];
-    }
-
-    return parsedTeams
-      .map((team) => normalizeSavedTeam(team as Partial<SavedTeamSummary>))
-      .filter((team): team is SavedTeamSummary => Boolean(team));
+    return normalizeSavedTeams(rawTeams ? JSON.parse(rawTeams) : []);
   } catch {
     return [];
   }
@@ -111,6 +112,20 @@ export function storeLastActiveTeamId(teamId: string) {
 
 export function clearLastActiveTeamId() {
   localStorage.removeItem(lastActiveTeamStorageKey);
+}
+
+export function clearStoredTeams() {
+  localStorage.removeItem(savedTeamsStorageKey);
+  localStorage.removeItem(savedTeamsAccountStorageKey);
+  clearLastActiveTeamId();
+}
+
+export function getStoredTeamsAccountId() {
+  return localStorage.getItem(savedTeamsAccountStorageKey);
+}
+
+export function storeSavedTeamsAccountId(accountId: string) {
+  localStorage.setItem(savedTeamsAccountStorageKey, accountId);
 }
 
 export function getCopiedTeamName(name: string, teams: SavedTeamSummary[]) {

@@ -29,7 +29,7 @@ export default tseslint.config(
     files: [
       "scripts/**/*.{js,mjs,ts}",
       "server/**/*.{js,mjs,ts}",
-      "api/**/*.{js,mjs,ts}",
+      "worker/**/*.{js,mjs,ts}",
       "vite.config.ts"
     ],
     languageOptions: {

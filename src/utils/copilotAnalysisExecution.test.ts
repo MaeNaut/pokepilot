@@ -139,11 +139,11 @@ describe("analysis execution", () => {
     expect(candidates).toHaveLength(3);
   });
 
-  it.each(["localhost", "127.0.0.1", "pokepilot-ai.vercel.app"])("keeps diagnostic logging limited to development hosts: %s", async (hostname) => {
+  it.each(["localhost", "127.0.0.1", "pokepilot.app", "pokepilot.pokepilot-ai.workers.dev"])("keeps diagnostic logging limited to development hosts: %s", async (hostname) => {
     vi.stubGlobal("window", { location: { hostname } });
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.mocked(requestHostedCopilotAnalysis).mockRejectedValue(new Error("offline"));
     await executeCopilotAnalysis(request, "en", vi.fn());
-    expect(warn).toHaveBeenCalledTimes(hostname === "pokepilot-ai.vercel.app" ? 0 : 1);
+    expect(warn).toHaveBeenCalledTimes(["localhost", "127.0.0.1"].includes(hostname) ? 1 : 0);
   });
 });

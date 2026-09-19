@@ -10,4 +10,5 @@ export type WorkerEnvironment = PokePilotOperationsEnvironment & {
   POKEPILOT_AUTH_REQUIRED?: string;
   POKEPILOT_CLIENT_SECRET?: string;
   POKEPILOT_SESSION_SECRET?: string;
+  POKEPILOT_METRICS_ENABLED?: string;
 };

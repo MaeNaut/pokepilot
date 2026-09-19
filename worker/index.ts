@@ -8,36 +8,17 @@ import {
   accountUsageId,
   completeGoogleAuthorization,
   createGoogleAuthorizationResponse,
-  deleteCurrentAccount,
   logoutCurrentAccount,
   readAccountSession,
 } from "./accountAuth.js";
+import { handleAccount } from "./accountEndpoint.js";
+import { emptyResponse, isEnabled, jsonResponse, withSessionRefresh } from "./http.js";
+import { handleAccountStorage } from "./accountStorage.js";
 import type { WorkerEnvironment } from "./env.js";
+import type { PokePilotOperationalEvent } from "../server/pokepilotApi.js";
+import { metricRoute, recordMetric, pruneMetrics } from "./metrics.js";
 
 let operationsRuntime: PokePilotOperationsRuntime | undefined;
-
-function isEnabled(value: string | undefined) {
-  return ["1", "true", "yes", "on"].includes(value?.trim().toLowerCase() ?? "");
-}
-
-function jsonResponse(status: number, body: unknown, headers: HeadersInit = {}) {
-  const responseHeaders = new Headers(headers);
-  responseHeaders.set("Cache-Control", "no-store");
-  responseHeaders.set("Content-Type", "application/json; charset=utf-8");
-  responseHeaders.set("X-Content-Type-Options", "nosniff");
-  return new Response(JSON.stringify(body), { headers: responseHeaders, status });
-}
-
-function withSessionRefresh(response: Response, refreshCookie?: string) {
-  if (!refreshCookie) return response;
-  const headers = new Headers(response.headers);
-  headers.append("Set-Cookie", refreshCookie);
-  return new Response(response.body, {
-    headers,
-    status: response.status,
-    statusText: response.statusText,
-  });
-}
 
 function accountErrorResponse(error: unknown) {
   const status = error instanceof AccountAuthError ? error.status : 503;
@@ -57,40 +38,7 @@ function proxySmogonStats(request: Request) {
   return fetch(new Request(upstream, request));
 }
 
-async function handleAccount(request: Request, env: WorkerEnvironment) {
-  const authRequired = isEnabled(env.POKEPILOT_AUTH_REQUIRED);
-  if (request.method === "GET") {
-    if (!authRequired) return jsonResponse(200, { enabled: false });
-    const session = await readAccountSession(request, env);
-    if (!session) return jsonResponse(401, { ok: false, error: { code: "AUTH_REQUIRED" } });
-    return jsonResponse(
-      200,
-      { enabled: true, user: session.account },
-      session.refreshCookie ? { "Set-Cookie": session.refreshCookie } : {},
-    );
-  }
-  if (request.method === "DELETE") {
-    if (!authRequired) return jsonResponse(404, { ok: false, error: { code: "AUTH_DISABLED" } });
-    const session = await readAccountSession(request, env, { refresh: false });
-    if (!session) return jsonResponse(401, { ok: false, error: { code: "AUTH_REQUIRED" } });
-    const setCookie = await deleteCurrentAccount(request, env, session.account);
-    return new Response(null, {
-      headers: {
-        "Cache-Control": "no-store",
-        "Set-Cookie": setCookie,
-        "X-Content-Type-Options": "nosniff",
-      },
-      status: 204,
-    });
-  }
-  return jsonResponse(
-    405,
-    { ok: false, error: { code: "METHOD_NOT_ALLOWED" } },
-    { Allow: "GET, DELETE" },
-  );
-}
-
-async function handleAnalyze(request: Request, env: WorkerEnvironment) {
+async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void) {
   let authenticatedAccountId: string | undefined;
   let refreshCookie: string | undefined;
   if (isEnabled(env.POKEPILOT_AUTH_REQUIRED)) {
@@ -106,6 +54,7 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment) {
   }
   const response = await handleWebPokePilotApi(request, {
     apiKey: env.OPENAI_API_KEY,
+    onOperationalEvent,
     authenticatedAccountId,
     clientSecret: env.POKEPILOT_CLIENT_SECRET,
     operations: getOperationsRuntime(env).operations,
@@ -114,29 +63,31 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment) {
   return withSessionRefresh(response, refreshCookie);
 }
 
-export default {
-  async fetch(request, env: WorkerEnvironment): Promise<Response> {
+const router = {
+  async fetch(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void): Promise<Response> {
     const url = new URL(request.url);
     try {
       if (url.pathname === "/api/auth/google" && request.method === "GET") {
-        return createGoogleAuthorizationResponse(request, env);
+        return await createGoogleAuthorizationResponse(request, env);
       }
       if (url.pathname === "/api/auth/google/callback" && request.method === "GET") {
-        return completeGoogleAuthorization(request, env);
+        return await completeGoogleAuthorization(request, env);
       }
       if (url.pathname === "/api/auth/logout" && request.method === "POST") {
         const setCookie = await logoutCurrentAccount(request, env);
-        return new Response(null, {
-          headers: {
-            "Cache-Control": "no-store",
-            "Set-Cookie": setCookie,
-            "X-Content-Type-Options": "nosniff",
-          },
-          status: 204,
-        });
+        return emptyResponse({ "Set-Cookie": setCookie });
       }
-      if (url.pathname === "/api/pokepilot/account") return handleAccount(request, env);
-      if (url.pathname === "/api/pokepilot/analyze") return handleAnalyze(request, env);
+      if (url.pathname === "/api/pokepilot/account") return await handleAccount(request, env);
+      if (url.pathname === "/api/pokepilot/teams") {
+        return await handleAccountStorage(request, env, "teams");
+      }
+      if (url.pathname === "/api/pokepilot/analysis-history") {
+        return await handleAccountStorage(request, env, "analysis-history");
+      }
+      if (url.pathname === "/api/pokepilot/preferences") {
+        return await handleAccountStorage(request, env, "preferences");
+      }
+      if (url.pathname === "/api/pokepilot/analyze") return await handleAnalyze(request, env, onOperationalEvent);
       if (url.pathname.startsWith("/smogon-stats/")) {
         if (request.method !== "GET" && request.method !== "HEAD") {
           return jsonResponse(
@@ -145,14 +96,30 @@ export default {
             { Allow: "GET, HEAD" },
           );
         }
-        return proxySmogonStats(request);
+        return await proxySmogonStats(request);
       }
       if (url.pathname.startsWith("/api/")) {
         return jsonResponse(404, { ok: false, error: { code: "NOT_FOUND" } });
       }
-      return env.ASSETS.fetch(request);
+      return await env.ASSETS.fetch(request);
     } catch (error) {
       return accountErrorResponse(error);
     }
+  },
+};
+
+export default {
+  async fetch(request: Request, env: WorkerEnvironment, ctx?: ExecutionContext): Promise<Response> {
+    const started = Date.now();
+    let event: PokePilotOperationalEvent | undefined;
+    const response = await router.fetch(request, env, (value) => { event = value; });
+    const route = metricRoute(new URL(request.url).pathname);
+    if (route && ctx && env.POKEPILOT_METRICS_ENABLED === "true") {
+      ctx.waitUntil(recordMetric(env, route, response.status, Date.now() - started, event));
+    }
+    return response;
+  },
+  async scheduled(_controller: ScheduledController, env: WorkerEnvironment) {
+    await pruneMetrics(env);
   },
 } satisfies ExportedHandler<WorkerEnvironment>;
