@@ -19,8 +19,8 @@ function endpoint(key: AccountStorageKey) {
   return "/api/pokepilot/preferences";
 }
 
-async function readStorage(key: AccountStorageKey): Promise<unknown | null> {
-  const response = await fetch(endpoint(key), { cache: "no-store" });
+async function readStorage(key: AccountStorageKey, signal?: AbortSignal): Promise<unknown | null> {
+  const response = await fetch(endpoint(key), { cache: "no-store", signal });
   if (response.status === 401) throw new Error("AUTH_REQUIRED");
   if (!response.ok) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
 
@@ -31,9 +31,10 @@ async function readStorage(key: AccountStorageKey): Promise<unknown | null> {
   return body[key] ?? null;
 }
 
-async function writeStorage(key: AccountStorageKey, value: unknown) {
+async function writeStorage(key: AccountStorageKey, value: unknown, signal?: AbortSignal) {
   const response = await fetch(endpoint(key), {
     method: "PUT",
+    signal,
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ [key]: value }),
   });
@@ -41,29 +42,29 @@ async function writeStorage(key: AccountStorageKey, value: unknown) {
   if (!response.ok) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
 }
 
-export async function readAccountTeams(): Promise<SavedTeamSummary[] | null> {
-  const value = await readStorage("teams");
+export async function readAccountTeams(signal?: AbortSignal): Promise<SavedTeamSummary[] | null> {
+  const value = await readStorage("teams", signal);
   return value === null ? null : normalizeSavedTeams(value);
 }
 
-export function writeAccountTeams(teams: SavedTeamSummary[]) {
-  return writeStorage("teams", teams);
+export function writeAccountTeams(teams: SavedTeamSummary[], signal?: AbortSignal) {
+  return writeStorage("teams", teams, signal);
 }
 
-export async function readAccountCopilotHistory(): Promise<CopilotHistoryEntry[] | null> {
-  const value = await readStorage("analysis-history");
+export async function readAccountCopilotHistory(signal?: AbortSignal): Promise<CopilotHistoryEntry[] | null> {
+  const value = await readStorage("analysis-history", signal);
   return value === null ? null : normalizeCopilotHistoryEntries(value);
 }
 
-export function writeAccountCopilotHistory(entries: CopilotHistoryEntry[]) {
-  return writeStorage("analysis-history", entries);
+export function writeAccountCopilotHistory(entries: CopilotHistoryEntry[], signal?: AbortSignal) {
+  return writeStorage("analysis-history", entries, signal);
 }
 
-export async function readAccountPreferences(): Promise<AccountPreferences | null> {
-  const value = await readStorage("preferences");
+export async function readAccountPreferences(signal?: AbortSignal): Promise<AccountPreferences | null> {
+  const value = await readStorage("preferences", signal);
   return value === null ? null : normalizeAccountPreferences(value);
 }
 
-export function writeAccountPreferences(preferences: AccountPreferences) {
-  return writeStorage("preferences", preferences);
+export function writeAccountPreferences(preferences: AccountPreferences, signal?: AbortSignal) {
+  return writeStorage("preferences", preferences, signal);
 }

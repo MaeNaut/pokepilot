@@ -3,6 +3,7 @@ import {
   readAccountPreferences,
   writeAccountPreferences,
 } from "../api/accountStorage";
+import { createAccountSyncSession, type AccountSyncSession } from "../utils/accountSyncSession";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import type { Locale } from "../i18n/gameTranslations";
 import type { ThemePreference } from "../theme/theme";
@@ -52,11 +53,9 @@ export function useAccountPreferencesSync(
     themePreference,
     tutorialCompleted,
   ]);
-  const accountIdRef = useRef(accountId);
   const latestPreferencesRef = useRef(currentPreferences);
-  const syncReadyRef = useRef(false);
   const lastSyncedPreferencesRef = useRef<AccountPreferences | null>(null);
-  const writeQueueRef = useRef(Promise.resolve());
+  const writer = useRef<AccountSyncSession<AccountPreferences> | null>(null);
 
   latestPreferencesRef.current = currentPreferences;
 
@@ -72,38 +71,16 @@ export function useAccountPreferencesSync(
     setTutorialCompleted,
   ]);
 
-  const queueAccountWrite = useCallback((
-    preferences: AccountPreferences,
-    targetAccountId = accountIdRef.current,
-  ) => {
-    if (
-      !targetAccountId ||
-      !syncReadyRef.current ||
-      accountIdRef.current !== targetAccountId
-    ) {
-      return;
-    }
-
-    writeQueueRef.current = writeQueueRef.current
-      .catch(() => undefined)
-      .then(async () => {
-        if (accountIdRef.current !== targetAccountId) return;
-        await writeAccountPreferences(preferences);
-      });
-  }, []);
-
   useEffect(() => {
-    accountIdRef.current = accountId;
-    syncReadyRef.current = false;
     lastSyncedPreferencesRef.current = null;
 
     if (!accountId) return;
 
-    let active = true;
+    const session = createAccountSyncSession(writeAccountPreferences);
     void (async () => {
       try {
-        const remotePreferences = await readAccountPreferences();
-        if (!active || accountIdRef.current !== accountId) return;
+        const remotePreferences = await readAccountPreferences(session.signal);
+        if (session.signal.aborted) return;
 
         const ownerId = getStoredAccountPreferencesOwnerId();
         const localPreferences = ownerId === null || ownerId === accountId
@@ -118,13 +95,13 @@ export function useAccountPreferencesSync(
         lastSyncedPreferencesRef.current = nextPreferences;
         applyPreferences(nextPreferences);
         storeAccountPreferencesOwnerId(accountId);
-        syncReadyRef.current = true;
+        writer.current = session;
 
         if (
           remotePreferences === null ||
           !areAccountPreferencesEqual(remotePreferences, nextPreferences)
         ) {
-          queueAccountWrite(nextPreferences, accountId);
+          void session.write(nextPreferences);
         }
       } catch {
         // Browser settings remain usable when account storage is unavailable.
@@ -132,12 +109,13 @@ export function useAccountPreferencesSync(
     })();
 
     return () => {
-      active = false;
+      session.close();
+      if (writer.current === session) writer.current = null;
     };
-  }, [accountId, applyPreferences, queueAccountWrite]);
+  }, [accountId, applyPreferences]);
 
   useEffect(() => {
-    if (!accountId || !syncReadyRef.current) return;
+    if (!accountId || !writer.current) return;
     if (lastSyncedPreferencesRef.current && areAccountPreferencesEqual(
       lastSyncedPreferencesRef.current,
       currentPreferences,
@@ -146,6 +124,6 @@ export function useAccountPreferencesSync(
     }
 
     lastSyncedPreferencesRef.current = currentPreferences;
-    queueAccountWrite(currentPreferences, accountId);
-  }, [accountId, currentPreferences, queueAccountWrite]);
+    void writer.current.write(currentPreferences);
+  }, [accountId, currentPreferences]);
 }

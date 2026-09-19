@@ -17,6 +17,15 @@
 - Image export: `html-to-image` for rendering dedicated share-card DOM into PNG blobs
 - Deployment: Cloudflare Workers at `https://pokepilot.app`
 
+## Refactoring Boundaries
+
+Account collection hydration and write lifetimes are shared through
+`useAccountCollection` and `accountSyncSession`. Optimization hooks use
+`workerTask` for cancellation and cleanup. Worker response handling lives in
+`worker/http`, while share-image model preparation lives in `teamShareBuilds`.
+See [refactoring QA](docs/REFACTORING_QA.md) for preserved contracts, regression
+coverage, browser checks, and remaining verification limits.
+
 ## Skills This Project Can Demonstrate
 
 - TypeScript

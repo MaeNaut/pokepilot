@@ -1,4 +1,5 @@
 import { AccountAuthError, readAccountSession } from "./accountAuth.js";
+import { emptyResponse, isSameOrigin, jsonResponse, withSessionRefresh } from "./http.js";
 import type { WorkerEnvironment } from "./env.js";
 
 export type AccountStorageKey = "teams" | "analysis-history" | "preferences";
@@ -32,18 +33,6 @@ function isPreferences(value: unknown) {
     (preferences.battleFormat === "singles" ||
       preferences.battleFormat === "doubles") &&
     typeof preferences.tutorialCompleted === "boolean";
-}
-
-function jsonResponse(status: number, body: unknown, headers: HeadersInit = {}) {
-  const responseHeaders = new Headers(headers);
-  responseHeaders.set("Cache-Control", "no-store");
-  responseHeaders.set("Content-Type", "application/json; charset=utf-8");
-  responseHeaders.set("X-Content-Type-Options", "nosniff");
-  return new Response(JSON.stringify(body), { headers: responseHeaders, status });
-}
-
-function sameOrigin(request: Request) {
-  return request.headers.get("origin") === new URL(request.url).origin;
 }
 
 function getPayload(value: unknown, key: AccountStorageKey) {
@@ -97,7 +86,7 @@ export async function handleAccountStorage(
   }
 
   if (request.method === "PUT") {
-    if (!sameOrigin(request)) {
+    if (!isSameOrigin(request)) {
       throw new AccountAuthError(403, "AUTH_FORBIDDEN");
     }
 
@@ -116,14 +105,7 @@ export async function handleAccountStorage(
     )
       .bind(session.account.id, key, payload, Date.now())
       .run();
-    return new Response(null, {
-      headers: {
-        "Cache-Control": "no-store",
-        ...(session.refreshCookie ? { "Set-Cookie": session.refreshCookie } : {}),
-        "X-Content-Type-Options": "nosniff",
-      },
-      status: 204,
-    });
+    return withSessionRefresh(emptyResponse(), session.refreshCookie);
   }
 
   return jsonResponse(

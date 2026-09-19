@@ -1,3 +1,4 @@
+import { isSameOrigin } from "./http.js";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { WorkerEnvironment } from "./env.js";
 
@@ -126,11 +127,6 @@ function toProfile(row: AccountRow): AccountProfile {
     ...(row.name ? { name: row.name } : {}),
     ...(isHttpsUrl(row.picture_url) ? { pictureUrl: row.picture_url } : {}),
   };
-}
-
-function isSameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  return origin === new URL(request.url).origin;
 }
 
 function appRedirect(request: Request, error?: string) {

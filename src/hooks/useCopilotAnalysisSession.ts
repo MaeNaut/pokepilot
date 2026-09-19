@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  readAccountCopilotHistory,
-  writeAccountCopilotHistory,
-} from "../api/accountStorage";
+import { useCopilotHistory } from "./useCopilotHistory";
 import { executeCopilotAnalysis } from "../utils/copilotAnalysisExecution";
 import { CopilotApiError } from "../api/copilotApi";
 import {
@@ -21,18 +18,12 @@ import type {
 import {
   addCopilotHistoryEntry,
   clearCopilotHistoryForTeam,
-  clearStoredCopilotHistory,
   createCopilotHistoryEntry,
   createCopilotHistoryTeamKey,
   findMatchingCopilotHistoryEntry,
   getCopilotHistoryForTeam,
-  getStoredCopilotHistory,
-  getStoredCopilotHistoryAccountId,
-  storeCopilotHistoryAccountId,
-  storeCopilotHistory,
   type CopilotHistoryEntry,
 } from "../utils/copilotHistory";
-import { mergeAccountCopilotHistory } from "../utils/accountStorageSync";
 
 type UseCopilotAnalysisSessionOptions = {
   accountId: string | null;
@@ -63,16 +54,17 @@ export function useCopilotAnalysisSession({
   const [analysisByContext, setAnalysisByContext] = useState<
     Record<string, AnalysisState>
   >({});
-  const [analysisHistory, setAnalysisHistory] = useState(
-    getStoredCopilotHistory,
-  );
-  const historyRef = useRef(analysisHistory);
-  const accountIdRef = useRef(accountId);
-  const previousAccountIdRef = useRef(accountId);
-  const syncReadyRef = useRef(false);
-  const writeQueueRef = useRef(Promise.resolve());
+  const { items: analysisHistory, current: historyRef, commit: commitHistory, isHydrated } =
+    useCopilotHistory(accountId);
+  const accountGeneration = useRef(0);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const [cooldownClock, setCooldownClock] = useState(Date.now);
+  useEffect(() => {
+    accountGeneration.current += 1;
+    setAnalysisByContext({});
+    setCooldownUntil(null);
+    return () => { accountGeneration.current += 1; };
+  }, [accountId]);
   const requestFingerprint = useMemo(
     () => getCopilotRequestFingerprint(request),
     [request],
@@ -102,84 +94,6 @@ export function useCopilotAnalysisSession({
     ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
     : 0;
 
-  const queueAccountWrite = useCallback((
-    next: CopilotHistoryEntry[],
-    targetAccountId = accountIdRef.current,
-  ) => {
-      if (
-        !targetAccountId ||
-        !syncReadyRef.current ||
-        accountIdRef.current !== targetAccountId
-      ) {
-        return;
-      }
-
-      writeQueueRef.current = writeQueueRef.current
-        .catch(() => undefined)
-        .then(async () => {
-          if (accountIdRef.current !== targetAccountId) return;
-          await writeAccountCopilotHistory(next);
-        });
-    }, []);
-
-  const commitHistory = useCallback((next: CopilotHistoryEntry[]) => {
-    storeCopilotHistory(next);
-    historyRef.current = next;
-    setAnalysisHistory(next);
-    queueAccountWrite(next);
-  }, [queueAccountWrite]);
-
-  const clearLocalHistory = useCallback(() => {
-    clearStoredCopilotHistory();
-    historyRef.current = [];
-    setAnalysisHistory([]);
-  }, []);
-
-  useEffect(() => {
-    const previousAccountId = previousAccountIdRef.current;
-    previousAccountIdRef.current = accountId;
-    accountIdRef.current = accountId;
-    syncReadyRef.current = false;
-    if (previousAccountId && previousAccountId !== accountId) {
-      clearLocalHistory();
-    }
-    if (!accountId) return;
-
-    let active = true;
-    void (async () => {
-      try {
-        const remoteEntries = await readAccountCopilotHistory();
-        if (!active || accountIdRef.current !== accountId) return;
-
-        const storedAccountId = getStoredCopilotHistoryAccountId();
-        const localEntries = storedAccountId === null || storedAccountId === accountId
-          ? historyRef.current
-          : [];
-        const nextHistory = mergeAccountCopilotHistory(
-          remoteEntries ?? [],
-          localEntries,
-        );
-
-        commitHistory(nextHistory);
-        storeCopilotHistoryAccountId(accountId);
-        syncReadyRef.current = true;
-
-        if (
-          remoteEntries === null ||
-          JSON.stringify(remoteEntries) !== JSON.stringify(nextHistory)
-        ) {
-          queueAccountWrite(nextHistory, accountId);
-        }
-      } catch {
-        // Local history stays usable when the account storage endpoint is unavailable.
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [accountId, clearLocalHistory, commitHistory, queueAccountWrite]);
-
   useEffect(() => {
     if (!cooldownUntil) {
       return;
@@ -199,6 +113,7 @@ export function useCopilotAnalysisSession({
   }, [cooldownUntil]);
 
   useEffect(() => {
+    if (!isHydrated) return;
     const matchingEntry = findMatchingCopilotHistoryEntry(
       analysisHistory,
       historyTeamKey,
@@ -218,12 +133,15 @@ export function useCopilotAnalysisSession({
     analysisContextKey,
     analysisHistory,
     historyTeamKey,
+    isHydrated,
     locale,
     request.scope,
     requestFingerprint,
   ]);
 
   async function analyze(submittedRequest: CopilotAnalysisRequest = request) {
+    const generation = accountGeneration.current;
+    const isCurrentAccount = () => generation === accountGeneration.current;
     const submittedFingerprint = getCopilotRequestFingerprint(submittedRequest);
     setAnalysisByContext((current) => ({
       ...current,
@@ -237,9 +155,10 @@ export function useCopilotAnalysisSession({
     try {
       const { response: nextResponse, usedFallback, fallbackReason } =
         await executeCopilotAnalysis(submittedRequest, locale, (seconds) => {
-          setCooldownUntil(Date.now() + seconds * 1_000);
+          if (isCurrentAccount()) setCooldownUntil(Date.now() + seconds * 1_000);
         });
 
+      if (!isCurrentAccount()) return;
       const historyEntry = createCopilotHistoryEntry({
         teamKey: historyTeamKey,
         locale,
@@ -257,6 +176,7 @@ export function useCopilotAnalysisSession({
         [analysisContextKey]: createReadyAnalysisState(historyEntry, "analysis"),
       }));
     } catch (error) {
+      if (!isCurrentAccount()) return;
       setAnalysisByContext((current) => ({
         ...current,
         [analysisContextKey]: {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   accountAuthEnabled,
   deleteAccount,
@@ -11,55 +11,72 @@ import {
 export type AccountStatus = "loading" | "guest" | "ready" | "error";
 
 export function useAccount() {
-  const [status, setStatus] = useState<AccountStatus>("loading");
+  const [status, setStatus] = useState<AccountStatus>(accountAuthEnabled ? "loading" : "guest");
   const [user, setUser] = useState<AccountProfile | null>(null);
   const [busy, setBusy] = useState(false);
   const [prompt, setPrompt] = useState(false);
-  useEffect(() => {
-    if (!accountAuthEnabled) return;
-    let active = true;
-    const refresh = () => readAccount().then((nextUser) => {
-      if (!active) return;
+  const busyRef = useRef(false);
+  const mounted = useRef(true);
+  const requestVersion = useRef(0);
+
+  const refresh = useCallback(async (showPrompt = false) => {
+    if (!accountAuthEnabled) return true;
+    if (busyRef.current) return false;
+    const version = ++requestVersion.current;
+    const isCurrent = () => mounted.current && requestVersion.current === version;
+    try {
+      const nextUser = await readAccount();
+      if (!isCurrent()) return false;
       setUser(nextUser);
       setStatus(nextUser ? "ready" : "guest");
-    }).catch(() => {
-      if (!active) return;
-      setUser(null);
-      setStatus("error");
-    });
-    void refresh();
-    window.addEventListener("focus", refresh);
-    return () => { active = false; window.removeEventListener("focus", refresh); };
-  }, []);
-
-  async function ensureAuthenticated() {
-    if (!accountAuthEnabled) return true;
-    try {
-      const user = await readAccount();
-      setUser(user);
-      setStatus(user ? "ready" : "guest");
-      setPrompt(!user);
-      return Boolean(user);
+      if (showPrompt) setPrompt(!nextUser);
+      return Boolean(nextUser);
     } catch {
-      setUser(null);
-      setStatus("error");
+      if (isCurrent()) {
+        setUser(null);
+        setStatus("error");
+      }
       return false;
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    mounted.current = true;
+    if (!accountAuthEnabled) return;
+    const onFocus = () => { void refresh(); };
+    onFocus();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      mounted.current = false;
+      requestVersion.current += 1;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refresh]);
 
   async function act(action: "login" | "logout" | "delete") {
-    if (busy) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
+    // A focus refresh started before logout must not restore the old profile.
+    requestVersion.current += 1;
     try {
       if (action === "login") await loginAccount();
       else {
         await (action === "delete" ? deleteAccount() : logoutAccount());
-        setUser(null);
-        setStatus("guest");
+        if (mounted.current) {
+          setUser(null);
+          setStatus("guest");
+          setPrompt(false);
+        }
       }
-    } catch { setStatus("error"); }
-    finally { setBusy(false); }
+    } catch {
+      if (mounted.current) setStatus("error");
+    } finally {
+      busyRef.current = false;
+      if (mounted.current) setBusy(false);
+    }
   }
+
   return {
     enabled: accountAuthEnabled,
     status,
@@ -67,6 +84,6 @@ export function useAccount() {
     busy,
     prompt,
     act,
-    ensureAuthenticated,
+    ensureAuthenticated: () => refresh(true),
   };
 }
