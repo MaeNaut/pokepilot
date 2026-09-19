@@ -15,6 +15,7 @@ import {
 import { getDefaultPokePilotOperationsRuntime } from "./pokepilotOperationsRuntime.js";
 
 type WebPokePilotApiOptions = {
+  authenticatedAccountId?: string;
   apiKey?: string;
   clientSecret?: string;
   clock?: () => number;
@@ -226,7 +227,9 @@ export async function handleWebPokePilotApi(
         );
       },
       operations,
-      requester: identity.requester,
+      requester: options.authenticatedAccountId
+        ? { ...identity.requester, clientId: options.authenticatedAccountId }
+        : identity.requester,
       safeguardMode: options.safeguardMode,
     });
     return jsonResponse(

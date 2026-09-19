@@ -58,6 +58,9 @@ export async function executeCopilotAnalysis(
       onCooldown(hostedResult.retryAfterSeconds);
     }
   } catch (error) {
+    if (error instanceof CopilotApiError && (error.code === "AUTH_REQUIRED" || error.code === "AUTH_UNAVAILABLE")) {
+      throw error;
+    }
     fallbackReason = classifyHostedAnalysisFailure(error);
     logHostedAnalysisFallback(error, fallbackReason);
 

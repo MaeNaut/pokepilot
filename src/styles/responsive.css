@@ -43,19 +43,6 @@
     margin-right: 0;
   }
 
-  .header-preferences {
-    position: absolute;
-    top: 50%;
-    right: 24px;
-    margin-left: 0;
-    transform: translateY(-50%);
-  }
-
-  .preference-menu {
-    right: 0;
-    left: auto;
-  }
-
   .workspace {
     height: auto;
     max-height: none;
@@ -141,10 +128,6 @@
   .app-wordmark {
     left: 16px;
     font-size: 1rem;
-  }
-
-  .header-preferences {
-    right: 10px;
   }
 
   .header-builder-workspace {
@@ -334,19 +317,6 @@
   justify-self: start;
   margin-right: 0;
   margin-left: 5vw;
-}
-
-:where(.app-shell.is-compact-drawer-layout) .header-preferences {
-  position: absolute;
-  top: 50%;
-  right: 24px;
-  margin-left: 0;
-  transform: translateY(-50%);
-}
-
-:where(.app-shell.is-compact-drawer-layout) .preference-menu {
-  right: 0;
-  left: auto;
 }
 
 :where(.app-shell.is-compact-drawer-layout) .team-actions {
@@ -798,16 +768,6 @@
   .team-action-button svg {
     width: 15px;
     height: 15px;
-  }
-
-  .header-preferences {
-    right: 6px;
-    gap: 0;
-  }
-
-  .preference-menu {
-    top: calc(100% + 8px);
-    width: 146px;
   }
 
   .team-manager-panel,
@@ -1560,8 +1520,7 @@
   .app-shell:has(.team-manager-panel) .copilot-drawer-handle:not(.is-open),
   .app-shell:has(.new-team-menu) .copilot-drawer-handle:not(.is-open),
   .app-shell:has(.new-team-import-panel) .copilot-drawer-handle:not(.is-open),
-  .app-shell:has(.team-unsaved-warning) .copilot-drawer-handle:not(.is-open),
-  .app-shell:has(.preference-menu) .copilot-drawer-handle:not(.is-open) {
+  .app-shell:has(.team-unsaved-warning) .copilot-drawer-handle:not(.is-open) {
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
@@ -1605,10 +1564,6 @@
   .team-action-button {
     width: 30px;
     height: 30px;
-  }
-
-  .header-preferences {
-    right: 4px;
   }
 
   .builder-card-toolbar {

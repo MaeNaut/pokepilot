@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { executeCopilotAnalysis } from "../utils/copilotAnalysisExecution";
+import { CopilotApiError } from "../api/copilotApi";
 import {
   consumeAnalysisReveal,
   createReadyAnalysisState,
@@ -172,7 +173,11 @@ export function useCopilotAnalysisSession({
         [analysisContextKey]: {
           ...current[analysisContextKey],
           status: "error",
-          error: error instanceof Error ? error.message : failedMessage,
+          error: error instanceof CopilotApiError && error.code === "AUTH_REQUIRED"
+            ? (locale === "ko" ? "로그인이 만료되었습니다. 다시 로그인해 주세요." : "Your session expired. Please sign in again.")
+            : error instanceof CopilotApiError && error.code === "AUTH_UNAVAILABLE"
+              ? (locale === "ko" ? "인증 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요." : "Authentication is unavailable. Please try again shortly.")
+              : error instanceof Error ? error.message : failedMessage,
         },
       }));
     }

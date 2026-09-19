@@ -44,12 +44,15 @@ import { CopilotHistoryControl } from "./CopilotHistoryControl";
 import { defaultEvs } from "../data/natures";
 import { normalizeShowdownId } from "../api/showdownIds";
 import { PokePilotMark } from "./PokePilotMark";
+import type { useAccount } from "../hooks/useAccount";
 import {
   isVisibleCopilotScope,
   usesHistoricalUsageData,
 } from "../utils/copilotScopeAvailability";
+import { getCopilotScopeRequirement } from "../utils/copilotScopeRequirements";
 
 type CopilotPanelProps = {
+  account: ReturnType<typeof useAccount>;
   savedTeamId: string | null;
   teamName: string;
   battleFormat: BattleFormat;
@@ -131,6 +134,7 @@ const emptyStateCopy: Record<
 };
 
 export function CopilotPanel({
+  account,
   savedTeamId,
   teamName,
   battleFormat,
@@ -152,6 +156,7 @@ export function CopilotPanel({
 }: CopilotPanelProps) {
   const { locale, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
+  const [isLoginGateRevealed, setIsLoginGateRevealed] = useState(false);
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
   );
@@ -310,6 +315,13 @@ export function CopilotPanel({
   });
   const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
   const isUsageDataScope = usesHistoricalUsageData(scope);
+  const isAccountGateLocked = account.enabled && account.status === "guest";
+  const scopeRequirement = getCopilotScopeRequirement({
+    scope,
+    battleFormat,
+    team,
+    selectedSlot,
+  });
   const visibleTeamHistory = teamHistory.filter((entry) =>
     isVisibleCopilotScope(entry.scope),
   );
@@ -346,6 +358,7 @@ export function CopilotPanel({
     cooldownRemainingSeconds > 0 ||
     (scope === "recommendation" &&
       showdownLegalityStatus === "loading") ||
+    Boolean(scopeRequirement) ||
     (scope === "optimization" &&
       !optimizationInput) ||
     (scope === "matchup" && !team.some(Boolean));
@@ -360,6 +373,12 @@ export function CopilotPanel({
   }, [scope]);
 
   useEffect(() => {
+    if (!isAccountGateLocked) {
+      setIsLoginGateRevealed(false);
+    }
+  }, [isAccountGateLocked]);
+
+  useEffect(() => {
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
@@ -367,6 +386,7 @@ export function CopilotPanel({
 
   async function handleAnalyze() {
     if (isAnalyzeDisabled) return;
+    if (!(await account.ensureAuthenticated())) return;
     setOptimizationActionStatus(null);
     if (scope === "recommendation") {
       const candidates = await recommendationState.run();
@@ -514,8 +534,27 @@ export function CopilotPanel({
     clearHistory();
   }
 
+  function handleSignIn() {
+    void account.act("login");
+  }
+
   return (
-    <aside className="copilot-panel" aria-labelledby="copilot-title">
+    <aside
+      className={`copilot-panel${
+        isAccountGateLocked ? " is-account-locked" : ""
+      }${isLoginGateRevealed ? " is-login-gate-revealed" : ""}`}
+      aria-labelledby="copilot-title"
+      onPointerEnter={() => {
+        if (isAccountGateLocked) setIsLoginGateRevealed(true);
+      }}
+      onPointerLeave={() => {
+        if (isAccountGateLocked) setIsLoginGateRevealed(false);
+      }}
+    >
+      <div
+        className="copilot-panel-content"
+        inert={isAccountGateLocked || undefined}
+      >
       <header className="copilot-header">
         <h2 id="copilot-title">PokePilot</h2>
         <div className="copilot-header-actions">
@@ -599,7 +638,32 @@ export function CopilotPanel({
         {recommendationNotice ? <p role="status">{recommendationNotice}</p> : null}
         {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
         {matchupNotice ? <p role="status">{matchupNotice}</p> : null}
-        {analysisState.status === "error" ? (
+        {scopeRequirement ? (
+          <div className="copilot-empty-state is-requirement">
+            <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
+            <strong>
+              {t(
+                scopeRequirement.kind === "minimum-team-size"
+                  ? "copilot.requirement.teamTitle"
+                  : "copilot.requirement.pokemonTitle",
+              )}
+            </strong>
+            <span>
+              {scopeRequirement.kind === "minimum-team-size"
+                ? t("copilot.requirement.teamDescription", {
+                    required: scopeRequirement.requiredCount,
+                    remaining:
+                      scopeRequirement.requiredCount - scopeRequirement.activeCount,
+                    format: t(
+                      battleFormat === "singles"
+                        ? "battleFormat.singles"
+                        : "battleFormat.doubles",
+                    ),
+                  })
+                : t("copilot.requirement.pokemonDescription")}
+            </span>
+          </div>
+        ) : analysisState.status === "error" ? (
           <div className="copilot-empty-state is-error">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
             <strong>{t("copilot.unavailable")}</strong>
@@ -676,6 +740,34 @@ export function CopilotPanel({
               : t("copilot.aiReady")}
         </span>
       </footer>
+      </div>
+
+      {isAccountGateLocked ? (
+        <div
+          className="copilot-login-gate"
+          role="group"
+          aria-label={t("account.loginRequired")}
+          onFocus={() => setIsLoginGateRevealed(true)}
+          onPointerDown={(event) => {
+            if (event.pointerType !== "mouse") {
+              setIsLoginGateRevealed(true);
+            }
+          }}
+        >
+          <div className="copilot-login-gate-card">
+            <FontAwesomeIcon icon={faUser} aria-hidden="true" />
+            <strong>{t("account.loginRequired")}</strong>
+            <span>{t("account.signInDescription")}</span>
+            <button
+              type="button"
+              onClick={handleSignIn}
+              disabled={account.busy}
+            >
+              {t("account.signIn")}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </aside>
   );
 }

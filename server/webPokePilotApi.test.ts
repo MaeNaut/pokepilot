@@ -10,6 +10,7 @@ import {
   POKEPILOT_CLIENT_COOKIE,
 } from "./pokepilotIdentity";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
+import { accountUsageId } from "./accountAuth";
 
 const validRequest = {
   version: 34,
@@ -66,6 +67,33 @@ function createRequest(
 }
 
 describe("PokePilot web API boundary", () => {
+  it("keeps account cooldown across cleared cookies, other browsers and other IPs", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    const authenticatedAccountId = accountUsageId({ id: "verified-account" });
+    for (let index = 0; index < 5; index += 1) {
+      const decision = operations.reserve({ clientId: authenticatedAccountId, ipHash: "original-ip" }, 0);
+      if (!decision.allowed) throw new Error("Expected reservation");
+      operations.completeReservation(decision.reservation, 0);
+    }
+    const cookie = `${POKEPILOT_CLIENT_COOKIE}=${createSignedPokePilotClientToken("new-browser", "test-secret")}`;
+    const browserHeaders: Record<string, string>[] = [{}, { cookie }];
+    for (const headers of browserHeaders) {
+      const response = await handleWebPokePilotApi(createRequest(headers), {
+        authenticatedAccountId,
+        apiKey: "unused-test-key",
+        clientSecret: "test-secret",
+        clock: () => 0,
+        operations,
+        requesterIp: "192.0.2.2",
+        onOperationalEvent: vi.fn(),
+      });
+      expect(response.status).toBe(429);
+      expect(response.headers.get("retry-after")).toBe("60");
+      expect(await response.json()).toMatchObject({ error: { code: "ANALYSIS_COOLDOWN" } });
+    }
+    expect(operations.reserve({ clientId: accountUsageId({ id: "different-account" }), ipHash: "different-ip" }, 0).allowed).toBe(true);
+    expect(operations.reserve({ clientId: authenticatedAccountId, ipHash: "new-ip" }, 60_000).allowed).toBe(true);
+  });
   it("rejects cross-origin browser requests before resolving a requester", async () => {
     const response = await handleWebPokePilotApi(
       createRequest({ origin: "https://attacker.example" }),

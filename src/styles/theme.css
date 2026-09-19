@@ -51,10 +51,6 @@
 
 :root[data-theme="dark"] .team-action-button:not(.is-confirmed):hover,
 :root[data-theme="dark"] .team-action-button:not(.is-confirmed):focus-visible,
-:root[data-theme="dark"] .preference-trigger.is-open,
-:root[data-theme="dark"] .preference-option:hover,
-:root[data-theme="dark"] .preference-option:focus-visible,
-:root[data-theme="dark"] .preference-option.is-active,
 :root[data-theme="dark"] .new-team-menu button:hover,
 :root[data-theme="dark"] .new-team-menu button:focus-visible,
 :root[data-theme="dark"] .team-name-field input:hover,
@@ -70,7 +66,6 @@
   color: var(--color-success);
 }
 
-:root[data-theme="dark"] .preference-option svg,
 :root[data-theme="dark"] .new-team-menu button svg {
   color: var(--color-muted);
 }
