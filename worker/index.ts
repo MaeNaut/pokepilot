@@ -15,6 +15,8 @@ import { handleAccount } from "./accountEndpoint.js";
 import { emptyResponse, isEnabled, jsonResponse, withSessionRefresh } from "./http.js";
 import { handleAccountStorage } from "./accountStorage.js";
 import type { WorkerEnvironment } from "./env.js";
+import type { PokePilotOperationalEvent } from "../server/pokepilotApi.js";
+import { metricRoute, recordMetric, pruneMetrics } from "./metrics.js";
 
 let operationsRuntime: PokePilotOperationsRuntime | undefined;
 
@@ -36,7 +38,7 @@ function proxySmogonStats(request: Request) {
   return fetch(new Request(upstream, request));
 }
 
-async function handleAnalyze(request: Request, env: WorkerEnvironment) {
+async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void) {
   let authenticatedAccountId: string | undefined;
   let refreshCookie: string | undefined;
   if (isEnabled(env.POKEPILOT_AUTH_REQUIRED)) {
@@ -52,6 +54,7 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment) {
   }
   const response = await handleWebPokePilotApi(request, {
     apiKey: env.OPENAI_API_KEY,
+    onOperationalEvent,
     authenticatedAccountId,
     clientSecret: env.POKEPILOT_CLIENT_SECRET,
     operations: getOperationsRuntime(env).operations,
@@ -60,8 +63,8 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment) {
   return withSessionRefresh(response, refreshCookie);
 }
 
-export default {
-  async fetch(request, env: WorkerEnvironment): Promise<Response> {
+const router = {
+  async fetch(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void): Promise<Response> {
     const url = new URL(request.url);
     try {
       if (url.pathname === "/api/auth/google" && request.method === "GET") {
@@ -84,7 +87,7 @@ export default {
       if (url.pathname === "/api/pokepilot/preferences") {
         return await handleAccountStorage(request, env, "preferences");
       }
-      if (url.pathname === "/api/pokepilot/analyze") return await handleAnalyze(request, env);
+      if (url.pathname === "/api/pokepilot/analyze") return await handleAnalyze(request, env, onOperationalEvent);
       if (url.pathname.startsWith("/smogon-stats/")) {
         if (request.method !== "GET" && request.method !== "HEAD") {
           return jsonResponse(
@@ -102,5 +105,21 @@ export default {
     } catch (error) {
       return accountErrorResponse(error);
     }
+  },
+};
+
+export default {
+  async fetch(request: Request, env: WorkerEnvironment, ctx?: ExecutionContext): Promise<Response> {
+    const started = Date.now();
+    let event: PokePilotOperationalEvent | undefined;
+    const response = await router.fetch(request, env, (value) => { event = value; });
+    const route = metricRoute(new URL(request.url).pathname);
+    if (route && ctx && env.POKEPILOT_METRICS_ENABLED === "true") {
+      ctx.waitUntil(recordMetric(env, route, response.status, Date.now() - started, event));
+    }
+    return response;
+  },
+  async scheduled(_controller: ScheduledController, env: WorkerEnvironment) {
+    await pruneMetrics(env);
   },
 } satisfies ExportedHandler<WorkerEnvironment>;

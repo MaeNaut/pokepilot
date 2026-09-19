@@ -7,6 +7,7 @@ build/
 .env.*.local
 .vercel/
 .netlify/
+.wrangler/
 deno.lock
 coverage/
 artifacts/ai-evaluation/

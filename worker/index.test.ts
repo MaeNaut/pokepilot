@@ -22,6 +22,20 @@ beforeEach(() => {
 });
 
 describe("Worker routing error boundary", () => {
+  it("schedules guest metrics without changing the authentication response", async () => {
+    const run = vi.fn().mockResolvedValue({ success: true });
+    const bind = vi.fn().mockReturnValue({ run });
+    const prepare = vi.fn().mockReturnValue({ bind });
+    const waitUntil = vi.fn();
+    const response = await worker.fetch(new Request("https://pokepilot.app/api/pokepilot/analyze?private=value"), {
+      ...env, DB: { prepare } as unknown as D1Database, POKEPILOT_METRICS_ENABLED: "true",
+    }, { waitUntil });
+    expect(response.status).toBe(401);
+    expect(waitUntil).toHaveBeenCalledOnce();
+    await waitUntil.mock.calls[0][0];
+    expect(bind.mock.calls[0]).toContain("/api/pokepilot/analyze");
+    expect(JSON.stringify(bind.mock.calls)).not.toContain("private=value");
+  });
   it.each(["account", "teams", "analysis-history", "preferences", "analyze"])("rejects guests at %s", async (endpoint) => {
     const response = await worker.fetch(new Request(`https://pokepilot.app/api/pokepilot/${endpoint}`), env);
     expect(response.status).toBe(401);

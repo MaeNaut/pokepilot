@@ -19,6 +19,10 @@
 
 ## Refactoring Boundaries
 
+Operational API metrics use bounded daily D1 aggregates and a versioned JSON
+report CLI. See [operational metrics](docs/OPERATIONAL_METRICS.md) for activation,
+retention, privacy boundaries, report commands, and interpretation limits.
+
 Account collection hydration and write lifetimes are shared through
 `useAccountCollection` and `accountSyncSession`. Optimization hooks use
 `workerTask` for cancellation and cleanup. Worker response handling lives in

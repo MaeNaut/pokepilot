@@ -5,6 +5,7 @@
   "compatibility_date": "2026-09-18",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "triggers": { "crons": ["17 4 * * *"] },
   "routes": [
     {
       "pattern": "pokepilot.app",
@@ -26,6 +27,7 @@
     }
   ],
   "vars": {
+    "POKEPILOT_METRICS_ENABLED": "true",
     "POKEPILOT_AUTH_REQUIRED": "true",
     "POKEPILOT_SHARED_STORE_REQUIRED": "true",
     "POKEPILOT_REDIS_PREFIX": "pokepilot:operations:v1"
