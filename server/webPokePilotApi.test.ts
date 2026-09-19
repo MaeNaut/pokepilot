@@ -10,7 +10,8 @@ import {
   POKEPILOT_CLIENT_COOKIE,
 } from "./pokepilotIdentity";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
-import { accountUsageId } from "./accountAuth";
+import { accountUsageId } from "../worker/accountAuth";
+import type { WorkerEnvironment } from "../worker/env";
 
 const validRequest = {
   version: 34,
@@ -69,7 +70,8 @@ function createRequest(
 describe("PokePilot web API boundary", () => {
   it("keeps account cooldown across cleared cookies, other browsers and other IPs", async () => {
     const operations = new InMemoryPokePilotOperations();
-    const authenticatedAccountId = accountUsageId({ id: "verified-account" });
+    const env = { POKEPILOT_SESSION_SECRET: "test-secret" } as WorkerEnvironment;
+    const authenticatedAccountId = await accountUsageId({ id: "verified-account" }, env);
     for (let index = 0; index < 5; index += 1) {
       const decision = operations.reserve({ clientId: authenticatedAccountId, ipHash: "original-ip" }, 0);
       if (!decision.allowed) throw new Error("Expected reservation");
@@ -91,7 +93,7 @@ describe("PokePilot web API boundary", () => {
       expect(response.headers.get("retry-after")).toBe("60");
       expect(await response.json()).toMatchObject({ error: { code: "ANALYSIS_COOLDOWN" } });
     }
-    expect(operations.reserve({ clientId: accountUsageId({ id: "different-account" }), ipHash: "different-ip" }, 0).allowed).toBe(true);
+    expect(operations.reserve({ clientId: await accountUsageId({ id: "different-account" }, env), ipHash: "different-ip" }, 0).allowed).toBe(true);
     expect(operations.reserve({ clientId: authenticatedAccountId, ipHash: "new-ip" }, 60_000).allowed).toBe(true);
   });
   it("rejects cross-origin browser requests before resolving a requester", async () => {

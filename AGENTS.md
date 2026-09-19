@@ -36,6 +36,8 @@ The project should support the user's portfolio and job search by demonstrating:
 - Favor readable code over clever abstractions.
 - Avoid overengineering until the MVP works.
 - Use environment variables for API keys and never commit secrets.
+- Treat Cloudflare Workers/D1 as the active production path. Legacy Netlify and
+  Vercel deployment implementations are available in Git history.
 - Add comments only where they clarify non-obvious logic.
 
 ## MVP Priorities
@@ -49,7 +51,8 @@ The project should support the user's portfolio and job search by demonstrating:
 ## What To Avoid
 
 - Do not build a full competitive simulator first.
-- Do not start with account systems unless needed.
+- Do not expand the existing account system into social, collaborative, or
+  unbounded-storage features without a concrete product need and privacy review.
 - Do not train a custom ML model for the MVP.
 - Do not assume source attribution grants commercial rights to Pokemon assets;
   reassess or replace them before monetizing the project.

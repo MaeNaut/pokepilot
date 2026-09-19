@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="How PokePilot stores local team data and processes optional AI analysis requests."
+      content="How PokePilot stores saved teams and processes optional AI analysis requests."
     />
     <link rel="canonical" href="https://pokepilot.app/privacy.html" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -128,19 +128,23 @@
 
       <article lang="en">
         <h1>Privacy</h1>
-        <p class="meta">Public beta notice · Last updated September 18, 2026</p>
+        <p class="meta">Public beta notice · Last updated September 19, 2026</p>
 
         <section>
           <h2>Data kept in your browser</h2>
           <p>
-            Saved teams, bench sets, interface preferences, cached game data,
-            and PokePilot analysis history are stored in your browser using
-            localStorage. They remain on that device until you remove them in
-            the app or clear the site's browser data. When Google sign-in is
-            enabled, PokePilot also stores the minimum account profile needed
-            for sign-in and abuse controls: a Google account identifier, and
-            any email address, display name, or profile image URL Google gives
-            to PokePilot.
+            Interface preferences and cached game data stay in your browser
+            using localStorage. Saved teams, bench sets, and PokePilot analysis
+            history also keep a local browser copy. When you sign in with
+            Google, PokePilot synchronizes those saved teams and history, plus
+            your language, theme, default battle format, and tutorial-completion
+            preference, to an account-scoped Cloudflare D1 database so they are
+            available on your other signed-in devices. The browser copy remains until you remove
+            it in the app or clear the site's browser data; it is also cleared
+            when you sign out. PokePilot also stores the minimum account
+            profile needed for sign-in and abuse controls: a Google account
+            identifier, and any email address, display name, or profile image
+            URL Google gives to PokePilot.
           </p>
         </section>
 
@@ -216,9 +220,14 @@
           <p>
             Delete saved teams and analysis history in PokePilot, or clear this
             site's browser data to remove local data and the anonymous cookie.
-            When signed in, the account menu also deletes the server-side
-            account record and active sessions. Server-side operational entries
-            expire automatically. Send general feedback through
+            Signing out clears synchronized team and analysis-history copies
+            from this browser while retaining them in your account. Deleting
+            the account also deletes synchronized teams, analysis history, and
+            preferences from the server alongside the account record and active
+            sessions; local team and history copies are cleared. Interface
+            preferences remain normal browser settings. Server-side operational
+            entries expire automatically. Send
+            general feedback through
             <a href="https://github.com/MaeNaut/pokepilot/issues">GitHub Issues</a>
             and report security concerns through the repository's
             <a href="https://github.com/MaeNaut/pokepilot/security/policy"
@@ -230,18 +239,21 @@
 
       <article class="ko" lang="ko">
         <h1>개인정보 안내</h1>
-        <p class="meta">공개 베타 안내 · 최종 수정 2026년 9월 18일</p>
+        <p class="meta">공개 베타 안내 · 최종 수정 2026년 9월 19일</p>
 
         <section>
           <h2>브라우저에 저장되는 데이터</h2>
           <p>
-            저장한 팀과 벤치 샘플, 화면 설정, 캐시된 게임 데이터, PokePilot
-            분석 기록은 현재 기기의 브라우저 localStorage에 저장됩니다. 앱에서
-            삭제하거나 브라우저의 사이트 데이터를 지울 때까지 해당 기기에
-            남습니다. Google 로그인이 활성화된 경우에는 로그인과 오남용 방지에
-            필요한 최소 계정 프로필 정보도 저장합니다. 여기에는 Google 계정
-            식별자와 Google이 PokePilot에 제공한 이메일, 표시 이름, 프로필
-            이미지 URL이 포함될 수 있습니다.
+            화면 설정과 캐시된 게임 데이터는 현재 기기의 브라우저 localStorage에
+            저장됩니다. 저장한 팀, 벤치 샘플, PokePilot 분석 기록도 브라우저에
+            로컬 사본을 유지합니다. Google로 로그인하면 다른 로그인 기기에서도
+            이용할 수 있도록 해당 저장 팀과 분석 기록, 언어, 테마, 기본 배틀 형식,
+            튜토리얼 완료 설정을 계정별 Cloudflare D1 데이터베이스에 동기화합니다.
+            브라우저 사본은 앱에서 삭제하거나
+            사이트 데이터를 지우기 전까지 해당 기기에 남으며, 로그아웃할 때에도
+            삭제됩니다. 또한 로그인과 오남용 방지에 필요한 최소 계정 프로필
+            정보를 저장합니다. 여기에는 Google 계정 식별자와 Google이 PokePilot에
+            제공한 이메일, 표시 이름, 프로필 이미지 URL이 포함될 수 있습니다.
           </p>
         </section>
 
@@ -315,8 +327,11 @@
           <p>
             PokePilot에서 저장 팀과 분석 기록을 삭제하거나 브라우저의 사이트
             데이터를 지우면 로컬 데이터와 익명 쿠키를 제거할 수 있습니다.
-            로그인한 경우 계정 메뉴에서 서버의 계정 기록과 활성 세션도
-            삭제할 수 있습니다. 서버 운영 데이터는 자동 만료됩니다. 일반 피드백은
+            로그아웃하면 이 브라우저의 동기화 팀과 분석 기록 사본은 삭제되지만,
+            계정의 동기화본은 유지됩니다. 계정을 삭제하면 서버의 동기화 팀, 분석 기록,
+            설정, 계정 기록, 활성 세션이 삭제되고 현재 브라우저의 팀과 분석 기록 사본도
+            지워집니다. 화면 설정은 일반 브라우저 설정으로 남습니다. 서버 운영 데이터는
+            자동 만료됩니다. 일반 피드백은
             <a href="https://github.com/MaeNaut/pokepilot/issues">GitHub Issues</a>,
             보안 문제는 저장소의
             <a href="https://github.com/MaeNaut/pokepilot/security/policy"

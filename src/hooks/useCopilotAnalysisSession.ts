@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  readAccountCopilotHistory,
+  writeAccountCopilotHistory,
+} from "../api/accountStorage";
 import { executeCopilotAnalysis } from "../utils/copilotAnalysisExecution";
 import { CopilotApiError } from "../api/copilotApi";
 import {
@@ -17,16 +21,21 @@ import type {
 import {
   addCopilotHistoryEntry,
   clearCopilotHistoryForTeam,
+  clearStoredCopilotHistory,
   createCopilotHistoryEntry,
   createCopilotHistoryTeamKey,
   findMatchingCopilotHistoryEntry,
   getCopilotHistoryForTeam,
   getStoredCopilotHistory,
+  getStoredCopilotHistoryAccountId,
+  storeCopilotHistoryAccountId,
   storeCopilotHistory,
   type CopilotHistoryEntry,
 } from "../utils/copilotHistory";
+import { mergeAccountCopilotHistory } from "../utils/accountStorageSync";
 
 type UseCopilotAnalysisSessionOptions = {
+  accountId: string | null;
   savedTeamId: string | null;
   request: CopilotAnalysisRequest;
   locale: Locale;
@@ -44,6 +53,7 @@ function getAnalysisContextKey(
 }
 
 export function useCopilotAnalysisSession({
+  accountId,
   savedTeamId,
   request,
   locale,
@@ -56,6 +66,11 @@ export function useCopilotAnalysisSession({
   const [analysisHistory, setAnalysisHistory] = useState(
     getStoredCopilotHistory,
   );
+  const historyRef = useRef(analysisHistory);
+  const accountIdRef = useRef(accountId);
+  const previousAccountIdRef = useRef(accountId);
+  const syncReadyRef = useRef(false);
+  const writeQueueRef = useRef(Promise.resolve());
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const [cooldownClock, setCooldownClock] = useState(Date.now);
   const requestFingerprint = useMemo(
@@ -86,6 +101,84 @@ export function useCopilotAnalysisSession({
   const cooldownRemainingSeconds = cooldownUntil
     ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
     : 0;
+
+  const queueAccountWrite = useCallback((
+    next: CopilotHistoryEntry[],
+    targetAccountId = accountIdRef.current,
+  ) => {
+      if (
+        !targetAccountId ||
+        !syncReadyRef.current ||
+        accountIdRef.current !== targetAccountId
+      ) {
+        return;
+      }
+
+      writeQueueRef.current = writeQueueRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (accountIdRef.current !== targetAccountId) return;
+          await writeAccountCopilotHistory(next);
+        });
+    }, []);
+
+  const commitHistory = useCallback((next: CopilotHistoryEntry[]) => {
+    storeCopilotHistory(next);
+    historyRef.current = next;
+    setAnalysisHistory(next);
+    queueAccountWrite(next);
+  }, [queueAccountWrite]);
+
+  const clearLocalHistory = useCallback(() => {
+    clearStoredCopilotHistory();
+    historyRef.current = [];
+    setAnalysisHistory([]);
+  }, []);
+
+  useEffect(() => {
+    const previousAccountId = previousAccountIdRef.current;
+    previousAccountIdRef.current = accountId;
+    accountIdRef.current = accountId;
+    syncReadyRef.current = false;
+    if (previousAccountId && previousAccountId !== accountId) {
+      clearLocalHistory();
+    }
+    if (!accountId) return;
+
+    let active = true;
+    void (async () => {
+      try {
+        const remoteEntries = await readAccountCopilotHistory();
+        if (!active || accountIdRef.current !== accountId) return;
+
+        const storedAccountId = getStoredCopilotHistoryAccountId();
+        const localEntries = storedAccountId === null || storedAccountId === accountId
+          ? historyRef.current
+          : [];
+        const nextHistory = mergeAccountCopilotHistory(
+          remoteEntries ?? [],
+          localEntries,
+        );
+
+        commitHistory(nextHistory);
+        storeCopilotHistoryAccountId(accountId);
+        syncReadyRef.current = true;
+
+        if (
+          remoteEntries === null ||
+          JSON.stringify(remoteEntries) !== JSON.stringify(nextHistory)
+        ) {
+          queueAccountWrite(nextHistory, accountId);
+        }
+      } catch {
+        // Local history stays usable when the account storage endpoint is unavailable.
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [accountId, clearLocalHistory, commitHistory, queueAccountWrite]);
 
   useEffect(() => {
     if (!cooldownUntil) {
@@ -158,11 +251,7 @@ export function useCopilotAnalysisSession({
         fallbackReason,
       });
 
-      setAnalysisHistory((current) => {
-        const nextHistory = addCopilotHistoryEntry(current, historyEntry);
-        storeCopilotHistory(nextHistory);
-        return nextHistory;
-      });
+      commitHistory(addCopilotHistoryEntry(historyRef.current, historyEntry));
       setAnalysisByContext((current) => ({
         ...current,
         [analysisContextKey]: createReadyAnalysisState(historyEntry, "analysis"),
@@ -193,11 +282,9 @@ export function useCopilotAnalysisSession({
   }
 
   function clearHistory() {
-    setAnalysisHistory((current) => {
-      const nextHistory = clearCopilotHistoryForTeam(current, historyTeamKey);
-      storeCopilotHistory(nextHistory);
-      return nextHistory;
-    });
+    commitHistory(
+      clearCopilotHistoryForTeam(historyRef.current, historyTeamKey),
+    );
   }
 
   const consumeReveal = useCallback(() => {

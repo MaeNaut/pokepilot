@@ -17,10 +17,6 @@ function getSecurePictureUrl(value: string | undefined) {
   }
 }
 
-export function initializeAccountAuth() {
-  return Promise.resolve();
-}
-
 export async function readAccount() {
   const response = await fetch("/api/pokepilot/account", { cache: "no-store" });
   if (response.status === 401) return null;

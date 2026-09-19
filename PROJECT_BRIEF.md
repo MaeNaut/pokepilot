@@ -28,6 +28,16 @@ Users can build or describe a team, then PokePilot analyzes it and provides:
 - suggested replacements or additions
 - AI-generated reasoning presented as structured cards or visual sections
 
+## Current Production Scope
+
+The public beta is live at [pokepilot.app](https://pokepilot.app). The shipped
+product includes Regulation M-C data, a Team Builder, a damage Calculator,
+PokePilot analysis and recommendations, bilingual UI, responsive layouts, and
+Google sign-in. Signed-in users can synchronize saved teams, bounded analysis
+history, and interface preferences through Cloudflare D1; Upstash Redis protects
+shared AI operational state. These are deliberately bounded product features,
+not a social platform or a full battle simulator.
+
 ## Target User
 
 - Players who enjoy Pokemon-style turn-based battles.

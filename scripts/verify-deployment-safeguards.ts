@@ -22,7 +22,7 @@ import { installAiEvaluationRuntime } from "./aiEvaluationRuntime";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(scriptDirectory, "..");
-const defaultUrl = "https://pokepilot-ai.vercel.app";
+const defaultUrl = "https://pokepilot.app";
 const defaultConcurrency = 5;
 
 type CliOptions = {
@@ -78,13 +78,15 @@ function printHelp() {
 
 Usage:
   npm run verify:deployment
-  npm run verify:deployment -- --url https://preview.example.vercel.app
+  npm run verify:deployment -- --url https://preview.example.workers.dev
   npm run verify:deployment -- --allow-paid-call
 
 The default run checks the HTTP boundary without calling OpenAI. The paid mode
 builds one production-parity fixture request, sends up to five identical requests
 concurrently, and expects exactly one cache miss plus shared or cached followers.
-It then confirms that a follow-up request is served from the canonical cache.`);
+It then confirms that a follow-up request is served from the canonical cache.
+On login-required deployments, this CLI checks guest rejection only. Paid checks
+must run from an authenticated browser; this script does not extract sessions.`);
 }
 
 function createInvalidNestedRequest(): CopilotAnalysisRequest & {
@@ -176,6 +178,23 @@ function assertResponse(
 
 async function verifyHttpBoundary(url: string) {
   const methodResult = await requestApi(url, { method: "GET" });
+  if (methodResult.status === 401) {
+    assertResponse(methodResult, 401, "AUTH_REQUIRED");
+    for (const origin of [url, "https://example.invalid"]) {
+      const result = await requestApi(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin },
+        body: JSON.stringify(createInvalidNestedRequest()),
+      });
+      assertResponse(result, 401, "AUTH_REQUIRED");
+      if (result.headers.has("set-cookie")) {
+        throw new Error("Guest rejection unexpectedly issued a cookie.");
+      }
+    }
+    console.log("Guest boundary: PASS (authentication required, headers, no cookie)");
+    console.log("Authenticated contract and concurrency checks require browser QA.");
+    return null;
+  }
   assertResponse(methodResult, 405, "METHOD_NOT_ALLOWED");
 
   const crossOriginResult = await requestApi(url, {
@@ -295,6 +314,13 @@ async function main() {
   const options = parseOptions(args);
   console.log(`Target: ${options.url}`);
   const cookie = await verifyHttpBoundary(options.url);
+  if (cookie === null) {
+    if (options.allowPaidCall) {
+      throw new Error("Paid checks require an authenticated browser on this deployment.");
+    }
+    console.log("Paid concurrency check: SKIPPED (requires authenticated browser QA)");
+    return;
+  }
   if (!options.allowPaidCall) {
     console.log(
       "Paid concurrency check: SKIPPED (rerun with --allow-paid-call)",

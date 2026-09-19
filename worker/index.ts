@@ -12,6 +12,7 @@ import {
   logoutCurrentAccount,
   readAccountSession,
 } from "./accountAuth.js";
+import { handleAccountStorage } from "./accountStorage.js";
 import type { WorkerEnvironment } from "./env.js";
 
 let operationsRuntime: PokePilotOperationsRuntime | undefined;
@@ -136,6 +137,15 @@ export default {
         });
       }
       if (url.pathname === "/api/pokepilot/account") return handleAccount(request, env);
+      if (url.pathname === "/api/pokepilot/teams") {
+        return handleAccountStorage(request, env, "teams");
+      }
+      if (url.pathname === "/api/pokepilot/analysis-history") {
+        return handleAccountStorage(request, env, "analysis-history");
+      }
+      if (url.pathname === "/api/pokepilot/preferences") {
+        return handleAccountStorage(request, env, "preferences");
+      }
       if (url.pathname === "/api/pokepilot/analyze") return handleAnalyze(request, env);
       if (url.pathname.startsWith("/smogon-stats/")) {
         if (request.method !== "GET" && request.method !== "HEAD") {

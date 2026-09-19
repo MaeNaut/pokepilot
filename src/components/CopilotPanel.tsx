@@ -307,6 +307,7 @@ export function CopilotPanel({
     consumeReveal,
     selectHistory,
   } = useCopilotAnalysisSession({
+    accountId: account.status === "ready" ? account.user?.id ?? null : null,
     savedTeamId,
     request,
     locale,

@@ -1,54 +1,91 @@
-# Account authentication rollout
+# Account authentication
 
-Status: Cloudflare Worker migration in progress. Google OAuth and a real
-Cloudflare Worker preview must be verified before rollout.
+Status: live in production as of 2026-09-18. PokePilot uses Google OAuth on the
+Cloudflare Worker and does not use Netlify Identity in the active deployment.
 
-## Preview setup
+## Runtime model
 
-1. Create the `pokepilot` D1 database, then add its generated ID as the `DB`
-   binding in `wrangler.jsonc`. Apply `migrations/0001_accounts_and_sessions.sql`.
-2. Build with `npm run build:cloudflare` so the committed `.env.cloudflare`
-   enables the account controls. Keep `POKEPILOT_AUTH_REQUIRED=true` in Worker
-   variables for preview and production.
-3. Set Worker secrets: `OPENAI_API_KEY`, `UPSTASH_REDIS_REST_URL`,
-   `UPSTASH_REDIS_REST_TOKEN`, `POKEPILOT_CLIENT_SECRET`,
-   `POKEPILOT_SESSION_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, and
-   `GOOGLE_OAUTH_CLIENT_SECRET`. Set `GOOGLE_OAUTH_REDIRECT_URI` to the exact
-   Worker callback URL as a non-secret variable or secret.
-4. In Google Cloud, add the exact preview callback URL
-   `/api/auth/google/callback` before testing it. Do not publish the OAuth app
-   until the Cloudflare preview has passed acceptance checks.
+Google authorization is completed by the Worker. It verifies the Google ID token
+against Google's JWKS, creates a random session token, stores only its HMAC in
+D1, and returns the token in a Secure, HttpOnly, SameSite=Lax cookie.
 
-Google authorization happens on the Worker. The Worker verifies the Google ID
-token against Google's JWKS, creates a random session with a 30-day idle window
-and a 90-day maximum lifetime, stores only an HMAC of that session in D1, and
-returns it as a `Secure`, `HttpOnly`, `SameSite` cookie. When the session has
-seven days or less remaining, the next authenticated request rotates its token
-and renews the idle window without extending the 90-day maximum. JavaScript
-never reads the session cookie. Logout and deletion revoke the server-side
-session; expired sessions fail closed before any paid provider or cache
-operation. Existing Netlify Identity sessions intentionally do not migrate, so
-every account signs in again after the traffic switch.
+- Idle session window: 30 days
+- Absolute session lifetime: 90 days
+- Refresh threshold: seven days remaining
+- Session refresh: an authenticated request renews the idle window without
+  extending the 90-day maximum
+- Logout: revokes the server session and clears synchronized team and analysis
+  history copies from the current browser
+- Deletion: removes the caller's account, sessions, and account-scoped D1
+  storage. Browser interface preferences remain device settings.
 
-Redis usage keys retain their current expiration and atomic reservations, but
-use a namespaced hash of the verified account ID. IP safeguards and analysis
-caching remain. There is no new global spending cap. No team cloud sync or
-credit ledger is implemented. Existing local teams/history stay on the device.
+JavaScript never reads the session cookie. Missing, forged, expired, or deleted
+sessions fail closed before a paid provider request or shared-cache operation.
 
-Account deletion requires a same-origin DELETE and a verified session, deletes
-only the caller's D1 sessions and account, then clears the browser session.
-Existing Redis usage entries expire normally. Re-registration abuse needs separate
-review; account deletion is not a promise to permanently blacklist that identity.
+## Required Worker configuration
 
-## Required acceptance checks
+Apply both checked-in D1 migrations, then bind the database as `DB` in
+`wrangler.jsonc`:
 
-- Google consent/cancel/error, callback, reload and browser restart restoration.
-- Incognito + second browser: same account consumes the same allowance.
-- Concurrent requests preserve Redis reservations and cooldowns.
-- Missing/forged/expired/deleted tokens never reach the paid provider or cache.
-- Logout/account deletion, cross-origin deletion rejection, outage fail-closed.
-- Desktop/mobile Korean/English controls and local team preservation.
-- Update BOTH static and in-app privacy notices before production activation.
+```bash
+npx wrangler d1 migrations apply pokepilot --remote
+```
 
-Never commit OAuth client secrets or operator tokens. Preview approval does not
-authorize turning on production flags or publishing updated privacy claims.
+Set the following Worker secrets in Cloudflare. Do not commit them or add them
+to a `VITE_` variable:
+
+- `OPENAI_API_KEY`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `POKEPILOT_CLIENT_SECRET`
+- `POKEPILOT_SESSION_SECRET`
+- `GOOGLE_OAUTH_CLIENT_ID`
+- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `GOOGLE_OAUTH_REDIRECT_URI`
+
+Production variables must keep `POKEPILOT_AUTH_REQUIRED=true` and
+`POKEPILOT_SHARED_STORE_REQUIRED=true`. The Google OAuth client must permit the
+exact callback URL:
+
+```text
+https://pokepilot.app/api/auth/google/callback
+```
+
+## Account data and sync scope
+
+D1 stores a minimal Google profile: provider account identifier and any email,
+display name, or HTTPS profile-image URL supplied by Google. It also stores
+account-scoped serialized data through the authenticated, same-origin storage
+endpoints:
+
+| Storage key | Limit | Contents |
+| --- | --- | --- |
+| `teams` | 30 entries / 1.5 MB | Saved teams, including bench and editable build state |
+| `analysis-history` | 60 entries / 1 MB | Validated PokePilot analysis history |
+| `preferences` | 4 KB | Language, theme, default battle format, tutorial completion |
+
+The browser keeps a local copy for continuity. On first sign-in, unclaimed local
+teams and history merge with the account data; on a second device, the account
+copy is authoritative. Preference ownership is also tracked locally so a second
+account on the same device cannot inherit the prior account's language or theme.
+
+Current workspace selection, open panels, unsaved drafts, last-opened team, and
+game-data caches remain device-local by design. They are navigation or cache
+state, not account profile data.
+
+## Acceptance checks after auth or storage changes
+
+- Google consent, cancellation, error, successful callback, reload, and browser
+  restart all yield the expected account state.
+- A second signed-in browser restores saved teams, analysis history, language,
+  theme, battle format, and completed tutorial state.
+- Logging out clears the current browser's synchronized team/history copies;
+  signing back into the same account restores the D1 copies.
+- Switching accounts does not expose local team/history data or carry over the
+  previous account's preferences.
+- Cross-origin storage writes and account deletion requests are rejected.
+- Missing/forged/expired/deleted sessions never reach OpenAI or bypass shared
+  Redis controls.
+
+Update the static privacy notice and this document whenever the account schema,
+sync scope, cookie behavior, or provider list changes.

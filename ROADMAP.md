@@ -1,5 +1,11 @@
 # PokePilot Roadmap
 
+> Current status, 2026-09-19: PokePilot is in public beta at
+> `https://pokepilot.app` on Cloudflare Workers. The active format is
+> Regulation M-C; Google sign-in and bounded D1 account sync are live. Earlier
+> M-B, Vercel, and Supabase notes below are retained as planning history unless
+> explicitly superseded.
+
 ## MVP Scope
 
 The MVP should prove the core loop:
@@ -239,7 +245,7 @@ The MVP should prove the core loop:
   - [x] Harden the hosted request boundary with exact nested validation, complete
         Pokemon cache identity, cache-hit admission, provider-attempt accounting,
         and bounded expiring distributed waiters.
-  - [x] Add the Vercel AI function duration, production Smogon rewrite, baseline
+  - [x] Add the Cloudflare Worker API, same-origin Smogon proxy, baseline
         security/cache headers, CI quality gate, and deployment checklist.
   - [x] Provision and require the shared store in public deployment, then verify
         cross-instance concurrency, cold starts, and Redis failure behavior.
@@ -258,15 +264,19 @@ The MVP should prove the core loop:
 - [x] Add shareable PNG build images for individual Pokemon sets and complete active teams.
   - [x] Ship the individual Pokemon preview, clipboard-copy, and PNG-download flow.
   - [x] Add the complete active-team image template and shared preview navigation.
-- [ ] Prepare account-backed server persistence after the local MVP is stable.
-  - [x] Keep Supabase-managed PostgreSQL as the leading candidate, with Neon as the main database-focused alternative.
-  - [ ] Normalize teams and Pokemon sets into server-owned records with active/bench location and ordering.
-  - [ ] Store canonical Pokemon, item, ability, nature, and move IDs instead of duplicating display text and asset URLs.
-  - [ ] Keep PokeAPI, Showdown, and Smogon responses in client or shared caches rather than user-owned database rows.
-  - [ ] Recompute validity, diagnostics, Showdown text, and PokePilot inputs from source team data instead of persisting stale derived output.
-  - [ ] Recheck provider free-plan storage, egress, inactivity, and backup limits immediately before deployment.
-  - [x] Enforce initial guardrails of 30 saved teams per user and six bench Pokemon per team.
-  - [ ] Revisit persistence limits from real usage before public deployment.
+- [x] Add bounded account-backed persistence after the local MVP is stable.
+  - [x] Use Cloudflare D1 with Google OAuth and Secure, HttpOnly sessions.
+  - [x] Synchronize complete saved-team payloads, including active/bench ordering
+        and editable build state, with a 30-team limit.
+  - [x] Synchronize bounded analysis history, language, theme, default battle
+        format, and tutorial completion.
+  - [x] Keep PokeAPI, Showdown, and Smogon responses in client or shared caches
+        rather than user-owned D1 rows.
+  - [x] Recompute validity, diagnostics, Showdown text, and PokePilot input from
+        current team data instead of persisting stale derived output.
+  - [ ] Add normalized D1 tables only when query-heavy features such as share
+        links, folders, tags, or collaboration justify a migration.
+  - [ ] Revisit persistence limits from real usage before expanding the product.
 - [ ] Add shareable team links if reasonable.
 - [x] Complete Korean localization.
   - [x] Add a persisted English/Korean language control and typed UI translations.

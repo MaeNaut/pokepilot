@@ -18,7 +18,6 @@
     "eslint.config.js",
     "scripts/**/*.ts",
     "server/**/*.ts",
-    "api/**/*.ts",
-    "netlify/**/*.ts"
+    "worker/runtime.d.ts"
   ]
 }

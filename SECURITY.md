@@ -18,4 +18,4 @@ https://github.com/MaeNaut/pokepilot/issues
 ## Scope
 
 The supported version is the current production deployment at
-https://pokepilot-ai.vercel.app and the latest commit on `main`.
+https://pokepilot.app and the latest commit on `main`.

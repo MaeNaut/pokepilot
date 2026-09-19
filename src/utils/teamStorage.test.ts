@@ -1,15 +1,38 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TeamMember } from "../types";
 import {
   SAVED_TEAM_SCHEMA_VERSION,
+  clearStoredTeams,
   createEmptyBuildState,
   createFallbackMember,
   createSavedSlot,
   getCopiedTeamName,
+  getStoredTeams,
   normalizeSavedTeam,
   serializeTeamSnapshot,
+  storeSavedTeamsAccountId,
+  storeTeams,
   type SavedTeamSummary,
 } from "./teamStorage";
+
+function createMemoryStorage(): Storage {
+  const values = new Map<string, string>();
+
+  return {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => [...values.keys()][index] ?? null,
+    removeItem: (key) => values.delete(key),
+    setItem: (key, value) => values.set(key, value),
+  };
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function savedTeam(name: string): SavedTeamSummary {
   return {
@@ -50,6 +73,18 @@ describe("team storage normalization", () => {
 });
 
 describe("saved-team helpers", () => {
+  it("clears account-scoped local team data on sign-out", () => {
+    const storage = createMemoryStorage();
+    vi.stubGlobal("localStorage", storage);
+    storeTeams([savedTeam("Rain")]);
+    storeSavedTeamsAccountId("account-a");
+
+    clearStoredTeams();
+
+    expect(getStoredTeams()).toEqual([]);
+    expect(storage.getItem("pokepilot.savedTeams.account.v1")).toBeNull();
+  });
+
   it("increments duplicate names case-insensitively", () => {
     const teams = [
       savedTeam("Rain"),

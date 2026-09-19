@@ -1,44 +1,67 @@
 # Cloudflare migration
 
-The production Netlify deployment remains untouched until the Worker preview
-passes QA. The Worker keeps Upstash for analysis cache, distributed locks, and
-rate limiting. D1 holds only account and session records.
+Status: complete as of 2026-09-18. `https://pokepilot.app` is served by the
+`pokepilot` Cloudflare Worker. The Worker serves the built Vite assets and owns
+the API, Google OAuth callback, and same-origin Smogon proxy.
 
-## Cloudflare account access
+## Current production topology
 
-The Codex Cloudflare connection currently has DNS access but not Workers or D1
-access. Reconnect it with these least-privilege groups:
+- **Worker and static assets:** `pokepilot` Worker with the `ASSETS` binding
+- **Custom domain:** `pokepilot.app`
+- **Preview URL:** `https://pokepilot.pokepilot-ai.workers.dev`
+- **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
+- **Operational state:** Upstash Redis for analysis cache, distributed leases,
+  cooldowns, and rate limits
+- **Account storage:** D1 `accounts`, `account_sessions`, and
+  `account_storage` tables
 
-- Developer Platform: Workers Scripts, Workers Routes, and D1: Edit
-- DNS & Zones: Zone, DNS, and Registrar Domains: Read; Zone DNS: Edit only for
-  the final custom-domain cutover
+Legacy Netlify/Vercel deployment entry points and Netlify Identity dependencies
+have been removed. Their historical implementations remain available in Git.
+The Node API adapter in `server/` is still used by the Vite development server.
 
-Do not grant Account & Billing, AI, R2, KV, Pages, or broad account-wide write
-permissions for this migration.
+## Reprovisioning or recovery
 
-## First preview deployment
+1. Confirm `wrangler.jsonc` still binds `ASSETS` and the D1 `DB` database, and
+   maps the `pokepilot.app` custom domain.
+2. Apply both D1 migrations in order:
 
-1. Create D1 database `pokepilot` in the Cloudflare dashboard.
-2. Copy the database ID into `wrangler.jsonc` as:
-
-   ```jsonc
-   "d1_databases": [{
-     "binding": "DB",
-     "database_name": "pokepilot",
-     "database_id": "<database-id>",
-     "migrations_dir": "./migrations"
-   }]
+   ```bash
+   npx wrangler d1 migrations apply pokepilot --remote
    ```
 
-3. Apply `npx wrangler d1 migrations apply pokepilot --remote`.
-4. Set the documented Worker secrets through the Cloudflare dashboard. Never
-   put a secret in `wrangler.jsonc`, `.env.cloudflare`, Git, or chat.
-5. Deploy `npm run deploy:cloudflare`. Add its `workers.dev` callback URL to
-   the existing Google OAuth web client before using Google sign-in.
+   If local Wrangler credentials lack D1 access, apply the same checked-in SQL
+   through the Cloudflare D1 console and record the operation before deploying.
+3. Set server-side Worker secrets in Cloudflare. Never place them in
+   `wrangler.jsonc`, `.env.cloudflare`, Git, or chat:
 
-## Cutover
+   - `OPENAI_API_KEY`
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+   - `POKEPILOT_CLIENT_SECRET`
+   - `POKEPILOT_SESSION_SECRET`
+   - `GOOGLE_OAUTH_CLIENT_ID`
+   - `GOOGLE_OAUTH_CLIENT_SECRET`
+   - `GOOGLE_OAUTH_REDIRECT_URI`
+4. Keep the Worker variables in `wrangler.jsonc` aligned with the intended
+   environment. Production currently requires account authentication and the
+   shared Redis store.
+5. In Google Cloud, register the exact production redirect URI:
 
-After preview QA, add `https://pokepilot.app/api/auth/google/callback` to the
-Google OAuth client, map the Cloudflare Worker to `pokepilot.app`, and verify
-the production callback plus analysis path. Leave the Netlify site online but
-unlinked during the observation period; it is the rollback target.
+   ```text
+   https://pokepilot.app/api/auth/google/callback
+   ```
+
+   Add the `workers.dev` callback only when actively testing that preview host.
+6. Verify and deploy:
+
+   ```bash
+   npm run check:cloudflare
+   npm run deploy:cloudflare
+   ```
+
+## Rollback
+
+Use the Cloudflare Workers dashboard to roll the `pokepilot` Worker back to a
+previous healthy version. Do not make a DNS or registrar change for an ordinary
+application rollback. After rollback, verify `/`, `/api/pokepilot/account`, a
+signed-in PokePilot request, and the Google callback before announcing recovery.

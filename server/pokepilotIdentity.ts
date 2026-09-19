@@ -114,13 +114,11 @@ function getRequesterIp(
   trustedIp?: string,
   fallbackIp?: string,
 ) {
-  const platformForwarded = readHeader(headers, "x-vercel-forwarded-for");
   const realIp = readHeader(headers, "x-real-ip");
   const forwarded = readHeader(headers, "x-forwarded-for");
 
   return (
     trustedIp?.trim() ||
-    platformForwarded?.split(",")[0]?.trim() ||
     realIp?.trim() ||
     forwarded?.split(",")[0]?.trim() ||
     fallbackIp?.trim() ||

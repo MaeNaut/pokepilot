@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CopilotAnalysisResponse } from "./copilotAnalysis";
 import {
   addCopilotHistoryEntry,
+  clearStoredCopilotHistory,
   clearCopilotHistoryForTeam,
   copilotHistoryLimits,
   createCopilotHistoryEntry,
@@ -53,6 +54,18 @@ afterEach(() => {
 });
 
 describe("PokePilot analysis history", () => {
+  it("clears account-scoped local history on sign-out", () => {
+    const storage = createMemoryStorage();
+    vi.stubGlobal("localStorage", storage);
+    storeCopilotHistory([createEntry(1)]);
+    storage.setItem("pokepilot:analysis-history.account.v1", "account-a");
+
+    clearStoredCopilotHistory();
+
+    expect(getStoredCopilotHistory()).toEqual([]);
+    expect(storage.getItem("pokepilot:analysis-history.account.v1")).toBeNull();
+  });
+
   it("persists validated analysis records and restores an exact locale match", () => {
     vi.stubGlobal("localStorage", createMemoryStorage());
     const koreanEntry = {

@@ -2,6 +2,11 @@
 
 This file is for active implementation notes and small follow-up tasks. Keep larger product direction in `ROADMAP.md`.
 
+> Current status, 2026-09-19: the public beta runs on Cloudflare Workers with
+> Regulation M-C data, Google sign-in, and bounded D1 account sync. Earlier
+> M-B/Vercel tasks below are retained as implementation history; new work should
+> use the current deployment and regulation documents.
+
 ## Now
 
 - [x] Define the Calculator MVP before building its UI.
@@ -41,13 +46,13 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Preserve complete active and bench builds through JSON/localStorage round trips.
   - [x] Enforce current limits of 30 saved teams and six bench Pokemon per team
         without deleting legacy over-limit data.
-- [ ] Prepare saved-team records for account-backed storage when server migration begins.
-  - [ ] Draft normalized `teams` and `pokemon_sets` tables with active/bench
-        location and ordering.
-  - [ ] Persist canonical IDs plus editable build values instead of display text
-        and asset URLs.
-  - [ ] Add a regulation/format identifier so saved teams can be revalidated
-        against later rule data.
+- [x] Add account-backed saved-team synchronization.
+  - [x] Store complete team payloads, including active/bench location and
+        ordering, in bounded account-scoped D1 storage.
+  - [x] Preserve canonical build IDs and editable values inside the existing
+        versioned team schema, then rehydrate current game data by ID.
+  - [x] Preserve the saved battle format and revalidate loaded teams against the
+        current regulation data.
   - [ ] Revisit team and bench limits using real product usage.
 - [x] Lift or expose TeamBuilder slot edit state so it can be saved.
   - [x] Avoid saving only the visible Pokemon slots while losing item/ability/nature/EV/move choices.
@@ -458,7 +463,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## Before Public Deployment
 
-- [x] Add a checked-in CI quality gate, Vercel runtime/rewrite/security config,
+- [x] Add a checked-in CI quality gate, Cloudflare Worker/security configuration,
       and a concrete deployment checklist.
 - [x] Complete hosted environment separation, production smoke testing, cache
       verification, response-header checks, and rollback-readiness review from
@@ -470,7 +475,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Measure the production bundle and lazy-load genuinely deferred features if
       initial transfer or parse cost warrants it.
 - [x] Run Lighthouse and representative cold-load/network checks.
-- [x] Run `npm run lint`, `npm run test:run`, and `npm run build`.
+- [x] Run `npm run lint`, `npm run test:run`, and `npm run build:cloudflare`.
 
 ## Done Recently
 

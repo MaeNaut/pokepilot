@@ -1,15 +1,21 @@
 # PokePilot Technical Notes
 
+> Current architecture, 2026-09-19: the public app runs on Cloudflare Workers
+> with D1, Upstash Redis, Google OAuth, and Regulation M-C data. Detailed M-B
+> data experiments and early persistence alternatives below are retained as
+> implementation history unless a later section explicitly supersedes them.
+
 ## Recommended Stack
 
 - Frontend: Vite + React + TypeScript
 - Styling: the current custom CSS design system
-- Server option: add a small server-side API route or deployment function when hosted AI begins
-- AI: OpenAI API or another LLM provider through a server-side API route
-- Data: localStorage first; Supabase-managed PostgreSQL is the leading server-persistence candidate, with Neon as the primary alternative
+- Server: Cloudflare Worker serving static assets and same-origin API routes
+- AI: OpenAI API through the Worker, never directly from browser code
+- Data: Cloudflare D1 for accounts, sessions, and bounded account sync; browser
+  localStorage for device state; Upstash Redis for shared operational state
 - Damage engine: a typed Pokemon Champions adapter around `@smogon/calc`
 - Image export: `html-to-image` for rendering dedicated share-card DOM into PNG blobs
-- Deployment: Vercel or another simple web deployment platform
+- Deployment: Cloudflare Workers at `https://pokepilot.app`
 
 ## Skills This Project Can Demonstrate
 
@@ -30,9 +36,11 @@ This project is also meant to fill practical skill gaps that have appeared repea
 
 - TypeScript: Build the app in TypeScript from the start so the project can support TypeScript claims honestly.
 - API routes: Keep AI calls server-side through API routes instead of calling model APIs directly from browser code.
-- PostgreSQL / SQL: Add persistence later through Supabase or PostgreSQL for saved teams, shared builds, user preferences, and bounded analysis caches.
+- SQL / server persistence: Cloudflare D1 now stores account sessions and bounded
+  cross-device team, analysis-history, and preference records.
 - AI API integration: Use an LLM API for structured team analysis and recommendations, then render the output as product UI.
-- Deployment: Deploy the app publicly through Vercel or a similar platform and keep a live link for the portfolio.
+- Deployment: Operate a public Cloudflare Worker deployment with a custom domain,
+  D1 binding, OAuth callback, secret configuration, and rollback procedure.
 - GitHub Actions: Add a simple lint/build workflow later to demonstrate basic CI/CD experience.
 - Testing: Use Vitest for deterministic stat, parser, alias, legality, team-diagnostic,
   and local Copilot-contract regression tests. Keep live PokeAPI, Showdown, and
@@ -46,7 +54,8 @@ This project is also meant to fill practical skill gaps that have appeared repea
 Avoid forcing these skills into the project too early:
 
 - Python: Not necessary for the MVP unless a later backend or data-processing need clearly appears.
-- AWS: Useful in some job postings, but too heavy for the first version compared with Vercel/Supabase.
+- AWS: Useful in some job postings, but too heavy for the current application
+  compared with Cloudflare Workers/D1 and Upstash.
 - Custom ML training: Out of scope; the goal is AI-assisted product development, not model training.
 
 ## Pokemon Selection Boundary
@@ -415,12 +424,12 @@ Desktop UX decisions after the wide-builder layout change:
 - Pokemon picked from the main name dropdown can auto-apply a popular Smogon
   moveset usage sample. Form changes, Mega toggles, saved-team loads, and
   Showdown imports do not trigger usage auto-application.
-- Saved teams are currently persisted in localStorage with a schema version,
+- Saved teams are cached in localStorage with a schema version,
   team name, timestamps, six active slots, bench entries, and per-Pokemon build
   details. Saved-team types, normalization, serialization helpers, fallback
   hydration data, and localStorage keys live in `src/utils/teamStorage.ts` rather
-  than the app shell. The model is kept plain-JSON so it can later move to
-  Supabase/Postgres without changing UI state shape too aggressively.
+  than the app shell. Signed-in accounts sync the plain-JSON library to D1 through
+  `/api/pokepilot/teams`; localStorage is not the cross-device source of truth.
 - `useSavedTeams` owns saved-list mutations and persistence; its current-list
   reference prevents an async import from rebuilding the list from an old
   render. Storage writes stay outside React's replayable state updater.
@@ -455,44 +464,29 @@ Desktop UX decisions after the wide-builder layout change:
 
 ## Server Persistence Direction
 
-- The database engine should remain PostgreSQL. Supabase is the leading managed
-  provider because it combines Postgres, authentication, generated APIs, and
-  row-level security in one portfolio-friendly stack. Neon remains the main
-  alternative if the app later prefers a database-focused serverless service and
-  assembles authentication and API routes separately.
-- Keep the current localStorage schema as the working client model, not as the
-  final relational schema. The server model should start with `teams` and
-  `pokemon_sets`; each set should carry a team owner, active or bench location,
-  ordering, canonical Pokemon/form ID, item, ability, nature, EVs, moves, and
-  pre-Mega identity where needed.
-- Current local saves include display names, sprite URLs, icon URLs, and complete
-  item objects for convenient offline fallback. Server rows should normally store
-  canonical IDs and editable values only, then hydrate shared display metadata
-  from the current data layer.
-- Do not copy per-browser PokeAPI Pokemon caches, generated Showdown catalogs,
-  the shared M-B legality snapshot, or Smogon usage snapshots into each user's database data.
-  Keep them in client caches or a shared TTL cache if a server proxy later owns
-  those requests.
-- Showdown text, calculated stats, validity results, team diagnostics, role and
-  concept classifications, and PokePilot request input are derived from the saved
-  team. Recompute them so rule and data updates do not leave persisted results
-  stale. Store AI output only when a product feature explicitly needs history;
-  otherwise keep the latest result as a bounded cache.
-- Likely future user-owned records include team folders/tags, a separate Pokemon
-  sample library, share visibility and links, limited calculator presets, and
-  user preferences. Avoid storing unlimited calculator history, chat transcripts,
-  or generated analysis by default.
-- Current local guardrails are 30 saved teams per user and six bench Pokemon per
-  team. New saves and duplicates stop at the team limit, while active Pokemon
-  cannot be added to a full bench. Existing over-limit local data is preserved
-  instead of being truncated. These limits are primarily for list UX and abuse
-  prevention, not because team records are expected to exhaust a free Postgres
-  tier. A larger collection should become a dedicated Sample Library rather than
-  an oversized bench.
-- A free managed-Postgres plan should cover portfolio deployment and early public
-  use when records are normalized and generated assets remain external. Recheck
-  official provider storage, egress, inactivity, backup, and authentication limits
-  immediately before deployment because plan details are time-sensitive.
+- Cloudflare D1 is the current account store. `accounts` and `account_sessions`
+  support Google OAuth, while `account_storage` holds bounded serialized rows for
+  saved teams, analysis history, and account preferences.
+- The browser remains the working editor model. It keeps local copies for
+  continuity, migrates unclaimed teams/history on first sign-in, and treats the
+  signed-in account copy as authoritative on another device.
+- Saved teams retain complete editable build state, including active and bench
+  Pokemon. The account limit is 30 teams; browser and server validation preserve
+  the same bound. Analysis history is capped at 60 entries.
+- Account preferences synchronize only language, theme, default battle format,
+  and tutorial completion. Current app mode, selected slots, open panels,
+  last-opened team, unsaved drafts, and data caches deliberately remain local.
+- Do not store PokeAPI caches, generated Showdown catalogs, M-C legality data,
+  Smogon usage snapshots, unlimited calculator history, raw chat transcripts, or
+  unbounded model output in user-owned D1 rows.
+- Showdown text, calculated stats, validity, diagnostics, and PokePilot request
+  data are derived from the current saved build so regulation updates do not
+  leave persisted derived values stale. Analysis history is an explicit bounded
+  product feature, separate from Redis's short-lived operational cache.
+- Add normalized D1 tables only if a future feature needs queries D1's current
+  serialized storage cannot answer efficiently, such as public share links,
+  folders, tags, or collaboration. Any such design needs a new privacy and
+  migration review.
 
 ## Localization Strategy
 
@@ -502,9 +496,10 @@ Desktop UX decisions after the wide-builder layout change:
 - Write Korean app-owned UI copy as concise status or action phrases rather than
   polite full sentences. Preserve full prose for official game descriptions and
   legal or attribution text where sentence form improves clarity.
-- Persist only the selected locale under `pokepilot:locale`; never duplicate team
-  or Pokemon data per language. Saved builds and Showdown import/export continue
-  to use canonical English IDs.
+- Persist the selected locale under `pokepilot:locale` for immediate browser
+  startup, then synchronize it for signed-in accounts with the bounded account
+  preference row. Never duplicate team or Pokemon data per language; saved
+  builds and Showdown import/export continue to use canonical English IDs.
 - Generate `src/i18n/data/ko-game-data.json` with `npm run data:locales` from the
   official PokeAPI CSV dataset. The checked-in snapshot covers Pokemon species and
   forms, moves, items, abilities, types, natures, and available Korean flavor text,
@@ -527,9 +522,10 @@ Desktop UX decisions after the wide-builder layout change:
 
 ## Theme Strategy
 
-- Keep theme state independent from localization and team persistence. Store the
-  `system`, `light`, or `dark` preference under `pokepilot:theme`; when no
-  supported value exists, use `system`. System mode resolves from
+- Keep theme state independent from team persistence. Store the `system`,
+  `light`, or `dark` preference under `pokepilot:theme` for immediate browser
+  startup and synchronize it for signed-in accounts with the bounded preference
+  row. When no supported value exists, use `system`. System mode resolves from
   `prefers-color-scheme` and listens for operating-system changes while the app is open.
 - Apply `data-theme="light"` or `data-theme="dark"` to the document root and keep
   the browser `color-scheme` property in sync. Components should consume shared
@@ -552,8 +548,8 @@ Desktop UX decisions after the wide-builder layout change:
 
 ## Regulation Target
 
-The intended competitive target is Pokemon Champions Regulation M-B. The current
-implementation uses Pokemon Showdown data as the M-B legality source for:
+The active competitive target is Pokemon Champions Regulation M-C. The current
+implementation uses Pokemon Showdown data as the M-C legality source for:
 
 - legal Pokemon
 - legal items
@@ -562,8 +558,8 @@ implementation uses Pokemon Showdown data as the M-B legality source for:
 
 Still needed:
 
-- extend the representative fixtures whenever a new legality-sensitive Pokemon,
-  item, ability, or move exception is discovered
+- extend representative fixtures whenever a new legality-sensitive Pokemon, item,
+  ability, move, or mechanically distinct fixed form is discovered
 - any newly discovered Pokemon Champions-specific battle-rule differences
 
 ## Desktop QA Baseline
@@ -950,7 +946,7 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   atomic Redis Lua scripts, and coordinates identical requests with a token-owned
   distributed lease and short-lived shared result. Per-key and global expiring
   waiter tokens bound duplicate serverless requests, and their 50-second shared
-  deadline remains below the Vercel Function duration.
+  deadline remains within the Worker request budget.
 - Set `POKEPILOT_SHARED_STORE_REQUIRED=true` for public deployment so missing or
   partial Redis configuration fails closed. Use distinct
   `POKEPILOT_REDIS_PREFIX` values for preview and production. Redis outages
@@ -963,14 +959,13 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   other than `shared` deliberately discard Redis environment values before
   selecting the operations adapter; the deployed server runtime still selects
   Upstash automatically from its server-side secrets.
-- Keep the OpenAI project hard budget as the final cost ceiling. Production uses
-  `pokepilot:operations:prod`, Preview uses
-  `pokepilot:operations:preview`, and both require shared storage. The live
-  production verification sent five identical concurrent requests across cold
-  serverless invocations: one request performed the model call, four received
-  the shared result, and the follow-up was a canonical cache hit. Runtime logs
-  confirmed the Upstash adapter without recording team contents or requester
-  identifiers.
+- Keep the OpenAI project budget and alerts as a separate operational safeguard.
+  Production currently uses `pokepilot:operations:v1` and requires shared
+  storage. Give any preview environment its own prefix before testing so it
+  cannot consume production cache or limiter state. The live concurrency check
+  verified one provider call for identical simultaneous requests, with followers
+  receiving the shared result and no team contents or requester identifiers in
+  runtime logs.
 - Use `npm run verify:deployment` for the no-cost method, origin, nested-contract,
   response-header, and signed-cookie checks. Add `-- --allow-paid-call` only for
   an intentional live concurrency check; the script limits the group to five

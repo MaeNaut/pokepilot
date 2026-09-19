@@ -82,6 +82,11 @@ import { useTheme } from "./theme/useTheme";
 import { useBattleFormat } from "./battleFormat/useBattleFormat";
 import { useAppMode } from "./appMode/useAppMode";
 import { useAccount } from "./hooks/useAccount";
+import { useAccountPreferencesSync } from "./hooks/useAccountPreferencesSync";
+import {
+  getWorkspaceTutorialCompleted,
+  storeWorkspaceTutorialCompleted,
+} from "./utils/tutorialStorage";
 
 const Calculator = lazy(() =>
   import("./components/Calculator").then((module) => ({
@@ -133,8 +138,23 @@ function App() {
   const { locale, setLocale, t } = useLocalization();
   const { themePreference, setThemePreference } = useTheme();
   const account = useAccount();
+  const accountStorageId = account.status === "ready" ? account.user?.id ?? null : null;
   const { battleFormat, setBattleFormat } = useBattleFormat();
   const { appMode, setAppMode } = useAppMode();
+  const [tutorialCompleted, setTutorialCompleted] = useState(
+    getWorkspaceTutorialCompleted,
+  );
+  useAccountPreferencesSync({
+    accountId: accountStorageId,
+    locale,
+    setLocale,
+    themePreference,
+    setThemePreference,
+    battleFormat,
+    setBattleFormat,
+    tutorialCompleted,
+    setTutorialCompleted,
+  });
   const isCompactDrawerLayout = useMediaQuery("(max-width: 1420px)");
   const [team, setTeam] = useState<TeamSlot[]>(() =>
     Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null),
@@ -161,7 +181,7 @@ function App() {
   } = useBuilderData();
   const [teamName, setTeamName] = useState(() => t("team.untitled"));
   const [teamNameDraft, setTeamNameDraft] = useState(() => t("team.untitled"));
-  const savedTeamLibrary = useSavedTeams();
+  const savedTeamLibrary = useSavedTeams(accountStorageId);
   const savedTeams = savedTeamLibrary.teams;
   const [activeSavedTeamId, setActiveSavedTeamId] = useState<string | null>(null);
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
@@ -199,6 +219,8 @@ function App() {
   const pokemonSelectionRequestRef = useRef(0);
   const teamLoadRequestRef = useRef(0);
   const committedSnapshotRef = useRef<string | null>(null);
+  const restoredStorageScopeRef = useRef<string | null>(null);
+  const previousAccountStorageIdRef = useRef(accountStorageId);
   const analysisBuildState = teamBuildState.getBuildStateSnapshot();
   const pokemonSelectionContextFingerprint = JSON.stringify({
     activeSavedTeamId,
@@ -298,11 +320,47 @@ function App() {
   }
 
   useEffect(() => {
-    const storedTeams = savedTeams;
+    const previousAccountId = previousAccountStorageIdRef.current;
+    previousAccountStorageIdRef.current = accountStorageId;
+    if (!previousAccountId || previousAccountId === accountStorageId) return;
+
+    teamLoadRequestRef.current += 1;
+    setTeam(Array<TeamSlot>(ACTIVE_TEAM_SIZE).fill(null));
+    setBench([]);
+    setCustomPool([]);
+    setSelectedTeamSlot(0);
+    teamBuildState.replaceBuildState();
+    const untitledTeamName = t("team.untitled");
+    setTeamName(untitledTeamName);
+    setTeamNameDraft(untitledTeamName);
+    setActiveSavedTeamId(null);
+    clearLastActiveTeamId();
+    setTeamStorageMessage(null);
+    setPendingTeamAction(null);
+    setSelectingPokemonSlot(null);
+    setSearchError(null);
+    setSearchNotice(null);
+    setFailedPokemonSelection(null);
+    committedSnapshotRef.current = null;
+    restoredStorageScopeRef.current = null;
+  }, [accountStorageId, t, teamBuildState]);
+
+  useEffect(() => {
+    if (
+      (account.enabled && account.status === "loading") ||
+      !savedTeamLibrary.isHydrated
+    ) {
+      return;
+    }
+
+    const storageScope = accountStorageId ?? "local";
+    if (restoredStorageScopeRef.current === storageScope) return;
+    restoredStorageScopeRef.current = storageScope;
+
     const lastActiveTeamId = getLastActiveTeamId();
-    const lastActiveTeam = storedTeams.find(
+    const lastActiveTeam = savedTeams.find(
       (savedTeam) => savedTeam.id === lastActiveTeamId,
-    );
+    ) ?? savedTeams[0];
 
     if (lastActiveTeam) {
       void loadSavedTeam(lastActiveTeam);
@@ -310,9 +368,15 @@ function App() {
     return () => {
       teamLoadRequestRef.current += 1;
     };
-    // Startup restore must run once from localStorage instead of following team edits.
+    // Restore once for the local workspace or after each account sync completes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    account.enabled,
+    account.status,
+    accountStorageId,
+    savedTeamLibrary.isHydrated,
+    savedTeams,
+  ]);
 
   useEffect(() => {
     if (
@@ -1681,7 +1745,13 @@ function App() {
             </a>
           </span>
       </footer>
-      <WorkspaceTutorial />
+      <WorkspaceTutorial
+        completed={tutorialCompleted}
+        onComplete={() => {
+          storeWorkspaceTutorialCompleted();
+          setTutorialCompleted(true);
+        }}
+      />
     </main>
   );
 }
