@@ -27,6 +27,7 @@
     }
   ],
   "vars": {
+    "GOOGLE_OAUTH_REDIRECT_URI": "https://pokepilot.app/api/auth/google/callback",
     "POKEPILOT_METRICS_ENABLED": "true",
     "POKEPILOT_AUTH_REQUIRED": "true",
     "POKEPILOT_SHARED_STORE_REQUIRED": "true",

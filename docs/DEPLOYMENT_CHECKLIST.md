@@ -26,6 +26,8 @@ build, and a Worker dry run. Do not deploy when any command or CI job fails.
   Apply pending migrations before deploying Worker code that reads the new tables.
 - Keep `POKEPILOT_AUTH_REQUIRED=true` and
   `POKEPILOT_SHARED_STORE_REQUIRED=true` for production.
+- Confirm `GOOGLE_OAUTH_REDIRECT_URI` in `wrangler.jsonc` is the production
+  callback, not the QA version URL callback.
 - Use a production-specific `POKEPILOT_REDIS_PREFIX`. Change it intentionally
   when invalidating all operational cache and rate-limit state.
 
@@ -42,7 +44,6 @@ Set these in Cloudflare Worker secrets, never with a `VITE_` prefix or in Git:
 | `POKEPILOT_SESSION_SECRET` | Account session HMACs and account usage identifiers |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google sign-in client |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google sign-in authorization-code exchange |
-| `GOOGLE_OAUTH_REDIRECT_URI` | Exact Google OAuth callback URI |
 
 Keep the OpenAI project budget and alerting policy configured independently of
 this repository.

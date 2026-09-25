@@ -43,10 +43,11 @@ The Node API adapter in `server/` is still used by the Vite development server.
    - `POKEPILOT_SESSION_SECRET`
    - `GOOGLE_OAUTH_CLIENT_ID`
    - `GOOGLE_OAUTH_CLIENT_SECRET`
-   - `GOOGLE_OAUTH_REDIRECT_URI`
 4. Keep the Worker variables in `wrangler.jsonc` aligned with the intended
-   environment. Production currently requires account authentication and the
-   shared Redis store.
+   environment. Production requires account authentication, the shared Redis
+   store, and `GOOGLE_OAUTH_REDIRECT_URI` set to the production callback. QA
+   version uploads use a different callback, so keep both URLs explicit in
+   their respective Wrangler configs.
 5. In Google Cloud, register the exact production redirect URI:
 
    ```text
