@@ -163,7 +163,7 @@ export function getFactProfileValues(
   return null;
 }
 
-export function getUnconditionalItemSpeedMultiplier(
+function getUnconditionalItemSpeedMultiplier(
   set: CopilotAnalysisRequest["sets"][number],
   request: CopilotAnalysisRequest,
 ) {

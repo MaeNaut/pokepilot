@@ -5,6 +5,7 @@ import {
   useState,
 } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
+import { filterEditorLegalMoves, getEditorLegalMoveIds } from "../utils/editorMoveLegality";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronDown,
@@ -18,7 +19,6 @@ import {
 import { normalizeShowdownId } from "../api/showdownIds";
 import {
   getLegalAbilities,
-  getLegalMoves,
   isExactPokemonFormLegal,
   type ShowdownLegalitySnapshot,
 } from "../api/showdownLegality";
@@ -310,27 +310,10 @@ export function CalculatorPokemonEditor({
 
     return legal.length > 0 ? legal : options;
   }, [legalAbilityIds, member?.abilities]);
-  const legalMoveIds = useMemo(() => {
-    const activeLegalMoveIds = getLegalMoves(
-      showdownLegality,
-      member?.id ?? "",
-      speciesKey,
-    );
-    const preMegaLegalMoveIds =
-      activeFormKind === "mega" && preMegaPokemonId
-        ? getLegalMoves(showdownLegality, preMegaPokemonId, speciesKey)
-        : null;
-
-    if (!activeLegalMoveIds) {
-      return preMegaLegalMoveIds;
-    }
-
-    if (!preMegaLegalMoveIds) {
-      return activeLegalMoveIds;
-    }
-
-    return new Set([...activeLegalMoveIds, ...preMegaLegalMoveIds]);
-  }, [
+  const legalMoveIds = useMemo(() => getEditorLegalMoveIds(
+    showdownLegality, member?.id ?? "", speciesKey,
+    activeFormKind === "mega" ? preMegaPokemonId ?? undefined : undefined,
+  ), [
     activeFormKind,
     member?.id,
     preMegaPokemonId,
@@ -359,11 +342,7 @@ export function CalculatorPokemonEditor({
       return options;
     }
 
-    const legal = options.filter(
-      (move) =>
-        legalMoveIds.has(normalizeShowdownId(move.id)) ||
-        legalMoveIds.has(normalizeShowdownId(move.name)),
-    );
+    const legal = filterEditorLegalMoves(options, legalMoveIds);
 
     return legal.length > 0 ? legal : options;
   }, [activeFormKind, legalMoveIds, member?.moves, preMegaMoves]);

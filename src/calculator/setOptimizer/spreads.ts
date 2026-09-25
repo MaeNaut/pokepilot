@@ -44,7 +44,7 @@ export function getStatPointChanges(
   }, {} as StatBlock);
 }
 
-export function getOppositeOffenseStat(stat: StatKey): StatKey | null {
+function getOppositeOffenseStat(stat: StatKey): StatKey | null {
   if (stat === "attack") return "specialAttack";
   if (stat === "specialAttack") return "attack";
   return null;
@@ -188,7 +188,7 @@ export function createSeed(
   };
 }
 
-export function getTargetPointTotal(targets: Partial<StatBlock>) {
+function getTargetPointTotal(targets: Partial<StatBlock>) {
   return statKeys.reduce((total, stat) => total + (targets[stat] ?? 0), 0);
 }
 

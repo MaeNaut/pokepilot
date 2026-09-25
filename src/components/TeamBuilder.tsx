@@ -1,5 +1,7 @@
 ﻿import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
+import { filterEditorLegalMoves, getEditorLegalMoveIds } from "../utils/editorMoveLegality";
+import { getLegalMoves } from "../api/showdownLegality";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -15,7 +17,6 @@ import {
   getPokemonCandidateAbilities,
   type ShowdownLegalitySnapshot,
   getLegalAbilities,
-  getLegalMoves,
   isExactPokemonFormLegal,
   isPokemonLegal,
   isItemLegal,
@@ -409,26 +410,10 @@ export function TeamBuilder({
   const evs = evsBySlot[selectedSlot] ?? defaultEvs;
   const evTotal = statKeys.reduce((total, stat) => total + evs[stat], 0);
   const preMegaPokemonId = activeFormKind === "mega" ? preMegaPokemonBySlot[selectedSlot] : "";
-  const legalMoveIds = useMemo(() => {
-    const activeLegalMoveIds = getLegalMoves(
-      showdownLegality ?? null,
-      activePokemonId,
-      activeSpeciesKey,
-    );
-    const preMegaLegalMoveIds = preMegaPokemonId
-      ? getLegalMoves(showdownLegality ?? null, preMegaPokemonId, activeSpeciesKey)
-      : null;
-
-    if (!activeLegalMoveIds) {
-      return preMegaLegalMoveIds;
-    }
-
-    if (!preMegaLegalMoveIds) {
-      return activeLegalMoveIds;
-    }
-
-    return new Set([...activeLegalMoveIds, ...preMegaLegalMoveIds]);
-  }, [activePokemonId, activeSpeciesKey, preMegaPokemonId, showdownLegality]);
+  const legalMoveIds = useMemo(
+    () => getEditorLegalMoveIds(showdownLegality ?? null, activePokemonId, activeSpeciesKey, preMegaPokemonId),
+    [activePokemonId, activeSpeciesKey, preMegaPokemonId, showdownLegality],
+  );
   const preMegaMoves = useMemo(
     () => (preMegaPokemonId ? (preMegaMovesByPokemonId[preMegaPokemonId] ?? []) : []),
     [preMegaMovesByPokemonId, preMegaPokemonId],
@@ -459,15 +444,7 @@ export function TeamBuilder({
     return activeMember.moves ?? [];
   }, [activeFormKind, activeMember, preMegaMoves]);
   const moves = useMemo(() => {
-    const legalMoves =
-      legalMoveIds && availableMoves.length > 0
-        ? availableMoves.filter((move) => {
-            const moveId = normalizeShowdownId(move.id);
-            const moveName = normalizeShowdownId(move.name);
-
-            return legalMoveIds.has(moveId) || legalMoveIds.has(moveName);
-          })
-        : availableMoves;
+    const legalMoves = filterEditorLegalMoves(availableMoves, legalMoveIds);
 
     return legalMoves.length ? legalMoves : fallbackMoves(activeMember?.types ?? []);
   }, [activeMember?.types, availableMoves, legalMoveIds]);

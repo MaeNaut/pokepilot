@@ -30,6 +30,14 @@ with UTC dates, summary totals, caveats, and sorted aggregate rows. The current
 day is incomplete. An empty report means no recorded observations, not verified
 zero traffic. Historical data before activation cannot be reconstructed.
 
+The report includes personal-key completions (`personal-low-*` and
+`personal-medium-*`) in completion/cache counts. The existing
+`estimatedSuccessfulCallCostUsd` remains the combined estimate;
+`estimatedSiteCallCostUsd` and `estimatedPersonalCallCostUsd` separate funding
+sources. These are additive report fields, not a D1 schema change. Legacy plain
+cache statuses identify site-funded results, but do not identify historical
+reasoning effort; do not assume they all used the current default effort.
+
 For future Codex reviews: run the 7-day and 30-day reports, separate account API
 traffic from analysis traffic, group rows by prompt_version/model/scope, compare
 5xx and 429 counts, cache hit/shared proportions, mean duration and latency

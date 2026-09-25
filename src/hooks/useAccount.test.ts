@@ -3,6 +3,7 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deferred, renderHook } from "../test/renderHook";
 import { useAccount } from "./useAccount";
+import { readPersonalApiKeyStatus } from "../api/personalApiKey";
 import { deleteAccount, logoutAccount, readAccount, type AccountProfile } from "../api/accountAuth";
 
 vi.mock("../api/accountAuth", () => ({
@@ -13,9 +14,11 @@ vi.mock("../api/accountAuth", () => ({
   deleteAccount: vi.fn(),
 }));
 
+vi.mock("../api/personalApiKey", () => ({ readPersonalApiKeyStatus: vi.fn(), removePersonalApiKey: vi.fn(), savePersonalApiKey: vi.fn() }));
 const cleanups: Array<() => Promise<void>> = [];
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(readPersonalApiKeyStatus).mockResolvedValue(false);
   vi.mocked(readAccount).mockResolvedValue({ id: "a" });
   vi.mocked(logoutAccount).mockResolvedValue(undefined);
   vi.mocked(deleteAccount).mockResolvedValue(undefined);

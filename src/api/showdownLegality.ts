@@ -47,7 +47,7 @@ function isRegulationMcFormat(formatId: string) {
   );
 }
 
-export function getShowdownLookupKeys(value: string) {
+function getShowdownLookupKeys(value: string) {
   return [
     ...new Set(
       getPokemonLookupAliases(value).map(normalizeShowdownId).filter(Boolean),

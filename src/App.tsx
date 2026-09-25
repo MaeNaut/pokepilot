@@ -35,6 +35,9 @@ import {
   canAddBenchPokemon,
 } from "./data/teamLimits";
 import { useTeamBuildState } from "./hooks/useTeamBuildState";
+import { useTeamDraft } from "./hooks/useTeamDraft";
+import { useSavedTeamShowdown } from "./hooks/useSavedTeamShowdown";
+import { useTeamWorkspaceRestore } from "./hooks/useTeamWorkspaceRestore";
 import { useBuilderData } from "./hooks/useBuilderData";
 import { useDismissOnOutsidePointer } from "./hooks/useDismissOnOutsidePointer";
 import { useLongPressReorder } from "./hooks/useLongPressReorder";
@@ -56,25 +59,19 @@ import {
 import type { CopilotSetOptimizationCandidateSnapshot } from "./utils/copilotContracts";
 import { resolveOptimizationCandidatePatch } from "./utils/optimizationCandidateApplication";
 import { createTeamAnalysisContext } from "./utils/teamAnalysisContext";
-import {
-  formatShowdownSlot,
-  formatShowdownTeam,
-} from "./utils/showdownText";
+import { formatShowdownSlot } from "./utils/showdownText";
 import {
   buildImportedShowdownSnapshot,
   normalizeImportedEvs,
+  type ImportedShowdownSnapshot,
 } from "./utils/showdownImport";
 import {
   clearLastActiveTeamId,
   createEmptyBuildState,
-  createSavedBenchPokemon,
   createSavedSlot,
   createSavedTeamId,
-  getLastActiveTeamId,
-  serializeTeamSnapshot,
   storeLastActiveTeamId,
   type SavedTeamSummary,
-  type TeamSnapshot,
 } from "./utils/teamStorage";
 import type { TeamMember, TeamSlot } from "./types";
 import { useLocalization } from "./i18n/useLocalization";
@@ -124,8 +121,6 @@ type EditorPokemonSelectionOptions = Omit<
   PokemonSelectionOptions,
   "validateRecommendation"
 >;
-
-const localizedUntitledTeamNames = new Set(["Untitled Team", "이름 없는 팀"]);
 
 function mergePool(nextMembers: TeamMember[], currentPool: TeamMember[]) {
   const merged = [...nextMembers, ...currentPool];
@@ -179,11 +174,17 @@ function App() {
     retryItemIndex,
     retryShowdownLegality,
   } = useBuilderData();
-  const [teamName, setTeamName] = useState(() => t("team.untitled"));
-  const [teamNameDraft, setTeamNameDraft] = useState(() => t("team.untitled"));
   const savedTeamLibrary = useSavedTeams(accountStorageId);
   const savedTeams = savedTeamLibrary.teams;
   const [activeSavedTeamId, setActiveSavedTeamId] = useState<string | null>(null);
+  const {
+    teamName, setTeamName, teamNameDraft, setTeamNameDraft, commitTeamName,
+    getCurrentTeamSnapshot, setCommittedSnapshot, renameCommittedSnapshot,
+    markCurrentTeamCommitted, hasUnsavedTeamChanges,
+  } = useTeamDraft({
+    team, bench, buildState: teamBuildState.getBuildStateSnapshot(), battleFormat,
+    activeSavedTeamId, untitledName: t("team.untitled"),
+  });
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
   const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
@@ -195,9 +196,6 @@ function App() {
   const [renamingTeamId, setRenamingTeamId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [pendingDeleteTeamId, setPendingDeleteTeamId] = useState<string | null>(null);
-  const [showdownTeamId, setShowdownTeamId] = useState<string | null>(null);
-  const [teamShowdownDraft, setTeamShowdownDraft] = useState("");
-  const [isImportingSavedTeam, setIsImportingSavedTeam] = useState(false);
   const [pendingTeamAction, setPendingTeamAction] = useState<PendingTeamAction | null>(
     null,
   );
@@ -218,9 +216,16 @@ function App() {
   const saveFeedbackTimeoutRef = useRef<number | null>(null);
   const pokemonSelectionRequestRef = useRef(0);
   const teamLoadRequestRef = useRef(0);
-  const committedSnapshotRef = useRef<string | null>(null);
-  const restoredStorageScopeRef = useRef<string | null>(null);
   const previousAccountStorageIdRef = useRef(accountStorageId);
+  const {
+    showdownTeamId, teamShowdownDraft, setTeamShowdownDraft, isImportingSavedTeam,
+    closeSavedTeamShowdown, toggleSavedTeamShowdown, handleExportSavedTeam, commitImportSavedTeam,
+  } = useSavedTeamShowdown({
+    accountId: accountStorageId, pool: customPool, pokemonIndex,
+    library: savedTeamLibrary, t, onMessage: setTeamStorageMessage,
+    getWorkspaceRevision: () => teamLoadRequestRef.current,
+    onImported: applySavedTeamImport,
+  });
   const analysisBuildState = teamBuildState.getBuildStateSnapshot();
   const pokemonSelectionContextFingerprint = JSON.stringify({
     activeSavedTeamId,
@@ -270,54 +275,16 @@ function App() {
   const closeTeamManager = useCallback(() => {
     setIsTeamManagerOpen(false);
     setPendingDeleteTeamId(null);
-    setShowdownTeamId(null);
-    setTeamShowdownDraft("");
+    closeSavedTeamShowdown();
     setRenamingTeamId(null);
     setRenameDraft("");
-  }, []);
+  }, [closeSavedTeamShowdown]);
 
   const closeNewTeamTools = useCallback(() => {
     setIsNewTeamMenuOpen(false);
     setIsNewTeamImportOpen(false);
     setNewTeamImportError(null);
   }, []);
-
-  function getCurrentTeamSnapshot(name = teamNameDraft): TeamSnapshot {
-    return {
-      name: name.trim() || t("team.untitled"),
-      battleFormat,
-      slots: team.map(createSavedSlot),
-      bench: bench.map(createSavedBenchPokemon),
-      buildState: teamBuildState.getBuildStateSnapshot(),
-    };
-  }
-
-  function markCurrentTeamCommitted(name = teamNameDraft) {
-    committedSnapshotRef.current = serializeTeamSnapshot(getCurrentTeamSnapshot(name));
-  }
-
-  function hasUnsavedTeamChanges() {
-    if (!committedSnapshotRef.current) {
-      return false;
-    }
-
-    return (
-      serializeTeamSnapshot(getCurrentTeamSnapshot()) !== committedSnapshotRef.current
-    );
-  }
-
-  function renameCommittedSnapshot(nextName: string) {
-    if (!committedSnapshotRef.current) {
-      return;
-    }
-
-    const committedSnapshot = JSON.parse(committedSnapshotRef.current) as TeamSnapshot;
-
-    committedSnapshotRef.current = serializeTeamSnapshot({
-      ...committedSnapshot,
-      name: nextName,
-    });
-  }
 
   useEffect(() => {
     const previousAccountId = previousAccountStorageIdRef.current;
@@ -341,60 +308,15 @@ function App() {
     setSearchError(null);
     setSearchNotice(null);
     setFailedPokemonSelection(null);
-    committedSnapshotRef.current = null;
-    restoredStorageScopeRef.current = null;
-  }, [accountStorageId, t, teamBuildState]);
+    setCommittedSnapshot(null);
+  }, [accountStorageId, t, teamBuildState, setCommittedSnapshot, setTeamName, setTeamNameDraft]);
 
-  useEffect(() => {
-    if (
-      (account.enabled && account.status === "loading") ||
-      !savedTeamLibrary.isHydrated
-    ) {
-      return;
-    }
-
-    const storageScope = accountStorageId ?? "local";
-    if (restoredStorageScopeRef.current === storageScope) return;
-    restoredStorageScopeRef.current = storageScope;
-
-    const lastActiveTeamId = getLastActiveTeamId();
-    const lastActiveTeam = savedTeams.find(
-      (savedTeam) => savedTeam.id === lastActiveTeamId,
-    ) ?? savedTeams[0];
-
-    if (lastActiveTeam) {
-      void loadSavedTeam(lastActiveTeam);
-    }
-    return () => {
-      teamLoadRequestRef.current += 1;
-    };
-    // Restore once for the local workspace or after each account sync completes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    account.enabled,
-    account.status,
-    accountStorageId,
-    savedTeamLibrary.isHydrated,
-    savedTeams,
-  ]);
-
-  useEffect(() => {
-    if (
-      activeSavedTeamId ||
-      !localizedUntitledTeamNames.has(teamName) ||
-      !localizedUntitledTeamNames.has(teamNameDraft)
-    ) {
-      return;
-    }
-
-    const localizedName = t("team.untitled");
-
-    if (localizedName !== teamName) {
-      setTeamName(localizedName);
-      setTeamNameDraft(localizedName);
-      renameCommittedSnapshot(localizedName);
-    }
-  }, [activeSavedTeamId, locale, t, teamName, teamNameDraft]);
+  useTeamWorkspaceRestore({
+    scope: accountStorageId ?? "local",
+    ready: !(account.enabled && account.status === "loading") && savedTeamLibrary.isHydrated,
+    teams: savedTeams,
+    restore: loadSavedTeam,
+  });
 
   useEffect(
     () => () => {
@@ -578,15 +500,6 @@ function App() {
     ]);
 
     return true;
-  }
-
-  function commitTeamName() {
-    const nextName = teamNameDraft.trim() || t("team.untitled");
-
-    setTeamName(nextName);
-    setTeamNameDraft(nextName);
-
-    return nextName;
   }
 
   function toggleTeamManager() {
@@ -971,7 +884,7 @@ function App() {
       closeTeamManager();
       closeNewTeamTools();
       setNewTeamShowdownDraft("");
-      committedSnapshotRef.current = serializeTeamSnapshot({
+      setCommittedSnapshot({
         name: importedTeamName,
         battleFormat,
         slots: emptyTeam.map(createSavedSlot),
@@ -1059,7 +972,7 @@ function App() {
     void loadSavedTeam(savedTeam);
   }
 
-  async function loadSavedTeam(savedTeam: SavedTeamSummary) {
+  async function loadSavedTeam(savedTeam: SavedTeamSummary, signal?: AbortSignal) {
     const requestId = ++teamLoadRequestRef.current;
     setIsImportingNewTeam(false);
     setTeamStorageMessage(null);
@@ -1068,7 +981,7 @@ function App() {
       hydrateSavedTeamMembers(savedTeam, customPool),
       hydrateSavedBench(savedTeam, customPool),
     ]);
-    if (requestId !== teamLoadRequestRef.current) return;
+    if (requestId !== teamLoadRequestRef.current || signal?.aborted) return false;
 
     setCustomPool((currentPool) =>
       mergePool(
@@ -1087,7 +1000,7 @@ function App() {
     teamBuildState.replaceBuildState(savedTeam.buildState);
     setActiveSavedTeamId(savedTeam.id);
     storeLastActiveTeamId(savedTeam.id);
-    committedSnapshotRef.current = serializeTeamSnapshot({
+    setCommittedSnapshot({
       name: savedTeam.name,
       battleFormat: savedTeam.battleFormat,
       slots: savedTeam.slots,
@@ -1095,6 +1008,7 @@ function App() {
       buildState: savedTeam.buildState ?? createEmptyBuildState(),
     });
     closeTeamManager();
+    return true;
   }
 
 
@@ -1121,7 +1035,7 @@ function App() {
     setIsTeamManagerOpen(false);
     closeNewTeamTools();
     setNewTeamShowdownDraft("");
-    committedSnapshotRef.current = serializeTeamSnapshot({
+    setCommittedSnapshot({
       name: untitledTeamName,
       battleFormat,
       slots: emptyTeam.map(createSavedSlot),
@@ -1233,8 +1147,7 @@ function App() {
 
   function startRenameTeam(savedTeam: SavedTeamSummary) {
     setPendingDeleteTeamId(null);
-    setShowdownTeamId(null);
-    setTeamShowdownDraft("");
+    closeSavedTeamShowdown();
     setRenamingTeamId(savedTeam.id);
     setRenameDraft(savedTeam.name);
     setTeamStorageMessage(null);
@@ -1287,112 +1200,40 @@ function App() {
 
     setTeamStorageMessage(t("team.duplicatedNamed", { name: savedTeam.name }));
     setPendingDeleteTeamId(null);
-    setShowdownTeamId(null);
-    setTeamShowdownDraft("");
+    closeSavedTeamShowdown();
     setRenamingTeamId(null);
   }
 
-  async function getSavedTeamShowdownText(savedTeam: SavedTeamSummary) {
-    const hydratedTeam = await hydrateSavedTeamMembers(savedTeam, customPool);
-
-    return formatShowdownTeam(
-      hydratedTeam,
-      savedTeam.buildState ?? createEmptyBuildState(),
-    );
-  }
-
-  async function toggleSavedTeamShowdown(savedTeam: SavedTeamSummary) {
+  function handleToggleSavedTeamShowdown(savedTeam: SavedTeamSummary) {
     setPendingDeleteTeamId(null);
     setRenamingTeamId(null);
     setTeamStorageMessage(null);
-
-    if (showdownTeamId === savedTeam.id) {
-      setShowdownTeamId(null);
-      setTeamShowdownDraft("");
-      return;
-    }
-
-    const showdownText = await getSavedTeamShowdownText(savedTeam);
-    setTeamShowdownDraft(showdownText);
-    setShowdownTeamId(savedTeam.id);
+    return toggleSavedTeamShowdown(savedTeam);
   }
 
-  async function handleExportSavedTeam() {
-    try {
-      await navigator.clipboard.writeText(teamShowdownDraft);
-      setTeamStorageMessage(t("team.copiedShowdown"));
-    } catch {
-      setTeamStorageMessage(t("team.exportCopyFailed"));
-    }
-  }
-
-  function closeSavedTeamShowdown() {
-    setShowdownTeamId(null);
-    setTeamShowdownDraft("");
-    setIsImportingSavedTeam(false);
-  }
-
-  async function commitImportSavedTeam(savedTeam: SavedTeamSummary) {
-    const editorRequestId = teamLoadRequestRef.current;
-    setIsImportingSavedTeam(true);
-
-    try {
-      const importedSnapshot = await buildImportedShowdownSnapshot(
-        teamShowdownDraft,
-        {
-          pokemonIndex,
-          emptyTeamMessage: t("team.pasteAtLeastOne"),
-        },
-      );
-      const now = new Date().toISOString();
-      const nextSavedTeam: SavedTeamSummary = {
-        ...savedTeam,
-        slots: importedSnapshot.members.map(createSavedSlot),
-        buildState: importedSnapshot.buildState,
-        updatedAt: now,
-      };
-      savedTeamLibrary.update(savedTeam.id, (current) => ({
-        ...current,
-        slots: nextSavedTeam.slots,
-        buildState: nextSavedTeam.buildState,
-        updatedAt: now,
-      }));
-
-      setCustomPool((currentPool) =>
-        mergePool(
-          importedSnapshot.members.filter(
-            (member): member is TeamMember => Boolean(member),
-          ),
-          currentPool,
-        ),
-      );
-
-      if (savedTeam.id === activeSavedTeamId && editorRequestId === teamLoadRequestRef.current) {
-        setTeam(importedSnapshot.members);
-        teamBuildState.replaceBuildState(importedSnapshot.buildState);
-        committedSnapshotRef.current = serializeTeamSnapshot({
-          name: savedTeam.name,
-          battleFormat: savedTeam.battleFormat,
-          slots: nextSavedTeam.slots,
-          bench: nextSavedTeam.bench,
-          buildState: importedSnapshot.buildState,
-        });
-      }
-
-      setTeamStorageMessage(t("team.importedInto", { name: savedTeam.name }));
-      closeSavedTeamShowdown();
-    } catch (error) {
-      setTeamStorageMessage(
-        error instanceof Error ? error.message : t("toolbar.importFailed"),
-      );
-      setIsImportingSavedTeam(false);
-    }
+  function applySavedTeamImport(
+    savedTeam: SavedTeamSummary,
+    snapshot: ImportedShowdownSnapshot,
+    editorRequestId: number,
+  ) {
+    setCustomPool((currentPool) => mergePool(
+      snapshot.members.filter((member): member is TeamMember => Boolean(member)), currentPool,
+    ));
+    if (savedTeam.id !== activeSavedTeamId || editorRequestId !== teamLoadRequestRef.current) return;
+    setTeam(snapshot.members);
+    teamBuildState.replaceBuildState(snapshot.buildState);
+    setCommittedSnapshot({
+      name: savedTeam.name,
+      battleFormat: savedTeam.battleFormat,
+      slots: savedTeam.slots,
+      bench: savedTeam.bench,
+      buildState: snapshot.buildState,
+    });
   }
 
   function toggleDeleteTeam(teamId: string) {
     setRenamingTeamId(null);
-    setShowdownTeamId(null);
-    setTeamShowdownDraft("");
+    closeSavedTeamShowdown();
     setPendingDeleteTeamId((currentId) =>
       currentId === teamId ? null : teamId,
     );
@@ -1406,7 +1247,7 @@ function App() {
     if (teamId === activeSavedTeamId) {
       setActiveSavedTeamId(null);
       clearLastActiveTeamId();
-      committedSnapshotRef.current = null;
+      setCommittedSnapshot(null);
     }
 
     setPendingDeleteTeamId(null);
@@ -1543,7 +1384,7 @@ function App() {
                       onStartRename={startRenameTeam}
                       onDuplicate={handleDuplicateTeam}
                       onToggleShowdown={(teamSummary) =>
-                        void toggleSavedTeamShowdown(teamSummary)
+                        void handleToggleSavedTeamShowdown(teamSummary)
                       }
                       onToggleDelete={toggleDeleteTeam}
                       onCancelDelete={() => setPendingDeleteTeamId(null)}

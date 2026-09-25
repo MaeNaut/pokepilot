@@ -2,17 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   isVisibleCopilotScope,
   usesHistoricalUsageData,
-  visibleCopilotScopes,
 } from "./copilotScopeAvailability";
 
 describe("PokePilot scope availability", () => {
   it("keeps threat analysis out of the public scope list", () => {
-    expect(visibleCopilotScopes).toEqual([
+    for (const scope of [
       "team",
       "pokemon",
       "recommendation",
       "optimization",
-    ]);
+    ] as const) {
+      expect(isVisibleCopilotScope(scope)).toBe(true);
+    }
     expect(isVisibleCopilotScope("matchup")).toBe(false);
   });
 

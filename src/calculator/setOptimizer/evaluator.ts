@@ -137,7 +137,7 @@ function applyStatStage(value: number, stage: number) {
   );
 }
 
-export function getSpeedState(
+function getSpeedState(
   context: CalculatorAnalysisContext,
   playerBuild: CalculatorBuildValues,
 ): SetOptimizationSpeedState | null {
