@@ -30,7 +30,7 @@ const POKEPILOT_AI_MAX_OUTPUT_TOKENS = 8_000;
 const POKEPILOT_AI_MEDIUM_MAX_OUTPUT_TOKENS = 16_000;
 
 export type LunaReasoningEffort = "none" | "low" | "medium" | "high";
-export type PokePilotEvaluationModel = "gpt-5.6-luna" | "gpt-5.6-terra" | "gpt-5.6-sol" | "gpt-6-luna";
+export type PokePilotEvaluationModel = "gpt-5.6-luna" | "gpt-5.6-terra" | "gpt-5.6-sol" | "gpt-6-luna" | "gpt-6-sol";
 export const POKEPILOT_AI_DEFAULT_REASONING_EFFORT = "low" as const;
 
 export type LunaAnalysisResult = {
@@ -71,13 +71,13 @@ type AnalyzeWithOpenAiLunaOptions = {
 
 function parseStructuredOutput(outputText: string) {
   if (!outputText.trim()) {
-    throw new Error("Luna returned no structured output.");
+    throw new Error("Model returned no structured output.");
   }
 
   try {
     return JSON.parse(outputText) as unknown;
   } catch {
-    throw new Error("Luna returned output that could not be parsed as JSON.");
+    throw new Error("Model returned output that could not be parsed as JSON.");
   }
 }
 
@@ -194,7 +194,7 @@ export async function analyzeWithOpenAiLuna(
     output = parseStructuredOutput(response.output_text);
   } catch (error) {
     throw new LunaStructuredOutputError(
-      error instanceof Error ? error.message : "Luna returned invalid output.",
+      error instanceof Error ? error.message : "Model returned invalid output.",
       usage,
       responseMetadata,
     );

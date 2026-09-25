@@ -33,6 +33,7 @@ type UseCopilotAnalysisSessionOptions = {
   battleFormat: BattleFormat;
   failedMessage: string;
   reasoningEffort?: "low" | "medium";
+  modelId?: "gpt-6-luna" | "gpt-6-sol";
   usingPersonalApiKey?: boolean;
 };
 
@@ -42,8 +43,9 @@ function getAnalysisContextKey(
   teamKey: string,
   scope: CopilotAnalysisScope,
   reasoningEffort: "low" | "medium",
+  modelId: "gpt-6-luna" | "gpt-6-sol",
 ) {
-  return `${teamKey}:${scope}:${reasoningEffort}`;
+  return `${teamKey}:${scope}:${modelId}:${reasoningEffort}`;
 }
 
 export function useCopilotAnalysisSession({
@@ -54,6 +56,7 @@ export function useCopilotAnalysisSession({
   battleFormat,
   failedMessage,
   reasoningEffort = "low",
+  modelId = "gpt-6-luna",
   usingPersonalApiKey = false,
 }: UseCopilotAnalysisSessionOptions) {
   const [analysisByContext, setAnalysisByContext] = useState<
@@ -82,6 +85,7 @@ export function useCopilotAnalysisSession({
     historyTeamKey,
     request.scope,
     reasoningEffort,
+    modelId,
   );
   const analysisState =
     analysisByContext[analysisContextKey] ?? idleAnalysisState;
@@ -127,6 +131,7 @@ export function useCopilotAnalysisSession({
       locale,
       requestFingerprint,
       reasoningEffort,
+      modelId,
     );
 
     if (!matchingEntry) {
@@ -145,6 +150,7 @@ export function useCopilotAnalysisSession({
     request.scope,
     requestFingerprint,
     reasoningEffort,
+    modelId,
   ]);
 
   async function analyze(submittedRequest: CopilotAnalysisRequest = request) {
@@ -162,9 +168,9 @@ export function useCopilotAnalysisSession({
 
     try {
       const { response: nextResponse, usedFallback, fallbackReason } =
-        await executeCopilotAnalysis(submittedRequest, locale, (seconds) => {
+        await executeCopilotAnalysis(submittedRequest, (seconds) => {
           if (isCurrentAccount()) setCooldownUntil(Date.now() + seconds * 1_000);
-        }, reasoningEffort, usingPersonalApiKey);
+        }, reasoningEffort, modelId);
 
       if (!isCurrentAccount()) return;
       const historyEntry = createCopilotHistoryEntry({
@@ -173,6 +179,7 @@ export function useCopilotAnalysisSession({
         scope: submittedRequest.scope,
         battleFormat,
         reasoningEffort,
+        modelId,
         requestFingerprint: submittedFingerprint,
         response: nextResponse,
         usedFallback,
@@ -191,22 +198,24 @@ export function useCopilotAnalysisSession({
         [analysisContextKey]: {
           ...current[analysisContextKey],
           status: "error",
+          errorCode: error instanceof CopilotApiError ? error.code : undefined,
+          providerAttempted: error instanceof CopilotApiError ? error.providerAttempted : undefined,
           error: error instanceof CopilotApiError && error.code === "AUTH_REQUIRED"
-            ? (locale === "ko" ? "로그인이 만료되었습니다. 다시 로그인해 주세요." : "Your session expired. Please sign in again.")
+            ? (locale === "ko" ? "로그인이 만료되었습니다. 다시 로그인하시기 바랍니다." : "Your session expired. Please sign in again.")
             : error instanceof CopilotApiError && error.code === "AUTH_UNAVAILABLE"
-              ? (locale === "ko" ? "인증 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요." : "Authentication is unavailable. Please try again shortly.")
+              ? (locale === "ko" ? "인증 서비스를 이용할 수 없습니다. 잠시 후 다시 시도하시기 바랍니다." : "Authentication is unavailable. Please try again shortly.")
               : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_INVALID"
-                ? (locale === "ko" ? "개인 API 키가 유효하지 않습니다. 계정 설정에서 확인해 주세요." : "Your personal API key is invalid. Check it in account settings.")
+                ? (locale === "ko" ? "개인 API 키가 유효하지 않습니다. 계정 설정에서 확인하시기 바랍니다." : "Your personal API key is invalid. Check it in account settings.")
                 : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_REQUIRED"
-                  ? (locale === "ko" ? "중간 추론에는 개인 API 키가 필요합니다. 계정 설정에서 등록해 주세요." : "Medium reasoning requires a personal API key. Add one in account settings.")
+                  ? (locale === "ko" ? "중간 추론에는 개인 API 키가 필요합니다. 계정 설정에서 등록할 수 있습니다." : "Medium reasoning requires a personal API key. Add one in account settings.")
               : error instanceof Error ? error.message : failedMessage,
         },
       }));
     }
   }
 
-  function selectHistory(entry: CopilotHistoryEntry, displayEffort = entry.reasoningEffort ?? "low") {
-    const entryContextKey = getAnalysisContextKey(historyTeamKey, entry.scope, displayEffort);
+  function selectHistory(entry: CopilotHistoryEntry, displayEffort = entry.reasoningEffort ?? "low", displayModel = entry.modelId ?? "gpt-6-luna") {
+    const entryContextKey = getAnalysisContextKey(historyTeamKey, entry.scope, displayEffort, displayModel);
 
     setAnalysisByContext((current) => ({
       ...current,

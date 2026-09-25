@@ -56,7 +56,9 @@ const sources = args.filter((arg) => !arg.startsWith("--"));
 const prepareOnly = args.includes("--prepare-only");
 const useFrozenInputs = args.includes("--frozen-inputs");
 const reuseDirectory = args.find((arg) => arg.startsWith("--reuse-results="))?.slice("--reuse-results=".length);
-const configurations: Configuration[] = args.includes("--luna6-low-medium")
+const configurations: Configuration[] = args.includes("--sol6-low")
+  ? [{ modelId: "gpt-6-sol", effort: "low" }]
+  : args.includes("--luna6-low-medium")
   ? [
       { modelId: "gpt-6-luna", effort: "low" },
       { modelId: "gpt-6-luna", effort: "medium" },

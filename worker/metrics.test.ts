@@ -44,6 +44,22 @@ describe("private operational aggregates", () => {
     expect(values).not.toContain("private-fingerprint");
     expect(values.slice(-5)).toEqual([100,20,10,5,0.01]);
   });
+  it("attributes Sol usage to Sol rather than the Luna default", () => {
+    const values = metricValues("/api/pokepilot/analyze", 200, 50, { ...event, modelId: "gpt-6-sol" });
+    expect(values[5]).toBe("gpt-6-sol");
+  });
+  it("counts tokens and cost when a paid model response cannot be displayed", () => {
+    const failed: PokePilotOperationalEvent = {
+      type: "analysis-failure", scope: "team", billingSource: "personal",
+      reasoningEffort: "medium", requestKey: "private-fingerprint", safeguardMode: "ai-fresh",
+      usage: { inputTokens: 100, outputTokens: 20, cachedInputTokens: 10,
+        cacheWriteTokens: 5, reasoningTokens: 2, totalTokens: 120, costUsd: 0.01 },
+    };
+    const values = metricValues("/api/pokepilot/analyze", 502, 50, failed);
+    expect(values[4]).toBe("personal-medium-failed");
+    expect(values.slice(-5)).toEqual([100, 20, 10, 5, 0.01]);
+    expect(values).not.toContain("private-fingerprint");
+  });
   it.each(["hit","shared"] as const)("does not double count %s token usage", (cacheStatus) => {
     expect(metricValues("/api/pokepilot/analyze",200,20,{ ...event,cacheStatus }).slice(-5)).toEqual([0,0,0,0,0]);
   });

@@ -216,6 +216,14 @@ export async function handleNodePokePilotApi(
 
   try {
     const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY;
+    const selectedModel = getFirstHeader(request.headers["x-pokepilot-model"]) ?? "gpt-6-luna";
+    const selectedEffort = getFirstHeader(request.headers["x-pokepilot-reasoning-effort"]) ?? "low";
+    if ((selectedModel !== "gpt-6-luna" && selectedModel !== "gpt-6-sol") ||
+      (selectedEffort !== "low" && selectedEffort !== "medium") ||
+      (selectedModel === "gpt-6-sol" && selectedEffort !== "low")) {
+      sendJson(response, 400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid model selection.", providerAttempted: false } });
+      return;
+    }
     const clientSecret = resolvePokePilotClientSecret(
       options.clientSecret,
       apiKey,
@@ -229,6 +237,8 @@ export async function handleNodePokePilotApi(
       options.operations ?? getDefaultPokePilotOperationsRuntime().operations;
     const result = await handlePokePilotAnalysis(body, {
       apiKey,
+      modelId: selectedModel,
+      reasoningEffort: selectedEffort,
       clock: options.clock,
       onOperationalEvent:
         options.onOperationalEvent ?? logOperationalEvent,

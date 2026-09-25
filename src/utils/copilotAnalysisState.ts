@@ -8,6 +8,8 @@ export type AnalysisState = {
   fingerprint?: string;
   response?: CopilotAnalysisResponse;
   error?: string;
+  errorCode?: string;
+  providerAttempted?: false;
   fallbackReason?: HostedAnalysisFailureReason;
   usedFallback?: boolean;
   historyEntryId?: string;

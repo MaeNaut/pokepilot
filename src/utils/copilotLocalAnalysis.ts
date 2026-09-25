@@ -673,8 +673,8 @@ function analyzeRecommendationRequest(
       id: candidate.pokemonId,
       title: isKorean
         ? candidate.target.mode === "replacement"
-          ? `${candidate.target.currentDisplayName} 대신 ${candidate.displayName}을 검토해 보세요.`
-          : `${candidate.displayName}을 검토해 보세요.`
+          ? `${candidate.target.currentDisplayName} 대신 ${candidate.displayName}을 검토하는 것이 좋습니다.`
+          : `${candidate.displayName}을 검토하는 것이 좋습니다.`
         : candidate.target.mode === "replacement"
           ? `Consider ${candidate.displayName} over ${candidate.target.currentDisplayName}.`
           : `Consider ${candidate.displayName}.`,
@@ -779,7 +779,7 @@ function analyzeOptimizationRequest(
       title: isKorean ? "계산기 설정 필요" : "Calculator setup required",
       paragraphs: [
         isKorean
-          ? "계산기에서 내 포켓몬, 상대 포켓몬과 공격 방향을 먼저 설정해 주세요."
+          ? "계산기에서 내 포켓몬, 상대 포켓몬과 공격 방향을 먼저 설정해야 합니다."
           : "Choose both Pokemon and the attack direction in the calculator first.",
       ],
       recommendations: [],
@@ -821,7 +821,7 @@ function analyzeOptimizationRequest(
       id: candidate.id,
       title: candidate.id === "set-current"
         ? (isKorean ? "현재 샘플을 유지해도 좋습니다." : "Keeping the current sample is a valid choice.")
-        : isKorean ? `${candidate.natureDisplayName} 성격의 샘플을 검토해 보세요.`
+        : isKorean ? `${candidate.natureDisplayName} 성격의 샘플을 검토하는 것이 좋습니다.`
           : `Consider the ${candidate.natureDisplayName} sample.`,
       reason: candidate.id === "set-current"
         ? formatCurrentSampleReason(candidate, locale)
@@ -917,7 +917,7 @@ function analyzeMatchupRequest(
       title: isKorean ? "대응 분석 설정이 필요합니다" : "Matchup setup required",
       paragraphs: [
         isKorean
-          ? "계산기에서 상대 포켓몬과 공격 기술을 설정한 뒤 다시 분석해 주세요."
+          ? "계산기에서 상대 포켓몬과 공격 기술을 설정한 뒤 다시 분석해야 합니다."
           : "Configure an opponent and attacking moves in the calculator before running this analysis.",
       ],
       recommendations: [],
@@ -962,8 +962,8 @@ function analyzeMatchupRequest(
           id: optimizationCandidate.id,
           title: isKorean
             ? addedMove
-              ? `${addedMove}을 포함한 ${optimizationCandidate.natureDisplayName} 조정 샘플을 검토해 보세요.`
-              : `${optimizationCandidate.natureDisplayName} 조정 샘플을 검토해 보세요.`
+              ? `${addedMove}을 포함한 ${optimizationCandidate.natureDisplayName} 조정 샘플을 검토하는 것이 좋습니다.`
+              : `${optimizationCandidate.natureDisplayName} 조정 샘플을 검토하는 것이 좋습니다.`
             : addedMove
               ? `Consider the ${optimizationCandidate.natureDisplayName} tuned sample with ${addedMove}.`
               : `Consider the ${optimizationCandidate.natureDisplayName} tuned sample.`,
@@ -975,7 +975,7 @@ function analyzeMatchupRequest(
         return {
           id: replacementCandidate.pokemonId,
           title: isKorean
-            ? `${replacementCandidate.target.currentDisplayName ?? "현재 포켓몬"} 대신 ${replacementCandidate.displayName}을 검토해 보세요.`
+            ? `${replacementCandidate.target.currentDisplayName ?? "현재 포켓몬"} 대신 ${replacementCandidate.displayName}을 검토하는 것이 좋습니다.`
             : `Consider ${replacementCandidate.displayName} over ${replacementCandidate.target.currentDisplayName ?? "the current Pokemon"}.`,
           reason: isKorean
             ? `${replacementCandidate.displayName}은(는) 대표 사용률 샘플 기준으로 ${threat.opponent.displayName}에게 ${replacementEvidence.member.responseTier === "answer" ? "확실한 대응" : "조건부 견제"}이 됩니다. 다만 이 계산은 해당 위협 하나만 검증하므로, 교체 대상의 기존 역할과 지원 연계를 함께 비교해야 합니다.`
@@ -999,7 +999,7 @@ function analyzeMatchupRequest(
       return {
         id: `use-slot-${response.slotIndex}-${threat.opponent.pokemonId}`,
         title: isKorean
-          ? `${threat.opponent.displayName} 상대로 ${response.displayName}을 중심으로 대응해 보세요.`
+          ? `${threat.opponent.displayName} 상대로 ${response.displayName}을 중심으로 대응할 수 있습니다.`
           : `Use ${response.displayName} as the main response to ${threat.opponent.displayName}.`,
         reason: describeMatchupMember(response, locale),
         priority: answer ? "high" as const : "medium" as const,
@@ -1075,7 +1075,7 @@ function analyzeMatchupRequest(
     recommendations.push({
       id: optimizationCandidate.id,
       title: isKorean
-        ? `${optimizationCandidate.natureDisplayName} 성격의 조정 샘플을 검토해 보세요.`
+        ? `${optimizationCandidate.natureDisplayName} 성격의 조정 샘플을 검토하는 것이 좋습니다.`
         : `Consider the ${optimizationCandidate.natureDisplayName} tuned sample.`,
       reason: formatLocalOptimizationReason(optimizationCandidate, locale),
       priority: recommendations.length === 0 ? "high" : "medium",
@@ -1086,7 +1086,7 @@ function analyzeMatchupRequest(
     recommendations.push({
       id: "review-roster-answer",
       title: isKorean
-        ? "팀 차원의 새로운 대응책을 검토해 보세요."
+        ? "팀 차원의 새로운 대응책을 검토하는 것이 좋습니다."
         : "Consider adding a roster-level answer.",
       reason: isKorean
         ? "현재 샘플과 선택된 기술만으로는 안정적인 대응이 확인되지 않았습니다. 이후 포켓몬 교체 후보를 검토할 가치가 있습니다."

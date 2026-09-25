@@ -17,4 +17,15 @@ describe("metrics reporting", () => {
       .toMatchObject({ completedAnalyses: 0, serverErrors: 1 });
     expect(summarizeMetrics([])).toMatchObject({ requests: 0, meanDurationMs: null });
   });
+  it("separates known failed-call cost from successful analysis cost", () => {
+    const rows = [
+      { route: "/api/pokepilot/analyze", status: 200, cache_status: "miss", requests: 1, estimated_cost_usd: 0.01 },
+      { route: "/api/pokepilot/analyze", status: 502, cache_status: "personal-medium-failed", requests: 1, estimated_cost_usd: 0.03 },
+    ];
+    expect(summarizeMetrics(rows)).toMatchObject({
+      completedAnalyses: 1, estimatedSuccessfulCallCostUsd: 0.01,
+      estimatedFailedCallCostUsd: 0.03, estimatedTotalCallCostUsd: 0.04,
+      estimatedSiteCallCostUsd: 0.01, estimatedPersonalCallCostUsd: 0.03,
+    });
+  });
 });

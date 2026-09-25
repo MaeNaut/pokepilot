@@ -32,7 +32,9 @@ zero traffic. Historical data before activation cannot be reconstructed.
 
 The report includes personal-key completions (`personal-low-*` and
 `personal-medium-*`) in completion/cache counts. The existing
-`estimatedSuccessfulCallCostUsd` remains the combined estimate;
+`estimatedSuccessfulCallCostUsd` counts successful calls only;
+`estimatedFailedCallCostUsd` counts failures with known usage and
+`estimatedTotalCallCostUsd` combines the two;
 `estimatedSiteCallCostUsd` and `estimatedPersonalCallCostUsd` separate funding
 sources. These are additive report fields, not a D1 schema change. Legacy plain
 cache statuses identify site-funded results, but do not identify historical
@@ -54,10 +56,11 @@ date window and sample counts. Do not infer unique users or response quality.
 - Auth failures, invalid requests, and upstream failures are counted by HTTP
   status. OAuth redirects are counted as redirects, not confirmed login success.
 - Scope is unknown when execution does not emit a validated operational event.
-- Tokens and costs are counted only for completed cache misses. Cache hits and
-  shared followers never count the producer's token usage again.
+- Tokens and costs are counted for completed cache misses and failed analyses
+  whose model usage is known. Cache hits and shared followers never count the
+  producer's token usage again.
 - Cost is the existing application's estimate, not a billing total. Failed
-  upstream attempts may cost money without reporting tokens here. Pricing changes
+  upstream attempts without usage data may still cost money. Pricing changes
   require maintaining the existing usage estimator; do not use this as an invoice.
 - No raw satisfaction feedback or automated semantic quality score is collected.
 - Aggregation bounds stored row growth, but each observed API call still incurs

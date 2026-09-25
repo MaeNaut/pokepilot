@@ -17,6 +17,7 @@ type HostedAnalysisEnvelope = {
     code?: unknown;
     message?: unknown;
     retryAfterSeconds?: unknown;
+    providerAttempted?: unknown;
   };
 };
 
@@ -30,18 +31,21 @@ export class CopilotApiError extends Error {
   readonly code: string;
   readonly retryAfterSeconds?: number;
   readonly status: number;
+  readonly providerAttempted?: false;
 
   constructor(
     message: string,
     code: string,
     status: number,
     retryAfterSeconds?: number,
+    providerAttempted?: false,
   ) {
     super(message);
     this.name = "CopilotApiError";
     this.code = code;
     this.status = status;
     this.retryAfterSeconds = retryAfterSeconds;
+    this.providerAttempted = providerAttempted;
   }
 }
 
@@ -61,6 +65,7 @@ export async function requestHostedCopilotAnalysis(
   request: CopilotAnalysisRequest,
   signal?: AbortSignal,
   reasoningEffort: "low" | "medium" = "low",
+  modelId: "gpt-6-luna" | "gpt-6-sol" = "gpt-6-luna",
 ): Promise<HostedCopilotAnalysisResult> {
   let response: Response;
 
@@ -70,6 +75,7 @@ export async function requestHostedCopilotAnalysis(
       headers: {
         "Content-Type": "application/json",
         "X-PokePilot-Reasoning-Effort": reasoningEffort,
+        "X-PokePilot-Model": modelId,
       },
       body: JSON.stringify(request),
       signal,
@@ -95,6 +101,7 @@ export async function requestHostedCopilotAnalysis(
       typeof envelope.error?.retryAfterSeconds === "number"
         ? Math.max(1, Math.ceil(envelope.error.retryAfterSeconds))
         : undefined,
+      envelope.error?.providerAttempted === false ? false : undefined,
     );
   }
 

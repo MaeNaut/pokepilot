@@ -3,6 +3,7 @@ import {
   POKEPILOT_API_MAX_BODY_BYTES,
   type PokePilotApiResponse,
   type PokePilotOperationalEvent,
+  type PokePilotHostedModel,
 } from "./pokepilotApi.js";
 import {
   resolvePokePilotClientSecret,
@@ -18,6 +19,7 @@ type WebPokePilotApiOptions = {
   authenticatedAccountId?: string;
   apiKey?: string;
   reasoningEffort?: "low" | "medium";
+  modelId?: PokePilotHostedModel;
   billingSource?: "site" | "personal";
   billingIdentity?: string;
   clientSecret?: string;
@@ -159,6 +161,7 @@ export async function handleWebPokePilotApi(
         error: {
           code: "METHOD_NOT_ALLOWED",
           message: "Only POST requests are supported.",
+          providerAttempted: false,
         },
       },
       { Allow: "POST" },
@@ -171,6 +174,7 @@ export async function handleWebPokePilotApi(
       error: {
         code: "INVALID_REQUEST",
         message: "Cross-origin analysis requests are not supported.",
+        providerAttempted: false,
       },
     });
   }
@@ -181,6 +185,7 @@ export async function handleWebPokePilotApi(
       error: {
         code: "INVALID_REQUEST",
         message: "Content-Type must be application/json.",
+        providerAttempted: false,
       },
     });
   }
@@ -198,6 +203,7 @@ export async function handleWebPokePilotApi(
         message: isTooLarge
           ? "Analysis request is too large."
           : "Request body must be valid JSON.",
+        providerAttempted: false,
       },
     });
   }
@@ -221,6 +227,7 @@ export async function handleWebPokePilotApi(
     const result = await handlePokePilotAnalysis(body, {
       apiKey,
       reasoningEffort: options.reasoningEffort,
+      modelId: options.modelId,
       billingSource: options.billingSource,
       billingIdentity: options.billingIdentity,
       clock: options.clock,
@@ -231,6 +238,9 @@ export async function handleWebPokePilotApi(
           "[PokePilot API] Hosted analysis failed.",
           summarizeUpstreamError(error),
         );
+      },
+      onQualityWarning: (warnings) => {
+        console.warn("[PokePilot API] Analysis quality warnings.", warnings);
       },
       operations,
       requester: options.authenticatedAccountId

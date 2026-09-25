@@ -48,7 +48,7 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
     if (!session) {
       return jsonResponse(401, {
         ok: false,
-        error: { code: "AUTH_REQUIRED", message: "AUTH_REQUIRED" },
+        error: { code: "AUTH_REQUIRED", message: "AUTH_REQUIRED", providerAttempted: false },
       });
     }
     authenticatedAccountId = await accountUsageId(session.account, env);
@@ -56,16 +56,21 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
     refreshCookie = session.refreshCookie;
   }
   const effort = request.headers.get("X-PokePilot-Reasoning-Effort") ?? "low";
+  const modelId = request.headers.get("X-PokePilot-Model") ?? "gpt-6-luna";
   if (effort !== "low" && effort !== "medium") {
-    return jsonResponse(400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid reasoning effort." } });
+    return jsonResponse(400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid reasoning effort.", providerAttempted: false } });
+  }
+  if ((modelId !== "gpt-6-luna" && modelId !== "gpt-6-sol") || (modelId === "gpt-6-sol" && effort !== "low")) {
+    return jsonResponse(400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid model selection.", providerAttempted: false } });
   }
   const personalKey = accountId ? await readPersonalApiKey(accountId, env) : null;
-  if (effort === "medium" && !personalKey) {
-    return jsonResponse(403, { ok: false, error: { code: "PERSONAL_KEY_REQUIRED", message: "A personal API key is required for medium reasoning." } });
+  if ((effort === "medium" || modelId === "gpt-6-sol") && !personalKey) {
+    return jsonResponse(403, { ok: false, error: { code: "PERSONAL_KEY_REQUIRED", message: "A personal API key is required for this model.", providerAttempted: false } });
   }
   const response = await handleWebPokePilotApi(request, {
     apiKey: personalKey ?? env.OPENAI_API_KEY,
     reasoningEffort: effort,
+    modelId,
     billingSource: personalKey ? "personal" : "site",
     billingIdentity: personalKey ? accountId : undefined,
     onOperationalEvent,

@@ -23,7 +23,7 @@ afterEach(() => {
 
 describe("hosted PokePilot client", () => {
   it("posts the request and marks validated analysis as hosted", async () => {
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn<typeof fetch>(async () =>
       new Response(
         JSON.stringify({
           ok: true,
@@ -51,6 +51,20 @@ describe("hosted PokePilot client", () => {
         body: JSON.stringify(request),
       }),
     );
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
+      "X-PokePilot-Model": "gpt-6-luna",
+      "X-PokePilot-Reasoning-Effort": "low",
+    });
+  });
+
+  it("sends Sol low as an explicit model selection", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true, analysis: modelOutput }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await requestHostedCopilotAnalysis(request, undefined, "low", "gpt-6-sol");
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
+      "X-PokePilot-Model": "gpt-6-sol",
+      "X-PokePilot-Reasoning-Effort": "low",
+    });
   });
 
   it("preserves a cooldown that begins after a successful analysis", async () => {
@@ -115,6 +129,7 @@ describe("hosted PokePilot client", () => {
             error: {
               code: "AI_NOT_CONFIGURED",
               message: "Hosted analysis is not configured.",
+              providerAttempted: false,
             },
           }),
           { status: 503 },
@@ -126,6 +141,7 @@ describe("hosted PokePilot client", () => {
       name: "CopilotApiError",
       code: "AI_NOT_CONFIGURED",
       status: 503,
+      providerAttempted: false,
     } satisfies Partial<CopilotApiError>);
   });
 

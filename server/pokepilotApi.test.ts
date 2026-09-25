@@ -4,7 +4,7 @@ import {
   type CopilotAnalysisRequest,
 } from "../src/utils/copilotAnalysis";
 import { createCopilotResponsibilityCounts } from "../src/utils/copilotResponsibilities";
-import type { LunaAnalysisResult } from "./openAiLuna";
+import { LunaStructuredOutputError, type LunaAnalysisResult } from "./openAiLuna";
 import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 
@@ -201,6 +201,12 @@ function createModelResult(output: unknown): LunaAnalysisResult {
 }
 
 describe("PokePilot server API", () => {
+  it("rejects Sol on the site key before any analysis", async () => {
+    const analyze = vi.fn();
+    const result = await handlePokePilotAnalysis(validRequest, { analyze, modelId: "gpt-6-sol" });
+    expect(result).toMatchObject({ status: 403, body: { ok: false, error: { code: "PERSONAL_KEY_REQUIRED", providerAttempted: false } } });
+    expect(analyze).not.toHaveBeenCalled();
+  });
   it("rejects malformed request contracts before calling the model", async () => {
     const analyze = vi.fn();
     const result = await handlePokePilotAnalysis(
@@ -211,7 +217,7 @@ describe("PokePilot server API", () => {
     expect(result.status).toBe(400);
     expect(result.body).toMatchObject({
       ok: false,
-      error: { code: "INVALID_REQUEST" },
+      error: { code: "INVALID_REQUEST", providerAttempted: false },
     });
     expect(analyze).not.toHaveBeenCalled();
   });
@@ -309,7 +315,7 @@ describe("PokePilot server API", () => {
     expect(result.body).toMatchObject({
       ok: true,
       analysis: modelOutput,
-      metadata: { qualityWarnings: ["service-degraded"] },
+      metadata: { cacheStatus: "miss" },
     });
     expect(onUpstreamError).toHaveBeenCalledOnce();
     expect(analyze).toHaveBeenCalledOnce();
@@ -335,7 +341,7 @@ describe("PokePilot server API", () => {
     expect(result.body).toMatchObject({
       ok: true,
       analysis: modelOutput,
-      metadata: { qualityWarnings: ["service-degraded"] },
+      metadata: { cacheStatus: "miss" },
     });
     expect(onUpstreamError).toHaveBeenCalledOnce();
     expect(cancelReservation).toHaveBeenCalledOnce();
@@ -359,7 +365,9 @@ describe("PokePilot server API", () => {
   });
 
   it("rejects a structured response for the wrong analysis scope", async () => {
+    const onOperationalEvent = vi.fn();
     const result = await handlePokePilotAnalysis(validRequest, {
+      onOperationalEvent,
       analyze: async () =>
         createModelResult({
           ...groundedModelOutput,
@@ -372,10 +380,30 @@ describe("PokePilot server API", () => {
       ok: false,
       error: { code: "AI_INVALID_RESPONSE" },
     });
+    expect(onOperationalEvent).toHaveBeenCalledWith(expect.objectContaining({
+      type: "analysis-failure", usage: expect.objectContaining({ totalTokens: 150 }),
+    }));
+  });
+
+  it("classifies unparseable model output and records its usage", async () => {
+    const onOperationalEvent = vi.fn();
+    const sample = createModelResult(null);
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze: async () => {
+        throw new LunaStructuredOutputError("Luna returned no structured output.", sample.usage, sample.responseMetadata);
+      },
+      onOperationalEvent,
+    });
+    expect(result.body).toMatchObject({ ok: false, error: { code: "AI_INVALID_RESPONSE" } });
+    expect(onOperationalEvent).toHaveBeenCalledWith(expect.objectContaining({
+      type: "analysis-failure", usage: expect.objectContaining({ costUsd: 0.00008 }),
+    }));
   });
 
   it("keeps Pokemon analysis when only its private fact audit is invalid", async () => {
+    const onQualityWarning = vi.fn();
     const result = await handlePokePilotAnalysis(pokemonRequest, {
+      onQualityWarning,
       analyze: async () =>
         createModelResult({
           ...groundedPokemonOutput,
@@ -397,8 +425,19 @@ describe("PokePilot server API", () => {
     expect(result.body).toMatchObject({
       ok: true,
       analysis: { scope: "pokemon" },
-      metadata: { qualityWarnings: ["grounding-incomplete"] },
+      metadata: { cacheStatus: "miss" },
     });
+    expect(onQualityWarning).toHaveBeenCalledWith(["grounding-incomplete"]);
+    expect(JSON.stringify(result.body)).not.toContain("qualityWarnings");
+  });
+
+  it("does not fail a completed analysis when warning logging fails", async () => {
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze: async () => createModelResult(modelOutput),
+      onQualityWarning: () => { throw new Error("log unavailable"); },
+    });
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ ok: true, analysis: modelOutput });
   });
 
   it("omits recommendation candidates that were not supplied by the client", async () => {
@@ -427,12 +466,7 @@ describe("PokePilot server API", () => {
       analysis: {
         recommendations: [{ id: "rotom-wash" }, { id: "gastrodon" }],
       },
-      metadata: {
-        qualityWarnings: [
-          "recommendations-adjusted",
-          "grounding-incomplete",
-        ],
-      },
+      metadata: { cacheStatus: "miss" },
     });
   });
 
@@ -445,7 +479,7 @@ describe("PokePilot server API", () => {
     expect(result.body).toMatchObject({
       ok: true,
       analysis: modelOutput,
-      metadata: { qualityWarnings: ["grounding-incomplete"] },
+      metadata: { cacheStatus: "miss" },
     });
   });
 
@@ -462,7 +496,7 @@ describe("PokePilot server API", () => {
     expect(result.body).toMatchObject({
       ok: true,
       analysis: modelOutput,
-      metadata: { qualityWarnings: ["grounding-incomplete"] },
+      metadata: { cacheStatus: "miss" },
     });
   });
 
@@ -507,7 +541,20 @@ describe("PokePilot server API", () => {
     });
   });
 
-  it("preserves quality warnings when a reviewed analysis is served from cache", async () => {
+  it("isolates Sol and Luna caches and reports the selected model", async () => {
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const operations = new InMemoryPokePilotOperations();
+    const options = { analyze, clock: () => 1_000, operations, requester: { clientId: "client-a", ipHash: "ip-a" }, billingSource: "personal" as const };
+    const luna = await handlePokePilotAnalysis(validRequest, { ...options, modelId: "gpt-6-luna" });
+    const sol = await handlePokePilotAnalysis(validRequest, { ...options, modelId: "gpt-6-sol" });
+    const solCached = await handlePokePilotAnalysis(validRequest, { ...options, modelId: "gpt-6-sol" });
+    expect(analyze).toHaveBeenCalledTimes(2);
+    expect(luna.body).toMatchObject({ ok: true, metadata: { model: "gpt-6-luna", cacheStatus: "miss" } });
+    expect(sol.body).toMatchObject({ ok: true, metadata: { model: "gpt-6-sol", cacheStatus: "miss" } });
+    expect(solCached.body).toMatchObject({ ok: true, metadata: { model: "gpt-6-sol", cacheStatus: "hit" } });
+  });
+
+  it("does not expose quality warnings when a reviewed analysis is served from cache", async () => {
     const analyze = vi.fn(async () => createModelResult(modelOutput));
     const operations = new InMemoryPokePilotOperations();
     const options = {
@@ -524,17 +571,17 @@ describe("PokePilot server API", () => {
       ok: true,
       metadata: {
         cacheStatus: "miss",
-        qualityWarnings: ["grounding-incomplete"],
       },
     });
     expect(second.body).toMatchObject({
       ok: true,
       metadata: {
         cacheStatus: "hit",
-        qualityWarnings: ["grounding-incomplete"],
       },
     });
     expect(analyze).toHaveBeenCalledOnce();
+    expect(JSON.stringify(first.body)).not.toContain("qualityWarnings");
+    expect(JSON.stringify(second.body)).not.toContain("qualityWarnings");
   });
 
   it("keeps team-scope cache identity stable when only the selected slot changes", async () => {

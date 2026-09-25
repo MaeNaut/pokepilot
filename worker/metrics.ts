@@ -29,18 +29,21 @@ function positive(value: number | undefined) {
 // from entering the aggregate even when operational events gain new properties.
 export function metricValues(route: string, status: number, elapsed: number, event?: PokePilotOperationalEvent, now = new Date()) {
   const analysis = event?.type === "analysis" ? event : undefined;
+  const failed = event?.type === "analysis-failure" ? event : undefined;
   const paid = analysis?.cacheStatus === "miss" ? analysis : undefined;
   const duration = Math.round(positive(elapsed));
   return [
     now.toISOString().slice(0, 10), route, status, event?.scope ?? "unknown",
-    analysis?.billingSource === "personal"
+    failed
+      ? failed.billingSource === "personal" ? `personal-${failed.reasoningEffort}-failed` : "failed"
+      : analysis?.billingSource === "personal"
       ? `personal-${analysis.reasoningEffort ?? "low"}-${analysis.cacheStatus}`
       : analysis?.cacheStatus ?? (event?.type === "cooldown" ? "cooldown" : "none"),
-    route === "/api/pokepilot/analyze" ? OPENAI_LUNA_MODEL_ID : "none",
+    route === "/api/pokepilot/analyze" ? analysis?.modelId ?? failed?.modelId ?? OPENAI_LUNA_MODEL_ID : "none",
     route === "/api/pokepilot/analyze" ? POKEPILOT_AI_PROMPT_VERSION : 0,
     latencyBucket(duration), duration,
-    positive(paid?.inputTokens), positive(paid?.outputTokens),
-    positive(paid?.cachedInputTokens), positive(paid?.cacheWriteTokens), positive(paid?.costUsd),
+    positive(failed?.usage.inputTokens ?? paid?.inputTokens), positive(failed?.usage.outputTokens ?? paid?.outputTokens),
+    positive(failed?.usage.cachedInputTokens ?? paid?.cachedInputTokens), positive(failed?.usage.cacheWriteTokens ?? paid?.cacheWriteTokens), positive(failed?.usage.costUsd ?? paid?.costUsd),
   ];
 }
 

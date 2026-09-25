@@ -7,11 +7,14 @@ import { getCopilotAnalysisCacheFingerprint } from "../src/utils/copilotRequestF
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract.js";
 import {
   analyzeWithOpenAiLuna,
+  LunaStructuredOutputError,
   OPENAI_LUNA_MODEL_ID,
   POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
   POKEPILOT_AI_PROMPT_VERSION,
   type LunaAnalysisResult,
   type LunaReasoningEffort,
+  type LunaUsage,
+  type PokePilotEvaluationModel,
 } from "./openAiLuna.js";
 import {
   createPokePilotAnalysisCacheKey,
@@ -31,6 +34,7 @@ import {
 } from "./pokepilotAnalysisValidation.js";
 
 export const POKEPILOT_API_MAX_BODY_BYTES = 256_000;
+export type PokePilotHostedModel = Extract<PokePilotEvaluationModel, "gpt-6-luna" | "gpt-6-sol">;
 
 export type PokePilotApiErrorCode =
   | "METHOD_NOT_ALLOWED"
@@ -42,7 +46,8 @@ export type PokePilotApiErrorCode =
   | "AI_RATE_LIMITED"
   | "AI_INVALID_RESPONSE"
   | "AI_UPSTREAM_ERROR"
-  | "PERSONAL_KEY_INVALID";
+  | "PERSONAL_KEY_INVALID"
+  | "PERSONAL_KEY_REQUIRED";
 
 export type PokePilotApiResponse =
   | {
@@ -50,10 +55,9 @@ export type PokePilotApiResponse =
       analysis: CopilotModelOutput;
       metadata: {
         cacheStatus: "hit" | "miss" | "shared";
-        model: typeof OPENAI_LUNA_MODEL_ID;
+        model: PokePilotHostedModel;
         promptVersion: number;
         retryAfterSeconds?: number;
-        qualityWarnings?: CopilotQualityWarningCode[];
       };
     }
   | {
@@ -62,6 +66,7 @@ export type PokePilotApiResponse =
         code: PokePilotApiErrorCode;
         message: string;
         retryAfterSeconds?: number;
+        providerAttempted?: false;
       };
     };
 
@@ -78,10 +83,12 @@ type HandlePokePilotAnalysisOptions = {
   analyze?: AnalyzeRequest;
   apiKey?: string;
   reasoningEffort?: Extract<LunaReasoningEffort, "low" | "medium">;
+  modelId?: PokePilotHostedModel;
   billingSource?: "site" | "personal";
   billingIdentity?: string;
   clock?: () => number;
   onUpstreamError?: (error: unknown) => void;
+  onQualityWarning?: (warnings: CopilotQualityWarningCode[]) => void;
   onOperationalEvent?: (event: PokePilotOperationalEvent) => void;
   operations?: PokePilotOperations;
   requester?: PokePilotRequester;
@@ -93,6 +100,7 @@ export type PokePilotOperationalEvent =
       type: "analysis";
       billingSource?: "site" | "personal";
       reasoningEffort?: "low" | "medium";
+      modelId?: PokePilotHostedModel;
       cacheStatus: "hit" | "miss" | "shared";
       cachedInputTokens?: number;
       cacheWriteTokens?: number;
@@ -112,6 +120,16 @@ export type PokePilotOperationalEvent =
       safeguardMode: PokePilotSafeguardMode;
       scope: CopilotAnalysisScope;
       limiter: "client" | "ip";
+    }
+  | {
+      type: "analysis-failure";
+      billingSource: "site" | "personal";
+      reasoningEffort: "low" | "medium";
+      modelId?: PokePilotHostedModel;
+      requestKey: string;
+      safeguardMode: PokePilotSafeguardMode;
+      scope: CopilotAnalysisScope;
+      usage: LunaUsage;
     };
 
 type HostedAnalysisExecution =
@@ -135,6 +153,7 @@ function errorResult(
   code: PokePilotApiErrorCode,
   message: string,
   retryAfterSeconds?: number,
+  providerAttempted?: false,
 ): PokePilotApiResult {
   return {
     status,
@@ -144,6 +163,7 @@ function errorResult(
         code,
         message,
         ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
+        ...(providerAttempted === undefined ? {} : { providerAttempted }),
       },
     },
   };
@@ -152,11 +172,10 @@ function errorResult(
 function successResult(
   analysis: CopilotModelOutput,
   cacheStatus: "hit" | "miss" | "shared",
+  modelId: PokePilotHostedModel,
   {
-    qualityWarnings = [],
     retryAfterSeconds,
   }: {
-    qualityWarnings?: CopilotQualityWarningCode[];
     retryAfterSeconds?: number;
   } = {},
 ): PokePilotApiResult {
@@ -167,10 +186,9 @@ function successResult(
       analysis,
       metadata: {
         cacheStatus,
-        model: OPENAI_LUNA_MODEL_ID,
+        model: modelId,
         promptVersion: POKEPILOT_AI_PROMPT_VERSION,
         ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
-        ...(qualityWarnings.length === 0 ? {} : { qualityWarnings }),
       },
     },
   };
@@ -202,6 +220,7 @@ function getUpstreamStatus(error: unknown) {
 }
 
 function isInvalidResponseError(error: unknown) {
+  if (error instanceof LunaStructuredOutputError) return true;
   return (
     typeof error === "object" &&
     error !== null &&
@@ -216,11 +235,13 @@ export async function handlePokePilotAnalysis(
     analyze,
     apiKey,
     reasoningEffort = POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
+    modelId = OPENAI_LUNA_MODEL_ID,
     billingSource = "site",
     billingIdentity,
     clock = Date.now,
     onOperationalEvent,
     onUpstreamError,
+    onQualityWarning,
     operations,
     requester,
     safeguardMode = "enforced",
@@ -232,7 +253,13 @@ export async function handlePokePilotAnalysis(
       400,
       "INVALID_REQUEST",
       requestValidation.errors.join(" "),
+      undefined,
+      false,
     );
+  }
+
+  if (modelId === "gpt-6-sol" && (billingSource !== "personal" || reasoningEffort !== "low")) {
+    return errorResult(403, "PERSONAL_KEY_REQUIRED", "Sol low requires a personal API key.", undefined, false);
   }
 
   if (!analyze && !apiKey) {
@@ -240,6 +267,8 @@ export async function handlePokePilotAnalysis(
       503,
       "AI_NOT_CONFIGURED",
       "Hosted analysis is not configured.",
+      undefined,
+      false,
     );
   }
 
@@ -249,7 +278,7 @@ export async function handlePokePilotAnalysis(
       fingerprint: getCopilotAnalysisCacheFingerprint(requestValidation.data),
       locale: requestValidation.data.locale,
     },
-    OPENAI_LUNA_MODEL_ID,
+    modelId,
     POKEPILOT_AI_PROMPT_VERSION,
     reasoningEffort,
   );
@@ -257,6 +286,7 @@ export async function handlePokePilotAnalysis(
   const operationsKey = `${safeguardMode}:${billingIdentity ?? "site"}:${requestKey}`;
   const safeguardConfig = getPokePilotSafeguardConfig(safeguardMode);
   const startedAt = clock();
+  let attemptedUsage: LunaUsage | undefined;
 
   try {
     if (
@@ -283,6 +313,7 @@ export async function handlePokePilotAnalysis(
           "ANALYSIS_COOLDOWN",
           "Request rate limit is active.",
           retryAfterSeconds,
+          false,
         );
       }
     }
@@ -298,6 +329,7 @@ export async function handlePokePilotAnalysis(
       onOperationalEvent?.({
         type: "analysis",
         billingSource,
+        modelId,
         reasoningEffort: reasoningEffort === "medium" ? "medium" : "low",
         cacheStatus: "hit",
         durationMs: Math.max(0, clock() - startedAt),
@@ -305,9 +337,7 @@ export async function handlePokePilotAnalysis(
         safeguardMode,
         scope: requestValidation.data.scope,
       });
-      return successResult(cachedAnalysis.analysis, "hit", {
-        qualityWarnings: cachedAnalysis.qualityWarnings,
-      });
+      return successResult(cachedAnalysis.analysis, "hit", modelId);
     }
 
     const runAnalysis = async (): Promise<HostedAnalysisExecution> => {
@@ -348,10 +378,12 @@ export async function handlePokePilotAnalysis(
           ? await analyze(requestValidation.data)
           : await analyzeWithOpenAiLuna(requestValidation.data, {
               apiKey,
+              modelId,
               cacheNamespace: "production",
               reasoningEffort,
               safetyIdentifier: requester?.clientId,
             });
+        attemptedUsage = result.usage;
         let reviewed = reviewHostedCopilotAnalysis(
           result.output,
           requestValidation.data,
@@ -392,6 +424,13 @@ export async function handlePokePilotAnalysis(
             reviewed = addQualityWarning(reviewed, "service-degraded");
           }
           reservation = undefined;
+        }
+        if (reviewed.qualityWarnings.length) {
+          try {
+            onQualityWarning?.(reviewed.qualityWarnings);
+          } catch {
+            // Diagnostic logging must not turn a completed analysis into an error.
+          }
         }
         return {
           kind: "completed" as const,
@@ -440,6 +479,7 @@ export async function handlePokePilotAnalysis(
         "ANALYSIS_COOLDOWN",
         "Analysis cooldown is active.",
         retryAfterSeconds,
+        false,
       );
     }
 
@@ -449,6 +489,7 @@ export async function handlePokePilotAnalysis(
       onOperationalEvent?.({
         type: "analysis",
         billingSource,
+        modelId,
         reasoningEffort: reasoningEffort === "medium" ? "medium" : "low",
         cacheStatus: "shared",
         durationMs: Math.max(0, clock() - startedAt),
@@ -456,14 +497,13 @@ export async function handlePokePilotAnalysis(
         safeguardMode,
         scope: requestValidation.data.scope,
       });
-      return successResult(completed.analysis, "shared", {
-        qualityWarnings: completed.qualityWarnings,
-      });
+      return successResult(completed.analysis, "shared", modelId);
     }
 
     onOperationalEvent?.({
       type: "analysis",
       billingSource,
+      modelId,
       reasoningEffort: reasoningEffort === "medium" ? "medium" : "low",
       cacheStatus: "miss",
       cachedInputTokens: completed.result.usage.cachedInputTokens,
@@ -480,12 +520,27 @@ export async function handlePokePilotAnalysis(
     return successResult(
       completed.analysis,
       "miss",
+      modelId,
       {
-        qualityWarnings: completed.qualityWarnings,
         retryAfterSeconds: completed.retryAfterSeconds,
       },
     );
   } catch (error) {
+    const usage = error instanceof LunaStructuredOutputError
+      ? error.usage
+      : attemptedUsage;
+    if (usage) {
+      onOperationalEvent?.({
+        type: "analysis-failure",
+        billingSource,
+        modelId,
+        reasoningEffort: reasoningEffort === "medium" ? "medium" : "low",
+        requestKey: publicRequestKey,
+        safeguardMode,
+        scope: requestValidation.data.scope,
+        usage,
+      });
+    }
     if (error instanceof PokePilotCapacityError) {
       return errorResult(
         429,

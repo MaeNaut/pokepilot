@@ -57,6 +57,7 @@ import {
   usesHistoricalUsageData,
 } from "../utils/copilotScopeAvailability";
 import { getCopilotScopeRequirement } from "../utils/copilotScopeRequirements";
+import { getCopilotFailureMessage, getCopilotNoCostMessage } from "../utils/copilotFailureMessage";
 
 type CopilotPanelProps = {
   account: ReturnType<typeof useAccount>;
@@ -142,11 +143,11 @@ const emptyStateCopy: Record<
 
 const analysisEstimates: Partial<Record<
   CopilotAnalysisScope,
-  Record<"low" | "medium", { seconds: number; cost: string }>
+  Record<"luna-low" | "luna-medium" | "sol-low", { seconds: number; cost: string }>
 >> = {
-  team: { low: { seconds: 16, cost: "0.0018" }, medium: { seconds: 75, cost: "0.0048" } },
-  pokemon: { low: { seconds: 10, cost: "0.0015" }, medium: { seconds: 31, cost: "0.0024" } },
-  recommendation: { low: { seconds: 12, cost: "0.0027" }, medium: { seconds: 52, cost: "0.0041" } },
+  team: { "luna-low": { seconds: 16, cost: "0.0018" }, "luna-medium": { seconds: 75, cost: "0.0048" }, "sol-low": { seconds: 24, cost: "0.036" } },
+  pokemon: { "luna-low": { seconds: 10, cost: "0.0015" }, "luna-medium": { seconds: 31, cost: "0.0024" }, "sol-low": { seconds: 15, cost: "0.026" } },
+  recommendation: { "luna-low": { seconds: 12, cost: "0.0027" }, "luna-medium": { seconds: 52, cost: "0.0041" }, "sol-low": { seconds: 23, cost: "0.054" } },
 };
 
 export function CopilotPanel({
@@ -173,8 +174,13 @@ export function CopilotPanel({
   const { locale, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
   const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium">("low");
+  const [modelId, setModelId] = useState<"gpt-6-luna" | "gpt-6-sol">("gpt-6-luna");
   const [isReasoningMenuOpen, setIsReasoningMenuOpen] = useState(false);
   const reasoningMenuRef = useRef<HTMLDivElement>(null);
+  const [isAnalyzeConfirmationOpen, setIsAnalyzeConfirmationOpen] = useState(false);
+  const analyzeControlRef = useRef<HTMLDivElement>(null);
+  const analyzeButtonRef = useRef<HTMLButtonElement>(null);
+  const analyzeConfirmationHeadingRef = useRef<HTMLElement>(null);
   const [showdownData, setShowdownData] = useState<ShowdownDataSnapshot | null>(null);
   const [isShowdownDataLoading, setIsShowdownDataLoading] = useState(true);
   const [isLoginGateRevealed, setIsLoginGateRevealed] = useState(false);
@@ -194,7 +200,10 @@ export function CopilotPanel({
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!account.hasPersonalApiKey) setReasoningEffort("low");
+    if (!account.hasPersonalApiKey) {
+      setReasoningEffort("low");
+      setModelId("gpt-6-luna");
+    }
   }, [account.hasPersonalApiKey]);
 
   useEffect(() => {
@@ -214,6 +223,20 @@ export function CopilotPanel({
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [isReasoningMenuOpen]);
+
+  useEffect(() => {
+    if (!isAnalyzeConfirmationOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!analyzeControlRef.current?.contains(event.target as Node)) {
+        setIsAnalyzeConfirmationOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    analyzeConfirmationHeadingRef.current?.focus();
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+    };
+  }, [isAnalyzeConfirmationOpen]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -380,8 +403,13 @@ export function CopilotPanel({
     battleFormat,
     failedMessage: t("copilot.failed"),
     reasoningEffort,
+    modelId,
     usingPersonalApiKey: account.hasPersonalApiKey,
   });
+  const modelChoice = modelId === "gpt-6-sol" ? "sol-low" : reasoningEffort === "medium" ? "luna-medium" : "luna-low";
+  const modelLabel = modelId === "gpt-6-sol" ? "Sol low" : reasoningEffort === "medium" ? "Luna medium" : "Luna low";
+  const isPersonalModelAvailable = account.hasPersonalApiKey && account.personalApiKeyStatus === "ready";
+  const keyRequiredMessage = locale === "ko" ? "개인 OpenAI API 키가 필요합니다." : "Requires your OpenAI API key.";
   const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
   const isUsageDataScope = usesHistoricalUsageData(scope);
   const isAccountGateLocked = account.enabled && account.status === "guest";
@@ -426,13 +454,17 @@ export function CopilotPanel({
     abilityIndexStatus === "loading" ||
     cooldownRemainingSeconds > 0 ||
     (account.enabled && account.status === "ready" && account.personalApiKeyStatus !== "ready") ||
-    (reasoningEffort === "medium" && !account.hasPersonalApiKey) ||
+    ((reasoningEffort === "medium" || modelId === "gpt-6-sol") && !account.hasPersonalApiKey) ||
     (scope === "recommendation" &&
       showdownLegalityStatus === "loading") ||
     Boolean(scopeRequirement) ||
     (scope === "optimization" &&
       !optimizationInput) ||
     (scope === "matchup" && !team.some(Boolean));
+
+  useEffect(() => {
+    setIsAnalyzeConfirmationOpen(false);
+  }, [scope, modelChoice, isAnalyzeDisabled]);
 
   useEffect(() => {
     setCandidateApplyFailure(null);
@@ -455,8 +487,13 @@ export function CopilotPanel({
     }
   }, [analysisState.fingerprint, analysisState.historyEntryId, response, scope]);
 
+  function requestAnalyze() {
+    if (!isAnalyzeDisabled) setIsAnalyzeConfirmationOpen(true);
+  }
+
   async function handleAnalyze() {
     if (isAnalyzeDisabled) return;
+    setIsAnalyzeConfirmationOpen(false);
     if (!(await account.ensureAuthenticated())) return;
     setOptimizationActionStatus(null);
     if (scope === "recommendation") {
@@ -598,9 +635,11 @@ export function CopilotPanel({
 
   function handleSelectHistory(entry: CopilotHistoryEntry) {
     setScope(entry.scope);
-    const displayEffort = entry.reasoningEffort === "medium" && account.hasPersonalApiKey ? "medium" : "low";
+    const displayEffort = entry.reasoningEffort ?? "low";
+    const displayModel = entry.modelId ?? "gpt-6-luna";
     setReasoningEffort(displayEffort);
-    selectHistory(entry, displayEffort);
+    setModelId(displayModel);
+    selectHistory(entry, displayEffort, displayModel);
   }
 
   function handleClearHistory() {
@@ -638,13 +677,26 @@ export function CopilotPanel({
             onClear={handleClearHistory}
           />
 
-          <div className="copilot-analyze-control" tabIndex={isAnalyzeDisabled ? 0 : undefined} aria-describedby={isAnalyzeDisabled ? "copilot-analyze-estimate" : undefined}>
+          <div
+            className="copilot-analyze-control"
+            ref={analyzeControlRef}
+            onKeyDown={(event) => {
+              if (isAnalyzeConfirmationOpen && event.key === "Escape") {
+                event.stopPropagation();
+                setIsAnalyzeConfirmationOpen(false);
+                analyzeButtonRef.current?.focus();
+              }
+            }}
+          >
             <button
+              ref={analyzeButtonRef}
               className="copilot-analyze-button"
               type="button"
               disabled={isAnalyzeDisabled}
-              onClick={handleAnalyze}
-              aria-describedby="copilot-analyze-estimate"
+              onClick={requestAnalyze}
+              aria-haspopup="dialog"
+              aria-expanded={isAnalyzeConfirmationOpen}
+              aria-controls={isAnalyzeConfirmationOpen ? "copilot-analyze-confirmation" : undefined}
             >
               <FontAwesomeIcon
                 icon={
@@ -659,16 +711,39 @@ export function CopilotPanel({
               />
               {analyzeLabel}
             </button>
-            <span className="copilot-analyze-estimate" id="copilot-analyze-estimate" role="tooltip">
-              {account.personalApiKeyStatus === "error" && account.status === "ready"
-                ? t("copilot.keyStatusError")
-                : analysisEstimates[scope]
-                  ? t(account.hasPersonalApiKey ? "copilot.estimate" : "copilot.estimateSite", {
-                      seconds: analysisEstimates[scope][reasoningEffort].seconds,
-                      cost: analysisEstimates[scope][reasoningEffort].cost,
-                    })
-                  : t("copilot.estimateUnavailable")}
-            </span>
+            {isAnalyzeConfirmationOpen ? (
+              <div
+                className="copilot-analyze-confirmation"
+                id="copilot-analyze-confirmation"
+                role="dialog"
+                aria-label={t("copilot.confirmAnalysis")}
+              >
+                <strong ref={analyzeConfirmationHeadingRef} tabIndex={-1}>
+                  {t("copilot.confirmAnalysis")}
+                </strong>
+                <span className="copilot-analyze-confirmation-model">{modelLabel}</span>
+                <p>
+                  {analysisEstimates[scope]
+                    ? t(account.hasPersonalApiKey ? "copilot.estimate" : "copilot.estimateSite", {
+                        seconds: analysisEstimates[scope][modelChoice].seconds,
+                        cost: analysisEstimates[scope][modelChoice].cost,
+                      })
+                    : t("copilot.estimateUnavailable")}
+                </p>
+                <small>{t(account.hasPersonalApiKey ? "copilot.estimateNote" : "copilot.estimateNoteSite")}</small>
+                <div className="copilot-analyze-confirmation-actions">
+                  <button type="button" onClick={() => {
+                    setIsAnalyzeConfirmationOpen(false);
+                    analyzeButtonRef.current?.focus();
+                  }}>
+                    {t("common.cancel")}
+                  </button>
+                  <button type="button" onClick={() => void handleAnalyze()}>
+                    {t("copilot.startAnalysis")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </header>
@@ -753,7 +828,14 @@ export function CopilotPanel({
           <div className="copilot-empty-state is-error">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
             <strong>{t("copilot.unavailable")}</strong>
-            <span>{analysisState.error}</span>
+            <span>{getCopilotFailureMessage(analysisState.errorCode, locale, analysisState.error ?? t("copilot.failed"))}</span>
+            {analysisState.providerAttempted === false ? (
+              <span>{getCopilotNoCostMessage(locale)}</span>
+            ) : null}
+            <button type="button" onClick={requestAnalyze} disabled={isAnalyzeDisabled}>
+              <FontAwesomeIcon icon={faRotateRight} aria-hidden="true" />
+              {t("copilot.refresh")}
+            </button>
           </div>
         ) : response ? (
           <CopilotAnalysisResult
@@ -784,7 +866,7 @@ export function CopilotPanel({
               request.optimization?.currentBuild.itemDisplayName ?? null
             }
             optimizationActionStatus={optimizationActionStatus}
-            onAnalyze={() => void handleAnalyze()}
+            onAnalyze={requestAnalyze}
             onSelectCandidate={(pokemonId) =>
               void handleSelectCandidate(pokemonId)
             }
@@ -822,26 +904,34 @@ export function CopilotPanel({
           <button
             type="button"
             className="copilot-reasoning-trigger"
-            aria-label={`${t("copilot.reasoningLevel")}: ${t(reasoningEffort === "low" ? "copilot.reasoningLow" : "copilot.reasoningMedium")}`}
+            aria-label={`${locale === "ko" ? "모델" : "Model"}: ${modelLabel}`}
             aria-expanded={isReasoningMenuOpen}
             aria-haspopup="menu"
             onClick={() => setIsReasoningMenuOpen((open) => !open)}
           >
-            <span>{t(response && response.source !== "hosted" ? "copilot.rulesFallback" : "copilot.hostedAnalysis")}</span>
-            <span className="copilot-reasoning-current">{t(reasoningEffort === "low" ? "copilot.reasoningLow" : "copilot.reasoningMedium")}</span>
+            <span>GPT 6</span>
+            <span className="copilot-reasoning-current">{modelLabel}</span>
             <FontAwesomeIcon icon={isReasoningMenuOpen ? faChevronDown : faChevronUp} aria-hidden="true" />
           </button>
           {isReasoningMenuOpen ? (
-            <div className="copilot-reasoning-menu" role="menu" aria-label={t("copilot.reasoningLevel")}>
-              <strong>{t("copilot.reasoningLevel")}</strong>
-              <button type="button" role="menuitemradio" aria-checked={reasoningEffort === "low"} className={reasoningEffort === "low" ? "is-active" : ""} onClick={() => { setReasoningEffort("low"); setIsReasoningMenuOpen(false); }}>
-                {t("copilot.reasoningLow")}
-              </button>
-              <button type="button" role="menuitemradio" aria-checked={reasoningEffort === "medium"} aria-disabled={!account.hasPersonalApiKey || account.personalApiKeyStatus !== "ready"} className={reasoningEffort === "medium" ? "is-active" : ""} disabled={!account.hasPersonalApiKey || account.personalApiKeyStatus !== "ready"} onClick={() => { setReasoningEffort("medium"); setIsReasoningMenuOpen(false); }}>
-                {t("copilot.reasoningMedium")}
-                {!account.hasPersonalApiKey ? <FontAwesomeIcon icon={faLock} aria-hidden="true" /> : null}
-              </button>
-              {!account.hasPersonalApiKey ? <p>{t("copilot.mediumNeedsKey")}</p> : null}
+            <div className="copilot-reasoning-menu" role="menu" aria-label={locale === "ko" ? "모델" : "Model"}>
+              <strong>{locale === "ko" ? "모델" : "Model"}</strong>
+              {([
+                { choice: "sol-low", label: "Sol low", id: "gpt-6-sol", effort: "low", requiresKey: true },
+                { choice: "luna-medium", label: "Luna medium", id: "gpt-6-luna", effort: "medium", requiresKey: true },
+                { choice: "luna-low", label: "Luna low", id: "gpt-6-luna", effort: "low", requiresKey: false },
+              ] as const).map((option) => {
+                const locked = option.requiresKey && !isPersonalModelAvailable;
+                return (
+                  <div className="copilot-reasoning-option" key={option.choice} tabIndex={locked ? 0 : undefined} aria-describedby={locked ? `copilot-${option.choice}-lock` : undefined}>
+                    <button type="button" role="menuitemradio" aria-checked={modelChoice === option.choice} className={modelChoice === option.choice ? "is-active" : ""} disabled={locked} onClick={() => { setModelId(option.id); setReasoningEffort(option.effort); setIsReasoningMenuOpen(false); }}>
+                      {option.label}
+                      {locked ? <FontAwesomeIcon icon={faLock} aria-hidden="true" /> : null}
+                    </button>
+                    {locked ? <span className="copilot-reasoning-lock-popover" id={`copilot-${option.choice}-lock`} role="tooltip">{keyRequiredMessage}</span> : null}
+                  </div>
+                );
+              })}
             </div>
           ) : null}
         </div>

@@ -1,55 +1,16 @@
 import { CopilotApiError, requestHostedCopilotAnalysis } from "../api/copilotApi";
-import {
-  classifyHostedAnalysisFailure,
-  type HostedAnalysisFailureReason,
-} from "../api/copilotFailure";
-import type { Locale } from "../i18n/gameTranslations";
 import type { CopilotAnalysisRequest, CopilotAnalysisResponse } from "./copilotContracts";
-import { createLocalCopilotAnalysis } from "./copilotLocalAnalysis";
 
-function logHostedAnalysisFallback(
-  error: unknown,
-  reason: HostedAnalysisFailureReason,
-) {
-  if (
-    typeof window === "undefined" ||
-    !["localhost", "127.0.0.1"].includes(window.location.hostname)
-  ) {
-    return;
-  }
-
-  const details = error instanceof CopilotApiError
-    ? [
-        `reason=${reason}`,
-        `code=${error.code}`,
-        `status=${error.status}`,
-        `message=${JSON.stringify(error.message)}`,
-        ...(error.retryAfterSeconds
-          ? [`retryAfterSeconds=${error.retryAfterSeconds}`]
-          : []),
-      ]
-    : [
-        `reason=${reason}`,
-        `error=${error instanceof Error ? error.name : typeof error}`,
-      ];
-
-  console.warn(`[PokePilot] Hosted analysis fallback: ${details.join(" ")}`);
-}
-
-// Keep cooldown notification before fallback generation, even if the fallback fails.
 export async function executeCopilotAnalysis(
   request: CopilotAnalysisRequest,
-  locale: Locale,
   onCooldown: (seconds: number) => void,
   reasoningEffort: "low" | "medium" = "low",
-  usingPersonalApiKey = false,
+  modelId: "gpt-6-luna" | "gpt-6-sol" = "gpt-6-luna",
 ) {
   let nextResponse: CopilotAnalysisResponse;
-  let usedFallback = false;
-  let fallbackReason: HostedAnalysisFailureReason | undefined;
 
   try {
-    const hostedResult = await requestHostedCopilotAnalysis(request, undefined, reasoningEffort);
+    const hostedResult = await requestHostedCopilotAnalysis(request, undefined, reasoningEffort, modelId);
     nextResponse = hostedResult.qualityWarnings?.length
       ? {
           ...hostedResult.analysis,
@@ -60,21 +21,13 @@ export async function executeCopilotAnalysis(
       onCooldown(hostedResult.retryAfterSeconds);
     }
   } catch (error) {
-    if (usingPersonalApiKey || error instanceof CopilotApiError && (error.code === "AUTH_REQUIRED" || error.code === "AUTH_UNAVAILABLE" || error.code === "PERSONAL_KEY_REQUIRED")) {
-      throw error;
-    }
-    fallbackReason = classifyHostedAnalysisFailure(error);
-    logHostedAnalysisFallback(error, fallbackReason);
-
     if (
-      fallbackReason === "cooldown" &&
       error instanceof CopilotApiError &&
       error.retryAfterSeconds
     ) {
       onCooldown(error.retryAfterSeconds);
     }
-    nextResponse = createLocalCopilotAnalysis(request, locale);
-    usedFallback = true;
+    throw error;
   }
 
   if (
@@ -92,5 +45,5 @@ export async function executeCopilotAnalysis(
     };
   }
 
-  return { response: nextResponse, usedFallback, fallbackReason };
+  return { response: nextResponse, usedFallback: false, fallbackReason: undefined };
 }

@@ -12,22 +12,22 @@ import "./workspaceTutorial.css";
 const steps = [
   {
     image: "builder",
-    ko: ["나만의 팀을 만들어보세요", "포켓몬을 고르면 사용률 데이터가 있는 경우 샘플이 자동으로 채워집니다. 기술과 노력치를 바꾸며 팀을 완성해보세요.", "팀 빌더의 샘플 편집 화면"],
+    ko: ["나만의 팀 만들기", "포켓몬을 고르면 사용률 데이터가 있는 경우 샘플이 자동으로 채워집니다. 기술과 노력치를 바꾸며 팀을 완성할 수 있습니다.", "팀 빌더의 샘플 편집 화면"],
     en: ["Build your team", "Choose a Pokemon to load a sample when usage data is available. Adjust its moves and effort values to make the team your own.", "Team builder showing sample editing"],
   },
   {
     image: "calculator",
-    ko: ["대미지를 비교해보세요", "상대 포켓몬을 선택하고, 내 공격과 상대 공격의 피해량을 확인해보세요.", "계산기의 기술별 대미지와 타수 결과"],
+    ko: ["대미지 비교", "상대 포켓몬을 선택하고, 내 공격과 상대 공격의 피해량을 확인할 수 있습니다.", "계산기의 기술별 대미지와 타수 결과"],
     en: ["Compare damage", "Choose an opponent and compare the damage your Pokemon deals and receives.", "Calculator showing damage ranges and hits to KO"],
   },
   {
     image: "copilot",
-    ko: ["PokePilot과 함께 다듬어보세요", "팀과 포켓몬을 분석하고, 어울리는 포켓몬과 샘플을 추천받아보세요.", "PokePilot의 팀 분석 예시"],
+    ko: ["PokePilot으로 팀 다듬기", "팀과 포켓몬을 분석하고, 어울리는 포켓몬과 샘플을 추천받을 수 있습니다.", "PokePilot의 팀 분석 예시"],
     en: ["Refine your team with PokePilot", "Analyze your team and Pokemon, or get recommendations for Pokemon and builds that fit.", "Example team analysis in PokePilot"],
   },
   {
     image: "help",
-    ko: ["궁금할 때는 도움말을 확인하세요", "화면 아래 도움말에서 기능별 사용법과 계산 결과의 의미를 확인할 수 있습니다. 목차로 원하는 내용을 바로 찾아보세요.", "도움말의 목차와 시작하기 설명"],
+    ko: ["궁금할 때는 도움말 확인", "화면 아래 도움말에서 기능별 사용법과 계산 결과의 의미를 확인할 수 있습니다. 목차로 원하는 내용을 바로 찾을 수 있습니다.", "도움말의 목차와 시작하기 설명"],
     en: ["Find answers in Help", "Open Help at the bottom of the app for feature instructions and advice on reading calculations. Use the contents to jump to a topic.", "Help contents and getting started instructions"],
   },
 ];

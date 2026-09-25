@@ -6,6 +6,7 @@ import { deferred, renderHook } from "../test/renderHook";
 import { executeCopilotAnalysis } from "../utils/copilotAnalysisExecution";
 import type { CopilotAnalysisRequest } from "../utils/copilotContracts";
 import { useCopilotAnalysisSession } from "./useCopilotAnalysisSession";
+import { CopilotApiError } from "../api/copilotApi";
 
 vi.mock("../api/accountStorage", () => ({ readAccountCopilotHistory: vi.fn(), writeAccountCopilotHistory: vi.fn() }));
 vi.mock("../utils/copilotAnalysisExecution", () => ({ executeCopilotAnalysis: vi.fn() }));
@@ -34,6 +35,20 @@ async function mount() {
 }
 
 describe("analysis account lifecycle", () => {
+  it.each([
+    ["AI_NOT_CONFIGURED", false],
+    ["AI_INVALID_RESPONSE", undefined],
+  ] as const)("keeps %s as an error without saving analysis history", async (code, providerAttempted) => {
+    vi.mocked(executeCopilotAnalysis).mockRejectedValue(
+      new CopilotApiError("failed", code, 502, undefined, providerAttempted),
+    );
+    const hook = await mount();
+    await act(async () => { await hook.current.analyze(); });
+    expect(hook.current.analysisState).toMatchObject({ status: "error", errorCode: code });
+    expect(hook.current.analysisState.providerAttempted).toBe(providerAttempted);
+    expect(hook.current.response).toBeUndefined();
+    expect(writeAccountCopilotHistory).not.toHaveBeenCalled();
+  });
   it("persists successful results and clears them on logout", async () => {
     const hook = await mount();
     await act(async () => { await hook.current.analyze(); });
@@ -64,7 +79,7 @@ describe("analysis account lifecycle", () => {
     const hook = await mount();
     let analysis!: Promise<void>;
     await act(async () => { analysis = hook.current.analyze(); });
-    const cooldown = vi.mocked(executeCopilotAnalysis).mock.calls[0][2];
+    const cooldown = vi.mocked(executeCopilotAnalysis).mock.calls[0][1];
     await hook.rerender(null);
     await act(async () => {
       cooldown(60);

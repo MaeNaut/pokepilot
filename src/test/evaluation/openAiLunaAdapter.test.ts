@@ -96,7 +96,7 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
-  it.each(["gpt-5.6-terra", "gpt-6-luna"] as const)("forwards %s and output cap without changing production defaults", async (modelId) => {
+  it.each(["gpt-5.6-terra", "gpt-6-luna", "gpt-6-sol"] as const)("forwards %s and output cap without changing production defaults", async (modelId) => {
     const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
     const adapter = createOpenAiLunaAdapter({
       modelId, reasoningEffort: "high", maxOutputTokens: 16000,
@@ -120,6 +120,19 @@ describe("OpenAI Luna evaluation adapter", () => {
       output_tokens_details: { reasoning_tokens: 5000 },
       total_tokens: inputTokens + 7000,
     } as ResponseUsage, "gpt-6-luna");
+    expect(usage.costUsd).toBeCloseTo(cost, 8);
+  });
+  it.each([
+    [272000, 0.601],
+    [272001, 1.167004],
+  ])("prices GPT-6 Sol at the %s input-token boundary including cache writes", (inputTokens, cost) => {
+    const usage = createLunaStandardUsage({
+      input_tokens: inputTokens,
+      input_tokens_details: { cached_tokens: 10000, cache_write_tokens: 10000 },
+      output_tokens: 7000,
+      output_tokens_details: { reasoning_tokens: 5000 },
+      total_tokens: inputTokens + 7000,
+    } as ResponseUsage, "gpt-6-sol");
     expect(usage.costUsd).toBeCloseTo(cost, 8);
   });
   it("rejects an incomplete response even when its partial text parses", async () => {
@@ -580,7 +593,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(englishInstructions).not.toMatch(/[\uac00-\ud7a3]/u);
     expect(koreanInstructions).toContain("Korean only");
     expect(koreanInstructions).toContain("확정 N타");
-    expect(koreanInstructions).toContain("polite honorific prose");
+    expect(koreanInstructions).toContain("formal polite prose");
     expect(koreanInstructions).toContain("-습니다");
     expect(koreanInstructions).toContain("branch as 선택지");
     expect(koreanInstructions).toContain("role as 역할");
@@ -621,7 +634,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     await expect(adapter.analyze(request)).resolves.toMatchObject({
       output: null,
       validationErrors: [
-        "Luna returned output that could not be parsed as JSON.",
+      "Model returned output that could not be parsed as JSON.",
       ],
       usage: {
         inputTokens: 1_000,

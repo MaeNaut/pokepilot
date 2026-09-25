@@ -100,6 +100,16 @@ describe("PokePilot analysis history", () => {
     expect(findMatchingCopilotHistoryEntry(restored, low.teamKey, low.scope, low.locale, low.requestFingerprint, "medium")).toEqual(medium);
   });
 
+  it("keeps Sol low separate from Luna low, including stored history", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const luna = { ...createEntry(2), reasoningEffort: "low" as const };
+    const sol = { ...createEntry(2), id: "entry-sol", reasoningEffort: "low" as const, modelId: "gpt-6-sol" as const };
+    storeCopilotHistory([sol, luna]);
+    const restored = getStoredCopilotHistory();
+    expect(findMatchingCopilotHistoryEntry(restored, luna.teamKey, luna.scope, luna.locale, luna.requestFingerprint, "low", "gpt-6-luna")).toEqual(luna);
+    expect(findMatchingCopilotHistoryEntry(restored, sol.teamKey, sol.scope, sol.locale, sol.requestFingerprint, "low", "gpt-6-sol")).toEqual(sol);
+  });
+
   it("limits each team and supports clearing only that team's records", () => {
     const otherTeamEntry = createEntry(99, "saved:other");
     const entries = Array.from(

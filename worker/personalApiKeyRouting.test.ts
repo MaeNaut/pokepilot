@@ -26,10 +26,10 @@ const env = {
   POKEPILOT_SHARED_STORE_REQUIRED: "false",
 } as WorkerEnvironment;
 
-function analyzeRequest(effort: string) {
+function analyzeRequest(effort: string, modelId = "gpt-6-luna") {
   return new Request("https://pokepilot.app/api/pokepilot/analyze", {
     method: "POST",
-    headers: { "X-PokePilot-Reasoning-Effort": effort, Origin: "https://pokepilot.app" },
+    headers: { "X-PokePilot-Reasoning-Effort": effort, "X-PokePilot-Model": modelId, Origin: "https://pokepilot.app" },
   });
 }
 
@@ -68,6 +68,28 @@ describe("Worker analysis key routing", () => {
 
   it("rejects unrecognized reasoning levels", async () => {
     expect((await worker.fetch(analyzeRequest("high"), env)).status).toBe(400);
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+  });
+
+  it("blocks Sol without a personal key before the provider call", async () => {
+    const response = await worker.fetch(analyzeRequest("low", "gpt-6-sol"), env);
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: { code: "PERSONAL_KEY_REQUIRED", providerAttempted: false } });
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+  });
+
+  it("uses only the registered key for Sol low", async () => {
+    vi.mocked(readPersonalApiKey).mockResolvedValue("personal-key-test");
+    await worker.fetch(analyzeRequest("low", "gpt-6-sol"), env);
+    expect(handleWebPokePilotApi).toHaveBeenCalledWith(expect.any(Request), expect.objectContaining({
+      apiKey: "personal-key-test", modelId: "gpt-6-sol", reasoningEffort: "low",
+      billingSource: "personal", safeguardMode: "ai-fresh",
+    }));
+  });
+
+  it("rejects unsupported models and Sol medium before the provider call", async () => {
+    expect((await worker.fetch(analyzeRequest("low", "gpt-5.6-sol"), env)).status).toBe(400);
+    expect((await worker.fetch(analyzeRequest("medium", "gpt-6-sol"), env)).status).toBe(400);
     expect(handleWebPokePilotApi).not.toHaveBeenCalled();
   });
 });

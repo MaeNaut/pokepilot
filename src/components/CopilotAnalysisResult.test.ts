@@ -41,6 +41,7 @@ describe("CopilotAnalysisResult", () => {
         scope: "matchup",
         title: "Meta threat audit",
         paragraphs: ["Dragonite-Mega remains structurally unsafe."],
+        qualityWarnings: ["grounding-incomplete"],
         recommendations: [{
           id: candidate.pokemonId,
           title: "Consider Arcanine Hisui over Basculegion Male.",
@@ -78,5 +79,6 @@ describe("CopilotAnalysisResult", () => {
     expect(html).toContain("Arcanine Hisui");
     expect(html).toContain("Replace");
     expect(html).toContain("Save to Bench");
+    expect(html).not.toContain("Some strategic evidence could not be verified");
   });
 });

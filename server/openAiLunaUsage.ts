@@ -48,6 +48,10 @@ export function createLunaStandardUsage(
     ? usage.input_tokens > 272_000
       ? { input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 0.75 }
       : { input: 0.1, cachedInput: 0.01, cacheWrite: 0.125, output: 0.5 }
+    : modelId === "gpt-6-sol"
+    ? usage.input_tokens > 272_000
+      ? { input: 4, cachedInput: 0.4, cacheWrite: 5, output: 15 }
+      : { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10 }
     : modelId === "gpt-5.6-terra"
     ? { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 12 }
     : modelId === "gpt-5.6-sol"

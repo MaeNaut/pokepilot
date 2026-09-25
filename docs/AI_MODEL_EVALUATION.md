@@ -6,10 +6,11 @@
 > `/api/pokepilot/analyze`; do not use legacy Vercel/Netlify references in this
 > document as deployment instructions.
 
-Current code default (September 24, 2026; deploy pending): GPT-6 Luna low. Authenticated
-users with a registered personal OpenAI API key can choose low or medium; both
-use their own key. Medium uses a 180-second timeout and a 16,000-token output
-cap. The historical trials below retain their original models and settings.
+Current code default (September 25, 2026; deploy pending): GPT-6 Luna low. Authenticated
+users with a registered personal OpenAI API key can also choose Luna medium or
+Sol low; all personal-key analyses use their own key. Luna medium uses a
+180-second timeout and a 16,000-token output cap. The historical trials below
+retain their original models and settings.
 
 ## Purpose
 
@@ -919,3 +920,21 @@ evaluator-only expectations.
 The provider adapter and result writer should keep outputs outside the source
 fixture files so a model response can never silently redefine the expected
 team interpretation.
+
+## Runtime Failure Handling
+
+New PokePilot analyses no longer generate a rules-based answer when the hosted
+request fails. Confirmed pre-provider failures (invalid request, missing
+configuration, cooldown, or missing sign-in/key) may show that no AI call or
+analysis cost occurred. Network, timeout, malformed model output, and other
+uncertain failures do not make a cost claim. Users see the failure reason and
+can retry.
+
+When the public analysis is renderable but private grounding checks fail, the
+analysis is displayed normally. Warning codes are logged on the server and
+are not included in new API responses. Malformed JSON, missing required public
+fields, and scope mismatches remain hard failures because there is no
+renderable analysis. A failed model response with known usage is counted in
+operational aggregates, including token and estimated cost totals. Historical
+rules-based entries remain readable, but the client no longer generates new
+ones.

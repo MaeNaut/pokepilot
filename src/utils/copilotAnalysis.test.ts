@@ -8,9 +8,9 @@ import type { TeamDiagnosticsResult } from "./teamDiagnostics";
 import type { TeamValidityResult } from "./teamValidity";
 import {
   createCopilotAnalysisRequest,
-  createLocalCopilotAnalysis,
   getCopilotRequestFingerprint,
 } from "./copilotAnalysis";
+import { createLocalCopilotAnalysis } from "./copilotLocalAnalysis";
 import { validateCopilotAnalysisRequest } from "./copilotRequestContract";
 import {
   createCalculatorBattleState,
@@ -1228,7 +1228,7 @@ describe("Copilot analysis", () => {
     expect(response.paragraphs.join(" ")).toContain("밸런스형");
     expect(response.recommendations[0]).toMatchObject({
       id: "fill-team",
-      title: "활성 파티의 남은 슬롯을 채워 주세요.",
+      title: "활성 파티의 남은 슬롯을 채워야 합니다.",
     });
   });
 

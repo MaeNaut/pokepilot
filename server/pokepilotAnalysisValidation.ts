@@ -186,7 +186,7 @@ function repairMetaReplacementNarrative(
     return {
       ...recommendation,
       title: request.locale === "ko"
-        ? `${currentName ?? "현재 포켓몬"} 대신 ${candidate.displayName}을 검토해 보세요.`
+        ? `${currentName ?? "현재 포켓몬"} 대신 ${candidate.displayName}을 검토하는 것이 좋습니다.`
         : `Consider ${candidate.displayName} over ${currentName ?? "the current Pokemon"}.`,
       reason: request.locale === "ko"
         ? `${candidate.displayName}은(는) 대표 사용률 샘플 기준으로 ${threat?.opponent.displayName ?? "해당 위협"}에게 ${evidence.member.responseTier === "answer" ? "확실한 대응" : "조건부 견제"}이 됩니다. 다만 ${currentName ?? "현재 포켓몬"}의 역할과 지원 연계를 잃는 비용은 별도로 비교해야 합니다.`
@@ -392,7 +392,7 @@ function sanitizeOptimizationNarrative(
       ? "표시된 계산 결과와 현재 팀에서 맡는 역할을 함께 고려한 상대 조정입니다."
       : "This matchup tuning weighs the displayed calculator results against the set's current team role.";
   const fallbackTitle = isKorean
-    ? "검증된 상대 조정을 사용해 보세요."
+    ? "검증된 상대 조정을 사용할 수 있습니다."
     : "Use the verified matchup option.";
   // Sentence deletion can leave a conclusion without its premise or only a drawback.
   // Replace the complete affected block with calculator-grounded prose instead.
@@ -461,7 +461,7 @@ function repairOptimizationMoveNarrative(
       ...recommendation,
       title:
         request.locale === "ko"
-          ? `${moveSummary} 기술 교체를 검토해 보세요.`
+          ? `${moveSummary} 기술 교체를 검토하는 것이 좋습니다.`
           : `Consider the ${moveSummary} move change.`,
       reason: verifiedOptimizationReason(recommendation.id, request),
     };

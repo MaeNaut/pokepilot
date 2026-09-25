@@ -29,6 +29,7 @@ export type CopilotHistoryEntry = {
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
   reasoningEffort?: "low" | "medium";
+  modelId?: "gpt-6-luna" | "gpt-6-sol";
   requestFingerprint: string;
   createdAt: string;
   response: CopilotAnalysisResponse;
@@ -167,6 +168,7 @@ export function normalizeCopilotHistoryEntry(value: unknown): CopilotHistoryEntr
     ...(value.reasoningEffort === "low" || value.reasoningEffort === "medium"
       ? { reasoningEffort: value.reasoningEffort }
       : {}),
+    ...(value.modelId === "gpt-6-sol" ? { modelId: value.modelId } : {}),
     requestFingerprint: value.requestFingerprint as string,
     createdAt: value.createdAt as string,
     response,
@@ -296,6 +298,7 @@ export function findMatchingCopilotHistoryEntry(
   locale: Locale,
   requestFingerprint: string,
   reasoningEffort: "low" | "medium" = "low",
+  modelId: "gpt-6-luna" | "gpt-6-sol" = "gpt-6-luna",
 ) {
   return entries.find(
     (entry) =>
@@ -303,7 +306,8 @@ export function findMatchingCopilotHistoryEntry(
       entry.scope === scope &&
       entry.locale === locale &&
       entry.requestFingerprint === requestFingerprint &&
-      (entry.reasoningEffort ?? "low") === reasoningEffort,
+      (entry.reasoningEffort ?? "low") === reasoningEffort &&
+      (entry.modelId ?? "gpt-6-luna") === modelId,
   );
 }
 
