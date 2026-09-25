@@ -154,7 +154,7 @@ describe("Copilot analysis", () => {
     });
 
     expect(request).toMatchObject({
-      version: 34,
+      version: 35,
       locale: "en",
       scope: "pokemon",
       battleFormat: "doubles",
@@ -183,6 +183,14 @@ describe("Copilot analysis", () => {
             displayName: "Sitrus Berry",
           },
         ],
+      },
+      tactics: {
+        allyTargetOpportunities: [],
+        allyStatChangeInteractions: [],
+        sharedMoveSequences: [],
+        fieldSetters: [],
+        unconditionalSpeedOrder: [],
+        defensiveCoverage: [],
       },
       diagnostics: {
         filledSlots: 1,
@@ -1302,6 +1310,17 @@ describe("Copilot analysis", () => {
         },
       }),
     ).toMatchObject({ success: false });
+    expect(
+      validateCopilotAnalysisRequest({
+        ...request,
+        tactics: {
+          ...request.tactics!,
+          unconditionalSpeedOrder: [
+            { fasterSlotIndex: 0, slowerSlotIndex: 0 },
+          ],
+        },
+      }),
+    ).toMatchObject({ success: false });
   });
 
   it("validates exact full-team replacement targets", () => {
@@ -1446,6 +1465,62 @@ describe("Copilot analysis", () => {
         },
       }),
     ).not.toBe(fingerprint);
+  });
+
+  it("fills saved-team move mechanics from the current Showdown snapshot", () => {
+    const cachedRound: PokemonMove = {
+      ...closeCombat,
+      id: "round",
+      name: "Round",
+      type: "normal",
+      category: "special",
+      power: 60,
+    };
+    const request = createCopilotAnalysisRequest({
+      scope: "team",
+      teamName: "Cached Round Team",
+      team: [
+        { ...member, id: "cached-round-one", name: "Cached Round One", moves: [cachedRound] },
+        { ...member, id: "cached-round-two", name: "Cached Round Two", moves: [cachedRound] },
+        null,
+        null,
+        null,
+        null,
+      ],
+      selectedSlot: 0,
+      buildState: {
+        ...buildState,
+        itemBySlot: {},
+        abilityBySlot: {},
+        moveIdsBySlot: { 0: ["round"], 1: ["round"] },
+      },
+      diagnostics: { ...diagnostics, filledSlots: 2 },
+      validity: {
+        ...validity,
+        slotResults: [
+          ...validity.slotResults,
+          { slotIndex: 1, status: "valid", issues: [] },
+        ],
+      },
+      showdownData: {
+        speciesById: {},
+        movesById: {
+          round: {
+            ...cachedRound,
+            target: "any-adjacent",
+            description:
+              "Power doubles if others used Round this turn.",
+          },
+        },
+      },
+    });
+
+    expect(request.mechanics.moves).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "round", target: "any-adjacent" }),
+    ]));
+    expect(request.tactics).toMatchObject({
+      sharedMoveSequences: [{ moveId: "round", slotIndexes: [0, 1] }],
+    });
   });
 
   it("summarizes the selected Pokemon without treating empty move slots as errors", () => {

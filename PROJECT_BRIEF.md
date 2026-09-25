@@ -6,7 +6,7 @@ PokePilot is an unofficial AI-assisted team-building tool for Pokemon-style turn
 
 ## Why This Project Exists
 
-The user is a recent RIT Game Design and Development graduate with strong interest in game development, gameplay systems, frontend development, and product-focused software. During the job search, many roles have asked for AI, TypeScript, API, database, deployment, or full-stack experience. This project is meant to fill that gap while staying connected to the user's genuine game interests.
+The user is an RIT Game Design and Development undergraduate expected to graduate in Fall 2026 after completing one remaining co-op requirement. The user has strong interest in game development, gameplay systems, frontend development, and product-focused software. During the job search, many roles have asked for AI, TypeScript, API, database, deployment, or full-stack experience. This project is meant to fill that gap while staying connected to the user's genuine game interests.
 
 ## Portfolio Value
 

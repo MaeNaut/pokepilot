@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "pokepilot",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-09-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/smogon-stats/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pokepilot-qa",
+      "database_id": "da0ec6fe-b092-4533-8f49-7a3575f7f451",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  "vars": {
+    "GOOGLE_OAUTH_REDIRECT_URI": "https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback",
+    "POKEPILOT_METRICS_ENABLED": "true",
+    "POKEPILOT_AUTH_REQUIRED": "true",
+    "POKEPILOT_SHARED_STORE_REQUIRED": "true",
+    "POKEPILOT_REDIS_PREFIX": "pokepilot:qa:operations:v1"
+  }
+}

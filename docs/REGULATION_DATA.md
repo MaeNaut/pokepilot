@@ -14,8 +14,9 @@ missing descriptions show English with a Korean notice.
 Smogon usage remains the historical M-B source until M-C monthly statistics are
 available. It must not be interpreted as measured M-C usage.
 
-Prompt version 90 and Pokemon cache v23 separate the updated data from old cache
-entries. Saved teams reload Pokemon data by ID, preserving configured builds.
+Prompt version 91, Pokemon cache v23, and Showdown battle-data cache v2 separate
+the updated data from old cache entries. Saved teams reload Pokemon data by ID,
+preserving configured builds.
 
 ## QA on 2026-09-09
 

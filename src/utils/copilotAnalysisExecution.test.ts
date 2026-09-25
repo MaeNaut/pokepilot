@@ -39,12 +39,20 @@ describe("analysis execution", () => {
   it("forwards the request unchanged and avoids fallback on success", async () => {
     const cooldown = vi.fn();
     const result = await executeCopilotAnalysis(request, "en", cooldown);
-    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request);
+    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "low");
     expect(result.response).toBe(hosted);
     expect(result.usedFallback).toBe(false);
     expect(result.fallbackReason).toBeUndefined();
     expect(createLocalCopilotAnalysis).not.toHaveBeenCalled();
     expect(cooldown).not.toHaveBeenCalled();
+  });
+
+  it("uses the selected effort and surfaces personal-key failures without a local fallback", async () => {
+    const error = new CopilotApiError("Check your personal key", "PERSONAL_KEY_INVALID", 401);
+    vi.mocked(requestHostedCopilotAnalysis).mockRejectedValue(error);
+    await expect(executeCopilotAnalysis(request, "en", vi.fn(), "medium", true)).rejects.toBe(error);
+    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "medium");
+    expect(createLocalCopilotAnalysis).not.toHaveBeenCalled();
   });
 
   it("reports cooldown only after the hosted request completes", async () => {

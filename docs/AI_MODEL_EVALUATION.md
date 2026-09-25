@@ -6,7 +6,15 @@
 > `/api/pokepilot/analyze`; do not use legacy Vercel/Netlify references in this
 > document as deployment instructions.
 
+Current code default (September 24, 2026; deploy pending): GPT-6 Luna low. Authenticated
+users with a registered personal OpenAI API key can choose low or medium; both
+use their own key. Medium uses a 180-second timeout and a 16,000-token output
+cap. The historical trials below retain their original models and settings.
+
 ## Purpose
+
+Latest frozen-input comparison: [September 24 GPT-6 Luna low/medium comparison](AI_MODEL_COMPARISON_2026_09_24.md).
+Earlier quality-first pilot: [September 19 model comparison](AI_MODEL_COMPARISON_2026_09_19.md).
 
 Use a stable offline team suite to compare hosted models without turning a
 single "good answer" into the product's strategy template. The fixtures are
@@ -138,10 +146,10 @@ Use the same:
 The initial 20-team baseline used Luna at `low` reasoning effort. Production
 briefly moved to `medium` after live neutral-mechanics tests showed missed move
 ownership and simultaneous-active constraints. Prompt v17 then moved those
-hard constraints into a private, deterministic strategy audit. A controlled
-six-case Prompt v17 comparison found no reliable quality gain from `medium`, so
-production and the evaluation CLI now default to `low`; use `medium` only for
-explicit comparison runs. Keep every request on Standard processing during
+hard constraints into a private, deterministic strategy audit. The current
+production default is now `medium` for all analysis scopes while post-v35
+quality and cost are observed; explicit evaluation runs may still select
+`low`, `medium`, or `high`. Keep every request on Standard processing during
 evaluation;
 the CLI explicitly sends `service_tier: "default"`, independently of the
 Fast-mode setting used by Codex. A versioned core prompt-cache key keeps
@@ -161,7 +169,31 @@ project from production traffic.
 
 ## Running The Evaluation
 
-The default command makes two paid Standard API calls at low reasoning: the
+### Frozen Multi-Model Comparison
+
+`npx tsx scripts/compare-ai-models.ts <report.json> ...` reuses saved request
+fingerprints so every candidate sees the same input. The diagnostic selection
+keeps team cases, the Hippowdon Pokemon case, and the Swampert-rain recommendation
+case. It compares Luna low/medium/high and Terra low/medium with three repetitions,
+16000 output tokens, a 180-second request timeout, no SDK retries, and three
+concurrent requests. Candidate order rotates between repetitions. Production
+currently defaults to Luna medium; these are evaluation-only overrides.
+
+Use `--sol-only` for an optional Sol medium reference run. Optionally select
+specific cases with `--fixtures=<fixture-id>,<fixture-id>`. Use
+`--resume=artifacts/ai-evaluation/comparison-<timestamp>` with the same input files
+to preserve completed results and retry request errors (old errors are archived).
+Do not run multiple processes against the same output directory. Each response
+is checkpointed, and the manifest records input hashes and configuration.
+
+The summary's `strictPass` measures existing validation, not semantic accuracy.
+Read the public prose, including outputs with invalid private audits. Costs use
+model-specific Standard pricing; timed-out, interrupted, or failed requests
+without returned usage are not included. Prefix cache warmth affects cost.
+
+### Single-Model Runs
+
+The default command makes two paid Standard API calls at medium reasoning: the
 first Singles fixture and the first Doubles fixture.
 
 ```bash
@@ -202,8 +234,9 @@ npm run eval:ai -- --effort medium
 npm run eval:ai -- --recommendation-regressions --repeat 3
 ```
 
-The runner checks the process environment for `OPENAI_API_KEY`, then falls
-back to the ignored project file `.env.local`. Never add the key to a
+All three evaluation CLIs require `OPENAI_EVALUATION_API_KEY` from the process
+environment or the ignored `.env.local` / `.env` files. They never fall back
+to the production `OPENAI_API_KEY`. Never add the key to a
 Vite-prefixed environment variable or commit it to the repository. See
 `.env.example` for the local file shape. Generated JSON and Markdown reports
 are written to `artifacts/ai-evaluation/`, which is ignored by Git.
@@ -542,6 +575,40 @@ available. See the [Luna model page](https://developers.openai.com/api/docs/mode
 and [model optimization guide](https://developers.openai.com/api/docs/guides/model-optimization).
 
 ## Hosted Analysis Integration
+
+### Request v35 structured tactics - September 20, 2026
+
+Showdown remains the battle-data authority. PokeAPI remains an optional artwork
+and localization source; no PokeAPI battle information is used for the hosted
+analysis request. Request v35 preserves selected move target class, nonzero
+priority, deterministic target stat-stage changes, and field-setting effects
+from the local Showdown snapshot instead of requiring the model to reconstruct
+them from an effect sentence and broad tags.
+
+The builder additionally supplies a bounded `tactics` snapshot. It contains
+legal ally-target opportunities in Doubles, explicit stat-change interactions
+with abilities whose supplied effect unambiguously reverses or doubles stat
+stages, shared-move sequences whose effects mention an ally/user turn sequence,
+field setters, unconditional held-item Speed order, and exact defensive cover
+relations. These are candidate facts, not lead, lineup, or strategy decisions.
+The model must still check state, timing, and prerequisites before presenting a
+plan. The Showdown client cache key is v2 so older cached snapshots lacking
+these fields cannot suppress the update.
+
+The request validator accepts v34 only without `tactics` during deployment
+rollout and requires the bounded v35 structure for new clients. No paid model
+calls were made for this change. Re-run the held-out comparison suite before
+changing the production reasoning default.
+
+The focused rerun is recorded in
+[`AI_MODEL_COMPARISON_2026_09_19.md`](AI_MODEL_COMPARISON_2026_09_19.md).
+`scripts/compare-current-ai-models.ts --luna-low-medium` rebuilds the eight
+frozen logical cases through the current import, Showdown enrichment, and
+request-builder path. It must load the current Showdown snapshot while doing
+so: persisted browser teams can predate a new move-field schema. The request
+builder therefore overlays canonical current move mechanics on saved move
+entries, retaining user-selected IDs while preventing a stale local cache from
+silently omitting targets, stat changes, field effects, or shared-move facts.
 
 The first production-shaped analysis path now uses
 `POST /api/pokepilot/analyze`. The browser sends request-contract v14 and never

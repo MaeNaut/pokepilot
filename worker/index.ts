@@ -14,6 +14,7 @@ import {
 import { handleAccount } from "./accountEndpoint.js";
 import { emptyResponse, isEnabled, jsonResponse, withSessionRefresh } from "./http.js";
 import { handleAccountStorage } from "./accountStorage.js";
+import { handlePersonalApiKey, readPersonalApiKey } from "./personalApiKey.js";
 import type { WorkerEnvironment } from "./env.js";
 import type { PokePilotOperationalEvent } from "../server/pokepilotApi.js";
 import { metricRoute, recordMetric, pruneMetrics } from "./metrics.js";
@@ -41,6 +42,7 @@ function proxySmogonStats(request: Request) {
 async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void) {
   let authenticatedAccountId: string | undefined;
   let refreshCookie: string | undefined;
+  let accountId: string | undefined;
   if (isEnabled(env.POKEPILOT_AUTH_REQUIRED)) {
     const session = await readAccountSession(request, env);
     if (!session) {
@@ -50,15 +52,28 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
       });
     }
     authenticatedAccountId = await accountUsageId(session.account, env);
+    accountId = session.account.id;
     refreshCookie = session.refreshCookie;
   }
+  const effort = request.headers.get("X-PokePilot-Reasoning-Effort") ?? "low";
+  if (effort !== "low" && effort !== "medium") {
+    return jsonResponse(400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid reasoning effort." } });
+  }
+  const personalKey = accountId ? await readPersonalApiKey(accountId, env) : null;
+  if (effort === "medium" && !personalKey) {
+    return jsonResponse(403, { ok: false, error: { code: "PERSONAL_KEY_REQUIRED", message: "A personal API key is required for medium reasoning." } });
+  }
   const response = await handleWebPokePilotApi(request, {
-    apiKey: env.OPENAI_API_KEY,
+    apiKey: personalKey ?? env.OPENAI_API_KEY,
+    reasoningEffort: effort,
+    billingSource: personalKey ? "personal" : "site",
+    billingIdentity: personalKey ? accountId : undefined,
     onOperationalEvent,
     authenticatedAccountId,
     clientSecret: env.POKEPILOT_CLIENT_SECRET,
     operations: getOperationsRuntime(env).operations,
     requesterIp: request.headers.get("CF-Connecting-IP") ?? undefined,
+    ...(personalKey ? { safeguardMode: "ai-fresh" as const } : {}),
   });
   return withSessionRefresh(response, refreshCookie);
 }
@@ -87,6 +102,7 @@ const router = {
       if (url.pathname === "/api/pokepilot/preferences") {
         return await handleAccountStorage(request, env, "preferences");
       }
+      if (url.pathname === "/api/pokepilot/personal-api-key") return await handlePersonalApiKey(request, env);
       if (url.pathname === "/api/pokepilot/analyze") return await handleAnalyze(request, env, onOperationalEvent);
       if (url.pathname.startsWith("/smogon-stats/")) {
         if (request.method !== "GET" && request.method !== "HEAD") {

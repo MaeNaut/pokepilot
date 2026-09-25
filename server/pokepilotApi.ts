@@ -11,6 +11,7 @@ import {
   POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
   POKEPILOT_AI_PROMPT_VERSION,
   type LunaAnalysisResult,
+  type LunaReasoningEffort,
 } from "./openAiLuna.js";
 import {
   createPokePilotAnalysisCacheKey,
@@ -40,7 +41,8 @@ export type PokePilotApiErrorCode =
   | "ANALYSIS_COOLDOWN"
   | "AI_RATE_LIMITED"
   | "AI_INVALID_RESPONSE"
-  | "AI_UPSTREAM_ERROR";
+  | "AI_UPSTREAM_ERROR"
+  | "PERSONAL_KEY_INVALID";
 
 export type PokePilotApiResponse =
   | {
@@ -75,6 +77,9 @@ type AnalyzeRequest = (
 type HandlePokePilotAnalysisOptions = {
   analyze?: AnalyzeRequest;
   apiKey?: string;
+  reasoningEffort?: Extract<LunaReasoningEffort, "low" | "medium">;
+  billingSource?: "site" | "personal";
+  billingIdentity?: string;
   clock?: () => number;
   onUpstreamError?: (error: unknown) => void;
   onOperationalEvent?: (event: PokePilotOperationalEvent) => void;
@@ -86,6 +91,8 @@ type HandlePokePilotAnalysisOptions = {
 export type PokePilotOperationalEvent =
   | {
       type: "analysis";
+      billingSource?: "site" | "personal";
+      reasoningEffort?: "low" | "medium";
       cacheStatus: "hit" | "miss" | "shared";
       cachedInputTokens?: number;
       cacheWriteTokens?: number;
@@ -208,6 +215,9 @@ export async function handlePokePilotAnalysis(
   {
     analyze,
     apiKey,
+    reasoningEffort = POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
+    billingSource = "site",
+    billingIdentity,
     clock = Date.now,
     onOperationalEvent,
     onUpstreamError,
@@ -241,10 +251,10 @@ export async function handlePokePilotAnalysis(
     },
     OPENAI_LUNA_MODEL_ID,
     POKEPILOT_AI_PROMPT_VERSION,
-    POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
+    reasoningEffort,
   );
   const publicRequestKey = requestKey.slice(0, 12);
-  const operationsKey = `${safeguardMode}:${requestKey}`;
+  const operationsKey = `${safeguardMode}:${billingIdentity ?? "site"}:${requestKey}`;
   const safeguardConfig = getPokePilotSafeguardConfig(safeguardMode);
   const startedAt = clock();
 
@@ -287,6 +297,8 @@ export async function handlePokePilotAnalysis(
     if (cachedAnalysis) {
       onOperationalEvent?.({
         type: "analysis",
+        billingSource,
+        reasoningEffort: reasoningEffort === "medium" ? "medium" : "low",
         cacheStatus: "hit",
         durationMs: Math.max(0, clock() - startedAt),
         requestKey: publicRequestKey,
@@ -337,7 +349,7 @@ export async function handlePokePilotAnalysis(
           : await analyzeWithOpenAiLuna(requestValidation.data, {
               apiKey,
               cacheNamespace: "production",
-              reasoningEffort: POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
+              reasoningEffort,
               safetyIdentifier: requester?.clientId,
             });
         let reviewed = reviewHostedCopilotAnalysis(
@@ -436,6 +448,8 @@ export async function handlePokePilotAnalysis(
     if (execution.shared) {
       onOperationalEvent?.({
         type: "analysis",
+        billingSource,
+        reasoningEffort: reasoningEffort === "medium" ? "medium" : "low",
         cacheStatus: "shared",
         durationMs: Math.max(0, clock() - startedAt),
         requestKey: publicRequestKey,
@@ -449,6 +463,8 @@ export async function handlePokePilotAnalysis(
 
     onOperationalEvent?.({
       type: "analysis",
+      billingSource,
+      reasoningEffort: reasoningEffort === "medium" ? "medium" : "low",
       cacheStatus: "miss",
       cachedInputTokens: completed.result.usage.cachedInputTokens,
       cacheWriteTokens: completed.result.usage.cacheWriteTokens,
@@ -479,7 +495,7 @@ export async function handlePokePilotAnalysis(
       );
     }
 
-    onUpstreamError?.(error);
+    if (billingSource === "site") onUpstreamError?.(error);
 
     if (isInvalidResponseError(error)) {
       return errorResult(
@@ -487,6 +503,10 @@ export async function handlePokePilotAnalysis(
         "AI_INVALID_RESPONSE",
         "Hosted analysis returned an invalid response.",
       );
+    }
+
+    if (billingSource === "personal" && (getUpstreamStatus(error) === 401 || getUpstreamStatus(error) === 403)) {
+      return errorResult(401, "PERSONAL_KEY_INVALID", "Check your personal OpenAI API key and project permissions.");
     }
 
     if (getUpstreamStatus(error) === 429) {

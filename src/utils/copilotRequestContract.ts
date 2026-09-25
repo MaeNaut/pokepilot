@@ -1,6 +1,11 @@
 import type { CopilotAnalysisRequest } from "./copilotContracts.js";
 import { normalizeShowdownId } from "../api/showdownIds.js";
-import { pokemonTypes } from "../types.js";
+import {
+  pokemonMoveFieldEffectKinds,
+  pokemonMoveStatStages,
+  pokemonMoveTargets,
+  pokemonTypes,
+} from "../types.js";
 import { copilotResponsibilityIds } from "./copilotResponsibilities.js";
 import { hasValidOptimizationShape } from "./copilotRequestOptimizationValidation.js";
 import { hasValidMatchupShape } from "./copilotRequestMatchupValidation.js";
@@ -46,6 +51,7 @@ const requestKeys = new Set([
   "optimization",
   "matchup",
   "mechanics",
+  "tactics",
   "diagnostics",
 ]);
 const validityCodes = new Set([
@@ -334,11 +340,46 @@ function hasValidCandidateFilterShape(value: unknown) {
 function hasValidMechanicEntry(value: unknown) {
   return (
     isRecord(value) &&
-    hasOnlyKeys(value, ["id", "displayName", "effect", "tags"]) &&
+    hasOnlyKeys(value, [
+      "id",
+      "displayName",
+      "effect",
+      "tags",
+      "target",
+      "priority",
+      "targetStatChanges",
+      "fieldEffects",
+      "statChangeMode",
+    ]) &&
     isNonEmptyString(value.id) &&
     isNonEmptyString(value.displayName) &&
     (!("effect" in value) || typeof value.effect === "string") &&
-    (!("tags" in value) || isStringArray(value.tags, 32))
+    (!("tags" in value) || isStringArray(value.tags, 32)) &&
+    (!("target" in value) || pokemonMoveTargets.includes(value.target as never)) &&
+    (!("priority" in value) || isBoundedInteger(value.priority, -10, 10)) &&
+    (!("targetStatChanges" in value) ||
+      (Array.isArray(value.targetStatChanges) &&
+        value.targetStatChanges.length <= pokemonMoveStatStages.length &&
+        value.targetStatChanges.every(
+          (change) =>
+            isRecord(change) &&
+            hasOnlyKeys(change, ["stat", "stages"]) &&
+            pokemonMoveStatStages.includes(change.stat as never) &&
+            isBoundedInteger(change.stages, -6, 6) &&
+            change.stages !== 0,
+        ))) &&
+    (!("fieldEffects" in value) ||
+      (Array.isArray(value.fieldEffects) &&
+        value.fieldEffects.length <= 5 &&
+        value.fieldEffects.every(
+          (effect) =>
+            isRecord(effect) &&
+            hasOnlyKeys(effect, ["kind", "id"]) &&
+            pokemonMoveFieldEffectKinds.includes(effect.kind as never) &&
+            isNonEmptyString(effect.id),
+        ))) &&
+    (!("statChangeMode" in value) ||
+      value.statChangeMode === "reverse" || value.statChangeMode === "double")
   );
 }
 
@@ -610,6 +651,129 @@ function hasValidConcept(value: unknown) {
   );
 }
 
+function hasValidTactics(value: unknown) {
+  const hasSlotIndexes = (entries: unknown, maximum: number, minimum = 0) =>
+    Array.isArray(entries) &&
+    entries.length >= minimum &&
+    entries.length <= maximum &&
+    entries.every(isSlotIndex) &&
+    new Set(entries).size === entries.length;
+  const hasFieldEffect = (effect: unknown) =>
+    isRecord(effect) &&
+    hasOnlyKeys(effect, ["kind", "id"]) &&
+    pokemonMoveFieldEffectKinds.includes(effect.kind as never) &&
+    isNonEmptyString(effect.id);
+
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, [
+      "allyTargetOpportunities",
+      "allyStatChangeInteractions",
+      "sharedMoveSequences",
+      "fieldSetters",
+      "unconditionalSpeedOrder",
+      "defensiveCoverage",
+    ]) &&
+    Array.isArray(value.allyTargetOpportunities) &&
+    value.allyTargetOpportunities.length <= 24 &&
+    value.allyTargetOpportunities.every(
+      (opportunity) =>
+        isRecord(opportunity) &&
+        hasOnlyKeys(opportunity, [
+          "sourceSlotIndex",
+          "moveId",
+          "target",
+          "targetSlotIndexes",
+        ]) &&
+        isSlotIndex(opportunity.sourceSlotIndex) &&
+        isNonEmptyString(opportunity.moveId) &&
+        pokemonMoveTargets.includes(opportunity.target as never) &&
+        hasSlotIndexes(opportunity.targetSlotIndexes, 5, 1) &&
+        Array.isArray(opportunity.targetSlotIndexes) &&
+        !opportunity.targetSlotIndexes.includes(opportunity.sourceSlotIndex),
+    ) &&
+    Array.isArray(value.allyStatChangeInteractions) &&
+    value.allyStatChangeInteractions.length <= 24 &&
+    value.allyStatChangeInteractions.every(
+      (interaction) =>
+        isRecord(interaction) &&
+        hasOnlyKeys(interaction, [
+          "sourceSlotIndex",
+          "targetSlotIndex",
+          "moveId",
+          "abilityId",
+          "state",
+          "mode",
+          "targetStatChanges",
+        ]) &&
+        isSlotIndex(interaction.sourceSlotIndex) &&
+        isSlotIndex(interaction.targetSlotIndex) &&
+        interaction.sourceSlotIndex !== interaction.targetSlotIndex &&
+        isNonEmptyString(interaction.moveId) &&
+        isNonEmptyString(interaction.abilityId) &&
+        (interaction.state === "current" || interaction.state === "mega") &&
+        (interaction.mode === "reverse" || interaction.mode === "double") &&
+        Array.isArray(interaction.targetStatChanges) &&
+        interaction.targetStatChanges.length > 0 &&
+        interaction.targetStatChanges.length <= pokemonMoveStatStages.length &&
+        interaction.targetStatChanges.every(
+          (change) =>
+            isRecord(change) &&
+            hasOnlyKeys(change, ["stat", "stages"]) &&
+            pokemonMoveStatStages.includes(change.stat as never) &&
+            isBoundedInteger(change.stages, -6, 6) &&
+            change.stages !== 0,
+        ),
+    ) &&
+    Array.isArray(value.sharedMoveSequences) &&
+    value.sharedMoveSequences.length <= 12 &&
+    value.sharedMoveSequences.every(
+      (sequence) =>
+        isRecord(sequence) &&
+        hasOnlyKeys(sequence, ["moveId", "slotIndexes"]) &&
+        isNonEmptyString(sequence.moveId) &&
+        hasSlotIndexes(sequence.slotIndexes, 6, 2),
+    ) &&
+    Array.isArray(value.fieldSetters) &&
+    value.fieldSetters.length <= 24 &&
+    value.fieldSetters.every(
+      (setter) =>
+        isRecord(setter) &&
+        hasOnlyKeys(setter, ["sourceSlotIndex", "moveId", "fieldEffect"]) &&
+        isSlotIndex(setter.sourceSlotIndex) &&
+        isNonEmptyString(setter.moveId) &&
+        hasFieldEffect(setter.fieldEffect),
+    ) &&
+    Array.isArray(value.unconditionalSpeedOrder) &&
+    value.unconditionalSpeedOrder.length <= 15 &&
+    value.unconditionalSpeedOrder.every(
+      (order) =>
+        isRecord(order) &&
+        hasOnlyKeys(order, ["fasterSlotIndex", "slowerSlotIndex"]) &&
+        isSlotIndex(order.fasterSlotIndex) &&
+        isSlotIndex(order.slowerSlotIndex) &&
+        order.fasterSlotIndex !== order.slowerSlotIndex,
+    ) &&
+    Array.isArray(value.defensiveCoverage) &&
+    value.defensiveCoverage.length <= 48 &&
+    value.defensiveCoverage.every(
+      (coverage) =>
+        isRecord(coverage) &&
+        hasOnlyKeys(coverage, [
+          "protectedSlotIndex",
+          "defenderSlotIndex",
+          "type",
+          "relation",
+        ]) &&
+        isSlotIndex(coverage.protectedSlotIndex) &&
+        isSlotIndex(coverage.defenderSlotIndex) &&
+        coverage.protectedSlotIndex !== coverage.defenderSlotIndex &&
+        pokemonTypeSet.has(String(coverage.type)) &&
+        (coverage.relation === "resists" || coverage.relation === "immune"),
+    )
+  );
+}
+
 function hasValidDiagnostics(value: unknown) {
   if (!isRecord(value)) {
     return false;
@@ -726,7 +890,9 @@ export function validateCopilotAnalysisRequest(
     errors.push(`Unexpected request fields: ${unexpectedKeys.join(", ")}.`);
   }
 
-  if (value.version !== 34) errors.push("version must be 34.");
+  if (value.version !== 34 && value.version !== 35) {
+    errors.push("version must be 34 or 35.");
+  }
   if (value.locale !== "en" && value.locale !== "ko") {
     errors.push("locale must be en or ko.");
   }
@@ -980,6 +1146,12 @@ export function validateCopilotAnalysisRequest(
   }
   if (!hasValidMechanicsShape(value.mechanics)) {
     errors.push("mechanics must contain bounded move, ability, and item arrays.");
+  }
+  if (value.version === 35 && !hasValidTactics(value.tactics)) {
+    errors.push("tactics must contain bounded deterministic team relationships.");
+  }
+  if (value.version === 34 && "tactics" in value) {
+    errors.push("version 34 must not contain tactics.");
   }
   if (!hasValidDiagnostics(value.diagnostics)) {
     errors.push("diagnostics must match the complete diagnostics contract.");

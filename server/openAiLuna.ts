@@ -25,12 +25,13 @@ export {
   type LunaUsage,
 } from "./openAiLunaUsage.js";
 
-export const OPENAI_LUNA_MODEL_ID = "gpt-5.6-luna";
-const POKEPILOT_AI_MAX_OUTPUT_TOKENS = 3_500;
+export const OPENAI_LUNA_MODEL_ID = "gpt-6-luna";
+const POKEPILOT_AI_MAX_OUTPUT_TOKENS = 8_000;
+const POKEPILOT_AI_MEDIUM_MAX_OUTPUT_TOKENS = 16_000;
 
-export type LunaReasoningEffort = "none" | "low" | "medium";
-export const POKEPILOT_AI_DEFAULT_REASONING_EFFORT: LunaReasoningEffort =
-  "low";
+export type LunaReasoningEffort = "none" | "low" | "medium" | "high";
+export type PokePilotEvaluationModel = "gpt-5.6-luna" | "gpt-5.6-terra" | "gpt-5.6-sol" | "gpt-6-luna";
+export const POKEPILOT_AI_DEFAULT_REASONING_EFFORT = "low" as const;
 
 export type LunaAnalysisResult = {
   output: unknown;
@@ -57,6 +58,10 @@ export class LunaStructuredOutputError extends Error {
 type LunaResponsesClient = Pick<OpenAI, "responses">;
 
 type AnalyzeWithOpenAiLunaOptions = {
+  modelId?: PokePilotEvaluationModel;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+  maxRetries?: number;
   client?: LunaResponsesClient;
   apiKey?: string;
   cacheNamespace?: "evaluation" | "production";
@@ -79,6 +84,10 @@ function parseStructuredOutput(outputText: string) {
 export async function analyzeWithOpenAiLuna(
   request: CopilotAnalysisRequest,
   {
+    modelId = OPENAI_LUNA_MODEL_ID,
+    maxOutputTokens,
+    timeoutMs,
+    maxRetries = 1,
     client,
     apiKey,
     cacheNamespace = "production",
@@ -91,11 +100,11 @@ export async function analyzeWithOpenAiLuna(
     client ??
     new OpenAI({
       apiKey,
-      maxRetries: 1,
-      timeout: 60_000,
+      maxRetries,
+      timeout: timeoutMs ?? (reasoningEffort === "medium" ? 180_000 : 60_000),
     });
   const response = await openAiClient.responses.create({
-    model: OPENAI_LUNA_MODEL_ID,
+    model: modelId,
     service_tier: "default",
     store: false,
     ...(safetyIdentifier ? { safety_identifier: safetyIdentifier } : {}),
@@ -153,7 +162,9 @@ export async function analyzeWithOpenAiLuna(
       effort: reasoningEffort,
       context: "current_turn",
     },
-    max_output_tokens: POKEPILOT_AI_MAX_OUTPUT_TOKENS,
+    max_output_tokens: maxOutputTokens ?? (reasoningEffort === "high" ? 16_000 : reasoningEffort === "medium"
+      ? POKEPILOT_AI_MEDIUM_MAX_OUTPUT_TOKENS
+      : POKEPILOT_AI_MAX_OUTPUT_TOKENS),
     text: {
       verbosity: "low",
       format: {
@@ -167,7 +178,7 @@ export async function analyzeWithOpenAiLuna(
     },
   });
 
-  const usage = createLunaStandardUsage(response.usage);
+  const usage = createLunaStandardUsage(response.usage, modelId);
   const responseMetadata = {
     responseId: response.id,
     serviceTier: response.service_tier ?? "default",
@@ -177,6 +188,9 @@ export async function analyzeWithOpenAiLuna(
   let output: unknown;
 
   try {
+    if (response.status === "incomplete") {
+      throw new Error(`Model response incomplete: ${response.incomplete_details?.reason ?? "unknown"}.`);
+    }
     output = parseStructuredOutput(response.output_text);
   } catch (error) {
     throw new LunaStructuredOutputError(

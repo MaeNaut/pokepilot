@@ -1098,7 +1098,7 @@ describe("Copilot strategy audit", () => {
     );
   });
 
-  it("accepts fact-grounded recommendations for a selected Pokemon", () => {
+  it.each(["x", "\u00d7"])("accepts fact-grounded recommendations with %s speed multipliers", (symbol) => {
     const pokemonSets = [
       createSet(0, "Hisuian Zoroark", ["round", "icywind"], {
         ability: "illusion",
@@ -1172,7 +1172,7 @@ describe("Copilot strategy audit", () => {
                 id: "choice-scarf",
                 displayName: "Choice Scarf",
                 effect:
-                  "Holder's Speed is 1.5x, but it can only select the first move it executes.",
+                  `Holder's Speed is 1.5${symbol}, but it can only select the first move it executes.`,
               },
             ],
           },
@@ -1686,6 +1686,35 @@ describe("Copilot strategy audit", () => {
     expect(errors).toContain(
       "Recommendation grass-cover names Pelipper in Grass coverage advice without matching resistance or immunity evidence.",
     );
+
+    // Ground the warning with a weakness, not a fictitious resistance.
+    pokemonSets[1].defensiveProfile = {
+      weaknesses: [{ type: "grass", multiplier: 2 }],
+      resistances: [],
+      immunities: [],
+    };
+    output.strategyAudit.facts[1].kind = "weak-to";
+    output.strategyAudit.facts[1].valueId = "grass";
+    const request = createRequest(pokemonSets, { scope: "pokemon", selectedSlot: 0 });
+    for (const warning of [
+      "Do not use Pelipper as a Grass switch-in.",
+      "Pelipper cannot cover Grass attacks.",
+      "Pelipper는 풀에 약점이므로 이 교체 경로에 함께 넣지 않는 편이 좋습니다.",
+    ]) {
+      output.analysis.recommendations[0].reason =
+        `Use Archaludon to cover Grass attacks. ${warning}`;
+      expect(validateCopilotStrategyAuditForRequest(output, request)).toEqual([]);
+    }
+    for (const advice of [
+      "Use Pelipper to cover Grass attacks. Do not use Pelipper against Fire.",
+      "Do not use Archaludon, but use Pelipper to cover Grass attacks.",
+      "Pelipper는 불꽃에 교대하지 말고 Grass 공격을 받아내세요.",
+    ]) {
+      output.analysis.recommendations[0].reason = advice;
+      expect(validateCopilotStrategyAuditForRequest(output, request)).toContain(
+        "Recommendation grass-cover names Pelipper in Grass coverage advice without matching resistance or immunity evidence.",
+      );
+    }
   });
 
   it("accepts exact teammate resistance evidence for Pokemon weakness coverage", () => {

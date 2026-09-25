@@ -4,6 +4,7 @@ import {
   faCheck,
   faDesktop,
   faLanguage,
+  faKey,
   faMoon,
   faRightFromBracket,
   faSun,
@@ -72,6 +73,8 @@ export function HeaderAccountMenu({
 }: HeaderAccountMenuProps) {
   const { t } = useLocalization();
   const [isOpen, setIsOpen] = useState(false);
+  const [apiKeyDraft, setApiKeyDraft] = useState("");
+  const [keyMessage, setKeyMessage] = useState<"saved" | "removed" | "error" | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -91,6 +94,19 @@ export function HeaderAccountMenu({
   }, [isOpen]);
 
   const accountName = account.user?.name ?? account.user?.email ?? t("account.guest");
+
+  async function handleSavePersonalKey(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const saved = await account.updatePersonalApiKey(apiKeyDraft);
+    setApiKeyDraft("");
+    setKeyMessage(saved ? "saved" : "error");
+  }
+
+  async function handleRemovePersonalKey() {
+    const removed = await account.updatePersonalApiKey(null);
+    setApiKeyDraft("");
+    setKeyMessage(removed ? "removed" : "error");
+  }
 
   return (
     <div className="header-account-menu" ref={menuRef}>
@@ -172,6 +188,44 @@ export function HeaderAccountMenu({
                   </button>
                 )}
               </div>
+            </section>
+          ) : null}
+
+          {account.status === "ready" ? (
+            <section className="header-account-section" aria-label={t("account.apiKeyLabel")}>
+              <div className="header-account-setting-label">
+                <FontAwesomeIcon icon={faKey} aria-hidden="true" />
+                <span>{t("account.apiKeyLabel")}</span>
+              </div>
+              <p className="header-account-key-note">{t("account.apiKeyDescription")}</p>
+              <span className="header-account-key-status">
+                {account.personalApiKeyStatus === "loading"
+                  ? t("account.apiKeyChecking")
+                  : account.personalApiKeyStatus === "error"
+                    ? t("account.apiKeyError")
+                    : account.hasPersonalApiKey
+                      ? t("account.apiKeySaved")
+                      : t("account.apiKeyMissing")}
+              </span>
+              <form className="header-account-key-form" onSubmit={(event) => void handleSavePersonalKey(event)}>
+                <input
+                  type="password"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-label={t("account.apiKeyLabel")}
+                  placeholder="sk-..."
+                  value={apiKeyDraft}
+                  onChange={(event) => { setApiKeyDraft(event.target.value); setKeyMessage(null); }}
+                />
+                <button type="submit" disabled={account.busy || !apiKeyDraft.trim()}>{t("account.apiKeySave")}</button>
+              </form>
+              {account.hasPersonalApiKey ? (
+                <button className="header-account-key-remove" type="button" disabled={account.busy} onClick={() => void handleRemovePersonalKey()}>
+                  <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" />
+                  {t("account.apiKeyRemove")}
+                </button>
+              ) : null}
+              {keyMessage ? <span className="header-account-key-status" role="status">{t(`account.apiKey${keyMessage === "saved" ? "Saved" : keyMessage === "removed" ? "Removed" : "Error"}`)}</span> : null}
             </section>
           ) : null}
 

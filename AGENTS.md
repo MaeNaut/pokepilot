@@ -10,14 +10,7 @@
 
 PokePilot is an unofficial AI-assisted team-building web app for Pokemon-style turn-based battles.
 
-The project should support the user's portfolio and job search by demonstrating:
-
-- React / TypeScript frontend development
-- AI-assisted product features
-- structured API usage
-- data visualization
-- game systems and strategy understanding
-- deployable full-stack web app experience
+The live app uses React / TypeScript and Cloudflare Workers / D1.
 
 ## IP / Branding Safety
 
@@ -31,22 +24,31 @@ The project should support the user's portfolio and job search by demonstrating:
 
 ## Engineering Preferences
 
-- Keep the first version small and shippable.
 - Prefer TypeScript for new app code.
 - Favor readable code over clever abstractions.
-- Avoid overengineering until the MVP works.
+- Keep changes scoped to the requested behavior.
 - Use environment variables for API keys and never commit secrets.
 - Treat Cloudflare Workers/D1 as the active production path. Legacy Netlify and
   Vercel deployment implementations are available in Git history.
 - Add comments only where they clarify non-obvious logic.
 
-## MVP Priorities
+## Efficient Context and Verification
 
-1. Team builder UI with 6 team slots.
-2. Type coverage / weakness visualization.
-3. AI-assisted recommendation or analysis flow.
-4. Structured AI response parsing.
-5. Deployable web app.
+- Start with `git status --short` and targeted `rg` searches. Read relevant file
+  sections before entire files; do not load every project document at startup.
+- Batch independent reads and searches. Keep dependent steps sequential.
+- Bound tool output. For long test, build, evaluation, or deployment logs, retain
+  the full log locally and return the exit status, summary, and relevant failures.
+  Do not dump generated catalogs, full evaluation JSON, or repeated page snapshots.
+- Use focused browser queries and screenshots of the relevant state. Expand to
+  full-page inspection when layout or navigation verification requires it.
+- Run focused tests while editing, then the required broader checks before delivery.
+  Repeat passing checks only after relevant changes or new evidence of a problem.
+- Read existing evaluation summaries before opening individual cases. Preserve
+  original evidence; reducing output must not hide failures or skip verification.
+- At major task boundaries, update the relevant project document with decisions,
+  verification, and remaining work. Use a short handoff for a new conversation
+  instead of copying the full chat. Do not interrupt an active task just to reset context.
 
 ## What To Avoid
 

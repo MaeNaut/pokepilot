@@ -24,7 +24,7 @@ sessions fail closed before a paid provider request or shared-cache operation.
 
 ## Required Worker configuration
 
-Apply both checked-in D1 migrations, then bind the database as `DB` in
+Apply all checked-in D1 migrations, then bind the database as `DB` in
 `wrangler.jsonc`:
 
 ```bash
@@ -73,6 +73,11 @@ Current workspace selection, open panels, unsaved drafts, last-opened team, and
 game-data caches remain device-local by design. They are navigation or cache
 state, not account profile data.
 
+Personal OpenAI API keys are separate account-scoped D1 records, encrypted at
+rest rather than stored in the synchronized `preferences` record or browser
+storage. They are deleted with the account. See [personal-api-key.md](personal-api-key.md)
+for the encryption, rotation, and deployment requirements.
+
 ## Acceptance checks after auth or storage changes
 
 - Google consent, cancellation, error, successful callback, reload, and browser
@@ -86,6 +91,8 @@ state, not account profile data.
 - Cross-origin storage writes and account deletion requests are rejected.
 - Missing/forged/expired/deleted sessions never reach OpenAI or bypass shared
   Redis controls.
+- A personal key is unavailable to other accounts, is never returned by the
+  status endpoint, and is deleted on request or account deletion.
 
 Update the static privacy notice and this document whenever the account schema,
 sync scope, cookie behavior, or provider list changes.

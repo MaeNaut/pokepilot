@@ -9,6 +9,7 @@ import {
   fetchItemIndex,
 } from "../src/api/showdownCatalog";
 import { loadShowdownLegality } from "../src/api/showdownLegality";
+import { loadShowdownData } from "../src/api/showdownData";
 import {
   createAiEvaluationReport,
   formatAiEvaluationReportMarkdown,
@@ -24,7 +25,7 @@ import {
   createOpenAiLunaAdapter,
   type LunaReasoningEffort,
 } from "../src/test/evaluation/openAiLunaAdapter";
-import { resolveOpenAiApiKey } from "../server/openAiEnvironment";
+import { resolveOpenAiEvaluationApiKey } from "../server/openAiEnvironment";
 import { POKEPILOT_AI_DEFAULT_REASONING_EFFORT } from "../server/openAiLuna";
 import {
   aiTeamDoublesFixtures,
@@ -54,14 +55,14 @@ type CliOptions = {
 };
 
 async function loadOpenAiApiKey() {
-  const apiKey = resolveOpenAiApiKey(projectRoot);
+  const apiKey = resolveOpenAiEvaluationApiKey(projectRoot);
 
   if (apiKey) {
     return apiKey;
   }
 
   throw new Error(
-    "OPENAI_API_KEY is unavailable. Set it in the process environment or " +
+    "OPENAI_EVALUATION_API_KEY is unavailable. Set it in the process environment or " +
       "in the ignored project file .env.local, then rerun the command.",
   );
 }
@@ -209,7 +210,7 @@ Usage:
   npm run eval:ai -- --recommendation-regressions --repeat 3
 
 The default run is a two-case smoke test with one Singles and one Doubles
-  fixture at low reasoning. --strategy runs focused team interactions,
+  fixture at medium reasoning. --strategy runs focused team interactions,
   --pokemon-regressions runs selected-set cases, and --recommendation-regressions
   removes one member before building the production candidate shortlist.
   --full-team keeps all six members and evaluates replacement targets.
@@ -240,11 +241,12 @@ async function main() {
 
   try {
     console.log("Loading production Pokemon, item, and Regulation M-C data...");
-    const [pokemonIndex, itemIndex, abilityIndex, legality] = await Promise.all([
+    const [pokemonIndex, itemIndex, abilityIndex, legality, showdownData] = await Promise.all([
       fetchPokemonIndex(),
       fetchItemIndex(),
       fetchAbilityIndex(),
       loadShowdownLegality(),
+      loadShowdownData(),
     ]);
     const evaluationCases = [];
     const baseEvaluationTargets = options.pokemonRegressions
@@ -323,6 +325,7 @@ async function main() {
         pokemonIndex,
         itemIndex,
         abilityIndex,
+        showdownData,
         legality,
         services: {
           fetchPokemon,

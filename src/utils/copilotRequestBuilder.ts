@@ -5,6 +5,7 @@ import {
   statKeys,
 } from "../data/natures";
 import { normalizeShowdownId } from "../api/showdownIds";
+import type { ShowdownDataSnapshot } from "../api/showdownData";
 import type { TeamConceptId } from "../data/teamConcepts";
 import {
   conceptCopilotTextKeys,
@@ -45,6 +46,7 @@ import {
   inferCopilotResponsibilities,
   type CopilotResponsibilityId,
 } from "./copilotResponsibilities";
+import { createCopilotTeamTactics } from "./copilotTeamTactics";
 import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
 import {
   createSetOptimizationPlan,
@@ -832,6 +834,7 @@ function getSelectedMoves(
   memberMoves: PokemonMove[] | undefined,
   configuredMoveIds: string[] | undefined,
   locale: Locale,
+  showdownData: ShowdownDataSnapshot | null | undefined,
 ) {
   const moveLookup = new Map<string, PokemonMove>();
 
@@ -849,7 +852,13 @@ function getSelectedMoves(
       return [];
     }
 
-    const move = moveLookup.get(normalizeLookup(moveId));
+    const memberMove = moveLookup.get(normalizeLookup(moveId));
+    const canonicalMove = showdownData?.movesById[normalizeShowdownId(moveId)];
+    // Saved teams can retain an older move snapshot. Canonical Showdown fields
+    // deliberately override stale mechanics while unknown custom moves remain intact.
+    const move = canonicalMove
+      ? { ...memberMove, ...canonicalMove }
+      : memberMove;
 
     const snapshot = move
       ? {
@@ -891,6 +900,10 @@ function getSelectedMoves(
       displayName: snapshot.displayName,
       description: source?.description,
       tags: source?.tags,
+      target: source?.target,
+      priority: source?.priority,
+      targetStatChanges: source?.targetStatChanges,
+      fieldEffects: source?.fieldEffects,
     })),
   };
 }
@@ -1159,6 +1172,7 @@ export function createCopilotAnalysisRequest({
   team,
   pokemonIndex = [],
   abilityIndex = [],
+  showdownData,
   selectedSlot,
   buildState,
   diagnostics,
@@ -1209,6 +1223,7 @@ export function createCopilotAnalysisRequest({
       member.moves,
       buildState.moveIdsBySlot[slotIndex],
       locale,
+      showdownData,
     );
     const moves = selectedMoves.snapshots;
     const itemDisplayName = item
@@ -1399,9 +1414,11 @@ export function createCopilotAnalysisRequest({
   const optimization = scope === "matchup"
     ? filterPersistentMatchupOptimization(unfilteredOptimization, matchup)
     : unfilteredOptimization;
+  const mechanics = createCopilotMechanicsSnapshot(mechanicsSets);
+  const tactics = createCopilotTeamTactics(sets, mechanics, battleFormat);
 
   return {
-    version: 34,
+    version: 35,
     locale,
     scope,
     battleFormat,
@@ -1422,7 +1439,8 @@ export function createCopilotAnalysisRequest({
         : [],
     optimization,
     matchup,
-    mechanics: createCopilotMechanicsSnapshot(mechanicsSets),
+    mechanics,
+    tactics,
     diagnostics: {
       filledSlots: diagnostics.filledSlots,
       coverageCount: diagnostics.coveredDefendingTypes.length,

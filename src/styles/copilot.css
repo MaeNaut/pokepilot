@@ -438,6 +438,11 @@
   -webkit-line-clamp: 2;
 }
 
+.copilot-analyze-control {
+  position: relative;
+  flex: 0 0 auto;
+}
+
 .copilot-analyze-button {
   display: inline-flex;
   width: 118px;
@@ -476,6 +481,34 @@
 .copilot-analyze-button svg {
   width: 12px;
   height: 12px;
+}
+
+.copilot-analyze-estimate {
+  position: absolute;
+  z-index: 6;
+  top: calc(100% + 7px);
+  right: 0;
+  width: max-content;
+  max-width: min(240px, 75vw);
+  visibility: hidden;
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  background: var(--copilot-surface-raised);
+  box-shadow: 0 4px 12px var(--copilot-panel-shadow);
+  color: var(--copilot-copy);
+  font-size: 0.67rem;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, visibility 120ms ease;
+}
+
+.copilot-analyze-control:hover .copilot-analyze-estimate,
+.copilot-analyze-control:focus-within .copilot-analyze-estimate,
+.copilot-analyze-control:focus-visible .copilot-analyze-estimate {
+  visibility: visible;
+  opacity: 1;
 }
 
 .copilot-scope-tabs {
@@ -1331,4 +1364,97 @@
   padding-top: 10px;
   color: var(--copilot-subtle);
   font-size: 0.62rem;
+}
+
+.copilot-reasoning-control {
+  position: relative;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.copilot-reasoning-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 3px 0 3px 6px;
+  background: transparent;
+  color: var(--copilot-copy);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.copilot-reasoning-trigger:hover,
+.copilot-reasoning-trigger:focus-visible {
+  color: var(--copilot-text);
+  outline-color: var(--copilot-accent);
+}
+
+.copilot-reasoning-current {
+  color: var(--copilot-accent);
+  font-weight: var(--font-medium);
+}
+
+.copilot-reasoning-menu {
+  position: absolute;
+  z-index: 7;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: grid;
+  width: min(225px, 75vw);
+  gap: 3px;
+  border: 1px solid var(--copilot-border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+  background: var(--copilot-panel-background);
+  box-shadow: 0 6px 20px var(--copilot-panel-shadow);
+  color: var(--copilot-copy);
+}
+
+.copilot-reasoning-menu strong {
+  padding: 6px 8px 4px;
+  color: var(--copilot-muted);
+  font-size: 0.66rem;
+  font-weight: var(--font-medium);
+}
+
+.copilot-reasoning-menu button {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 4px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--copilot-copy);
+  font: inherit;
+  font-size: 0.72rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.copilot-reasoning-menu button:hover:not(:disabled),
+.copilot-reasoning-menu button:focus-visible,
+.copilot-reasoning-menu button.is-active {
+  background: var(--copilot-surface-raised);
+  color: var(--copilot-text);
+  outline: none;
+}
+
+.copilot-reasoning-menu button:disabled {
+  color: var(--copilot-subtle);
+  cursor: not-allowed;
+}
+
+.copilot-reasoning-menu button svg {
+  color: var(--copilot-muted);
+}
+
+.copilot-reasoning-menu p {
+  margin: 3px 8px 5px;
+  color: var(--copilot-warning);
+  font-size: 0.67rem;
+  line-height: 1.4;
 }

@@ -83,6 +83,29 @@ function hasDefensiveCoverageLanguage(text: string) {
   );
 }
 
+function onlyWarnsAgainstDefensiveUse(
+  text: string,
+  set: CopilotAnalysisRequest["sets"][number],
+  mentionedSets: CopilotAnalysisRequest["sets"],
+) {
+  const mentions = text.split(/[.!?\n;]+/).filter((sentence) =>
+    textMentionsDisplayName(sentence, set.displayName),
+  );
+  // Only exempt unambiguous, single-Pokemon warnings, never a whole recommendation.
+  return mentions.length > 0 && mentions.every((sentence) => {
+    if (mentionedSets.some((other) =>
+      other.slotIndex !== set.slotIndex &&
+      textMentionsDisplayName(sentence, other.displayName),
+    )) {
+      return false;
+    }
+    if (/\b(?:but|however)\b|하지만|반면|아니라|말고/i.test(sentence)) {
+      return false;
+    }
+    return /\b(?:do not|don't|never|avoid)\s+(?:use|using|switch|switching|include|including|rely|relying)\b|\b(?:cannot|can't|should not|shouldn't)\s+(?:cover|handle|switch|resist|take)\b|(?:넣지|교체하지|교대하지|사용하지|의존하지)\s*(?:않|말)|(?:교체|교대)\s*(?:경로|대상|후보)[^.!?\n]*(?:제외|피하)/i.test(sentence);
+  });
+}
+
 function claimsNoTeammateDefense(text: string) {
   return /(?:\bno\b|\bnone\b|\bwithout\b|\black(?:s|ing)?\b)[^.!?\n]{0,140}(?:team-?mate|partner|member|resistan|immun)|(?:team-?mate|partner|member)[^.!?\n]{0,140}(?:resist|immun)[^.!?\n]{0,50}(?:\bno\b|\bnone\b|\bwithout\b)|(?:동료|팀원|파트너)[^.!?\n]{0,140}(?:반감|저항|무효)[^.!?\n]{0,50}(?:없|부재)|(?:반감|저항|무효)[^.!?\n]{0,140}(?:동료|팀원|파트너)[^.!?\n]{0,50}(?:없|부재)|팀(?:에는|에서|에게는|에|은|이)?[^.!?\n]{0,140}(?:반감|저항|무효|교대점)[^.!?\n]{0,70}(?:없|부재)/i.test(
     text,
@@ -496,7 +519,8 @@ function validatePokemonDefensiveRecommendationEvidence(
     }
 
     mentionedSets
-      .filter((set) => set.slotIndex !== selectedSet.slotIndex)
+      .filter((set) => set.slotIndex !== selectedSet.slotIndex &&
+        !onlyWarnsAgainstDefensiveUse(recommendationText, set, mentionedSets))
       .forEach((set) => {
         const hasExactDefenseEvidence = teammateDefensiveFacts.some(
           (fact) =>

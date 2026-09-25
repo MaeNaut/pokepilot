@@ -128,7 +128,7 @@
 
       <article lang="en">
         <h1>Privacy</h1>
-        <p class="meta">Public beta notice · Last updated September 19, 2026</p>
+        <p class="meta">Public beta notice · Last updated September 24, 2026</p>
 
         <section>
           <h2>Data kept in your browser</h2>
@@ -156,6 +156,16 @@
             battle data, including a team name when present, to OpenAI to
             generate the response. Avoid placing personal or confidential
             information in team names or analysis inputs.
+          </p>
+          <p>
+            Signed-in users may optionally register a personal OpenAI API key.
+            PokePilot encrypts the key before storing it in the account-scoped
+            Cloudflare D1 database. The browser does not retain the key after
+            registration, and PokePilot does not display it again. The server
+            decrypts and sends it to OpenAI only when you request an analysis
+            using that key. OpenAI bills usage to your own account. You can
+            remove the key in account settings; deleting your PokePilot account
+            also removes it.
           </p>
         </section>
 
@@ -245,7 +255,7 @@
 
       <article class="ko" lang="ko">
         <h1>개인정보 안내</h1>
-        <p class="meta">공개 베타 안내 · 최종 수정 2026년 9월 19일</p>
+        <p class="meta">공개 베타 안내 · 최종 수정 2026년 9월 24일</p>
 
         <section>
           <h2>브라우저에 저장되는 데이터</h2>
@@ -270,6 +280,15 @@
             서버로 전송됩니다. 서버는 팀 이름이 있는 경우 이를 포함한 구조화된
             배틀 데이터를 OpenAI에 전달해 분석 결과를 생성합니다. 팀 이름과
             분석 입력에 개인정보나 기밀정보를 넣지 마세요.
+          </p>
+          <p>
+            로그인한 이용자는 개인 OpenAI API 키를 선택적으로 등록할 수 있습니다.
+            PokePilot은 키를 암호화하여 계정별 Cloudflare D1 데이터베이스에
+            저장합니다. 등록 후 브라우저에는 키를 보관하지 않고, 키를 다시
+            표시하지도 않습니다. 서버는 해당 키로 분석을 요청할 때에만 키를
+            복호화하여 OpenAI에 전달합니다. 이용 요금은 이용자 본인의 OpenAI
+            계정에 청구됩니다. 계정 설정에서 키를 삭제할 수 있으며 PokePilot
+            계정을 삭제해도 함께 삭제됩니다.
           </p>
         </section>
 

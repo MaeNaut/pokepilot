@@ -17,6 +17,9 @@ import { getDefaultPokePilotOperationsRuntime } from "./pokepilotOperationsRunti
 type WebPokePilotApiOptions = {
   authenticatedAccountId?: string;
   apiKey?: string;
+  reasoningEffort?: "low" | "medium";
+  billingSource?: "site" | "personal";
+  billingIdentity?: string;
   clientSecret?: string;
   clock?: () => number;
   onOperationalEvent?: (event: PokePilotOperationalEvent) => void;
@@ -217,6 +220,9 @@ export async function handleWebPokePilotApi(
       options.operations ?? getDefaultPokePilotOperationsRuntime().operations;
     const result = await handlePokePilotAnalysis(body, {
       apiKey,
+      reasoningEffort: options.reasoningEffort,
+      billingSource: options.billingSource,
+      billingIdentity: options.billingIdentity,
       clock: options.clock,
       onOperationalEvent:
         options.onOperationalEvent ?? logOperationalEvent,

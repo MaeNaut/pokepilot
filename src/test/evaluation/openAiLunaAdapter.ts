@@ -8,6 +8,7 @@ import {
   POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
   POKEPILOT_AI_PROMPT_VERSION,
   type LunaReasoningEffort,
+  type PokePilotEvaluationModel,
 } from "../../../server/openAiLuna";
 import { validateCopilotGroundedModelOutput } from "../../utils/copilotModelContract";
 import {
@@ -19,6 +20,10 @@ import type { AiEvaluationModelAdapter } from "./aiModelEvaluation";
 type LunaResponsesClient = Pick<OpenAI, "responses">;
 
 type CreateOpenAiLunaAdapterOptions = {
+  modelId?: PokePilotEvaluationModel;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+  maxRetries?: number;
   client?: LunaResponsesClient;
   apiKey?: string;
   reasoningEffort?: LunaReasoningEffort;
@@ -32,17 +37,25 @@ export {
 export type { LunaReasoningEffort };
 
 export function createOpenAiLunaAdapter({
+  modelId = OPENAI_LUNA_MODEL_ID,
+  maxOutputTokens,
+  timeoutMs,
+  maxRetries,
   client,
   apiKey,
   reasoningEffort = POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
 }: CreateOpenAiLunaAdapterOptions = {}): AiEvaluationModelAdapter {
   return {
-    modelId: OPENAI_LUNA_MODEL_ID,
+    modelId,
     analyze: async (request) => {
       let result;
 
       try {
         result = await analyzeWithOpenAiLuna(request, {
+          modelId,
+          maxOutputTokens,
+          timeoutMs,
+          maxRetries,
           client,
           apiKey,
           cacheNamespace: "evaluation",

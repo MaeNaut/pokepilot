@@ -96,6 +96,65 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
+  it.each(["gpt-5.6-terra", "gpt-6-luna"] as const)("forwards %s and output cap without changing production defaults", async (modelId) => {
+    const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
+    const adapter = createOpenAiLunaAdapter({
+      modelId, reasoningEffort: "high", maxOutputTokens: 16000,
+      client: { responses: { create } } as never,
+    });
+    await adapter.analyze(request);
+    expect(adapter.modelId).toBe(modelId);
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      model: modelId, max_output_tokens: 16000,
+      reasoning: expect.objectContaining({ effort: "high" }),
+    }));
+  });
+  it.each([
+    [272000, 0.03005],
+    [272001, 0.0583502],
+  ])("prices GPT-6 Luna at the %s input-token boundary including cache writes", (inputTokens, cost) => {
+    const usage = createLunaStandardUsage({
+      input_tokens: inputTokens,
+      input_tokens_details: { cached_tokens: 10000, cache_write_tokens: 10000 },
+      output_tokens: 7000,
+      output_tokens_details: { reasoning_tokens: 5000 },
+      total_tokens: inputTokens + 7000,
+    } as ResponseUsage, "gpt-6-luna");
+    expect(usage.costUsd).toBeCloseTo(cost, 8);
+  });
+  it("rejects an incomplete response even when its partial text parses", async () => {
+    const create = vi.fn(async () => ({
+      status: "incomplete", incomplete_details: { reason: "max_output_tokens" },
+      output_text: JSON.stringify(groundedModelOutput),
+    }));
+    await expect(analyzeWithOpenAiLuna(request, {
+      client: { responses: { create } } as never,
+    })).rejects.toThrow("Model response incomplete: max_output_tokens");
+  });
+  it.each([["gpt-5.6-luna", 1.4, 1.427], ["gpt-5.6-terra", 14, 14.27], ["gpt-5.6-sol", 24, 24.54]])(
+    "uses the published Standard price for %s", (modelId, uncachedCost, cachedCost) => {
+      const usage = createLunaStandardUsage({
+        input_tokens: 1000000, input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+        output_tokens: 1000000, output_tokens_details: { reasoning_tokens: 0 }, total_tokens: 2000000,
+      } as ResponseUsage, modelId);
+      expect(usage.costUsd).toBe(uncachedCost);
+      const cached = createLunaStandardUsage({
+        input_tokens: 1000000, input_tokens_details: { cached_tokens: 100000, cache_write_tokens: 900000 },
+        output_tokens: 1000000, output_tokens_details: { reasoning_tokens: 0 }, total_tokens: 2000000,
+      } as ResponseUsage, modelId);
+      expect(cached.costUsd).toBeCloseTo(cachedCost);
+    },
+  );
+  it.each([["low", 8000], ["medium", 16000]] as const)(
+    "reserves sufficient output space for %s reasoning", async (reasoningEffort, maxOutputTokens) => {
+      const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
+      await analyzeWithOpenAiLuna(request, {
+        reasoningEffort,
+        client: { responses: { create } } as never,
+      });
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({ max_output_tokens: maxOutputTokens }));
+    },
+  );
   it.each(["team", "pokemon", "recommendation", "optimization", "matchup"] as const)(
     "keeps the original output schema and shared cache key for %s", async (scope) => {
       const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
@@ -104,7 +163,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       });
       expect(result.output).toEqual(groundedModelOutput);
       expect(create).toHaveBeenCalledWith(expect.objectContaining({
-        prompt_cache_key: "pokepilot-production-core-v5-low",
+        prompt_cache_key: "pokepilot-production-core-v6-low",
         text: expect.objectContaining({ format: expect.objectContaining({
           schema: copilotGroundedModelOutputJsonSchema,
         }) }),
@@ -184,7 +243,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       outputTokens: 300,
       reasoningTokens: 120,
       totalTokens: 1_300,
-      costUsd: 0.000529,
+      costUsd: 0.0002345,
     });
   });
 
@@ -221,10 +280,10 @@ describe("OpenAI Luna evaluation adapter", () => {
 
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-core-v5-low",
+        prompt_cache_key: "pokepilot-evaluation-core-v6-low",
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -277,7 +336,7 @@ describe("OpenAI Luna evaluation adapter", () => {
           effort: "low",
           context: "current_turn",
         },
-        max_output_tokens: 3_500,
+        max_output_tokens: 8_000,
       }),
     );
     expect(result).toMatchObject({
@@ -287,7 +346,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 90,
+        promptVersion: 91,
       },
       usage: {
         totalTokens: 150,
@@ -383,7 +442,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(create).toHaveBeenCalledOnce();
     const modelRequest = create.mock.calls[0]![0];
     expect(modelRequest.prompt_cache_key).toBe(
-      "pokepilot-evaluation-core-v5-low",
+      "pokepilot-evaluation-core-v6-low",
     );
     expect(modelRequest.input[0].content[0].text).toBe(
       pokepilotCommonInstructions,
@@ -570,7 +629,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         outputTokens: 500,
         reasoningTokens: 300,
         totalTokens: 1_500,
-        costUsd: 0.000656,
+        costUsd: 0.000278,
       },
       responseMetadata: {
         responseId: "resp_incomplete",

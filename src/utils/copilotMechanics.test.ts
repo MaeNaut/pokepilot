@@ -26,6 +26,11 @@ describe("PokePilot mechanics dictionary", () => {
             displayName: "Illusion",
             effect: "Appears as the last non-fainted party Pokemon.",
           },
+          {
+            id: "contrary",
+            displayName: "Contrary",
+            effect: "If this Pokemon has a stat stage raised it is lowered instead, and vice versa.",
+          },
         ],
         itemId: "choicescarf",
         itemDisplayName: "Choice Scarf",
@@ -37,6 +42,9 @@ describe("PokePilot mechanics dictionary", () => {
             description:
               "Power doubles and the user moves immediately after an ally that already used Round this turn.",
             tags: ["Sound", "Sound", "Priority 0"],
+            target: "any-adjacent",
+            targetStatChanges: [{ stat: "attack", stages: -1 }],
+            fieldEffects: [{ kind: "weather", id: "rain" }],
           },
         ],
       }),
@@ -67,6 +75,9 @@ describe("PokePilot mechanics dictionary", () => {
           effect:
             "Power doubles and the user moves immediately after an ally that already used Round this turn.",
           tags: ["Sound", "Priority 0"],
+          target: "any-adjacent",
+          targetStatChanges: [{ stat: "attack", stages: -1 }],
+          fieldEffects: [{ kind: "weather", id: "rain" }],
         },
         {
           id: "hypervoice",
@@ -79,6 +90,12 @@ describe("PokePilot mechanics dictionary", () => {
           id: "illusion",
           displayName: "Illusion",
           effect: "Appears as the last non-fainted party Pokemon.",
+        },
+        {
+          id: "contrary",
+          displayName: "Contrary",
+          effect: "If this Pokemon has a stat stage raised it is lowered instead, and vice versa.",
+          statChangeMode: "reverse",
         },
       ],
       items: [
@@ -107,5 +124,19 @@ describe("PokePilot mechanics dictionary", () => {
       abilities: [{ id: "newability", displayName: "New Ability" }],
       items: [{ id: "newitem", displayName: "New Item" }],
     });
+  });
+
+  it("recognizes the canonical Simple stat-stage multiplier", () => {
+    const mechanics = createCopilotMechanicsSnapshot([
+      createSet({
+        abilities: [{
+          id: "simple",
+          displayName: "Simple",
+          effect: "When one of this Pokemon's stat stages is raised or lowered, the amount is doubled.",
+        }],
+      }),
+    ]);
+
+    expect(mechanics.abilities[0]).toMatchObject({ statChangeMode: "double" });
   });
 });

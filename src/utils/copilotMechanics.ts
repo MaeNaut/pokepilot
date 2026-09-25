@@ -1,10 +1,20 @@
 import { normalizeShowdownId } from "../api/showdownIds";
+import type {
+  PokemonMoveFieldEffect,
+  PokemonMoveStatChange,
+  PokemonMoveTarget,
+} from "../types";
 
 export type CopilotMechanicEntry = {
   id: string;
   displayName: string;
   effect?: string;
   tags?: string[];
+  target?: PokemonMoveTarget;
+  priority?: number;
+  targetStatChanges?: PokemonMoveStatChange[];
+  fieldEffects?: PokemonMoveFieldEffect[];
+  statChangeMode?: "reverse" | "double";
 };
 
 export type CopilotMechanicsSnapshot = {
@@ -18,6 +28,10 @@ export type CopilotMechanicsMoveInput = {
   displayName: string;
   description?: string;
   tags?: string[];
+  target?: PokemonMoveTarget;
+  priority?: number;
+  targetStatChanges?: PokemonMoveStatChange[];
+  fieldEffects?: PokemonMoveFieldEffect[];
 };
 
 export type CopilotMechanicsAbilityInput = {
@@ -62,6 +76,25 @@ function compactTags(tags: string[] | undefined) {
   return [...new Set((tags ?? []).map((tag) => tag.trim()).filter(Boolean))];
 }
 
+function inferStatChangeMode(effect: string | undefined) {
+  const normalized = effect?.toLowerCase() ?? "";
+  if (
+    /revers(?:e|es|ed|ing)[\s\S]{0,80}stat (?:stage )?changes|stat (?:stage )?changes[\s\S]{0,80}revers|stat stage(?:s)?[\s\S]{0,80}raised[\s\S]{0,80}lowered[\s\S]{0,80}vice versa/i.test(
+      normalized,
+    )
+  ) {
+    return "reverse" as const;
+  }
+  if (
+    /doubl(?:e|es|ed|ing)[\s\S]{0,80}stat (?:stage )?changes|stat (?:stage )?changes[\s\S]{0,80}doubl|stat stage(?:s)?[\s\S]{0,80}doubl/i.test(
+      normalized,
+    )
+  ) {
+    return "double" as const;
+  }
+  return undefined;
+}
+
 function addUniqueMechanic(
   entries: Map<string, CopilotMechanicEntry>,
   entry: CopilotMechanicEntry,
@@ -89,15 +122,25 @@ export function createCopilotMechanicsSnapshot(
         displayName: move.displayName,
         ...(effect ? { effect } : {}),
         ...(tags.length > 0 ? { tags } : {}),
+        ...(move.target ? { target: move.target } : {}),
+        ...(move.priority ? { priority: move.priority } : {}),
+        ...(move.targetStatChanges?.length
+          ? { targetStatChanges: move.targetStatChanges.map((change) => ({ ...change })) }
+          : {}),
+        ...(move.fieldEffects?.length
+          ? { fieldEffects: move.fieldEffects.map((effect) => ({ ...effect })) }
+          : {}),
       });
     }
 
     for (const ability of set.abilities) {
       const effect = compactCopilotMechanicEffect(ability.effect);
+      const statChangeMode = inferStatChangeMode(effect);
       addUniqueMechanic(abilities, {
         id: ability.id,
         displayName: ability.displayName,
         ...(effect ? { effect } : {}),
+        ...(statChangeMode ? { statChangeMode } : {}),
       });
     }
 

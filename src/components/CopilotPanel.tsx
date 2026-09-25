@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faChevronDown,
+  faChevronUp,
+  faLock,
   faMagnifyingGlass,
   faRotateRight,
   faSliders,
@@ -19,6 +22,10 @@ import type {
   TeamSlot,
 } from "../types";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
+import {
+  loadShowdownData,
+  type ShowdownDataSnapshot,
+} from "../api/showdownData";
 import { createCopilotAnalysisRequest } from "../utils/copilotRequestBuilder";
 import type {
   CopilotAnalysisScope,
@@ -133,6 +140,15 @@ const emptyStateCopy: Record<
   },
 };
 
+const analysisEstimates: Partial<Record<
+  CopilotAnalysisScope,
+  Record<"low" | "medium", { seconds: number; cost: string }>
+>> = {
+  team: { low: { seconds: 16, cost: "0.0018" }, medium: { seconds: 75, cost: "0.0048" } },
+  pokemon: { low: { seconds: 10, cost: "0.0015" }, medium: { seconds: 31, cost: "0.0024" } },
+  recommendation: { low: { seconds: 12, cost: "0.0027" }, medium: { seconds: 52, cost: "0.0041" } },
+};
+
 export function CopilotPanel({
   account,
   savedTeamId,
@@ -156,6 +172,11 @@ export function CopilotPanel({
 }: CopilotPanelProps) {
   const { locale, t } = useLocalization();
   const [scope, setScope] = useState<CopilotAnalysisScope>("team");
+  const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium">("low");
+  const [isReasoningMenuOpen, setIsReasoningMenuOpen] = useState(false);
+  const reasoningMenuRef = useRef<HTMLDivElement>(null);
+  const [showdownData, setShowdownData] = useState<ShowdownDataSnapshot | null>(null);
+  const [isShowdownDataLoading, setIsShowdownDataLoading] = useState(true);
   const [isLoginGateRevealed, setIsLoginGateRevealed] = useState(false);
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
@@ -171,6 +192,48 @@ export function CopilotPanel({
     "applied" | "saved" | "bench-full" | "stale" | null
   >(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!account.hasPersonalApiKey) setReasoningEffort("low");
+  }, [account.hasPersonalApiKey]);
+
+  useEffect(() => {
+    if (!isReasoningMenuOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!reasoningMenuRef.current?.contains(event.target as Node)) {
+        setIsReasoningMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsReasoningMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isReasoningMenuOpen]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    void loadShowdownData()
+      .then((data) => {
+        if (isCurrent) setShowdownData(data);
+      })
+      .catch(() => {
+        // Existing request data remains a best-effort fallback when the catalog is unavailable.
+      })
+      .finally(() => {
+        if (isCurrent) setIsShowdownDataLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
   const recommendationState = useCopilotRecommendationCandidates({
     scope,
     selectedSlot,
@@ -241,6 +304,7 @@ export function CopilotPanel({
         team,
         pokemonIndex,
         abilityIndex,
+        showdownData,
         selectedSlot,
         buildState,
         diagnostics,
@@ -260,6 +324,7 @@ export function CopilotPanel({
       teamName,
       validity,
       recommendationState.candidates,
+      showdownData,
     ],
   );
   const request = useMemo(() => createCopilotAnalysisRequest({
@@ -292,7 +357,8 @@ export function CopilotPanel({
   const isAnalysisPreparing =
     recommendationState.status === "loading" ||
     optimizationState.loading ||
-    matchupState.loading;
+    matchupState.loading ||
+    isShowdownDataLoading;
   const {
     analysisContextKey,
     analysisState,
@@ -313,6 +379,8 @@ export function CopilotPanel({
     locale,
     battleFormat,
     failedMessage: t("copilot.failed"),
+    reasoningEffort,
+    usingPersonalApiKey: account.hasPersonalApiKey,
   });
   const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
   const isUsageDataScope = usesHistoricalUsageData(scope);
@@ -357,6 +425,8 @@ export function CopilotPanel({
     isAnalysisPreparing ||
     abilityIndexStatus === "loading" ||
     cooldownRemainingSeconds > 0 ||
+    (account.enabled && account.status === "ready" && account.personalApiKeyStatus !== "ready") ||
+    (reasoningEffort === "medium" && !account.hasPersonalApiKey) ||
     (scope === "recommendation" &&
       showdownLegalityStatus === "loading") ||
     Boolean(scopeRequirement) ||
@@ -528,7 +598,9 @@ export function CopilotPanel({
 
   function handleSelectHistory(entry: CopilotHistoryEntry) {
     setScope(entry.scope);
-    selectHistory(entry);
+    const displayEffort = entry.reasoningEffort === "medium" && account.hasPersonalApiKey ? "medium" : "low";
+    setReasoningEffort(displayEffort);
+    selectHistory(entry, displayEffort);
   }
 
   function handleClearHistory() {
@@ -566,25 +638,38 @@ export function CopilotPanel({
             onClear={handleClearHistory}
           />
 
-          <button
-            className="copilot-analyze-button"
-            type="button"
-            disabled={isAnalyzeDisabled}
-            onClick={handleAnalyze}
-          >
-            <FontAwesomeIcon
-              icon={
-                analysisState.status === "loading" || isAnalysisPreparing
-                  ? faSpinner
-                  : response
-                    ? faRotateRight
-                    : faWandMagicSparkles
-              }
-              spin={analysisState.status === "loading" || isAnalysisPreparing}
-              aria-hidden="true"
-            />
-            {analyzeLabel}
-          </button>
+          <div className="copilot-analyze-control" tabIndex={isAnalyzeDisabled ? 0 : undefined} aria-describedby={isAnalyzeDisabled ? "copilot-analyze-estimate" : undefined}>
+            <button
+              className="copilot-analyze-button"
+              type="button"
+              disabled={isAnalyzeDisabled}
+              onClick={handleAnalyze}
+              aria-describedby="copilot-analyze-estimate"
+            >
+              <FontAwesomeIcon
+                icon={
+                  analysisState.status === "loading" || isAnalysisPreparing
+                    ? faSpinner
+                    : response
+                      ? faRotateRight
+                      : faWandMagicSparkles
+                }
+                spin={analysisState.status === "loading" || isAnalysisPreparing}
+                aria-hidden="true"
+              />
+              {analyzeLabel}
+            </button>
+            <span className="copilot-analyze-estimate" id="copilot-analyze-estimate" role="tooltip">
+              {account.personalApiKeyStatus === "error" && account.status === "ready"
+                ? t("copilot.keyStatusError")
+                : analysisEstimates[scope]
+                  ? t(account.hasPersonalApiKey ? "copilot.estimate" : "copilot.estimateSite", {
+                      seconds: analysisEstimates[scope][reasoningEffort].seconds,
+                      cost: analysisEstimates[scope][reasoningEffort].cost,
+                    })
+                  : t("copilot.estimateUnavailable")}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -733,13 +818,33 @@ export function CopilotPanel({
               : "battleFormat.doubles",
           )}
         </span>
-        <span>
-          {response?.source === "hosted"
-            ? t("copilot.hostedAnalysis")
-            : response
-              ? t("copilot.rulesFallback")
-              : t("copilot.aiReady")}
-        </span>
+        <div className="copilot-reasoning-control" ref={reasoningMenuRef}>
+          <button
+            type="button"
+            className="copilot-reasoning-trigger"
+            aria-label={`${t("copilot.reasoningLevel")}: ${t(reasoningEffort === "low" ? "copilot.reasoningLow" : "copilot.reasoningMedium")}`}
+            aria-expanded={isReasoningMenuOpen}
+            aria-haspopup="menu"
+            onClick={() => setIsReasoningMenuOpen((open) => !open)}
+          >
+            <span>{t(response && response.source !== "hosted" ? "copilot.rulesFallback" : "copilot.hostedAnalysis")}</span>
+            <span className="copilot-reasoning-current">{t(reasoningEffort === "low" ? "copilot.reasoningLow" : "copilot.reasoningMedium")}</span>
+            <FontAwesomeIcon icon={isReasoningMenuOpen ? faChevronDown : faChevronUp} aria-hidden="true" />
+          </button>
+          {isReasoningMenuOpen ? (
+            <div className="copilot-reasoning-menu" role="menu" aria-label={t("copilot.reasoningLevel")}>
+              <strong>{t("copilot.reasoningLevel")}</strong>
+              <button type="button" role="menuitemradio" aria-checked={reasoningEffort === "low"} className={reasoningEffort === "low" ? "is-active" : ""} onClick={() => { setReasoningEffort("low"); setIsReasoningMenuOpen(false); }}>
+                {t("copilot.reasoningLow")}
+              </button>
+              <button type="button" role="menuitemradio" aria-checked={reasoningEffort === "medium"} aria-disabled={!account.hasPersonalApiKey || account.personalApiKeyStatus !== "ready"} className={reasoningEffort === "medium" ? "is-active" : ""} disabled={!account.hasPersonalApiKey || account.personalApiKeyStatus !== "ready"} onClick={() => { setReasoningEffort("medium"); setIsReasoningMenuOpen(false); }}>
+                {t("copilot.reasoningMedium")}
+                {!account.hasPersonalApiKey ? <FontAwesomeIcon icon={faLock} aria-hidden="true" /> : null}
+              </button>
+              {!account.hasPersonalApiKey ? <p>{t("copilot.mediumNeedsKey")}</p> : null}
+            </div>
+          ) : null}
+        </div>
       </footer>
       </div>
 

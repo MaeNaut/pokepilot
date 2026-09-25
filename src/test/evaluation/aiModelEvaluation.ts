@@ -1,4 +1,5 @@
 import type { ShowdownLegalitySnapshot } from "../../api/showdownLegality";
+import type { ShowdownDataSnapshot } from "../../api/showdownData";
 import { formatIdLabel } from "../../api/showdownIds";
 import {
   translateGameName,
@@ -118,6 +119,7 @@ export type CreateAiTeamEvaluationCaseOptions = {
   pokemonIndex: PokemonIndexEntry[];
   itemIndex: ItemIndexEntry[];
   abilityIndex?: PokemonAbility[];
+  showdownData?: ShowdownDataSnapshot | null;
   legality: ShowdownLegalitySnapshot | null;
   services?: ShowdownImportServices;
   createRecommendationCandidates?: typeof createPokemonRecommendationCandidates;
@@ -183,6 +185,7 @@ export async function createAiTeamEvaluationCase(
     pokemonIndex,
     itemIndex,
     abilityIndex = [],
+    showdownData,
     legality,
     services,
   }: CreateAiTeamEvaluationCaseOptions,
@@ -207,6 +210,7 @@ export async function createAiTeamEvaluationCase(
     team,
     pokemonIndex,
     abilityIndex,
+    showdownData,
     selectedSlot,
     buildState,
     diagnostics,
@@ -286,6 +290,7 @@ export async function createAiPokemonRecommendationEvaluationCase(
   const {
     pokemonIndex,
     abilityIndex = [],
+    showdownData,
     legality,
     createRecommendationCandidates = createPokemonRecommendationCandidates,
   } = options;
@@ -385,6 +390,7 @@ export async function createAiPokemonRecommendationEvaluationCase(
     team,
     pokemonIndex,
     abilityIndex,
+    showdownData,
     selectedSlot,
     buildState,
     diagnostics,

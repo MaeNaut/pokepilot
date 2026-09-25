@@ -90,6 +90,16 @@ describe("PokePilot analysis history", () => {
     ).toEqual(koreanEntry);
   });
 
+  it("keeps low and medium results separate for the same team request", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const low = { ...createEntry(2), reasoningEffort: "low" as const };
+    const medium = { ...createEntry(2), id: "entry-medium", reasoningEffort: "medium" as const };
+    storeCopilotHistory([medium, low]);
+    const restored = getStoredCopilotHistory();
+    expect(findMatchingCopilotHistoryEntry(restored, low.teamKey, low.scope, low.locale, low.requestFingerprint, "low")).toEqual(low);
+    expect(findMatchingCopilotHistoryEntry(restored, low.teamKey, low.scope, low.locale, low.requestFingerprint, "medium")).toEqual(medium);
+  });
+
   it("limits each team and supports clearing only that team's records", () => {
     const otherTeamEntry = createEntry(99, "saved:other");
     const entries = Array.from(

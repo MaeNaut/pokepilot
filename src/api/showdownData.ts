@@ -1,6 +1,9 @@
 import {
   pokemonTypes,
   type PokemonMove,
+  type PokemonMoveFieldEffect,
+  type PokemonMoveStatChange,
+  type PokemonMoveTarget,
   type PokemonType,
   type StatBlock,
 } from "../types";
@@ -86,7 +89,7 @@ type ShowdownDataCachePayload = ShowdownDataSnapshot & {
   cachedAt: number;
 };
 
-const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:mc-v1";
+const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:mc-v2";
 const SHOWDOWN_DATA_CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 
 const MOVE_FLAG_TAG_LABELS: Record<string, string> = {
@@ -303,6 +306,69 @@ function normalizeAbilities(value: unknown) {
   );
 }
 
+const moveTargets: Record<string, PokemonMoveTarget> = {
+  self: "self",
+  adjacentAlly: "adjacent-ally",
+  adjacentAllyOrSelf: "adjacent-ally-or-self",
+  adjacentFoe: "adjacent-foe",
+  normal: "any-adjacent",
+  randomNormal: "any-adjacent",
+  any: "any-adjacent",
+  allAdjacent: "all-adjacent",
+  allAdjacentFoes: "all-adjacent-foes",
+  all: "all",
+  allySide: "ally-side",
+  allyTeam: "ally-side",
+  foeSide: "foe-side",
+  foeTeam: "foe-side",
+  scripted: "field",
+};
+
+const moveStatStages: Record<string, PokemonMoveStatChange["stat"]> = {
+  atk: "attack",
+  def: "defense",
+  spa: "specialAttack",
+  spd: "specialDefense",
+  spe: "speed",
+  accuracy: "accuracy",
+  evasion: "evasion",
+};
+
+function normalizeMoveTarget(target: unknown): PokemonMoveTarget | undefined {
+  return typeof target === "string" ? moveTargets[target] ?? "unknown" : undefined;
+}
+
+function normalizeTargetStatChanges(
+  boosts: RawShowdownMove["boosts"],
+): PokemonMoveStatChange[] | undefined {
+  if (!boosts) return undefined;
+  const changes = Object.entries(boosts).flatMap(([stat, stages]) => {
+    const normalizedStat = moveStatStages[stat];
+    return normalizedStat && typeof stages === "number" && stages !== 0
+      ? [{ stat: normalizedStat, stages }]
+      : [];
+  });
+  return changes.length > 0 ? changes : undefined;
+}
+
+function normalizeFieldEffects(
+  move: RawShowdownMove,
+): PokemonMoveFieldEffect[] | undefined {
+  const fields: Array<[PokemonMoveFieldEffect["kind"], unknown]> = [
+    ["weather", move.weather],
+    ["terrain", move.terrain],
+    ["pseudo-weather", move.pseudoWeather],
+    ["side-condition", move.sideCondition],
+    ["slot-condition", move.slotCondition],
+  ];
+  const effects = fields.flatMap(([kind, id]) =>
+    typeof id === "string" && id.trim()
+      ? [{ kind, id: normalizeShowdownId(id) }]
+      : [],
+  );
+  return effects.length > 0 ? effects : undefined;
+}
+
 function normalizeSpecies(
   id: string,
   species: RawShowdownSpecies,
@@ -331,6 +397,10 @@ function normalizeMove(id: string, move: RawShowdownMove): PokemonMove | null {
     return null;
   }
 
+  const target = normalizeMoveTarget(move.target);
+  const targetStatChanges = normalizeTargetStatChanges(move.boosts);
+  const fieldEffects = normalizeFieldEffects(move);
+
   return {
     id: normalizeShowdownId(id),
     name: move.name ?? formatIdLabel(id),
@@ -345,10 +415,16 @@ function normalizeMove(id: string, move: RawShowdownMove): PokemonMove | null {
     description:
       move.shortDesc ?? move.desc ?? "Move description is not available from Showdown.",
     tags: getMoveTags(move),
+    ...(target ? { target } : {}),
+    ...(typeof move.priority === "number" && move.priority !== 0
+      ? { priority: move.priority }
+      : {}),
+    ...(targetStatChanges ? { targetStatChanges } : {}),
+    ...(fieldEffects ? { fieldEffects } : {}),
   };
 }
 
-function normalizeSnapshot(
+export function normalizeShowdownSnapshot(
   rawSpecies: Record<string, RawShowdownSpecies>,
   rawMoves: Record<string, RawShowdownMove>,
 ): ShowdownDataSnapshot {
@@ -432,7 +508,7 @@ export async function loadShowdownData(): Promise<ShowdownDataSnapshot> {
     }
 
     const data = await fetchJson<{ species: Record<string, RawShowdownSpecies>; moves: Record<string, RawShowdownMove> }>("/data/showdown-battle-mc.json");
-    const snapshot = normalizeSnapshot(data.species, data.moves);
+    const snapshot = normalizeShowdownSnapshot(data.species, data.moves);
 
     saveSnapshot(snapshot);
     return snapshot;

@@ -199,6 +199,55 @@
   color: var(--color-muted);
 }
 
+.header-account-key-note,
+.header-account-key-status {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.69rem;
+  line-height: 1.4;
+}
+
+.header-account-key-form {
+  display: flex;
+  min-width: 0;
+  gap: 5px;
+}
+
+.header-account-key-form input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+.header-account-key-form button,
+.header-account-key-remove {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.header-account-key-remove {
+  justify-self: start;
+  color: var(--color-danger);
+}
+
+.header-account-key-form button:disabled,
+.header-account-key-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .header-account-choice-group {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

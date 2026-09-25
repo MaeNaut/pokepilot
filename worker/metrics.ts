@@ -6,6 +6,7 @@ const routes = new Set([
   "/api/auth/google", "/api/auth/google/callback", "/api/auth/logout",
   "/api/pokepilot/account", "/api/pokepilot/teams",
   "/api/pokepilot/analysis-history", "/api/pokepilot/preferences", "/api/pokepilot/analyze",
+  "/api/pokepilot/personal-api-key",
 ]);
 
 export function metricRoute(path: string) {
@@ -32,7 +33,9 @@ export function metricValues(route: string, status: number, elapsed: number, eve
   const duration = Math.round(positive(elapsed));
   return [
     now.toISOString().slice(0, 10), route, status, event?.scope ?? "unknown",
-    analysis?.cacheStatus ?? (event?.type === "cooldown" ? "cooldown" : "none"),
+    analysis?.billingSource === "personal"
+      ? `personal-${analysis.reasoningEffort ?? "low"}-${analysis.cacheStatus}`
+      : analysis?.cacheStatus ?? (event?.type === "cooldown" ? "cooldown" : "none"),
     route === "/api/pokepilot/analyze" ? OPENAI_LUNA_MODEL_ID : "none",
     route === "/api/pokepilot/analyze" ? POKEPILOT_AI_PROMPT_VERSION : 0,
     latencyBucket(duration), duration,

@@ -41,13 +41,15 @@ export async function executeCopilotAnalysis(
   request: CopilotAnalysisRequest,
   locale: Locale,
   onCooldown: (seconds: number) => void,
+  reasoningEffort: "low" | "medium" = "low",
+  usingPersonalApiKey = false,
 ) {
   let nextResponse: CopilotAnalysisResponse;
   let usedFallback = false;
   let fallbackReason: HostedAnalysisFailureReason | undefined;
 
   try {
-    const hostedResult = await requestHostedCopilotAnalysis(request);
+    const hostedResult = await requestHostedCopilotAnalysis(request, undefined, reasoningEffort);
     nextResponse = hostedResult.qualityWarnings?.length
       ? {
           ...hostedResult.analysis,
@@ -58,7 +60,7 @@ export async function executeCopilotAnalysis(
       onCooldown(hostedResult.retryAfterSeconds);
     }
   } catch (error) {
-    if (error instanceof CopilotApiError && (error.code === "AUTH_REQUIRED" || error.code === "AUTH_UNAVAILABLE")) {
+    if (usingPersonalApiKey || error instanceof CopilotApiError && (error.code === "AUTH_REQUIRED" || error.code === "AUTH_UNAVAILABLE" || error.code === "PERSONAL_KEY_REQUIRED")) {
       throw error;
     }
     fallbackReason = classifyHostedAnalysisFailure(error);

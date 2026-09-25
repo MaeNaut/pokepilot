@@ -9,6 +9,8 @@ the API, Google OAuth callback, and same-origin Smogon proxy.
 - **Worker and static assets:** `pokepilot` Worker with the `ASSETS` binding
 - **Custom domain:** `pokepilot.app`
 - **Preview URL:** `https://pokepilot.pokepilot-ai.workers.dev`
+- **QA version URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
+- **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
 - **Operational state:** Upstash Redis for analysis cache, distributed leases,
   cooldowns, and rate limits
@@ -23,7 +25,7 @@ The Node API adapter in `server/` is still used by the Vite development server.
 
 1. Confirm `wrangler.jsonc` still binds `ASSETS` and the D1 `DB` database, and
    maps the `pokepilot.app` custom domain.
-2. Apply both D1 migrations in order:
+2. Apply all checked-in D1 migrations in order:
 
    ```bash
    npx wrangler d1 migrations apply pokepilot --remote
@@ -58,6 +60,24 @@ The Node API adapter in `server/` is still used by the Vite development server.
    npm run check:cloudflare
    npm run deploy:cloudflare
    ```
+
+## QA version URL
+
+`wrangler.qa.jsonc` binds an isolated D1 database and Redis prefix. It uploads
+the current build as an aliased Worker version, without deploying that version
+to `pokepilot.app`:
+
+```bash
+npx wrangler d1 migrations apply pokepilot-qa --remote --config wrangler.qa.jsonc
+npm run check:cloudflare
+npx wrangler versions upload --config wrangler.qa.jsonc --preview-alias qa
+```
+
+The QA version reuses the Worker's existing encrypted secrets. Google sign-in
+requires `https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback`
+in the OAuth client's authorized redirect URIs. The QA database is separate
+from production; do not use this config with `wrangler deploy` or `wrangler
+versions deploy`.
 
 ## Rollback
 

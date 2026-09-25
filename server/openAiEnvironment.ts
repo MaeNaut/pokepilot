@@ -14,7 +14,7 @@ function isUsableOpenAiApiKey(value: string | undefined): value is string {
   );
 }
 
-export function parseOpenAiApiKeyFromEnvSource(source: string) {
+export function parseOpenAiApiKeyFromEnvSource(source: string, variableName = "OPENAI_API_KEY") {
   for (const line of source.split(/\r?\n/)) {
     const trimmedLine = line.trim();
 
@@ -25,7 +25,7 @@ export function parseOpenAiApiKeyFromEnvSource(source: string) {
     const separatorIndex = trimmedLine.indexOf("=");
     if (
       separatorIndex < 0 ||
-      trimmedLine.slice(0, separatorIndex).trim() !== "OPENAI_API_KEY"
+      trimmedLine.slice(0, separatorIndex).trim() !== variableName
     ) {
       continue;
     }
@@ -89,4 +89,21 @@ export function resolveOpenAiApiKey(
   });
 
   return selectUsableOpenAiApiKey([processValue, ...fileCandidates]);
+}
+
+export function resolveOpenAiEvaluationApiKey(projectRoot: string) {
+  const fileCandidates = [".env.local", ".env"].map((fileName) => {
+    const source = readEnvironmentFile(resolve(projectRoot, fileName));
+    return source
+      ? parseOpenAiApiKeyFromEnvSource(source, "OPENAI_EVALUATION_API_KEY")
+      : undefined;
+  });
+  const key = selectUsableOpenAiApiKey([
+    process.env.OPENAI_EVALUATION_API_KEY,
+    ...fileCandidates,
+  ]);
+  if (!key) {
+    throw new Error("OPENAI_EVALUATION_API_KEY is unavailable. Evaluation will not fall back to the production key.");
+  }
+  return key;
 }

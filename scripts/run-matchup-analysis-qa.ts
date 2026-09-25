@@ -37,7 +37,7 @@ import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContr
 import { buildImportedShowdownSnapshot } from "../src/utils/showdownImport";
 import { createTeamAnalysisContext } from "../src/utils/teamAnalysisContext";
 import type { TeamBuildState } from "../src/utils/teamBuildState";
-import { resolveOpenAiApiKey } from "../server/openAiEnvironment";
+import { resolveOpenAiEvaluationApiKey } from "../server/openAiEnvironment";
 import { installAiEvaluationRuntime } from "./aiEvaluationRuntime";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -500,8 +500,7 @@ async function main() {
       return;
     }
 
-    const apiKey = resolveOpenAiApiKey(projectRoot);
-    if (!apiKey) throw new Error("OPENAI_API_KEY is unavailable.");
+    const apiKey = resolveOpenAiEvaluationApiKey(projectRoot);
     const adapter = createOpenAiLunaAdapter({ apiKey, reasoningEffort: "low" });
     const results = [];
 

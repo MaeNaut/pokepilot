@@ -1,4 +1,5 @@
 import type { BattleFormat } from "../battleFormat/battleFormat";
+import type { ShowdownDataSnapshot } from "../api/showdownData";
 import type {
   CalculatorAnalysisContext,
   SetOptimizationBenchmark,
@@ -23,7 +24,10 @@ import type {
   PokemonCandidateFilterValue,
   PokemonAbility,
   PokemonIndexEntry,
+  PokemonMoveFieldEffect,
   PokemonMove,
+  PokemonMoveStatChange,
+  PokemonMoveTarget,
   PokemonType,
   StatBlock,
   StatKey,
@@ -189,6 +193,56 @@ export type CopilotDiagnosticsSnapshot = {
     TeamValidityResult,
     "status" | "errorCount" | "unavailableCount"
   >;
+};
+
+export type CopilotAllyTargetOpportunity = {
+  sourceSlotIndex: number;
+  moveId: string;
+  target: PokemonMoveTarget;
+  targetSlotIndexes: number[];
+};
+
+export type CopilotSharedMoveSequence = {
+  moveId: string;
+  slotIndexes: number[];
+};
+
+export type CopilotAllyStatChangeInteraction = {
+  sourceSlotIndex: number;
+  targetSlotIndex: number;
+  moveId: string;
+  abilityId: string;
+  state: "current" | "mega";
+  mode: "reverse" | "double";
+  targetStatChanges: PokemonMoveStatChange[];
+};
+
+export type CopilotFieldSetter = {
+  sourceSlotIndex: number;
+  moveId: string;
+  fieldEffect: PokemonMoveFieldEffect;
+};
+
+export type CopilotUnconditionalSpeedOrder = {
+  fasterSlotIndex: number;
+  slowerSlotIndex: number;
+};
+
+export type CopilotDefensiveCoverage = {
+  protectedSlotIndex: number;
+  defenderSlotIndex: number;
+  type: PokemonType;
+  relation: "resists" | "immune";
+};
+
+/** Deterministic team relationships. These are candidates, never inferred strategy. */
+export type CopilotTeamTacticsSnapshot = {
+  allyTargetOpportunities: CopilotAllyTargetOpportunity[];
+  allyStatChangeInteractions: CopilotAllyStatChangeInteraction[];
+  sharedMoveSequences: CopilotSharedMoveSequence[];
+  fieldSetters: CopilotFieldSetter[];
+  unconditionalSpeedOrder: CopilotUnconditionalSpeedOrder[];
+  defensiveCoverage: CopilotDefensiveCoverage[];
 };
 
 export type CopilotCandidateFilterSnapshot = {
@@ -404,7 +458,7 @@ export type CopilotMatchupSnapshot =
   | CopilotMetaMatchupSnapshot;
 
 export type CopilotAnalysisRequest = {
-  version: 34;
+  version: 34 | 35;
   locale: Locale;
   scope: CopilotAnalysisScope;
   battleFormat: BattleFormat;
@@ -418,6 +472,7 @@ export type CopilotAnalysisRequest = {
   optimization?: CopilotSetOptimizationSnapshot | null;
   matchup?: CopilotMatchupSnapshot | null;
   mechanics: CopilotMechanicsSnapshot;
+  tactics?: CopilotTeamTacticsSnapshot;
   diagnostics: CopilotDiagnosticsSnapshot;
 };
 
@@ -447,6 +502,7 @@ export type CreateCopilotRequestInput = {
   team: TeamSlot[];
   pokemonIndex?: PokemonIndexEntry[];
   abilityIndex?: PokemonAbility[];
+  showdownData?: ShowdownDataSnapshot | null;
   selectedSlot: number;
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;

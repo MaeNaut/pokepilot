@@ -21,8 +21,9 @@ build, and a Worker dry run. Do not deploy when any command or CI job fails.
 
 - Confirm `wrangler.jsonc` names the `pokepilot` Worker, the `ASSETS` binding,
   the D1 `DB` binding, and the `pokepilot.app` route.
-- Confirm both D1 migrations have been applied: account/session tables and
-  `account_storage`.
+- Confirm all four D1 migrations have been applied in order: account/session
+  tables, `account_storage`, `operational_metrics`, and `personal_api_keys`.
+  Apply pending migrations before deploying Worker code that reads the new tables.
 - Keep `POKEPILOT_AUTH_REQUIRED=true` and
   `POKEPILOT_SHARED_STORE_REQUIRED=true` for production.
 - Use a production-specific `POKEPILOT_REDIS_PREFIX`. Change it intentionally
@@ -57,6 +58,9 @@ this repository.
   theme, default battle format, and tutorial completion should load after sign-in.
 - Confirm an account switch does not expose the prior account's local team,
   history, or preferences.
+- With a disposable QA account, verify personal API key registration, low and
+  medium analysis, removal, re-registration, and isolation from another account.
+  Never remove a real user's key or delete a real account for a smoke test.
 
 ## 5. Production smoke test
 
@@ -66,8 +70,11 @@ this repository.
 - Confirm M-C legal forms appear where intended and in-battle-only forms remain
   post-selection controls.
 - Verify saved-team save, rename, duplicate, bench transfer, reload, and image export.
-- Confirm PokePilot gating when signed out, one successful signed-in analysis,
-  a deterministic fallback when the provider is unavailable, and a cached repeat.
+- Confirm PokePilot gating when signed out, one successful site-funded low
+  analysis, one personal-key medium analysis, and an appropriate error when the
+  provider is unavailable. Check the account history and aggregate metrics.
+- QA and production use separate D1 databases. Keys registered in QA do not
+  transfer to production; register a key on the production site to test it there.
 - Verify the privacy notice, help pages, `ads.txt`, `robots.txt`, and sitemap at
   the production domain.
 - Review Cloudflare Worker errors and Upstash/OpenAI dashboards without exposing

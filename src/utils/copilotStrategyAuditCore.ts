@@ -163,7 +163,7 @@ export function getFactProfileValues(
   return null;
 }
 
-function getUnconditionalItemSpeedMultiplier(
+export function getUnconditionalItemSpeedMultiplier(
   set: CopilotAnalysisRequest["sets"][number],
   request: CopilotAnalysisRequest,
 ) {
@@ -179,7 +179,7 @@ function getUnconditionalItemSpeedMultiplier(
     return 1;
   }
 
-  const numericMatch = effect.match(
+  const numericMatch = effect.normalize("NFKC").replace(/\u00d7/g, "x").match(
     /holder(?:'s|’s) speed is (\d+(?:\.\d+)?)x\b/,
   );
   if (numericMatch) {

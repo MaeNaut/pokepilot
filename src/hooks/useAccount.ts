@@ -7,6 +7,7 @@ import {
   readAccount,
   type AccountProfile,
 } from "../api/accountAuth";
+import { readPersonalApiKeyStatus, removePersonalApiKey, savePersonalApiKey } from "../api/personalApiKey";
 
 export type AccountStatus = "loading" | "guest" | "ready" | "error";
 
@@ -14,6 +15,8 @@ export function useAccount() {
   const [status, setStatus] = useState<AccountStatus>(accountAuthEnabled ? "loading" : "guest");
   const [user, setUser] = useState<AccountProfile | null>(null);
   const [busy, setBusy] = useState(false);
+  const [hasPersonalApiKey, setHasPersonalApiKey] = useState(false);
+  const [personalApiKeyStatus, setPersonalApiKeyStatus] = useState<"loading" | "ready" | "error">("loading");
   const [prompt, setPrompt] = useState(false);
   const busyRef = useRef(false);
   const mounted = useRef(true);
@@ -53,6 +56,45 @@ export function useAccount() {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    if (status !== "ready" || !user?.id) {
+      setHasPersonalApiKey(false);
+      setPersonalApiKeyStatus("loading");
+      return;
+    }
+    let active = true;
+    setPersonalApiKeyStatus("loading");
+    void readPersonalApiKeyStatus()
+      .then((hasKey) => {
+        if (!active) return;
+        setHasPersonalApiKey(hasKey);
+        setPersonalApiKeyStatus("ready");
+      })
+      .catch(() => { if (active) setPersonalApiKeyStatus("error"); });
+    return () => { active = false; };
+  }, [status, user?.id]);
+
+  async function updatePersonalApiKey(apiKey: string | null) {
+    if (status !== "ready" || busyRef.current) return false;
+    busyRef.current = true;
+    setBusy(true);
+    try {
+      if (apiKey === null) await removePersonalApiKey();
+      else await savePersonalApiKey(apiKey.trim());
+      if (mounted.current) {
+        setHasPersonalApiKey(apiKey !== null);
+        setPersonalApiKeyStatus("ready");
+      }
+      return true;
+    } catch {
+      if (mounted.current) setPersonalApiKeyStatus("error");
+      return false;
+    } finally {
+      busyRef.current = false;
+      if (mounted.current) setBusy(false);
+    }
+  }
+
   async function act(action: "login" | "logout" | "delete") {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -65,6 +107,7 @@ export function useAccount() {
         await (action === "delete" ? deleteAccount() : logoutAccount());
         if (mounted.current) {
           setUser(null);
+          setHasPersonalApiKey(false);
           setStatus("guest");
           setPrompt(false);
         }
@@ -82,6 +125,9 @@ export function useAccount() {
     status,
     user,
     busy,
+    hasPersonalApiKey,
+    personalApiKeyStatus,
+    updatePersonalApiKey,
     prompt,
     act,
     ensureAuthenticated: () => refresh(true),

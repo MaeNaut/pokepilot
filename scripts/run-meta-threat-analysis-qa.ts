@@ -24,7 +24,7 @@ import {
 import { selectMetaThreatReplacementCandidates } from "../src/utils/metaThreatRecommendations";
 import { validateCopilotAnalysisRequest } from "../src/utils/copilotRequestContract";
 import { serializePokePilotModelRequest } from "../server/pokepilotModelInput";
-import { resolveOpenAiApiKey } from "../server/openAiEnvironment";
+import { resolveOpenAiEvaluationApiKey } from "../server/openAiEnvironment";
 import { createOpenAiLunaAdapter } from "../src/test/evaluation/openAiLunaAdapter";
 import { installAiEvaluationRuntime } from "./aiEvaluationRuntime";
 
@@ -197,7 +197,7 @@ async function main() {
     const runAi = process.argv.includes("--ai");
     const aiResult = runAi
       ? await createOpenAiLunaAdapter({
-          apiKey: resolveOpenAiApiKey(projectRoot),
+          apiKey: resolveOpenAiEvaluationApiKey(projectRoot),
           reasoningEffort: "low",
         }).analyze(request)
       : null;

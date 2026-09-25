@@ -60,6 +60,7 @@ async function readEnvelope(response: Response) {
 export async function requestHostedCopilotAnalysis(
   request: CopilotAnalysisRequest,
   signal?: AbortSignal,
+  reasoningEffort: "low" | "medium" = "low",
 ): Promise<HostedCopilotAnalysisResult> {
   let response: Response;
 
@@ -68,6 +69,7 @@ export async function requestHostedCopilotAnalysis(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-PokePilot-Reasoning-Effort": reasoningEffort,
       },
       body: JSON.stringify(request),
       signal,

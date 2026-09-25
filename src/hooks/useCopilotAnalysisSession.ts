@@ -32,6 +32,8 @@ type UseCopilotAnalysisSessionOptions = {
   locale: Locale;
   battleFormat: BattleFormat;
   failedMessage: string;
+  reasoningEffort?: "low" | "medium";
+  usingPersonalApiKey?: boolean;
 };
 
 const idleAnalysisState: AnalysisState = { status: "idle" };
@@ -39,8 +41,9 @@ const idleAnalysisState: AnalysisState = { status: "idle" };
 function getAnalysisContextKey(
   teamKey: string,
   scope: CopilotAnalysisScope,
+  reasoningEffort: "low" | "medium",
 ) {
-  return `${teamKey}:${scope}`;
+  return `${teamKey}:${scope}:${reasoningEffort}`;
 }
 
 export function useCopilotAnalysisSession({
@@ -50,6 +53,8 @@ export function useCopilotAnalysisSession({
   locale,
   battleFormat,
   failedMessage,
+  reasoningEffort = "low",
+  usingPersonalApiKey = false,
 }: UseCopilotAnalysisSessionOptions) {
   const [analysisByContext, setAnalysisByContext] = useState<
     Record<string, AnalysisState>
@@ -76,6 +81,7 @@ export function useCopilotAnalysisSession({
   const analysisContextKey = getAnalysisContextKey(
     historyTeamKey,
     request.scope,
+    reasoningEffort,
   );
   const analysisState =
     analysisByContext[analysisContextKey] ?? idleAnalysisState;
@@ -90,7 +96,7 @@ export function useCopilotAnalysisSession({
     () => getCopilotHistoryForTeam(analysisHistory, historyTeamKey),
     [analysisHistory, historyTeamKey],
   );
-  const cooldownRemainingSeconds = cooldownUntil
+  const cooldownRemainingSeconds = !usingPersonalApiKey && cooldownUntil
     ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
     : 0;
 
@@ -120,6 +126,7 @@ export function useCopilotAnalysisSession({
       request.scope,
       locale,
       requestFingerprint,
+      reasoningEffort,
     );
 
     if (!matchingEntry) {
@@ -137,6 +144,7 @@ export function useCopilotAnalysisSession({
     locale,
     request.scope,
     requestFingerprint,
+    reasoningEffort,
   ]);
 
   async function analyze(submittedRequest: CopilotAnalysisRequest = request) {
@@ -156,7 +164,7 @@ export function useCopilotAnalysisSession({
       const { response: nextResponse, usedFallback, fallbackReason } =
         await executeCopilotAnalysis(submittedRequest, locale, (seconds) => {
           if (isCurrentAccount()) setCooldownUntil(Date.now() + seconds * 1_000);
-        });
+        }, reasoningEffort, usingPersonalApiKey);
 
       if (!isCurrentAccount()) return;
       const historyEntry = createCopilotHistoryEntry({
@@ -164,6 +172,7 @@ export function useCopilotAnalysisSession({
         locale,
         scope: submittedRequest.scope,
         battleFormat,
+        reasoningEffort,
         requestFingerprint: submittedFingerprint,
         response: nextResponse,
         usedFallback,
@@ -186,14 +195,18 @@ export function useCopilotAnalysisSession({
             ? (locale === "ko" ? "로그인이 만료되었습니다. 다시 로그인해 주세요." : "Your session expired. Please sign in again.")
             : error instanceof CopilotApiError && error.code === "AUTH_UNAVAILABLE"
               ? (locale === "ko" ? "인증 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요." : "Authentication is unavailable. Please try again shortly.")
+              : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_INVALID"
+                ? (locale === "ko" ? "개인 API 키가 유효하지 않습니다. 계정 설정에서 확인해 주세요." : "Your personal API key is invalid. Check it in account settings.")
+                : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_REQUIRED"
+                  ? (locale === "ko" ? "중간 추론에는 개인 API 키가 필요합니다. 계정 설정에서 등록해 주세요." : "Medium reasoning requires a personal API key. Add one in account settings.")
               : error instanceof Error ? error.message : failedMessage,
         },
       }));
     }
   }
 
-  function selectHistory(entry: CopilotHistoryEntry) {
-    const entryContextKey = getAnalysisContextKey(historyTeamKey, entry.scope);
+  function selectHistory(entry: CopilotHistoryEntry, displayEffort = entry.reasoningEffort ?? "low") {
+    const entryContextKey = getAnalysisContextKey(historyTeamKey, entry.scope, displayEffort);
 
     setAnalysisByContext((current) => ({
       ...current,
