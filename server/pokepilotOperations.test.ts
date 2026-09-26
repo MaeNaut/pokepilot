@@ -5,27 +5,10 @@ import {
   InMemoryPokePilotOperations,
   POKEPILOT_ANALYSIS_CACHE_TTL_MS,
   POKEPILOT_CLIENT_REQUEST_LIMIT,
-  POKEPILOT_COOLDOWN_TEST_DURATION_MS,
   POKEPILOT_MAX_SHARED_WAITERS,
   PokePilotCapacityError,
   resolvePokePilotSafeguardMode,
-  type PokePilotRateLimitMode,
-  type PokePilotRequester,
 } from "./pokepilotOperations";
-
-function reserve(
-  operations: InMemoryPokePilotOperations,
-  requester: PokePilotRequester,
-  now: number,
-  mode: PokePilotRateLimitMode = "enforced",
-) {
-  const decision = operations.reserve(requester, now, mode);
-  expect(decision.allowed).toBe(true);
-  if (!decision.allowed) {
-    throw new Error("Expected a rate-limit reservation.");
-  }
-  return decision.reservation;
-}
 
 describe("PokePilot operational safeguards", () => {
   it("creates the same cache key regardless of object key order", () => {
@@ -60,52 +43,18 @@ describe("PokePilot operational safeguards", () => {
     ).toBeNull();
   });
 
-  it("applies increasing client cooldowns inside the rolling window", () => {
-    const operations = new InMemoryPokePilotOperations();
-    const requester = { clientId: "client-a", ipHash: "ip-a" };
-
-    for (let index = 0; index < 5; index += 1) {
-      const reservation = reserve(operations, requester, 0);
-      operations.completeReservation(reservation, 0);
-    }
-
-    expect(operations.reserve(requester, 0)).toEqual({
-      allowed: false,
-      retryAfterMs: 60_000,
-      scope: "client",
-    });
-    const nextReservation = reserve(operations, requester, 60_000);
-    operations.completeReservation(nextReservation, 60_000);
-    expect(operations.reserve(requester, 60_000)).toEqual({
-      allowed: false,
-      retryAfterMs: 60_000,
-      scope: "client",
-    });
-  });
 
   it("keeps local test modes explicit and production-safe by default", () => {
     expect(getPokePilotSafeguardConfig("enforced")).toEqual({
       cacheEnabled: true,
-      providerAttemptLimitEnabled: true,
-      rateLimitMode: "enforced",
       requestRateLimitEnabled: true,
     });
     expect(getPokePilotSafeguardConfig("ai-test")).toEqual({
       cacheEnabled: true,
-      providerAttemptLimitEnabled: false,
-      rateLimitMode: null,
       requestRateLimitEnabled: false,
     });
     expect(getPokePilotSafeguardConfig("ai-fresh")).toEqual({
       cacheEnabled: false,
-      providerAttemptLimitEnabled: false,
-      rateLimitMode: null,
-      requestRateLimitEnabled: false,
-    });
-    expect(getPokePilotSafeguardConfig("cooldown-test")).toEqual({
-      cacheEnabled: false,
-      providerAttemptLimitEnabled: false,
-      rateLimitMode: "cooldown-test",
       requestRateLimitEnabled: false,
     });
     expect(resolvePokePilotSafeguardMode("production")).toBe("enforced");
@@ -115,51 +64,8 @@ describe("PokePilot operational safeguards", () => {
     );
   });
 
-  it("triggers the isolated cooldown test policy after one use", () => {
-    const operations = new InMemoryPokePilotOperations();
-    const requester = { clientId: "client-a", ipHash: "ip-a" };
 
-    reserve(operations, requester, 0, "cooldown-test");
-    expect(operations.reserve(requester, 0, "cooldown-test")).toEqual({
-      allowed: false,
-      retryAfterMs: POKEPILOT_COOLDOWN_TEST_DURATION_MS,
-      scope: "client",
-    });
-    reserve(operations, requester, 0, "enforced");
-  });
 
-  it("starts the full cooldown when a successful analysis completes", () => {
-    const operations = new InMemoryPokePilotOperations();
-    const requester = { clientId: "client-a", ipHash: "ip-a" };
-    const reservation = reserve(operations, requester, 1_000, "cooldown-test");
-
-    expect(operations.completeReservation(reservation, 9_000)).toEqual({
-      retryAfterMs: POKEPILOT_COOLDOWN_TEST_DURATION_MS,
-      scope: "client",
-    });
-
-    expect(operations.reserve(requester, 9_000, "cooldown-test")).toEqual({
-      allowed: false,
-      retryAfterMs: POKEPILOT_COOLDOWN_TEST_DURATION_MS,
-      scope: "client",
-    });
-    expect(operations.reserve(requester, 18_999, "cooldown-test")).toEqual({
-      allowed: false,
-      retryAfterMs: 1,
-      scope: "client",
-    });
-    reserve(operations, requester, 19_000, "cooldown-test");
-  });
-
-  it("releases a failed analysis reservation without consuming a use", () => {
-    const operations = new InMemoryPokePilotOperations();
-    const requester = { clientId: "client-a", ipHash: "ip-a" };
-    const reservation = reserve(operations, requester, 1_000, "cooldown-test");
-
-    operations.cancelReservation(reservation);
-
-    reserve(operations, requester, 1_000, "cooldown-test");
-  });
 
   it("limits all requests without consuming analysis credits", () => {
     const operations = new InMemoryPokePilotOperations();
@@ -174,24 +80,8 @@ describe("PokePilot operational safeguards", () => {
       scope: "client",
     });
 
-    reserve(operations, requester, 0);
   });
 
-  it("counts provider attempts even when user analysis credits are canceled", () => {
-    const operations = new InMemoryPokePilotOperations();
-    const requester = { clientId: "client-a", ipHash: "ip-a" };
-
-    for (let index = 0; index < 5; index += 1) {
-      expect(operations.admitProviderAttempt(requester, 0)).toEqual({
-        allowed: true,
-      });
-    }
-    expect(operations.admitProviderAttempt(requester, 0)).toEqual({
-      allowed: false,
-      retryAfterMs: 60_000,
-      scope: "client",
-    });
-  });
 
   it("bounds followers waiting on one in-flight analysis", async () => {
     const operations = new InMemoryPokePilotOperations();

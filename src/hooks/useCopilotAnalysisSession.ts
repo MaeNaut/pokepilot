@@ -34,7 +34,6 @@ type UseCopilotAnalysisSessionOptions = {
   failedMessage: string;
   reasoningEffort?: "low" | "medium";
   modelId?: "gpt-6-luna" | "gpt-6-sol";
-  usingPersonalApiKey?: boolean;
 };
 
 const idleAnalysisState: AnalysisState = { status: "idle" };
@@ -57,7 +56,6 @@ export function useCopilotAnalysisSession({
   failedMessage,
   reasoningEffort = "low",
   modelId = "gpt-6-luna",
-  usingPersonalApiKey = false,
 }: UseCopilotAnalysisSessionOptions) {
   const [analysisByContext, setAnalysisByContext] = useState<
     Record<string, AnalysisState>
@@ -65,12 +63,9 @@ export function useCopilotAnalysisSession({
   const { items: analysisHistory, current: historyRef, commit: commitHistory, isHydrated } =
     useCopilotHistory(accountId);
   const accountGeneration = useRef(0);
-  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
-  const [cooldownClock, setCooldownClock] = useState(Date.now);
   useEffect(() => {
     accountGeneration.current += 1;
     setAnalysisByContext({});
-    setCooldownUntil(null);
     return () => { accountGeneration.current += 1; };
   }, [accountId]);
   const requestFingerprint = useMemo(
@@ -100,28 +95,6 @@ export function useCopilotAnalysisSession({
     () => getCopilotHistoryForTeam(analysisHistory, historyTeamKey),
     [analysisHistory, historyTeamKey],
   );
-  const cooldownRemainingSeconds = !usingPersonalApiKey && cooldownUntil
-    ? Math.max(0, Math.ceil((cooldownUntil - cooldownClock) / 1_000))
-    : 0;
-
-  useEffect(() => {
-    if (!cooldownUntil) {
-      return;
-    }
-
-    setCooldownClock(Date.now());
-    const interval = window.setInterval(() => {
-      const now = Date.now();
-      setCooldownClock(now);
-      if (now >= cooldownUntil) {
-        setCooldownUntil(null);
-        window.clearInterval(interval);
-      }
-    }, 1_000);
-
-    return () => window.clearInterval(interval);
-  }, [cooldownUntil]);
-
   useEffect(() => {
     if (!isHydrated) return;
     const matchingEntry = findMatchingCopilotHistoryEntry(
@@ -168,9 +141,7 @@ export function useCopilotAnalysisSession({
 
     try {
       const { response: nextResponse, usedFallback, fallbackReason } =
-        await executeCopilotAnalysis(submittedRequest, (seconds) => {
-          if (isCurrentAccount()) setCooldownUntil(Date.now() + seconds * 1_000);
-        }, reasoningEffort, modelId);
+        await executeCopilotAnalysis(submittedRequest, reasoningEffort, modelId);
 
       if (!isCurrentAccount()) return;
       const historyEntry = createCopilotHistoryEntry({
@@ -207,7 +178,7 @@ export function useCopilotAnalysisSession({
               : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_INVALID"
                 ? (locale === "ko" ? "개인 API 키가 유효하지 않습니다. 계정 설정에서 확인하시기 바랍니다." : "Your personal API key is invalid. Check it in account settings.")
                 : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_REQUIRED"
-                  ? (locale === "ko" ? "중간 추론에는 개인 API 키가 필요합니다. 계정 설정에서 등록할 수 있습니다." : "Medium reasoning requires a personal API key. Add one in account settings.")
+                  ? (locale === "ko" ? "PokePilot 분석에는 개인 API 키가 필요합니다. 계정 설정에서 등록할 수 있습니다." : "PokePilot analysis requires a personal API key. Add one in account settings.")
               : error instanceof Error ? error.message : failedMessage,
         },
       }));
@@ -240,7 +211,6 @@ export function useCopilotAnalysisSession({
   return {
     analysisContextKey,
     analysisState,
-    cooldownRemainingSeconds,
     isLanguageMismatch,
     isStale,
     requestFingerprint,

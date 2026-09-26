@@ -92,19 +92,8 @@ type CopilotPanelProps = {
   ) => boolean;
 };
 
-function formatCooldown(seconds: number) {
-  const safeSeconds = Math.max(0, Math.ceil(seconds));
-  const hours = Math.floor(safeSeconds / 3_600);
-  const minutes = Math.floor((safeSeconds % 3_600) / 60);
-  const remainingSeconds = safeSeconds % 60;
-
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
-    : `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
-}
-
 const fallbackTranslationKeys: Record<
-  Exclude<HostedAnalysisFailureReason, "cooldown">,
+  HostedAnalysisFailureReason,
   TranslationKey
 > = {
   connection: "copilot.connectionFallback",
@@ -385,7 +374,6 @@ export function CopilotPanel({
   const {
     analysisContextKey,
     analysisState,
-    cooldownRemainingSeconds,
     isLanguageMismatch,
     isStale,
     requestFingerprint,
@@ -404,13 +392,11 @@ export function CopilotPanel({
     failedMessage: t("copilot.failed"),
     reasoningEffort,
     modelId,
-    usingPersonalApiKey: account.hasPersonalApiKey,
   });
   const modelChoice = modelId === "gpt-6-sol" ? "sol-low" : reasoningEffort === "medium" ? "luna-medium" : "luna-low";
   const modelLabel = modelId === "gpt-6-sol" ? "Sol low" : reasoningEffort === "medium" ? "Luna medium" : "Luna low";
   const isPersonalModelAvailable = account.hasPersonalApiKey && account.personalApiKeyStatus === "ready";
   const keyRequiredMessage = locale === "ko" ? "개인 OpenAI API 키가 필요합니다." : "Requires your OpenAI API key.";
-  const cooldownLabel = formatCooldown(cooldownRemainingSeconds);
   const isUsageDataScope = usesHistoricalUsageData(scope);
   const isAccountGateLocked = account.enabled && account.status === "guest";
   const scopeRequirement = getCopilotScopeRequirement({
@@ -422,22 +408,11 @@ export function CopilotPanel({
   const visibleTeamHistory = teamHistory.filter((entry) =>
     isVisibleCopilotScope(entry.scope),
   );
-  const fallbackMessage =
-    analysisState.fallbackReason === "cooldown"
-      ? cooldownRemainingSeconds > 0
-        ? t("copilot.cooldownFallback", { time: cooldownLabel })
-        : t("copilot.cooldownReadyFallback")
-      : t(
-          fallbackTranslationKeys[
-            analysisState.fallbackReason ?? "unavailable"
-          ],
-        );
+  const fallbackMessage = t(fallbackTranslationKeys[analysisState.fallbackReason ?? "unavailable"]);
   const analyzeLabel =
     analysisState.status === "loading" || isAnalysisPreparing
       ? t("copilot.analyzing")
-      : cooldownRemainingSeconds > 0
-        ? t("copilot.cooldownButton", { time: cooldownLabel })
-        : response
+      : response
           ? t("copilot.refresh")
           : scope === "team"
             ? t("copilot.analyze")
@@ -452,9 +427,8 @@ export function CopilotPanel({
     analysisState.status === "loading" ||
     isAnalysisPreparing ||
     abilityIndexStatus === "loading" ||
-    cooldownRemainingSeconds > 0 ||
     (account.enabled && account.status === "ready" && account.personalApiKeyStatus !== "ready") ||
-    ((reasoningEffort === "medium" || modelId === "gpt-6-sol") && !account.hasPersonalApiKey) ||
+    !isPersonalModelAvailable ||
     (scope === "recommendation" &&
       showdownLegalityStatus === "loading") ||
     Boolean(scopeRequirement) ||
@@ -799,7 +773,13 @@ export function CopilotPanel({
         {recommendationNotice ? <p role="status">{recommendationNotice}</p> : null}
         {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
         {matchupNotice ? <p role="status">{matchupNotice}</p> : null}
-        {scopeRequirement ? (
+        {account.status === "ready" && !account.hasPersonalApiKey ? (
+          <div className="copilot-empty-state" role="status">
+            <FontAwesomeIcon icon={faLock} aria-hidden="true" />
+            <strong>{keyRequiredMessage}</strong>
+            <span>{locale === "ko" ? "우측 상단 계정 설정에서 키를 등록하면 분석을 사용할 수 있습니다." : "Add your key in account settings at the top right to use analysis."}</span>
+          </div>
+        ) : scopeRequirement ? (
           <div className="copilot-empty-state is-requirement">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
             <strong>
@@ -919,7 +899,7 @@ export function CopilotPanel({
               {([
                 { choice: "sol-low", label: "Sol low", id: "gpt-6-sol", effort: "low", requiresKey: true },
                 { choice: "luna-medium", label: "Luna medium", id: "gpt-6-luna", effort: "medium", requiresKey: true },
-                { choice: "luna-low", label: "Luna low", id: "gpt-6-luna", effort: "low", requiresKey: false },
+                { choice: "luna-low", label: "Luna low", id: "gpt-6-luna", effort: "low", requiresKey: true },
               ] as const).map((option) => {
                 const locked = option.requiresKey && !isPersonalModelAvailable;
                 return (

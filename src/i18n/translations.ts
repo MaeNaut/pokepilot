@@ -20,10 +20,9 @@ export const en = {
   "account.deleteConfirm": "Delete your account? Cloud-synced teams, analysis history, and their local browser copies will be deleted.",
   "account.themeSystem": "System",
   "account.apiKeyLabel": "Your OpenAI API key",
-  "account.apiKeyDescription": "Use your own key for low or medium analysis without PokePilot cooldowns. OpenAI charges your account. Your key is encrypted on the server and never shown again.",
+  "account.apiKeyDescription": "Use your personal key for PokePilot analysis without usage quotas or ads. OpenAI charges your account. Your key is encrypted on the server and never shown again.",
   "account.apiKeyChecking": "Checking key...",
   "account.apiKeySaved": "Key registered",
-  "account.apiKeyMissing": "No key registered",
   "account.apiKeyError": "Could not update the key. Please try again.",
   "account.apiKeySave": "Save",
   "account.apiKeyRemove": "Remove key",
@@ -376,11 +375,6 @@ export const en = {
     "AI request limit reached. Showing the rules-based fallback.",
   "copilot.serviceUnavailableFallback":
     "AI service temporarily unavailable. Showing the rules-based fallback.",
-  "copilot.cooldownFallback":
-    "AI cooldown active. Showing the rules-based analysis. Try again in {time}.",
-  "copilot.cooldownReadyFallback":
-    "AI cooldown ended. Showing the rules-based analysis; refresh to retry.",
-  "copilot.cooldownButton": "Wait {time}",
   "copilot.hostedAnalysis": "GPT 6 Luna",
   "copilot.reasoningLevel": "Reasoning",
   "copilot.reasoningLow": "Low",
@@ -572,10 +566,9 @@ export const ko = {
   "account.deleteConfirm": "계정을 삭제하면 클라우드에 동기화된 팀과 분석 기록, 이 브라우저의 로컬 사본이 함께 삭제됩니다. 삭제하시겠습니까?",
   "account.themeSystem": "시스템",
   "account.apiKeyLabel": "내 OpenAI API 키",
-  "account.apiKeyDescription": "개인 키로 포케파일럿 쿨다운 없이 low·medium 분석을 사용할 수 있습니다. OpenAI 이용 요금은 본인 계정에 청구됩니다. 키는 서버에 암호화해 저장하며 다시 표시하지 않습니다.",
+  "account.apiKeyDescription": "개인 키로 제한 없이 PokePilot 분석을 사용할 수 있습니다. 분석 횟수 한도나 광고 시청 없이 이용할 수 있으며, OpenAI 이용 요금은 본인 계정에 청구됩니다. 키는 서버에 암호화해 저장하며 다시 표시하지 않습니다.",
   "account.apiKeyChecking": "키를 확인하는 중...",
   "account.apiKeySaved": "키가 등록됨",
-  "account.apiKeyMissing": "등록된 키 없음",
   "account.apiKeyError": "키를 변경하지 못했습니다. 다시 시도하시기 바랍니다.",
   "account.apiKeySave": "저장",
   "account.apiKeyRemove": "키 삭제",
@@ -928,11 +921,6 @@ export const ko = {
     "AI 요청 한도 도달 · 규칙 기반 분석 표시",
   "copilot.serviceUnavailableFallback":
     "AI 서비스 일시 오류 · 규칙 기반 분석 표시",
-  "copilot.cooldownFallback":
-    "AI 분석 대기 중 · 규칙 기반 분석 표시 · {time} 후 재시도",
-  "copilot.cooldownReadyFallback":
-    "AI 분석 대기 종료 · 규칙 기반 분석 표시 · 재시도 가능",
-  "copilot.cooldownButton": "대기 {time}",
   "copilot.hostedAnalysis": "GPT 6 Luna",
   "copilot.reasoningLevel": "추론 강도",
   "copilot.reasoningLow": "낮음",

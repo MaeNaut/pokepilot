@@ -372,15 +372,14 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
   - [x] Cache identical one-shot analyses by canonical team, format, regulation,
         locale, prompt version, and request-contract version.
   - [x] Add a signed anonymous-client cookie, hashed-IP backstop, progressive
-        rolling cooldowns, in-flight request deduplication, and `Retry-After`
+        in-flight request deduplication, and `Retry-After`
         responses without storing raw IP addresses.
   - [x] Keep the model request at a 60-second timeout and 3,500 combined
         reasoning/response token ceiling.
   - [x] Log cache status, latency, token use, and estimated cost without logging
         team contents or requester identifiers.
   - [x] Add server-start-only local modes for production-like safeguards,
-        cached AI QA without cooldown, fresh AI QA without cache/cooldown, and
-        an accelerated one-call/10-second cooldown test.
+        cached and fresh AI QA modes.
   - [x] Add an optional Upstash Redis adapter for shared canonical responses,
         atomic client/IP rate decisions, and distributed identical-request
         deduplication while retaining the in-memory local adapter.

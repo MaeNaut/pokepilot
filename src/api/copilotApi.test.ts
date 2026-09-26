@@ -67,30 +67,6 @@ describe("hosted PokePilot client", () => {
     });
   });
 
-  it("preserves a cooldown that begins after a successful analysis", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            ok: true,
-            analysis: modelOutput,
-            metadata: {
-              model: "gpt-5.6-luna",
-              promptVersion: 44,
-              retryAfterSeconds: 60,
-            },
-          }),
-          { status: 200 },
-        ),
-      ),
-    );
-
-    await expect(requestHostedCopilotAnalysis(request)).resolves.toMatchObject({
-      analysis: { source: "hosted" },
-      retryAfterSeconds: 60,
-    });
-  });
 
   it("preserves supported quality warnings from a successful analysis", async () => {
     vi.stubGlobal(
@@ -160,7 +136,7 @@ describe("hosted PokePilot client", () => {
     } satisfies Partial<CopilotApiError>);
   });
 
-  it("preserves server cooldown duration for the analysis UI", async () => {
+  it("preserves provider retry metadata", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
@@ -168,8 +144,8 @@ describe("hosted PokePilot client", () => {
           JSON.stringify({
             ok: false,
             error: {
-              code: "ANALYSIS_COOLDOWN",
-              message: "Analysis cooldown is active.",
+              code: "AI_RATE_LIMITED",
+              message: "Provider rate limit is active.",
               retryAfterSeconds: 75,
             },
           }),
@@ -179,7 +155,7 @@ describe("hosted PokePilot client", () => {
     );
 
     await expect(requestHostedCopilotAnalysis(request)).rejects.toMatchObject({
-      code: "ANALYSIS_COOLDOWN",
+      code: "AI_RATE_LIMITED",
       retryAfterSeconds: 75,
       status: 429,
     } satisfies Partial<CopilotApiError>);

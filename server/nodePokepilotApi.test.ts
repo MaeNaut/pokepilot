@@ -150,17 +150,13 @@ describe("PokePilot Node HTTP boundary", () => {
     );
   });
 
-  it("returns Retry-After when the anonymous client enters cooldown", async () => {
+  it("returns Retry-After when the request admission limit is reached", async () => {
     const operations = new InMemoryPokePilotOperations();
     const clientId = "client-a";
     const secret = "test-secret";
     const requester = { clientId, ipHash: "preload-ip" };
-    for (let index = 0; index < 5; index += 1) {
-      const decision = operations.reserve(requester, 0);
-      if (!decision.allowed) {
-        throw new Error("Expected a rate-limit reservation.");
-      }
-      operations.completeReservation(decision.reservation, 0);
+    for (let index = 0; index < 20; index += 1) {
+      operations.admitRequest(requester, 0);
     }
     const token = createSignedPokePilotClientToken(clientId, secret);
     const target = createResponse();
@@ -182,7 +178,7 @@ describe("PokePilot Node HTTP boundary", () => {
     expect(target.readBody()).toMatchObject({
       ok: false,
       error: {
-        code: "ANALYSIS_COOLDOWN",
+        code: "AI_RATE_LIMITED",
         retryAfterSeconds: 60,
       },
     });

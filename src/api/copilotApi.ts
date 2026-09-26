@@ -10,7 +10,6 @@ type HostedAnalysisEnvelope = {
   ok?: unknown;
   analysis?: unknown;
   metadata?: {
-    retryAfterSeconds?: unknown;
     qualityWarnings?: unknown;
   };
   error?: {
@@ -23,7 +22,6 @@ type HostedAnalysisEnvelope = {
 
 export type HostedCopilotAnalysisResult = {
   analysis: CopilotAnalysisResponse;
-  retryAfterSeconds?: number;
   qualityWarnings?: CopilotQualityWarningCode[];
 };
 
@@ -113,11 +111,6 @@ export async function requestHostedCopilotAnalysis(
       response.status,
     );
   }
-
-  const retryAfterSeconds =
-    typeof envelope.metadata?.retryAfterSeconds === "number"
-      ? Math.max(1, Math.ceil(envelope.metadata.retryAfterSeconds))
-      : undefined;
   const qualityWarnings = Array.isArray(envelope.metadata?.qualityWarnings)
     ? [...new Set(
         envelope.metadata.qualityWarnings.filter(
@@ -131,7 +124,6 @@ export async function requestHostedCopilotAnalysis(
       ...validation.data,
       source: "hosted",
     },
-    ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
     ...(qualityWarnings.length === 0 ? {} : { qualityWarnings }),
   };
 }

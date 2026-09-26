@@ -231,11 +231,11 @@ The MVP should prove the core loop:
         regulation, locale,
         prompt version, and request-contract version.
   - [x] Add signed anonymous-browser identity, a hashed-IP abuse backstop,
-        progressive cooldowns, in-flight deduplication, bounded model output,
+        in-flight deduplication, bounded model output,
         and graceful rules-based fallback UI.
   - [x] Record privacy-safe cache, latency, token, and estimated-cost telemetry.
   - [x] Provide server-start-only cached, fresh-response, and accelerated
-        cooldown QA modes while keeping production safeguards as the default.
+        cache QA modes while keeping production safeguards as the default.
   - [x] Add an Upstash Redis operations adapter with atomic cross-instance
         limiter decisions, canonical response storage, and distributed request
         leases; retain memory storage for local development.

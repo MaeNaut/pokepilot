@@ -1,19 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Redis } from "@upstash/redis";
 import {
-  getPokePilotRatePolicies,
   POKEPILOT_ANALYSIS_CACHE_TTL_MS,
   POKEPILOT_CLIENT_REQUEST_LIMIT,
   POKEPILOT_IP_REQUEST_LIMIT,
-  POKEPILOT_RATE_WINDOW_MS,
   POKEPILOT_REQUEST_WINDOW_MS,
   POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
   PokePilotCapacityError,
   type PokePilotOperations,
-  type PokePilotPostAnalysisCooldown,
-  type PokePilotRateLimitDecision,
-  type PokePilotRateLimitMode,
-  type PokePilotRateLimitReservation,
   type PokePilotRequestAdmissionDecision,
   type PokePilotRequester,
   type PokePilotRunOnceOptions,
@@ -23,11 +17,8 @@ import {
 import {
   acquireWaiterScript,
   admitRequestScript,
-  cancelRateLimitReservationScript,
-  completeRateLimitReservationScript,
   releaseLockScript,
   releaseWaiterScript,
-  reserveRateLimitScript,
 } from "./upstashPokePilotScripts.js";
 
 const defaultKeyPrefix = "pokepilot:operations:v1";
@@ -120,47 +111,6 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
     this.waitTimeoutMs = waitTimeoutMs;
   }
 
-  async reserve(
-    requester: PokePilotRequester,
-    now: number,
-    mode: PokePilotRateLimitMode = "enforced",
-  ): Promise<PokePilotRateLimitDecision> {
-    const policies = getPokePilotRatePolicies(mode);
-    const reservationId = `${now}:${randomUUID()}`;
-    const result = await this.redis.eval<
-      [string, string, string, string, string],
-      [number, number, number]
-    >(
-      reserveRateLimitScript,
-      this.usageKeys(requester, mode),
-      [
-        String(now),
-        String(POKEPILOT_RATE_WINDOW_MS),
-        reservationId,
-        JSON.stringify(policies.client),
-        JSON.stringify(policies.ip),
-      ],
-    );
-    const allowed = Number(result[0]) === 1;
-
-    if (allowed) {
-      return {
-        allowed: true,
-        reservation: {
-          id: reservationId,
-          mode,
-          requester: { ...requester },
-        },
-      };
-    }
-
-    return {
-      allowed: false,
-      retryAfterMs: Math.max(1, Number(result[1]) || 1),
-      scope: Number(result[2]) === 2 ? "ip" : "client",
-    };
-  }
-
   async admitRequest(
     requester: PokePilotRequester,
     now: number,
@@ -171,70 +121,6 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
       POKEPILOT_REQUEST_WINDOW_MS,
       POKEPILOT_CLIENT_REQUEST_LIMIT,
       POKEPILOT_IP_REQUEST_LIMIT,
-    );
-  }
-
-  async admitProviderAttempt(
-    requester: PokePilotRequester,
-    now: number,
-  ): Promise<PokePilotRequestAdmissionDecision> {
-    const policies = getPokePilotRatePolicies("enforced");
-    const eventId = `${now}:${randomUUID()}`;
-    const result = await this.redis.eval<
-      [string, string, string, string, string],
-      [number, number, number]
-    >(
-      reserveRateLimitScript,
-      this.providerKeys(requester),
-      [
-        String(now),
-        String(POKEPILOT_RATE_WINDOW_MS),
-        eventId,
-        JSON.stringify(policies.client),
-        JSON.stringify(policies.ip),
-      ],
-    );
-
-    return this.toAdmissionDecision(result);
-  }
-
-  async completeReservation(
-    reservation: PokePilotRateLimitReservation,
-    completedAt: number,
-  ): Promise<PokePilotPostAnalysisCooldown> {
-    const policies = getPokePilotRatePolicies(reservation.mode);
-    const result = await this.redis.eval<
-      [string, string, string, string, string],
-      [number, number, number, number]
-    >(
-      completeRateLimitReservationScript,
-      this.usageKeys(reservation.requester, reservation.mode),
-      [
-        String(completedAt),
-        reservation.id,
-        String(POKEPILOT_RATE_WINDOW_MS),
-        JSON.stringify(policies.client),
-        JSON.stringify(policies.ip),
-      ],
-    );
-
-    const retryAfterMs = Math.max(0, Number(result[2]) || 0);
-    return {
-      retryAfterMs,
-      scope:
-        retryAfterMs <= 0
-          ? null
-          : Number(result[3]) === 2
-            ? "ip"
-            : "client",
-    };
-  }
-
-  async cancelReservation(reservation: PokePilotRateLimitReservation) {
-    await this.redis.eval<[string], [number, number]>(
-      cancelRateLimitReservationScript,
-      this.usageKeys(reservation.requester, reservation.mode),
-      [reservation.id],
     );
   }
 
@@ -316,27 +202,10 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
     return `${this.keyPrefix}:${value}`;
   }
 
-  private usageKeys(
-    requester: PokePilotRequester,
-    mode: PokePilotRateLimitMode,
-  ): [string, string] {
-    return [
-      this.key(`usage:${mode}:client:${requester.clientId}`),
-      this.key(`usage:${mode}:ip:${requester.ipHash}`),
-    ];
-  }
-
   private requestKeys(requester: PokePilotRequester): [string, string] {
     return [
       this.key(`request:client:${requester.clientId}`),
       this.key(`request:ip:${requester.ipHash}`),
-    ];
-  }
-
-  private providerKeys(requester: PokePilotRequester): [string, string] {
-    return [
-      this.key(`provider:client:${requester.clientId}`),
-      this.key(`provider:ip:${requester.ipHash}`),
     ];
   }
 

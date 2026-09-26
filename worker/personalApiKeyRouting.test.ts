@@ -41,16 +41,19 @@ beforeEach(() => {
 });
 
 describe("Worker analysis key routing", () => {
-  it("uses the site key for low and blocks medium without a personal key", async () => {
-    expect((await worker.fetch(analyzeRequest("low"), env)).status).toBe(200);
-    expect(vi.mocked(handleWebPokePilotApi).mock.calls[0]?.[1]).toMatchObject({
-      apiKey: "site-key-test", reasoningEffort: "low", billingSource: "site",
-    });
-
-    const response = await worker.fetch(analyzeRequest("medium"), env);
+  it.each(["low", "medium"])("blocks %s without a personal key even with a site key configured", async (effort) => {
+    const response = await worker.fetch(analyzeRequest(effort), env);
     expect(response.status).toBe(403);
-    expect(await response.json()).toMatchObject({ error: { code: "PERSONAL_KEY_REQUIRED" } });
-    expect(handleWebPokePilotApi).toHaveBeenCalledOnce();
+    expect(await response.json()).toMatchObject({ error: { code: "PERSONAL_KEY_REQUIRED", providerAttempted: false } });
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+  });
+
+  it("requires login even if the legacy auth flag is disabled", async () => {
+    vi.mocked(readAccountSession).mockResolvedValue(null);
+    const response = await worker.fetch(analyzeRequest("low"), { ...env, POKEPILOT_AUTH_REQUIRED: "false" });
+    expect(response.status).toBe(401);
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+    expect(readPersonalApiKey).not.toHaveBeenCalled();
   });
 
   it("uses the registered key for both efforts without site-key safeguards", async () => {
@@ -69,6 +72,13 @@ describe("Worker analysis key routing", () => {
   it("rejects unrecognized reasoning levels", async () => {
     expect((await worker.fetch(analyzeRequest("high"), env)).status).toBe(400);
     expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+  });
+
+  it("blocks the next request immediately after the registered key is removed", async () => {
+    vi.mocked(readPersonalApiKey).mockResolvedValueOnce("personal-key-test").mockResolvedValueOnce(null);
+    expect((await worker.fetch(analyzeRequest("low"), env)).status).toBe(200);
+    expect((await worker.fetch(analyzeRequest("low"), env)).status).toBe(403);
+    expect(handleWebPokePilotApi).toHaveBeenCalledOnce();
   });
 
   it("blocks Sol without a personal key before the provider call", async () => {

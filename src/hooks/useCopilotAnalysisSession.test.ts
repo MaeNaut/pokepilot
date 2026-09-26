@@ -73,20 +73,17 @@ describe("analysis account lifecycle", () => {
     expect(writeAccountCopilotHistory).not.toHaveBeenCalled();
   });
 
-  it("discards a late failure and cooldown from a logged-out account", async () => {
+  it("discards a late failure from a logged-out account", async () => {
     const pending = deferred<typeof result>();
     vi.mocked(executeCopilotAnalysis).mockReturnValue(pending.promise);
     const hook = await mount();
     let analysis!: Promise<void>;
     await act(async () => { analysis = hook.current.analyze(); });
-    const cooldown = vi.mocked(executeCopilotAnalysis).mock.calls[0][1];
     await hook.rerender(null);
     await act(async () => {
-      cooldown(60);
       pending.reject(new Error("Old failure"));
       await analysis;
     });
     expect(hook.current.analysisState.status).toBe("idle");
-    expect(hook.current.cooldownRemainingSeconds).toBe(0);
   });
 });

@@ -6,7 +6,6 @@ import {
 
 describe("hosted analysis failure classification", () => {
   it.each([
-    ["ANALYSIS_COOLDOWN", "cooldown"],
     ["NETWORK_ERROR", "connection"],
     ["AI_NOT_CONFIGURED", "not-configured"],
     ["AI_INVALID_RESPONSE", "invalid-response"],

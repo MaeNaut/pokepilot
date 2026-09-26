@@ -21,15 +21,13 @@ beforeEach(() => {
 
 describe("analysis execution", () => {
   it("forwards effort and returns only the hosted result", async () => {
-    const cooldown = vi.fn();
-    const result = await executeCopilotAnalysis(request, cooldown, "medium");
+    const result = await executeCopilotAnalysis(request, "medium");
     expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "medium", "gpt-6-luna");
     expect(result).toEqual({ response: hosted, usedFallback: false, fallbackReason: undefined });
-    expect(cooldown).not.toHaveBeenCalled();
   });
 
   it("forwards a personal Sol low selection", async () => {
-    await executeCopilotAnalysis(request, vi.fn(), "low", "gpt-6-sol");
+    await executeCopilotAnalysis(request, "low", "gpt-6-sol");
     expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "low", "gpt-6-sol");
   });
 
@@ -37,7 +35,7 @@ describe("analysis execution", () => {
     vi.mocked(requestHostedCopilotAnalysis).mockResolvedValue({
       analysis: hosted, qualityWarnings: ["grounding-incomplete"],
     });
-    expect((await executeCopilotAnalysis(request, vi.fn())).response).toEqual({
+    expect((await executeCopilotAnalysis(request)).response).toEqual({
       ...hosted, qualityWarnings: ["grounding-incomplete"],
     });
   });
@@ -53,15 +51,13 @@ describe("analysis execution", () => {
   ] as const)("does not generate analysis after %s", async (code, providerAttempted) => {
     const error = new CopilotApiError("failed", code, 502, undefined, providerAttempted);
     vi.mocked(requestHostedCopilotAnalysis).mockRejectedValue(error);
-    await expect(executeCopilotAnalysis(request, vi.fn())).rejects.toBe(error);
+    await expect(executeCopilotAnalysis(request)).rejects.toBe(error);
   });
 
-  it("notifies cooldown even when no analysis is returned", async () => {
-    const error = new CopilotApiError("wait", "ANALYSIS_COOLDOWN", 429, 120, false);
+  it("preserves provider rate-limit errors", async () => {
+    const error = new CopilotApiError("wait", "AI_RATE_LIMITED", 429, 120, false);
     vi.mocked(requestHostedCopilotAnalysis).mockRejectedValue(error);
-    const cooldown = vi.fn();
-    await expect(executeCopilotAnalysis(request, cooldown)).rejects.toBe(error);
-    expect(cooldown).toHaveBeenCalledExactlyOnceWith(120);
+    await expect(executeCopilotAnalysis(request)).rejects.toBe(error);
   });
 
   it("attaches only selected optimization candidate snapshots", async () => {
@@ -76,7 +72,7 @@ describe("analysis execution", () => {
       })),
     };
     vi.mocked(requestHostedCopilotAnalysis).mockResolvedValue({ analysis: response });
-    const result = await executeCopilotAnalysis(optimizationRequest, vi.fn());
+    const result = await executeCopilotAnalysis(optimizationRequest);
     expect(result.response.optimizationCandidates).toEqual([
       optimizationRequest.optimization!.candidates[0],
       optimizationRequest.optimization!.candidates[2],

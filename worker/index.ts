@@ -12,7 +12,7 @@ import {
   readAccountSession,
 } from "./accountAuth.js";
 import { handleAccount } from "./accountEndpoint.js";
-import { emptyResponse, isEnabled, jsonResponse, withSessionRefresh } from "./http.js";
+import { emptyResponse, jsonResponse, withSessionRefresh } from "./http.js";
 import { handleAccountStorage } from "./accountStorage.js";
 import { handlePersonalApiKey, readPersonalApiKey } from "./personalApiKey.js";
 import type { WorkerEnvironment } from "./env.js";
@@ -40,21 +40,16 @@ function proxySmogonStats(request: Request) {
 }
 
 async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void) {
-  let authenticatedAccountId: string | undefined;
-  let refreshCookie: string | undefined;
-  let accountId: string | undefined;
-  if (isEnabled(env.POKEPILOT_AUTH_REQUIRED)) {
-    const session = await readAccountSession(request, env);
-    if (!session) {
-      return jsonResponse(401, {
-        ok: false,
-        error: { code: "AUTH_REQUIRED", message: "AUTH_REQUIRED", providerAttempted: false },
-      });
-    }
-    authenticatedAccountId = await accountUsageId(session.account, env);
-    accountId = session.account.id;
-    refreshCookie = session.refreshCookie;
+  const session = await readAccountSession(request, env);
+  if (!session) {
+    return jsonResponse(401, {
+      ok: false,
+      error: { code: "AUTH_REQUIRED", message: "AUTH_REQUIRED", providerAttempted: false },
+    });
   }
+  const authenticatedAccountId = await accountUsageId(session.account, env);
+  const accountId = session.account.id;
+  const refreshCookie = session.refreshCookie;
   const effort = request.headers.get("X-PokePilot-Reasoning-Effort") ?? "low";
   const modelId = request.headers.get("X-PokePilot-Model") ?? "gpt-6-luna";
   if (effort !== "low" && effort !== "medium") {
@@ -63,22 +58,22 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
   if ((modelId !== "gpt-6-luna" && modelId !== "gpt-6-sol") || (modelId === "gpt-6-sol" && effort !== "low")) {
     return jsonResponse(400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid model selection.", providerAttempted: false } });
   }
-  const personalKey = accountId ? await readPersonalApiKey(accountId, env) : null;
-  if ((effort === "medium" || modelId === "gpt-6-sol") && !personalKey) {
-    return jsonResponse(403, { ok: false, error: { code: "PERSONAL_KEY_REQUIRED", message: "A personal API key is required for this model.", providerAttempted: false } });
+  const personalKey = await readPersonalApiKey(accountId, env);
+  if (!personalKey) {
+    return withSessionRefresh(jsonResponse(403, { ok: false, error: { code: "PERSONAL_KEY_REQUIRED", message: "A personal API key is required for PokePilot analysis.", providerAttempted: false } }), refreshCookie);
   }
   const response = await handleWebPokePilotApi(request, {
-    apiKey: personalKey ?? env.OPENAI_API_KEY,
+    apiKey: personalKey,
     reasoningEffort: effort,
     modelId,
-    billingSource: personalKey ? "personal" : "site",
-    billingIdentity: personalKey ? accountId : undefined,
+    billingSource: "personal",
+    billingIdentity: accountId,
     onOperationalEvent,
     authenticatedAccountId,
     clientSecret: env.POKEPILOT_CLIENT_SECRET,
     operations: getOperationsRuntime(env).operations,
     requesterIp: request.headers.get("CF-Connecting-IP") ?? undefined,
-    ...(personalKey ? { safeguardMode: "ai-fresh" as const } : {}),
+    safeguardMode: "ai-fresh",
   });
   return withSessionRefresh(response, refreshCookie);
 }

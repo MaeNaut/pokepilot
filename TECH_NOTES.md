@@ -86,13 +86,12 @@ Avoid forcing these skills into the project too early:
 ## Analysis Session Boundaries
 
 - `copilotAnalysisExecution.ts` owns hosted/fallback execution and attaches the
-  selected optimization snapshots. The session hook owns cooldown timestamps,
-  React state, and history persistence; no request or cache contract changed.
+  selected optimization snapshots. The session hook owns React state, and history persistence; no request or cache contract changed.
 - `copilotAnalysisState.ts` builds ready states consistently for new analyses,
   automatic restoration, and manual history selection. Only new analyses reveal
   with animation; restoration must not overwrite loading or manually selected states.
 - Offline tests mock hosted/local generation to verify failure classification,
-  cooldown notification order, locale forwarding, and history restoration rules.
+  locale forwarding, and history restoration rules.
 
 ## Bench Build Transfers
 
@@ -703,7 +702,7 @@ across deterministic fallback and hosted analysis:
   strategic fact survives expansion. Small requests stay inline when references
   plus their explanation do not save enough text. The explanation follows both
   cache breakpoints, leaving core v3 and all scope prefixes unchanged. The browser
-  contract, fingerprints, response validation, candidate application, and cooldown
+  contract, fingerprints, response validation, candidate application, and request admission
   accounting still use the complete original request. Prompt v73 separates Redis
   result entries from v72 without changing the OpenAI prefix caches. Every scope
   uses the original output schema; the audit field-name compression trial was
@@ -722,7 +721,7 @@ across deterministic fallback and hosted analysis:
   response, a scope mismatch, or a Recommend/Sample result with no valid
   actionable candidate. The stricter evaluation adapter still treats every
   grounding warning as a failed case so production recovery cannot hide model
-  quality regression. Cache-write or cooldown-finalization failures after a
+  quality regression. Cache-write failures after a
   completed model call keep the reviewed analysis and add a service warning;
   pre-call safeguard storage failures still fail closed. Cache contract v3
   stores warnings with the reviewed text.
@@ -730,7 +729,7 @@ across deterministic fallback and hosted analysis:
   an existing result stale after relevant edits without rerunning analysis on every
   keystroke; changing only the displayed slot does not stale team-scope analysis.
 - `CopilotPanel.tsx` renders the structured response and owns idle, loading,
-  hosted/fallback error, refresh, stale, cooldown, and persisted-history states.
+  hosted/fallback error, refresh, stale, and persisted-history states.
 - On the desktop workspace, cap the content shell at 1920px. Stack a wider,
   shorter builder and compact diagnostics in the left column, and keep the
   full-height PokePilot panel visible in the right column. The Pokemon editor
@@ -938,24 +937,13 @@ embedding a detailed all-versus-all matchup matrix in the browser.
 - Sign the anonymous analysis cookie on the server and hash IP addresses before
   they enter limiter state. Never log raw IP addresses, cookie IDs, or team
   request contents.
-- Apply a lightweight client/IP request window before the 24-hour canonical
-  cache lookup so cache hits cannot create unbounded Function and Redis work.
-  Cache hits still do not consume analysis credits. The first five uncached calls
-  in a rolling day have no client cooldown; later calls progress through one-
-  minute, five-minute, fifteen-minute, and one-hour waits. A more generous IP
-  policy limits browser-ID resets and bursts.
-- Reserve rate-limit capacity before an uncached model call to prevent concurrent
-  bypasses, then move the event timestamp to validated completion so the user
-  receives the full cooldown after the result arrives. Cancel the reservation on
-  upstream, validation, or cache-write failure so failed attempts do not count.
-- Validate the complete nested request contract before operational work and key
-  Pokemon results by the full team context. Record each actual provider dispatch
-  in a separate non-refundable abuse budget, so repeated invalid or failed model
-  responses cannot bypass cost controls while user analysis credits remain
-  success-based.
+- Public analysis requires login and a registered personal key. No site-funded
+  fallback, usage quota, or post-analysis waiting period is applied. Provider
+  rate-limit errors and bounded in-flight deduplication remain. The generic
+  local/evaluation adapter retains short request-admission protection.
 - Keep the in-memory implementation for local development. When both Upstash
   REST credentials exist, select the shared adapter automatically. It stores
-  canonical responses with a 24-hour TTL, evaluates client/IP rolling limits in
+  canonical responses with a 24-hour TTL, evaluates short client/IP request windows in
   atomic Redis Lua scripts, and coordinates identical requests with a token-owned
   distributed lease and short-lived shared result. Per-key and global expiring
   waiter tokens bound duplicate serverless requests, and their 50-second shared
@@ -963,8 +951,7 @@ embedding a detailed all-versus-all matchup matrix in the browser.
 - Set `POKEPILOT_SHARED_STORE_REQUIRED=true` for public deployment so missing or
   partial Redis configuration fails closed. Use distinct
   `POKEPILOT_REDIS_PREFIX` values for preview and production. Redis outages
-  should return the existing rules-based fallback rather than bypass shared
-  controls and issue unbounded model calls.
+  must return an explicit error rather than silently bypass coordination.
 - Keep routine `npm run dev` isolated on process-local memory. Load real Redis
   credentials only from ignored `.env.shared.local` through
   `npm run dev:shared`; this mode retains production-like safeguards, forces the
@@ -985,7 +972,7 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   identical requests and expects exactly one cache miss.
 - Select local safeguard test behavior only through server-start Vite modes:
   production-like `dev`, cached/unlimited `dev:ai`, uncached/unlimited
-  `dev:ai:fresh`, and one-call/10-second `dev:cooldown`. Unknown and production
+  `dev:ai:fresh`. Unknown and production
   modes always fall back to enforced safeguards; never accept a browser query,
   cookie, or localStorage override for this setting.
 

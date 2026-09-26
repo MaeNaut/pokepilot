@@ -198,16 +198,16 @@ export function HeaderAccountMenu({
                 <span>{t("account.apiKeyLabel")}</span>
               </div>
               <p className="header-account-key-note">{t("account.apiKeyDescription")}</p>
-              <span className="header-account-key-status">
+              {account.personalApiKeyStatus !== "ready" || account.hasPersonalApiKey ? <span className="header-account-key-status">
                 {account.personalApiKeyStatus === "loading"
                   ? t("account.apiKeyChecking")
                   : account.personalApiKeyStatus === "error"
                     ? t("account.apiKeyError")
                     : account.hasPersonalApiKey
                       ? t("account.apiKeySaved")
-                      : t("account.apiKeyMissing")}
-              </span>
-              <form className="header-account-key-form" onSubmit={(event) => void handleSavePersonalKey(event)}>
+                      : null}
+              </span> : null}
+              {!account.hasPersonalApiKey && account.personalApiKeyStatus === "ready" ? <form className="header-account-key-form" onSubmit={(event) => void handleSavePersonalKey(event)}>
                 <input
                   type="password"
                   autoComplete="off"
@@ -218,14 +218,14 @@ export function HeaderAccountMenu({
                   onChange={(event) => { setApiKeyDraft(event.target.value); setKeyMessage(null); }}
                 />
                 <button type="submit" disabled={account.busy || !apiKeyDraft.trim()}>{t("account.apiKeySave")}</button>
-              </form>
+              </form> : null}
               {account.hasPersonalApiKey ? (
                 <button className="header-account-key-remove" type="button" disabled={account.busy} onClick={() => void handleRemovePersonalKey()}>
                   <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" />
                   {t("account.apiKeyRemove")}
                 </button>
               ) : null}
-              {keyMessage ? <span className="header-account-key-status" role="status">{t(`account.apiKey${keyMessage === "saved" ? "Saved" : keyMessage === "removed" ? "Removed" : "Error"}`)}</span> : null}
+              {keyMessage && keyMessage !== "saved" ? <span className="header-account-key-status" role="status">{t(`account.apiKey${keyMessage === "removed" ? "Removed" : "Error"}`)}</span> : null}
             </section>
           ) : null}
 

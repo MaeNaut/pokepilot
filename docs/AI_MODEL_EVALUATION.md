@@ -844,7 +844,7 @@ that restores exact team, scope, locale, and request-state matches. Its menu is
 rendered outside the scroll-clipped panel, and deleting a team's history
 requires the shared destructive-action confirmation flow. Public deployment
 still requires canonical request caching,
-per-client cooldown/rate limiting, and budget monitoring before unrestricted
+request admission controls, and budget monitoring before unrestricted
 traffic is enabled.
 
 ## Automated Checks
@@ -925,7 +925,7 @@ team interpretation.
 
 New PokePilot analyses no longer generate a rules-based answer when the hosted
 request fails. Confirmed pre-provider failures (invalid request, missing
-configuration, cooldown, or missing sign-in/key) may show that no AI call or
+configuration or missing sign-in/key) may show that no AI call or
 analysis cost occurred. Network, timeout, malformed model output, and other
 uncertain failures do not make a cost claim. Users see the failure reason and
 can retry.

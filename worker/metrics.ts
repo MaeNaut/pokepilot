@@ -38,7 +38,7 @@ export function metricValues(route: string, status: number, elapsed: number, eve
       ? failed.billingSource === "personal" ? `personal-${failed.reasoningEffort}-failed` : "failed"
       : analysis?.billingSource === "personal"
       ? `personal-${analysis.reasoningEffort ?? "low"}-${analysis.cacheStatus}`
-      : analysis?.cacheStatus ?? (event?.type === "cooldown" ? "cooldown" : "none"),
+      : analysis?.cacheStatus ?? "none",
     route === "/api/pokepilot/analyze" ? analysis?.modelId ?? failed?.modelId ?? OPENAI_LUNA_MODEL_ID : "none",
     route === "/api/pokepilot/analyze" ? POKEPILOT_AI_PROMPT_VERSION : 0,
     latencyBucket(duration), duration,

@@ -3,9 +3,8 @@ import type { Locale } from "../i18n/gameTranslations";
 const failureMessages: Record<string, { ko: string; en: string }> = {
   AUTH_REQUIRED: { ko: "로그인이 만료되었습니다. 다시 로그인하시기 바랍니다.", en: "Your session expired. Sign in again." },
   AUTH_UNAVAILABLE: { ko: "로그인 서비스를 이용할 수 없습니다. 잠시 후 다시 시도하시기 바랍니다.", en: "Sign-in is unavailable. Try again shortly." },
-  PERSONAL_KEY_REQUIRED: { ko: "중간 추론에는 개인 API 키가 필요합니다. 계정 설정에서 등록할 수 있습니다.", en: "Medium reasoning requires a personal API key. Add one in account settings." },
+  PERSONAL_KEY_REQUIRED: { ko: "PokePilot 분석에는 개인 API 키가 필요합니다. 계정 설정에서 등록할 수 있습니다.", en: "PokePilot analysis requires a personal API key. Add one in account settings." },
   PERSONAL_KEY_INVALID: { ko: "개인 API 키를 사용할 수 없습니다. 계정 설정에서 확인하시기 바랍니다.", en: "Your personal API key could not be used. Check it in account settings." },
-  ANALYSIS_COOLDOWN: { ko: "분석 대기 시간이 남아 있습니다. 시간이 지난 뒤 다시 시도할 수 있습니다.", en: "Analysis cooldown is active. Try again when it ends." },
   AI_RATE_LIMITED: { ko: "AI 요청이 일시적으로 제한되었습니다. 잠시 후 다시 시도하시기 바랍니다.", en: "AI requests are temporarily limited. Try again shortly." },
   AI_NOT_CONFIGURED: { ko: "AI 분석이 설정되지 않았습니다.", en: "AI analysis is not configured." },
   INVALID_REQUEST: { ko: "분석 요청에 필요한 정보가 올바르지 않습니다.", en: "The analysis request contains invalid data." },

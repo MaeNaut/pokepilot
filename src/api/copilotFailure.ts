@@ -1,5 +1,4 @@
 const hostedAnalysisFailureReasons = [
-  "cooldown",
   "connection",
   "not-configured",
   "invalid-response",
@@ -44,8 +43,6 @@ export function classifyHostedAnalysisFailure(
   const { code, status } = readErrorMetadata(error);
 
   switch (code) {
-    case "ANALYSIS_COOLDOWN":
-      return "cooldown";
     case "NETWORK_ERROR":
       return "connection";
     case "AI_NOT_CONFIGURED":

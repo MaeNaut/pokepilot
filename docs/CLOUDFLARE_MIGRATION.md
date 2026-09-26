@@ -13,7 +13,7 @@ the API, Google OAuth callback, and same-origin Smogon proxy.
 - **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
 - **Operational state:** Upstash Redis for analysis cache, distributed leases,
-  cooldowns, and rate limits
+  and request admission
 - **Account storage:** D1 `accounts`, `account_sessions`, and
   `account_storage` tables
 

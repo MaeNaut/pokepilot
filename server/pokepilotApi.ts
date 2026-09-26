@@ -24,7 +24,6 @@ import {
   POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
   PokePilotCapacityError,
   type PokePilotOperations,
-  type PokePilotRateLimitReservation,
   type PokePilotRequester,
   type PokePilotSafeguardMode,
 } from "./pokepilotOperations.js";
@@ -42,7 +41,6 @@ export type PokePilotApiErrorCode =
   | "PAYLOAD_TOO_LARGE"
   | "INVALID_REQUEST"
   | "AI_NOT_CONFIGURED"
-  | "ANALYSIS_COOLDOWN"
   | "AI_RATE_LIMITED"
   | "AI_INVALID_RESPONSE"
   | "AI_UPSTREAM_ERROR"
@@ -57,7 +55,6 @@ export type PokePilotApiResponse =
         cacheStatus: "hit" | "miss" | "shared";
         model: PokePilotHostedModel;
         promptVersion: number;
-        retryAfterSeconds?: number;
       };
     }
   | {
@@ -114,14 +111,6 @@ export type PokePilotOperationalEvent =
       totalTokens?: number;
     }
   | {
-      type: "cooldown";
-      requestKey: string;
-      retryAfterSeconds: number;
-      safeguardMode: PokePilotSafeguardMode;
-      scope: CopilotAnalysisScope;
-      limiter: "client" | "ip";
-    }
-  | {
       type: "analysis-failure";
       billingSource: "site" | "personal";
       reasoningEffort: "low" | "medium";
@@ -138,14 +127,6 @@ type HostedAnalysisExecution =
       analysis: CopilotModelOutput;
       qualityWarnings: CopilotQualityWarningCode[];
       result: LunaAnalysisResult;
-      retryAfterSeconds?: number;
-    }
-  | {
-      kind: "cooldown";
-      decision: Extract<
-        Awaited<ReturnType<NonNullable<PokePilotOperations["reserve"]>>>,
-        { allowed: false }
-      >;
     };
 
 function errorResult(
@@ -173,11 +154,6 @@ function successResult(
   analysis: CopilotModelOutput,
   cacheStatus: "hit" | "miss" | "shared",
   modelId: PokePilotHostedModel,
-  {
-    retryAfterSeconds,
-  }: {
-    retryAfterSeconds?: number;
-  } = {},
 ): PokePilotApiResult {
   return {
     status: 200,
@@ -188,7 +164,6 @@ function successResult(
         cacheStatus,
         model: modelId,
         promptVersion: POKEPILOT_AI_PROMPT_VERSION,
-        ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
       },
     },
   };
@@ -300,17 +275,9 @@ export async function handlePokePilotAnalysis(
           1,
           Math.ceil(admission.retryAfterMs / 1_000),
         );
-        onOperationalEvent?.({
-          type: "cooldown",
-          limiter: admission.scope,
-          requestKey: publicRequestKey,
-          retryAfterSeconds,
-          safeguardMode,
-          scope: requestValidation.data.scope,
-        });
         return errorResult(
           429,
-          "ANALYSIS_COOLDOWN",
+          "AI_RATE_LIMITED",
           "Request rate limit is active.",
           retryAfterSeconds,
           false,
@@ -341,115 +308,30 @@ export async function handlePokePilotAnalysis(
     }
 
     const runAnalysis = async (): Promise<HostedAnalysisExecution> => {
-      let reservation: PokePilotRateLimitReservation | undefined;
-
-      try {
-        if (operations && requester && safeguardConfig.rateLimitMode) {
-          const decision = await operations.reserve(
-            requester,
-            clock(),
-            safeguardConfig.rateLimitMode,
-          );
-          if (!decision.allowed) {
-            return { kind: "cooldown", decision };
-          }
-          reservation = decision.reservation;
+      const result = analyze
+        ? await analyze(requestValidation.data)
+        : await analyzeWithOpenAiLuna(requestValidation.data, {
+            apiKey, modelId, cacheNamespace: "production", reasoningEffort,
+            safetyIdentifier: requester?.clientId,
+          });
+      attemptedUsage = result.usage;
+      let reviewed = reviewHostedCopilotAnalysis(result.output, requestValidation.data);
+      if (safeguardConfig.cacheEnabled) {
+        try {
+          await operations?.setCached(operationsKey, reviewed, clock());
+        } catch (error) {
+          onUpstreamError?.(error);
+          reviewed = addQualityWarning(reviewed, "service-degraded");
         }
-
-        if (
-          operations &&
-          requester &&
-          safeguardConfig.providerAttemptLimitEnabled
-        ) {
-          const decision = await operations.admitProviderAttempt(
-            requester,
-            clock(),
-          );
-          if (!decision.allowed) {
-            if (reservation) {
-              await operations.cancelReservation(reservation);
-              reservation = undefined;
-            }
-            return { kind: "cooldown", decision };
-          }
-        }
-
-        const result = analyze
-          ? await analyze(requestValidation.data)
-          : await analyzeWithOpenAiLuna(requestValidation.data, {
-              apiKey,
-              modelId,
-              cacheNamespace: "production",
-              reasoningEffort,
-              safetyIdentifier: requester?.clientId,
-            });
-        attemptedUsage = result.usage;
-        let reviewed = reviewHostedCopilotAnalysis(
-          result.output,
-          requestValidation.data,
-        );
-
-        if (safeguardConfig.cacheEnabled) {
-          try {
-            await operations?.setCached(
-              operationsKey,
-              reviewed,
-              clock(),
-            );
-          } catch (error) {
-            onUpstreamError?.(error);
-            reviewed = addQualityWarning(reviewed, "service-degraded");
-          }
-        }
-        let retryAfterSeconds: number | undefined;
-        if (reservation && operations) {
-          try {
-            const cooldown = await operations.completeReservation(
-              reservation,
-              clock(),
-            );
-            if (cooldown.retryAfterMs > 0) {
-              retryAfterSeconds = Math.max(
-                1,
-                Math.ceil(cooldown.retryAfterMs / 1_000),
-              );
-            }
-          } catch (error) {
-            onUpstreamError?.(error);
-            try {
-              await operations.cancelReservation(reservation);
-            } catch (cleanupError) {
-              onUpstreamError?.(cleanupError);
-            }
-            reviewed = addQualityWarning(reviewed, "service-degraded");
-          }
-          reservation = undefined;
-        }
-        if (reviewed.qualityWarnings.length) {
-          try {
-            onQualityWarning?.(reviewed.qualityWarnings);
-          } catch {
-            // Diagnostic logging must not turn a completed analysis into an error.
-          }
-        }
-        return {
-          kind: "completed" as const,
-          analysis: reviewed.analysis,
-          qualityWarnings: reviewed.qualityWarnings,
-          result,
-          ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
-        };
-      } catch (error) {
-        if (reservation && operations) {
-          try {
-            await operations.cancelReservation(reservation);
-          } catch (cleanupError) {
-            onUpstreamError?.(cleanupError);
-          }
-        }
-
-        throw error;
       }
+      if (reviewed.qualityWarnings.length) {
+        try {
+          onQualityWarning?.(reviewed.qualityWarnings);
+        } catch {
+          // Diagnostic logging must not turn a completed analysis into an error.
+        }
+      }
+      return { kind: "completed", analysis: reviewed.analysis, qualityWarnings: reviewed.qualityWarnings, result };
     };
     const execution = operations
       ? await operations.runOnce(operationsKey, runAnalysis, {
@@ -460,28 +342,6 @@ export async function handlePokePilotAnalysis(
           waitTimeoutMs: POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
         })
       : { shared: false, value: await runAnalysis() };
-
-    if (execution.value.kind === "cooldown") {
-      const retryAfterSeconds = Math.max(
-        1,
-        Math.ceil(execution.value.decision.retryAfterMs / 1_000),
-      );
-      onOperationalEvent?.({
-        type: "cooldown",
-        limiter: execution.value.decision.scope,
-        requestKey: publicRequestKey,
-        retryAfterSeconds,
-        safeguardMode,
-        scope: requestValidation.data.scope,
-      });
-      return errorResult(
-        429,
-        "ANALYSIS_COOLDOWN",
-        "Analysis cooldown is active.",
-        retryAfterSeconds,
-        false,
-      );
-    }
 
     const completed = execution.value;
 
@@ -521,9 +381,6 @@ export async function handlePokePilotAnalysis(
       completed.analysis,
       "miss",
       modelId,
-      {
-        retryAfterSeconds: completed.retryAfterSeconds,
-      },
     );
   } catch (error) {
     const usage = error instanceof LunaStructuredOutputError

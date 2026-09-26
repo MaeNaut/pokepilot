@@ -30,7 +30,7 @@ responsive web app.
 - Pokemon Showdown data and `@smogon/calc`
 - PokeAPI sprites and localized source data
 - OpenAI Responses API for requested PokePilot analysis
-- Upstash Redis for shared caching, request deduplication, cooldowns, and abuse controls
+- Upstash Redis for shared caching, request deduplication, and request admission
 - Cloudflare Workers for the static app and server API
 - Cloudflare D1 for account, session, and account-scoped synchronized data
 - Google OAuth with Secure, HttpOnly, SameSite session cookies
@@ -68,9 +68,8 @@ Useful development commands:
 | --- | --- |
 | `npm test` | Run Vitest in watch mode |
 | `npm run test:run` | Run tests once |
-| `npm run dev:ai` | Test AI with cache enabled and cooldown disabled |
+| `npm run dev:ai` | Test AI with cache enabled |
 | `npm run dev:ai:fresh` | Test uncached AI responses |
-| `npm run dev:cooldown` | Exercise the cooldown UI |
 | `npm run dev:shared` | Use the shared Upstash development adapter |
 | `npm run eval:ai` | Run the optional paid AI fixture evaluation |
 | `npm run verify:deployment` | Check the deployed API boundary without an OpenAI call |

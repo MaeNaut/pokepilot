@@ -108,10 +108,6 @@ function hasJsonContentType(request: IncomingMessage) {
 }
 
 function logOperationalEvent(event: PokePilotOperationalEvent) {
-  if (event.type === "cooldown") {
-    console.info("[PokePilot API] Analysis cooldown.", event);
-    return;
-  }
 
   console.info("[PokePilot API] Analysis completed.", event);
 }

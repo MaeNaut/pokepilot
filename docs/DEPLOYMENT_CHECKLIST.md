@@ -37,8 +37,8 @@ Set these in Cloudflare Worker secrets, never with a `VITE_` prefix or in Git:
 
 | Secret | Purpose |
 | --- | --- |
-| `OPENAI_API_KEY` | Hosted PokePilot analysis |
-| `UPSTASH_REDIS_REST_URL` | Shared cache, leases, cooldowns, and rate limits |
+| `OPENAI_API_KEY` | Evaluation tooling only; public analysis never falls back to this key |
+| `UPSTASH_REDIS_REST_URL` | Shared cache, leases, and request admission |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash authorization |
 | `POKEPILOT_CLIENT_SECRET` | Anonymous client and abuse-control signing |
 | `POKEPILOT_SESSION_SECRET` | Account session HMACs and account usage identifiers |
@@ -71,8 +71,8 @@ this repository.
 - Confirm M-C legal forms appear where intended and in-battle-only forms remain
   post-selection controls.
 - Verify saved-team save, rename, duplicate, bench transfer, reload, and image export.
-- Confirm PokePilot gating when signed out, one successful site-funded low
-  analysis, one personal-key medium analysis, and an appropriate error when the
+- Confirm PokePilot gating when signed out and when no personal key is registered,
+  personal-key analysis for each supported model, and an appropriate error when the
   provider is unavailable. Check the account history and aggregate metrics.
 - QA and production use separate D1 databases. Keys registered in QA do not
   transfer to production; register a key on the production site to test it there.

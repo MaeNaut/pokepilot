@@ -1,10 +1,6 @@
 # Personal API Keys and Reasoning Levels
 
-The hosted default is GPT-6 Luna at low reasoning. Signed-in users may register
-a personal OpenAI API key in Account and settings. The same key is used for low
-or medium when registered; without a key only site-funded low is available.
-Personal-key requests bypass PokePilot's site-funded cooldowns and shared
-analysis cache. OpenAI still applies its own billing and account limits.
+PokePilot analysis requires both a signed-in account and a registered personal OpenAI API key for every model (Luna low, Luna medium, and Sol low). There is no site-key fallback, free trial, advertising credit, or daily/monthly allowance at launch. Personal requests bypass the shared analysis cache. OpenAI billing and provider limits still apply; in-flight deduplication remains. The UI shows the registration form only when no key is registered, otherwise a saved status and delete action.
 
 The browser sends a key only once to `PUT /api/pokepilot/personal-api-key`.
 The Worker encrypts it with AES-GCM using a domain-separated key derived from
@@ -27,8 +23,7 @@ from 24 GPT-6 runs per effort on September 24. Team had 18 cases per effort;
 Pokemon and recommendation had three each. Sample analysis has no reliable
 fixture-specific estimate, so the UI says its time and cost vary. Actual
 requests depend on prompt length, cache status, output length, provider load,
-and failed attempts. The site-funded path has no direct charge to the user.
+and failed attempts. There is no publicly accessible site-funded analysis path.
 
 Before release, run `npm run check:cloudflare`, apply the D1 migration in a
-preview environment, and verify key registration, account isolation, low and
-medium analyses, key removal, sign-out, and account deletion there.
+preview environment, and verify key registration, account isolation, all three model choices, key removal, sign-out, and account deletion there.
