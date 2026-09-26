@@ -82,7 +82,11 @@ export function normalizeAccountPreferences(
     themePreference: preferences.themePreference,
     battleFormat: preferences.battleFormat,
     tutorialCompleted: preferences.tutorialCompleted,
-    ...(isAnalysisPreference(preferences.analysis) ? { analysis: preferences.analysis } : {}),
+    ...(isAnalysisPreference(preferences.analysis) ? { analysis: {
+      ...preferences.analysis,
+      // Retired model selections must not discard the user's other preferences.
+      modelId: "gpt-6-luna" as const,
+    } } : {}),
   };
 }
 

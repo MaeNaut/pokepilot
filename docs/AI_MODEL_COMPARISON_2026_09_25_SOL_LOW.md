@@ -1,5 +1,9 @@
 # GPT-6 Sol Low Comparison (2026-09-25)
 
+> Historical evaluation only. As of September 26, Sol is not offered in the
+> application. Preserve these measurements for future reconsideration; the
+> original recommendation below is not the current product configuration.
+
 ## Method
 
 GPT-6 Sol low was run against the eight frozen Korean requests from the

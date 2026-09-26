@@ -5,10 +5,14 @@
 > legality and serves hosted analysis through the Cloudflare Worker endpoint
 > `/api/pokepilot/analyze`; do not use legacy Vercel/Netlify references in this
 > document as deployment instructions.
+> Older fallback/cache descriptions are historical. The Runtime Failure Handling
+> section at the end and `personal-api-key.md` describe current production:
+> personal-key-only access, no generated rules-based replacement, and no shared
+> analysis cache for public requests. Preserve past measurements as recorded.
 
-Current code default (September 25, 2026; deploy pending): GPT-6 Luna low. Authenticated
-users with a registered personal OpenAI API key can also choose Luna medium or
-Sol low; all personal-key analyses use their own key. Luna medium uses a
+Current code default (September 26, 2026): GPT-6 Luna low. Authenticated
+users with a registered personal OpenAI API key can also choose Luna medium;
+all personal-key analyses use their own key. Luna medium uses a
 180-second timeout and a 16,000-token output cap. The historical trials below
 retain their original models and settings.
 

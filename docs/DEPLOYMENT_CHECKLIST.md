@@ -12,6 +12,10 @@ lint, tests, build, dry run, and audit pass. Deployment then runs the unpaid
 production authentication smoke test. A smoke-test failure is reported but does
 not automatically roll back a completed deployment.
 
+Pushing `develop` does not deploy production. Open a pull request to run CI,
+then merge into `main` to trigger production deployment. A Worker preview is
+a separate QA deployment, not an automatic consequence of a develop push.
+
 Before enabling this workflow, add repository Actions secrets in
 GitHub Settings > Secrets and variables > Actions:
 
@@ -57,11 +61,11 @@ Set these in Cloudflare Worker secrets, never with a `VITE_` prefix or in Git:
 
 | Secret | Purpose |
 | --- | --- |
-| `OPENAI_API_KEY` | Evaluation tooling only; public analysis never falls back to this key |
+| `OPENAI_API_KEY` | Optional legacy binding; public Worker analysis does not read it. Configure paid evaluation credentials separately in the evaluation environment |
 | `UPSTASH_REDIS_REST_URL` | Shared cache, leases, and request admission |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash authorization |
 | `POKEPILOT_CLIENT_SECRET` | Anonymous client and abuse-control signing |
-| `POKEPILOT_SESSION_SECRET` | Account session HMACs and account usage identifiers |
+| `POKEPILOT_SESSION_SECRET` | Session HMACs, account usage identifiers, and personal-key encryption; rotation requires a key migration/re-registration plan |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google sign-in client |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google sign-in authorization-code exchange |
 
@@ -79,8 +83,8 @@ this repository.
   theme, default battle format, and tutorial completion should load after sign-in.
 - Confirm an account switch does not expose the prior account's local team,
   history, or preferences.
-- With a disposable QA account, verify personal API key registration, low and
-  medium analysis, removal, re-registration, and isolation from another account.
+- With a disposable QA account, verify personal API key registration, Luna low,
+  Luna medium, removal, re-registration, and isolation from another account.
   Never remove a real user's key or delete a real account for a smoke test.
 
 ## 5. Production smoke test

@@ -40,4 +40,34 @@ describe.each(["ko", "en"])("static %s help", (locale) => {
       expect(existsSync(new URL(match[1].slice(1), publicRoot))).toBe(true);
     }
   });
+  it("documents personal-key analysis and account sync without legacy fallback claims", () => {
+    expect(html).toContain(`/help/api-key-${locale}.html`);
+    expect(html).toContain("Luna low");
+    expect(html).toContain("Luna medium");
+    expect(html).not.toContain("Sol low");
+    if (locale === "ko") {
+      expect(html).toContain("개인 OpenAI API 키 등록이 필요합니다");
+      expect(html).toContain("계정에 동기화");
+      expect(html).not.toContain("자동 동기화되지 않습니다");
+      expect(html).not.toContain("규칙 기반 대체 분석 표시");
+    } else {
+      expect(html).toContain("AI analysis requires Google sign-in and a personal OpenAI API key");
+      expect(html).toContain("across signed-in devices");
+      expect(html).not.toContain("do not automatically sync");
+    }
+  });
+});
+
+describe("privacy notice", () => {
+  it("documents rolling sessions, analysis preferences, and failed-call metrics in both languages", () => {
+    const html = readFileSync(new URL("privacy.html", publicRoot), "utf8");
+    expect(html).toContain("30-day idle window");
+    expect(html).toContain("90 days from sign-in");
+    expect(html).toContain("최근 선택한 분석 탭·모델·추론 강도");
+    expect(html).toContain("최대 90일");
+    expect(html).toContain("failed calls with known usage");
+    expect(html).toContain("확인된 실패 호출");
+    expect(html).not.toContain("may optionally register");
+    expect(html).not.toContain("선택적으로 등록");
+  });
 });

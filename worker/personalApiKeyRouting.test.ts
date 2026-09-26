@@ -81,20 +81,17 @@ describe("Worker analysis key routing", () => {
     expect(handleWebPokePilotApi).toHaveBeenCalledOnce();
   });
 
-  it("blocks Sol without a personal key before the provider call", async () => {
+  it("rejects a retired model without a personal key before the provider call", async () => {
     const response = await worker.fetch(analyzeRequest("low", "gpt-6-sol"), env);
-    expect(response.status).toBe(403);
-    expect(await response.json()).toMatchObject({ error: { code: "PERSONAL_KEY_REQUIRED", providerAttempted: false } });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: { code: "INVALID_REQUEST", providerAttempted: false } });
     expect(handleWebPokePilotApi).not.toHaveBeenCalled();
   });
 
-  it("uses only the registered key for Sol low", async () => {
+  it("rejects a retired model even with a registered key", async () => {
     vi.mocked(readPersonalApiKey).mockResolvedValue("personal-key-test");
-    await worker.fetch(analyzeRequest("low", "gpt-6-sol"), env);
-    expect(handleWebPokePilotApi).toHaveBeenCalledWith(expect.any(Request), expect.objectContaining({
-      apiKey: "personal-key-test", modelId: "gpt-6-sol", reasoningEffort: "low",
-      billingSource: "personal", safeguardMode: "ai-fresh",
-    }));
+    expect((await worker.fetch(analyzeRequest("low", "gpt-6-sol"), env)).status).toBe(400);
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
   });
 
   it("rejects unsupported models and Sol medium before the provider call", async () => {

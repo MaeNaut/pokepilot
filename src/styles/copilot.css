@@ -1520,6 +1520,21 @@
   color: var(--copilot-muted);
 }
 
+.copilot-reasoning-option-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 8px 0;
+}
+
+.copilot-reasoning-option-copy small {
+  color: var(--copilot-muted);
+  font-size: 0.65rem;
+  font-weight: var(--font-normal, 400);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .copilot-reasoning-lock-popover {
   position: absolute;
   z-index: 8;

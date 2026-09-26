@@ -1,10 +1,13 @@
 # PokePilot Roadmap
 
-> Current status, 2026-09-19: PokePilot is in public beta at
+> Current status, 2026-09-26: PokePilot is in public beta at
 > `https://pokepilot.app` on Cloudflare Workers. The active format is
 > Regulation M-C; Google sign-in and bounded D1 account sync are live. Earlier
 > M-B, Vercel, and Supabase notes below are retained as planning history unless
 > explicitly superseded.
+> Current AI access is personal-key-only after login. No site-funded trials,
+> advertising credits, or data-sharing rewards are active. Historical rules-based
+> fallback plans below have been superseded by explicit analysis error handling.
 
 ## MVP Scope
 

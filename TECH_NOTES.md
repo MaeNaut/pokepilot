@@ -1,9 +1,11 @@
 # PokePilot Technical Notes
 
-> Current architecture, 2026-09-19: the public app runs on Cloudflare Workers
+> Current architecture, 2026-09-26: the public app runs on Cloudflare Workers
 > with D1, Upstash Redis, Google OAuth, and Regulation M-C data. Detailed M-B
 > data experiments and early persistence alternatives below are retained as
 > implementation history unless a later section explicitly supersedes them.
+> Public AI access requires a personal key after login. Old deterministic-response
+> descriptions are implementation history, not the current error-handling policy.
 
 ## Recommended Stack
 
@@ -85,7 +87,7 @@ Avoid forcing these skills into the project too early:
 
 ## Analysis Session Boundaries
 
-- `copilotAnalysisExecution.ts` owns hosted/fallback execution and attaches the
+- `copilotAnalysisExecution.ts` owns hosted execution and attaches the
   selected optimization snapshots. The session hook owns React state, and history persistence; no request or cache contract changed.
 - `copilotAnalysisState.ts` builds ready states consistently for new analyses,
   automatic restoration, and manual history selection. Only new analyses reveal
@@ -679,8 +681,8 @@ Still needed:
 The preferred AI shape is a team-aware Copilot, not a generic ChatGPT clone. Keep
 the Copilot constrained to the current team data and deterministic builder analysis.
 
-The current implementation keeps one provider-independent product contract
-across deterministic fallback and hosted analysis:
+The current implementation keeps a provider-independent hosted analysis
+contract. Failed requests no longer generate a rules-based replacement:
 
 - `src/utils/copilotAnalysis.ts` creates request-contract v21 containing active
   sets, the selected slot, deterministic diagnostics, field/weather concept
@@ -716,8 +718,8 @@ across deterministic fallback and hosted analysis:
 - Production review keeps a structurally valid, correctly scoped public AI
   analysis when only private grounding is incomplete. It removes unknown or
   duplicate actionable candidates, repairs deterministic optimization wording,
-  and returns compact quality-warning codes with the analysis. A full rules
-  fallback remains reserved for transport/provider failures, an unusable public
+  and records compact quality-warning codes internally without displaying a
+  fallback notice. Explicit errors remain for transport/provider failures, an unusable public
   response, a scope mismatch, or a Recommend/Sample result with no valid
   actionable candidate. The stricter evaluation adapter still treats every
   grounding warning as a failed case so production recovery cannot hide model
@@ -729,7 +731,7 @@ across deterministic fallback and hosted analysis:
   an existing result stale after relevant edits without rerunning analysis on every
   keystroke; changing only the displayed slot does not stale team-scope analysis.
 - `CopilotPanel.tsx` renders the structured response and owns idle, loading,
-  hosted/fallback error, refresh, stale, and persisted-history states.
+  hosted error, refresh, stale, and persisted-history states.
 - On the desktop workspace, cap the content shell at 1920px. Stack a wider,
   shorter builder and compact diagnostics in the left column, and keep the
   full-height PokePilot panel visible in the right column. The Pokemon editor
@@ -931,7 +933,8 @@ embedding a detailed all-versus-all matchup matrix in the browser.
 
 ## Security Notes
 
-- Keep API keys in `.env.local`.
+- Keep development/evaluation keys in ignored environment files. Public personal
+  keys are encrypted in D1, never stored in browser storage or `VITE_` variables.
 - Do not call paid AI APIs directly from browser code.
 - Keep prompts and model calls server-side.
 - Sign the anonymous analysis cookie on the server and hash IP addresses before
@@ -948,10 +951,14 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   distributed lease and short-lived shared result. Per-key and global expiring
   waiter tokens bound duplicate serverless requests, and their 50-second shared
   deadline remains within the Worker request budget.
+- The above Redis cache/admission/distributed-coordination behavior applies to
+  the generic adapter when enabled, not current public BYOK calls. The Worker
+  uses `ai-fresh`: no shared cache, request-rate counters, or distributed result
+  storage; deduplication is process-local and account/model/effort scoped.
 - Set `POKEPILOT_SHARED_STORE_REQUIRED=true` for public deployment so missing or
-  partial Redis configuration fails closed. Use distinct
-  `POKEPILOT_REDIS_PREFIX` values for preview and production. Redis outages
-  must return an explicit error rather than silently bypass coordination.
+  partial Redis configuration fails closed during adapter initialization. Use distinct
+  `POKEPILOT_REDIS_PREFIX` values for preview and production. When shared operations
+  are enabled, Redis failures must not silently bypass coordination.
 - Keep routine `npm run dev` isolated on process-local memory. Load real Redis
   credentials only from ignored `.env.shared.local` through
   `npm run dev:shared`; this mode retains production-like safeguards, forces the

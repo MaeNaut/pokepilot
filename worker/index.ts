@@ -55,7 +55,7 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
   if (effort !== "low" && effort !== "medium") {
     return jsonResponse(400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid reasoning effort.", providerAttempted: false } });
   }
-  if ((modelId !== "gpt-6-luna" && modelId !== "gpt-6-sol") || (modelId === "gpt-6-sol" && effort !== "low")) {
+  if (modelId !== "gpt-6-luna") {
     return jsonResponse(400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid model selection.", providerAttempted: false } });
   }
   const personalKey = await readPersonalApiKey(accountId, env);

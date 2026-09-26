@@ -34,7 +34,6 @@ npx wrangler d1 migrations apply pokepilot --remote
 Set the following Worker secrets in Cloudflare. Do not commit them or add them
 to a `VITE_` variable:
 
-- `OPENAI_API_KEY`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 - `POKEPILOT_CLIENT_SECRET`
@@ -51,6 +50,11 @@ exact callback URL:
 https://pokepilot.app/api/auth/google/callback
 ```
 
+`OPENAI_API_KEY` is not used by public Worker analysis: every request requires
+the account's encrypted personal key. Local development/evaluation credentials
+are separate. `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_REDIRECT_URI` may be
+Worker variables rather than secrets; never expose the OAuth client secret.
+
 ## Account data and sync scope
 
 D1 stores a minimal Google profile: provider account identifier and any email,
@@ -61,8 +65,8 @@ endpoints:
 | Storage key | Limit | Contents |
 | --- | --- | --- |
 | `teams` | 30 entries / 1.5 MB | Saved teams, including bench and editable build state |
-| `analysis-history` | 60 entries / 1 MB | Validated PokePilot analysis history |
-| `preferences` | 4 KB | Language, theme, default battle format, tutorial completion |
+| `analysis-history` | 60 entries / 1 MB | Renderable PokePilot analysis history; not a guarantee of factual accuracy |
+| `preferences` | 4 KB | Language, theme, default battle format, tutorial completion, last selected analysis tab/model/reasoning level |
 
 The browser keeps a local copy for continuity. On first sign-in, unclaimed local
 teams and history merge with the account data; on a second device, the account
@@ -83,7 +87,7 @@ for the encryption, rotation, and deployment requirements.
 - Google consent, cancellation, error, successful callback, reload, and browser
   restart all yield the expected account state.
 - A second signed-in browser restores saved teams, analysis history, language,
-  theme, battle format, and completed tutorial state.
+  theme, battle format, completed tutorial state, and analysis selection.
 - Logging out clears the current browser's synchronized team/history copies;
   signing back into the same account restores the D1 copies.
 - Switching accounts does not expose local team/history data or carry over the

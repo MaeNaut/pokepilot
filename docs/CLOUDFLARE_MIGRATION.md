@@ -8,14 +8,16 @@ the API, Google OAuth callback, and same-origin Smogon proxy.
 
 - **Worker and static assets:** `pokepilot` Worker with the `ASSETS` binding
 - **Custom domain:** `pokepilot.app`
-- **Preview URL:** `https://pokepilot.pokepilot-ai.workers.dev`
+- **Worker URL:** `https://pokepilot.pokepilot-ai.workers.dev` (not an isolated QA environment)
 - **QA version URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
 - **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
-- **Operational state:** Upstash Redis for analysis cache, distributed leases,
-  and request admission
+- **Operational state:** Upstash adapter remains configured; public BYOK calls
+  bypass its cache, distributed leases, and request-rate counters and use
+  process-local deduplication. Generic development modes can enable Redis operations.
 - **Account storage:** D1 `accounts`, `account_sessions`, and
-  `account_storage` tables
+  `account_storage` tables, plus encrypted `personal_api_keys`
+- **Metrics:** bounded daily `operational_metrics` aggregates in D1
 
 Legacy Netlify/Vercel deployment entry points and Netlify Identity dependencies
 have been removed. Their historical implementations remain available in Git.
@@ -36,13 +38,16 @@ The Node API adapter in `server/` is still used by the Vite development server.
 3. Set server-side Worker secrets in Cloudflare. Never place them in
    `wrangler.jsonc`, `.env.cloudflare`, Git, or chat:
 
-   - `OPENAI_API_KEY`
    - `UPSTASH_REDIS_REST_URL`
    - `UPSTASH_REDIS_REST_TOKEN`
    - `POKEPILOT_CLIENT_SECRET`
    - `POKEPILOT_SESSION_SECRET`
    - `GOOGLE_OAUTH_CLIENT_ID`
    - `GOOGLE_OAUTH_CLIENT_SECRET`
+
+   Public analysis reads the signed-in account's personal key, not
+   `OPENAI_API_KEY`. Keep local/evaluation keys separate. The OAuth client ID
+   may also be configured as a Worker variable; its client secret must remain secret.
 4. Keep the Worker variables in `wrangler.jsonc` aligned with the intended
    environment. Production requires account authentication, the shared Redis
    store, and `GOOGLE_OAUTH_REDIRECT_URI` set to the production callback. QA

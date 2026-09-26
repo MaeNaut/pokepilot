@@ -214,9 +214,8 @@ export async function handleNodePokePilotApi(
     const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY;
     const selectedModel = getFirstHeader(request.headers["x-pokepilot-model"]) ?? "gpt-6-luna";
     const selectedEffort = getFirstHeader(request.headers["x-pokepilot-reasoning-effort"]) ?? "low";
-    if ((selectedModel !== "gpt-6-luna" && selectedModel !== "gpt-6-sol") ||
-      (selectedEffort !== "low" && selectedEffort !== "medium") ||
-      (selectedModel === "gpt-6-sol" && selectedEffort !== "low")) {
+    if (selectedModel !== "gpt-6-luna" ||
+      (selectedEffort !== "low" && selectedEffort !== "medium")) {
       sendJson(response, 400, { ok: false, error: { code: "INVALID_REQUEST", message: "Invalid model selection.", providerAttempted: false } });
       return;
     }

@@ -18,7 +18,9 @@ describe("account preferences", () => {
     const preferences: AccountPreferences = { ...localPreferences, analysis: {
       scope: "pokemon", modelId: "gpt-6-sol", reasoningEffort: "low",
     } };
-    expect(normalizeAccountPreferences(preferences)).toEqual(preferences);
+    expect(normalizeAccountPreferences(preferences)).toEqual({
+      ...preferences, analysis: { ...preferences.analysis, modelId: "gpt-6-luna" },
+    });
     expect(areAccountPreferencesEqual(preferences, localPreferences)).toBe(false);
     expect(normalizeAccountPreferences({ ...preferences, analysis: {
       ...preferences.analysis, reasoningEffort: "medium",

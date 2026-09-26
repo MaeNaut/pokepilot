@@ -128,7 +128,7 @@
 
       <article lang="en">
         <h1>Privacy</h1>
-        <p class="meta">Public beta notice · Last updated September 24, 2026</p>
+        <p class="meta">Public beta notice · Last updated September 26, 2026</p>
 
         <section>
           <h2>Data kept in your browser</h2>
@@ -138,7 +138,8 @@
             history also keep a local browser copy. When you sign in with
             Google, PokePilot synchronizes those saved teams and history, plus
             your language, theme, default battle format, and tutorial-completion
-            preference, to an account-scoped Cloudflare D1 database so they are
+            preference, plus the last selected analysis tab, model, and reasoning
+            level, to an account-scoped Cloudflare D1 database so they are
             available on your other signed-in devices. The browser copy remains until you remove
             it in the app or clear the site's browser data; it is also cleared
             when you sign out. PokePilot also stores the minimum account
@@ -151,14 +152,19 @@
         <section>
           <h2>Optional AI analysis</h2>
           <p>
-            PokePilot sends a team or Pokemon build to the PokePilot server only
-            when you request an AI analysis. The server forwards the structured
+            Account sync stores saved teams and analysis history as described above.
+            When you request an AI analysis, the server forwards the structured
             battle data, including a team name when present, to OpenAI to
             generate the response. Avoid placing personal or confidential
             information in team names or analysis inputs.
+            The request also includes a pseudonymous account identifier derived
+            with a server secret for OpenAI abuse monitoring, not your Google
+            email or profile. Requests use <code>store: false</code>; this does
+            not override OpenAI's own data-retention policies.
           </p>
           <p>
-            Signed-in users may optionally register a personal OpenAI API key.
+            AI analysis requires sign-in and a personal OpenAI API key; team
+            building and damage calculation do not require a key.
             PokePilot encrypts the key before storing it in the account-scoped
             Cloudflare D1 database. The browser does not retain the key after
             registration, and PokePilot does not display it again. The server
@@ -175,7 +181,10 @@
             <li>
               Google sign-in creates a random, Secure, HttpOnly, SameSite
               session cookie. Its server-side HMAC is stored in Cloudflare D1
-              for up to 30 days; JavaScript cannot read the session value.
+              with a 30-day idle window. Authenticated activity renews that window
+              when seven days or less remain, up to 90 days from sign-in.
+              JavaScript cannot read the session value. Expired session records
+              no longer grant access; expiration is not a promise of immediate deletion.
             </li>
             <li>
               An HttpOnly, signed anonymous-client cookie identifies a browser
@@ -184,13 +193,16 @@
             </li>
             <li>
               The application converts the request IP address to a keyed,
-              one-way hash for rate limiting. PokePilot does not place the raw
+              one-way hash for request identity. PokePilot does not place the raw
               IP address in its application cache.
             </li>
             <li>
-              Upstash Redis stores bounded usage records and cached analysis
-              outputs. Analysis cache entries and rolling usage records expire
-              after no more than 24 hours.
+              Public personal-key analysis bypasses the shared Redis analysis
+              cache and request-rate counters. Duplicate in-flight requests may
+              share a result within a server process. The development adapter
+              can use Upstash for temporary request controls and analysis caching;
+              its analysis cache expires within 24 hours. Account analysis history
+              in D1 is separate from this cache and remains until removed.
             </li>
           </ul>
         </section>
@@ -198,8 +210,9 @@
         <section>
           <h2>Operational metrics</h2>
           <p>We retain daily aggregate API request counts, HTTP status codes, latency buckets,
-            analysis categories, cache outcomes, token totals, and estimated successful-call
-            costs for approximately 90 days. These aggregates contain no account identifiers,
+            analysis categories, cache outcomes, token totals, and estimated costs
+            for successful calls and failed calls with known usage for approximately
+            90 days. These aggregates contain no account identifiers,
             IP addresses, team contents, prompts, or analysis text. They help us improve
             reliability and resource efficiency; they do not track individual browsing activity.</p>
           <h2>Service providers</h2>
@@ -255,7 +268,7 @@
 
       <article class="ko" lang="ko">
         <h1>개인정보 안내</h1>
-        <p class="meta">공개 베타 안내 · 최종 수정 2026년 9월 24일</p>
+        <p class="meta">공개 베타 안내 · 최종 수정 2026년 9월 26일</p>
 
         <section>
           <h2>브라우저에 저장되는 데이터</h2>
@@ -264,7 +277,8 @@
             저장됩니다. 저장한 팀, 벤치 샘플, PokePilot 분석 기록도 브라우저에
             로컬 사본을 유지합니다. Google로 로그인하면 다른 로그인 기기에서도
             이용할 수 있도록 해당 저장 팀과 분석 기록, 언어, 테마, 기본 배틀 형식,
-            튜토리얼 완료 설정을 계정별 Cloudflare D1 데이터베이스에 동기화합니다.
+            튜토리얼 완료 여부, 최근 선택한 분석 탭·모델·추론 강도를 계정별
+            Cloudflare D1 데이터베이스에 동기화합니다.
             브라우저 사본은 앱에서 삭제하거나
             사이트 데이터를 지우기 전까지 해당 기기에 남으며, 로그아웃할 때에도
             삭제됩니다. 또한 로그인과 오남용 방지에 필요한 최소 계정 프로필
@@ -276,13 +290,18 @@
         <section>
           <h2>선택형 AI 분석</h2>
           <p>
-            AI 분석을 직접 요청한 경우에만 팀 또는 포켓몬 샘플이 PokePilot
-            서버로 전송됩니다. 서버는 팀 이름이 있는 경우 이를 포함한 구조화된
+            저장 팀과 분석 기록은 앞서 설명한 계정 동기화를 통해 서버에 저장됩니다.
+            AI 분석을 직접 요청하면 서버는 팀 이름이 있는 경우 이를 포함한 구조화된
             배틀 데이터를 OpenAI에 전달해 분석 결과를 생성합니다. 팀 이름과
             분석 입력에 개인정보나 기밀정보를 넣어서는 안 됩니다.
+            OpenAI의 오남용 모니터링을 위해 서버 비밀값으로 파생한 가명 계정
+            식별자도 전달하며, Google 이메일이나 프로필을 이 식별자로 전달하지는
+            않습니다. 요청에는 <code>store: false</code>를 사용하지만 이것이
+            OpenAI 자체의 데이터 보관 정책까지 변경하는 것은 아닙니다.
           </p>
           <p>
-            로그인한 이용자는 개인 OpenAI API 키를 선택적으로 등록할 수 있습니다.
+            AI 분석에는 로그인과 개인 OpenAI API 키 등록이 필요합니다.
+            팀 빌더와 대미지 계산기는 키 없이 이용할 수 있습니다.
             PokePilot은 키를 암호화하여 계정별 Cloudflare D1 데이터베이스에
             저장합니다. 등록 후 브라우저에는 키를 보관하지 않고, 키를 다시
             표시하지도 않습니다. 서버는 해당 키로 분석을 요청할 때에만 키를
@@ -297,8 +316,11 @@
           <ul>
             <li>
               Google 로그인은 무작위 Secure, HttpOnly, SameSite 세션 쿠키를
-              만듭니다. 세션의 서버 측 HMAC은 Cloudflare D1에 최대 30일 동안
-              저장되며 JavaScript에서는 세션 값을 읽을 수 없습니다.
+              만듭니다. 세션의 서버 측 HMAC은 Cloudflare D1에 저장됩니다.
+              비활성 만료 기간은 30일이며, 잔여 기간이 7일 이하일 때 인증된 요청이
+              발생하면 로그인 시점부터 최대 90일 범위에서 연장됩니다.
+              JavaScript에서는 세션 값을 읽을 수 없습니다. 만료된 세션은 접근 권한을
+              잃으며, 만료 시점에 저장 기록까지 즉시 삭제된다는 뜻은 아닙니다.
             </li>
             <li>
               요청 보호를 위해 서명된 익명 브라우저 식별자를 HttpOnly
@@ -306,13 +328,15 @@
               1년간 유지될 수 있습니다.
             </li>
             <li>
-              요청 IP는 사용량 제한을 위해 키 기반 단방향 해시로 변환합니다.
+              요청 IP는 요청 식별을 위해 키 기반 단방향 해시로 변환합니다.
               PokePilot 애플리케이션 캐시에는 원본 IP를 저장하지 않습니다.
             </li>
             <li>
-              Upstash Redis에는 제한된 사용량 기록과 분석 결과 캐시가
-              저장됩니다. 분석 캐시와 누적 사용량 기록은 최대 24시간 후
-              만료됩니다.
+              공개 서비스의 개인 키 분석은 Redis 공유 분석 캐시와 요청 횟수 제한을
+              사용하지 않습니다. 동시에 진행 중인 중복 요청은 같은 서버 프로세스에서
+              결과를 공유할 수 있습니다. 개발용 어댑터는 Upstash에 임시 요청 제어
+              데이터와 최대 24시간의 분석 캐시를 저장할 수 있습니다. D1의 계정 분석
+              기록은 이 캐시와 별개이며 삭제하기 전까지 유지됩니다.
             </li>
           </ul>
         </section>
@@ -320,7 +344,8 @@
         <section>
           <h2>운영 지표</h2>
           <p>서비스 안정성과 자원 효율 개선을 위해 API 요청 횟수, HTTP 상태 코드,
-            응답 시간 구간, 분석 종류, 캐시 결과, 토큰 합계와 성공한 호출의 추정 비용을
+            응답 시간 구간, 분석 종류, 캐시 결과, 토큰 합계와 성공한 호출 및 사용량이
+            확인된 실패 호출의 추정 비용을
             날짜별로 집계하여 약 90일 동안 보관합니다. 이 집계에는 계정 식별자, IP 주소,
             팀 내용, 프롬프트나 분석 원문을 포함하지 않으며 개인의 탐색 활동을 추적하지 않습니다.</p>
           <h2>외부 서비스</h2>

@@ -136,11 +136,11 @@ const emptyStateCopy: Record<
 
 const analysisEstimates: Partial<Record<
   CopilotAnalysisScope,
-  Record<"luna-low" | "luna-medium" | "sol-low", { seconds: number; cost: string }>
+  Record<"luna-low" | "luna-medium", { seconds: number; cost: string }>
 >> = {
-  team: { "luna-low": { seconds: 16, cost: "0.0018" }, "luna-medium": { seconds: 75, cost: "0.0048" }, "sol-low": { seconds: 24, cost: "0.036" } },
-  pokemon: { "luna-low": { seconds: 10, cost: "0.0015" }, "luna-medium": { seconds: 31, cost: "0.0024" }, "sol-low": { seconds: 15, cost: "0.026" } },
-  recommendation: { "luna-low": { seconds: 12, cost: "0.0027" }, "luna-medium": { seconds: 52, cost: "0.0041" }, "sol-low": { seconds: 23, cost: "0.054" } },
+  team: { "luna-low": { seconds: 16, cost: "0.0018" }, "luna-medium": { seconds: 75, cost: "0.0048" } },
+  pokemon: { "luna-low": { seconds: 10, cost: "0.0015" }, "luna-medium": { seconds: 31, cost: "0.0024" } },
+  recommendation: { "luna-low": { seconds: 12, cost: "0.0027" }, "luna-medium": { seconds: 52, cost: "0.0041" } },
 };
 
 export function CopilotPanel({
@@ -167,7 +167,8 @@ export function CopilotPanel({
   onSaveOptimizationCandidate,
 }: CopilotPanelProps) {
   const { locale, t } = useLocalization();
-  const { scope, reasoningEffort, modelId } = analysisPreference;
+  const { scope, reasoningEffort } = analysisPreference;
+  const modelId = "gpt-6-luna";
   const setScope = (next: CopilotAnalysisScope) =>
     setAnalysisPreference((current) => ({ ...current, scope: next }));
   const setReasoningEffort = (next: "low" | "medium") =>
@@ -396,8 +397,8 @@ export function CopilotPanel({
     reasoningEffort,
     modelId,
   });
-  const modelChoice = modelId === "gpt-6-sol" ? "sol-low" : reasoningEffort === "medium" ? "luna-medium" : "luna-low";
-  const modelLabel = modelId === "gpt-6-sol" ? "Sol low" : reasoningEffort === "medium" ? "Luna medium" : "Luna low";
+  const modelChoice = reasoningEffort === "medium" ? "luna-medium" : "luna-low";
+  const modelLabel = reasoningEffort === "medium" ? "Luna medium" : "Luna low";
   const isPersonalModelAvailable = account.hasPersonalApiKey && account.personalApiKeyStatus === "ready";
   const keyRequiredMessage = locale === "ko" ? "개인 OpenAI API 키가 필요합니다." : "Requires your OpenAI API key.";
   const isUsageDataScope = usesHistoricalUsageData(scope);
@@ -909,15 +910,22 @@ export function CopilotPanel({
             <div className="copilot-reasoning-menu" role="menu" aria-label={locale === "ko" ? "모델" : "Model"}>
               <strong>{locale === "ko" ? "모델" : "Model"}</strong>
               {([
-                { choice: "sol-low", label: "Sol low", id: "gpt-6-sol", effort: "low", requiresKey: true },
                 { choice: "luna-medium", label: "Luna medium", id: "gpt-6-luna", effort: "medium", requiresKey: true },
                 { choice: "luna-low", label: "Luna low", id: "gpt-6-luna", effort: "low", requiresKey: true },
               ] as const).map((option) => {
                 const locked = option.requiresKey && !isPersonalModelAvailable;
+                const comparison = option.choice === "luna-low"
+                  ? locale === "ko" ? "기본 모델" : "Default model"
+                  : locale === "ko"
+                    ? "더 깊은 추론 · 시간·비용 증가"
+                    : "Deeper reasoning · More time and cost";
                 return (
                   <div className="copilot-reasoning-option" key={option.choice} tabIndex={locked ? 0 : undefined} aria-describedby={locked ? `copilot-${option.choice}-lock` : undefined}>
                     <button type="button" role="menuitemradio" aria-checked={modelChoice === option.choice} className={modelChoice === option.choice ? "is-active" : ""} disabled={locked} onClick={() => { setModelId(option.id); setReasoningEffort(option.effort); setIsReasoningMenuOpen(false); }}>
-                      {option.label}
+                      <span className="copilot-reasoning-option-copy">
+                        <span>{option.label}</span>
+                        <small>{comparison}</small>
+                      </span>
                       {locked ? <FontAwesomeIcon icon={faLock} aria-hidden="true" /> : null}
                     </button>
                     {locked ? <span className="copilot-reasoning-lock-popover" id={`copilot-${option.choice}-lock`} role="tooltip">{keyRequiredMessage}</span> : null}

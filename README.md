@@ -22,7 +22,8 @@ responsive web app.
 - Analyze teams and individual Pokemon, compare samples, recommend roster additions, and audit metagame threats.
 - Export individual builds and full teams as shareable PNG images.
 - Use English or Korean with system, light, and dark themes across desktop, tablet, and mobile layouts.
-- Sign in with Google to synchronize saved teams, bounded analysis history, language, theme, default battle format, and tutorial completion across devices.
+- Sign in with Google to synchronize saved teams, bounded analysis history, language, theme, default battle format, tutorial completion, and the last selected analysis tab/model/reasoning level across devices.
+- Register a personal OpenAI API key to use AI analysis. OpenAI bills your account; PokePilot currently provides no site-funded trials or advertising credits.
 
 ## Stack
 
@@ -30,7 +31,7 @@ responsive web app.
 - Pokemon Showdown data and `@smogon/calc`
 - PokeAPI sprites and localized source data
 - OpenAI Responses API for requested PokePilot analysis
-- Upstash Redis for shared caching, request deduplication, and request admission
+- Upstash Redis adapter for shared operational modes; public personal-key calls bypass shared caching and use process-local request deduplication
 - Cloudflare Workers for the static app and server API
 - Cloudflare D1 for account, session, and account-scoped synchronized data
 - Google OAuth with Secure, HttpOnly, SameSite session cookies
@@ -58,8 +59,11 @@ npm run check:cloudflare
 ```
 
 Hosted AI analysis is optional during routine local development. Add
-`OPENAI_API_KEY` to ignored `.env.local` to enable it; without a key, the app
-continues to offer deterministic fallback guidance. Never expose a provider key
+`OPENAI_API_KEY` to ignored `.env.local` for the local AI adapter. Team building
+and damage calculation work without it; failed AI requests show an error, not
+a rules-based replacement. The deployed Worker requires Google sign-in and a
+registered personal key for every model. Use a Worker preview for account QA;
+plain Vite does not reproduce the account service. Never expose a provider key
 through a `VITE_` environment variable.
 
 Useful development commands:
@@ -107,6 +111,9 @@ it is not presented as measured M-C usage.
 - [Technical notes](./TECH_NOTES.md)
 - [Regulation M-C data](./docs/REGULATION_DATA.md)
 - [Account authentication](./docs/account-auth.md)
+- [Personal API keys and model selection](./docs/personal-api-key.md)
+- [API key setup guide](https://pokepilot.app/help/api-key-en.html) / [한국어](https://pokepilot.app/help/api-key-ko.html)
+- [Operational metrics](./docs/OPERATIONAL_METRICS.md)
 - [Cloudflare deployment and migration record](./docs/CLOUDFLARE_MIGRATION.md)
 - [Deployment checklist](./docs/DEPLOYMENT_CHECKLIST.md)
 - [AI model evaluation](./docs/AI_MODEL_EVALUATION.md)
