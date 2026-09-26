@@ -11,6 +11,9 @@ import type { KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
+  faChevronDown,
+  faPlus,
+  faFileImport,
   faFloppyDisk,
   faList,
 } from "@fortawesome/free-solid-svg-icons";
@@ -190,6 +193,8 @@ function App() {
     activeSavedTeamId, untitledName: t("team.untitled"),
   });
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
+  const [isMobileTeamMenuOpen, setIsMobileTeamMenuOpen] = useState(false);
+  const mobileTeamMenuTriggerRef = useRef<HTMLButtonElement>(null);
   const [isNewTeamMenuOpen, setIsNewTeamMenuOpen] = useState(false);
   const [isNewTeamImportOpen, setIsNewTeamImportOpen] = useState(false);
   const [newTeamShowdownDraft, setNewTeamShowdownDraft] = useState("");
@@ -334,11 +339,13 @@ function App() {
   useDismissOnOutsidePointer(
     teamActionsRef,
     isTeamManagerOpen ||
+      isMobileTeamMenuOpen ||
       isNewTeamMenuOpen ||
       isNewTeamImportOpen ||
       Boolean(pendingTeamAction),
     () => {
       closeTeamManager();
+      setIsMobileTeamMenuOpen(false);
       closeNewTeamTools();
       setPendingTeamAction(null);
     },
@@ -1280,10 +1287,76 @@ function App() {
             aria-label={t("team.manage")}
             title={t("team.manage")}
             aria-expanded={isTeamManagerOpen}
-            onClick={toggleTeamManager}
+            onClick={() => {
+              setIsMobileTeamMenuOpen(false);
+              toggleTeamManager();
+            }}
           >
             <FontAwesomeIcon icon={faList} aria-hidden="true" />
           </button>
+          <button
+            className="mobile-team-menu-trigger"
+            ref={mobileTeamMenuTriggerRef}
+            type="button"
+            aria-label={`${t("team.actions")}: ${teamNameDraft}`}
+            aria-expanded={isMobileTeamMenuOpen}
+            aria-controls="mobile-team-menu"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setIsMobileTeamMenuOpen(false);
+            }}
+            onClick={() => {
+              closeTeamManager();
+              closeNewTeamTools();
+              setIsMobileTeamMenuOpen((open) => !open);
+            }}
+          >
+            <span>{teamNameDraft}</span>
+            <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
+          </button>
+          {isMobileTeamMenuOpen && (
+            <div
+              id="mobile-team-menu"
+              className="mobile-team-menu"
+              role="region"
+              aria-label={t("team.actions")}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  setIsMobileTeamMenuOpen(false);
+                  mobileTeamMenuTriggerRef.current?.focus();
+                }
+              }}
+            >
+              <label>
+                <span>{t("team.name")}</span>
+                <input
+                  value={teamNameDraft}
+                  spellCheck={false}
+                  onChange={(event) => setTeamNameDraft(event.target.value)}
+                  onBlur={commitTeamName}
+                  onKeyDown={handleTeamNameKeyDown}
+                />
+              </label>
+              <button type="button" onClick={() => {
+                handleSaveTeam();
+                setIsMobileTeamMenuOpen(false);
+                mobileTeamMenuTriggerRef.current?.focus();
+              }}>
+                <FontAwesomeIcon icon={faFloppyDisk} aria-hidden="true" />{t("team.save")}
+              </button>
+              <button type="button" onClick={() => {
+                setIsMobileTeamMenuOpen(false);
+                requestNewTeam();
+              }}>
+                <FontAwesomeIcon icon={faPlus} aria-hidden="true" />{t("team.new")}
+              </button>
+              <button type="button" onClick={() => {
+                setIsMobileTeamMenuOpen(false);
+                openNewTeamImport();
+              }}>
+                <FontAwesomeIcon icon={faFileImport} aria-hidden="true" />{t("team.importShowdown")}
+              </button>
+            </div>
+          )}
           <NewTeamControl
             isMenuOpen={isNewTeamMenuOpen}
             isImportOpen={isNewTeamImportOpen}
@@ -1313,7 +1386,7 @@ function App() {
             />
           </label>
           <button
-            className={`team-action-button ${isSaveConfirmed ? "is-confirmed" : ""}`}
+            className={`team-action-button desktop-team-save ${isSaveConfirmed ? "is-confirmed" : ""}`}
             type="button"
             aria-label={t("team.save")}
             title={t("team.save")}

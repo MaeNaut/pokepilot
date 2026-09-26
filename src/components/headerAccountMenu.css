@@ -336,3 +336,9 @@
     height: 32px;
   }
 }
+
+@media (pointer: coarse) {
+  .header-account-key-form input { font-size: 16px; min-height: 44px; }
+  .header-account-choice-group button,
+  .header-account-popover button { min-height: 44px; }
+}

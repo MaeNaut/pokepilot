@@ -104,6 +104,14 @@ footer a { font-weight: 600; }
 }
 @media (min-width: 761px) and (max-width: 1420px) { .help-wordmark { display: none; } .help-compact-home { display: grid; left: 5vw; } .help-account-menu { right: 5vw; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media (max-width: 760px) {
+  .help-home-link { right: 56px; width: 44px; height: 44px; }
+  .help-account-trigger { width: 44px; height: 44px; }
+  .help-account-choice-group button, .help-account-choice-group a { min-height: 44px; }
+  aside, aside summary { height: 44px; }
+  aside details[open] a { min-height: 44px; }
+  aside details[open] ol { max-height: calc(100dvh - 132px); }
+}
 @media print {
   aside, header nav, .skip { display: none; }
   header { position: static; }

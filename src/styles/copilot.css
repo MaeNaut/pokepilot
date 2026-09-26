@@ -7,6 +7,7 @@
   --copilot-surface: #151719;
   --copilot-surface-raised: #24272a;
   --copilot-surface-deep: #08090a;
+  --copilot-tab-active: #3b4441;
   --copilot-card: #0d0f10;
   --copilot-history-surface: #111315;
   --copilot-history-hover: #1b1e20;
@@ -54,6 +55,7 @@
   --copilot-surface: #ffffff;
   --copilot-surface-raised: #e8ebeb;
   --copilot-surface-deep: #eeeeee;
+  --copilot-tab-active: #becbc6;
   --copilot-card: #ffffff;
   --copilot-history-surface: #ffffff;
   --copilot-history-hover: #f0f1f1;
@@ -584,7 +586,7 @@
 }
 
 .copilot-scope-tabs button.is-active {
-  background: var(--copilot-surface-raised);
+  background: var(--copilot-tab-active);
   color: var(--copilot-text);
 }
 

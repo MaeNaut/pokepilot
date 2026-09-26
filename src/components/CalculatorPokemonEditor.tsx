@@ -71,6 +71,7 @@ import {
   PokemonPickerOptions,
 } from "./CalculatorPickerOptions";
 import { ItemSprite } from "./ItemSprite";
+import { MegaStoneIcon } from "./MegaStoneIcon";
 import {
   NatureGrid,
 } from "./NatureGrid";
@@ -1430,12 +1431,13 @@ export function CalculatorPokemonEditor({
                           { name: megaDisplayName },
                         )}
                         title={megaDisplayName}
+                        aria-pressed={isActiveMega}
                         key={option.name}
                         onClick={() =>
                           void handleToggleMega(option, isActiveMega)
                         }
                       >
-                        M{megaSuffix ? ` ${megaSuffix}` : ""}
+                        <MegaStoneIcon pokemon={option.name} fallback={`M${megaSuffix ? ` ${megaSuffix}` : ""}`} />
                       </button>
                     );
                   })}

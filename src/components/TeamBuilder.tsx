@@ -87,6 +87,7 @@ import {
   type Nature,
 } from "../data/natures";
 import { ItemSprite } from "./ItemSprite";
+import { MegaStoneIcon } from "./MegaStoneIcon";
 import { createShareMoveCatalog, createTeamShareBuilds } from "../utils/teamShareBuilds";
 import { MoveSummary, MoveTooltip } from "./MoveDetails";
 import { TypeBadge } from "./TypeBadge";
@@ -2683,6 +2684,7 @@ export function TeamBuilder({
                     return (
                       <button
                         className={`mega-button ${isActiveMega ? "is-active" : ""}`}
+                        aria-pressed={isActiveMega}
                         type="button"
                         aria-label={t(
                           isActiveMega ? "builder.returnFromMega" : "builder.useMega",
@@ -2694,7 +2696,7 @@ export function TeamBuilder({
                           handleToggleMega(option.name, isActiveMega)
                         }
                       >
-                        M{megaSuffix ? ` ${megaSuffix}` : ""}
+                        <MegaStoneIcon pokemon={option.name} fallback={`M${megaSuffix ? ` ${megaSuffix}` : ""}`} />
                       </button>
                     );
                   })}
