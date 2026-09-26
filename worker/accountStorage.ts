@@ -1,6 +1,7 @@
 import { AccountAuthError, readAccountSession } from "./accountAuth.js";
 import { emptyResponse, isSameOrigin, jsonResponse, withSessionRefresh } from "./http.js";
 import type { WorkerEnvironment } from "./env.js";
+import { isAnalysisPreference } from "../src/utils/accountPreferences.js";
 
 export type AccountStorageKey = "teams" | "analysis-history" | "preferences";
 
@@ -21,12 +22,14 @@ function isPreferences(value: unknown) {
     "themePreference",
     "battleFormat",
     "tutorialCompleted",
+    "analysis",
   ];
   if (Object.keys(preferences).some((key) => !expectedKeys.includes(key))) {
     return false;
   }
 
   return (preferences.locale === "en" || preferences.locale === "ko") &&
+    (preferences.analysis === undefined || isAnalysisPreference(preferences.analysis)) &&
     (preferences.themePreference === "system" ||
       preferences.themePreference === "light" ||
       preferences.themePreference === "dark") &&

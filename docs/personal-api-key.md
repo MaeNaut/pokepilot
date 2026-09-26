@@ -1,5 +1,9 @@
 # Personal API Keys and Reasoning Levels
 
+The account preferences also sync the last selected analysis tab, model, and reasoning
+level. Older accounts default to Pokemon and Luna low. Logging out resets this
+selection; loading key status does not overwrite it. Tabs begin with Pokemon, then Team.
+
 PokePilot analysis requires both a signed-in account and a registered personal OpenAI API key for every model (Luna low, Luna medium, and Sol low). There is no site-key fallback, free trial, advertising credit, or daily/monthly allowance at launch. Personal requests bypass the shared analysis cache. OpenAI billing and provider limits still apply; in-flight deduplication remains. The UI shows the registration form only when no key is registered, otherwise a saved status and delete action.
 
 The browser sends a key only once to `PUT /api/pokepilot/personal-api-key`.

@@ -80,6 +80,7 @@ import { useBattleFormat } from "./battleFormat/useBattleFormat";
 import { useAppMode } from "./appMode/useAppMode";
 import { useAccount } from "./hooks/useAccount";
 import { useAccountPreferencesSync } from "./hooks/useAccountPreferencesSync";
+import { DEFAULT_ANALYSIS_PREFERENCE } from "./utils/accountPreferences";
 import {
   getWorkspaceTutorialCompleted,
   storeWorkspaceTutorialCompleted,
@@ -136,10 +137,13 @@ function App() {
   const accountStorageId = account.status === "ready" ? account.user?.id ?? null : null;
   const { battleFormat, setBattleFormat } = useBattleFormat();
   const { appMode, setAppMode } = useAppMode();
+  const [analysisPreference, setAnalysisPreference] = useState(DEFAULT_ANALYSIS_PREFERENCE);
   const [tutorialCompleted, setTutorialCompleted] = useState(
     getWorkspaceTutorialCompleted,
   );
   useAccountPreferencesSync({
+    analysis: analysisPreference,
+    setAnalysis: setAnalysisPreference,
     accountId: accountStorageId,
     locale,
     setLocale,
@@ -1520,6 +1524,8 @@ function App() {
             }
           >
             <CopilotPanel
+              analysisPreference={analysisPreference}
+              setAnalysisPreference={setAnalysisPreference}
               account={account}
               savedTeamId={activeSavedTeamId}
               teamName={teamNameDraft}

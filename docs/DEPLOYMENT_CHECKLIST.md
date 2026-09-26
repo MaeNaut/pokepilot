@@ -6,6 +6,26 @@ provider requirements.
 
 ## 1. Automated gate
 
+`.github/workflows/ci.yml` verifies pull requests without deploying. Pushes to
+`main` deploy the verified build with the lockfile-installed Wrangler only after
+lint, tests, build, dry run, and audit pass. Deployment then runs the unpaid
+production authentication smoke test. A smoke-test failure is reported but does
+not automatically roll back a completed deployment.
+
+Before enabling this workflow, add repository Actions secrets in
+GitHub Settings > Secrets and variables > Actions:
+
+- `CLOUDFLARE_API_TOKEN`: a deployment token scoped to the PokePilot account and
+  the relevant Worker/zone resources. Never reuse a local OAuth session token.
+- `CLOUDFLARE_ACCOUNT_ID`: the Cloudflare account containing `pokepilot`.
+
+Production application secrets (OpenAI, Google, session signing, and Upstash)
+remain on the Worker and must not be copied into GitHub. No D1 migrations are
+automatically applied. Runs are serialized by ref without interrupting an active
+deployment; superseded commits skip deployment. Keep Workers Builds disconnected
+to avoid a second independent deployment pipeline. Re-run a failed Actions run
+after correcting missing secrets; only the current main commit will deploy.
+
 Run from the repository root:
 
 ```bash

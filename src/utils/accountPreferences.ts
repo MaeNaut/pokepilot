@@ -3,12 +3,33 @@ import {
   type BattleFormat,
 } from "../battleFormat/battleFormat";
 import type { Locale } from "../i18n/gameTranslations";
+import type { CopilotAnalysisScope } from "./copilotContracts";
+
+export type AnalysisPreference = {
+  scope: CopilotAnalysisScope;
+  modelId: "gpt-6-luna" | "gpt-6-sol";
+  reasoningEffort: "low" | "medium";
+};
+
+export const DEFAULT_ANALYSIS_PREFERENCE: AnalysisPreference = {
+  scope: "pokemon", modelId: "gpt-6-luna", reasoningEffort: "low",
+};
+
+export function isAnalysisPreference(value: unknown): value is AnalysisPreference {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const p = value as Record<string, unknown>;
+  return Object.keys(p).every((key) => ["scope", "modelId", "reasoningEffort"].includes(key)) &&
+    ["pokemon", "team", "recommendation", "optimization"].includes(p.scope as string) &&
+    (p.modelId === "gpt-6-luna" || p.modelId === "gpt-6-sol") &&
+    (p.reasoningEffort === "low" || (p.reasoningEffort === "medium" && p.modelId === "gpt-6-luna"));
+}
 import {
   isThemePreference,
   type ThemePreference,
 } from "../theme/theme";
 
 export type AccountPreferences = {
+  analysis?: AnalysisPreference;
   locale: Locale;
   themePreference: ThemePreference;
   battleFormat: BattleFormat;
@@ -50,6 +71,7 @@ export function normalizeAccountPreferences(
     !isThemePreference(preferences.themePreference) ||
     typeof preferences.battleFormat !== "string" ||
     !isBattleFormat(preferences.battleFormat) ||
+    (preferences.analysis !== undefined && !isAnalysisPreference(preferences.analysis)) ||
     typeof preferences.tutorialCompleted !== "boolean"
   ) {
     return null;
@@ -60,6 +82,7 @@ export function normalizeAccountPreferences(
     themePreference: preferences.themePreference,
     battleFormat: preferences.battleFormat,
     tutorialCompleted: preferences.tutorialCompleted,
+    ...(isAnalysisPreference(preferences.analysis) ? { analysis: preferences.analysis } : {}),
   };
 }
 
@@ -83,6 +106,9 @@ export function areAccountPreferencesEqual(
   right: AccountPreferences,
 ) {
   return left.locale === right.locale &&
+    left.analysis?.scope === right.analysis?.scope &&
+    left.analysis?.modelId === right.analysis?.modelId &&
+    left.analysis?.reasoningEffort === right.analysis?.reasoningEffort &&
     left.themePreference === right.themePreference &&
     left.battleFormat === right.battleFormat &&
     left.tutorialCompleted === right.tutorialCompleted;

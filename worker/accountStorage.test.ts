@@ -122,6 +122,7 @@ describe("account storage boundary", () => {
 
   it("reads and writes validated account preferences", async () => {
     const preferences = {
+      analysis: { scope: "pokemon", modelId: "gpt-6-sol", reasoningEffort: "low" },
       locale: "ko",
       themePreference: "dark",
       battleFormat: "doubles",

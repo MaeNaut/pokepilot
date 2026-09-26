@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import type { AnalysisPreference } from "../utils/accountPreferences";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronDown,
@@ -60,6 +62,8 @@ import { getCopilotScopeRequirement } from "../utils/copilotScopeRequirements";
 import { getCopilotFailureMessage, getCopilotNoCostMessage } from "../utils/copilotFailureMessage";
 
 type CopilotPanelProps = {
+  analysisPreference: AnalysisPreference;
+  setAnalysisPreference: Dispatch<SetStateAction<AnalysisPreference>>;
   account: ReturnType<typeof useAccount>;
   savedTeamId: string | null;
   teamName: string;
@@ -140,6 +144,8 @@ const analysisEstimates: Partial<Record<
 };
 
 export function CopilotPanel({
+  analysisPreference,
+  setAnalysisPreference,
   account,
   savedTeamId,
   teamName,
@@ -161,9 +167,13 @@ export function CopilotPanel({
   onSaveOptimizationCandidate,
 }: CopilotPanelProps) {
   const { locale, t } = useLocalization();
-  const [scope, setScope] = useState<CopilotAnalysisScope>("team");
-  const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium">("low");
-  const [modelId, setModelId] = useState<"gpt-6-luna" | "gpt-6-sol">("gpt-6-luna");
+  const { scope, reasoningEffort, modelId } = analysisPreference;
+  const setScope = (next: CopilotAnalysisScope) =>
+    setAnalysisPreference((current) => ({ ...current, scope: next }));
+  const setReasoningEffort = (next: "low" | "medium") =>
+    setAnalysisPreference((current) => ({ ...current, reasoningEffort: next }));
+  const setModelId = (next: "gpt-6-luna" | "gpt-6-sol") =>
+    setAnalysisPreference((current) => ({ ...current, modelId: next }));
   const [isReasoningMenuOpen, setIsReasoningMenuOpen] = useState(false);
   const reasoningMenuRef = useRef<HTMLDivElement>(null);
   const [isAnalyzeConfirmationOpen, setIsAnalyzeConfirmationOpen] = useState(false);
@@ -187,13 +197,6 @@ export function CopilotPanel({
     "applied" | "saved" | "bench-full" | "stale" | null
   >(null);
   const contentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!account.hasPersonalApiKey) {
-      setReasoningEffort("low");
-      setModelId("gpt-6-luna");
-    }
-  }, [account.hasPersonalApiKey]);
 
   useEffect(() => {
     if (!isReasoningMenuOpen) return;
@@ -730,22 +733,22 @@ export function CopilotPanel({
         <button
           type="button"
           role="tab"
-          aria-selected={scope === "team"}
-          className={scope === "team" ? "is-active" : ""}
-          onClick={() => setScope("team")}
-        >
-          <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
-          {t("copilot.team")}
-        </button>
-        <button
-          type="button"
-          role="tab"
           aria-selected={scope === "pokemon"}
           className={scope === "pokemon" ? "is-active" : ""}
           onClick={() => setScope("pokemon")}
         >
           <FontAwesomeIcon icon={faUser} aria-hidden="true" />
           {t("copilot.pokemon")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={scope === "team"}
+          className={scope === "team" ? "is-active" : ""}
+          onClick={() => setScope("team")}
+        >
+          <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
+          {t("copilot.team")}
         </button>
         <button
           type="button"

@@ -14,9 +14,13 @@ import {
   mergeAccountPreferences,
   storeAccountPreferencesOwnerId,
   type AccountPreferences,
+  type AnalysisPreference,
+  DEFAULT_ANALYSIS_PREFERENCE,
 } from "../utils/accountPreferences";
 
 type UseAccountPreferencesSyncOptions = {
+  analysis?: AnalysisPreference;
+  setAnalysis?: (analysis: AnalysisPreference) => void;
   accountId: string | null;
   locale: Locale;
   setLocale: (locale: Locale) => void;
@@ -32,6 +36,8 @@ export function useAccountPreferencesSync(
   options: UseAccountPreferencesSyncOptions,
 ) {
   const {
+    analysis,
+    setAnalysis,
     accountId,
     battleFormat,
     locale,
@@ -43,11 +49,13 @@ export function useAccountPreferencesSync(
     tutorialCompleted,
   } = options;
   const currentPreferences = useMemo(() => ({
+    ...(analysis ? { analysis } : {}),
     locale,
     themePreference,
     battleFormat,
     tutorialCompleted,
   }), [
+    analysis,
     battleFormat,
     locale,
     themePreference,
@@ -60,11 +68,13 @@ export function useAccountPreferencesSync(
   latestPreferencesRef.current = currentPreferences;
 
   const applyPreferences = useCallback((preferences: AccountPreferences) => {
+    setAnalysis?.(preferences.analysis ?? DEFAULT_ANALYSIS_PREFERENCE);
     setLocale(preferences.locale);
     setThemePreference(preferences.themePreference);
     setBattleFormat(preferences.battleFormat);
     setTutorialCompleted(preferences.tutorialCompleted);
   }, [
+    setAnalysis,
     setBattleFormat,
     setLocale,
     setThemePreference,
@@ -73,8 +83,11 @@ export function useAccountPreferencesSync(
 
   useEffect(() => {
     lastSyncedPreferencesRef.current = null;
+    setAnalysis?.(DEFAULT_ANALYSIS_PREFERENCE);
 
-    if (!accountId) return;
+    if (!accountId) {
+      return;
+    }
 
     const session = createAccountSyncSession(writeAccountPreferences);
     void (async () => {
@@ -112,7 +125,7 @@ export function useAccountPreferencesSync(
       session.close();
       if (writer.current === session) writer.current = null;
     };
-  }, [accountId, applyPreferences]);
+  }, [accountId, applyPreferences, setAnalysis]);
 
   useEffect(() => {
     if (!accountId || !writer.current) return;

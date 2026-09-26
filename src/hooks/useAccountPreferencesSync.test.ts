@@ -3,7 +3,7 @@ import { act, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readAccountPreferences, writeAccountPreferences } from "../api/accountStorage";
 import { deferred, renderHook } from "../test/renderHook";
-import { ACCOUNT_PREFERENCES_OWNER_STORAGE_KEY, type AccountPreferences } from "../utils/accountPreferences";
+import { ACCOUNT_PREFERENCES_OWNER_STORAGE_KEY, DEFAULT_ANALYSIS_PREFERENCE, type AccountPreferences } from "../utils/accountPreferences";
 import { useAccountPreferencesSync } from "./useAccountPreferencesSync";
 
 vi.mock("../api/accountStorage", () => ({ readAccountPreferences: vi.fn(), writeAccountPreferences: vi.fn() }));
@@ -32,6 +32,31 @@ async function mount(id: string | null = "a", strict = false) {
 }
 
 describe("account preference synchronization", () => {
+  it("restores analysis selection, syncs edits, and resets it on logout", async () => {
+    const saved: AccountPreferences = { ...remote, analysis: {
+      scope: "team", modelId: "gpt-6-sol", reasoningEffort: "low",
+    } };
+    vi.mocked(readAccountPreferences).mockResolvedValue(saved);
+    const hook = await renderHook((accountId: string | null) => {
+      const [analysis, setAnalysis] = useState(DEFAULT_ANALYSIS_PREFERENCE);
+      useAccountPreferencesSync({ accountId, ...remote,
+        setLocale: noop, setThemePreference: noop, setBattleFormat: noop,
+        setTutorialCompleted: noop, analysis, setAnalysis,
+      });
+      return { analysis, setAnalysis };
+    }, "a" as string | null);
+    cleanups.push(hook.unmount);
+    expect(hook.current.analysis).toEqual(saved.analysis);
+    expect(writeAccountPreferences).not.toHaveBeenCalled();
+    await act(async () => { hook.current.setAnalysis({
+      scope: "pokemon", modelId: "gpt-6-luna", reasoningEffort: "medium",
+    }); });
+    expect(writeAccountPreferences).toHaveBeenLastCalledWith({
+      ...remote, analysis: hook.current.analysis,
+    }, expect.any(AbortSignal));
+    await hook.rerender(null);
+    expect(hook.current.analysis).toEqual(DEFAULT_ANALYSIS_PREFERENCE);
+  });
   it("hydrates all settings without echoing remote values back", async () => {
     const hook = await mount();
     expect(hook.current.preferences).toEqual(remote);
@@ -77,3 +102,5 @@ describe("account preference synchronization", () => {
     expect(writeAccountPreferences).toHaveBeenCalledTimes(1);
   });
 });
+
+function noop() {}
