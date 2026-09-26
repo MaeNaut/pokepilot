@@ -36,6 +36,14 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--text); outline
 .help-compact-home img { width: 22px; height: 22px; }
 .help-account-menu { position: absolute; top: 50%; right: 24px; transform: translateY(-50%); }
 .help-account-trigger { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 50%; padding: 2px; background: var(--surface); color: var(--text); cursor: pointer; list-style: none; }
+.help-home-link { position: absolute; top: 50%; right: 68px; display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--text); transform: translateY(-50%); }
+.help-home-link svg { width: 16px; height: 16px; }
+.help-home-link:hover, .help-home-link:focus-visible { background: var(--hover); border-color: var(--strong); }
+.help-home-link:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+@media (min-width: 1421px) { .help-home-link { right: calc(68px - (100vw - 100%)); } }
+@media (min-width: 1921px) { .help-home-link { right: calc((100vw - 1920px) / 2 + 68px - (100vw - 100%)); } }
+@media (min-width: 761px) and (max-width: 1420px) { .help-home-link { right: calc(5vw + 44px); } }
+@media (max-width: 760px) { .help-home-link { right: 48px; width: 32px; height: 32px; } }
 .help-account-trigger::-webkit-details-marker { display: none; }
 .help-account-trigger:hover, .help-account-menu[open] .help-account-trigger, .help-account-trigger:focus-visible { border-color: var(--strong); background: var(--hover); outline: none; }
 .help-account-trigger:focus-visible { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API key setup guide | PokePilot</title>
+  <meta name="description" content="Create a personal OpenAI API key, then register it with PokePilot. Key creation happens on OpenAI; registration happens on PokePilot." />
+  <link rel="canonical" href="https://pokepilot.app/help/api-key-en.html" />
+  <link rel="alternate" hreflang="ko" href="https://pokepilot.app/help/api-key-ko.html" />
+  <link rel="alternate" hreflang="en" href="https://pokepilot.app/help/api-key-en.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/help/help.css" />
+  <link rel="stylesheet" href="/help/api-key.css" />
+  <script src="/help/help.js" defer></script>
+</head>
+<body data-help-page="api-key">
+  <a class="skip" href="#content">Skip to content</a>
+  <header><a href="/"><img src="/favicon.svg" width="22" height="22" alt="" /> PokePilot</a></header>
+  <div class="layout">
+    <aside><details open><summary>Contents</summary><nav aria-label="Guide contents"><ol>
+      <li><a href="#start">Before you start</a></li>
+      <li><a href="#billing">Account and billing</a></li>
+      <li><a href="#create">Create a restricted key</a></li>
+      <li><a href="#register">Register with PokePilot</a></li>
+      <li><a href="#troubleshoot">Troubleshooting and key care</a></li>
+    </ol></nav></details></aside>
+    <main id="content">
+      <a href="/help/en.html">Back to Help</a>
+      <h1>API key setup guide</h1>
+      <p class="intro">Create a personal OpenAI API key, then register it with PokePilot. Key creation happens on OpenAI; registration happens on PokePilot.</p>
+      <section id="start"><h2>1. Before you start</h2>
+        <p>AI analysis requires a PokePilot account and a personal OpenAI API key. The team builder and damage calculator work without a key.</p><p><strong>OpenAI charges your account for analysis.</strong> API billing is separate from a ChatGPT subscription. Creating a key does not start a PokePilot analysis.</p><p>Treat your key like a password. Never include it in comments, GitHub Issues, chats, or screenshots. Do not enter a key on this guide page.</p>
+      </section>
+      <section id="billing"><h2>2. Account and billing</h2>
+        <ol><li>Sign in to <a href="https://platform.openai.com/" target="_blank" rel="noopener noreferrer">OpenAI Platform</a>.</li><li>Select a project. A personal-use project or clearly named key helps separate usage.</li><li>Check <a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Billing</a> for the payment setup and balance your account needs. Review amounts and automatic recharge settings before proceeding.</li><li>Monitor <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Usage</a>. Do not assume a budget alert automatically blocks all further spending.</li></ol><p>Enter payment details only on OpenAI's billing page, never in PokePilot.</p>
+      </section>
+      <section id="create"><h2>3. Create a restricted key</h2>
+        <ol><li>Open <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">API keys</a> and select <strong>Create new secret key</strong>.</li><li>For personal use, select <strong>Owned by: You</strong>. Use a name such as <code>pokepilot-personal</code>.</li><li>Select <strong>Permissions: Restricted</strong>. Expand <strong>Model capabilities</strong>, allow <strong>Responses (/v1/responses): Write</strong>, and leave unused permissions at <strong>None</strong>.</li><li>Review expiration, then create the key. If you set an expiry date, replace the key before it expires.</li><li>Copy the key for the next step. You may not be able to reveal it again; use a password manager if you need to retain it.</li></ol><p>OpenAI may change screen labels and permission controls. If they differ, consult the <a href="https://help.openai.com/en/articles/8867743-assign-api-key-permissions" target="_blank" rel="noopener noreferrer">official permission guide</a> rather than enabling All by default.</p>
+      </section>
+      <section id="register"><h2>4. Register with PokePilot</h2>
+        <ol><li>Open <a href="/">PokePilot</a> and sign in through the profile button at the top right.</li><li>Paste your key into the personal API key field in the account menu and save it.</li><li>Check for the saved-key status and delete button. The stored key is not shown again.</li><li>Prepare your Pokemon or team and select a model. Press the analysis button to review estimated time and cost. Analysis starts after final confirmation.</li></ol><p>Estimates may differ from actual charges. Saving a key does not guarantee access to every model: OpenAI model access and account balance still apply.</p><p>Your key is sent to the PokePilot server over HTTPS, stored encrypted, and decrypted on the server to call OpenAI for analysis. Read the <a href="/privacy.html">privacy notice</a> for details.</p>
+      </section>
+      <section id="troubleshoot"><h2>5. Troubleshooting and key care</h2>
+        <details><summary>Authentication or permission error</summary><p>Check that the key is not expired or revoked. Verify Responses Write permission and the project's model access. If you copied the wrong key, remove it from PokePilot and register it again.</p></details><details><summary>Insufficient balance or rate limit</summary><p>Check OpenAI Billing and Usage for balance and usage limits. For rate limits, wait as instructed before retrying. OpenAI limits still apply even though PokePilot has no daily analysis quota.</p></details><details><summary>Replace a key or stop using it</summary><p>Delete the registered key from the PokePilot account menu, then register a replacement. Removing it from PokePilot does not revoke the original OpenAI key. To stop its use everywhere, delete it on OpenAI's API keys page too.</p></details><details><summary>A key may have leaked</summary><p>Revoke it immediately on OpenAI's API keys page and review usage. Create and register a replacement. Remove keys and personal information from error reports and screenshots.</p></details>
+      </section>
+      <h2>Official references</h2>
+      <ul>
+        <li><a href="https://help.openai.com/en/articles/9039756" target="_blank" rel="noopener noreferrer">OpenAI: ChatGPT &amp; API billing</a></li>
+        <li><a href="https://help.openai.com/en/articles/8867743-assign-api-key-permissions" target="_blank" rel="noopener noreferrer">OpenAI: API key permissions</a></li>
+        <li><a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">OpenAI: Usage</a></li>
+      </ul>
+    </main>
+  </div>
+  <footer>PokePilot · <a href="/help/en.html">Back to Help</a></footer>
+</body>
+</html>

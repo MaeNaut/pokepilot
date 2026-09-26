@@ -1573,7 +1573,6 @@ function App() {
           {t("footer.disclaimer")}
         </p>
           <span className="footer-links">
-            <a href={locale === "ko" ? "/help/ko.html" : "/help/en.html"} target="_blank" rel="noopener noreferrer">{locale === "ko" ? "도움말" : "Help"}</a>
             <button className="tutorial-restart" type="button" onClick={() => window.dispatchEvent(new Event("pokepilot:tutorial"))}>{locale === "ko" ? "튜토리얼" : "Tutorial"}</button>
             <PrivacyControl />
             <a

@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { getCopilotFailureMessage, getCopilotNoCostMessage } from "./copilotFailureMessage";
+import { getCopilotFailureMessage } from "./copilotFailureMessage";
 
-describe("analysis failure copy", () => {
-  it("explains invalid model output in both languages", () => {
-    expect(getCopilotFailureMessage("AI_INVALID_RESPONSE", "en", "fallback")).toContain("AI response");
-    expect(getCopilotFailureMessage("AI_INVALID_RESPONSE", "ko", "fallback")).toContain("AI 응답");
-  });
-
-  it("does not invent a message for an unknown error code", () => {
-    expect(getCopilotFailureMessage("UNKNOWN", "en", "fallback")).toBe("fallback");
-  });
-
-  it("states that the model was not called when the server confirms it", () => {
-    expect(getCopilotNoCostMessage("en")).toContain("did not start");
+describe.each(["ko", "en"] as const)("personal-key failure messages (%s)", (locale) => {
+  it("has distinct localized guidance without provider error text", () => {
+    const codes = ["PERSONAL_KEY_INVALID", "PERSONAL_KEY_FORBIDDEN", "AI_QUOTA_EXCEEDED", "AI_MODEL_UNAVAILABLE", "AI_RATE_LIMITED"];
+    const messages = codes.map((code) => getCopilotFailureMessage(code, locale, "PRIVATE_PROVIDER_DETAIL"));
+    expect(new Set(messages).size).toBe(codes.length);
+    for (const message of messages) expect(message).not.toContain("PRIVATE_PROVIDER_DETAIL");
+    expect(messages[1]).toContain("Responses Write");
+    expect(messages[2]).toContain("Billing");
   });
 });

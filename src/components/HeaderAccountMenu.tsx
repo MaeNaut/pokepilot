@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
+  faCircleQuestion,
   faDesktop,
   faLanguage,
   faKey,
@@ -110,6 +111,10 @@ export function HeaderAccountMenu({
 
   return (
     <div className="header-account-menu" ref={menuRef}>
+      <a className="header-account-trigger header-help-link" href={`/help/${locale}.html`}
+        aria-label={locale === "ko" ? "도움말" : "Help"} title={locale === "ko" ? "도움말" : "Help"}>
+        <FontAwesomeIcon icon={faCircleQuestion} aria-hidden="true" />
+      </a>
       <button
         className={`header-account-trigger${isOpen ? " is-open" : ""}`}
         type="button"
@@ -198,6 +203,9 @@ export function HeaderAccountMenu({
                 <span>{t("account.apiKeyLabel")}</span>
               </div>
               <p className="header-account-key-note">{t("account.apiKeyDescription")}</p>
+              <a className="header-account-key-note" href={`/help/api-key-${locale}.html`} target="_blank" rel="noopener noreferrer">
+                {locale === "ko" ? "API 키 발급 가이드 (새 탭)" : "API key setup guide (new tab)"}
+              </a>
               {account.personalApiKeyStatus !== "ready" || account.hasPersonalApiKey ? <span className="header-account-key-status">
                 {account.personalApiKeyStatus === "loading"
                   ? t("account.apiKeyChecking")

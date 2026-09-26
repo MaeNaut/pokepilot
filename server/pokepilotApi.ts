@@ -45,6 +45,9 @@ export type PokePilotApiErrorCode =
   | "AI_INVALID_RESPONSE"
   | "AI_UPSTREAM_ERROR"
   | "PERSONAL_KEY_INVALID"
+  | "PERSONAL_KEY_FORBIDDEN"
+  | "AI_QUOTA_EXCEEDED"
+  | "AI_MODEL_UNAVAILABLE"
   | "PERSONAL_KEY_REQUIRED";
 
 export type PokePilotApiResponse =
@@ -192,6 +195,15 @@ function getUpstreamStatus(error: unknown) {
   }
 
   return null;
+}
+
+function getUpstreamIdentifiers(error: unknown): string[] {
+  if (!error || typeof error !== "object") return [];
+  const outer = error as Record<string, unknown>;
+  const inner = outer.error && typeof outer.error === "object"
+    ? outer.error as Record<string, unknown> : {};
+  return [outer.code, outer.type, inner.code, inner.type]
+    .filter((value): value is string => typeof value === "string");
 }
 
 function isInvalidResponseError(error: unknown) {
@@ -417,8 +429,18 @@ export async function handlePokePilotAnalysis(
       );
     }
 
-    if (billingSource === "personal" && (getUpstreamStatus(error) === 401 || getUpstreamStatus(error) === 403)) {
-      return errorResult(401, "PERSONAL_KEY_INVALID", "Check your personal OpenAI API key and project permissions.");
+    const identifiers = getUpstreamIdentifiers(error);
+    if (identifiers.some((code) => ["insufficient_quota", "billing_hard_limit_reached", "billing_not_active", "organization_spend_limit_exceeded", "project_spend_limit_exceeded", "organization_usage_limit_exceeded"].includes(code))) {
+      return errorResult(429, "AI_QUOTA_EXCEEDED", "Check OpenAI billing, credits, and usage limits before retrying.");
+    }
+    if (identifiers.includes("model_not_found")) {
+      return errorResult(403, "AI_MODEL_UNAVAILABLE", "The selected model is unavailable or not accessible to this project.");
+    }
+    if (billingSource === "personal" && (getUpstreamStatus(error) === 403 || identifiers.includes("insufficient_permissions"))) {
+      return errorResult(403, "PERSONAL_KEY_FORBIDDEN", "OpenAI denied access. Check key permissions and project access.");
+    }
+    if (billingSource === "personal" && (getUpstreamStatus(error) === 401 || identifiers.includes("invalid_api_key"))) {
+      return errorResult(401, "PERSONAL_KEY_INVALID", "OpenAI could not authenticate the personal API key.");
     }
 
     if (getUpstreamStatus(error) === 429) {

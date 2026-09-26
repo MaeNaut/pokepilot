@@ -812,6 +812,15 @@ export function CopilotPanel({
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
             <strong>{t("copilot.unavailable")}</strong>
             <span>{getCopilotFailureMessage(analysisState.errorCode, locale, analysisState.error ?? t("copilot.failed"))}</span>
+            {analysisState.errorCode === "AI_QUOTA_EXCEEDED" ? <>
+              <a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">OpenAI Billing</a>
+              <a href="https://platform.openai.com/settings/organization/limits" target="_blank" rel="noopener noreferrer">OpenAI Limits</a>
+            </> : null}
+            {["PERSONAL_KEY_REQUIRED", "PERSONAL_KEY_INVALID", "PERSONAL_KEY_FORBIDDEN", "AI_QUOTA_EXCEEDED", "AI_MODEL_UNAVAILABLE"].includes(analysisState.errorCode ?? "") ? (
+              <a href={`/help/api-key-${locale}.html#troubleshoot`} target="_blank" rel="noopener noreferrer">
+                {locale === "ko" ? "API 키 문제 해결 가이드 (새 탭)" : "API key troubleshooting (new tab)"}
+              </a>
+            ) : null}
             {analysisState.providerAttempted === false ? (
               <span>{getCopilotNoCostMessage(locale)}</span>
             ) : null}

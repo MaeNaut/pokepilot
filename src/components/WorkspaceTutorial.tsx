@@ -22,13 +22,13 @@ const steps = [
   },
   {
     image: "copilot",
-    ko: ["PokePilot으로 팀 다듬기", "팀과 포켓몬을 분석하고, 어울리는 포켓몬과 샘플을 추천받을 수 있습니다.", "PokePilot의 팀 분석 예시"],
-    en: ["Refine your team with PokePilot", "Analyze your team and Pokemon, or get recommendations for Pokemon and builds that fit.", "Example team analysis in PokePilot"],
+    ko: ["PokePilot으로 팀 다듬기", "팀과 포켓몬을 분석하고, 어울리는 포켓몬과 샘플을 추천받을 수 있습니다. AI 분석을 사용하려면 로그인과 개인 OpenAI API 키 등록이 필요합니다. 화면 오른쪽 위 프로필 버튼에서 설정할 수 있습니다.", "PokePilot의 팀 분석 예시"],
+    en: ["Refine your team with PokePilot", "Analyze your team and Pokemon, or get recommendations for Pokemon and builds that fit. AI analysis requires sign-in and a personal OpenAI API key. Set these up using the profile button at the top right.", "Example team analysis in PokePilot"],
   },
   {
     image: "help",
-    ko: ["궁금할 때는 도움말 확인", "화면 아래 도움말에서 기능별 사용법과 계산 결과의 의미를 확인할 수 있습니다. 목차로 원하는 내용을 바로 찾을 수 있습니다.", "도움말의 목차와 시작하기 설명"],
-    en: ["Find answers in Help", "Open Help at the bottom of the app for feature instructions and advice on reading calculations. Use the contents to jump to a topic.", "Help contents and getting started instructions"],
+    ko: ["궁금할 때는 도움말 확인", "화면 오른쪽 위 프로필 왼쪽의 물음표 버튼에서 도움말을 열 수 있습니다. 기능별 사용법과 계산 결과의 의미를 확인하고, 목차로 원하는 내용을 바로 찾을 수 있습니다.", "도움말의 목차와 시작하기 설명"],
+    en: ["Find answers in Help", "Open Help using the question-mark button beside your profile at the top right. Find feature instructions and advice on reading calculations, or use the contents to jump to a topic.", "Help contents and getting started instructions"],
   },
 ];
 

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API 키 발급 가이드 | PokePilot</title>
+  <meta name="description" content="개인 OpenAI API 키를 발급하고 PokePilot에 등록하는 순서입니다. 키 발급은 OpenAI에서, 등록은 PokePilot에서 진행합니다." />
+  <link rel="canonical" href="https://pokepilot.app/help/api-key-ko.html" />
+  <link rel="alternate" hreflang="ko" href="https://pokepilot.app/help/api-key-ko.html" />
+  <link rel="alternate" hreflang="en" href="https://pokepilot.app/help/api-key-en.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/help/help.css" />
+  <link rel="stylesheet" href="/help/api-key.css" />
+  <script src="/help/help.js" defer></script>
+</head>
+<body data-help-page="api-key">
+  <a class="skip" href="#content">본문으로 이동</a>
+  <header><a href="/"><img src="/favicon.svg" width="22" height="22" alt="" /> PokePilot</a></header>
+  <div class="layout">
+    <aside><details open><summary>목차</summary><nav aria-label="가이드 목차"><ol>
+      <li><a href="#start">시작 전 확인</a></li>
+      <li><a href="#billing">계정과 결제 준비</a></li>
+      <li><a href="#create">키 발급과 권한</a></li>
+      <li><a href="#register">PokePilot에 등록</a></li>
+      <li><a href="#troubleshoot">문제 해결과 키 관리</a></li>
+    </ol></nav></details></aside>
+    <main id="content">
+      <a href="/help/ko.html">도움말로 돌아가기</a>
+      <h1>API 키 발급 가이드</h1>
+      <p class="intro">개인 OpenAI API 키를 발급하고 PokePilot에 등록하는 순서입니다. 키 발급은 OpenAI에서, 등록은 PokePilot에서 진행합니다.</p>
+      <section id="start"><h2>1. 시작 전 확인</h2>
+        <p>AI 분석에는 PokePilot 로그인과 개인 OpenAI API 키가 필요합니다. 팀 빌더와 대미지 계산기는 키 없이 사용할 수 있습니다.</p><p><strong>분석 비용은 본인의 OpenAI 계정에 청구됩니다.</strong> ChatGPT 구독료와 API 요금은 별개입니다. 키 발급만으로 PokePilot 분석이 실행되지는 않습니다.</p><p>키는 비밀번호처럼 취급합니다. 댓글, GitHub Issues, 채팅이나 스크린샷에 키를 노출하지 않습니다. 이 가이드에는 키를 입력하지 않습니다.</p>
+      </section>
+      <section id="billing"><h2>2. 계정과 결제 준비</h2>
+        <ol><li><a href="https://platform.openai.com/" target="_blank" rel="noopener noreferrer">OpenAI Platform</a>에 로그인합니다.</li><li>사용할 프로젝트를 선택합니다. 개인 사용 전용 프로젝트나 키 이름으로 용도를 구분하면 관리하기 편합니다.</li><li><a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Billing</a>에서 계정에 필요한 결제 설정과 사용 가능한 잔액을 확인합니다. 결제 금액과 자동 충전 조건은 직접 확인한 뒤 진행합니다.</li><li><a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Usage</a>에서 사용량을 확인합니다. 예산 알림을 설정하더라도 자동으로 모든 지출이 차단된다고 가정하지 않습니다.</li></ol><p>카드 정보는 OpenAI의 결제 화면에서만 입력합니다. PokePilot에는 카드 정보를 입력하지 않습니다.</p>
+      </section>
+      <section id="create"><h2>3. 키 발급과 권한</h2>
+        <ol><li><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">API keys</a>에서 <strong>Create new secret key</strong>를 선택합니다.</li><li>개인 사용이면 <strong>Owned by: You</strong>를 선택하고, 이름은 <code>pokepilot-personal</code>처럼 구분하기 쉽게 정합니다.</li><li><strong>Permissions: Restricted</strong>를 선택합니다. <strong>Model capabilities</strong>를 펼쳐 <strong>Responses (/v1/responses): Write</strong>를 허용하고, 사용하지 않는 항목은 <strong>None</strong>으로 둡니다.</li><li>만료일을 확인한 다음 키를 생성합니다. 만료일을 설정하면 만료 전에 새 키를 등록해야 합니다.</li><li>표시된 키를 복사해 다음 단계에서 등록합니다. 다시 확인하지 못할 수 있으므로 보관이 필요하면 비밀번호 관리자를 사용합니다.</li></ol><p>화면 이름이나 권한 구성은 OpenAI 업데이트로 달라질 수 있습니다. 항목이 다르면 무작정 All로 넓히지 말고 <a href="https://help.openai.com/en/articles/8867743-assign-api-key-permissions" target="_blank" rel="noopener noreferrer">공식 권한 안내</a>를 확인합니다.</p>
+      </section>
+      <section id="register"><h2>4. PokePilot에 등록</h2>
+        <ol><li><a href="/">PokePilot</a>을 열고 오른쪽 위 프로필 버튼에서 로그인합니다.</li><li>계정 메뉴의 개인 API 키 입력란에 발급한 키를 붙여넣고 등록합니다.</li><li>키 등록 상태와 삭제 버튼이 나타나는지 확인합니다. 저장된 키 값은 다시 표시하지 않습니다.</li><li>팀이나 포켓몬을 준비하고 모델을 선택합니다. 분석 버튼을 누르면 예상 시간과 비용을 확인할 수 있습니다. 최종 확인 후 분석이 실행됩니다.</li></ol><p>예상 비용은 실제 청구액과 다를 수 있습니다. 등록 완료는 모든 모델의 호출 성공을 보장하지 않으며, OpenAI 계정의 모델 접근 권한과 잔액에 따라 분석이 실패할 수 있습니다.</p><p>키는 HTTPS로 PokePilot 서버에 전송되어 암호화 저장되며, 분석 요청 시 서버에서 복호화해 OpenAI 호출에 사용됩니다. 자세한 내용은 <a href="/privacy.html">개인정보 안내</a>를 확인합니다.</p>
+      </section>
+      <section id="troubleshoot"><h2>5. 문제 해결과 키 관리</h2>
+        <details><summary>인증 또는 권한 오류가 발생합니다</summary><p>키가 만료·폐기되지 않았는지 확인합니다. Restricted 설정의 Responses Write 권한과 프로젝트의 모델 접근 권한을 확인합니다. 키를 잘못 복사했다면 등록된 키를 삭제하고 다시 등록합니다.</p></details><details><summary>잔액 부족 또는 요청 제한이 표시됩니다</summary><p>OpenAI Billing과 Usage에서 잔액·사용 한도를 확인합니다. 요청 속도 제한이면 안내에 따라 기다린 뒤 다시 시도합니다. PokePilot에 자체 일일 분석 한도가 없더라도 OpenAI의 제한은 적용됩니다.</p></details><details><summary>키를 바꾸거나 사용을 중단하고 싶습니다</summary><p>PokePilot 계정 메뉴에서 등록된 키를 삭제한 뒤 새 키를 등록합니다. PokePilot에서 삭제해도 OpenAI의 원본 키는 폐기되지 않습니다. 완전히 사용을 중단하려면 OpenAI API keys에서도 해당 키를 삭제합니다.</p></details><details><summary>키가 노출된 것 같습니다</summary><p>OpenAI API keys에서 해당 키를 즉시 폐기하고 사용 내역을 확인합니다. 새 키를 발급해 다시 등록합니다. 문의할 때는 키와 개인정보를 가리고 오류 문구만 전달합니다.</p></details>
+      </section>
+      <h2>공식 참고 자료</h2>
+      <ul>
+        <li><a href="https://help.openai.com/en/articles/9039756" target="_blank" rel="noopener noreferrer">OpenAI: ChatGPT &amp; API billing</a></li>
+        <li><a href="https://help.openai.com/en/articles/8867743-assign-api-key-permissions" target="_blank" rel="noopener noreferrer">OpenAI: API key permissions</a></li>
+        <li><a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">OpenAI: Usage</a></li>
+      </ul>
+    </main>
+  </div>
+  <footer>PokePilot · <a href="/help/ko.html">도움말로 돌아가기</a></footer>
+</body>
+</html>

@@ -1,0 +1,6 @@
+main ol { padding-left: 1.6em; }
+main li { margin-block: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+main code { overflow-wrap: anywhere; font-size: 0.95em; }
+main details { padding-block: 16px; border-bottom: 1px solid var(--line); }
+main details summary { cursor: pointer; font-weight: 600; line-height: 1.6; }
+main details p { margin-bottom: 0; }

@@ -36,8 +36,8 @@ function renderHeader() {
       <img src="/favicon.svg" width="22" height="22" alt="" />
       <span>PokePilot</span>
     </a>
-    <a class="help-compact-home" href="/" aria-label="${helpCopy.returnToApp}" title="${helpCopy.returnToApp}">
-      <img src="/favicon.svg" width="22" height="22" alt="" />
+    <a class="help-home-link" href="/" aria-label="${helpCopy.returnToApp}" title="${helpCopy.returnToApp}">
+      <svg aria-hidden="true" viewBox="0 0 512 512" fill="currentColor"><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272l16 0 0 176c0 35.3 28.7 64 64 64l288 0c35.3 0 64-28.7 64-64l0-176 16 0c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1l-224-208zM240 320l32 0c26.5 0 48 21.5 48 48l0 96-128 0 0-96c0-26.5 21.5-48 48-48z"></path></svg>
     </a>
     <details class="preference-control help-account-menu">
       <summary class="help-account-trigger" aria-label="${helpCopy.settings}" title="${helpCopy.settings}">
@@ -64,6 +64,11 @@ function renderHeader() {
 }
 
 renderHeader();
+if (document.body.dataset.helpPage === "api-key") {
+  document.querySelectorAll(".help-account-choice-group a[data-locale]").forEach((link) => {
+    link.href = `/help/api-key-${link.dataset.locale}.html`;
+  });
+}
 
 function syncTheme() {
   try {

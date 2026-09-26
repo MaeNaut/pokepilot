@@ -1,5 +1,12 @@
 # Personal API Keys and Reasoning Levels
 
+Analysis failures distinguish key authentication, access restrictions, model access,
+billing/quota exhaustion, and transient rate limiting. Classification uses provider
+status and allowlisted code/type identifiers, never raw error text. Billing failures
+link to OpenAI Billing/Limits; key-related failures link to the localized setup guide.
+An attempted provider request does not receive a blanket no-cost claim. Regression
+tests use mock provider failures without paid calls.
+
 The account preferences also sync the last selected analysis tab, model, and reasoning
 level. Older accounts default to Pokemon and Luna low. Logging out resets this
 selection; loading key status does not overwrite it. Tabs begin with Pokemon, then Team.

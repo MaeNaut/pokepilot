@@ -492,6 +492,30 @@ describe("PokePilot server API", () => {
     expect(onUpstreamError).toHaveBeenCalledOnce();
   });
 
+  it.each([
+    [{ status: 401 }, "PERSONAL_KEY_INVALID"],
+    [{ status: 403 }, "PERSONAL_KEY_FORBIDDEN"],
+    [{ status: 401, code: "insufficient_permissions" }, "PERSONAL_KEY_FORBIDDEN"],
+    [{ status: 404, code: "model_not_found" }, "AI_MODEL_UNAVAILABLE"],
+    [{ status: 429, code: "insufficient_quota" }, "AI_QUOTA_EXCEEDED"],
+    [{ status: 429, error: { type: "insufficient_quota" } }, "AI_QUOTA_EXCEEDED"],
+    [{ status: 429, code: "project_spend_limit_exceeded" }, "AI_QUOTA_EXCEEDED"],
+    [{ status: 429, code: "organization_spend_limit_exceeded" }, "AI_QUOTA_EXCEEDED"],
+    [{ status: 429, code: "organization_usage_limit_exceeded" }, "AI_QUOTA_EXCEEDED"],
+    [{ status: 429, code: "rate_limit_exceeded" }, "AI_RATE_LIMITED"],
+    [{ status: 500 }, "AI_UPSTREAM_ERROR"],
+  ])("classifies personal-key provider failure %j without leaking details", async (metadata, code) => {
+    const result = await handlePokePilotAnalysis(validRequest, {
+      billingSource: "personal",
+      apiKey: "test-only-placeholder",
+      analyze: async () => { throw Object.assign(new Error("PRIVATE_PROVIDER_DETAIL"), metadata); },
+    });
+    expect(result.body).toMatchObject({ ok: false, error: { code } });
+    expect(JSON.stringify(result.body)).not.toContain("PRIVATE_PROVIDER_DETAIL");
+    expect(JSON.stringify(result.body)).not.toContain("test-only-placeholder");
+    expect(result.body).not.toMatchObject({ error: { providerAttempted: false } });
+  });
+
   it("reuses an identical validated analysis without another model call", async () => {
     const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const operations = new InMemoryPokePilotOperations();
