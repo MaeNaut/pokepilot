@@ -63,6 +63,9 @@ date window and sample counts. Do not infer unique users or response quality.
   upstream attempts without usage data may still cost money. Pricing changes
   require maintaining the existing usage estimator; do not use this as an invoice.
 - No raw satisfaction feedback or automated semantic quality score is collected.
+- These aggregates are not a quality-improvement contribution dataset. The app
+  currently has no separate opt-in collection of user teams or analyses for
+  quality review, and account-synced history is not repurposed for that use.
 - Aggregation bounds stored row growth, but each observed API call still incurs
   a database write. Monitor D1 usage as traffic grows. Missing best-effort writes
   mean these counters are operational evidence, not an accounting ledger.

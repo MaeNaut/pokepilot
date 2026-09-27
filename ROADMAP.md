@@ -9,6 +9,23 @@
 > advertising credits, or data-sharing rewards are active. Historical rules-based
 > fallback plans below have been superseded by explicit analysis error handling.
 
+## Future Quality Contributions
+
+- Not implemented: account-synced teams and analysis history currently exist to
+  restore the user's work, not as a quality-improvement contribution dataset.
+  Aggregate operational metrics contain no raw teams or analysis text.
+- If introduced, quality sharing must be a separate, default-off, informed
+  choice. Only data from analyses performed after opt-in may be eligible; do
+  not import earlier account history retroactively.
+- Participation is voluntary and independent of AI access, credits, and ads.
+  Do not grant free analyses merely for enabling or maintaining sharing.
+  Any future ad-funded access is a separate product decision.
+- Provide controls to stop future contributions and request removal of prior
+  identifiable contributions, independently of deleting account history.
+  Define minimization, retention, and access rules before collecting anything.
+- Update the privacy notice, in-app explanation, and verification tests before
+  enabling collection.
+
 ## MVP Scope
 
 The MVP should prove the core loop:
