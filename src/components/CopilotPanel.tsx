@@ -837,6 +837,7 @@ export function CopilotPanel({
               `${analysisContextKey}:${analysisState.fingerprint ?? "analysis"}`
             }
             response={response}
+            execution={analysisState.execution}
             scope={scope}
             usedFallback={Boolean(analysisState.usedFallback)}
             fallbackMessage={fallbackMessage}

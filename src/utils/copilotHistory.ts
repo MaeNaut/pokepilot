@@ -8,10 +8,11 @@ import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
   CopilotAnalysisScope,
+  CopilotExecutionInfo,
   CopilotQualityWarningCode,
   CopilotSetOptimizationCandidateSnapshot,
 } from "./copilotContracts";
-import { isCopilotQualityWarningCode } from "./copilotContracts";
+import { isCopilotQualityWarningCode, normalizeCopilotExecutionInfo } from "./copilotContracts";
 import { isRecord } from "./typeGuards";
 import { validateCopilotModelOutput } from "./copilotModelValidation";
 import { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestContract";
@@ -33,6 +34,7 @@ export type CopilotHistoryEntry = {
   requestFingerprint: string;
   createdAt: string;
   response: CopilotAnalysisResponse;
+  execution?: CopilotExecutionInfo;
   usedFallback: boolean;
   fallbackReason?: HostedAnalysisFailureReason;
 };
@@ -138,6 +140,7 @@ export function normalizeCopilotHistoryEntry(value: unknown): CopilotHistoryEntr
   const fallbackReason = isHostedAnalysisFailureReason(value.fallbackReason)
     ? value.fallbackReason
     : undefined;
+  const execution = normalizeCopilotExecutionInfo(value.execution);
   const hasValidMetadata =
     typeof value.id === "string" &&
     typeof value.teamKey === "string" &&
@@ -172,6 +175,7 @@ export function normalizeCopilotHistoryEntry(value: unknown): CopilotHistoryEntr
     requestFingerprint: value.requestFingerprint as string,
     createdAt: value.createdAt as string,
     response,
+    ...(execution ? { execution } : {}),
     usedFallback: value.usedFallback as boolean,
     ...(fallbackReason ? { fallbackReason } : {}),
   };

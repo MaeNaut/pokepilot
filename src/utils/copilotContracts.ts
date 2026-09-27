@@ -494,6 +494,23 @@ export type CopilotAnalysisResponse = {
   optimizationCandidates?: CopilotSetOptimizationCandidateSnapshot[];
 };
 
+export type CopilotExecutionInfo = {
+  durationMs: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+};
+
+export function normalizeCopilotExecutionInfo(value: unknown): CopilotExecutionInfo | null {
+  if (!value || typeof value !== "object") return null;
+  const { durationMs, totalTokens, estimatedCostUsd } = value as Record<string, unknown>;
+  if (
+    typeof durationMs !== "number" || !Number.isFinite(durationMs) || durationMs < 0 ||
+    typeof totalTokens !== "number" || !Number.isSafeInteger(totalTokens) || totalTokens <= 0 ||
+    typeof estimatedCostUsd !== "number" || !Number.isFinite(estimatedCostUsd) || estimatedCostUsd < 0
+  ) return null;
+  return { durationMs, totalTokens, estimatedCostUsd };
+}
+
 export type CreateCopilotRequestInput = {
   scope: CopilotAnalysisScope;
   locale?: Locale;

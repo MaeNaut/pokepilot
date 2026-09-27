@@ -334,6 +334,11 @@ describe("PokePilot server API", () => {
         cacheStatus: "miss",
         model: "gpt-6-luna",
         promptVersion: 91,
+        execution: {
+          durationMs: expect.any(Number),
+          totalTokens: 150,
+          estimatedCostUsd: 0.00008,
+        },
       },
     });
     expect(analyze).toHaveBeenCalledWith(validRequest);

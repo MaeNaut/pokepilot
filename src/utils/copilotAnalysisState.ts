@@ -1,12 +1,13 @@
 import type { HostedAnalysisFailureReason } from "../api/copilotFailure";
 import type { Locale } from "../i18n/gameTranslations";
-import type { CopilotAnalysisResponse } from "./copilotContracts";
+import type { CopilotAnalysisResponse, CopilotExecutionInfo } from "./copilotContracts";
 import type { CopilotHistoryEntry } from "./copilotHistory";
 
 export type AnalysisState = {
   status: "idle" | "loading" | "ready" | "error";
   fingerprint?: string;
   response?: CopilotAnalysisResponse;
+  execution?: CopilotExecutionInfo;
   error?: string;
   errorCode?: string;
   providerAttempted?: false;
@@ -26,6 +27,7 @@ export function createReadyAnalysisState(
     status: "ready",
     fingerprint: entry.requestFingerprint,
     response: entry.response,
+    ...(entry.execution ? { execution: entry.execution } : {}),
     fallbackReason: entry.fallbackReason,
     usedFallback: entry.usedFallback,
     historyEntryId: entry.id,

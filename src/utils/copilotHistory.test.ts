@@ -90,6 +90,14 @@ describe("PokePilot analysis history", () => {
     ).toEqual(koreanEntry);
   });
 
+  it("keeps measured execution data with saved analyses", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const execution = { durationMs: 12_400, totalTokens: 1_840, estimatedCostUsd: 0.0018 };
+    const entry = { ...createEntry(1), execution };
+    storeCopilotHistory([entry]);
+    expect(getStoredCopilotHistory()[0]?.execution).toEqual(execution);
+  });
+
   it("keeps low and medium results separate for the same team request", () => {
     vi.stubGlobal("localStorage", createMemoryStorage());
     const low = { ...createEntry(2), reasoningEffort: "low" as const };

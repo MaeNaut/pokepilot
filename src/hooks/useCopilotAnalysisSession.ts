@@ -140,7 +140,7 @@ export function useCopilotAnalysisSession({
     }));
 
     try {
-      const { response: nextResponse, usedFallback, fallbackReason } =
+      const { response: nextResponse, execution, usedFallback, fallbackReason } =
         await executeCopilotAnalysis(submittedRequest, reasoningEffort, modelId);
 
       if (!isCurrentAccount()) return;
@@ -153,6 +153,7 @@ export function useCopilotAnalysisSession({
         modelId,
         requestFingerprint: submittedFingerprint,
         response: nextResponse,
+        ...(execution ? { execution } : {}),
         usedFallback,
         fallbackReason,
       });

@@ -1,6 +1,7 @@
 import type { CopilotModelOutput } from "../src/utils/copilotModelTypes.js";
 import type {
   CopilotAnalysisScope,
+  CopilotExecutionInfo,
   CopilotQualityWarningCode,
 } from "../src/utils/copilotContracts.js";
 import { getCopilotAnalysisCacheFingerprint } from "../src/utils/copilotRequestFingerprint.js";
@@ -58,6 +59,7 @@ export type PokePilotApiResponse =
         cacheStatus: "hit" | "miss" | "shared";
         model: PokePilotHostedModel;
         promptVersion: number;
+        execution?: CopilotExecutionInfo;
       };
     }
   | {
@@ -157,6 +159,7 @@ function successResult(
   analysis: CopilotModelOutput,
   cacheStatus: "hit" | "miss" | "shared",
   modelId: PokePilotHostedModel,
+  execution?: CopilotExecutionInfo,
 ): PokePilotApiResult {
   return {
     status: 200,
@@ -167,6 +170,7 @@ function successResult(
         cacheStatus,
         model: modelId,
         promptVersion: POKEPILOT_AI_PROMPT_VERSION,
+        ...(execution ? { execution } : {}),
       },
     },
   };
@@ -393,6 +397,13 @@ export async function handlePokePilotAnalysis(
       completed.analysis,
       "miss",
       modelId,
+      completed.result.usage.totalTokens > 0
+        ? {
+            durationMs: Math.max(0, clock() - startedAt),
+            totalTokens: completed.result.usage.totalTokens,
+            estimatedCostUsd: completed.result.usage.costUsd,
+          }
+        : undefined,
     );
   } catch (error) {
     const usage = error instanceof LunaStructuredOutputError

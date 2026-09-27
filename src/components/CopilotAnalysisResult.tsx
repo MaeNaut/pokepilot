@@ -11,6 +11,7 @@ import type { TranslationKey } from "../i18n/translations";
 import type {
   CopilotAnalysisResponse,
   CopilotAnalysisScope,
+  CopilotExecutionInfo,
   CopilotSetOptimizationCandidateSnapshot,
 } from "../utils/copilotContracts";
 import type { CopilotRecommendationCandidateSnapshot } from "../utils/pokemonRecommendations";
@@ -33,6 +34,7 @@ type CandidateApplyFailureReason = Extract<
 
 type CopilotAnalysisResultProps = {
   response: CopilotAnalysisResponse;
+  execution?: CopilotExecutionInfo;
   scope: CopilotAnalysisScope;
   usedFallback: boolean;
   fallbackMessage: string;
@@ -114,6 +116,7 @@ function CopilotCandidateSprite({
 
 export function CopilotAnalysisResult({
   response,
+  execution,
   scope,
   usedFallback,
   fallbackMessage,
@@ -136,7 +139,7 @@ export function CopilotAnalysisResult({
   onApplyOptimizationCandidate,
   onSaveOptimizationCandidate,
 }: CopilotAnalysisResultProps) {
-  const { t } = useLocalization();
+  const { t, locale } = useLocalization();
   const candidatesById = useMemo(
     () =>
       new Map(
@@ -172,6 +175,15 @@ export function CopilotAnalysisResult({
     narrativeTexts,
     revealOnThisMount,
   );
+  const [recommendationsRevealed, setRecommendationsRevealed] = useState(false);
+  const showExecution = Boolean(execution) && narrativeReveal.isComplete && (
+    !narrativeReveal.isAnimated ||
+    sortedRecommendations.length === 0 ||
+    recommendationsRevealed
+  );
+  const costDigits = execution && execution.estimatedCostUsd > 0 &&
+    execution.estimatedCostUsd < 0.0001 ? 6 : 4;
+  const numberLocale = locale === "ko" ? "ko-KR" : "en-US";
 
   useEffect(() => {
     if (revealOnThisMount) onRevealStart();
@@ -323,6 +335,11 @@ export function CopilotAnalysisResult({
                   candidate ? " is-candidate-card" : ""
                 }`}
                 key={recommendation.id}
+                onAnimationEnd={(event) => {
+                  if (index === sortedRecommendations.length - 1 && event.target === event.currentTarget) {
+                    setRecommendationsRevealed(true);
+                  }
+                }}
                 style={
                   {
                     "--copilot-reveal-index": index,
@@ -426,6 +443,35 @@ export function CopilotAnalysisResult({
           })}
         </ol>
       </section> : null}
+      {showExecution && execution ? (
+        <section className="copilot-execution" aria-label={t("copilot.execution.title")}>
+          <h3>{t("copilot.execution.title")}</h3>
+          <dl>
+            <div>
+              <dt>{t("copilot.execution.time")}</dt>
+              <dd>
+                {new Intl.NumberFormat(numberLocale, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                }).format(execution.durationMs / 1000)}{t("copilot.execution.seconds")}
+              </dd>
+            </div>
+            <div>
+              <dt>{t("copilot.execution.tokens")}</dt>
+              <dd>{new Intl.NumberFormat(numberLocale).format(execution.totalTokens)}</dd>
+            </div>
+            <div>
+              <dt>{t("copilot.execution.cost")}</dt>
+              <dd>
+                ${new Intl.NumberFormat("en-US", {
+                  minimumFractionDigits: costDigits,
+                  maximumFractionDigits: costDigits,
+                }).format(execution.estimatedCostUsd)}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
     </div>
   );
 }

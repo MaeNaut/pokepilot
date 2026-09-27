@@ -67,6 +67,22 @@ describe("hosted PokePilot client", () => {
     });
   });
 
+  it("accepts measured execution data but ignores malformed metrics", async () => {
+    const execution = { durationMs: 12_400, totalTokens: 1_840, estimatedCostUsd: 0.0018 };
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        ok: true, analysis: modelOutput, metadata: { execution },
+      }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        ok: true, analysis: modelOutput,
+        metadata: { execution: { ...execution, totalTokens: "1840" } },
+      }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(requestHostedCopilotAnalysis(request)).resolves.toMatchObject({ execution });
+    await expect(requestHostedCopilotAnalysis(request)).resolves.not.toHaveProperty("execution");
+  });
+
 
   it("preserves supported quality warnings from a successful analysis", async () => {
     vi.stubGlobal(

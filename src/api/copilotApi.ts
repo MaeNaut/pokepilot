@@ -1,9 +1,10 @@
 import type {
   CopilotAnalysisRequest,
   CopilotAnalysisResponse,
+  CopilotExecutionInfo,
   CopilotQualityWarningCode,
 } from "../utils/copilotContracts";
-import { isCopilotQualityWarningCode } from "../utils/copilotContracts";
+import { isCopilotQualityWarningCode, normalizeCopilotExecutionInfo } from "../utils/copilotContracts";
 import { validateCopilotModelOutput } from "../utils/copilotModelValidation";
 
 type HostedAnalysisEnvelope = {
@@ -11,6 +12,7 @@ type HostedAnalysisEnvelope = {
   analysis?: unknown;
   metadata?: {
     qualityWarnings?: unknown;
+    execution?: unknown;
   };
   error?: {
     code?: unknown;
@@ -23,6 +25,7 @@ type HostedAnalysisEnvelope = {
 export type HostedCopilotAnalysisResult = {
   analysis: CopilotAnalysisResponse;
   qualityWarnings?: CopilotQualityWarningCode[];
+  execution?: CopilotExecutionInfo;
 };
 
 export class CopilotApiError extends Error {
@@ -118,6 +121,7 @@ export async function requestHostedCopilotAnalysis(
         ),
       )]
     : [];
+  const execution = normalizeCopilotExecutionInfo(envelope.metadata?.execution);
 
   return {
     analysis: {
@@ -125,5 +129,6 @@ export async function requestHostedCopilotAnalysis(
       source: "hosted",
     },
     ...(qualityWarnings.length === 0 ? {} : { qualityWarnings }),
+    ...(execution ? { execution } : {}),
   };
 }

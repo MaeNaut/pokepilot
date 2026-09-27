@@ -31,6 +31,12 @@ describe("analysis execution", () => {
     expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "low", "gpt-6-sol");
   });
 
+  it("passes measured execution data through to history creation", async () => {
+    const execution = { durationMs: 12_400, totalTokens: 1_840, estimatedCostUsd: 0.0018 };
+    vi.mocked(requestHostedCopilotAnalysis).mockResolvedValue({ analysis: hosted, execution });
+    expect(await executeCopilotAnalysis(request)).toMatchObject({ execution });
+  });
+
   it("preserves a renderable answer with private quality warnings", async () => {
     vi.mocked(requestHostedCopilotAnalysis).mockResolvedValue({
       analysis: hosted, qualityWarnings: ["grounding-incomplete"],

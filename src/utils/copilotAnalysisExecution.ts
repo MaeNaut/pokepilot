@@ -31,5 +31,10 @@ export async function executeCopilotAnalysis(
     };
   }
 
-  return { response: nextResponse, usedFallback: false, fallbackReason: undefined };
+  return {
+    response: nextResponse,
+    ...(hostedResult.execution ? { execution: hostedResult.execution } : {}),
+    usedFallback: false,
+    fallbackReason: undefined,
+  };
 }

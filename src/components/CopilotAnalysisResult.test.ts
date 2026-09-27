@@ -21,6 +21,31 @@ const localization: LocalizationContextValue = {
 };
 
 describe("CopilotAnalysisResult", () => {
+  it("places completed execution metrics after the analysis body", () => {
+    const response = {
+      version: 2 as const, source: "hosted" as const, scope: "team" as const,
+      title: "Team analysis", paragraphs: ["The analysis body."], recommendations: [],
+    };
+    const html = renderToStaticMarkup(createElement(LocalizationContext.Provider, { value: localization },
+      createElement(CopilotAnalysisResult, {
+        response,
+        execution: { durationMs: 12_400, totalTokens: 1_840, estimatedCostUsd: 0.0018 },
+        scope: "team", usedFallback: false, fallbackMessage: "", isStale: false,
+        isLanguageMismatch: false, isAnalyzeDisabled: false, shouldReveal: false,
+        onRevealStart: () => undefined, recommendationCandidates: [],
+        selectingCandidateId: null, savingCandidateId: null, candidateApplyFailure: null,
+        candidateSaveStatus: null, optimizationCandidates: [],
+        optimizationCurrentItemDisplayName: null, optimizationActionStatus: null,
+        onAnalyze: () => undefined, onSelectCandidate: () => undefined,
+        onSaveCandidate: () => undefined, onApplyOptimizationCandidate: () => undefined,
+        onSaveOptimizationCandidate: () => undefined,
+      }),
+    ));
+    expect(html.indexOf("The analysis body.")).toBeLessThan(html.indexOf("copilot-execution"));
+    expect(html).toContain("1,840");
+    expect(html).toContain("$0.0018");
+    expect(html).not.toContain("Input tokens");
+  });
   it("renders a verified matchup replacement as an actionable Pokemon card", () => {
     const candidate = {
       pokemonId: "arcanine-hisui",
