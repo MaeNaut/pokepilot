@@ -51,9 +51,14 @@ import { useLocalization } from "../i18n/useLocalization";
 import { getNextCircularIndex } from "../utils/optionNavigation";
 import {
   getPokemonNameFallback,
-  shouldIncludePokemonForm,
+  shouldIncludeSelectedPokemonForm,
 } from "../utils/pokemonDisplay";
+import { isMegaFormCompatible } from "../utils/megaEvolution";
 import { matchesSearchText, normalizeSearchText } from "../utils/searchText";
+import {
+  getKnownPokemonArtworkUrl,
+  showKnownPokemonArtworkFallback,
+} from "../utils/pokemonSprites";
 import type {
   ItemIndexEntry,
   PokemonIndexEntry,
@@ -255,6 +260,7 @@ export function CalculatorPokemonEditor({
       if (
         entry.speciesKey !== speciesKey ||
         entry.formKind !== "mega" ||
+        !isMegaFormCompatible(member?.id ?? "", entry.name) ||
         !isExactPokemonFormLegal(showdownLegality, entry.showdownId)
       ) {
         return false;
@@ -269,7 +275,7 @@ export function CalculatorPokemonEditor({
       seenLabels.add(label);
       return true;
     });
-  }, [activeFormKind, pokemonIndex, showdownLegality, speciesKey]);
+  }, [activeFormKind, member?.id, pokemonIndex, showdownLegality, speciesKey]);
   const megaBaseOption = speciesKey
     ? pokemonIndex.find(
         (entry) =>
@@ -287,7 +293,9 @@ export function CalculatorPokemonEditor({
       )
     : undefined;
   const megaReturnOption = savedPreMegaOption ?? megaBaseOption;
-  const battleFormGroup = getBattleFormGroup(speciesKey || member?.id || "");
+  const battleFormGroup = activeFormKind === "mega"
+    ? undefined
+    : getBattleFormGroup(speciesKey || member?.id || "");
   const activeBattleFormOptionIndexFromPokemon = Math.max(
     0,
     battleFormGroup?.options.findIndex(
@@ -926,12 +934,16 @@ export function CalculatorPokemonEditor({
 
     return (
       <div className="touch-pokemon-preview">
-        {previewArtwork ? (
+        {previewArtwork || getKnownPokemonArtworkUrl(option.id) ? (
           <img
+            key={`${option.id}:${previewArtwork ?? ""}`}
             className="touch-pokemon-preview-artwork"
-            src={previewArtwork}
+            src={previewArtwork ?? getKnownPokemonArtworkUrl(option.id)}
             alt=""
             aria-hidden="true"
+            onError={(event) => {
+              showKnownPokemonArtworkFallback(event.currentTarget, option.id);
+            }}
           />
         ) : null}
         <div className="touch-pokemon-preview-copy">
@@ -1262,7 +1274,7 @@ export function CalculatorPokemonEditor({
       (entry) => entry.name === targetMember.id,
     );
     const includeForm = indexEntry
-      ? shouldIncludePokemonForm(indexEntry)
+      ? shouldIncludeSelectedPokemonForm(indexEntry)
       : false;
 
     return indexEntry
@@ -2056,8 +2068,15 @@ export function CalculatorPokemonEditor({
                 <TypeBadge type={type} key={type} />
               ))}
             </div>
-            {member?.spriteUrl ? (
-              <img src={member.spriteUrl} alt="" />
+            {member?.spriteUrl || (member && getKnownPokemonArtworkUrl(member.id)) ? (
+              <img
+                key={`${member.id}:${member.spriteUrl ?? ""}`}
+                src={member.spriteUrl ?? getKnownPokemonArtworkUrl(member.id)}
+                alt=""
+                onError={(event) => {
+                  showKnownPokemonArtworkFallback(event.currentTarget, member.id);
+                }}
+              />
             ) : null}
           </div>
         </div>

@@ -24,7 +24,28 @@ describe("Pokemon lookup aliases", () => {
     expect(getPreferredPokeApiId("Palafin")).toBe("palafin-zero");
   });
 
+  it("migrates saved Meowstic Mega IDs to their PokeAPI-compatible forms", () => {
+    expect(getPreferredPokeApiId("meowstic-m-mega"))
+      .toBe("meowstic-male-mega");
+    expect(getPreferredPokeApiId("meowstic-f-mega"))
+      .toBe("meowstic-female-mega");
+  });
+
+  it("does not resolve base Pyroar through its Mega form", () => {
+    expect(getPokemonLookupAliases("pyroar-male")).toContain("pyroar");
+    expect(getPokemonLookupAliases("pyroar-male")).not.toContain("pyroarmega");
+  });
+
+  it.each([
+    ["furfrou-natural", "furfrou"],
+    ["gourgeist-average", "gourgeist"],
+    ["lycanroc-midday", "lycanroc"],
+  ])("resolves the default %s form to Showdown's %s species", (form, species) => {
+    expect(getPokemonLookupAliases(form)).toContain(species);
+  });
+
   it("keeps asset-only PokeAPI form IDs out of canonical Pokemon IDs", () => {
+    expect(getPokeApiLookupId("Furfrou Natural")).toBe("furfrou");
     expect(getPreferredPokeApiId("Toxtricity")).toBeUndefined();
     expect(getPokeApiLookupId("Toxtricity")).toBe("toxtricity-amped");
     expect(getPreferredPokeApiId("Squawkabilly Yellow")).toBeUndefined();
@@ -43,6 +64,9 @@ describe("Pokemon lookup aliases", () => {
   });
 
   it("keeps usage samples attached while switching equivalent battle forms", () => {
+    expect(
+      shouldKeepSelectedPokemonForUsageTarget("pyroar-female", "pyroar-male"),
+    ).toBe(true);
     expect(
       shouldKeepSelectedPokemonForUsageTarget("aegislash-blade", "aegislash-shield"),
     ).toBe(true);

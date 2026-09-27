@@ -1,5 +1,6 @@
 import { fetchPokemon } from "../api/pokeApi";
 import type { TeamMember } from "../types";
+import { getPreferredPokeApiId } from "./pokemonAliases";
 import { isFullShowdownSpriteUrl } from "./pokemonSprites";
 import {
   SAVED_TEAM_SCHEMA_VERSION,
@@ -45,10 +46,11 @@ export function copySavedTeam(
 }
 
 async function hydrateSavedPokemon(slot: SavedPokemon, pool: TeamMember[]) {
-  const member = pool.find((candidate) => candidate.id === slot.pokemonId);
+  const canonicalId = getPreferredPokeApiId(slot.pokemonId) ?? slot.pokemonId;
+  const member = pool.find((candidate) => candidate.id === canonicalId);
   if (member && !isFullShowdownSpriteUrl(member.iconSpriteUrl)) return member;
   try {
-    return await fetchPokemon(slot.pokemonId);
+    return await fetchPokemon(canonicalId);
   } catch {
     return createFallbackMember(slot);
   }

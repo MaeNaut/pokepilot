@@ -24,6 +24,11 @@ const DEFAULT_FORM_IDS_BY_SHOWDOWN_ID: Record<string, string> = {
   palafin: "palafin-zero",
 };
 
+const POKEAPI_FORM_IDS_BY_SHOWDOWN_ID: Record<string, string> = {
+  meowsticmmega: "meowstic-male-mega",
+  meowsticfmega: "meowstic-female-mega",
+};
+
 const GENDER_FORMS_BY_SHOWDOWN_ID: Record<string, GenderFormMeta> = {
   basculegion: {
     pokemonId: "basculegion-male",
@@ -118,6 +123,12 @@ function getPokemonId(species: ShowdownSpeciesData) {
 
   if (defaultFormId) {
     return defaultFormId;
+  }
+
+  const pokeApiFormId = POKEAPI_FORM_IDS_BY_SHOWDOWN_ID[species.id];
+
+  if (pokeApiFormId) {
+    return pokeApiFormId;
   }
 
   const displayId = toDisplayId(species.name);

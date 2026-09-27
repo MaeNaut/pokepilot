@@ -87,7 +87,7 @@ export type DamageCalculationResult =
       reason: "missing-stats" | "status-move" | "invalid-move";
     };
 
-const generation = Generations.get(9);
+const generation = Generations.get(0);
 
 const engineStatKeys: Record<StatKey, keyof StatsTable> = {
   hp: "hp",
@@ -150,14 +150,6 @@ const terrainNames = {
   misty: "Misty",
 } as const;
 
-export function statPointsToEvs(statPoints: number) {
-  const value = Math.max(
-    0,
-    Math.min(CHAMPIONS_MAX_EV_PER_STAT, Math.trunc(statPoints)),
-  );
-  return value === 0 ? 0 : value * 8 - 4;
-}
-
 function toEngineStats(stats: StatBlock) {
   return Object.fromEntries(
     Object.entries(engineStatKeys).map(([stat, engineStat]) => [
@@ -171,7 +163,7 @@ function toEngineEvs(evs: StatBlock) {
   return Object.fromEntries(
     Object.entries(engineStatKeys).map(([stat, engineStat]) => [
       engineStat,
-      statPointsToEvs(evs[stat as StatKey]),
+      Math.max(0, Math.min(CHAMPIONS_MAX_EV_PER_STAT, Math.trunc(evs[stat as StatKey]))),
     ]),
   ) as StatsTable;
 }
@@ -254,35 +246,58 @@ function getMoveTarget(move: PokemonMove, isSpread: boolean) {
 function getMoveOverrides(
   move: PokemonMove,
   isSpread: boolean,
-): NonNullable<State.Move["overrides"]> {
-  return {
-    kind: "Move",
-    id: normalizeId(move.id),
-    name: move.name,
-    type: engineTypeNames[move.type],
-    category:
-      move.category === "Physical"
-        ? "Physical"
-        : move.category === "Special"
-          ? "Special"
-          : "Status",
-    flags: getMoveFlags(move),
-    target: getMoveTarget(move, isSpread),
-    ...(move.power !== null ? { basePower: move.power } : {}),
-  } as unknown as NonNullable<State.Move["overrides"]>;
+): State.Move["overrides"] {
+  const knownMove = generation.moves.get(toID(move.id)) ??
+    generation.moves.get(toID(move.name));
+  const type = engineTypeNames[move.type];
+  const category = move.category;
+  const flags = getMoveFlags(move);
+  const target = getMoveTarget(move, isSpread);
+
+  if (!knownMove) {
+    return {
+      kind: "Move",
+      id: normalizeId(move.id),
+      name: move.name,
+      type,
+      category,
+      flags,
+      target,
+      ...(move.power !== null ? { basePower: move.power } : {}),
+    } as NonNullable<State.Move["overrides"]>;
+  }
+
+  // Preserve the Champions dex's mechanics unless the supplied move adds data.
+  const additionalFlags = Object.fromEntries(
+    Object.entries(flags).filter(([key, value]) =>
+      value && !knownMove.flags[key as keyof typeof flags]),
+  );
+  const engineSpread = knownMove.target === "allAdjacent" ||
+    knownMove.target === "allAdjacentFoes";
+  const overrides = {
+    ...(type !== knownMove.type ? { type } : {}),
+    ...(category !== (knownMove.category ?? "Status") ? { category } : {}),
+    ...(move.power !== null && move.power !== knownMove.basePower
+      ? { basePower: move.power }
+      : {}),
+    ...(Object.keys(additionalFlags).length > 0 ? { flags: additionalFlags } : {}),
+    ...(!isSpread && engineSpread
+      ? { target: "normal" }
+      : isSpread && target !== "normal" && target !== knownMove.target
+        ? { target }
+        : {}),
+  } as NonNullable<State.Move["overrides"]>;
+  return Object.keys(overrides).length > 0 ? overrides : undefined;
 }
 
 function createEnginePokemon(
   pokemon: CalculatorPokemon,
   options: { abilityOn?: boolean; isAttacking?: boolean } = {},
 ) {
-  const maxHp =
-    pokemon.member.baseStats!.hp +
-    75 +
-    Math.max(
-      0,
-      Math.min(CHAMPIONS_MAX_EV_PER_STAT, pokemon.evs.hp),
-    );
+  const baseHp = pokemon.member.baseStats!.hp;
+  const maxHp = baseHp === 1
+    ? 1
+    : baseHp + 75 + Math.max(0, Math.min(CHAMPIONS_MAX_EV_PER_STAT, pokemon.evs.hp));
 
   const automaticFormId = options.isAttacking
     ? getAttackTriggeredBattleFormId(pokemon.member.id, pokemon.ability)
@@ -435,7 +450,9 @@ export function calculateChampionsDamage(
     isAttacking: true,
   });
   const engineDefender = createEnginePokemon(defender);
-  const engineMove = new Move(generation, attacker.move.name, {
+  const engineMoveName = generation.moves.get(toID(attacker.move.id))?.name ??
+    attacker.move.name;
+  const engineMove = new Move(generation, engineMoveName, {
     ability: attacker.ability || undefined,
     item: attacker.item?.name || undefined,
     species: attacker.member.showdownName ?? attacker.member.name,

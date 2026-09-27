@@ -58,8 +58,13 @@ import { getNextCircularIndex } from "../utils/optionNavigation";
 import {
   getPokemonNameFallback,
   shouldIncludePokemonForm,
+  shouldIncludeSelectedPokemonForm,
 } from "../utils/pokemonDisplay";
 import { matchesSearchText, normalizeSearchText } from "../utils/searchText";
+import {
+  getKnownPokemonArtworkUrl,
+  showKnownPokemonArtworkFallback,
+} from "../utils/pokemonSprites";
 import {
   emptyPokemonCandidateFilters,
   hasPokemonCandidateFilters,
@@ -68,7 +73,9 @@ import type { BenchPokemon } from "../utils/benchPokemon";
 import {
   getMegaSpeciesKey,
   getMegaStoneItemName,
+  isMegaFormCompatible,
   isMegaPokemonName,
+  prioritizeMegaStoneItems,
 } from "../utils/megaEvolution";
 import type { TeamValidityResult } from "../utils/teamValidity";
 import { getBattleFormGroup } from "../data/battleForms";
@@ -497,7 +504,7 @@ export function TeamBuilder({
     [itemIndex],
   );
   const activeHeaderIncludesForm = activeIndexEntry
-    ? shouldIncludePokemonForm(activeIndexEntry)
+    ? shouldIncludeSelectedPokemonForm(activeIndexEntry)
     : false;
   const activeHeaderName = activeIndexEntry
     ? pokemonName({
@@ -518,7 +525,7 @@ export function TeamBuilder({
   function getMemberDisplayName(member: TeamMember) {
     const indexEntry = pokemonIndexByName.get(member.id);
     const includeForm = indexEntry
-      ? shouldIncludePokemonForm(indexEntry)
+      ? shouldIncludeSelectedPokemonForm(indexEntry)
       : false;
 
     return indexEntry
@@ -556,13 +563,14 @@ export function TeamBuilder({
             (entry) =>
               entry.speciesKey === activeSpeciesKey &&
               entry.formKind === "mega" &&
+              isMegaFormCompatible(activePokemonId, entry.name) &&
               isExactPokemonFormLegal(
                 showdownLegality,
                 entry.showdownId,
               ),
           )
         : [],
-    [activeFormKind, activeSpeciesKey, pokemonIndex, showdownLegality],
+    [activeFormKind, activePokemonId, activeSpeciesKey, pokemonIndex, showdownLegality],
   );
   const visibleMegaOptions = useMemo(() => {
     const seenLabels = new Set<string>();
@@ -579,7 +587,9 @@ export function TeamBuilder({
       return true;
     });
   }, [megaOptions]);
-  const battleFormGroup = getBattleFormGroup(activeSpeciesKey || activePokemonId);
+  const battleFormGroup = activeFormKind === "mega"
+    ? undefined
+    : getBattleFormGroup(activeSpeciesKey || activePokemonId);
   const activeBattleFormOptionIndexFromPokemon = Math.max(
     0,
     battleFormGroup?.options.findIndex((option) => option.pokemonId === activePokemonId) ?? 0,
@@ -750,10 +760,13 @@ export function TeamBuilder({
   }, [candidateFilteredSelectOptions, usagePokemonIds]);
   const itemOptions = useMemo(
     () =>
-      itemIndex.filter(
-        (option) =>
-          isItemLegal(showdownLegality ?? null, option.name) &&
-          (!knownMegaStoneNames.has(option.name) || relevantMegaStoneNames.has(option.name)),
+      prioritizeMegaStoneItems(
+        itemIndex.filter(
+          (option) =>
+            isItemLegal(showdownLegality ?? null, option.name) &&
+            (!knownMegaStoneNames.has(option.name) || relevantMegaStoneNames.has(option.name)),
+        ),
+        relevantMegaStoneNames,
       ),
     [itemIndex, knownMegaStoneNames, relevantMegaStoneNames, showdownLegality],
   );
@@ -1881,15 +1894,15 @@ export function TeamBuilder({
   function renderPokemonOptionPreview(option: PokemonSelectOption) {
     return (
       <div className="touch-pokemon-preview">
-        {pokemonOptionPreviewArtwork ? (
+        {pokemonOptionPreviewArtwork || getKnownPokemonArtworkUrl(option.id) ? (
           <img
             className="touch-pokemon-preview-artwork"
-            src={pokemonOptionPreviewArtwork}
+            src={pokemonOptionPreviewArtwork ?? getKnownPokemonArtworkUrl(option.id)}
             alt=""
             aria-hidden="true"
-            key={pokemonOptionPreviewArtwork}
+            key={`${option.id}:${pokemonOptionPreviewArtwork ?? ""}`}
             onError={(event) => {
-              event.currentTarget.hidden = true;
+              showKnownPokemonArtworkFallback(event.currentTarget, option.id);
             }}
           />
         ) : null}
@@ -3231,12 +3244,13 @@ export function TeamBuilder({
                 <TypeBadge type={type} key={type} />
               ))}
             </div>
-            {activeMember?.spriteUrl ? (
+            {activeMember?.spriteUrl || (activeMember && getKnownPokemonArtworkUrl(activeMember.id)) ? (
               <img
-                src={activeMember.spriteUrl}
+                key={`${activeMember.id}:${activeMember.spriteUrl ?? ""}`}
+                src={activeMember.spriteUrl ?? getKnownPokemonArtworkUrl(activeMember.id)}
                 alt=""
                 onError={(event) => {
-                  event.currentTarget.hidden = true;
+                  showKnownPokemonArtworkFallback(event.currentTarget, activeMember.id);
                 }}
               />
             ) : null}

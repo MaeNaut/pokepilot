@@ -3,6 +3,10 @@ import { statKeys } from "../data/natures";
 import { shareTypeAccentColors } from "../data/shareImage";
 import { useLocalization } from "../i18n/useLocalization";
 import { statTranslationKeys } from "../i18n/statTranslations";
+import {
+  getKnownPokemonArtworkUrl,
+  showKnownPokemonArtworkFallback,
+} from "../utils/pokemonSprites";
 import { ItemSprite } from "./ItemSprite";
 import type { PokemonShareBuild } from "./PokemonShareCard";
 import { TypeBadge } from "./TypeBadge";
@@ -74,7 +78,7 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
           } = build;
           const teamDisplayName = fullDisplayName ?? displayName;
           const primaryType = member.types[0] ?? "normal";
-          const artworkUrl = member.spriteUrl ?? member.iconSpriteUrl;
+          const artworkUrl = member.spriteUrl ?? getKnownPokemonArtworkUrl(member.id) ?? member.iconSpriteUrl;
           const investedEvs = statKeys.filter((stat) => evs[stat] > 0);
 
           return (
@@ -100,12 +104,13 @@ export function TeamShareCard({ teamName, builds }: TeamShareCardProps) {
                 <div className="team-share-member-artwork-shell">
                   {artworkUrl ? (
                     <img
+                      key={`${member.id}:${artworkUrl}`}
                       className="team-share-member-artwork"
                       src={artworkUrl}
                       alt=""
                       draggable={false}
                       onError={(event) => {
-                        event.currentTarget.hidden = true;
+                        showKnownPokemonArtworkFallback(event.currentTarget, member.id);
                       }}
                     />
                   ) : null}

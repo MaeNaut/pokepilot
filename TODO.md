@@ -35,8 +35,8 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
         physical, special, STAB, resistance, weakness, and sun modifiers.
   - [x] Store the builds, expected combat stats, damage ranges, source metadata,
         and observed third-party comparator ranges as offline Vitest fixtures.
-  - [x] Prefer documented Champions mechanics and standard generation-9
-        modifier ordering over blindly matching a comparator's rounding.
+  - [x] Prefer documented Champions mechanics and the upstream Champions
+        engine over blindly matching a comparator's rounding.
 - [ ] Extend the reference suite with real Pokemon Champions battle captures and
       Champions-exclusive mechanics as reliable examples become available.
 
@@ -427,7 +427,7 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 - [x] Reuse the builder's Pokemon, item, type, and move presentation patterns,
       including a searchable Regulation M-B opponent picker.
 - [ ] Expand explicit Champions-only move, item, and ability overrides when the
-      upstream generation-9 engine does not yet model a new mechanic.
+      upstream Champions engine does not yet model a new mechanic.
 - [ ] Decide after playtesting whether to add simultaneous two-way results,
       usage-based opponent defaults, reusable opponent presets, and dedicated
       offensive-power / physical-bulk / special-bulk summaries.

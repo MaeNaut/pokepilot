@@ -9,6 +9,10 @@ import type {
   StatBlock,
   TeamMember,
 } from "../types";
+import {
+  getKnownPokemonArtworkUrl,
+  showKnownPokemonArtworkFallback,
+} from "../utils/pokemonSprites";
 import { ItemSprite } from "./ItemSprite";
 import { TypeBadge } from "./TypeBadge";
 
@@ -36,7 +40,7 @@ export function PokemonShareCard({
 }: PokemonShareBuild) {
   const { gameName, pokemonFormName, t } = useLocalization();
   const primaryType = member.types[0] ?? "normal";
-  const artworkUrl = member.spriteUrl ?? member.iconSpriteUrl;
+  const artworkUrl = member.spriteUrl ?? getKnownPokemonArtworkUrl(member.id) ?? member.iconSpriteUrl;
   const localizedFormLabel = formLabel
     ? pokemonFormName(member.id, formLabel)
     : undefined;
@@ -86,12 +90,13 @@ export function PokemonShareCard({
         </div>
         {artworkUrl ? (
           <img
+            key={`${member.id}:${artworkUrl}`}
             className="pokemon-share-artwork"
             src={artworkUrl}
             alt=""
             draggable={false}
             onError={(event) => {
-              event.currentTarget.hidden = true;
+              showKnownPokemonArtworkFallback(event.currentTarget, member.id);
             }}
           />
         ) : null}

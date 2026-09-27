@@ -3,7 +3,9 @@ import type { PokemonIndexEntry } from "../types";
 import {
   getPokemonNameFallback,
   shouldIncludePokemonForm,
+  shouldIncludeSelectedPokemonForm,
 } from "./pokemonDisplay";
+import { translatePokemonName } from "../i18n/gameTranslations";
 
 function entry(
   patch: Partial<PokemonIndexEntry> & Pick<PokemonIndexEntry, "name">,
@@ -42,5 +44,35 @@ describe("Pokemon form display", () => {
   it("adds labels to named default forms without duplicating other forms", () => {
     expect(getPokemonNameFallback(entry({ name: "toxtricity", displayName: "Toxtricity", speciesKey: "toxtricity", formLabel: "Amped" }))).toBe("Toxtricity Amped");
     expect(getPokemonNameFallback(entry({ name: "toxtricity-low-key", displayName: "Toxtricity Low Key", speciesKey: "toxtricity", formKind: "form", formLabel: "Low Key" }))).toBe("Toxtricity Low Key");
+  });
+
+  it("keeps gender in picker results but not in selected sample names", () => {
+    const female = entry({
+      name: "meowstic-female",
+      displayName: "Meowstic Female",
+      speciesKey: "meowstic",
+      formKind: "gender",
+      formLabel: "Female",
+    });
+    const selectedIncludeForm = shouldIncludeSelectedPokemonForm(female);
+
+    expect(shouldIncludePokemonForm(female)).toBe(true);
+    expect(selectedIncludeForm).toBe(false);
+    expect(translatePokemonName("en", {
+      id: female.name,
+      speciesId: female.speciesKey,
+      fallback: getPokemonNameFallback(female, selectedIncludeForm),
+      includeForm: selectedIncludeForm,
+      formLabel: female.formLabel,
+      formKind: female.formKind,
+    })).toBe("Meowstic");
+    expect(translatePokemonName("ko", {
+      id: female.name,
+      speciesId: female.speciesKey,
+      fallback: getPokemonNameFallback(female, selectedIncludeForm),
+      includeForm: selectedIncludeForm,
+      formLabel: female.formLabel,
+      formKind: female.formKind,
+    })).toBe("냐오닉스");
   });
 });

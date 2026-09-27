@@ -4,6 +4,7 @@ import type { PokemonIndexEntry, PokemonItem, TeamMember } from "../types";
 import {
   createProjectedMegaMember,
   getMegaEvolutionIndexEntry,
+  isMegaFormCompatible,
 } from "../utils/megaEvolution";
 import {
   createCalculatorBattleState,
@@ -123,5 +124,33 @@ describe("calculator Mega projection", () => {
     expect(Math.abs(
       (projected?.battle.currentHp ?? 0) - (projected?.maxHp ?? 0) / 2,
     )).toBeLessThanOrEqual(1);
+  });
+
+  it("keeps male and female Meowstic Mega forms separate", () => {
+    const genderIndex: PokemonIndexEntry[] = [
+      ...(["male", "female"] as const).flatMap((gender) => [
+        {
+          ...pokemonIndex[0],
+          name: `meowstic-${gender}`,
+          speciesKey: "meowstic",
+          formKind: "gender" as const,
+        },
+        {
+          ...pokemonIndex[1],
+          name: `meowstic-${gender}-mega`,
+          speciesKey: "meowstic",
+        },
+      ]),
+    ];
+    const stone = { ...mawilite, id: "meowsticite", name: "Meowsticite" };
+
+    expect(isMegaFormCompatible("meowstic-male", "meowstic-female-mega"))
+      .toBe(false);
+    expect(isMegaFormCompatible("meowstic-female", "meowstic-female-mega"))
+      .toBe(true);
+    expect(getMegaEvolutionIndexEntry("meowstic-male", stone, genderIndex)?.name)
+      .toBe("meowstic-male-mega");
+    expect(getMegaEvolutionIndexEntry("meowstic-female", stone, genderIndex)?.name)
+      .toBe("meowstic-female-mega");
   });
 });

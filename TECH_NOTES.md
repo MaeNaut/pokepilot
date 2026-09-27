@@ -281,13 +281,14 @@ claim of affiliation.
   falling back to a browser-native species select.
 - Treat `src/calculator/damageCalculator.ts` as the boundary between PokePilot's
   canonical data model and the third-party engine. Pass local species base stats,
-  typing, abilities, and move metadata through engine overrides so newly added
-  Champions records do not depend entirely on the package's bundled dex.
-- Calculate at level 50 with fixed IV 31. A Champions stat-point value of zero maps
-  to zero EV, while values 1-32 map to `statPoints * 8 - 4` EV. This produces the
-  displayed Champions formulas used elsewhere in the app: HP is
-  `base + 75 + stat points`; other stats are `base + 20 + stat points`, followed
-  by the nature modifier.
+  typing, and abilities through overrides for newly added Champions records.
+  Keep the engine's move flags and targeting for known moves; supply local move
+  metadata only for missing records or explicit differences.
+- Use the `@smogon/calc` Champions engine (generation 0), passing 0-32 stat
+  points directly rather than converting them to generation-9 EVs. Its level-50
+  stat formulas match the displayed values: HP is `base + 75 + stat points`
+  (or 1 when base HP is 1); other stats are `base + 20 + stat points`, followed
+  by the nature modifier. IVs are fixed at 31 in the app's build model.
 - Treat the header Singles/Doubles control as shared team context. Persist it with
   each saved team and as the latest browser preference, pass it to PokePilot
   requests, and use separate Smogon BSS/VGC Regulation M-B usage snapshots.
@@ -303,9 +304,10 @@ claim of affiliation.
 - Return structured ranges and KO data from the adapter. React localizes the KO
   summary rather than parsing the engine's English description.
 - Status moves and missing battle data return explicit unsupported results.
-  Generation-9 mechanics covered by `@smogon/calc` are available immediately, but
-  newly introduced Champions-only move, item, or ability behavior needs a checked
-  local override and a focused regression fixture before it is claimed as exact.
+  The upstream Champions engine covers its implemented mechanics, but newly
+  introduced or unimplemented Champions move, item, and ability behavior still
+  needs a checked local override and a focused regression fixture before it is
+  claimed as exact.
 - Keep external calculator checks offline and repeatable in
   `src/test/fixtures/damageCalculatorFixtures.ts`. The initial suite captures
   eight Regulation M-B singles matchups with complete builds, combat stats, and

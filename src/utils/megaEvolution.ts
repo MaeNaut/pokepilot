@@ -13,6 +13,19 @@ export function isMegaPokemonName(name: string) {
   return name.includes("-mega");
 }
 
+const GENDERED_MEGA_BASE_FORMS: Record<string, string> = {
+  "meowstic-male-mega": "meowstic-male",
+  "meowstic-female-mega": "meowstic-female",
+};
+
+export function isMegaFormCompatible(pokemonId: string, megaPokemonId: string) {
+  const requiredBaseForm = GENDERED_MEGA_BASE_FORMS[megaPokemonId];
+
+  return !requiredBaseForm ||
+    pokemonId === requiredBaseForm ||
+    pokemonId === megaPokemonId;
+}
+
 export function getMegaSpeciesKey(name: string) {
   if (!isMegaPokemonName(name)) {
     return name;
@@ -90,6 +103,7 @@ export function getMegaEvolutionIndexEntry(
     (entry) =>
       entry.formKind === "mega" &&
       entry.speciesKey === activeEntry.speciesKey &&
+      isMegaFormCompatible(pokemonId, entry.name) &&
       getMegaStoneItemName(entry.name, itemNames) !== null,
   ) ?? null;
 }
@@ -114,8 +128,45 @@ export function createProjectedMegaMember(
   };
 }
 import { normalizeShowdownId } from "../api/showdownIds";
+import {
+  isExactPokemonFormLegal,
+  type ShowdownLegalitySnapshot,
+} from "../api/showdownLegality";
 import type {
+  ItemIndexEntry,
   PokemonIndexEntry,
   PokemonItem,
   TeamMember,
 } from "../types";
+
+export function getRelevantMegaStoneNames(
+  pokemonId: string,
+  pokemonIndex: PokemonIndexEntry[],
+  knownMegaStoneNames: Set<string>,
+  showdownLegality: ShowdownLegalitySnapshot | null,
+) {
+  const activeEntry = pokemonIndex.find((entry) => entry.name === pokemonId);
+  if (!activeEntry) return new Set<string>();
+
+  return new Set(
+    pokemonIndex
+      .filter((entry) =>
+        entry.formKind === "mega" &&
+        entry.speciesKey === activeEntry.speciesKey &&
+        isMegaFormCompatible(pokemonId, entry.name) &&
+        isExactPokemonFormLegal(showdownLegality, entry.showdownId),
+      )
+      .map((entry) => getMegaStoneItemName(entry.name, knownMegaStoneNames))
+      .filter((name): name is string => Boolean(name)),
+  );
+}
+
+export function prioritizeMegaStoneItems(
+  items: ItemIndexEntry[],
+  megaStoneNames: Set<string>,
+) {
+  return [
+    ...items.filter((item) => megaStoneNames.has(item.name)),
+    ...items.filter((item) => !megaStoneNames.has(item.name)),
+  ];
+}

@@ -3,7 +3,6 @@ import { resolveAutomaticEnvironment } from "./automaticEnvironment";
 import type { PokemonMove, StatBlock, TeamMember } from "../types";
 import {
   calculateChampionsDamage,
-  statPointsToEvs,
   type CalculatorField,
   type CalculatorPokemon,
 } from "./damageCalculator";
@@ -244,6 +243,39 @@ function createPokemon(
 }
 
 describe("Champions damage calculator adapter", () => {
+  it("applies Mega Feraligatr's Dragonize to Normal attacks", () => {
+    const megaFeraligatr: TeamMember = {
+      ...garchomp,
+      id: "feraligatr-mega",
+      name: "Feraligatr-Mega",
+      showdownId: "feraligatrmega",
+      showdownName: "Feraligatr-Mega",
+      types: ["water", "dragon"],
+      abilities: ["Dragonize"],
+      baseStats: {
+        hp: 85, attack: 160, defense: 125,
+        specialAttack: 89, specialDefense: 93, speed: 78,
+      },
+    };
+    const normalAttack = calculateChampionsDamage(
+      createPokemon(megaFeraligatr, { ability: "Torrent", move: bodySlam }),
+      createPokemon(gengar),
+      field,
+    );
+    const dragonizedAttack = calculateChampionsDamage(
+      createPokemon(megaFeraligatr, { move: bodySlam }),
+      createPokemon(gengar),
+      field,
+    );
+
+    expect(normalAttack.status).toBe("ready");
+    expect(dragonizedAttack.status).toBe("ready");
+    if (normalAttack.status !== "ready" || dragonizedAttack.status !== "ready") return;
+    expect(normalAttack.maxDamage).toBe(0);
+    expect(dragonizedAttack.minDamage).toBeGreaterThan(0);
+    expect(dragonizedAttack.effectiveness).toBe(1);
+  });
+
   it("uses Aegislash-Blade's attacking stats when Stance Change activates", () => {
     const defender = createPokemon(incineroar);
     const transformed = calculateChampionsDamage(
@@ -395,11 +427,18 @@ describe("Champions damage calculator adapter", () => {
     expect(clear.oneHitKoChance).toBeGreaterThan(0);
     expect(sand.oneHitKoChance).toBe(0);
   });
-  it("maps Champions stat points to equivalent level 50 EV values", () => {
-    expect(statPointsToEvs(0)).toBe(0);
-    expect(statPointsToEvs(1)).toBe(4);
-    expect(statPointsToEvs(2)).toBe(12);
-    expect(statPointsToEvs(32)).toBe(252);
+  it("passes Champions stat points directly to its damage engine", () => {
+    for (const points of [0, 1, 2, 32]) {
+      const result = calculateChampionsDamage(
+        createPokemon(garchomp, { evs: { ...emptyEvs, attack: points } }),
+        createPokemon(incineroar),
+        field,
+      );
+      expect(result.status).toBe("ready");
+      if (result.status === "ready") {
+        expect(result.attackStat).toBe(150 + points);
+      }
+    }
   });
 
   it("calculates a deterministic 16-roll damage range", () => {
@@ -490,6 +529,109 @@ describe("Champions damage calculator adapter", () => {
     if (singleTarget.status === "ready" && spread.status === "ready") {
       expect(spread.maxDamage).toBeLessThan(singleTarget.maxDamage);
     }
+  });
+
+  it("uses the Champions engine's contact flag for Aura Guard when local tags are absent", () => {
+    const attacker = createPokemon(garchomp, { move: bodySlam });
+    const plain = calculateChampionsDamage(
+      attacker,
+      createPokemon(incineroar, { ability: "Blaze" }),
+      field,
+    );
+    const guarded = calculateChampionsDamage(
+      attacker,
+      createPokemon(incineroar, { ability: "Aura Guard" }),
+      field,
+    );
+    const nonContact = calculateChampionsDamage(
+      createPokemon(garchomp, { move: flamethrower }),
+      createPokemon(incineroar, { ability: "Aura Guard" }),
+      field,
+    );
+    const nonContactPlain = calculateChampionsDamage(
+      createPokemon(garchomp, { move: flamethrower }),
+      createPokemon(incineroar, { ability: "Blaze" }),
+      field,
+    );
+
+    expect(plain.status).toBe("ready");
+    expect(guarded.status).toBe("ready");
+    expect(nonContact.status).toBe("ready");
+    expect(nonContactPlain.status).toBe("ready");
+    if (
+      plain.status !== "ready" || guarded.status !== "ready" ||
+      nonContact.status !== "ready" || nonContactPlain.status !== "ready"
+    ) return;
+    expect(guarded.maxDamage).toBeLessThan(plain.maxDamage);
+    expect(nonContact.maxDamage).toBe(nonContactPlain.maxDamage);
+  });
+
+  it("uses the engine's spread target when local tags are absent", () => {
+    const attacker = createPokemon(garchomp, {
+      move: { ...earthquake, tags: [] },
+    });
+    const defender = createPokemon(incineroar);
+    const singleTarget = calculateChampionsDamage(attacker, defender, {
+      ...field,
+      gameType: "doubles",
+    });
+    const spread = calculateChampionsDamage(attacker, defender, {
+      ...field,
+      gameType: "doubles",
+      isSpread: true,
+    });
+
+    expect(singleTarget.status).toBe("ready");
+    expect(spread.status).toBe("ready");
+    if (singleTarget.status !== "ready" || spread.status !== "ready") return;
+    expect(spread.maxDamage).toBeLessThan(singleTarget.maxDamage);
+  });
+
+  it("keeps local move data for moves absent from the Champions dex", () => {
+    const tackle: PokemonMove = {
+      ...bodySlam,
+      id: "tackle",
+      name: "Tackle",
+      power: 40,
+      tags: ["Contact"],
+    };
+    const attacker = createPokemon(garchomp, { move: tackle });
+    const plain = calculateChampionsDamage(
+      attacker,
+      createPokemon(incineroar, { ability: "Blaze" }),
+      field,
+    );
+    const guarded = calculateChampionsDamage(
+      attacker,
+      createPokemon(incineroar, { ability: "Aura Guard" }),
+      field,
+    );
+
+    expect(plain.status).toBe("ready");
+    expect(guarded.status).toBe("ready");
+    if (plain.status !== "ready" || guarded.status !== "ready") return;
+    expect(plain.maxDamage).toBeGreaterThan(0);
+    expect(guarded.maxDamage).toBeLessThan(plain.maxDamage);
+  });
+
+  it("resolves a known move by ID when its saved display name has drifted", () => {
+    const canonical = calculateChampionsDamage(
+      createPokemon(garchomp, { move: bodySlam }),
+      createPokemon(incineroar, { ability: "Aura Guard" }),
+      field,
+    );
+    const renamed = calculateChampionsDamage(
+      createPokemon(garchomp, {
+        move: { ...bodySlam, name: "Old Body Slam Label" },
+      }),
+      createPokemon(incineroar, { ability: "Aura Guard" }),
+      field,
+    );
+
+    expect(canonical.status).toBe("ready");
+    expect(renamed.status).toBe("ready");
+    if (canonical.status !== "ready" || renamed.status !== "ready") return;
+    expect(renamed.maxDamage).toBe(canonical.maxDamage);
   });
 
   it("applies critical-hit, weather, item, and ability modifiers", () => {

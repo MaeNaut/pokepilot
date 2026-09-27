@@ -249,6 +249,7 @@
 :root[data-theme="dark"] .pokemon-name-button,
 :root[data-theme="dark"] .pokemon-name-input,
 :root[data-theme="dark"] .pokemon-name-input::placeholder,
+:root[data-theme="dark"] .form-picker-trigger,
 :root[data-theme="dark"] .form-picker-trigger:hover,
 :root[data-theme="dark"] .form-picker-trigger:focus-visible,
 :root[data-theme="dark"] .item-button.has-item,

@@ -218,6 +218,11 @@ describe("Korean game translations", () => {
     );
   });
 
+  it("does not label male Pyroar as female in the form picker", () => {
+    expect(translatePokemonFormName("ko", "pyroar-male", "Male")).toBe("수컷");
+    expect(translatePokemonFormName("ko", "pyroar-female", "Female")).toBe("암컷");
+  });
+
   it("leaves English and missing entries unchanged", () => {
     expect(translateGameName("en", "moves", "protect", "Protect")).toBe("Protect");
     expect(translateGameName("ko", "moves", "future-custom-move", "Future Move")).toBe(

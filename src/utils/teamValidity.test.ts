@@ -51,6 +51,7 @@ function createBuildState(overrides: Partial<TeamBuildState> = {}): TeamBuildSta
     evsBySlot: {},
     moveIdsBySlot: { 0: ["flamethrower"] },
     preMegaPokemonBySlot: {},
+    preMegaAbilityBySlot: {},
     candidateFiltersBySlot: {},
     ...overrides,
   };

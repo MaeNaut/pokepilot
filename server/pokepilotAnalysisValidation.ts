@@ -277,6 +277,94 @@ function recoverActionableRecommendations(
   };
 }
 
+function repairSinglesAllySpreadNarrative(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  if (request.battleFormat !== "singles") {
+    return { analysis, repaired: false };
+  }
+
+  const spreadMoves = [...new Set(request.sets.flatMap((set) =>
+    set.moves
+      .filter((move) => move.spreadTarget !== null)
+      .flatMap((move) => [move.displayName, move.name]),
+  ))].filter(Boolean);
+  if (spreadMoves.length === 0) {
+    return { analysis, repaired: false };
+  }
+
+  let repaired = false;
+  const repairText = (text: string) => text.split(/(?<=[.!?])\s+/u).map((sentence) => {
+    const moveName = spreadMoves.find((name) =>
+      sentence.toLocaleLowerCase(request.locale).includes(name.toLocaleLowerCase(request.locale))
+    );
+    if (
+      !moveName ||
+      !/(?:아군|동료|파트너|함께\s*(?:내보내|나오|있는|행동)|다른\s*포켓몬이\s*행동|\b(?:ally|allies|teammate|partner)\b)/iu.test(sentence) ||
+      !/(?:배치|피해|맞|보호|방어|순서|행동|기다|\b(?:damage|hit|hurt|protect|position|order|wait)\b)/iu.test(sentence) ||
+      /(?:않|없|아니|\b(?:not|never|no|cannot|can't|doesn't|don't)\b)/iu.test(sentence)
+    ) {
+      return sentence;
+    }
+
+    repaired = true;
+    return request.locale === "ko"
+      ? `싱글에서는 ${moveName} 사용 시 다른 팀 포켓몬이 피해를 받지 않습니다.`
+      : `In Singles, ${moveName} does not damage other members of your team.`;
+  }).join(" ");
+
+  const paragraphs = analysis.paragraphs.map(repairText);
+  const recommendations = analysis.recommendations.map((recommendation) => ({
+    ...recommendation,
+    title: repairText(recommendation.title),
+    reason: repairText(recommendation.reason),
+  }));
+  return {
+    analysis: repaired ? { ...analysis, paragraphs, recommendations } : analysis,
+    repaired,
+  };
+}
+
+function repairImpossibleActiveRosterNarrative(
+  analysis: CopilotModelOutput,
+  request: CopilotAnalysisRequest,
+) {
+  const impossibleCount = request.battleFormat === "doubles"
+    ? /(?:세\s*마리|3\s*마리|셋|three(?:\s+Pokemon)?)/iu
+    : /(?:두\s*마리|2\s*마리|둘|two(?:\s+Pokemon)?)/iu;
+  const simultaneousActive = /(?:한\s*번에|동시에|한꺼번에|at\s+once|simultaneously).{0,20}(?:전면|필드|앞에|on\s+the\s+field|in\s+front|active)/iu;
+  let repaired = false;
+  const repairText = (text: string) => text.split(/(?<=[.!?])\s+/u).map((sentence) => {
+    const count = impossibleCount.exec(sentence);
+    if (!count) return sentence;
+    const afterCount = sentence.slice(count.index + count[0].length, count.index + count[0].length + 50);
+    const active = simultaneousActive.exec(afterCount);
+    if (
+      !active ||
+      /(?:선출|선발|select|choose|두\s*마리|둘|two)/iu.test(afterCount.slice(0, active.index))
+    ) {
+      return sentence;
+    }
+    repaired = true;
+    const activeCount = request.battleFormat === "doubles" ? 2 : 1;
+    return request.locale === "ko"
+      ? `${request.battleFormat === "doubles" ? "더블" : "싱글"}에서는 한 번에 최대 ${activeCount}마리만 필드에 나올 수 있습니다.`
+      : `In ${request.battleFormat === "doubles" ? "Doubles" : "Singles"}, at most ${activeCount} Pokemon can be active at once.`;
+  }).join(" ");
+
+  const paragraphs = analysis.paragraphs.map(repairText);
+  const recommendations = analysis.recommendations.map((recommendation) => ({
+    ...recommendation,
+    title: repairText(recommendation.title),
+    reason: repairText(recommendation.reason),
+  }));
+  return {
+    analysis: repaired ? { ...analysis, paragraphs, recommendations } : analysis,
+    repaired,
+  };
+}
+
 const optimizationOutcomePattern = new RegExp(
   [
     String.raw`\d+(?:\.\d+)?\s*%`,
@@ -533,6 +621,12 @@ export function validateHostedCopilotAnalysis(
   validateOptimizationIds(groundedOutput.analysis, request);
   validateOptimizationMoveNarrative(groundedOutput.analysis, request);
   validateMetaReplacementNarrative(groundedOutput.analysis, request);
+  if (repairSinglesAllySpreadNarrative(groundedOutput.analysis, request).repaired) {
+    throw invalidAnalysis("Hosted analysis assumes ally spread damage in Singles.");
+  }
+  if (repairImpossibleActiveRosterNarrative(groundedOutput.analysis, request).repaired) {
+    throw invalidAnalysis("Hosted analysis assumes too many simultaneous active Pokemon.");
+  }
 
   const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
     groundedOutput,
@@ -582,6 +676,12 @@ export function reviewHostedCopilotAnalysis(
   const replacementRepair = repairMetaReplacementNarrative(analysis, request);
   analysis = replacementRepair.analysis;
   if (replacementRepair.repaired) warnings.add("content-repaired");
+  const singlesRepair = repairSinglesAllySpreadNarrative(analysis, request);
+  analysis = singlesRepair.analysis;
+  if (singlesRepair.repaired) warnings.add("content-repaired");
+  const rosterRepair = repairImpossibleActiveRosterNarrative(analysis, request);
+  analysis = rosterRepair.analysis;
+  if (rosterRepair.repaired) warnings.add("content-repaired");
 
   const groundedValidation = validateCopilotGroundedModelOutput(output);
   if (!groundedValidation.success) {

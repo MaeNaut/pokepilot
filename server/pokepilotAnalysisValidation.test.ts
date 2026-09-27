@@ -357,6 +357,84 @@ describe("hosted meta threat replacement validation", () => {
 });
 
 describe("recoverable hosted analysis review", () => {
+  const spreadRequest = {
+    ...request,
+    locale: "ko",
+    scope: "pokemon",
+    battleFormat: "singles",
+    sets: [{ moves: [{ name: "Earthquake", displayName: "지진", spreadTarget: "adjacent" }] }],
+  } as unknown as CopilotAnalysisRequest;
+
+  it("repairs ally-spread advice in Singles without discarding the analysis", () => {
+    const output = createOutput(["hippowdon-disruption"]);
+    output.analysis.scope = "pokemon";
+    output.analysis.paragraphs = [
+      "하마돈은 회복할 수 있습니다. 지진은 함께 내보내는 아군의 안전한 배치를 고려한 뒤 사용하세요.",
+    ];
+    output.analysis.recommendations[0].reason =
+      "하품으로 압박하세요. 지진은 아군의 배치를 확인한 뒤 사용하세요.";
+
+    const reviewed = reviewHostedCopilotAnalysis(output, spreadRequest);
+
+    expect(reviewed.analysis.paragraphs[0]).toBe(
+      "하마돈은 회복할 수 있습니다. 싱글에서는 지진 사용 시 다른 팀 포켓몬이 피해를 받지 않습니다.",
+    );
+    expect(reviewed.analysis.recommendations[0].reason).toBe(
+      "하품으로 압박하세요. 싱글에서는 지진 사용 시 다른 팀 포켓몬이 피해를 받지 않습니다.",
+    );
+    expect(reviewed.qualityWarnings).toContain("content-repaired");
+  });
+
+  it("preserves correct Singles negation and Doubles ally-spread advice", () => {
+    const output = createOutput(["hippowdon-disruption"]);
+    output.analysis.scope = "pokemon";
+    output.analysis.paragraphs = ["싱글에서는 지진으로 아군을 맞힐 걱정이 없습니다."];
+    expect(reviewHostedCopilotAnalysis(output, spreadRequest).analysis.paragraphs)
+      .toEqual(output.analysis.paragraphs);
+
+    output.analysis.paragraphs = ["지진은 아군도 맞힐 수 있으니 배치를 확인하세요."];
+    expect(reviewHostedCopilotAnalysis(output, {
+      ...spreadRequest,
+      battleFormat: "doubles",
+    }).analysis.paragraphs).toEqual(output.analysis.paragraphs);
+  });
+
+  it("repairs an impossible three-Pokemon active lineup in Doubles", () => {
+    const output = createOutput(["weather-warning"]);
+    output.analysis.scope = "team";
+    output.analysis.recommendations[0].reason =
+      "알로라 나인테일과 눈여아는 바위에 약하고, 대도각참은 불꽃에 약하므로 이 셋을 한 번에 전면에 배치하면 상대 광역 공격에 취약해집니다. 상대의 공격 유형에 따라 선발을 조정하세요.";
+
+    const reviewed = reviewHostedCopilotAnalysis(output, {
+      ...request,
+      locale: "ko",
+      scope: "team",
+      battleFormat: "doubles",
+      sets: [],
+    });
+
+    expect(reviewed.analysis.recommendations[0].reason).toBe(
+      "더블에서는 한 번에 최대 2마리만 필드에 나올 수 있습니다. 상대의 공격 유형에 따라 선발을 조정하세요.",
+    );
+    expect(reviewed.qualityWarnings).toContain("content-repaired");
+  });
+
+  it("keeps a three-Pokemon Doubles selection distinct from an active pair", () => {
+    const output = createOutput(["selection"]);
+    output.analysis.scope = "team";
+    output.analysis.paragraphs = [
+      "세 마리를 선출하더라도 한 번에 필드에는 두 마리만 나옵니다.",
+    ];
+
+    expect(reviewHostedCopilotAnalysis(output, {
+      ...request,
+      locale: "ko",
+      scope: "team",
+      battleFormat: "doubles",
+      sets: [],
+    }).analysis.paragraphs).toEqual(output.analysis.paragraphs);
+  });
+
   it("deduplicates non-actionable strategy cards without discarding the analysis", () => {
     const output = createOutput(["one", "one", "two", "three", "four"]);
     output.analysis.scope = "team";

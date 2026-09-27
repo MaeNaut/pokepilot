@@ -77,6 +77,8 @@ describe("M-C production loading", () => {
     expect(getBattleFormGroup("indeedee")).toBeUndefined();
     expect(getBattleFormGroup("toxtricity")).toBeUndefined();
     expect(getBattleFormGroup("squawkabilly")).toBeUndefined();
+    expect(getBattleFormGroup("pyroar")?.options.map((option) => option.pokemonId))
+      .toEqual(["pyroar-male", "pyroar-female"]);
     expect(index.find(entry => entry.name === "squawkabilly-blue")?.isSelectorOption).toBe(false);
     expect(index.find(entry => entry.name === "squawkabilly-white")?.isSelectorOption).toBe(false);
     for (const id of [
@@ -132,5 +134,124 @@ describe("M-C production loading", () => {
     }));
     expect((await fetchPokemon("toxtricity")).id).toBe("toxtricity");
     expect((await fetchPokemon("squawkabilly-yellow")).id).toBe("squawkabilly-yellow");
+  });
+  it.each(["furfrou-natural", "gourgeist-average", "lycanroc-midday"])(
+    "loads the default %s form through its Showdown species",
+    async (pokemonId) => {
+      vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+        if (String(input).includes("pokeapi.co")) throw new Error("PokeAPI unavailable");
+        return { ok: true, json: async () => String(input).includes("showdown-battle") ? battle : legality };
+      }));
+
+      const member = await fetchPokemon(pokemonId);
+      expect(member.id).toBe(pokemonId);
+      expect(member.moves?.length).toBeGreaterThan(0);
+      expect(member.baseStats?.hp).toBeGreaterThan(1);
+    },
+  );
+
+  it("loads Pyroar's female art with the shared battle data", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes("pokeapi.co")) {
+        expect(url).toContain("/pokemon/pyroar-male");
+        return {
+          ok: true,
+          json: async () => ({
+            id: 668,
+            name: "pyroar-male",
+            sprites: {
+              front_default: "male.png",
+              front_female: "female.png",
+              other: {
+                home: { front_female: "female-home.png" },
+                "official-artwork": { front_default: "male-art.png" },
+              },
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => url.includes("showdown-battle") ? battle : legality };
+    }));
+
+    const female = await fetchPokemon("pyroar-female");
+    expect(female).toMatchObject({
+      id: "pyroar-female",
+      showdownId: "pyroar",
+      showdownGender: "F",
+      source: "showdown",
+      spriteUrl: "female-home.png",
+      abilities: ["Rivalry", "Unnerve", "Moxie"],
+    });
+    expect(female.baseStats?.hp).toBe(battle.species.pyroar.baseStats.hp);
+    expect(female.moves?.length).toBeGreaterThan(0);
+  });
+
+  it("keeps male Pyroar's base battle data distinct from its Mega form", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes("pokeapi.co")) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 668,
+            name: "pyroar-male",
+            sprites: { front_default: "male.png" },
+          }),
+        };
+      }
+      return { ok: true, json: async () => url.includes("showdown-battle") ? battle : legality };
+    }));
+
+    const male = await fetchPokemon("pyroar-male");
+    expect(male.showdownId).toBe("pyroar");
+    expect(male.abilities).toEqual(["Rivalry", "Unnerve", "Moxie"]);
+    expect(male.baseStats).toMatchObject({
+      hp: battle.species.pyroar.baseStats.hp,
+      attack: battle.species.pyroar.baseStats.atk,
+      specialAttack: battle.species.pyroar.baseStats.spa,
+      speed: battle.species.pyroar.baseStats.spe,
+    });
+  });
+
+  it("requests the canonical Meowstic Mega art and uses the matching Showdown form", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes("pokeapi.co")) {
+        expect(url).toContain("/pokemon/meowstic-female-mega");
+        return {
+          ok: true,
+          json: async () => ({
+            id: 10326,
+            name: "meowstic-female-mega",
+            sprites: {
+              front_default: null,
+              other: { "official-artwork": { front_default: "female-mega-art.png" } },
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => url.includes("showdown-battle") ? battle : legality };
+    }));
+
+    const femaleMega = await fetchPokemon("meowstic-female-mega");
+    expect(femaleMega).toMatchObject({
+      id: "meowstic-female-mega",
+      showdownId: "meowsticfmega",
+      spriteUrl: "female-mega-art.png",
+    });
+  });
+
+  it("uses a valid gender-specific image when PokeAPI is temporarily unavailable", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes("pokeapi.co")) throw new Error("PokeAPI unavailable");
+      return { ok: true, json: async () => url.includes("showdown-battle") ? battle : legality };
+    }));
+
+    const female = await fetchPokemon("meowstic-female");
+    expect(female.showdownId).toBe("meowsticf");
+    expect(female.spriteUrl).toContain("/official-artwork/10025.png");
+    expect(female.iconSpriteUrl).toContain("/champions/10025.png");
   });
 });

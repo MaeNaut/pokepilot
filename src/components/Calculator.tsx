@@ -5,7 +5,10 @@ import {
   useState,
 } from "react";
 import { fetchPokemon } from "../api/pokeApi";
-import { resolveUsageTargetMember } from "../utils/pokemonSelection";
+import {
+  resolveMegaAbilityTransition,
+  resolveUsageTargetMember,
+} from "../utils/pokemonSelection";
 import { itemFromIndexEntry } from "../api/showdownCatalog";
 import { normalizeShowdownId } from "../api/showdownIds";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
@@ -54,6 +57,8 @@ import { getPokemonBuildSnapshot } from "../utils/benchPokemon";
 import {
   createProjectedMegaMember,
   getMegaStoneItemName,
+  getRelevantMegaStoneNames,
+  prioritizeMegaStoneItems,
 } from "../utils/megaEvolution";
 import {
   reconcileMoveIds,
@@ -171,6 +176,7 @@ export function Calculator({
   const [isOpponentLoading, setIsOpponentLoading] = useState(false);
   const [opponentError, setOpponentError] = useState<string | null>(null);
   const [opponentPreMegaPokemonId, setOpponentPreMegaPokemonId] = useState("");
+  const [opponentPreMegaAbility, setOpponentPreMegaAbility] = useState("");
   const playerIdentityRef = useRef<string | null>(null);
   const preservePlayerBattleOnNextIdentityRef = useRef(false);
   const opponentIdentityRef = useRef<string | null>(null);
@@ -214,14 +220,18 @@ export function Calculator({
     pokemonIndex,
   );
   const playerItemOptions = useMemo(() => {
-    const megaStoneName = selectedMember
-      ? getMegaStoneItemName(selectedMember.id, knownMegaStoneNames)
-      : null;
-
-    return selectableItems.filter(
-      (item) => !item.isMegaStone || item.name === megaStoneName,
+    const megaStoneNames = getRelevantMegaStoneNames(
+      selectedMember?.id ?? "",
+      pokemonIndex,
+      knownMegaStoneNames,
+      showdownLegality,
     );
-  }, [knownMegaStoneNames, selectableItems, selectedMember]);
+
+    return prioritizeMegaStoneItems(
+      selectableItems.filter((item) => !item.isMegaStone || megaStoneNames.has(item.name)),
+      megaStoneNames,
+    );
+  }, [knownMegaStoneNames, pokemonIndex, selectableItems, selectedMember?.id, showdownLegality]);
   const playerUsageMoves = useCalculatorUsageMoves(
     selectedMember,
     playerPreMegaMoves,
@@ -566,17 +576,18 @@ export function Calculator({
   }, [analysisContext, onAnalysisContextChange]);
 
   const opponentItemOptions = useMemo(() => {
-    const megaStoneName = opponentBuild.member
-      ? getMegaStoneItemName(
-          opponentBuild.member.id,
-          knownMegaStoneNames,
-        )
-      : null;
-
-    return selectableItems.filter(
-      (item) => !item.isMegaStone || item.name === megaStoneName,
+    const megaStoneNames = getRelevantMegaStoneNames(
+      opponentBuild.member?.id ?? "",
+      pokemonIndex,
+      knownMegaStoneNames,
+      showdownLegality,
     );
-  }, [knownMegaStoneNames, opponentBuild.member, selectableItems]);
+
+    return prioritizeMegaStoneItems(
+      selectableItems.filter((item) => !item.isMegaStone || megaStoneNames.has(item.name)),
+      megaStoneNames,
+    );
+  }, [knownMegaStoneNames, opponentBuild.member?.id, pokemonIndex, selectableItems, showdownLegality]);
 
   function updatePlayerBuild(patch: Partial<CalculatorBuildValues>) {
     if (!selectedMember) {
@@ -683,10 +694,6 @@ export function Calculator({
     options: CalculatorPokemonSelectOptions = {},
   ) {
     const targetEntry = pokemonIndex.find((entry) => entry.name === pokemonId);
-    const currentEntry = pokemonIndex.find(
-      (entry) => entry.name === selectedMember?.id,
-    );
-
     await onSelectPokemon(selectedSlot, pokemonId, options);
 
     if (targetEntry?.formKind === "mega") {
@@ -704,8 +711,14 @@ export function Calculator({
         });
       }
     } else if (
-      currentEntry?.formKind === "mega" &&
-      playerBuild.item?.category === "Mega Stones"
+      !options.applyUsageStats &&
+      playerBuild.item?.category === "Mega Stones" &&
+      !getRelevantMegaStoneNames(
+        pokemonId,
+        pokemonIndex,
+        knownMegaStoneNames,
+        showdownLegality,
+      ).has(playerBuild.item.id)
     ) {
       buildState.patchSlot(selectedSlot, { item: null });
     }
@@ -760,6 +773,15 @@ export function Calculator({
           })
         : undefined;
       const item = usageItem ?? megaStone;
+      const abilityTransition = resolveMegaAbilityTransition({
+        previousMember: opponentBuild.member,
+        targetMember: member,
+        nextAbility: opponentBuild.ability,
+        previousAbility: opponentBuild.ability,
+        rememberedAbility: opponentPreMegaAbility,
+        rememberedPokemonId: opponentPreMegaPokemonId,
+        pokemonIndex,
+      });
 
       if (
         targetEntry?.formKind === "mega" &&
@@ -769,6 +791,7 @@ export function Calculator({
       } else if (targetEntry?.formKind !== "mega") {
         setOpponentPreMegaPokemonId("");
       }
+      setOpponentPreMegaAbility(abilityTransition.preMegaAbility ?? "");
 
       setOpponentBuild((current) => {
         if (options.applyUsageStats && usageSet) {
@@ -795,9 +818,16 @@ export function Calculator({
         const availableMoveIds = new Set(
           member.moves?.map((move) => move.id) ?? [],
         );
+        const relevantMegaStoneNames = getRelevantMegaStoneNames(
+          member.id,
+          pokemonIndex,
+          knownMegaStoneNames,
+          showdownLegality,
+        );
         const nextItem = megaStone
           ? itemFromIndexEntry(megaStone)
-          : current.item?.category === "Mega Stones"
+          : current.item?.category === "Mega Stones" &&
+              !relevantMegaStoneNames.has(current.item.id)
             ? null
             : current.item;
 
@@ -805,9 +835,7 @@ export function Calculator({
           ...current,
           member,
           item: nextItem,
-          ability: member.abilities?.includes(current.ability)
-            ? current.ability
-            : member.abilities?.[0] ?? "",
+          ability: abilityTransition.ability,
           moveIds: current.moveIds.map((moveId) =>
             !moveId || availableMoveIds.has(moveId) ? moveId : "",
           ),

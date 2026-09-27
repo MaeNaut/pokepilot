@@ -102,8 +102,8 @@ The MVP should prove the core loop:
 - [x] Keep the opponent build local to the calculator with direct set and battle-state editing.
 - [x] Add a shared, persisted Singles/Doubles header setting that switches
       calculator rules, PokePilot context, and BSS/VGC usage rankings.
-- [x] Adapt `@smogon/calc` to Pokemon Champions level 50, fixed IV 31, and
-  0-32 stat-point assumptions.
+- [x] Use the `@smogon/calc` Champions engine with level 50 and direct 0-32
+  stat points; keep fixed IV 31 in the app's build model.
 - [x] Support doubles spread damage, weather, terrain, Magic Room, Wonder Room,
   Gravity, Fairy Aura, critical hits, Helping Hand, Tailwind, Friend Guard,
   Plus/Minus activation, burn, defensive screens, current HP, and stat stages.
@@ -118,7 +118,7 @@ The MVP should prove the core loop:
 - [x] Add an offline external-reference fixture suite for representative
   Regulation M-B singles damage ranges and the combat stats used by each result.
 - [ ] Verify additional Pokemon Champions-only mechanics against live reference
-  cases and add explicit overrides where upstream generation-9 data is incomplete.
+  cases and add explicit overrides where the upstream Champions engine is incomplete.
 - [ ] Revisit simultaneous two-way results, usage-based opponent defaults,
   opponent presets, and dedicated power/bulk summaries after MVP playtesting.
 

@@ -17,6 +17,7 @@ const emptyBuildState: TeamBuildState = {
   evsBySlot: {},
   moveIdsBySlot: {},
   preMegaPokemonBySlot: {},
+  preMegaAbilityBySlot: {},
   candidateFiltersBySlot: {},
 };
 
@@ -41,6 +42,7 @@ describe("bench Pokemon transfers", () => {
       evsBySlot: { 0: { ...defaultEvs, hp: 32, attack: 32 }, 1: { ...defaultEvs } },
       moveIdsBySlot: { 0: ["bug-bite", "", "protect", ""], 1: ["fake-out"] },
       preMegaPokemonBySlot: { 0: "scizor", 1: "" },
+      preMegaAbilityBySlot: { 0: "Swarm", 1: "Intimidate" },
       candidateFiltersBySlot: {
         0: { types: ["bug"], ability: null, moves: [] },
         1: { types: ["dark"], ability: null, moves: [] },
@@ -88,7 +90,7 @@ describe("bench Pokemon transfers", () => {
     const pokemon = member("scizor");
     const emptyBuild = {
       item: null, ability: "", nature: "", evs: { ...defaultEvs },
-      moveIds: ["", "", "", ""], preMegaPokemon: "",
+      moveIds: ["", "", "", ""], preMegaPokemon: "", preMegaAbility: "",
     };
     const buildState: TeamBuildState = {
       ...emptyBuildState,
@@ -96,6 +98,7 @@ describe("bench Pokemon transfers", () => {
       abilityBySlot: { 0: "Technician" },
       natureBySlot: { 0: "adamant" },
       preMegaPokemonBySlot: { 0: "scizor" },
+      preMegaAbilityBySlot: { 0: "Swarm" },
     };
     const result = moveBenchPokemonToTeam({
       team: [pokemon], buildState,
@@ -105,6 +108,7 @@ describe("bench Pokemon transfers", () => {
     expect(result.buildState.itemBySlot).toHaveProperty("0", null);
     expect(result.buildState.preMegaPokemonBySlot).toHaveProperty("0", "");
     expect(result.bench[0].build.ability).toBe("Technician");
+    expect(result.bench[0].build.preMegaAbility).toBe("Swarm");
   });
 
   it("allows an occupied-slot swap even when the bench is full", () => {

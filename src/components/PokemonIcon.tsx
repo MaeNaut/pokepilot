@@ -1,5 +1,6 @@
 import type { TeamMember } from "../types";
 import {
+  getKnownPokemonIconUrl,
   getPokeApiChampionsSpriteUrlFromKnownSprites,
   isFullShowdownSpriteUrl,
 } from "../utils/pokemonSprites";
@@ -12,14 +13,16 @@ type PokemonIconProps = {
     | "iconSpriteUrl"
     | "iconFallbackSpriteUrls"
     | "showdownGender"
-  >;
+  > & { id?: string; pokemonId?: string };
 };
 
 export function PokemonIcon({ pokemon }: PokemonIconProps) {
+  const pokemonId = pokemon.id ?? pokemon.pokemonId ?? "";
   const savedIconUrls = [
     pokemon.iconSpriteUrl,
     ...(pokemon.iconFallbackSpriteUrls ?? []),
   ];
+  const knownIconUrl = getKnownPokemonIconUrl(pokemonId);
   const championsIconUrl =
     pokemon.showdownGender === "F"
       ? undefined
@@ -27,7 +30,7 @@ export function PokemonIcon({ pokemon }: PokemonIconProps) {
           ...savedIconUrls,
           pokemon.spriteUrl,
         ]);
-  const iconUrls = [championsIconUrl, ...savedIconUrls].filter(
+  const iconUrls = [knownIconUrl, championsIconUrl, ...savedIconUrls].filter(
     (url): url is string => Boolean(url) && !isFullShowdownSpriteUrl(url),
   );
   const spriteUrls = Array.from(

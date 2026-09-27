@@ -29,6 +29,7 @@ const buildState: TeamBuildState = {
   },
   moveIdsBySlot: { 0: ["overheat", "solar-beam"] },
   preMegaPokemonBySlot: {},
+  preMegaAbilityBySlot: {},
   candidateFiltersBySlot: {},
 };
 

@@ -64,6 +64,19 @@ describe("saved team hydration", () => {
     ]);
     expect(fetchPokemon).toHaveBeenCalledWith("pelipper");
   });
+  it("rehydrates an older Meowstic Mega ID using the canonical gender form", async () => {
+    const saved = createSavedTeam(snapshot());
+    saved.slots[0] = { pokemonId: "meowstic-f-mega", name: "Meowstic-F-Mega" };
+    const femaleMega = { ...pelipper, id: "meowstic-female-mega" };
+    vi.mocked(fetchPokemon).mockResolvedValue(femaleMega);
+
+    const members = await hydrateSavedTeamMembers(saved, [
+      { ...pelipper, id: "meowstic-f-mega" },
+    ]);
+
+    expect(fetchPokemon).toHaveBeenCalledWith("meowstic-female-mega");
+    expect(members[0]).toBe(femaleMega);
+  });
   it("uses saved identity for offline fallback", async () => {
     vi.mocked(fetchPokemon).mockRejectedValue(new Error("offline"));
     const team = await hydrateSavedTeamMembers(createSavedTeam(snapshot()), []);

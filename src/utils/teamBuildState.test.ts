@@ -35,6 +35,7 @@ describe("team build state", () => {
   it("removes every build field when a slot is cleared", () => {
     const patched = patchBuildStateSlot(createEmptyBuildState(), 1, {
       ability: "Levitate",
+      preMegaAbility: "Inner Focus",
       nature: "modest",
       moveIds: ["shadowball"],
     });
@@ -45,16 +46,19 @@ describe("team build state", () => {
   it("swaps complete slot records without shifting other slots", () => {
     let state = patchBuildStateSlot(createEmptyBuildState(), 0, {
       ability: "Drought",
+      preMegaAbility: "Blaze",
       moveIds: ["overheat"],
     });
     state = patchBuildStateSlot(state, 2, {
       ability: "Drizzle",
+      preMegaAbility: "Torrent",
       moveIds: ["hydropump"],
     });
 
     const reordered = reorderBuildStateSlots(state, 0, 2);
 
     expect(reordered.abilityBySlot).toEqual({ 0: "Drizzle", 2: "Drought" });
+    expect(reordered.preMegaAbilityBySlot).toEqual({ 0: "Torrent", 2: "Blaze" });
     expect(reordered.moveIdsBySlot).toEqual({
       0: ["hydropump"],
       2: ["overheat"],

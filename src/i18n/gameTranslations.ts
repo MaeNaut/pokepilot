@@ -285,6 +285,10 @@ export function translatePokemonFormName(
     return `메가${megaMatch[1] ? ` ${megaMatch[1].toUpperCase()}` : ""}`;
   }
 
+  if (normalizeTranslationId(pokemonId) === "pyroarmale") {
+    return translateFallbackFormLabel(fallback);
+  }
+
   const form = koreanCatalog.pokemonForms[normalizeTranslationId(pokemonId)];
   return form?.formName || form?.pokemonName || translateFallbackFormLabel(fallback);
 }

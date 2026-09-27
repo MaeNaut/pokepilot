@@ -6,8 +6,13 @@ import {
   resolveSmogonUsageAbility,
   type SmogonUsageSet,
 } from "../api/smogonUsage";
-import type { TeamMember } from "../types";
-import { resolvePokemonChoice, resolveUsageTargetMember } from "./pokemonSelection";
+import type { PokemonIndexEntry, TeamMember } from "../types";
+import {
+  getCompatiblePokemonAbility,
+  resolveMegaAbilityTransition,
+  resolvePokemonChoice,
+  resolveUsageTargetMember,
+} from "./pokemonSelection";
 import { createEmptyBuildState, patchBuildStateSlot } from "./teamBuildState";
 
 vi.mock("../api/pokeApi", () => ({ fetchPokemon: vi.fn() }));
@@ -49,11 +54,62 @@ beforeEach(() => {
 });
 
 describe("usage ability matching", () => {
+  it("preserves a legal ability and replaces one lost on Mega evolution", () => {
+    expect(getCompatiblePokemonAbility(member, "Technician")).toBe("Technician");
+    expect(getCompatiblePokemonAbility({ ...member, abilities: ["Technician"] }, "Swarm"))
+      .toBe("Technician");
+    expect(getCompatiblePokemonAbility({ ...member, abilities: ["Huge Power"] }, "Intimidate"))
+      .toBe("Huge Power");
+  });
   it("preserves canonical names and caller-specific missing-data defaults", () => {
     expect(resolveSmogonUsageAbility(member, "TECHNICIAN")).toBe("Technician");
     expect(resolveSmogonUsageAbility(member, undefined)).toBe("");
     expect(resolveSmogonUsageAbility(member, undefined, "Swarm")).toBe("Swarm");
     expect(resolveSmogonUsageAbility(member, "New Ability")).toBe("New Ability");
+  });
+});
+
+describe("Mega ability restoration", () => {
+  const base = { ...member, id: "lucario", abilities: ["Steadfast", "Inner Focus", "Justified"] };
+  const mega = { ...member, id: "lucario-mega", abilities: ["Adaptability"] };
+  const pokemonIndex = [
+    { name: "lucario", speciesKey: "lucario" },
+    { name: "lucario-mega", speciesKey: "lucario" },
+    { name: "scizor", speciesKey: "scizor" },
+  ] as PokemonIndexEntry[];
+
+  it("restores the selected base ability after Mega Evolution", () => {
+    const entering = resolveMegaAbilityTransition({
+      previousMember: base,
+      targetMember: mega,
+      nextAbility: "Inner Focus",
+      previousAbility: "Inner Focus",
+      pokemonIndex,
+    });
+    expect(entering).toEqual({ ability: "Adaptability", preMegaAbility: "Inner Focus" });
+
+    const returning = resolveMegaAbilityTransition({
+      previousMember: mega,
+      targetMember: base,
+      nextAbility: entering.ability,
+      previousAbility: entering.ability,
+      rememberedAbility: entering.preMegaAbility,
+      rememberedPokemonId: "lucario",
+      pokemonIndex,
+    });
+    expect(returning).toEqual({ ability: "Inner Focus", preMegaAbility: null });
+  });
+
+  it("does not restore a prior ability onto another species", () => {
+    expect(resolveMegaAbilityTransition({
+      previousMember: mega,
+      targetMember: member,
+      nextAbility: "Adaptability",
+      previousAbility: "Adaptability",
+      rememberedAbility: "Inner Focus",
+      rememberedPokemonId: "lucario",
+      pokemonIndex,
+    })).toEqual({ ability: "Swarm", preMegaAbility: null });
   });
 });
 

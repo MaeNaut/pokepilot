@@ -15,6 +15,7 @@ export type TeamBuildState = {
   evsBySlot: Record<number, StatBlock>;
   moveIdsBySlot: Record<number, string[]>;
   preMegaPokemonBySlot: Record<number, string>;
+  preMegaAbilityBySlot: Record<number, string>;
   candidateFiltersBySlot: Record<number, PokemonCandidateFilters>;
 };
 
@@ -25,6 +26,7 @@ export type TeamSlotBuildPatch = {
   evs?: StatBlock | null;
   moveIds?: string[] | null;
   preMegaPokemon?: string | null;
+  preMegaAbility?: string | null;
   candidateFilters?: PokemonCandidateFilters | null;
 };
 
@@ -36,6 +38,7 @@ export function createEmptyBuildState(): TeamBuildState {
     evsBySlot: {},
     moveIdsBySlot: {},
     preMegaPokemonBySlot: {},
+    preMegaAbilityBySlot: {},
     candidateFiltersBySlot: {},
   };
 }
@@ -98,6 +101,7 @@ export function normalizeBuildState(
     evsBySlot: state?.evsBySlot ?? {},
     moveIdsBySlot: state?.moveIdsBySlot ?? {},
     preMegaPokemonBySlot: state?.preMegaPokemonBySlot ?? {},
+    preMegaAbilityBySlot: state?.preMegaAbilityBySlot ?? {},
     candidateFiltersBySlot: Object.fromEntries(
       Object.entries(state?.candidateFiltersBySlot ?? {}).flatMap(
         ([slotIndex, filters]) => {
@@ -122,6 +126,7 @@ export function clearBuildStateSlot(
     evsBySlot: withoutSlot(state.evsBySlot, slotIndex),
     moveIdsBySlot: withoutSlot(state.moveIdsBySlot, slotIndex),
     preMegaPokemonBySlot: withoutSlot(state.preMegaPokemonBySlot, slotIndex),
+    preMegaAbilityBySlot: withoutSlot(state.preMegaAbilityBySlot, slotIndex),
     candidateFiltersBySlot: withoutSlot(
       state.candidateFiltersBySlot,
       slotIndex,
@@ -179,6 +184,14 @@ export function patchBuildStateSlot(
     );
   }
 
+  if (Object.prototype.hasOwnProperty.call(patch, "preMegaAbility")) {
+    nextState.preMegaAbilityBySlot = withSlotValue(
+      state.preMegaAbilityBySlot,
+      slotIndex,
+      patch.preMegaAbility,
+    );
+  }
+
   if (Object.prototype.hasOwnProperty.call(patch, "candidateFilters")) {
     const normalized = normalizePokemonCandidateFilters(patch.candidateFilters);
     nextState.candidateFiltersBySlot = hasPokemonCandidateFilters(normalized)
@@ -206,6 +219,11 @@ export function reorderBuildStateSlots(
     moveIdsBySlot: swapSlotRecord(state.moveIdsBySlot, sourceIndex, targetIndex),
     preMegaPokemonBySlot: swapSlotRecord(
       state.preMegaPokemonBySlot,
+      sourceIndex,
+      targetIndex,
+    ),
+    preMegaAbilityBySlot: swapSlotRecord(
+      state.preMegaAbilityBySlot,
       sourceIndex,
       targetIndex,
     ),

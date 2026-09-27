@@ -45,7 +45,10 @@ import { useBuilderData } from "./hooks/useBuilderData";
 import { useDismissOnOutsidePointer } from "./hooks/useDismissOnOutsidePointer";
 import { useLongPressReorder } from "./hooks/useLongPressReorder";
 import { useMediaQuery } from "./hooks/useMediaQuery";
-import { resolvePokemonChoice as resolveTeamPokemonChoice } from "./utils/pokemonSelection";
+import {
+  resolveMegaAbilityTransition,
+  resolvePokemonChoice as resolveTeamPokemonChoice,
+} from "./utils/pokemonSelection";
 import type { TeamBuildState } from "./utils/teamBuildState";
 import { swapArrayItems } from "./utils/reorder";
 import {
@@ -644,6 +647,9 @@ function App() {
         : undefined;
     }
 
+    const previousMember = team[slotIndex];
+    const previousBuildState = teamBuildState.getBuildStateSnapshot();
+
     try {
       const {
         selectedMember,
@@ -705,6 +711,29 @@ function App() {
 
       if (usageSetPatch) {
         teamBuildState.patchSlot(slotIndex, usageSetPatch.patch);
+      }
+
+      const previousAbility = previousBuildState.abilityBySlot[slotIndex] ??
+        previousMember?.abilities?.[0] ?? "";
+      const transition = resolveMegaAbilityTransition({
+        previousMember,
+        targetMember,
+        nextAbility: proposedBuildState.abilityBySlot[slotIndex] ??
+          (options.applyUsageStats ? "" : previousAbility),
+        previousAbility,
+        rememberedAbility: previousBuildState.preMegaAbilityBySlot[slotIndex],
+        rememberedPokemonId: previousBuildState.preMegaPokemonBySlot[slotIndex],
+        pokemonIndex,
+      });
+      const abilityChanged = transition.ability !== proposedBuildState.abilityBySlot[slotIndex];
+      const memoryChanged = transition.preMegaAbility !==
+        (proposedBuildState.preMegaAbilityBySlot[slotIndex] ?? null);
+
+      if (abilityChanged || memoryChanged) {
+        teamBuildState.patchSlot(slotIndex, {
+          ...(abilityChanged ? { ability: transition.ability } : {}),
+          ...(memoryChanged ? { preMegaAbility: transition.preMegaAbility } : {}),
+        });
       }
 
       return options.validateRecommendation ? { status: "applied" } : undefined;
@@ -936,6 +965,8 @@ function App() {
       moveIds: importedSnapshot.buildState.moveIdsBySlot[0] ?? [],
       preMegaPokemon:
         importedSnapshot.buildState.preMegaPokemonBySlot[0] ?? null,
+      preMegaAbility:
+        importedSnapshot.buildState.preMegaAbilityBySlot[0] ?? null,
     });
     setTeamStorageMessage(t("team.importedPokemon"));
   }

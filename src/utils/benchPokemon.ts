@@ -14,6 +14,7 @@ export type PokemonBuildSnapshot = {
   evs: StatBlock;
   moveIds: string[];
   preMegaPokemon: string;
+  preMegaAbility?: string;
 };
 
 export type BenchPokemon = {
@@ -44,6 +45,7 @@ export function getPokemonBuildSnapshot(
         []),
     ],
     preMegaPokemon: buildState.preMegaPokemonBySlot[slotIndex] ?? "",
+    preMegaAbility: buildState.preMegaAbilityBySlot[slotIndex] ?? "",
   };
 }
 
@@ -94,6 +96,7 @@ export function moveBenchPokemonToTeam(
     ...benchPokemon.build,
     evs: { ...benchPokemon.build.evs },
     moveIds: [...benchPokemon.build.moveIds],
+    preMegaAbility: benchPokemon.build.preMegaAbility ?? null,
     candidateFilters: null,
   });
 

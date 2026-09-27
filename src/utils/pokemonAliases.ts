@@ -13,17 +13,20 @@ const SPECIAL_POKEMON_LOOKUP_ALIASES: Record<string, string[]> = {
   "squawkabilly-white": ["squawkabilly-yellow"],
   "aegislash-blade": ["aegislash"],
   "aegislash-shield": ["aegislash"],
+  "furfrou-natural": ["furfrou"],
+  "gourgeist-average": ["gourgeist"],
+  "lycanroc-midday": ["lycanroc"],
   "maushold-family-of-four": ["maushold"],
   "mimikyu-disguised": ["mimikyu"],
   "morpeko-full-belly": ["morpeko"],
   "morpeko-hangry": ["morpeko"],
   "palafin-hero": ["palafin"],
   "palafin-zero": ["palafin", "palafin-hero"],
-  pyroar: ["pyroarmega", "pyroar-mega"],
-  "pyroar-male": ["pyroarmega", "pyroar-mega"],
 };
 
 const PREFERRED_POKEAPI_IDS: Record<string, string> = {
+  "meowstic-m-mega": "meowstic-male-mega",
+  "meowstic-f-mega": "meowstic-female-mega",
   "farfetch-d": "farfetchd",
   "sirfetch-d": "sirfetchd",
   indeedee: "indeedee-male",
@@ -35,6 +38,7 @@ const PREFERRED_POKEAPI_IDS: Record<string, string> = {
 };
 
 const POKEAPI_LOOKUP_IDS: Record<string, string> = {
+  "furfrou-natural": "furfrou",
   toxtricity: "toxtricity-amped",
   squawkabilly: "squawkabilly-green-plumage",
   "squawkabilly-blue": "squawkabilly-blue-plumage",

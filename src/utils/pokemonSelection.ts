@@ -9,7 +9,11 @@ import {
 } from "../api/smogonUsage";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import type { PokemonIndexEntry, PokemonItem, TeamMember } from "../types";
-import { shouldKeepSelectedPokemonForUsageTarget } from "./pokemonAliases";
+import { isMegaPokemonName } from "./megaEvolution";
+import {
+  getPreferredPokeApiId,
+  shouldKeepSelectedPokemonForUsageTarget,
+} from "./pokemonAliases";
 import { isFullShowdownSpriteUrl } from "./pokemonSprites";
 import { normalizeImportedEvs, resolveImportedPokemonId } from "./showdownImport";
 import { toPokemonId } from "./showdownText";
@@ -25,15 +29,61 @@ type ResolvedUsageSetPatch = {
   itemLoadFailed: boolean;
 };
 
+export function getCompatiblePokemonAbility(member: TeamMember, ability?: string) {
+  return ability && member.abilities?.includes(ability)
+    ? ability
+    : member.abilities?.[0] ?? "";
+}
+
+export function resolveMegaAbilityTransition({
+  previousMember,
+  targetMember,
+  nextAbility,
+  previousAbility,
+  rememberedAbility,
+  rememberedPokemonId,
+  pokemonIndex,
+}: {
+  previousMember: TeamMember | null;
+  targetMember: TeamMember;
+  nextAbility: string;
+  previousAbility: string;
+  rememberedAbility?: string | null;
+  rememberedPokemonId?: string;
+  pokemonIndex: PokemonIndexEntry[];
+}) {
+  const previousSpecies = pokemonIndex.find((entry) => entry.name === previousMember?.id)?.speciesKey;
+  const targetSpecies = pokemonIndex.find((entry) => entry.name === targetMember.id)?.speciesKey;
+  const sameSpecies = Boolean(previousSpecies && previousSpecies === targetSpecies);
+  const wasMega = Boolean(previousMember && isMegaPokemonName(previousMember.id));
+  const isMega = isMegaPokemonName(targetMember.id);
+  const enteringMega = sameSpecies && !wasMega && isMega;
+  const returningFromMega = sameSpecies && wasMega && !isMega &&
+    (!rememberedPokemonId || rememberedPokemonId === targetMember.id);
+
+  return {
+    ability: getCompatiblePokemonAbility(
+      targetMember,
+      returningFromMega && rememberedAbility ? rememberedAbility : nextAbility,
+    ),
+    preMegaAbility: enteringMega
+      ? previousAbility
+      : sameSpecies && isMega && wasMega
+        ? rememberedAbility ?? null
+        : null,
+  };
+}
+
 async function resolvePokemonMember(lookup: string, customPool: TeamMember[]) {
-  const localMember = customPool.find((member) => member.id === lookup);
+  const canonicalLookup = getPreferredPokeApiId(lookup) ?? lookup;
+  const localMember = customPool.find((member) => member.id === canonicalLookup);
   if (
     localMember?.baseStats && localMember.abilities &&
     !isFullShowdownSpriteUrl(localMember.iconSpriteUrl)
   ) {
     return localMember;
   }
-  return fetchPokemon(lookup);
+  return fetchPokemon(canonicalLookup);
 }
 
 export async function resolveUsageTargetMember(

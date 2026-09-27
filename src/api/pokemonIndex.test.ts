@@ -44,12 +44,14 @@ describe("Showdown Pokemon index normalization", () => {
       formKind: "mega",
       isSelectorOption: false,
     });
-    expect(byName.get("meowstic-m-mega")).toMatchObject({
+    expect(byName.get("meowstic-male-mega")).toMatchObject({
+      showdownId: "meowsticmmega",
       speciesKey: "meowstic",
       formKind: "mega",
       isSelectorOption: false,
     });
-    expect(byName.get("meowstic-f-mega")).toMatchObject({
+    expect(byName.get("meowstic-female-mega")).toMatchObject({
+      showdownId: "meowsticfmega",
       speciesKey: "meowstic",
       formKind: "mega",
       isSelectorOption: false,

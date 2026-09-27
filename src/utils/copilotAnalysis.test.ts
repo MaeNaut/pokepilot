@@ -63,6 +63,7 @@ const buildState: TeamBuildState = {
   },
   moveIdsBySlot: { 0: ["close-combat", "", "", ""] },
   preMegaPokemonBySlot: {},
+  preMegaAbilityBySlot: {},
   candidateFiltersBySlot: {},
 };
 

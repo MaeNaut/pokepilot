@@ -40,6 +40,14 @@ const battleFormGroups: BattleFormGroup[] = [
       { pokemonId: "morpeko-hangry", label: "Hangry" },
     ],
   },
+  {
+    speciesKey: "pyroar",
+    defaultPokemonId: "pyroar-male",
+    options: [
+      { pokemonId: "pyroar-male", label: "Male" },
+      { pokemonId: "pyroar-female", label: "Female" },
+    ],
+  },
 ];
 
 export const battleOnlyAlternateFormIds = new Set(
