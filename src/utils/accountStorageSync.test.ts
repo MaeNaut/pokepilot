@@ -111,6 +111,18 @@ describe("account storage synchronization", () => {
     expect(result.merged.map((team) => team.id)).toEqual(["original", "mobile", "desktop"]);
   });
 
+  it("does not call a normalized copy of the same team a concurrent edit", () => {
+    const original = savedTeam("team", "2026-09-02");
+    const reordered = {
+      name: original.name, slots: original.slots, bench: original.bench,
+      battleFormat: original.battleFormat, version: original.version, id: original.id,
+      createdAt: original.createdAt, updatedAt: original.updatedAt,
+    } as SavedTeamSummary;
+    const result = reconcileAccountTeams([original], [reordered], []);
+    expect(result.conflicts).toEqual([]);
+    expect(result.merged).toEqual([original]);
+  });
+
   it("requires an explicit removal when concurrent additions exceed 30 teams", () => {
     const original = Array.from({ length: 29 }, (_, index) => savedTeam(`original-${index}`, "2026-09-01"));
     const remote = [...original, savedTeam("remote", "2026-09-02")];

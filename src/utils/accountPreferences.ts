@@ -4,6 +4,7 @@ import {
 } from "../battleFormat/battleFormat";
 import type { Locale } from "../i18n/gameTranslations";
 import type { CopilotAnalysisScope } from "./copilotContracts";
+import { jsonValueEqual } from "./jsonValueEqual";
 
 export type AnalysisPreference = {
   scope: CopilotAnalysisScope;
@@ -133,7 +134,7 @@ export function reconcileAccountPreferences(
   const before = baseline ?? createDefaultAccountPreferences();
   const there = remote ?? createDefaultAccountPreferences();
   const choose = <K extends keyof AccountPreferences>(key: K): AccountPreferences[K] =>
-    JSON.stringify(local[key]) === JSON.stringify(before[key]) ? there[key] : local[key];
+    jsonValueEqual(local[key], before[key]) ? there[key] : local[key];
   return {
     locale: choose("locale"),
     themePreference: choose("themePreference"),

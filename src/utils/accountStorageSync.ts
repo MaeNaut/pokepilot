@@ -4,6 +4,7 @@ import {
   type CopilotHistoryEntry,
 } from "./copilotHistory";
 import { createSavedTeamId, type SavedTeamSummary } from "./teamStorage";
+import { jsonValueEqual } from "./jsonValueEqual";
 
 export type TeamSyncConflict = {
   id: string;
@@ -14,7 +15,7 @@ export type TeamSyncConflict = {
 export type TeamConflictChoice = "both" | "local" | "remote" | "discard";
 
 function sameEntry<T>(left: T | undefined, right: T | undefined) {
-  return JSON.stringify(left) === JSON.stringify(right);
+  return jsonValueEqual(left, right);
 }
 
 export function reconcileAccountTeams(

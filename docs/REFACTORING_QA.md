@@ -313,3 +313,22 @@ Pokemon form. No commit, push, or production deployment is part of this pass.
   Cloudflare build passed. Existing large-chunk build warnings remain.
 - These are local, simulated-device tests. Real OAuth, remote D1, and two
   authenticated preview browsers were not exercised or modified in this pass.
+
+### Two-Tab Preview QA (2026-09-28)
+
+- Uploaded `develop` to the isolated `qa` Worker version URL without routing
+  production traffic. The preview uses its own D1 database and Redis prefix.
+- The deployed preview passed the guest authentication-boundary check. Two
+  Chrome tabs loaded the deployed client while account endpoints were replaced
+  with a shared, versioned test store; no paid analysis was requested.
+- Verified independent team saves, concurrent additions, same-team conflict
+  choice to keep both versions, deletion propagation, persistence after reload,
+  language/theme propagation, and logout in the other tab.
+- Fixed false conflicts caused by differently ordered JSON object fields. Also
+  stopped live tabs from replaying another tab's uncommitted journal as if it
+  were server state; committed changes still refresh peers, while journals are
+  replayed on recovery. Focused regressions and the full suite pass: 142 files,
+  1,077 tests, lint, and Cloudflare build.
+- Google blocked sign-in from the automation browser with its insecure-browser
+  warning. Therefore real OAuth, authenticated Worker/D1 writes, and paid
+  analysis were not validated in this preview-browser pass.

@@ -12,7 +12,7 @@ import {
 import type {
   PendingAccountCollection, StoredPendingAccountCollection,
 } from "../utils/accountPendingStorage";
-import { SAVED_TEAM_SCHEMA_VERSION, type SavedTeamSummary } from "../utils/teamStorage";
+import { normalizeSavedTeams, SAVED_TEAM_SCHEMA_VERSION, type SavedTeamSummary } from "../utils/teamStorage";
 import { useAccountCollection } from "./useAccountCollection";
 
 function team(id: string, name = id): SavedTeamSummary {
@@ -102,7 +102,7 @@ function createSharedBrowser(server: ReturnType<typeof createServer>) {
             }
           }
         },
-        readRemote: async () => ({ value: server.teams, version: `"rev-${server.revision}"` }),
+        readRemote: async () => ({ value: normalizeSavedTeams(server.teams), version: `"rev-${server.revision}"` }),
         writeRemote: async (value: SavedTeamSummary[], version: string) => {
           if (delayedWrite) await delayedWrite.promise;
           if (offline) throw new Error("offline");
@@ -206,6 +206,31 @@ describe("two-device account synchronization", () => {
 });
 
 describe("same-browser tabs", () => {
+  it("does not raise a conflict when the server reorders a saved team's fields", async () => {
+    const server = createServer([]);
+    const browser = createSharedBrowser(server);
+    const firstStorage = browser.tab("first");
+    const secondStorage = browser.tab("second");
+    const first = await renderHook(() => useAccountCollection("account", firstStorage), undefined);
+    const second = await renderHook(() => useAccountCollection("account", secondStorage), undefined);
+    cleanups.push(first.unmount, second.unmount);
+    const original = team("first");
+    const reordered = {
+      name: original.name, battleFormat: original.battleFormat, slots: original.slots,
+      bench: original.bench, version: original.version, id: original.id,
+      createdAt: original.createdAt, updatedAt: original.updatedAt,
+    } as SavedTeamSummary;
+
+    await act(async () => { first.current.commit([reordered]); });
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await act(async () => { second.current.commit([team("second"), ...second.current.items]); });
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+
+    expect(server.teams.map(({ id }) => id)).toEqual(["second", "first"]);
+    expect(first.current.conflict).toBeNull();
+    expect(second.current.conflict).toBeNull();
+  });
+
   it("refreshes a stale tab on focus even without a previous sync error", async () => {
     const original = team("original");
     const server = createServer([original]);
@@ -222,24 +247,38 @@ describe("same-browser tabs", () => {
     expect(second.current.items.map(({ id }) => id)).toContain("new");
   });
 
-  it("replays another tab's pending record on a storage notification", async () => {
+  it("waits for a peer's committed write before refreshing its data", async () => {
     const original = team("original");
     const server = createServer([original]);
     const browser = createSharedBrowser(server);
     const storage = browser.tab("first");
     const first = await renderHook(() => useAccountCollection("account", storage), undefined);
     cleanups.push(first.unmount);
-    browser.tab("second").writePending({
-      accountId: "account", baseline: [original], items: [original, team("second")],
+    const secondStorage = browser.tab("second");
+    const updated = [original, team("second")];
+    secondStorage.writePending({
+      accountId: "account", baseline: [original], items: updated,
     });
     await act(async () => {
-      window.dispatchEvent(new StorageEvent("storage", { key: "test.shared.pending:second" }));
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: "test.shared.pending:second", newValue: "pending",
+      }));
+    });
+    expect(first.current.items.map(({ id }) => id)).toEqual(["original"]);
+    expect(server.teams.map(({ id }) => id)).toEqual(["original"]);
+
+    await secondStorage.writeRemote(updated, '"rev-1"');
+    browser.pending.delete("second");
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: "test.shared.pending:second", oldValue: "pending", newValue: null,
+      }));
     });
     expect(first.current.items.map(({ id }) => id)).toContain("second");
     expect(server.teams.map(({ id }) => id)).toContain("second");
   });
 
-  it("replays another tab's pending edit after the current write began", async () => {
+  it("leaves a peer's pending edit for recovery while its own write is active", async () => {
     const original = team("original");
     const server = createServer([original]);
     const browser = createSharedBrowser(server);
@@ -255,10 +294,42 @@ describe("same-browser tabs", () => {
     await act(async () => {
       release();
       await vi.waitFor(() => expect(server.teams.map(({ id }) => id).sort())
-        .toEqual(["first", "original", "second"]));
+        .toEqual(["first", "original"]));
     });
-    expect(browser.pending.size).toBe(0);
+    expect(browser.pending.size).toBe(1);
     expect(first.current.hasUnsyncedChanges).toBe(false);
+
+    await first.unmount();
+    cleanups.splice(cleanups.indexOf(first.unmount), 1);
+    const reopenedStorage = browser.tab("reopened");
+    const reopened = await renderHook(() => useAccountCollection("account", reopenedStorage), undefined);
+    cleanups.push(reopened.unmount);
+    expect(server.teams.map(({ id }) => id).sort()).toEqual(["first", "original", "second"]);
+    expect(browser.pending.size).toBe(0);
+  });
+
+  it("keeps concurrent same-team edits for an explicit decision", async () => {
+    const server = createServer([team("shared")]);
+    const browser = createSharedBrowser(server);
+    const firstStorage = browser.tab("first");
+    const secondStorage = browser.tab("second");
+    const first = await renderHook(() => useAccountCollection("account", firstStorage), undefined);
+    const second = await renderHook(() => useAccountCollection("account", secondStorage), undefined);
+    cleanups.push(first.unmount, second.unmount);
+    const release = browser.delayNextWrite();
+
+    await act(async () => { first.current.commit([team("shared", "first")]); });
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: "test.shared.pending:first", newValue: "pending",
+      }));
+    });
+    await act(async () => { second.current.commit([team("shared", "second")]); });
+    await act(async () => { release(); });
+    await vi.waitFor(() => expect(second.current.conflict?.conflicts).toMatchObject([{
+      id: "shared", local: { name: "second" }, remote: { name: "first" },
+    }]));
+    expect(server.teams[0].name).toBe("first");
   });
 
   it("pauses concurrent additions that exceed the account's team limit", async () => {
