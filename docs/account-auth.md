@@ -70,8 +70,51 @@ endpoints:
 
 The browser keeps a local copy for continuity. On first sign-in, unclaimed local
 teams and history merge with the account data; on a second device, the account
-copy is authoritative. Preference ownership is also tracked locally so a second
+copy is authoritative unless that device has a persisted unsynced edit.
+Account-owned teams and analysis history are hidden while authentication is
+unresolved, cleared after a confirmed guest result, and retained through a
+transient authentication error. Guest-owned local teams remain available.
+Pending edits retain their last confirmed server baseline for three-way reconciliation
+after a reload. A legacy team cache without that baseline asks once before
+replacing divergent teams; a legacy analysis-history cache follows the account
+copy so a deletion on another device cannot be silently undone. Preference
+edits also retain their last confirmed baseline across a failed write and
+reload. Preference ownership is also tracked locally so a second
 account on the same device cannot inherit the prior account's language or theme.
+Each tab keeps its own pending team, history, and preference record. Other tabs
+replay those records after a storage notification, and a focused tab checks the
+server for newer account data even when its last write succeeded. A pending
+record is cleared only if it has not changed since it was read.
+
+Account storage reads return an ETag. Writes require the matching `If-Match`
+version, so a stale device cannot overwrite a newer server copy. The version
+advances on every write, even when the payload returns to earlier
+content or multiple writes happen in the same millisecond. First-login team
+imports that exceed the 30-team limit require an explicit choice instead of
+silently dropping teams. The same rule applies when concurrent additions from
+separate tabs exceed that limit. Concurrent changes to different teams are merged
+automatically; edits to the same team
+(including an edit versus deletion) pause synchronization and ask the user to
+keep either version or both. Keeping both creates a new local-team copy and is
+subject to the 30-team limit. Independent analysis-history entries are merged,
+and preference fields changed on only one device are retained. A full or
+unavailable browser storage cache does not stop the in-memory account save;
+the interface warns that the local copy may be lost when the tab closes.
+Failed preference reads and writes appear in the account sync warning and retry
+on reconnect, focus, or a manual retry.
+Storage, personal-key, analysis, logout, and account-deletion requests from the
+current client identify the account visible in that tab. The Worker rejects a
+request if its authenticated session now belongs to another account or if the
+ID is missing; the client then refreshes its account state. Account deletion
+also requires a matching ID. Already-open older tabs must be refreshed after
+deploying this Worker version.
+
+Deployment note: already-open clients without the expected-account header get
+HTTP 403 from storage, personal-key, and analysis endpoints after this Worker
+version is deployed. They must refresh before using those features again.
+Even earlier clients without `If-Match` cannot perform conditional writes
+(HTTP 428 once they supply an account ID). Do not relax either guard: a shared
+cookie alone cannot identify the account or server revision a tab last saw.
 
 Current workspace selection, open panels, unsaved drafts, last-opened team, and
 game-data caches remain device-local by design. They are navigation or cache
@@ -88,6 +131,14 @@ for the encryption, rotation, and deployment requirements.
   restart all yield the expected account state.
 - A second signed-in browser restores saved teams, analysis history, language,
   theme, battle format, completed tutorial state, and analysis selection.
+- Concurrent saves on separate devices keep distinct team edits, and competing
+  edits to the same team present a version-choice dialog before saving.
+- A deletion on another device remains deleted after refresh; an offline edit
+  stored as pending survives refresh and is reconciled against the account copy.
+- A failed preference read or write displays the sync warning and retries when
+  the browser reconnects or the user retries manually.
+- When browser storage rejects a team write, account sync still succeeds and
+  the user sees a local-storage warning.
 - Logging out clears the current browser's synchronized team/history copies;
   signing back into the same account restores the D1 copies.
 - Switching accounts does not expose local team/history data or carry over the

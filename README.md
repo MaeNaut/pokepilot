@@ -101,8 +101,9 @@ account authentication, and intentionally makes a fresh hosted analysis.
 
 Large source catalogs are converted into compact checked-in snapshots and
 cached locally so the browser does not repeatedly request or parse upstream data.
-Smogon usage is still historical Regulation M-B data until M-C statistics exist;
-it is not presented as measured M-C usage.
+Smogon usage prefers the latest available Regulation M-C monthly statistics
+per battle format. Until that format's M-C file is available, the app labels
+and uses historical Regulation M-B statistics instead.
 
 ## Documentation
 

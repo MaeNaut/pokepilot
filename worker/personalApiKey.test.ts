@@ -35,7 +35,7 @@ const testKey = "sk-proj-test-user-key-1234567890";
 function request(method: string, body?: unknown, origin = "https://pokepilot.app") {
   return new Request(endpoint, {
     method,
-    headers: { Origin: origin, "Content-Type": "application/json" },
+    headers: { Origin: origin, "Content-Type": "application/json", "X-PokePilot-Account-Id": "account-a" },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
 }
@@ -47,6 +47,22 @@ beforeEach(() => {
 });
 
 describe("personal API key storage", () => {
+  it("rejects a stale tab before altering the newly signed-in account's key", async () => {
+    const stale = new Request(endpoint, {
+      method: "PUT",
+      headers: {
+        Origin: "https://pokepilot.app", "Content-Type": "application/json",
+        "X-PokePilot-Account-Id": "previous-account",
+      },
+      body: JSON.stringify({ apiKey: testKey }),
+    });
+    const response = await handlePersonalApiKey(stale, env);
+    expect(response.status).toBe(403);
+    expect((await handlePersonalApiKey(new Request(endpoint), env)).status).toBe(403);
+    expect(rows.size).toBe(0);
+    expect(await response.json()).toMatchObject({ error: { code: "ACCOUNT_SESSION_CHANGED" } });
+  });
+
   it("encrypts the key for one account and never returns plaintext to the browser", async () => {
     const save = await handlePersonalApiKey(request("PUT", { apiKey: testKey }), env);
     expect(save.status).toBe(204);

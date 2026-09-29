@@ -201,6 +201,43 @@ function createModelResult(output: unknown): LunaAnalysisResult {
 }
 
 describe("PokePilot server API", () => {
+  describe.each(["sync", "async"] as const)("diagnostic sink failure (%s)", (mode) => {
+    function fail() {
+      if (mode === "async") return Promise.reject(new Error("diagnostics unavailable"));
+      throw new Error("diagnostics unavailable");
+    }
+
+    it("preserves completed and cached analyses when metrics and warning sinks fail", async () => {
+      const analyze = vi.fn(async () => createModelResult(modelOutput));
+      const operations = new InMemoryPokePilotOperations();
+      const options = { analyze, operations, onOperationalEvent: fail, onQualityWarning: fail };
+      const first = await handlePokePilotAnalysis(validRequest, options);
+      const cached = await handlePokePilotAnalysis(validRequest, options);
+      expect(first.body).toMatchObject({ ok: true, analysis: modelOutput, metadata: { cacheStatus: "miss" } });
+      expect(cached.body).toMatchObject({ ok: true, analysis: modelOutput, metadata: { cacheStatus: "hit" } });
+      expect(analyze).toHaveBeenCalledOnce();
+    });
+
+    it("preserves the completed analysis when cache-write error logging also fails", async () => {
+      const operations = new InMemoryPokePilotOperations();
+      vi.spyOn(operations, "setCached").mockRejectedValue(new Error("cache offline"));
+      const result = await handlePokePilotAnalysis(validRequest, {
+        analyze: async () => createModelResult(groundedModelOutput), operations,
+        onUpstreamError: fail, onQualityWarning: fail, onOperationalEvent: fail,
+      });
+      expect(result.body).toMatchObject({ ok: true, analysis: modelOutput });
+    });
+
+    it("preserves the original AI failure when both failure sinks fail", async () => {
+      const sample = createModelResult(null);
+      const result = await handlePokePilotAnalysis(validRequest, {
+        analyze: async () => { throw new LunaStructuredOutputError("invalid output", sample.usage, sample.responseMetadata); },
+        onUpstreamError: fail, onOperationalEvent: fail,
+      });
+      expect(result).toMatchObject({ status: 502, body: { ok: false, error: { code: "AI_INVALID_RESPONSE" } } });
+    });
+  });
+
   it("rejects Sol on the site key before any analysis", async () => {
     const analyze = vi.fn();
     const result = await handlePokePilotAnalysis(validRequest, { analyze, modelId: "gpt-6-sol" });

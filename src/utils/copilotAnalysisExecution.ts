@@ -5,10 +5,13 @@ export async function executeCopilotAnalysis(
   request: CopilotAnalysisRequest,
   reasoningEffort: "low" | "medium" = "low",
   modelId: "gpt-6-luna" | "gpt-6-sol" = "gpt-6-luna",
+  accountId?: string,
 ) {
   let nextResponse: CopilotAnalysisResponse;
 
-  const hostedResult = await requestHostedCopilotAnalysis(request, undefined, reasoningEffort, modelId);
+  const hostedResult = await requestHostedCopilotAnalysis(
+    request, undefined, reasoningEffort, modelId, accountId,
+  );
   nextResponse = hostedResult.qualityWarnings?.length
     ? {
         ...hostedResult.analysis,

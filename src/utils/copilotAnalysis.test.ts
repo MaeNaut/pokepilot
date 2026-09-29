@@ -10,7 +10,6 @@ import {
   createCopilotAnalysisRequest,
   getCopilotRequestFingerprint,
 } from "./copilotAnalysis";
-import { createLocalCopilotAnalysis } from "./copilotLocalAnalysis";
 import { validateCopilotAnalysisRequest } from "./copilotRequestContract";
 import {
   createCalculatorBattleState,
@@ -500,11 +499,6 @@ describe("Copilot analysis", () => {
       expect(validateCopilotAnalysisRequest(metaRequest)).toMatchObject({
         success: true,
       });
-      expect(createLocalCopilotAnalysis(metaRequest)).toMatchObject({
-        scope: "matchup",
-        title: "Test Team meta threat analysis",
-        recommendations: expect.any(Array),
-      });
 
       const metaOptimizationRequest = createCopilotAnalysisRequest({
         ...input,
@@ -541,14 +535,6 @@ describe("Copilot analysis", () => {
       expect(validateCopilotAnalysisRequest(metaOptimizationRequest)).toMatchObject({
         success: true,
       });
-      const changedCandidate = metaOptimizationRequest.optimization?.candidates.find(
-        (candidate) => candidate.id !== "set-current",
-      );
-      expect(changedCandidate).toBeDefined();
-      expect(
-        createLocalCopilotAnalysis(metaOptimizationRequest).recommendations
-          .map(({ id }) => id),
-      ).toContain(changedCandidate?.id);
     }
 
     if (matchupPlan.status === "ready") {
@@ -631,11 +617,6 @@ describe("Copilot analysis", () => {
     }
     expect(validateCopilotAnalysisRequest(persistentMatchupRequest)).toMatchObject({
       success: false,
-    });
-    expect(createLocalCopilotAnalysis(matchupRequest)).toMatchObject({
-      scope: "matchup",
-      title: "Test Team vs. Test Opponent",
-      recommendations: expect.any(Array),
     });
     const mismatchedMatchup = structuredClone(matchupRequest);
     if (mismatchedMatchup.matchup?.mode === "exact") {
@@ -767,42 +748,6 @@ describe("Copilot analysis", () => {
     expect(validateCopilotAnalysisRequest(missingMoveMechanic)).toMatchObject({
       success: false,
     });
-
-    const response = createLocalCopilotAnalysis(request);
-    expect(response.scope).toBe("optimization");
-    expect(response.recommendations.length).toBeGreaterThan(0);
-    expect(response.recommendations.length).toBeLessThanOrEqual(3);
-    expect(
-      response.recommendations.every((recommendation) =>
-        request.optimization?.candidates.some(
-          (candidate) => candidate.id === recommendation.id,
-        ),
-      ),
-    ).toBe(true);
-
-    const fallbackCandidate = request.optimization?.candidates[0];
-    if (request.optimization && fallbackCandidate) {
-      const fallbackRequest = {
-        ...request,
-        optimization: {
-          ...request.optimization,
-          candidates: [
-            {
-              ...fallbackCandidate,
-              id: "set-current",
-              itemChanged: false,
-              moveChanges: [],
-            },
-            ...request.optimization.candidates,
-          ],
-        },
-      };
-      expect(
-        createLocalCopilotAnalysis(fallbackRequest).recommendations.map(
-          ({ id }) => id,
-        ),
-      ).toEqual(["set-current"]);
-    }
   });
 
   it("does not leak a selected calculator opponent into general sample candidates", () => {
@@ -1188,84 +1133,6 @@ describe("Copilot analysis", () => {
     });
   });
 
-  it("turns team diagnostics into prioritized structured guidance", () => {
-    const request = createCopilotAnalysisRequest({
-      scope: "team",
-      teamName: "Test Team",
-      team: [member, null, null, null, null, null],
-      selectedSlot: 0,
-      buildState,
-      diagnostics,
-      validity,
-    });
-    const response = createLocalCopilotAnalysis(request);
-
-    expect(response).toMatchObject({
-      version: 2,
-      source: "local",
-      scope: "team",
-      title: "Test Team",
-    });
-    expect(response.paragraphs.join(" ")).toContain("1/6 active sets");
-    expect(response.recommendations[0]).toMatchObject({
-      id: "fill-team",
-      priority: "medium",
-    });
-  });
-
-  it("renders deterministic team guidance in Korean", () => {
-    const request = createCopilotAnalysisRequest({
-      scope: "team",
-      teamName: "테스트 팀",
-      team: [member, null, null, null, null, null],
-      selectedSlot: 0,
-      buildState,
-      diagnostics,
-      validity,
-    });
-    const response = createLocalCopilotAnalysis(request, "ko");
-
-    expect(response.paragraphs.join(" ")).toContain("활성 샘플은 1/6개");
-    expect(response.paragraphs.join(" ")).toContain("밸런스형");
-    expect(response.recommendations[0]).toMatchObject({
-      id: "fill-team",
-      title: "활성 파티의 남은 슬롯을 채워야 합니다.",
-    });
-  });
-
-  it("does not recommend an ace from setup alone", () => {
-    const request = createCopilotAnalysisRequest({
-      scope: "team",
-      teamName: "Weather Utility",
-      team: [member, null, null, null, null, null],
-      selectedSlot: 0,
-      buildState,
-      diagnostics: {
-        ...diagnostics,
-        concepts: [
-          {
-            id: "sand",
-            label: "Sand",
-            status: "setup-only",
-            setterSlots: [0],
-            aceSlots: [],
-            dependentAceSlots: [],
-            independentAttackerSlots: [0],
-            hasIndependentAttacker: true,
-          },
-        ],
-      },
-      validity,
-    });
-    const response = createLocalCopilotAnalysis(request);
-
-    expect(
-      response.recommendations.some(
-        (recommendation) => recommendation.id === "concept-sand-ace",
-      ),
-    ).toBe(false);
-  });
-
   it("does not stale team analysis when only the displayed slot changes", () => {
     const request = createCopilotAnalysisRequest({
       scope: "team",
@@ -1524,47 +1391,7 @@ describe("Copilot analysis", () => {
     });
   });
 
-  it("summarizes the selected Pokemon without treating empty move slots as errors", () => {
-    const request = createCopilotAnalysisRequest({
-      scope: "pokemon",
-      teamName: "Test Team",
-      team: [member, null, null, null, null, null],
-      selectedSlot: 0,
-      buildState,
-      diagnostics,
-      validity,
-    });
-    const response = createLocalCopilotAnalysis(request);
-    const prose = response.paragraphs.join(" ");
-
-    expect(response.title).toBe("Test Pokemon");
-    expect(prose).toContain("1 selected move");
-    expect(prose).toContain("All 66 EV points are allocated.");
-    expect(prose).not.toContain(
-      "No moves are currently configured for set analysis.",
-    );
-  });
-
-  it("localizes Pokemon roles, abilities, natures, and generated prose", () => {
-    const request = createCopilotAnalysisRequest({
-      scope: "pokemon",
-      teamName: "Test Team",
-      team: [member, null, null, null, null, null],
-      selectedSlot: 0,
-      buildState,
-      diagnostics,
-      validity,
-    });
-    const response = createLocalCopilotAnalysis(request, "ko");
-    const prose = response.paragraphs.join(" ");
-
-    expect(prose).toContain("물리 어태커");
-    expect(prose).toContain("위협 특성");
-    expect(prose).toContain("고집 성격");
-    expect(prose).toContain("노력치 66포인트를 모두 배분했습니다.");
-  });
-
-  it("includes saved empty-slot requirements in the request and Pokemon recommendation", () => {
+  it("includes saved empty-slot requirements in the request", () => {
     const filteredBuildState: TeamBuildState = {
       ...buildState,
       candidateFiltersBySlot: {
@@ -1584,7 +1411,6 @@ describe("Copilot analysis", () => {
       diagnostics,
       validity,
     });
-    const response = createLocalCopilotAnalysis(request);
 
     expect(request.candidateFilters[0]).toMatchObject({
       slotIndex: 1,
@@ -1592,11 +1418,5 @@ describe("Copilot analysis", () => {
       ability: { id: "drought", name: "Drought" },
       moves: [{ id: "tailwind", name: "Tailwind" }],
     });
-    expect(response.paragraphs.join(" ")).toContain(
-      "Fire type, Flying type, Drought ability",
-    );
-    expect(response.recommendations[0]?.title).toBe(
-      "Choose a Pokemon that matches these requirements.",
-    );
   });
 });

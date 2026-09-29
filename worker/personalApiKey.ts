@@ -55,6 +55,10 @@ export async function handlePersonalApiKey(request: Request, env: WorkerEnvironm
   const session = await readAccountSession(request, env);
   if (!session) return jsonResponse(401, { ok: false, error: { code: "AUTH_REQUIRED" } });
   const accountId = session.account.id;
+  const expectedAccountId = request.headers.get("X-PokePilot-Account-Id");
+  if (expectedAccountId !== accountId) {
+    return jsonResponse(403, { ok: false, error: { code: "ACCOUNT_SESSION_CHANGED" } });
+  }
   const refreshed = session.refreshCookie;
 
   if (request.method === "GET") {

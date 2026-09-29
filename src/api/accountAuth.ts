@@ -1,3 +1,5 @@
+import { rejectChangedAccount } from "./accountSessionBoundary";
+
 export const accountAuthEnabled = import.meta.env.VITE_ACCOUNT_AUTH_ENABLED === "true";
 
 export type AccountProfile = {
@@ -36,12 +38,18 @@ export async function loginAccount() {
   window.location.assign("/api/auth/google");
 }
 
-export async function logoutAccount() {
-  const response = await fetch("/api/auth/logout", { method: "POST" });
+export async function logoutAccount(accountId: string) {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST", headers: { "X-PokePilot-Account-Id": accountId },
+  });
+  await rejectChangedAccount(response);
   if (!response.ok) throw new Error("AUTH_UNAVAILABLE");
 }
 
-export async function deleteAccount() {
-  const response = await fetch("/api/pokepilot/account", { method: "DELETE" });
+export async function deleteAccount(accountId: string) {
+  const response = await fetch("/api/pokepilot/account", {
+    method: "DELETE", headers: { "X-PokePilot-Account-Id": accountId },
+  });
+  await rejectChangedAccount(response);
   if (!response.ok) throw new Error("DELETE_FAILED");
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PokemonMove } from "../types";
 import {
   getSmogonUsageFormatId,
@@ -60,11 +60,17 @@ describe("Smogon usage move resolution", () => {
 });
 
 describe("Smogon usage formats", () => {
-  it("maps singles and doubles to their Regulation M-B ladders", () => {
-    expect(getSmogonUsageFormatId("singles")).toBe(
+  it("maps singles and doubles to their respective M-C and M-B ladders", () => {
+    expect(getSmogonUsageFormatId("singles", "mc")).toBe(
+      "gen9championsbssregmc",
+    );
+    expect(getSmogonUsageFormatId("doubles", "mc")).toBe(
+      "gen9championsvgc2026regmc",
+    );
+    expect(getSmogonUsageFormatId("singles", "mb")).toBe(
       "gen9championsbssregmb",
     );
-    expect(getSmogonUsageFormatId("doubles")).toBe(
+    expect(getSmogonUsageFormatId("doubles", "mb")).toBe(
       "gen9championsvgc2026regmb",
     );
   });
@@ -132,5 +138,140 @@ describe("Smogon usage formats", () => {
       nature: "jolly",
       evs: { hp: 2, attack: 32, speed: 32 },
     });
+  });
+});
+
+const movesetText = `
+ +------------+
+ | Incineroar |
+ +------------+
+ | Raw count: 100
+ | Abilities |
+ | Intimidate 95.000% |
+ | Items |
+ | Sitrus Berry 50.000% |
+ | Moves |
+ | Fake Out 90.000% |
+`;
+
+function stubBrowserStorage() {
+  const entries = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => entries.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      entries.set(key, value);
+    },
+    removeItem: (key: string) => {
+      entries.delete(key);
+    },
+  });
+  return entries;
+}
+
+function movesetResponse(url: string, path: string) {
+  const found = url.includes(path);
+  return new Response(found ? movesetText : "", { status: found ? 200 : 404 });
+}
+
+describe("Smogon usage source selection", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps M-B before September M-C statistics can exist", async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-27T00:00:00Z"));
+    stubBrowserStorage();
+    const fetchMock = vi.fn(async (url: string) => movesetResponse(
+      url, "2026-08/moveset/gen9championsbssregmb-1630.txt",
+    ));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { loadSmogonUsageSource } = await import("./smogonUsage");
+    expect(await loadSmogonUsageSource("singles")).toEqual({
+      regulation: "mb", sourceMonth: "2026-08", cutoff: 1630,
+    });
+    expect(fetchMock.mock.calls.every(([url]) => !url.includes("regmc"))).toBe(true);
+  });
+
+  it("prefers published M-C data and shares its source across usage consumers", async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-04T00:00:00Z"));
+    const storage = stubBrowserStorage();
+    storage.set("pokepilot:smogon-usage:v6:doubles", JSON.stringify({
+      sourceMonth: "2026-08", cutoff: 1630, sets: [{ pokemonId: "stale" }],
+      cachedAt: Date.now(),
+    }));
+    const fetchMock = vi.fn(async (url: string) => movesetResponse(
+      url, "2026-09/moveset/gen9championsvgc2026regmc-1630.txt",
+    ));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { loadSmogonUsageSource, loadSmogonUsageSets, loadPopularSmogonSet } = await import("./smogonUsage");
+    expect(await loadSmogonUsageSource("doubles")).toEqual({
+      regulation: "mc", sourceMonth: "2026-09", cutoff: 1630,
+    });
+    expect((await loadSmogonUsageSets("doubles"))[0].pokemonId).toBe("incineroar");
+    expect((await loadPopularSmogonSet("incineroar", "doubles"))?.sourceMonth).toBe("2026-09");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("switches singles and doubles independently and accepts the 0 cutoff", async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-04T00:00:00Z"));
+    stubBrowserStorage();
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const isSinglesMc = url.includes("2026-09/moveset/gen9championsbssregmc-0.txt");
+      const isDoublesMb = url.includes("2026-08/moveset/gen9championsvgc2026regmb-1630.txt");
+      const found = isSinglesMc || isDoublesMb;
+      return new Response(found ? movesetText : "", { status: found ? 200 : 404 });
+    }));
+
+    const { loadSmogonUsageSource } = await import("./smogonUsage");
+    const [singles, doubles] = await Promise.all([
+      loadSmogonUsageSource("singles"),
+      loadSmogonUsageSource("doubles"),
+    ]);
+    expect(singles).toEqual({ regulation: "mc", sourceMonth: "2026-09", cutoff: 0 });
+    expect(doubles).toEqual({ regulation: "mb", sourceMonth: "2026-08", cutoff: 1630 });
+  });
+
+  it("falls back to M-B, then refreshes the fallback when M-C appears", async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-04T00:00:00Z"));
+    const storage = stubBrowserStorage();
+    let mcPublished = false;
+    const fetchMock = vi.fn(async (url: string) => {
+      const isMc = url.includes("2026-09/moveset/gen9championsvgc2026regmc-1630.txt");
+      const isMb = url.includes("2026-08/moveset/gen9championsvgc2026regmb-1630.txt");
+      return new Response(isMb || (isMc && mcPublished) ? movesetText : "", {
+        status: isMb || (isMc && mcPublished) ? 200 : 404,
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    let { loadSmogonUsageSource } = await import("./smogonUsage");
+    expect(await loadSmogonUsageSource("doubles")).toEqual({
+      regulation: "mb", sourceMonth: "2026-08", cutoff: 1630,
+    });
+    expect(storage.has("pokepilot:smogon-usage:v7:doubles")).toBe(true);
+
+    vi.resetModules();
+    ({ loadSmogonUsageSource } = await import("./smogonUsage"));
+    const callsBeforeCacheRead = fetchMock.mock.calls.length;
+    expect((await loadSmogonUsageSource("doubles"))?.regulation).toBe("mb");
+    expect(fetchMock).toHaveBeenCalledTimes(callsBeforeCacheRead);
+
+    mcPublished = true;
+    vi.setSystemTime(new Date("2026-10-04T01:01:00Z"));
+    expect(await loadSmogonUsageSource("doubles")).toEqual({
+      regulation: "mc", sourceMonth: "2026-09", cutoff: 1630,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(callsBeforeCacheRead + 1);
   });
 });

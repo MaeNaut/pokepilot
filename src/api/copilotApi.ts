@@ -6,6 +6,7 @@ import type {
 } from "../utils/copilotContracts";
 import { isCopilotQualityWarningCode, normalizeCopilotExecutionInfo } from "../utils/copilotContracts";
 import { validateCopilotModelOutput } from "../utils/copilotModelValidation";
+import { requestAccountRefresh } from "./accountSessionBoundary";
 
 type HostedAnalysisEnvelope = {
   ok?: unknown;
@@ -67,6 +68,7 @@ export async function requestHostedCopilotAnalysis(
   signal?: AbortSignal,
   reasoningEffort: "low" | "medium" = "low",
   modelId: "gpt-6-luna" | "gpt-6-sol" = "gpt-6-luna",
+  accountId?: string,
 ): Promise<HostedCopilotAnalysisResult> {
   let response: Response;
 
@@ -77,6 +79,7 @@ export async function requestHostedCopilotAnalysis(
         "Content-Type": "application/json",
         "X-PokePilot-Reasoning-Effort": reasoningEffort,
         "X-PokePilot-Model": modelId,
+        ...(accountId ? { "X-PokePilot-Account-Id": accountId } : {}),
       },
       body: JSON.stringify(request),
       signal,
@@ -89,6 +92,7 @@ export async function requestHostedCopilotAnalysis(
     );
   }
   const envelope = await readEnvelope(response);
+  if (envelope.error?.code === "ACCOUNT_SESSION_CHANGED") requestAccountRefresh();
 
   if (!response.ok || envelope.ok !== true) {
     throw new CopilotApiError(

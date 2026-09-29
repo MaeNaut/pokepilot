@@ -8,11 +8,17 @@ import {
   normalizeBuildState,
   type TeamBuildState,
 } from "./teamBuildState";
+import {
+  clearConsumedPendingCollections, clearPendingCollection, readPendingCollection,
+  readPendingCollections, writePendingCollection, pendingTeamsStorageKey, type PendingAccountCollection,
+  type StoredPendingAccountCollection,
+} from "./accountPendingStorage";
 export { createEmptyBuildState } from "./teamBuildState";
 
 const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
 const lastActiveTeamStorageKey = "pokepilot.lastActiveTeam.v1";
 const savedTeamsAccountStorageKey = "pokepilot.savedTeams.account.v1";
+const managedTeamsStorageKey = "pokepilot.savedTeams.managed.v1";
 
 export const SAVED_TEAM_SCHEMA_VERSION = 1;
 
@@ -102,19 +108,66 @@ export function storeTeams(teams: SavedTeamSummary[]) {
   localStorage.setItem(savedTeamsStorageKey, JSON.stringify(teams));
 }
 
+export function getPendingTeams() {
+  return readPendingCollection(pendingTeamsStorageKey, normalizeSavedTeams);
+}
+
+export function getAllPendingTeams() {
+  return readPendingCollections(pendingTeamsStorageKey, normalizeSavedTeams);
+}
+
+export function storePendingTeams(pending: PendingAccountCollection<SavedTeamSummary>) {
+  writePendingCollection(pendingTeamsStorageKey, pending);
+}
+
+export function clearPendingTeams(accountId?: string) {
+  clearPendingCollection(pendingTeamsStorageKey, accountId);
+}
+
+export function clearConsumedPendingTeams(records: StoredPendingAccountCollection<SavedTeamSummary>[]) {
+  clearConsumedPendingCollections(records);
+}
+
+export function hasManagedTeams(accountId: string) {
+  try {
+    return localStorage.getItem(managedTeamsStorageKey) === accountId;
+  } catch {
+    return false;
+  }
+}
+
+export function markManagedTeams(accountId: string) {
+  localStorage.setItem(managedTeamsStorageKey, accountId);
+}
+
 export function getLastActiveTeamId() {
-  return localStorage.getItem(lastActiveTeamStorageKey);
+  try {
+    return localStorage.getItem(lastActiveTeamStorageKey);
+  } catch {
+    return null;
+  }
 }
 
 export function storeLastActiveTeamId(teamId: string) {
-  localStorage.setItem(lastActiveTeamStorageKey, teamId);
+  try {
+    localStorage.setItem(lastActiveTeamStorageKey, teamId);
+  } catch {
+    // Last-opened team is only a navigation hint; account sync still continues.
+  }
 }
 
 export function clearLastActiveTeamId() {
-  localStorage.removeItem(lastActiveTeamStorageKey);
+  try {
+    localStorage.removeItem(lastActiveTeamStorageKey);
+  } catch {
+    // The account data is cleared separately by the collection owner.
+  }
 }
 
 export function clearStoredTeams() {
+  const ownerId = getStoredTeamsAccountId();
+  if (ownerId) clearPendingTeams(ownerId);
+  localStorage.removeItem(managedTeamsStorageKey);
   localStorage.removeItem(savedTeamsStorageKey);
   localStorage.removeItem(savedTeamsAccountStorageKey);
   clearLastActiveTeamId();

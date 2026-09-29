@@ -57,6 +57,16 @@ describe("hosted PokePilot client", () => {
     });
   });
 
+  it("binds a signed-in analysis to the account shown in its tab", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      new Response(JSON.stringify({ ok: true, analysis: modelOutput }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await requestHostedCopilotAnalysis(request, undefined, "low", "gpt-6-luna", "account-a");
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
+      "X-PokePilot-Account-Id": "account-a",
+    });
+  });
+
   it("sends Sol low as an explicit model selection", async () => {
     const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true, analysis: modelOutput }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);

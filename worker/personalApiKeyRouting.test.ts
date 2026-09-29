@@ -29,7 +29,8 @@ const env = {
 function analyzeRequest(effort: string, modelId = "gpt-6-luna") {
   return new Request("https://pokepilot.app/api/pokepilot/analyze", {
     method: "POST",
-    headers: { "X-PokePilot-Reasoning-Effort": effort, "X-PokePilot-Model": modelId, Origin: "https://pokepilot.app" },
+    headers: { "X-PokePilot-Reasoning-Effort": effort, "X-PokePilot-Model": modelId,
+      "X-PokePilot-Account-Id": "account-a", Origin: "https://pokepilot.app" },
   });
 }
 
@@ -54,6 +55,22 @@ describe("Worker analysis key routing", () => {
     expect(response.status).toBe(401);
     expect(handleWebPokePilotApi).not.toHaveBeenCalled();
     expect(readPersonalApiKey).not.toHaveBeenCalled();
+  });
+
+  it("blocks a stale tab before reading a personal key or invoking the model", async () => {
+    const original = analyzeRequest("low");
+    const headers = new Headers(original.headers);
+    headers.set("X-PokePilot-Account-Id", "previous-account");
+    const response = await worker.fetch(new Request(original, { headers }), env);
+    expect(response.status).toBe(403);
+    expect((await worker.fetch(new Request("https://pokepilot.app/api/pokepilot/analyze", {
+      method: "POST", headers: { Origin: "https://pokepilot.app" },
+    }), env)).status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      error: { code: "ACCOUNT_SESSION_CHANGED", providerAttempted: false },
+    });
+    expect(readPersonalApiKey).not.toHaveBeenCalled();
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
   });
 
   it("uses the registered key for both efforts without site-key safeguards", async () => {

@@ -11,8 +11,23 @@ with a four-second request timeout. Missing artwork falls back to Showdown.
 Korean descriptions use the generated PokeAPI catalog and local overrides;
 missing descriptions show English with a Korean notice.
 
-Smogon usage remains the historical M-B source until M-C monthly statistics are
-available. It must not be interpreted as measured M-C usage.
+Smogon usage first checks the completed September 2026-or-later monthly
+statistics for the M-C singles and doubles ladders independently. Until a
+format's M-C moveset file is published, that format uses its latest available
+historical M-B moveset. The PokePilot footer and empty-state note reflect the
+source actually loaded for the selected battle format. An M-B fallback must
+not be interpreted as measured M-C usage. M-B browser snapshots expire after
+one hour so a newly published M-C file can be picked up on the next load;
+M-C snapshots retain the existing 24-hour cache lifetime.
+
+Before the public launch, check the official Smogon September 2026 moveset
+directory for both `gen9championsbssregmc` and
+`gen9championsvgc2026regmc`. Confirm the available cutoff, parsed Pokemon
+count, form IDs, and representative abilities, items, moves, and spreads in QA.
+Test both formats' sample application, ranking, recommendation, and analysis,
+then verify the production source label and browser-cache transition. If a
+format has no M-C file, keep its explicit M-B fallback instead of presenting
+the old data as current M-C statistics.
 
 Prompt version 91, Pokemon cache v23, and Showdown battle-data cache v2 separate
 the updated data from old cache entries. Saved teams reload Pokemon data by ID,
@@ -52,9 +67,8 @@ states such as Aegislash, Palafin, and Morpeko use the post-selection form contr
   states. Rotom-Wash, Persian-Alola, Basculegion-F, Aegislash-Shield,
   Palafin-Zero, and Morpeko-Full-Belly were checked alongside the six newly
   separated M-C form choices; every team and individual artwork loaded.
-- Remaining blocker: Aura Guard is present in Showdown but is not implemented by
-  the installed damage engine. Its contact damage reduction needs implementation
-  and damage-roll tests before claiming full M-C calculation support.
+- The later Champions damage-engine update now covers Aura Guard contact damage
+  reduction, with damage-roll regression tests in `damageCalculator.test.ts`.
 - Chrome controller failed to start; VS Code browser was available. Rillaboom
   selection was exercised there, including the missing Champions icon fallback.
 - At the time of this 2026-09-09 QA run, 630 tests, lint, and the production

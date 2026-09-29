@@ -1,5 +1,119 @@
 # Refactoring and Verification, 2026-09-19
 
+## 2026-09-27: Reproduced Late Pokemon Selection Fix
+
+- Prioritized a concrete race over further structural extraction. App-level
+  tests reproduced a late ordinary Pokemon selection repopulating a newly
+  created team or a logged-out workspace (two failing tests before the fix).
+- Added a small shared workspace-transition callback in App. New-team creation,
+  saved-team loading, new-team Showdown import, and account departure invalidate
+  pending selection request IDs and clear their loading/error/retry notices.
+  Existing stale-response checks then reject late successes and failures.
+- Seven integration regressions exercise the real App handlers with mocked child
+  views and deferred data services: new team, logout, normal selection, old
+  failure versus a newer loading request, stale usage notice, saved-team loading,
+  and Showdown import. No additional component or state-manager extraction.
+
+Verification: `check:cloudflare` passed with 136 test files / 983 tests, lint,
+TypeScript, production build, and Wrangler dry-run. Existing bundle-size warnings
+remain. Browser/cross-device OAuth QA was not repeated; no paid AI requests,
+commit, push, or deployment. Other refactoring candidates remain deferred.
+
+## 2026-09-27: Panel Controls and Team Editing Ownership
+
+- Extracted `CopilotModelControl` from CopilotPanel. It owns menu visibility,
+  outside/Escape dismissal, locked choices, tooltip copy, and model presentation.
+  The parent updates the persisted model/effort preference in one state update.
+- Extracted `CopilotAnalyzeControl`. It owns estimate presentation, button/dialog
+  markup, heading focus, cancel/Escape focus return, and dismissal on context
+  changes. The panel retains confirmation intent for result refresh buttons,
+  authentication, preparation, and execution orchestration.
+- Moved slot reorder, team-to-bench transfer, bench-to-team swap, bench reorder,
+  and bench removal from App into `useTeamWorkspace`. Existing pure bench
+  transformations remain the source of build transfer rules; selected-slot
+  behavior and capacity checks are unchanged.
+- DOM tests cover confirmation-before-execution, estimates, focus return,
+  context-change dismissal, keyless model locking, selection order, and menu
+  dismissal. Workspace tests cover build-preserving round trips (including
+  pre-mega ability), occupied-slot exchange, reorder, capacity, and removal.
+
+Verification: 13 new regressions; focused suite 18 passed. Full
+`check:cloudflare` passed: 135 test files / 976 tests, lint, TypeScript,
+production build, and Wrangler dry-run. Existing bundle-size warnings remain.
+CSS and persisted schemas are unchanged. Real-browser/cross-device OAuth QA and
+paid AI calls were not repeated; no commit, push, or deployment was performed.
+
+## 2026-09-27: Portalled Menu Dismissal
+
+- Extended the existing outside-pointer hook with optional additional container
+  refs, retaining its single-container callers. Portalled menu contents now use
+  the same inside/outside handling as their trigger.
+- Replaced duplicate pointer listeners in BuilderToolbar, CopilotHistoryControl,
+  and the model/analysis-confirmation controls in CopilotPanel. Component-owned
+  Escape behavior, confirmation focus, and history positioning remain unchanged.
+- Latest callbacks and portal refs are read without resubscribing the document
+  listener on every render. Disabled controls and unmounted components remove
+  their listeners.
+
+Verification: six new hook regressions cover nested portal content, outside
+clicks, enable/disable, callback/ref changes, unmount, late ref attachment, and
+unchanged Escape ownership. Full `check:cloudflare` passed: 134 test files /
+963 tests, lint, TypeScript, production build, and Wrangler dry-run.
+Existing bundle-size warnings remain. Browser QA was not repeated.
+No commit, push, or deployment was performed.
+
+## 2026-09-27: Analysis Boundaries and Workspace Transitions
+
+- Analysis diagnostics now isolate both synchronous callback exceptions and
+  asynchronous rejections. Metrics/logging failures cannot replace a successful
+  analysis, a cache hit, or the original provider error response.
+- Recommendation and matchup preparation share localized option/target creation,
+  including gender/form labels and saved-member fallback names.
+- Analysis sessions retain error codes and raw fallback messages; the existing
+  display translator resolves known errors using the current language.
+- `useCopilotRequestPreparation` owns catalog loading and scope-specific request
+  preparation. Cancelled, unavailable, or empty plans still do not submit analysis.
+  `useCopilotCandidateActions` owns recommendation/optimization apply and save
+  states, preserving stale-result guards and bench-capacity feedback.
+- `useTeamWorkspace` owns active team, bench, build state, selected slot, names,
+  and saved identity. Load/import/new/account-reset transitions coordinate their
+  draft checkpoints and last-active-team storage. Imports remain dirty; new teams
+  start clean; account reset clears the selected slot and comparison baseline.
+  Async hydration cancellation and saved-team import guards remain in App.
+
+Verification: added 35 regressions; final `check:cloudflare` passed with 133 test
+files / 957 tests, lint, TypeScript, production build, and Wrangler dry-run.
+Existing bundle-size and Node experimental SQLite warnings remain. UI markup,
+CSS, API routes, and persisted schemas were not changed by this follow-up.
+Browser/cross-device OAuth QA and paid model evaluation were not repeated.
+No commit, push, or deployment was performed.
+
+## 2026-09-27: Obsolete Analysis Code and Recommendation Loading
+
+- Removed the unused local-analysis generator and its dedicated assertions,
+  followed by its orphaned `copilotText` dictionary, prose helpers, and re-exports.
+  Request labels now reuse the existing Showdown ID and display-label helpers.
+  Historical local analysis entries remain readable through the history migration
+  path, including their fallback notices.
+- `useCalculatorUsage` shares a single popular-set subscription between move and
+  item suggestions. Item eligibility changes recompute suggestions locally;
+  Pokemon/format changes retain the existing stale-response protection.
+- Recommendation preparation uses the existing abortable frame/task helpers.
+  Scope/input changes, unmount, and newer runs release pending callers and discard
+  late results. An aborted run skips ranking after shared catalog loading finishes;
+  the catalog fetch itself remains available to other consumers.
+- The standard and universal recommendation paths share their data-loading helper.
+  Import/export inspection retained the Vite plugin, environment resolver, Worker
+  entrypoints, evaluation utilities, and persisted-data compatibility code.
+
+Verification: `check:cloudflare` passed (129 test files / 922 tests, lint,
+TypeScript, production build, Wrangler dry-run). Twelve focused regressions cover
+shared usage loading, local item filtering, format changes, cancellation before
+the first frame, late success/failure, unmount, overlapping requests, retry, and
+reuse of shared data after cancellation. Existing bundle-size warnings remain.
+This pass used automated checks; browser QA and paid AI evaluation were not run.
+Changes are local; no commit, push, or deployment was performed.
+
 ## 2026-09-24: Team Workspace Follow-up
 
 - `useTeamDraft` owns names, localized untitled names, normalized snapshots, and
@@ -171,8 +285,31 @@ and route tests; authenticated preview smoke testing is still appropriate before
 production deployment.
 
 Aborting a request cannot undo a write already accepted by the server. Existing
-whole-library synchronization and multi-device conflict semantics are unchanged.
+whole-library synchronization was unchanged in this refactoring pass. A later
+storage fix added conditional account writes, automatic merging of independent
+edits, and a same-team conflict dialog; see [account-auth.md](account-auth.md).
 Large UI files such as App, TeamBuilder, and CalculatorPokemonEditor still contain
 substantial presentation logic; this pass extracts selected responsibilities,
 not every component. Browser checks cover the listed flows, not every layout or
 Pokemon form. No commit, push, or production deployment is part of this pass.
+
+### Account Synchronization QA (2026-09-28)
+
+- A shared-server, two-device hook test now covers independent team edits,
+  competing edits to the same team, an offline edit followed by a remote
+  deletion and reload, and consecutive writes behind a delayed request.
+- Reproduced and fixed a stale-write gap when storage content changed A-B-A:
+  ETags now use a per-row version that advances on every write, including
+  multiple writes in one millisecond. The D1 update compares both the prior
+  payload and timestamp before accepting the new revision.
+- First-login team imports exceeding 30 entries now pause for an explicit
+  selection instead of silently truncating guest teams.
+- Reproduced and fixed a failed preference write being lost on reload. The
+  browser retains the unsent value and server baseline, rebases on a newer
+  remote field, and removes that pending copy after sync or explicit logout.
+- Authentication loading/error now hides account-owned team and history caches.
+  A confirmed guest clears those caches; a transient auth error does not.
+- Full validation: 138 test files / 1,037 tests, lint, TypeScript, and
+  Cloudflare build passed. Existing large-chunk build warnings remain.
+- These are local, simulated-device tests. Real OAuth, remote D1, and two
+  authenticated preview browsers were not exercised or modified in this pass.

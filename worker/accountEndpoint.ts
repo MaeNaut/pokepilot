@@ -18,6 +18,9 @@ export async function handleAccount(request: Request, env: WorkerEnvironment) {
     if (!authRequired) return jsonResponse(404, { ok: false, error: { code: "AUTH_DISABLED" } });
     const session = await readAccountSession(request, env, { refresh: false });
     if (!session) return jsonResponse(401, { ok: false, error: { code: "AUTH_REQUIRED" } });
+    if (request.headers.get("X-PokePilot-Account-Id") !== session.account.id) {
+      return jsonResponse(403, { ok: false, error: { code: "ACCOUNT_SESSION_CHANGED" } });
+    }
     const setCookie = await deleteCurrentAccount(request, env, session.account);
     return emptyResponse({ "Set-Cookie": setCookie });
   }

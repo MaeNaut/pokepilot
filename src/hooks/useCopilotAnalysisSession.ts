@@ -27,6 +27,7 @@ import {
 
 type UseCopilotAnalysisSessionOptions = {
   accountId: string | null;
+  accountResolved?: boolean;
   savedTeamId: string | null;
   request: CopilotAnalysisRequest;
   locale: Locale;
@@ -49,6 +50,7 @@ function getAnalysisContextKey(
 
 export function useCopilotAnalysisSession({
   accountId,
+  accountResolved = true,
   savedTeamId,
   request,
   locale,
@@ -61,10 +63,12 @@ export function useCopilotAnalysisSession({
     Record<string, AnalysisState>
   >({});
   const { items: analysisHistory, current: historyRef, commit: commitHistory, isHydrated } =
-    useCopilotHistory(accountId);
+    useCopilotHistory(accountId, accountResolved);
   const accountGeneration = useRef(0);
+  const displayGenerationByContext = useRef<Record<string, number>>({});
   useEffect(() => {
     accountGeneration.current += 1;
+    displayGenerationByContext.current = {};
     setAnalysisByContext({});
     return () => { accountGeneration.current += 1; };
   }, [accountId]);
@@ -129,6 +133,10 @@ export function useCopilotAnalysisSession({
   async function analyze(submittedRequest: CopilotAnalysisRequest = request) {
     const generation = accountGeneration.current;
     const isCurrentAccount = () => generation === accountGeneration.current;
+    const displayGeneration = (displayGenerationByContext.current[analysisContextKey] ?? 0) + 1;
+    displayGenerationByContext.current[analysisContextKey] = displayGeneration;
+    const isCurrentDisplay = () =>
+      displayGenerationByContext.current[analysisContextKey] === displayGeneration;
     const submittedFingerprint = getCopilotRequestFingerprint(submittedRequest);
     setAnalysisByContext((current) => ({
       ...current,
@@ -141,7 +149,7 @@ export function useCopilotAnalysisSession({
 
     try {
       const { response: nextResponse, execution, usedFallback, fallbackReason } =
-        await executeCopilotAnalysis(submittedRequest, reasoningEffort, modelId);
+        await executeCopilotAnalysis(submittedRequest, reasoningEffort, modelId, accountId ?? undefined);
 
       if (!isCurrentAccount()) return;
       const historyEntry = createCopilotHistoryEntry({
@@ -159,12 +167,13 @@ export function useCopilotAnalysisSession({
       });
 
       commitHistory(addCopilotHistoryEntry(historyRef.current, historyEntry));
+      if (!isCurrentDisplay()) return;
       setAnalysisByContext((current) => ({
         ...current,
         [analysisContextKey]: createReadyAnalysisState(historyEntry, "analysis"),
       }));
     } catch (error) {
-      if (!isCurrentAccount()) return;
+      if (!isCurrentAccount() || !isCurrentDisplay()) return;
       setAnalysisByContext((current) => ({
         ...current,
         [analysisContextKey]: {
@@ -172,22 +181,16 @@ export function useCopilotAnalysisSession({
           status: "error",
           errorCode: error instanceof CopilotApiError ? error.code : undefined,
           providerAttempted: error instanceof CopilotApiError ? error.providerAttempted : undefined,
-          error: error instanceof CopilotApiError && error.code === "AUTH_REQUIRED"
-            ? (locale === "ko" ? "로그인이 만료되었습니다. 다시 로그인하시기 바랍니다." : "Your session expired. Please sign in again.")
-            : error instanceof CopilotApiError && error.code === "AUTH_UNAVAILABLE"
-              ? (locale === "ko" ? "인증 서비스를 이용할 수 없습니다. 잠시 후 다시 시도하시기 바랍니다." : "Authentication is unavailable. Please try again shortly.")
-              : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_INVALID"
-                ? (locale === "ko" ? "개인 API 키가 유효하지 않습니다. 계정 설정에서 확인하시기 바랍니다." : "Your personal API key is invalid. Check it in account settings.")
-                : error instanceof CopilotApiError && error.code === "PERSONAL_KEY_REQUIRED"
-                  ? (locale === "ko" ? "PokePilot 분석에는 개인 API 키가 필요합니다. 계정 설정에서 등록할 수 있습니다." : "PokePilot analysis requires a personal API key. Add one in account settings.")
-              : error instanceof Error ? error.message : failedMessage,
+          error: error instanceof Error ? error.message : failedMessage,
         },
       }));
     }
   }
 
-  function selectHistory(entry: CopilotHistoryEntry, displayEffort = entry.reasoningEffort ?? "low", displayModel = entry.modelId ?? "gpt-6-luna") {
+  function selectHistory(entry: CopilotHistoryEntry, displayEffort = entry.reasoningEffort ?? "low", displayModel = modelId) {
     const entryContextKey = getAnalysisContextKey(historyTeamKey, entry.scope, displayEffort, displayModel);
+    displayGenerationByContext.current[entryContextKey] =
+      (displayGenerationByContext.current[entryContextKey] ?? 0) + 1;
 
     setAnalysisByContext((current) => ({
       ...current,

@@ -1115,20 +1115,23 @@ export function rankPokemonRecommendationCandidates(
   );
 }
 
-export async function createPokemonRecommendationCandidates(
-  input: CreatePokemonRecommendationCandidatesInput,
-) {
+async function loadRecommendationData(battleFormat: BattleFormat) {
   const [usageIds, usageSets, showdownData] = await Promise.all([
-    loadSmogonUsagePokemonIds(input.battleFormat).catch(() => null),
-    loadSmogonUsageSets(input.battleFormat).catch(() => null),
+    loadSmogonUsagePokemonIds(battleFormat).catch(() => null),
+    loadSmogonUsageSets(battleFormat).catch(() => null),
     loadShowdownData().catch(() => null),
   ]);
 
+  return { usageIds, usageSets, showdownData };
+}
+
+export async function createPokemonRecommendationCandidates(
+  input: CreatePokemonRecommendationCandidatesInput,
+) {
+  const data = await loadRecommendationData(input.battleFormat);
   return rankPokemonRecommendationCandidates({
     ...input,
-    usageIds,
-    usageSets,
-    showdownData,
+    ...data,
   });
 }
 
@@ -1166,25 +1169,17 @@ function getCandidateSetterConceptIds(
   );
 }
 
-export async function createUniversalPokemonRecommendationCandidates({
-  options,
-  targets,
-  battleFormat,
-  limit = DEFAULT_RECOMMENDATION_CANDIDATE_LIMIT,
-}: CreateUniversalPokemonRecommendationCandidatesInput) {
-  const [usageIds, usageSets, showdownData] = await Promise.all([
-    loadSmogonUsagePokemonIds(battleFormat).catch(() => null),
-    loadSmogonUsageSets(battleFormat).catch(() => null),
-    loadShowdownData().catch(() => null),
-  ]);
+export async function createUniversalPokemonRecommendationCandidates(
+  input: CreateUniversalPokemonRecommendationCandidatesInput,
+  signal?: AbortSignal,
+) {
+  if (signal?.aborted) return [];
+  const data = await loadRecommendationData(input.battleFormat);
+  if (signal?.aborted) return [];
 
   return rankUniversalPokemonRecommendationCandidates({
-    options,
-    targets,
-    usageIds,
-    usageSets,
-    showdownData,
-    limit,
+    ...input,
+    ...data,
   });
 }
 

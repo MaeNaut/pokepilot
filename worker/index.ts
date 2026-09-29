@@ -36,7 +36,10 @@ function proxySmogonStats(request: Request) {
   const path = url.pathname.replace(/^\/smogon-stats/, "/stats");
   const upstream = new URL(path, "https://www.smogon.com");
   upstream.search = url.search;
-  return fetch(new Request(upstream, request));
+  return fetch(new Request(upstream, {
+    method: request.method,
+    headers: { Accept: "text/plain" },
+  }));
 }
 
 async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void) {
@@ -45,6 +48,13 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
     return jsonResponse(401, {
       ok: false,
       error: { code: "AUTH_REQUIRED", message: "AUTH_REQUIRED", providerAttempted: false },
+    });
+  }
+  const expectedAccountId = request.headers.get("X-PokePilot-Account-Id");
+  if (expectedAccountId !== session.account.id) {
+    return jsonResponse(403, {
+      ok: false,
+      error: { code: "ACCOUNT_SESSION_CHANGED", message: "Account session changed.", providerAttempted: false },
     });
   }
   const authenticatedAccountId = await accountUsageId(session.account, env);
@@ -89,6 +99,12 @@ const router = {
         return await completeGoogleAuthorization(request, env);
       }
       if (url.pathname === "/api/auth/logout" && request.method === "POST") {
+        const expectedAccountId = request.headers.get("X-PokePilot-Account-Id");
+        const session = await readAccountSession(request, env, { refresh: false });
+        if (!session) return jsonResponse(401, { ok: false, error: { code: "AUTH_REQUIRED" } });
+        if (session.account.id !== expectedAccountId) {
+          return jsonResponse(403, { ok: false, error: { code: "ACCOUNT_SESSION_CHANGED" } });
+        }
         const setCookie = await logoutCurrentAccount(request, env);
         return emptyResponse({ "Set-Cookie": setCookie });
       }

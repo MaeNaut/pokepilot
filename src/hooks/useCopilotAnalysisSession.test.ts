@@ -21,8 +21,8 @@ const cleanups: Array<() => Promise<void>> = [];
 beforeEach(() => {
   localStorage.clear();
   vi.resetAllMocks();
-  vi.mocked(readAccountCopilotHistory).mockResolvedValue([]);
-  vi.mocked(writeAccountCopilotHistory).mockResolvedValue(undefined);
+  vi.mocked(readAccountCopilotHistory).mockResolvedValue({ value: [], version: '"v1"' });
+  vi.mocked(writeAccountCopilotHistory).mockResolvedValue('"v2"');
   vi.mocked(executeCopilotAnalysis).mockResolvedValue(result);
 });
 afterEach(async () => { for (const cleanup of cleanups.splice(0)) await cleanup(); });
@@ -85,5 +85,33 @@ describe("analysis account lifecycle", () => {
       await analysis;
     });
     expect(hook.current.analysisState.status).toBe("idle");
+  });
+
+  it("keeps an explicitly selected history entry when an older request finishes", async () => {
+    const hook = await mount();
+    await act(async () => { await hook.current.analyze(); });
+    const selected = hook.current.teamHistory[0];
+    const pending = deferred<typeof result>();
+    vi.mocked(executeCopilotAnalysis).mockReturnValue(pending.promise);
+    let analysis!: Promise<void>;
+    await act(async () => { analysis = hook.current.analyze(); });
+    await act(async () => { hook.current.selectHistory(selected); });
+    await act(async () => { pending.resolve({ ...result, response: { ...result.response, title: "New result" } }); await analysis; });
+    expect(hook.current.response?.title).toBe(selected.response.title);
+    expect(hook.current.analysisState.historyEntryId).toBe(selected.id);
+    expect(hook.current.teamHistory).toHaveLength(2);
+  });
+
+  it("shows a retired Sol history result while Luna remains the active model", async () => {
+    const hook = await mount();
+    await act(async () => { await hook.current.analyze(); });
+    const legacy = {
+      ...hook.current.teamHistory[0], id: "old-sol", modelId: "gpt-6-sol" as const,
+      response: { ...hook.current.teamHistory[0].response, title: "Old Sol result" },
+    };
+    await act(async () => { hook.current.selectHistory(legacy); });
+    expect(hook.current.response?.title).toBe("Old Sol result");
+    expect(hook.current.analysisState.historyEntryId).toBe(legacy.id);
+    expect(hook.current.analysisContextKey).toContain(":gpt-6-luna:");
   });
 });

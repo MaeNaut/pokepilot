@@ -9,18 +9,14 @@ import type {
   TeamSlot,
 } from "../types";
 import {
-  createPokemonRecommendationOptions,
-  createPokemonRecommendationTargets,
   createUniversalPokemonRecommendationCandidates,
   type CopilotRecommendationCandidateSnapshot,
-  type PokemonRecommendationOption,
 } from "../utils/pokemonRecommendations";
 import type { TeamBuildState } from "../utils/teamBuildState";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
 import type { CopilotAnalysisScope } from "../utils/copilotContracts";
-import {
-  getPokemonNameFallback,
-} from "../utils/pokemonDisplay";
+import { createLocalizedRecommendationContext } from "../utils/pokemonRecommendationContext";
+import { nextAnimationFrame, waitForTask } from "../utils/workerTask";
 
 type RecommendationCandidateState = {
   status: "idle" | "loading" | "ready" | "error";
@@ -63,25 +59,29 @@ export function useCopilotRecommendationCandidates({
   const [state, setState] = useState<RecommendationCandidateState>(
     idleRecommendationState,
   );
-  const runIdRef = useRef(0);
+  const cancelRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    runIdRef.current += 1;
     setState(idleRecommendationState);
+    return () => cancelRef.current?.abort();
   }, [
     abilityIndex,
+    abilityIndexStatus,
     battleFormat,
     buildState,
     diagnostics,
     gameName,
     pokemonIndex,
     pokemonName,
+    scope,
     selectedSlot,
     showdownLegality,
+    showdownLegalityStatus,
     team,
   ]);
 
   const run = useCallback(async () => {
+    cancelRef.current?.abort();
     if (
       scope !== "recommendation" ||
       abilityIndexStatus === "loading" ||
@@ -90,65 +90,27 @@ export function useCopilotRecommendationCandidates({
       return null;
     }
 
-    const runId = ++runIdRef.current;
+    const controller = new AbortController();
+    cancelRef.current = controller;
+    const { signal } = controller;
     setState({ status: "loading", candidates: [] });
 
-    // Give React a frame to paint the loading state before ranking candidates.
-    await new Promise<void>((resolve) => {
-      window.requestAnimationFrame(() => resolve());
-    });
-
     try {
-      const options: PokemonRecommendationOption[] =
-        createPokemonRecommendationOptions({
-          pokemonIndex,
-          abilityIndex,
-          legality: showdownLegality,
-          getPokemonDisplayName: (entry, includeForm) =>
-            pokemonName({
-              id: entry.name,
-              speciesId: entry.speciesKey,
-              fallback: getPokemonNameFallback(entry, includeForm),
-              includeForm,
-              formLabel: entry.formLabel,
-              formKind: entry.formKind,
-            }),
-          getTypeDisplayName: (type) => gameName("types", type, type),
-          getAbilityDisplayName: (id, fallback) =>
-            gameName("abilities", id, fallback),
-        });
-      const targets = createPokemonRecommendationTargets({
-        team,
-        selectedSlot,
-        buildState,
-        diagnostics,
-        pokemonIndex,
-          getCurrentPokemonDisplayName: (member, entry) => {
-            const includeForm = Boolean(entry);
-
-            return pokemonName({
-              id: entry?.name ?? member.id,
-              speciesId: entry?.speciesKey,
-              fallback: entry
-                ? getPokemonNameFallback(entry, includeForm)
-                : member.name,
-              includeForm,
-              formLabel: entry?.formLabel,
-              formKind: entry?.formKind,
-            });
-          },
+      if (!await nextAnimationFrame(signal)) return null;
+      const { options, targets } = createLocalizedRecommendationContext({
+        pokemonIndex, abilityIndex, legality: showdownLegality, team, selectedSlot,
+        buildState, diagnostics, gameName, pokemonName,
       });
-      const candidates = await createUniversalPokemonRecommendationCandidates({
-        options,
-        targets,
-        battleFormat,
-      });
+      const candidates = await waitForTask(
+        createUniversalPokemonRecommendationCandidates({ options, targets, battleFormat }, signal),
+        signal,
+      );
 
-      if (runIdRef.current !== runId) return null;
+      if (signal.aborted || !candidates) return null;
       setState({ status: "ready", candidates });
       return candidates;
     } catch {
-      if (runIdRef.current === runId) {
+      if (!signal.aborted) {
         setState({ status: "error", candidates: [] });
       }
       return null;

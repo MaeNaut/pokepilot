@@ -7,7 +7,7 @@ import { translateGameName, type Locale } from "../i18n/gameTranslations";
 import { type PokemonAbility, type PokemonIndexEntry, type PokemonMove } from "../types";
 import type { CopilotExactMatchupSnapshot, CopilotMatchupSnapshot, CopilotMetaMatchupSnapshot, CopilotSetOptimizationSnapshot, CopilotSetSnapshot, CreateCopilotRequestInput } from "./copilotContracts";
 import { compactCopilotMechanicEffect } from "./copilotMechanics";
-import { localizeType, normalizeLookup } from "./copilotRequestLabels";
+import { localizeType } from "./copilotRequestLabels";
 import { getOptimizationPokemonDisplayName, normalizeMoveCategory } from "./copilotRequestOptimizationSnapshot";
 
 export function createCopilotExactMatchupSnapshot(
@@ -87,7 +87,7 @@ export function createCopilotExactMatchupSnapshot(
           )
         : null,
       abilityEffect: compactCopilotMechanicEffect(
-        abilityById.get(normalizeLookup(context.opponent.build.ability))?.effect,
+        abilityById.get(normalizeShowdownId(context.opponent.build.ability))?.effect,
       ) ?? null,
       natureId: context.opponent.build.natureId,
       natureDisplayName: translateGameName(

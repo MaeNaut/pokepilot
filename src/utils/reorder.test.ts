@@ -9,6 +9,11 @@ describe("reorder helpers", () => {
     expect(source).toEqual(["first", "second", "third"]);
   });
 
+  it("ignores an index that became invalid while a delayed drop was settling", () => {
+    expect(swapArrayItems(["first", "second"], 2, 0)).toEqual(["first", "second"]);
+    expect(swapArrayItems(["first", "second"], -1, 1)).toEqual(["first", "second"]);
+  });
+
   it("tracks only the indices involved in a swap", () => {
     expect(getIndexAfterSwap(1, 1, 4)).toBe(4);
     expect(getIndexAfterSwap(4, 1, 4)).toBe(1);

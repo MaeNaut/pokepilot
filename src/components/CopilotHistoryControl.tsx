@@ -1,3 +1,4 @@
+import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -94,37 +95,15 @@ export function CopilotHistoryControl({
     setIsOpen(true);
   }
 
+  useDismissOnOutsidePointer(controlRef, isOpen, closeMenu, [menuRef]);
+
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target as Node;
-
-      if (
-        controlRef.current?.contains(target) ||
-        menuRef.current?.contains(target)
-      ) {
-        return;
-      }
-
-      closeMenu();
-    }
-
+    if (!isOpen) return;
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closeMenu();
-      }
+      if (event.key === "Escape") closeMenu();
     }
-
-    document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
   useEffect(() => {

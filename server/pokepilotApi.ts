@@ -220,6 +220,14 @@ function isInvalidResponseError(error: unknown) {
   );
 }
 
+function reportDiagnostic<T>(callback: ((value: T) => unknown) | undefined, value: T) {
+  try {
+    void Promise.resolve(callback?.(value)).catch(() => {});
+  } catch {
+    // Diagnostic sinks must never change an analysis response.
+  }
+}
+
 export async function handlePokePilotAnalysis(
   value: unknown,
   {
@@ -309,7 +317,7 @@ export async function handlePokePilotAnalysis(
       : null;
 
     if (cachedAnalysis) {
-      onOperationalEvent?.({
+      reportDiagnostic(onOperationalEvent, {
         type: "analysis",
         billingSource,
         modelId,
@@ -336,16 +344,12 @@ export async function handlePokePilotAnalysis(
         try {
           await operations?.setCached(operationsKey, reviewed, clock());
         } catch (error) {
-          onUpstreamError?.(error);
+          reportDiagnostic(onUpstreamError, error);
           reviewed = addQualityWarning(reviewed, "service-degraded");
         }
       }
       if (reviewed.qualityWarnings.length) {
-        try {
-          onQualityWarning?.(reviewed.qualityWarnings);
-        } catch {
-          // Diagnostic logging must not turn a completed analysis into an error.
-        }
+        reportDiagnostic(onQualityWarning, reviewed.qualityWarnings);
       }
       return { kind: "completed", analysis: reviewed.analysis, qualityWarnings: reviewed.qualityWarnings, result };
     };
@@ -362,7 +366,7 @@ export async function handlePokePilotAnalysis(
     const completed = execution.value;
 
     if (execution.shared) {
-      onOperationalEvent?.({
+      reportDiagnostic(onOperationalEvent, {
         type: "analysis",
         billingSource,
         modelId,
@@ -376,7 +380,7 @@ export async function handlePokePilotAnalysis(
       return successResult(completed.analysis, "shared", modelId);
     }
 
-    onOperationalEvent?.({
+    reportDiagnostic(onOperationalEvent, {
       type: "analysis",
       billingSource,
       modelId,
@@ -410,7 +414,7 @@ export async function handlePokePilotAnalysis(
       ? error.usage
       : attemptedUsage;
     if (usage) {
-      onOperationalEvent?.({
+      reportDiagnostic(onOperationalEvent, {
         type: "analysis-failure",
         billingSource,
         modelId,
@@ -430,7 +434,7 @@ export async function handlePokePilotAnalysis(
       );
     }
 
-    if (billingSource === "site") onUpstreamError?.(error);
+    if (billingSource === "site") reportDiagnostic(onUpstreamError, error);
 
     if (isInvalidResponseError(error)) {
       return errorResult(

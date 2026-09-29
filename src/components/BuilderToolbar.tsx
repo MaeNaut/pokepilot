@@ -1,3 +1,4 @@
+import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -155,34 +156,12 @@ export function BuilderToolbar({
     }
   }
 
-  useEffect(() => {
-    if (
-      !isValidityPanelOpen &&
-      !isShowdownPanelOpen &&
-      pendingDeleteSlot === null
-    ) {
-      return undefined;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target as Node;
-
-      if (
-        toolbarRef.current?.contains(target) ||
-        validityPanelRef.current?.contains(target) ||
-        showdownPanelRef.current?.contains(target) ||
-        deleteConfirmRef.current?.contains(target)
-      ) {
-        return;
-      }
-
-      closePanels();
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [closePanels, isShowdownPanelOpen, isValidityPanelOpen, pendingDeleteSlot]);
+  useDismissOnOutsidePointer(
+    toolbarRef,
+    isValidityPanelOpen || isShowdownPanelOpen || pendingDeleteSlot !== null,
+    closePanels,
+    [validityPanelRef, showdownPanelRef, deleteConfirmRef],
+  );
 
   useEffect(() => {
     if (isShowdownPanelOpen) {

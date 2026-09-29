@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readPersonalApiKeyStatus, removePersonalApiKey, savePersonalApiKey } from "../api/personalApiKey";
 import { deferred, renderHook } from "../test/renderHook";
 import { usePersonalApiKey } from "./usePersonalApiKey";
+import { ACCOUNT_EVENT_STORAGE_KEY } from "../utils/accountCrossTab";
 
 vi.mock("../api/personalApiKey", () => ({ readPersonalApiKeyStatus: vi.fn(), removePersonalApiKey: vi.fn(), savePersonalApiKey: vi.fn() }));
 const cleanups: Array<() => Promise<void>> = [];
@@ -21,13 +22,26 @@ async function mount(account: string | null = "a") {
 }
 
 describe("personal key lifecycle", () => {
+  it("refreshes another tab after a key changes without exposing the key", async () => {
+    const hook = await mount();
+    vi.mocked(readPersonalApiKeyStatus).mockResolvedValue(true);
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: ACCOUNT_EVENT_STORAGE_KEY,
+        newValue: JSON.stringify({ kind: "personal-key", accountId: "a" }),
+      }));
+    });
+    expect(hook.current.hasPersonalApiKey).toBe(true);
+    await act(async () => { await hook.current.update("private-test-key"); });
+    expect(localStorage.getItem(ACCOUNT_EVENT_STORAGE_KEY)).not.toContain("private-test-key");
+  });
   it("ignores initial reads that finish after a save", async () => {
     const stale = deferred<boolean>();
     vi.mocked(readPersonalApiKeyStatus).mockReturnValue(stale.promise);
     const hook = await mount();
     await act(async () => { expect(await hook.current.update(" test-key ")).toBe(true); });
     await act(async () => { stale.resolve(false); });
-    expect(savePersonalApiKey).toHaveBeenCalledWith("test-key");
+    expect(savePersonalApiKey).toHaveBeenCalledWith("test-key", "a");
     expect(hook.current.hasPersonalApiKey).toBe(true);
   });
   it("does not restore a removed key from a pending read", async () => {

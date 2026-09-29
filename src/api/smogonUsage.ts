@@ -46,19 +46,35 @@ export function resolveSmogonUsageAbility(
   ) ?? ability;
 }
 
-type SmogonUsageSnapshot = {
+export type SmogonUsageRegulation = "mc" | "mb";
+
+export type SmogonUsageSource = {
+  regulation: SmogonUsageRegulation;
   sourceMonth: string;
   cutoff: number;
+};
+
+type SmogonUsageSnapshot = SmogonUsageSource & {
   sets: SmogonUsageSet[];
 };
 
+type CachedSmogonUsageSnapshot = SmogonUsageSnapshot & { cachedAt: number };
+
 const SMOGON_STATS_BASE_URL = "/smogon-stats";
-const SMOGON_FORMAT_IDS: Record<BattleFormat, string> = {
-  singles: "gen9championsbssregmb",
-  doubles: "gen9championsvgc2026regmb",
+const SMOGON_FORMAT_IDS: Record<SmogonUsageRegulation, Record<BattleFormat, string>> = {
+  mc: {
+    singles: "gen9championsbssregmc",
+    doubles: "gen9championsvgc2026regmc",
+  },
+  mb: {
+    singles: "gen9championsbssregmb",
+    doubles: "gen9championsvgc2026regmb",
+  },
 };
-const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v6";
+const SMOGON_USAGE_CACHE_KEY = "pokepilot:smogon-usage:v7";
 const SMOGON_USAGE_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+const SMOGON_FALLBACK_CACHE_TTL_MS = 1000 * 60 * 60;
+const FIRST_MC_USAGE_MONTH = "2026-09";
 const SMOGON_MOVE_CANDIDATE_LIMIT = 8;
 const SMOGON_ITEM_CANDIDATE_LIMIT = 4;
 const SMOGON_SPREAD_CANDIDATE_LIMIT = 6;
@@ -72,7 +88,7 @@ const sectionLabels = new Set([
   "Checks and Counters",
 ]);
 
-const memorySnapshots: Partial<Record<BattleFormat, SmogonUsageSnapshot>> = {};
+const memorySnapshots: Partial<Record<BattleFormat, CachedSmogonUsageSnapshot>> = {};
 const smogonUsagePromises: Partial<
   Record<BattleFormat, Promise<SmogonUsageSnapshot | null>>
 > = {};
@@ -94,17 +110,22 @@ function getMonthCandidates() {
   return candidates;
 }
 
-export function getSmogonUsageFormatId(battleFormat: BattleFormat) {
-  return SMOGON_FORMAT_IDS[battleFormat];
+export function getSmogonUsageFormatId(
+  battleFormat: BattleFormat,
+  regulation: SmogonUsageRegulation,
+) {
+  return SMOGON_FORMAT_IDS[regulation][battleFormat];
 }
 
 function getMovesetUrl(
   month: string,
   cutoff: number,
   battleFormat: BattleFormat,
+  regulation: SmogonUsageRegulation,
 ) {
   return `${SMOGON_STATS_BASE_URL}/${month}/moveset/${getSmogonUsageFormatId(
     battleFormat,
+    regulation,
   )}-${cutoff}.txt`;
 }
 
@@ -281,6 +302,7 @@ export function parseSmogonMovesetText(
   text: string,
   sourceMonth: string,
   cutoff: number,
+  regulation: SmogonUsageRegulation = "mb",
 ): SmogonUsageSnapshot {
   const headerPattern =
     /(?:^|\n)\s*\+-+\+\s*\n\s*\|\s*([^|\n]+?)\s*\|\s*\n\s*\+-+\+\s*\n\s*\|\s*Raw count:/g;
@@ -298,6 +320,7 @@ export function parseSmogonMovesetText(
   }
 
   return {
+    regulation,
     sourceMonth,
     cutoff,
     sets,
@@ -306,6 +329,21 @@ export function parseSmogonMovesetText(
 
 function getCacheKey(battleFormat: BattleFormat) {
   return `${SMOGON_USAGE_CACHE_KEY}:${battleFormat}`;
+}
+
+function isFreshSnapshot(snapshot: CachedSmogonUsageSnapshot) {
+  return (
+    (snapshot.regulation === "mc" || snapshot.regulation === "mb") &&
+    Number.isFinite(snapshot.cachedAt) &&
+    snapshot.cachedAt <= Date.now() &&
+    Date.now() - snapshot.cachedAt <= (snapshot.regulation === "mc"
+      ? SMOGON_USAGE_CACHE_TTL_MS
+      : SMOGON_FALLBACK_CACHE_TTL_MS) &&
+    /^\d{4}-\d{2}$/.test(snapshot.sourceMonth) &&
+    preferredCutoffs.includes(snapshot.cutoff) &&
+    Array.isArray(snapshot.sets) &&
+    snapshot.sets.length > 0
+  );
 }
 
 function getCachedSnapshot(battleFormat: BattleFormat) {
@@ -317,15 +355,9 @@ function getCachedSnapshot(battleFormat: BattleFormat) {
       return null;
     }
 
-    const parsed = JSON.parse(cachedValue) as SmogonUsageSnapshot & {
-      cachedAt?: number;
-    };
+    const parsed = JSON.parse(cachedValue) as CachedSmogonUsageSnapshot;
 
-    if (
-      !parsed.cachedAt ||
-      Date.now() - parsed.cachedAt > SMOGON_USAGE_CACHE_TTL_MS ||
-      !Array.isArray(parsed.sets)
-    ) {
+    if (!isFreshSnapshot(parsed)) {
       localStorage.removeItem(cacheKey);
       return null;
     }
@@ -338,15 +370,12 @@ function getCachedSnapshot(battleFormat: BattleFormat) {
 
 function saveSnapshot(
   battleFormat: BattleFormat,
-  snapshot: SmogonUsageSnapshot,
+  snapshot: CachedSmogonUsageSnapshot,
 ) {
   try {
     localStorage.setItem(
       getCacheKey(battleFormat),
-      JSON.stringify({
-        ...snapshot,
-        cachedAt: Date.now(),
-      }),
+      JSON.stringify(snapshot),
     );
   } catch {
     // Usage data remains available in memory when browser storage is unavailable.
@@ -354,32 +383,39 @@ function saveSnapshot(
 }
 
 async function fetchSmogonUsageSnapshot(battleFormat: BattleFormat) {
-  for (const month of getMonthCandidates()) {
-    for (const cutoff of preferredCutoffs) {
-      try {
-        const response = await fetch(
-          getMovesetUrl(month, cutoff, battleFormat),
-        );
+  for (const regulation of ["mc", "mb"] as const) {
+    for (const month of getMonthCandidates()) {
+      if (regulation === "mc" && month < FIRST_MC_USAGE_MONTH) {
+        continue;
+      }
+      for (const cutoff of preferredCutoffs) {
+        try {
+          const response = await fetch(
+            getMovesetUrl(month, cutoff, battleFormat, regulation),
+          );
 
-        if (!response.ok) {
-          continue;
+          if (!response.ok) {
+            continue;
+          }
+
+          const snapshot = parseSmogonMovesetText(
+            await response.text(),
+            month,
+            cutoff,
+            regulation,
+          );
+
+          if (snapshot.sets.length === 0) {
+            continue;
+          }
+
+          const cachedSnapshot = { ...snapshot, cachedAt: Date.now() };
+          memorySnapshots[battleFormat] = cachedSnapshot;
+          saveSnapshot(battleFormat, cachedSnapshot);
+          return snapshot;
+        } catch {
+          // Try the next month/cutoff candidate.
         }
-
-        const snapshot = parseSmogonMovesetText(
-          await response.text(),
-          month,
-          cutoff,
-        );
-
-        if (snapshot.sets.length === 0) {
-          continue;
-        }
-
-        memorySnapshots[battleFormat] = snapshot;
-        saveSnapshot(battleFormat, snapshot);
-        return snapshot;
-      } catch {
-        // Try the next month/cutoff candidate.
       }
     }
   }
@@ -390,9 +426,10 @@ async function fetchSmogonUsageSnapshot(battleFormat: BattleFormat) {
 async function loadSmogonUsageSnapshot(battleFormat: BattleFormat) {
   const memorySnapshot = memorySnapshots[battleFormat];
 
-  if (memorySnapshot) {
+  if (memorySnapshot && isFreshSnapshot(memorySnapshot)) {
     return memorySnapshot;
   }
+  delete memorySnapshots[battleFormat];
 
   const cached = getCachedSnapshot(battleFormat);
 
@@ -463,4 +500,20 @@ export async function loadSmogonUsageSets(
   }
 
   return snapshot.sets;
+}
+
+export async function loadSmogonUsageSource(
+  battleFormat: BattleFormat = "doubles",
+): Promise<SmogonUsageSource | null> {
+  const snapshot = await loadSmogonUsageSnapshot(battleFormat);
+
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    regulation: snapshot.regulation,
+    sourceMonth: snapshot.sourceMonth,
+    cutoff: snapshot.cutoff,
+  };
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isVisibleCopilotScope,
-  usesHistoricalUsageData,
+  usesUsageData,
 } from "./copilotScopeAvailability";
 
 describe("PokePilot scope availability", () => {
@@ -17,10 +17,10 @@ describe("PokePilot scope availability", () => {
     expect(isVisibleCopilotScope("matchup")).toBe(false);
   });
 
-  it("marks usage-driven analyses as Regulation M-B", () => {
-    expect(usesHistoricalUsageData("recommendation")).toBe(true);
-    expect(usesHistoricalUsageData("optimization")).toBe(true);
-    expect(usesHistoricalUsageData("team")).toBe(false);
-    expect(usesHistoricalUsageData("pokemon")).toBe(false);
+  it("marks the analyses that depend on usage statistics", () => {
+    expect(usesUsageData("recommendation")).toBe(true);
+    expect(usesUsageData("optimization")).toBe(true);
+    expect(usesUsageData("team")).toBe(false);
+    expect(usesUsageData("pokemon")).toBe(false);
   });
 });

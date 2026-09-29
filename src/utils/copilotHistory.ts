@@ -16,6 +16,11 @@ import { isCopilotQualityWarningCode, normalizeCopilotExecutionInfo } from "./co
 import { isRecord } from "./typeGuards";
 import { validateCopilotModelOutput } from "./copilotModelValidation";
 import { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestContract";
+import {
+  clearConsumedPendingCollections, clearPendingCollection, readPendingCollection,
+  readPendingCollections, writePendingCollection, pendingCopilotHistoryStorageKey, type PendingAccountCollection,
+  type StoredPendingAccountCollection,
+} from "./accountPendingStorage";
 
 const COPILOT_HISTORY_STORAGE_KEY = "pokepilot:analysis-history:v1";
 const COPILOT_HISTORY_ACCOUNT_STORAGE_KEY = "pokepilot:analysis-history.account.v1";
@@ -246,7 +251,29 @@ export function storeCopilotHistory(entries: CopilotHistoryEntry[]) {
   }
 }
 
+export function getPendingCopilotHistory() {
+  return readPendingCollection(pendingCopilotHistoryStorageKey, normalizeCopilotHistoryEntries);
+}
+
+export function getAllPendingCopilotHistory() {
+  return readPendingCollections(pendingCopilotHistoryStorageKey, normalizeCopilotHistoryEntries);
+}
+
+export function storePendingCopilotHistory(pending: PendingAccountCollection<CopilotHistoryEntry>) {
+  writePendingCollection(pendingCopilotHistoryStorageKey, pending);
+}
+
+export function clearPendingCopilotHistory(accountId?: string) {
+  clearPendingCollection(pendingCopilotHistoryStorageKey, accountId);
+}
+
+export function clearConsumedPendingCopilotHistory(records: StoredPendingAccountCollection<CopilotHistoryEntry>[]) {
+  clearConsumedPendingCollections(records);
+}
+
 export function clearStoredCopilotHistory() {
+  const ownerId = getStoredCopilotHistoryAccountId();
+  if (ownerId) clearPendingCopilotHistory(ownerId);
   localStorage.removeItem(COPILOT_HISTORY_STORAGE_KEY);
   localStorage.removeItem(COPILOT_HISTORY_ACCOUNT_STORAGE_KEY);
 }

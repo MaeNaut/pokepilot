@@ -16,8 +16,6 @@ import type {
 } from "../types";
 import { useLocalization } from "../i18n/useLocalization";
 import {
-  createPokemonRecommendationOptions,
-  createPokemonRecommendationTargets,
   rankUniversalPokemonRecommendationCandidates,
 } from "../utils/pokemonRecommendations";
 import {
@@ -26,9 +24,7 @@ import {
 } from "../utils/metaThreatRecommendations";
 import type { TeamBuildState } from "../utils/teamBuildState";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
-import {
-  getPokemonNameFallback,
-} from "../utils/pokemonDisplay";
+import { createLocalizedRecommendationContext } from "../utils/pokemonRecommendationContext";
 
 type Result = {
   team: TeamSlot[];
@@ -121,44 +117,10 @@ export function useMetaThreatAnalysisPlan({
 
       let replacementCandidates: MetaThreatReplacementCandidate[] = [];
       try {
-        const options = createPokemonRecommendationOptions({
-          pokemonIndex,
-          abilityIndex,
-          legality: showdownLegality,
-          getPokemonDisplayName: (entry, includeForm) =>
-            pokemonName({
-              id: entry.name,
-              speciesId: entry.speciesKey,
-              fallback: getPokemonNameFallback(entry, includeForm),
-              includeForm,
-              formLabel: entry.formLabel,
-              formKind: entry.formKind,
-            }),
-          getTypeDisplayName: (type) =>
-            gameName("types", type, type),
-          getAbilityDisplayName: (id, fallback) =>
-            gameName("abilities", id, fallback),
-        });
-        const targets = createPokemonRecommendationTargets({
-          team,
+        const { options, targets } = createLocalizedRecommendationContext({
+          pokemonIndex, abilityIndex, legality: showdownLegality, team,
           selectedSlot: Math.max(0, team.findIndex(Boolean)),
-          buildState,
-          diagnostics,
-          pokemonIndex,
-          getCurrentPokemonDisplayName: (member, entry) => {
-            const includeForm = Boolean(entry);
-
-            return pokemonName({
-              id: entry?.name ?? member.id,
-              speciesId: entry?.speciesKey,
-              fallback: entry
-                ? getPokemonNameFallback(entry, includeForm)
-                : member.name,
-              includeForm,
-              formLabel: entry?.formLabel,
-              formKind: entry?.formKind,
-            });
-          },
+          buildState, diagnostics, gameName, pokemonName,
         });
         const rankedCandidates =
           rankUniversalPokemonRecommendationCandidates({

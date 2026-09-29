@@ -6,6 +6,6 @@ export function isVisibleCopilotScope(
   return scope !== "matchup";
 }
 
-export function usesHistoricalUsageData(scope: CopilotAnalysisScope) {
+export function usesUsageData(scope: CopilotAnalysisScope) {
   return scope === "recommendation" || scope === "optimization";
 }

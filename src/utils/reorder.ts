@@ -4,6 +4,9 @@ export function swapArrayItems<T>(
   targetIndex: number,
 ) {
   const nextItems = [...items];
+  if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex) ||
+      sourceIndex < 0 || targetIndex < 0 ||
+      sourceIndex >= items.length || targetIndex >= items.length) return nextItems;
 
   [nextItems[sourceIndex], nextItems[targetIndex]] = [
     nextItems[targetIndex],

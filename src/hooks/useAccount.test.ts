@@ -3,8 +3,9 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deferred, renderHook } from "../test/renderHook";
 import { useAccount } from "./useAccount";
-import { readPersonalApiKeyStatus } from "../api/personalApiKey";
+import { readPersonalApiKeyStatus, savePersonalApiKey } from "../api/personalApiKey";
 import { deleteAccount, logoutAccount, readAccount, type AccountProfile } from "../api/accountAuth";
+import { ACCOUNT_EVENT_STORAGE_KEY, ACCOUNT_REFRESH_EVENT } from "../utils/accountCrossTab";
 
 vi.mock("../api/accountAuth", () => ({
   accountAuthEnabled: true,
@@ -38,6 +39,34 @@ describe("account refresh lifecycle", () => {
     await act(async () => { window.dispatchEvent(new Event("focus")); });
     expect(hook.current.status).toBe("guest");
     expect(hook.current.user).toBeNull();
+  });
+
+  it("refreshes another tab after an account session change", async () => {
+    const hook = await mount();
+    vi.mocked(readAccount).mockResolvedValue(null);
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: ACCOUNT_EVENT_STORAGE_KEY,
+        newValue: JSON.stringify({ kind: "auth", accountId: "a" }),
+      }));
+    });
+    expect(hook.current.status).toBe("guest");
+  });
+
+  it("refreshes after a stale-tab key request finishes, even while the account was busy", async () => {
+    const hook = await mount();
+    const pending = deferred<void>();
+    vi.mocked(savePersonalApiKey).mockReturnValue(pending.promise);
+    vi.mocked(readAccount).mockResolvedValue({ id: "b" });
+    let update!: Promise<boolean>;
+    await act(async () => { update = hook.current.updatePersonalApiKey("test-key"); });
+    await act(async () => {
+      window.dispatchEvent(new Event(ACCOUNT_REFRESH_EVENT));
+      pending.resolve();
+      await update;
+      await new Promise((resolve) => window.setTimeout(resolve, 10));
+    });
+    expect(hook.current.user?.id).toBe("b");
   });
 
   it("does not restore a profile from a refresh that finished after logout", async () => {

@@ -22,13 +22,20 @@ beforeEach(() => {
 describe("analysis execution", () => {
   it("forwards effort and returns only the hosted result", async () => {
     const result = await executeCopilotAnalysis(request, "medium");
-    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "medium", "gpt-6-luna");
+    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "medium", "gpt-6-luna", undefined);
     expect(result).toEqual({ response: hosted, usedFallback: false, fallbackReason: undefined });
   });
 
   it("forwards a personal Sol low selection", async () => {
     await executeCopilotAnalysis(request, "low", "gpt-6-sol");
-    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "low", "gpt-6-sol");
+    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(request, undefined, "low", "gpt-6-sol", undefined);
+  });
+
+  it("forwards the expected account to the analysis request", async () => {
+    await executeCopilotAnalysis(request, "low", "gpt-6-luna", "account-a");
+    expect(requestHostedCopilotAnalysis).toHaveBeenCalledExactlyOnceWith(
+      request, undefined, "low", "gpt-6-luna", "account-a",
+    );
   });
 
   it("passes measured execution data through to history creation", async () => {

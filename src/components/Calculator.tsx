@@ -41,8 +41,7 @@ import { defaultEvs } from "../data/natures";
 import { useCalculatorCatalog } from "../hooks/useCalculatorCatalog";
 import { useCalculatorField } from "../hooks/useCalculatorField";
 import { useCalculatorMobileNavigation } from "../hooks/useCalculatorMobileNavigation";
-import { useCalculatorUsageMoves } from "../hooks/useCalculatorUsageMoves";
-import { useCalculatorUsageItems } from "../hooks/useCalculatorUsageItems";
+import { useCalculatorUsage } from "../hooks/useCalculatorUsage";
 import { usePreMegaMoves } from "../hooks/usePreMegaMoves";
 import type { TeamBuildStateController } from "../hooks/useTeamBuildState";
 import { useLocalization } from "../i18n/useLocalization";
@@ -232,16 +231,12 @@ export function Calculator({
       megaStoneNames,
     );
   }, [knownMegaStoneNames, pokemonIndex, selectableItems, selectedMember?.id, showdownLegality]);
-  const playerUsageMoves = useCalculatorUsageMoves(
-    selectedMember,
-    playerPreMegaMoves,
+  const { moves: playerUsageMoves, items: loadedPlayerUsageItems } = useCalculatorUsage({
+    member: selectedMember,
+    fallbackMoves: playerPreMegaMoves,
     battleFormat,
-  );
-  const loadedPlayerUsageItems = useCalculatorUsageItems(
-    selectedMember,
-    playerItemOptions,
-    battleFormat,
-  );
+    itemOptions: playerItemOptions,
+  });
   const playerUsageItems = useMemo(() => {
     const occupiedItemIds = new Set(
       Object.entries(buildState.itemBySlot).flatMap(([slot, item]) =>
@@ -269,11 +264,11 @@ export function Calculator({
     playerBuild.item,
     selectedSlot,
   ]);
-  const opponentUsageMoves = useCalculatorUsageMoves(
-    opponentBuild.member,
-    opponentPreMegaMoves,
+  const { moves: opponentUsageMoves } = useCalculatorUsage({
+    member: opponentBuild.member,
+    fallbackMoves: opponentPreMegaMoves,
     battleFormat,
-  );
+  });
   const playerAvailableMoves = useMemo(
     () => [...(selectedMember?.moves ?? []), ...playerPreMegaMoves],
     [playerPreMegaMoves, selectedMember?.moves],

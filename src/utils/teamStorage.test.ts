@@ -2,16 +2,23 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TeamMember } from "../types";
 import {
   SAVED_TEAM_SCHEMA_VERSION,
+  clearLastActiveTeamId,
   clearStoredTeams,
   createEmptyBuildState,
   createFallbackMember,
   createSavedSlot,
+  getLastActiveTeamId,
   getCopiedTeamName,
   getStoredTeams,
+  getPendingTeams,
+  hasManagedTeams,
   normalizeSavedTeam,
   serializeTeamSnapshot,
   storeSavedTeamsAccountId,
+  storeLastActiveTeamId,
   storeTeams,
+  storePendingTeams,
+  markManagedTeams,
   type SavedTeamSummary,
 } from "./teamStorage";
 
@@ -73,16 +80,41 @@ describe("team storage normalization", () => {
 });
 
 describe("saved-team helpers", () => {
+  it("keeps last-opened-team hints best-effort when browser storage is unavailable", () => {
+    vi.stubGlobal("localStorage", {
+      getItem: () => { throw new Error("storage denied"); },
+      setItem: () => { throw new Error("quota exceeded"); },
+      removeItem: () => { throw new Error("storage denied"); },
+    });
+
+    expect(getLastActiveTeamId()).toBeNull();
+    expect(() => storeLastActiveTeamId("team-a")).not.toThrow();
+    expect(() => clearLastActiveTeamId()).not.toThrow();
+  });
+
   it("clears account-scoped local team data on sign-out", () => {
     const storage = createMemoryStorage();
     vi.stubGlobal("localStorage", storage);
     storeTeams([savedTeam("Rain")]);
     storeSavedTeamsAccountId("account-a");
+    storePendingTeams({ accountId: "account-a", baseline: [], items: [savedTeam("Rain")] });
+    markManagedTeams("account-a");
 
     clearStoredTeams();
 
     expect(getStoredTeams()).toEqual([]);
     expect(storage.getItem("pokepilot.savedTeams.account.v1")).toBeNull();
+    expect(getPendingTeams()).toBeNull();
+    expect(hasManagedTeams("account-a")).toBe(false);
+  });
+
+  it("round-trips the last unsynced team change and its server baseline", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const pending = { accountId: "account-a", baseline: [savedTeam("Rain")], items: [savedTeam("Sun")] };
+    storePendingTeams(pending);
+    expect(getPendingTeams()).toEqual(pending);
+    markManagedTeams("account-a");
+    expect(hasManagedTeams("account-a")).toBe(true);
   });
 
   it("increments duplicate names case-insensitively", () => {

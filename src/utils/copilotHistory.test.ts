@@ -8,7 +8,9 @@ import {
   createCopilotHistoryEntry,
   findMatchingCopilotHistoryEntry,
   getStoredCopilotHistory,
+  getPendingCopilotHistory,
   storeCopilotHistory,
+  storePendingCopilotHistory,
 } from "./copilotHistory";
 
 function createMemoryStorage(): Storage {
@@ -59,11 +61,20 @@ describe("PokePilot analysis history", () => {
     vi.stubGlobal("localStorage", storage);
     storeCopilotHistory([createEntry(1)]);
     storage.setItem("pokepilot:analysis-history.account.v1", "account-a");
+    storePendingCopilotHistory({ accountId: "account-a", baseline: [], items: [createEntry(1)] });
 
     clearStoredCopilotHistory();
 
     expect(getStoredCopilotHistory()).toEqual([]);
     expect(storage.getItem("pokepilot:analysis-history.account.v1")).toBeNull();
+    expect(getPendingCopilotHistory()).toBeNull();
+  });
+
+  it("keeps pending analysis entries and their baseline across a reload", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const pending = { accountId: "account-a", baseline: [createEntry(1)], items: [createEntry(2)] };
+    storePendingCopilotHistory(pending);
+    expect(getPendingCopilotHistory()).toEqual(pending);
   });
 
   it("persists validated analysis records and restores an exact locale match", () => {

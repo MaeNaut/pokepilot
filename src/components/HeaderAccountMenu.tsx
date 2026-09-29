@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -8,6 +8,7 @@ import {
   faKey,
   faMoon,
   faRightFromBracket,
+  faRotateRight,
   faSun,
   faTrashCan,
   faUser,
@@ -17,6 +18,17 @@ import { useLocalization } from "../i18n/useLocalization";
 import type { ThemePreference } from "../theme/theme";
 import type { useAccount } from "../hooks/useAccount";
 import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
+import {
+  getAccountCollectionSyncSnapshot,
+  hasPendingAccountCollectionSync,
+  retryAccountCollections,
+  subscribeAccountCollectionSync,
+} from "../utils/accountCollectionSyncStatus";
+import {
+  hasPendingCollectionForAccount, pendingCopilotHistoryStorageKey,
+  pendingTeamsStorageKey,
+} from "../utils/accountPendingStorage";
+import { getAllPendingAccountPreferences } from "../utils/accountPreferences";
 import "./headerAccountMenu.css";
 
 type HeaderAccountMenuProps = {
@@ -78,6 +90,11 @@ export function HeaderAccountMenu({
   const [keyMessage, setKeyMessage] = useState<"saved" | "removed" | "error" | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const syncSnapshot = useSyncExternalStore(
+    subscribeAccountCollectionSync,
+    getAccountCollectionSyncSnapshot,
+  );
+  const hasSyncIssue = Number(syncSnapshot.split(":")[0]) > 0;
 
   useDismissOnOutsidePointer(menuRef, isOpen, () => setIsOpen(false));
 
@@ -116,10 +133,10 @@ export function HeaderAccountMenu({
         <FontAwesomeIcon icon={faCircleQuestion} aria-hidden="true" />
       </a>
       <button
-        className={`header-account-trigger${isOpen ? " is-open" : ""}`}
+        className={`header-account-trigger${isOpen ? " is-open" : ""}${hasSyncIssue ? " has-sync-issue" : ""}`}
         type="button"
-        aria-label={t("account.menu")}
-        title={t("account.menu")}
+        aria-label={hasSyncIssue ? `${t("account.menu")}: ${t("account.syncIssue")}` : t("account.menu")}
+        title={hasSyncIssue ? t("account.syncIssue") : t("account.menu")}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         ref={triggerRef}
@@ -162,7 +179,17 @@ export function HeaderAccountMenu({
                     <button
                       type="button"
                       disabled={account.busy}
-                      onClick={() => void account.act("logout")}
+                      onClick={() => {
+                        const accountId = account.user?.id;
+                        const pendingInAnotherTab = accountId && (
+                          hasPendingCollectionForAccount(pendingTeamsStorageKey, accountId) ||
+                          hasPendingCollectionForAccount(pendingCopilotHistoryStorageKey, accountId) ||
+                          getAllPendingAccountPreferences().some((record) => record.accountId === accountId)
+                        );
+                        if ((hasPendingAccountCollectionSync() || pendingInAnotherTab) &&
+                            !window.confirm(t("account.unsyncedSignOutConfirm"))) return;
+                        void account.act("logout");
+                      }}
                     >
                       <FontAwesomeIcon icon={faRightFromBracket} aria-hidden="true" />
                       {t("account.signOut")}
@@ -193,6 +220,15 @@ export function HeaderAccountMenu({
                   </button>
                 )}
               </div>
+              {account.status === "ready" && hasSyncIssue ? (
+                <div className="header-account-sync-warning" role="status">
+                  <span>{t("account.syncIssue")}</span>
+                  <button type="button" disabled={account.busy} onClick={() => void retryAccountCollections()}>
+                    <FontAwesomeIcon icon={faRotateRight} aria-hidden="true" />
+                    {t("account.syncRetry")}
+                  </button>
+                </div>
+              ) : null}
             </section>
           ) : null}
 

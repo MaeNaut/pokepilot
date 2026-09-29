@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountAuthError } from "./accountAuth";
 import worker from "./index";
 import type { WorkerEnvironment } from "./env";
@@ -20,6 +20,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(readAccountSession).mockResolvedValue(null);
 });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe("Worker routing error boundary", () => {
   it("schedules guest metrics without changing the authentication response", async () => {
@@ -53,8 +54,11 @@ describe("Worker routing error boundary", () => {
   });
 
   it("preserves intentional account errors from asynchronous handlers", async () => {
+    vi.mocked(readAccountSession).mockResolvedValue({ account: { id: "account-a" } });
     vi.mocked(logoutCurrentAccount).mockRejectedValue(new AccountAuthError(403, "AUTH_FORBIDDEN"));
-    const response = await worker.fetch(new Request("https://pokepilot.app/api/auth/logout", { method: "POST" }), env);
+    const response = await worker.fetch(new Request("https://pokepilot.app/api/auth/logout", {
+      method: "POST", headers: { "X-PokePilot-Account-Id": "account-a" },
+    }), env);
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toMatchObject({ error: { code: "AUTH_FORBIDDEN" } });
   });
@@ -76,5 +80,31 @@ describe("Worker routing error boundary", () => {
     const response = await worker.fetch(new Request("https://pokepilot.app/smogon-stats/test", { method: "POST" }), env);
     expect(response.status).toBe(405);
     expect(response.headers.get("Allow")).toBe("GET, HEAD");
+  });
+
+  it("does not log out a different account from a stale tab", async () => {
+    vi.mocked(readAccountSession).mockResolvedValue({ account: { id: "new-account" } });
+    const response = await worker.fetch(new Request("https://pokepilot.app/api/auth/logout", {
+      method: "POST", headers: { "X-PokePilot-Account-Id": "old-account" },
+    }), env);
+    expect(response.status).toBe(403);
+    expect((await worker.fetch(new Request("https://pokepilot.app/api/auth/logout", {
+      method: "POST",
+    }), env)).status).toBe(403);
+    expect(logoutCurrentAccount).not.toHaveBeenCalled();
+  });
+
+  it("does not forward account credentials to Smogon", async () => {
+    const upstream = vi.fn().mockResolvedValue(new Response("stats"));
+    vi.stubGlobal("fetch", upstream);
+    const response = await worker.fetch(new Request("https://pokepilot.app/smogon-stats/test.txt", {
+      headers: { Cookie: "pokepilot_session=secret", Authorization: "Bearer secret" },
+    }), env);
+    expect(response.status).toBe(200);
+    const forwarded = upstream.mock.calls[0][0] as Request;
+    expect(forwarded.url).toBe("https://www.smogon.com/stats/test.txt");
+    expect(forwarded.headers.get("Cookie")).toBeNull();
+    expect(forwarded.headers.get("Authorization")).toBeNull();
+    expect(forwarded.headers.get("Accept")).toBe("text/plain");
   });
 });

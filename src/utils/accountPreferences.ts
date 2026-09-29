@@ -38,6 +38,21 @@ export type AccountPreferences = {
 
 export const ACCOUNT_PREFERENCES_OWNER_STORAGE_KEY =
   "pokepilot.account-preferences.owner.v1";
+export const ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY = "pokepilot.account-preferences.pending.v1";
+const pageId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+const ownPendingKey = `${ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY}:${pageId}`;
+
+export type PendingAccountPreferences = {
+  accountId: string;
+  baseline: AccountPreferences | null;
+  value: AccountPreferences;
+};
+
+export type StoredPendingAccountPreferences = PendingAccountPreferences & {
+  storageKey: string;
+  serialized: string;
+  updatedAt: number;
+};
 
 function isLocale(value: unknown): value is Locale {
   return value === "en" || value === "ko";
@@ -105,6 +120,24 @@ export function mergeAccountPreferences(
   };
 }
 
+export function reconcileAccountPreferences(
+  remote: AccountPreferences | null,
+  local: AccountPreferences,
+  baseline: AccountPreferences | null,
+): AccountPreferences {
+  const before = baseline ?? createDefaultAccountPreferences();
+  const there = remote ?? createDefaultAccountPreferences();
+  const choose = <K extends keyof AccountPreferences>(key: K): AccountPreferences[K] =>
+    JSON.stringify(local[key]) === JSON.stringify(before[key]) ? there[key] : local[key];
+  return {
+    locale: choose("locale"),
+    themePreference: choose("themePreference"),
+    battleFormat: choose("battleFormat"),
+    analysis: choose("analysis"),
+    tutorialCompleted: local.tutorialCompleted || there.tutorialCompleted,
+  };
+}
+
 export function areAccountPreferencesEqual(
   left: AccountPreferences,
   right: AccountPreferences,
@@ -131,5 +164,85 @@ export function storeAccountPreferencesOwnerId(accountId: string) {
     localStorage.setItem(ACCOUNT_PREFERENCES_OWNER_STORAGE_KEY, accountId);
   } catch {
     // Settings still remain available for this browser session.
+  }
+}
+
+function parsePendingAccountPreferences(
+  storageKey: string, raw: string,
+): StoredPendingAccountPreferences | null {
+  const pending: unknown = JSON.parse(raw);
+  if (!pending || typeof pending !== "object") return null;
+  const record = pending as Record<string, unknown>;
+  const value = normalizeAccountPreferences(record.value);
+  const baseline = record.baseline === null ? null : normalizeAccountPreferences(record.baseline);
+  if (typeof record.accountId !== "string" || !value ||
+      (record.baseline !== null && !baseline)) return null;
+  return {
+    accountId: record.accountId, baseline, value, storageKey, serialized: raw,
+    updatedAt: typeof record.updatedAt === "number" && Number.isFinite(record.updatedAt)
+      ? record.updatedAt : 0,
+  };
+}
+
+export function getAllPendingAccountPreferences(): StoredPendingAccountPreferences[] {
+  const records: StoredPendingAccountPreferences[] = [];
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const storageKey = localStorage.key(index);
+      if (storageKey !== ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY &&
+          !storageKey?.startsWith(`${ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY}:`)) continue;
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) continue;
+      try {
+        const record = parsePendingAccountPreferences(storageKey, raw);
+        if (record) records.push(record);
+      } catch {
+        // One damaged tab record must not conceal edits from another tab.
+      }
+    }
+  } catch {
+    return records;
+  }
+  return records.sort((left, right) =>
+    left.updatedAt - right.updatedAt || left.storageKey.localeCompare(right.storageKey));
+}
+
+export function getPendingAccountPreferences(): PendingAccountPreferences | null {
+  const records = getAllPendingAccountPreferences();
+  const record = records.find(({ storageKey }) => storageKey === ownPendingKey) ??
+    records.find(({ storageKey }) =>
+      storageKey === ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY);
+  return record ? { accountId: record.accountId, baseline: record.baseline, value: record.value } : null;
+}
+
+export function storePendingAccountPreferences(pending: PendingAccountPreferences) {
+  localStorage.setItem(ownPendingKey, JSON.stringify({ ...pending, updatedAt: Date.now() }));
+}
+
+export function clearConsumedPendingAccountPreferences(records: StoredPendingAccountPreferences[]) {
+  for (const { storageKey, serialized } of records) {
+    if (localStorage.getItem(storageKey) === serialized) localStorage.removeItem(storageKey);
+  }
+}
+
+export function clearPendingAccountPreferences(accountId?: string) {
+  const keys: string[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const storageKey = localStorage.key(index);
+    if (storageKey === ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY ||
+        storageKey?.startsWith(`${ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY}:`)) keys.push(storageKey);
+  }
+  for (const storageKey of keys) {
+    const serialized = localStorage.getItem(storageKey);
+    if (!serialized) continue;
+    if (accountId) {
+      try {
+        const record = parsePendingAccountPreferences(storageKey, serialized);
+        if (record && record.accountId !== accountId) continue;
+      } catch {
+        // A malformed record has no reliable owner, so clear it on logout.
+      }
+    }
+    if (localStorage.getItem(storageKey) === serialized) localStorage.removeItem(storageKey);
   }
 }

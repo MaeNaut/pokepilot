@@ -8,6 +8,7 @@ import {
   type AccountProfile,
 } from "../api/accountAuth";
 import { usePersonalApiKey } from "./usePersonalApiKey";
+import { ACCOUNT_REFRESH_EVENT, announceAccountEvent, readAccountEvent } from "../utils/accountCrossTab";
 
 export type AccountStatus = "loading" | "guest" | "ready" | "error";
 
@@ -20,6 +21,8 @@ export function useAccount() {
   const busyRef = useRef(false);
   const mounted = useRef(true);
   const requestVersion = useRef(0);
+  const confirmedAccountId = useRef<string | null>(null);
+  const refreshTimer = useRef<number | null>(null);
 
   const refresh = useCallback(async (showPrompt = false) => {
     if (!accountAuthEnabled) return true;
@@ -29,6 +32,10 @@ export function useAccount() {
     try {
       const nextUser = await readAccount();
       if (!isCurrent()) return false;
+      if (nextUser && confirmedAccountId.current !== nextUser.id) {
+        announceAccountEvent({ kind: "auth", accountId: nextUser.id });
+      }
+      confirmedAccountId.current = nextUser?.id ?? null;
       setUser(nextUser);
       setStatus(nextUser ? "ready" : "guest");
       if (showPrompt) setPrompt(!nextUser);
@@ -46,12 +53,30 @@ export function useAccount() {
     mounted.current = true;
     if (!accountAuthEnabled) return;
     const onFocus = () => { void refresh(); };
+    const onSessionMismatch = () => {
+      if (refreshTimer.current !== null) window.clearTimeout(refreshTimer.current);
+      refreshTimer.current = window.setTimeout(() => {
+        refreshTimer.current = null;
+        void refresh();
+      }, 0);
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (readAccountEvent(event)?.kind !== "auth") return;
+      if (busyRef.current) onSessionMismatch();
+      else void refresh();
+    };
     onFocus();
     window.addEventListener("focus", onFocus);
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(ACCOUNT_REFRESH_EVENT, onSessionMismatch);
     return () => {
       mounted.current = false;
       requestVersion.current += 1;
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(ACCOUNT_REFRESH_EVENT, onSessionMismatch);
+      if (refreshTimer.current !== null) window.clearTimeout(refreshTimer.current);
+      refreshTimer.current = null;
     };
   }, [refresh]);
 
@@ -68,7 +93,7 @@ export function useAccount() {
   }
 
   async function act(action: "login" | "logout" | "delete") {
-    if (busyRef.current) return;
+    if (busyRef.current || (action !== "login" && !user)) return;
     busyRef.current = true;
     setBusy(true);
     // A focus refresh started before logout must not restore the old profile.
@@ -76,7 +101,9 @@ export function useAccount() {
     try {
       if (action === "login") await loginAccount();
       else {
-        await (action === "delete" ? deleteAccount() : logoutAccount());
+        await (action === "delete" ? deleteAccount(user!.id) : logoutAccount(user!.id));
+        if (user) announceAccountEvent({ kind: "auth", accountId: user.id });
+        confirmedAccountId.current = null;
         if (mounted.current) {
           setUser(null);
           setStatus("guest");

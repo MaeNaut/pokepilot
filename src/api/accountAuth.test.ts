@@ -52,4 +52,18 @@ describe("account session lifecycle", () => {
     await expect(readAccount()).rejects.toThrow("AUTH_UNAVAILABLE");
   });
 
+  it("binds logout and deletion to the account shown in the tab", async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetch);
+    const { logoutAccount, deleteAccount } = await import("./accountAuth");
+    await logoutAccount("account-a");
+    await deleteAccount("account-a");
+    expect(fetch).toHaveBeenNthCalledWith(1, "/api/auth/logout", {
+      method: "POST", headers: { "X-PokePilot-Account-Id": "account-a" },
+    });
+    expect(fetch).toHaveBeenNthCalledWith(2, "/api/pokepilot/account", {
+      method: "DELETE", headers: { "X-PokePilot-Account-Id": "account-a" },
+    });
+  });
+
 });

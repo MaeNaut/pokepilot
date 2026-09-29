@@ -67,6 +67,21 @@ function parseStoredPayload(payload: string | null, key: AccountStorageKey) {
   }
 }
 
+type StoredPayload = { payload: string; updated_at: number };
+
+function payloadVersion(row: StoredPayload | null) {
+  return row ? `"rev-${row.updated_at}"` : '"empty"';
+}
+
+async function conflictResponse(env: WorkerEnvironment, accountId: string, key: AccountStorageKey) {
+  const row = await env.DB.prepare(
+    "SELECT payload, updated_at FROM account_storage WHERE account_id = ? AND storage_key = ?",
+  ).bind(accountId, key).first<StoredPayload>();
+  return jsonResponse(409, { ok: false, error: { code: "ACCOUNT_STORAGE_CONFLICT" } }, {
+    ETag: payloadVersion(row),
+  });
+}
+
 export async function handleAccountStorage(
   request: Request,
   env: WorkerEnvironment,
@@ -74,17 +89,24 @@ export async function handleAccountStorage(
 ) {
   const session = await readAccountSession(request, env);
   if (!session) return jsonResponse(401, { ok: false, error: { code: "AUTH_REQUIRED" } });
+  const expectedAccountId = request.headers.get("X-PokePilot-Account-Id");
+  if (expectedAccountId !== session.account.id) {
+    return jsonResponse(403, { ok: false, error: { code: "ACCOUNT_SESSION_CHANGED" } });
+  }
 
   if (request.method === "GET") {
     const row = await env.DB.prepare(
-      "SELECT payload FROM account_storage WHERE account_id = ? AND storage_key = ?",
+      "SELECT payload, updated_at FROM account_storage WHERE account_id = ? AND storage_key = ?",
     )
       .bind(session.account.id, key)
-      .first<{ payload: string }>();
+      .first<StoredPayload>();
     return jsonResponse(
       200,
       parseStoredPayload(row?.payload ?? null, key),
-      session.refreshCookie ? { "Set-Cookie": session.refreshCookie } : {},
+      {
+        ETag: payloadVersion(row),
+        ...(session.refreshCookie ? { "Set-Cookie": session.refreshCookie } : {}),
+      },
     );
   }
 
@@ -99,16 +121,36 @@ export async function handleAccountStorage(
       return jsonResponse(400, { ok: false, error: { code: "INVALID_ACCOUNT_STORAGE" } });
     }
 
-    await env.DB.prepare(
-      `INSERT INTO account_storage (account_id, storage_key, payload, updated_at)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT(account_id, storage_key) DO UPDATE SET
-         payload = excluded.payload,
-         updated_at = excluded.updated_at`,
-    )
-      .bind(session.account.id, key, payload, Date.now())
-      .run();
-    return withSessionRefresh(emptyResponse(), session.refreshCookie);
+    const expectedVersion = request.headers.get("If-Match");
+    if (!expectedVersion) {
+      return jsonResponse(428, { ok: false, error: { code: "PRECONDITION_REQUIRED" } });
+    }
+
+    const accountId = session.account.id;
+    const row = await env.DB.prepare(
+      "SELECT payload, updated_at FROM account_storage WHERE account_id = ? AND storage_key = ?",
+    ).bind(accountId, key).first<StoredPayload>();
+    if (expectedVersion !== payloadVersion(row)) {
+      return jsonResponse(409, { ok: false, error: { code: "ACCOUNT_STORAGE_CONFLICT" } }, {
+        ETag: payloadVersion(row),
+      });
+    }
+
+    const updatedAt = row ? Math.max(Date.now(), row.updated_at + 1) : Date.now();
+    const statement = row
+      ? env.DB.prepare(
+          `UPDATE account_storage SET payload = ?, updated_at = ?
+           WHERE account_id = ? AND storage_key = ? AND payload = ? AND updated_at = ?`,
+        ).bind(payload, updatedAt, accountId, key, row.payload, row.updated_at)
+      : env.DB.prepare(
+          `INSERT INTO account_storage (account_id, storage_key, payload, updated_at)
+           VALUES (?, ?, ?, ?) ON CONFLICT(account_id, storage_key) DO NOTHING`,
+        ).bind(accountId, key, payload, updatedAt);
+    const result = await statement.run();
+    if ((result as { meta?: { changes?: number } }).meta?.changes !== 1) {
+      return conflictResponse(env, accountId, key);
+    }
+    return withSessionRefresh(emptyResponse({ ETag: payloadVersion({ payload, updated_at: updatedAt }) }), session.refreshCookie);
   }
 
   return jsonResponse(

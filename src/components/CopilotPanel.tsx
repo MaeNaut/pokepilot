@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { AnalysisPreference } from "../utils/accountPreferences";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faChevronDown,
-  faChevronUp,
   faLock,
   faMagnifyingGlass,
   faRotateRight,
   faSliders,
-  faSpinner,
   faTriangleExclamation,
   faUser,
   faUsers,
-  faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import type { TeamBuildState } from "../utils/teamBuildState";
 import type {
@@ -25,13 +21,11 @@ import type {
 } from "../types";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
 import {
-  loadShowdownData,
-  type ShowdownDataSnapshot,
-} from "../api/showdownData";
-import { createCopilotAnalysisRequest } from "../utils/copilotRequestBuilder";
+  loadSmogonUsageSource,
+  type SmogonUsageSource,
+} from "../api/smogonUsage";
 import type {
   CopilotAnalysisScope,
-  CopilotSetOptimizationCandidateSnapshot,
 } from "../utils/copilotContracts";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
 import type { TeamValidityResult } from "../utils/teamValidity";
@@ -40,28 +34,23 @@ import type { TranslationKey } from "../i18n/translations";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import type { HostedAnalysisFailureReason } from "../api/copilotFailure";
 import type { CopilotHistoryEntry } from "../utils/copilotHistory";
-import type {
-  RecommendedPokemonApplyResult,
-  RecommendedPokemonSaveResult,
-} from "../utils/recommendedPokemonApplication";
-import { useCopilotRecommendationCandidates } from "../hooks/useCopilotRecommendationCandidates";
+import { useCopilotRequestPreparation } from "../hooks/useCopilotRequestPreparation";
+import { useCopilotCandidateActions, type CopilotCandidateCallbacks } from "../hooks/useCopilotCandidateActions";
 import { useCopilotAnalysisSession } from "../hooks/useCopilotAnalysisSession";
-import { useSetOptimizationPlan } from "../hooks/useSetOptimizationPlan";
-import { useMetaThreatAnalysisPlan } from "../hooks/useMetaThreatAnalysisPlan";
 import { CopilotAnalysisResult } from "./CopilotAnalysisResult";
 import { CopilotHistoryControl } from "./CopilotHistoryControl";
-import { defaultEvs } from "../data/natures";
-import { normalizeShowdownId } from "../api/showdownIds";
+import { CopilotAnalyzeControl } from "./CopilotAnalyzeControl";
+import { CopilotModelControl } from "./CopilotModelControl";
 import { PokePilotMark } from "./PokePilotMark";
 import type { useAccount } from "../hooks/useAccount";
 import {
   isVisibleCopilotScope,
-  usesHistoricalUsageData,
+  usesUsageData,
 } from "../utils/copilotScopeAvailability";
 import { getCopilotScopeRequirement } from "../utils/copilotScopeRequirements";
 import { getCopilotFailureMessage, getCopilotNoCostMessage } from "../utils/copilotFailureMessage";
 
-type CopilotPanelProps = {
+type CopilotPanelProps = CopilotCandidateCallbacks & {
   analysisPreference: AnalysisPreference;
   setAnalysisPreference: Dispatch<SetStateAction<AnalysisPreference>>;
   account: ReturnType<typeof useAccount>;
@@ -79,21 +68,6 @@ type CopilotPanelProps = {
   buildState: TeamBuildState;
   diagnostics: TeamDiagnosticsResult;
   validity: TeamValidityResult;
-  onSelectRecommendedPokemon: (
-    slotIndex: number,
-    pokemonId: string,
-    expectedCurrentPokemonId: string | null,
-  ) => Promise<RecommendedPokemonApplyResult>;
-  onSaveRecommendedPokemon: (
-    slotIndex: number,
-    pokemonId: string,
-  ) => Promise<RecommendedPokemonSaveResult>;
-  onApplyOptimizationCandidate: (
-    candidate: CopilotSetOptimizationCandidateSnapshot,
-  ) => void;
-  onSaveOptimizationCandidate: (
-    candidate: CopilotSetOptimizationCandidateSnapshot,
-  ) => boolean;
 };
 
 const fallbackTranslationKeys: Record<
@@ -134,14 +108,6 @@ const emptyStateCopy: Record<
   },
 };
 
-const analysisEstimates: Partial<Record<
-  CopilotAnalysisScope,
-  Record<"luna-low" | "luna-medium", { seconds: number; cost: string }>
->> = {
-  team: { "luna-low": { seconds: 16, cost: "0.0018" }, "luna-medium": { seconds: 75, cost: "0.0048" } },
-  pokemon: { "luna-low": { seconds: 10, cost: "0.0015" }, "luna-medium": { seconds: 31, cost: "0.0024" } },
-  recommendation: { "luna-low": { seconds: 12, cost: "0.0027" }, "luna-medium": { seconds: 52, cost: "0.0041" } },
-};
 
 export function CopilotPanel({
   analysisPreference,
@@ -173,189 +139,34 @@ export function CopilotPanel({
     setAnalysisPreference((current) => ({ ...current, scope: next }));
   const setReasoningEffort = (next: "low" | "medium") =>
     setAnalysisPreference((current) => ({ ...current, reasoningEffort: next }));
-  const setModelId = (next: "gpt-6-luna" | "gpt-6-sol") =>
-    setAnalysisPreference((current) => ({ ...current, modelId: next }));
-  const [isReasoningMenuOpen, setIsReasoningMenuOpen] = useState(false);
-  const reasoningMenuRef = useRef<HTMLDivElement>(null);
   const [isAnalyzeConfirmationOpen, setIsAnalyzeConfirmationOpen] = useState(false);
-  const analyzeControlRef = useRef<HTMLDivElement>(null);
-  const analyzeButtonRef = useRef<HTMLButtonElement>(null);
-  const analyzeConfirmationHeadingRef = useRef<HTMLElement>(null);
-  const [showdownData, setShowdownData] = useState<ShowdownDataSnapshot | null>(null);
-  const [isShowdownDataLoading, setIsShowdownDataLoading] = useState(true);
+  const closeAnalyzeConfirmation = useCallback(() => setIsAnalyzeConfirmationOpen(false), []);
+  const [usageSourceState, setUsageSourceState] = useState<{
+    battleFormat: BattleFormat;
+    source: SmogonUsageSource | null;
+  } | null>(null);
   const [isLoginGateRevealed, setIsLoginGateRevealed] = useState(false);
-  const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
-    null,
-  );
-  const [candidateApplyFailure, setCandidateApplyFailure] = useState<
-    Extract<RecommendedPokemonApplyResult, { status: "blocked" }>["reason"] | null
-  >(null);
-  const [savingCandidateId, setSavingCandidateId] = useState<string | null>(null);
-  const [candidateSaveStatus, setCandidateSaveStatus] = useState<
-    "saved" | "bench-full" | null
-  >(null);
-  const [optimizationActionStatus, setOptimizationActionStatus] = useState<
-    "applied" | "saved" | "bench-full" | "stale" | null
-  >(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isReasoningMenuOpen) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      if (!reasoningMenuRef.current?.contains(event.target as Node)) {
-        setIsReasoningMenuOpen(false);
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsReasoningMenuOpen(false);
-    };
-    document.addEventListener("pointerdown", closeOnOutside);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutside);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [isReasoningMenuOpen]);
+    if (!usesUsageData(scope)) return;
 
-  useEffect(() => {
-    if (!isAnalyzeConfirmationOpen) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      if (!analyzeControlRef.current?.contains(event.target as Node)) {
-        setIsAnalyzeConfirmationOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", closeOnOutside);
-    analyzeConfirmationHeadingRef.current?.focus();
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutside);
-    };
-  }, [isAnalyzeConfirmationOpen]);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    void loadShowdownData()
-      .then((data) => {
-        if (isCurrent) setShowdownData(data);
+    let cancelled = false;
+    void loadSmogonUsageSource(battleFormat)
+      .then((source) => {
+        if (!cancelled) setUsageSourceState({ battleFormat, source });
       })
       .catch(() => {
-        // Existing request data remains a best-effort fallback when the catalog is unavailable.
-      })
-      .finally(() => {
-        if (isCurrent) setIsShowdownDataLoading(false);
+        if (!cancelled) setUsageSourceState({ battleFormat, source: null });
       });
+    return () => { cancelled = true; };
+  }, [battleFormat, scope]);
 
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
-
-  const recommendationState = useCopilotRecommendationCandidates({
-    scope,
-    selectedSlot,
-    team,
-    buildState,
-    battleFormat,
-    diagnostics,
-    pokemonIndex,
-    abilityIndex,
-    abilityIndexStatus,
-    showdownLegality,
-    showdownLegalityStatus,
+  const { request, prepareRequest, isAnalysisPreparing, recommendationState, optimizationState, matchupState } = useCopilotRequestPreparation({
+    scope, locale, battleFormat, teamName, team, pokemonIndex, itemIndex,
+    abilityIndex, abilityIndexStatus, showdownLegality, showdownLegalityStatus,
+    selectedSlot, buildState, diagnostics, validity,
   });
-
-  const optimizationInput = useMemo(() => {
-    const member = team[selectedSlot];
-    if (!member) return null;
-    return {
-      selectedSlot,
-      member,
-      build: {
-        item: buildState.itemBySlot[selectedSlot] ?? null,
-        ability:
-          buildState.abilityBySlot[selectedSlot] ?? member.abilities?.[0] ?? "",
-        natureId: buildState.natureBySlot[selectedSlot] ?? "hardy",
-        evs: buildState.evsBySlot[selectedSlot] ?? { ...defaultEvs },
-        moveIds: [
-          ...(buildState.moveIdsBySlot[selectedSlot] ?? []),
-          "",
-          "",
-          "",
-          "",
-        ].slice(0, 4),
-      },
-      reservedItemIds: team.flatMap((entry, slotIndex) => {
-        if (!entry || slotIndex === selectedSlot) return [];
-        const item = buildState.itemBySlot[slotIndex];
-        const id = normalizeShowdownId(
-          item?.showdownId ?? item?.id ?? item?.name ?? "",
-        );
-        return id ? [id] : [];
-      }),
-    };
-  }, [buildState, selectedSlot, team]);
-  const optimizationState = useSetOptimizationPlan(
-    optimizationInput,
-    battleFormat,
-    itemIndex,
-    scope === "optimization",
-  );
-  const matchupState = useMetaThreatAnalysisPlan({
-    team,
-    buildState,
-    battleFormat,
-    pokemonIndex,
-    itemIndex,
-    abilityIndex,
-    diagnostics,
-    showdownLegality,
-    enabled: scope === "matchup",
-  });
-  const requestInput = useMemo(
-    () => ({
-        scope,
-        locale,
-        battleFormat,
-        teamName,
-        team,
-        pokemonIndex,
-        abilityIndex,
-        showdownData,
-        selectedSlot,
-        buildState,
-        diagnostics,
-        validity,
-        recommendationCandidates: recommendationState.candidates,
-      }),
-    [
-      battleFormat,
-      abilityIndex,
-      buildState,
-      diagnostics,
-      locale,
-      pokemonIndex,
-      scope,
-      selectedSlot,
-      team,
-      teamName,
-      validity,
-      recommendationState.candidates,
-      showdownData,
-    ],
-  );
-  const request = useMemo(() => createCopilotAnalysisRequest({
-    ...requestInput,
-    optimizationPlan:
-      scope === "matchup" ? null : optimizationState.plan,
-    threatPlan: matchupState.plan,
-    threatReplacementCandidates: matchupState.replacementCandidates,
-  }), [
-    requestInput,
-    scope,
-    optimizationState.plan,
-    matchupState.plan,
-    matchupState.replacementCandidates,
-  ]);
   const optimizationNotice = optimizationState.error
     ? t("copilot.candidateLoadFailed")
     : optimizationState.plan?.status === "unavailable"
@@ -370,11 +181,6 @@ export function CopilotPanel({
     : matchupState.plan?.status === "unavailable"
       ? t("copilot.noMetaThreats")
       : null;
-  const isAnalysisPreparing =
-    recommendationState.status === "loading" ||
-    optimizationState.loading ||
-    matchupState.loading ||
-    isShowdownDataLoading;
   const {
     analysisContextKey,
     analysisState,
@@ -389,6 +195,7 @@ export function CopilotPanel({
     selectHistory,
   } = useCopilotAnalysisSession({
     accountId: account.status === "ready" ? account.user?.id ?? null : null,
+    accountResolved: account.status !== "loading" && account.status !== "error",
     savedTeamId,
     request,
     locale,
@@ -397,11 +204,37 @@ export function CopilotPanel({
     reasoningEffort,
     modelId,
   });
-  const modelChoice = reasoningEffort === "medium" ? "luna-medium" : "luna-low";
-  const modelLabel = reasoningEffort === "medium" ? "Luna medium" : "Luna low";
+  const {
+    selectingCandidateId, savingCandidateId, candidateApplyFailure, candidateSaveStatus,
+    optimizationActionStatus, setOptimizationActionStatus,
+    handleSelectCandidate, handleSaveCandidate,
+    handleApplyOptimizationCandidate, handleSaveOptimizationCandidate,
+  } = useCopilotCandidateActions({
+    scope, request, requestFingerprint, isStale, setScope,
+    onSelectRecommendedPokemon, onSaveRecommendedPokemon,
+    onApplyOptimizationCandidate, onSaveOptimizationCandidate,
+  });
   const isPersonalModelAvailable = account.hasPersonalApiKey && account.personalApiKeyStatus === "ready";
   const keyRequiredMessage = locale === "ko" ? "개인 OpenAI API 키가 필요합니다." : "Requires your OpenAI API key.";
-  const isUsageDataScope = usesHistoricalUsageData(scope);
+  const isUsageDataScope = usesUsageData(scope);
+  const usageSourceLoaded = usageSourceState?.battleFormat === battleFormat;
+  const usageSource = usageSourceLoaded ? usageSourceState.source : null;
+  const isHistoricalUsage = isUsageDataScope && usageSource?.regulation === "mb";
+  const isUsageWarning = isHistoricalUsage || (isUsageDataScope && usageSourceLoaded && !usageSource);
+  const usageDescriptionKey: TranslationKey = !isUsageDataScope || isHistoricalUsage
+    ? emptyStateCopy[scope].description
+    : !usageSource && usageSourceLoaded
+      ? "copilot.usageUnavailable"
+      : scope === "recommendation"
+        ? "copilot.empty.recommendationCurrentDescription"
+        : "copilot.empty.optimizationCurrentDescription";
+  const usageRegulationKey: TranslationKey = usageSource?.regulation === "mb"
+    ? "copilot.regulationMB"
+    : usageSource?.regulation === "mc"
+      ? "toolbar.regulation"
+      : usageSourceLoaded
+        ? "copilot.usageUnavailable"
+        : "copilot.usageChecking";
   const isAccountGateLocked = account.enabled && account.status === "guest";
   const scopeRequirement = getCopilotScopeRequirement({
     scope,
@@ -437,21 +270,10 @@ export function CopilotPanel({
       showdownLegalityStatus === "loading") ||
     Boolean(scopeRequirement) ||
     (scope === "optimization" &&
-      !optimizationInput) ||
+      !team[selectedSlot]) ||
     (scope === "matchup" && !team.some(Boolean));
 
-  useEffect(() => {
-    setIsAnalyzeConfirmationOpen(false);
-  }, [scope, modelChoice, isAnalyzeDisabled]);
 
-  useEffect(() => {
-    setCandidateApplyFailure(null);
-    setCandidateSaveStatus(null);
-  }, [requestFingerprint, scope]);
-
-  useEffect(() => {
-    setOptimizationActionStatus(null);
-  }, [scope]);
 
   useEffect(() => {
     if (!isAccountGateLocked) {
@@ -474,150 +296,16 @@ export function CopilotPanel({
     setIsAnalyzeConfirmationOpen(false);
     if (!(await account.ensureAuthenticated())) return;
     setOptimizationActionStatus(null);
-    if (scope === "recommendation") {
-      const candidates = await recommendationState.run();
-      if (!candidates?.length) return;
-      await analyze(createCopilotAnalysisRequest({
-        ...requestInput,
-        recommendationCandidates: candidates,
-      }));
-      return;
-    }
-    if (scope === "optimization") {
-      const plan = await optimizationState.run();
-      if (!plan || plan.status !== "ready" || plan.candidates.length === 0) return;
-      await analyze(createCopilotAnalysisRequest({ ...requestInput, optimizationPlan: plan }));
-      return;
-    }
-    if (scope === "matchup") {
-      const result = await matchupState.run();
-      if (!result || result.plan.status !== "ready") return;
-      await analyze(createCopilotAnalysisRequest({
-        ...requestInput,
-        optimizationPlan: null,
-        threatPlan: result.plan,
-        threatReplacementCandidates: result.replacementCandidates,
-      }));
-      return;
-    }
-    void analyze();
+    const preparedRequest = await prepareRequest();
+    if (preparedRequest) await analyze(preparedRequest);
   }
 
-  async function handleSelectCandidate(pokemonId: string) {
-    if (selectingCandidateId || savingCandidateId) {
-      return;
-    }
-
-    if (isStale) {
-      setCandidateApplyFailure("stale");
-      return;
-    }
-
-    setSelectingCandidateId(pokemonId);
-    setCandidateApplyFailure(null);
-    setCandidateSaveStatus(null);
-    try {
-      const candidate = request.recommendationCandidates.find(
-        (entry) => entry.pokemonId === pokemonId,
-      );
-      if (!candidate) {
-        setCandidateApplyFailure("stale");
-        return;
-      }
-      const result = await onSelectRecommendedPokemon(
-        candidate.target.slotIndex,
-        pokemonId,
-        candidate.target.currentPokemonId,
-      );
-
-      if (result.status === "blocked") {
-        setCandidateApplyFailure(result.reason);
-        return;
-      }
-
-      setScope("pokemon");
-    } catch {
-      setCandidateApplyFailure("load-failed");
-    } finally {
-      setSelectingCandidateId(null);
-    }
-  }
-
-  async function handleSaveCandidate(pokemonId: string) {
-    if (selectingCandidateId || savingCandidateId) {
-      return;
-    }
-
-    if (isStale) {
-      setCandidateApplyFailure("stale");
-      return;
-    }
-
-    setSavingCandidateId(pokemonId);
-    setCandidateApplyFailure(null);
-    setCandidateSaveStatus(null);
-    try {
-      const candidate = request.recommendationCandidates.find(
-        (entry) => entry.pokemonId === pokemonId,
-      );
-      if (!candidate) {
-        setCandidateApplyFailure("stale");
-        return;
-      }
-      const result = await onSaveRecommendedPokemon(
-        candidate.target.slotIndex,
-        pokemonId,
-      );
-
-      if (result.status === "blocked") {
-        if (result.reason === "bench-full") {
-          setCandidateSaveStatus("bench-full");
-        } else {
-          setCandidateApplyFailure(result.reason);
-        }
-        return;
-      }
-
-      setCandidateSaveStatus("saved");
-    } catch {
-      setCandidateApplyFailure("load-failed");
-    } finally {
-      setSavingCandidateId(null);
-    }
-  }
-
-  function handleApplyOptimizationCandidate(
-    candidate: CopilotSetOptimizationCandidateSnapshot,
-  ) {
-    if (isStale) {
-      setOptimizationActionStatus("stale");
-      return;
-    }
-
-    onApplyOptimizationCandidate(candidate);
-    setOptimizationActionStatus("applied");
-  }
-
-  function handleSaveOptimizationCandidate(
-    candidate: CopilotSetOptimizationCandidateSnapshot,
-  ) {
-    if (isStale) {
-      setOptimizationActionStatus("stale");
-      return;
-    }
-
-    setOptimizationActionStatus(
-      onSaveOptimizationCandidate(candidate) ? "saved" : "bench-full",
-    );
-  }
 
   function handleSelectHistory(entry: CopilotHistoryEntry) {
     setScope(entry.scope);
     const displayEffort = entry.reasoningEffort ?? "low";
-    const displayModel = entry.modelId ?? "gpt-6-luna";
     setReasoningEffort(displayEffort);
-    setModelId(displayModel);
-    selectHistory(entry, displayEffort, displayModel);
+    selectHistory(entry, displayEffort);
   }
 
   function handleClearHistory() {
@@ -655,74 +343,19 @@ export function CopilotPanel({
             onClear={handleClearHistory}
           />
 
-          <div
-            className="copilot-analyze-control"
-            ref={analyzeControlRef}
-            onKeyDown={(event) => {
-              if (isAnalyzeConfirmationOpen && event.key === "Escape") {
-                event.stopPropagation();
-                setIsAnalyzeConfirmationOpen(false);
-                analyzeButtonRef.current?.focus();
-              }
-            }}
-          >
-            <button
-              ref={analyzeButtonRef}
-              className="copilot-analyze-button"
-              type="button"
-              disabled={isAnalyzeDisabled}
-              onClick={requestAnalyze}
-              aria-haspopup="dialog"
-              aria-expanded={isAnalyzeConfirmationOpen}
-              aria-controls={isAnalyzeConfirmationOpen ? "copilot-analyze-confirmation" : undefined}
-            >
-              <FontAwesomeIcon
-                icon={
-                  analysisState.status === "loading" || isAnalysisPreparing
-                    ? faSpinner
-                    : response
-                      ? faRotateRight
-                      : faWandMagicSparkles
-                }
-                spin={analysisState.status === "loading" || isAnalysisPreparing}
-                aria-hidden="true"
-              />
-              {analyzeLabel}
-            </button>
-            {isAnalyzeConfirmationOpen ? (
-              <div
-                className="copilot-analyze-confirmation"
-                id="copilot-analyze-confirmation"
-                role="dialog"
-                aria-label={t("copilot.confirmAnalysis")}
-              >
-                <strong ref={analyzeConfirmationHeadingRef} tabIndex={-1}>
-                  {t("copilot.confirmAnalysis")}
-                </strong>
-                <span className="copilot-analyze-confirmation-model">{modelLabel}</span>
-                <p>
-                  {analysisEstimates[scope]
-                    ? t(account.hasPersonalApiKey ? "copilot.estimate" : "copilot.estimateSite", {
-                        seconds: analysisEstimates[scope][modelChoice].seconds,
-                        cost: analysisEstimates[scope][modelChoice].cost,
-                      })
-                    : t("copilot.estimateUnavailable")}
-                </p>
-                <small>{t(account.hasPersonalApiKey ? "copilot.estimateNote" : "copilot.estimateNoteSite")}</small>
-                <div className="copilot-analyze-confirmation-actions">
-                  <button type="button" onClick={() => {
-                    setIsAnalyzeConfirmationOpen(false);
-                    analyzeButtonRef.current?.focus();
-                  }}>
-                    {t("common.cancel")}
-                  </button>
-                  <button type="button" onClick={() => void handleAnalyze()}>
-                    {t("copilot.startAnalysis")}
-                  </button>
-                </div>
-              </div>
-            ) : null}
-          </div>
+          <CopilotAnalyzeControl
+            scope={scope}
+            reasoningEffort={reasoningEffort}
+            isAnalyzeConfirmationOpen={isAnalyzeConfirmationOpen}
+            isAnalyzeDisabled={isAnalyzeDisabled}
+            isBusy={analysisState.status === "loading" || isAnalysisPreparing}
+            hasResponse={Boolean(response)}
+            hasPersonalApiKey={account.hasPersonalApiKey}
+            analyzeLabel={analyzeLabel}
+            onRequest={requestAnalyze}
+            onClose={closeAnalyzeConfirmation}
+            onConfirm={handleAnalyze}
+          />
         </div>
       </header>
 
@@ -871,71 +504,36 @@ export function CopilotPanel({
         ) : (
           <div
             className={`copilot-empty-state${
-              isUsageDataScope ? " is-usage-warning" : ""
+              isUsageWarning ? " is-usage-warning" : ""
             }`}
           >
-            {isUsageDataScope ? (
+            {isUsageWarning ? (
               <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
             ) : (
               <PokePilotMark aria-hidden="true" />
             )}
             <strong>{t(emptyStateCopy[scope].title)}</strong>
-            <span>{t(emptyStateCopy[scope].description)}</span>
+            <span>{t(usageDescriptionKey)}</span>
           </div>
         )}
       </div>
 
       <footer className="copilot-footer">
         <span>
-          {t(isUsageDataScope ? "copilot.regulationMB" : "toolbar.regulation")} ·{" "}
+          {t(isUsageDataScope ? usageRegulationKey : "toolbar.regulation")} ·{" "}
           {t(
             battleFormat === "singles"
               ? "battleFormat.singles"
               : "battleFormat.doubles",
           )}
         </span>
-        <div className="copilot-reasoning-control" ref={reasoningMenuRef}>
-          <button
-            type="button"
-            className="copilot-reasoning-trigger"
-            aria-label={`${locale === "ko" ? "모델" : "Model"}: ${modelLabel}`}
-            aria-expanded={isReasoningMenuOpen}
-            aria-haspopup="menu"
-            onClick={() => setIsReasoningMenuOpen((open) => !open)}
-          >
-            <span>GPT 6</span>
-            <span className="copilot-reasoning-current">{modelLabel}</span>
-            <FontAwesomeIcon icon={isReasoningMenuOpen ? faChevronDown : faChevronUp} aria-hidden="true" />
-          </button>
-          {isReasoningMenuOpen ? (
-            <div className="copilot-reasoning-menu" role="menu" aria-label={locale === "ko" ? "모델" : "Model"}>
-              <strong>{locale === "ko" ? "모델" : "Model"}</strong>
-              {([
-                { choice: "luna-medium", label: "Luna medium", id: "gpt-6-luna", effort: "medium", requiresKey: true },
-                { choice: "luna-low", label: "Luna low", id: "gpt-6-luna", effort: "low", requiresKey: true },
-              ] as const).map((option) => {
-                const locked = option.requiresKey && !isPersonalModelAvailable;
-                const comparison = option.choice === "luna-low"
-                  ? locale === "ko" ? "기본 모델" : "Default model"
-                  : locale === "ko"
-                    ? "더 깊은 추론 · 시간·비용 증가"
-                    : "Deeper reasoning · More time and cost";
-                return (
-                  <div className="copilot-reasoning-option" key={option.choice} tabIndex={locked ? 0 : undefined} aria-describedby={locked ? `copilot-${option.choice}-lock` : undefined}>
-                    <button type="button" role="menuitemradio" aria-checked={modelChoice === option.choice} className={modelChoice === option.choice ? "is-active" : ""} disabled={locked} onClick={() => { setModelId(option.id); setReasoningEffort(option.effort); setIsReasoningMenuOpen(false); }}>
-                      <span className="copilot-reasoning-option-copy">
-                        <span>{option.label}</span>
-                        <small>{comparison}</small>
-                      </span>
-                      {locked ? <FontAwesomeIcon icon={faLock} aria-hidden="true" /> : null}
-                    </button>
-                    {locked ? <span className="copilot-reasoning-lock-popover" id={`copilot-${option.choice}-lock`} role="tooltip">{keyRequiredMessage}</span> : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
+        <CopilotModelControl
+          reasoningEffort={reasoningEffort}
+          isPersonalModelAvailable={isPersonalModelAvailable}
+          onChange={(effort) => setAnalysisPreference((current) => ({
+            ...current, modelId: "gpt-6-luna", reasoningEffort: effort,
+          }))}
+        />
       </footer>
       </div>
 

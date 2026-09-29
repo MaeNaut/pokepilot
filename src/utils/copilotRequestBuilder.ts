@@ -1,11 +1,11 @@
 import type { ShowdownDataSnapshot } from "../api/showdownData";
-import { normalizeShowdownId } from "../api/showdownIds";
+import { formatIdLabel, normalizeShowdownId } from "../api/showdownIds";
 import { calculateChampionsStats, defaultEvs, getNatureById, statKeys, } from "../data/natures";
 import { translateGameName, translatePokemonName, type Locale, } from "../i18n/gameTranslations";
 import { type PokemonIndexEntry, type PokemonItem, type PokemonMove, type PokemonType, type TeamSlot } from "../types";
 import type { CopilotAnalysisRequest, CopilotMegaEvolutionSnapshot, CopilotMegaOptionSnapshot, CopilotMoveSnapshot, CopilotMoveSpreadTarget, CopilotSetOffensiveProfile, CopilotSetSnapshot, CopilotTeamDefensiveProfile, CopilotTeamOffensiveProfile, CreateCopilotRequestInput } from "./copilotContracts";
 import { createCopilotMechanicsSnapshot, type CopilotMechanicsSetInput } from "./copilotMechanics";
-import { createCopilotTypeLabels, formatLookup, localizeType, normalizeLookup } from "./copilotRequestLabels";
+import { createCopilotTypeLabels, localizeType } from "./copilotRequestLabels";
 import { createCopilotExactMatchupSnapshot, createCopilotMetaMatchupSnapshot, filterPersistentMatchupOptimization } from "./copilotRequestMatchupSnapshots";
 import { createCopilotOptimizationSnapshot, normalizeMoveCategory } from "./copilotRequestOptimizationSnapshot";
 import { createCopilotResponsibilityCounts, inferCopilotResponsibilities, type CopilotResponsibilityId, } from "./copilotResponsibilities";
@@ -15,7 +15,6 @@ import { hasPokemonCandidateFilters } from "./pokemonCandidateFilters";
 import { getPokemonNameFallback, } from "./pokemonDisplay";
 import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
 import { createPokemonDefensiveProfile, type TeamDiagnosticsResult, type TeamRoleId, } from "./teamDiagnostics";
-export { createCopilotTypeLabels, describeCandidateFilter, formatList, localizeConcept, localizeType, text } from "./copilotRequestLabels";
 
 function localizeRecommendationCandidates(
   locale: Locale,
@@ -49,8 +48,8 @@ function getSelectedMoves(
   const moveLookup = new Map<string, PokemonMove>();
 
   for (const move of memberMoves ?? []) {
-    moveLookup.set(normalizeLookup(move.id), move);
-    moveLookup.set(normalizeLookup(move.name), move);
+    moveLookup.set(normalizeShowdownId(move.id), move);
+    moveLookup.set(normalizeShowdownId(move.name), move);
   }
 
   const moveIds = configuredMoveIds?.length
@@ -62,7 +61,7 @@ function getSelectedMoves(
       return [];
     }
 
-    const memberMove = moveLookup.get(normalizeLookup(moveId));
+    const memberMove = moveLookup.get(normalizeShowdownId(moveId));
     const canonicalMove = showdownData?.movesById[normalizeShowdownId(moveId)];
     // Saved teams can retain an older move snapshot. Canonical Showdown fields
     // deliberately override stale mechanics while unknown custom moves remain intact.
@@ -87,12 +86,12 @@ function getSelectedMoves(
           }
       : {
             id: moveId,
-            name: formatLookup(moveId),
+            name: formatIdLabel(moveId),
             displayName: translateGameName(
               locale,
               "moves",
               moveId,
-              formatLookup(moveId),
+              formatIdLabel(moveId),
             ),
             type: "normal" as const,
             category: "unknown" as const,
@@ -381,7 +380,7 @@ export function createCopilotAnalysisRequest({
   const mechanicsSets: CopilotMechanicsSetInput[] = [];
   const responsibilityGroups: CopilotResponsibilityId[][] = [];
   const abilityById = new Map(
-    abilityIndex.map((ability) => [normalizeLookup(ability.id), ability]),
+    abilityIndex.map((ability) => [normalizeShowdownId(ability.id), ability]),
   );
   const sets = team.flatMap((member, slotIndex) => {
     if (!member) {
@@ -447,7 +446,7 @@ export function createCopilotAnalysisRequest({
               {
                 id: ability,
                 displayName: abilityDisplayName,
-                effect: abilityById.get(normalizeLookup(ability))?.effect,
+                effect: abilityById.get(normalizeShowdownId(ability))?.effect,
               },
             ]
           : []),
@@ -457,7 +456,7 @@ export function createCopilotAnalysisRequest({
                 id: megaEvolution.ability,
                 displayName: megaEvolution.abilityDisplayName,
                 effect: abilityById.get(
-                  normalizeLookup(megaEvolution.ability),
+                  normalizeShowdownId(megaEvolution.ability),
                 )?.effect,
               },
             ]

@@ -1,9 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import * as usageApi from "../api/smogonUsage";
+import * as showdownApi from "../api/showdownData";
 import type { ShowdownDataSnapshot } from "../api/showdownData";
 import type { PokemonIndexEntry, PokemonMove, TeamMember } from "../types";
 import { createEmptyBuildState } from "./teamBuildState";
 import {
   createPokemonRecommendationTargets,
+  createUniversalPokemonRecommendationCandidates,
   rankPokemonRecommendationCandidates,
   rankUniversalPokemonRecommendationCandidates,
   type PokemonRecommendationOption,
@@ -109,6 +112,45 @@ const showdownData: ShowdownDataSnapshot = {
     },
   },
 };
+
+afterEach(() => vi.restoreAllMocks());
+
+describe("recommendation loading cancellation", () => {
+  const input = {
+    options,
+    targets: createPokemonRecommendationTargets({
+      team: [null], selectedSlot: 0, buildState: createEmptyBuildState(),
+      diagnostics, pokemonIndex: [], getCurrentPokemonDisplayName: (member) => member.name,
+    }),
+    battleFormat: "singles" as const,
+  };
+
+  it("skips data loading when cancelled before starting", async () => {
+    const loadUsage = vi.spyOn(usageApi, "loadSmogonUsagePokemonIds").mockResolvedValue([]);
+    const loadSets = vi.spyOn(usageApi, "loadSmogonUsageSets").mockResolvedValue([]);
+    const loadShowdown = vi.spyOn(showdownApi, "loadShowdownData").mockResolvedValue(showdownData);
+    const controller = new AbortController();
+    controller.abort();
+    await expect(createUniversalPokemonRecommendationCandidates(input, controller.signal)).resolves.toEqual([]);
+    expect(loadUsage).not.toHaveBeenCalled();
+    expect(loadSets).not.toHaveBeenCalled();
+    expect(loadShowdown).not.toHaveBeenCalled();
+  });
+
+  it("skips ranking after cancellation while keeping shared data usable for a later request", async () => {
+    let resolveUsage!: (ids: string[]) => void;
+    const pending = new Promise<string[]>((resolve) => { resolveUsage = resolve; });
+    vi.spyOn(usageApi, "loadSmogonUsagePokemonIds").mockReturnValue(pending);
+    vi.spyOn(usageApi, "loadSmogonUsageSets").mockResolvedValue([]);
+    vi.spyOn(showdownApi, "loadShowdownData").mockResolvedValue(showdownData);
+    const controller = new AbortController();
+    const result = createUniversalPokemonRecommendationCandidates(input, controller.signal);
+    controller.abort();
+    resolveUsage(["rotomwash"]);
+    await expect(result).resolves.toEqual([]);
+    expect(await createUniversalPokemonRecommendationCandidates(input)).not.toHaveLength(0);
+  });
+});
 
 describe("rankPokemonRecommendationCandidates", () => {
   it("protects a supported Mega axis when evaluating full-team replacements", () => {
