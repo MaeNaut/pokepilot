@@ -12,9 +12,10 @@ export type StoredPendingAccountCollection<T> = PendingAccountCollection<T> & {
 export const pendingTeamsStorageKey = "pokepilot.savedTeams.pending.v1";
 export const pendingCopilotHistoryStorageKey = "pokepilot:analysis-history.pending.v1";
 
-const pageId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+let pageId: string | null = null;
 
 function ownKey(key: string) {
+  pageId ??= globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   return `${key}:${pageId}`;
 }
 

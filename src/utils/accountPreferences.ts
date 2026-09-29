@@ -39,8 +39,13 @@ export type AccountPreferences = {
 export const ACCOUNT_PREFERENCES_OWNER_STORAGE_KEY =
   "pokepilot.account-preferences.owner.v1";
 export const ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY = "pokepilot.account-preferences.pending.v1";
-const pageId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
-const ownPendingKey = `${ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY}:${pageId}`;
+let ownPendingKey: string | null = null;
+
+function getOwnPendingKey() {
+  ownPendingKey ??= `${ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY}:${
+    globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`}`;
+  return ownPendingKey;
+}
 
 export type PendingAccountPreferences = {
   accountId: string;
@@ -209,14 +214,14 @@ export function getAllPendingAccountPreferences(): StoredPendingAccountPreferenc
 
 export function getPendingAccountPreferences(): PendingAccountPreferences | null {
   const records = getAllPendingAccountPreferences();
-  const record = records.find(({ storageKey }) => storageKey === ownPendingKey) ??
+  const record = records.find(({ storageKey }) => storageKey === getOwnPendingKey()) ??
     records.find(({ storageKey }) =>
       storageKey === ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY);
   return record ? { accountId: record.accountId, baseline: record.baseline, value: record.value } : null;
 }
 
 export function storePendingAccountPreferences(pending: PendingAccountPreferences) {
-  localStorage.setItem(ownPendingKey, JSON.stringify({ ...pending, updatedAt: Date.now() }));
+  localStorage.setItem(getOwnPendingKey(), JSON.stringify({ ...pending, updatedAt: Date.now() }));
 }
 
 export function clearConsumedPendingAccountPreferences(records: StoredPendingAccountPreferences[]) {
