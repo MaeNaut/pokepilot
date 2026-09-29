@@ -5,6 +5,7 @@ import {
 import type { Locale } from "../i18n/gameTranslations";
 import type { CopilotAnalysisScope } from "./copilotContracts";
 import { jsonValueEqual } from "./jsonValueEqual";
+import { clearConsumedJournal, readPendingJournal } from "./accountPendingJournal";
 
 export type AnalysisPreference = {
   scope: CopilotAnalysisScope;
@@ -191,24 +192,7 @@ function parsePendingAccountPreferences(
 }
 
 export function getAllPendingAccountPreferences(): StoredPendingAccountPreferences[] {
-  const records: StoredPendingAccountPreferences[] = [];
-  try {
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const storageKey = localStorage.key(index);
-      if (storageKey !== ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY &&
-          !storageKey?.startsWith(`${ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY}:`)) continue;
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) continue;
-      try {
-        const record = parsePendingAccountPreferences(storageKey, raw);
-        if (record) records.push(record);
-      } catch {
-        // One damaged tab record must not conceal edits from another tab.
-      }
-    }
-  } catch {
-    return records;
-  }
+  const records = readPendingJournal(ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY, parsePendingAccountPreferences);
   return records.sort((left, right) =>
     left.updatedAt - right.updatedAt || left.storageKey.localeCompare(right.storageKey));
 }
@@ -226,9 +210,7 @@ export function storePendingAccountPreferences(pending: PendingAccountPreference
 }
 
 export function clearConsumedPendingAccountPreferences(records: StoredPendingAccountPreferences[]) {
-  for (const { storageKey, serialized } of records) {
-    if (localStorage.getItem(storageKey) === serialized) localStorage.removeItem(storageKey);
-  }
+  clearConsumedJournal(records);
 }
 
 export function clearPendingAccountPreferences(accountId?: string) {

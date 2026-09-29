@@ -5,7 +5,8 @@ import {
   writeAccountPreferences,
 } from "../api/accountStorage";
 import { createAccountSyncSession, type AccountSyncSession } from "../utils/accountSyncSession";
-import { registerAccountCollectionSync, reportAccountCollectionSync } from "../utils/accountCollectionSyncStatus";
+import { reportAccountCollectionSync } from "../utils/accountCollectionSyncStatus";
+import { registerAccountSyncLifecycle } from "../utils/accountSyncLifecycle";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import type { Locale } from "../i18n/gameTranslations";
 import type { ThemePreference } from "../theme/theme";
@@ -225,8 +226,6 @@ export function useAccountPreferencesSync(
       throw new Error("ACCOUNT_STORAGE_CONFLICT_RETRY_EXHAUSTED");
     });
     sessionRef.current = session;
-    const unregister = registerAccountCollectionSync(registryToken.current, () => retry());
-    reportSync(false, true);
     let reading: Promise<boolean> | null = null;
     const read = (): Promise<boolean> => {
       if (reading) return reading;
@@ -280,22 +279,15 @@ export function useAccountPreferencesSync(
     };
     const retry = () => read();
     retryRef.current = retry;
-    const retryOnReconnect = () => { void retry(); };
-    const retryOnPendingChange = (event: StorageEvent) => {
-      if (event.key === ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY ||
-          event.key?.startsWith(`${ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY}:`)) void retry();
-    };
-    window.addEventListener("online", retryOnReconnect);
-    window.addEventListener("focus", retryOnReconnect);
-    window.addEventListener("storage", retryOnPendingChange);
+    const closeLifecycle = registerAccountSyncLifecycle({
+      token: registryToken.current, retry, session,
+      pendingKey: ACCOUNT_PREFERENCES_PENDING_STORAGE_KEY, pendingChanges: "all",
+    });
+    reportSync(false, true);
     void read();
 
     return () => {
-      window.removeEventListener("online", retryOnReconnect);
-      window.removeEventListener("focus", retryOnReconnect);
-      window.removeEventListener("storage", retryOnPendingChange);
-      unregister();
-      session.close();
+      closeLifecycle();
       if (replayTimerRef.current !== null) window.clearTimeout(replayTimerRef.current);
       replayTimerRef.current = null;
       if (sessionRef.current === session) sessionRef.current = null;

@@ -4,13 +4,12 @@ import { createAccountSyncSession, type AccountSyncSession } from "../utils/acco
 import type {
   PendingAccountCollection, StoredPendingAccountCollection,
 } from "../utils/accountPendingStorage";
-import {
-  registerAccountCollectionSync,
-  reportAccountCollectionSync,
-} from "../utils/accountCollectionSyncStatus";
+import { reportAccountCollectionSync } from "../utils/accountCollectionSyncStatus";
+import { registerAccountSyncLifecycle } from "../utils/accountSyncLifecycle";
 import { jsonValueEqual } from "../utils/jsonValueEqual";
+import { reconcileCollectionHydration, type CollectionMergePolicy } from "../utils/accountCollectionHydration";
 
-type AccountCollectionStorage<T, C> = {
+type AccountCollectionStorage<T, C> = CollectionMergePolicy<T, C> & {
   pendingKey?: string;
   readLocal: () => T[];
   writeLocal: (value: T[]) => void;
@@ -26,11 +25,6 @@ type AccountCollectionStorage<T, C> = {
   clearPendingEntries?: (records: StoredPendingAccountCollection<T>[]) => void;
   isManaged?: (accountId: string) => boolean;
   markManaged?: (accountId: string) => void;
-  merge: (remote: T[], local: T[]) => T[];
-  mergeAfterLocalEdits: (remote: T[], local: T[], baseline: T[]) => T[];
-  reconcile?: (remote: T[], local: T[], baseline: T[]) => { merged: T[]; conflicts: C[] };
-  reconcileLegacy?: (remote: T[], local: T[]) => { merged: T[]; conflicts: C[] };
-  reconcileUnclaimed?: (remote: T[], local: T[]) => { merged: T[]; conflicts: C[] };
 };
 
 // Storage adapters are module-level constants so UI renders cannot restart hydration.
@@ -184,36 +178,12 @@ export function useAccountCollection<T, C = never>(
     const legacy = ownerId === accountId && !hasInSessionEdits && pendings.length === 0 &&
       storage.isManaged && !storage.isManaged(accountId!) &&
       !jsonValueEqual(local, remote);
-    const reconcileEdit = (there: T[], here: T[], before: T[]) =>
-      storage.reconcile?.(there, here, before) ?? {
-        merged: storage.mergeAfterLocalEdits(there, here, before), conflicts: [] as C[],
-      };
-    const reconcilePendings = () => {
-      let merged = remote;
-      const conflicts: C[] = [];
-      for (let index = 0; index < pendings.length; index += 1) {
-        const entry = pendings[index];
-        const result = reconcileEdit(merged, entry.items, entry.baseline);
-        merged = result.merged;
-        conflicts.push(...result.conflicts);
-        if (storedPendings[index]) replayedPendings.current.push(storedPendings[index]);
-        if (result.conflicts.length > 0) break;
-      }
-      if (conflicts.length === 0 && hasInSessionEdits && unsynced.current &&
-          !pendings.some((entry) => jsonValueEqual(entry.items, local))) {
-        const result = reconcileEdit(merged, local, readBaseline.current);
-        merged = result.merged;
-        conflicts.push(...result.conflicts);
-      }
-      return { merged, conflicts };
-    };
-    const reconciled = ownerId === accountId && (hasInSessionEdits || pendings.length > 0)
-      ? reconcilePendings()
-      : legacy && storage.reconcileLegacy
-        ? storage.reconcileLegacy(remote, local)
-        : ownerId === null && storage.reconcileUnclaimed
-          ? storage.reconcileUnclaimed(remote, local)
-          : { merged: ownerId === null ? storage.merge(remote, local) : remote, conflicts: [] as C[] };
+    const { replayedCount, ...reconciled } = reconcileCollectionHydration({
+      remote, local, baseline: readBaseline.current, pendings,
+      ownership: ownerId === accountId ? "account" : ownerId === null ? "unclaimed" : "other",
+      hasInSessionEdits, unsynced: unsynced.current, legacy: Boolean(legacy),
+    }, storage);
+    replayedPendings.current = storedPendings.slice(0, replayedCount);
     writer.current = session;
     writeOwnerSafely(accountId!);
     if (reconciled.conflicts.length > 0) {
@@ -339,26 +309,17 @@ export function useAccountCollection<T, C = never>(
       throw new Error("ACCOUNT_STORAGE_CONFLICT_RETRY_EXHAUSTED");
     });
     sessionRef.current = session;
-    const unregister = registerAccountCollectionSync(registryToken.current, () => retryRef.current());
+    const closeLifecycle = registerAccountSyncLifecycle({
+      token: registryToken.current, retry: () => retryRef.current(), session,
+      pendingKey: storage.pendingKey, pendingChanges: "committed",
+    });
     reportSync(false, current.current.length > 0);
-    const retryOnReconnect = () => { void retryRef.current(); };
-    const retryOnPendingChange = (event: StorageEvent) => {
-      if (event.newValue === null && storage.pendingKey && (event.key === storage.pendingKey ||
-          event.key?.startsWith(`${storage.pendingKey}:`))) void retryRef.current();
-    };
-    window.addEventListener("online", retryOnReconnect);
-    window.addEventListener("focus", retryOnReconnect);
-    window.addEventListener("storage", retryOnPendingChange);
     void retryRef.current().finally(() => {
       if (!session.signal.aborted) setHydratedAccountId(accountId);
     });
 
     return () => {
-      window.removeEventListener("online", retryOnReconnect);
-      window.removeEventListener("focus", retryOnReconnect);
-      window.removeEventListener("storage", retryOnPendingChange);
-      unregister();
-      session.close();
+      closeLifecycle();
       if (replayTimer.current !== null) window.clearTimeout(replayTimer.current);
       replayTimer.current = null;
       retryPromise.current = null;

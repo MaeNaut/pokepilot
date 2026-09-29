@@ -1,3 +1,5 @@
+import { clearConsumedJournal, readPendingJournal } from "./accountPendingJournal";
+
 export type PendingAccountCollection<T> = {
   accountId: string;
   baseline: T[];
@@ -40,24 +42,7 @@ function parsePendingCollection<T>(
 export function readPendingCollections<T>(
   key: string, normalize: (value: unknown) => T[],
 ): StoredPendingAccountCollection<T>[] {
-  const records: StoredPendingAccountCollection<T>[] = [];
-  try {
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const storageKey = localStorage.key(index);
-      if (!storageKey || (storageKey !== key && !storageKey.startsWith(`${key}:`))) continue;
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) continue;
-      try {
-        const record = parsePendingCollection(storageKey, raw, normalize);
-        if (record) records.push(record);
-      } catch {
-        // A malformed record must not hide other tabs' pending edits.
-      }
-    }
-  } catch {
-    return records;
-  }
-  return records;
+  return readPendingJournal(key, (storageKey, raw) => parsePendingCollection(storageKey, raw, normalize));
 }
 
 export function readPendingCollection<T>(
@@ -77,9 +62,7 @@ export function writePendingCollection<T>(key: string, pending: PendingAccountCo
 export function clearConsumedPendingCollections<T>(
   records: StoredPendingAccountCollection<T>[],
 ) {
-  for (const { storageKey, serialized } of records) {
-    if (localStorage.getItem(storageKey) === serialized) localStorage.removeItem(storageKey);
-  }
+  clearConsumedJournal(records);
 }
 
 export function clearPendingCollection(key: string, accountId?: string) {

@@ -81,10 +81,23 @@ copy so a deletion on another device cannot be silently undone. Preference
 edits also retain their last confirmed baseline across a failed write and
 reload. Preference ownership is also tracked locally so a second
 account on the same device cannot inherit the prior account's language or theme.
-Each tab keeps its own pending team, history, and preference record. Other tabs
-replay those records after a storage notification, and a focused tab checks the
-server for newer account data even when its last write succeeded. A pending
-record is cleared only if it has not changed since it was read.
+Each tab keeps its own pending team, history, and preference record. Team and
+history sync refresh from the server when a peer removes a committed journal;
+they do not treat a peer's live pending edits as committed data. Peer journals
+are replayed during initial recovery or after resolving a recovery conflict.
+Preferences retain field-level reconciliation and replay pending records on
+both journal updates and removals. A focused tab checks the server for newer
+account data even when its last write succeeded. Consumed pending records are
+cleared only if they have not changed since they were read.
+
+The shared journal reader and compare-before-delete helper live in
+`accountPendingJournal.ts`; format validation and preference replay ordering
+remain in their adapters. `accountCollectionHydration.ts` makes recovery/merge
+decisions without browser or React side effects. `accountSyncLifecycle.ts`
+owns retry-event subscriptions, sync-registry registration, and session cleanup,
+with an explicit journal-event policy for each hook. Merge rules, conflict UI,
+and write-retry state remain in their existing owners; no account-storage schema
+or stored journal format changes are required.
 
 Account storage reads return an ETag. Writes require the matching `If-Match`
 version, so a stale device cannot overwrite a newer server copy. The version
