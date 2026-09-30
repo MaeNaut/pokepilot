@@ -10,15 +10,11 @@ import {
   getLastActiveTeamId,
   getCopiedTeamName,
   getStoredTeams,
-  getPendingTeams,
-  hasManagedTeams,
   normalizeSavedTeam,
   serializeTeamSnapshot,
   storeSavedTeamsAccountId,
   storeLastActiveTeamId,
   storeTeams,
-  storePendingTeams,
-  markManagedTeams,
   type SavedTeamSummary,
 } from "./teamStorage";
 
@@ -97,24 +93,17 @@ describe("saved-team helpers", () => {
     vi.stubGlobal("localStorage", storage);
     storeTeams([savedTeam("Rain")]);
     storeSavedTeamsAccountId("account-a");
-    storePendingTeams({ accountId: "account-a", baseline: [], items: [savedTeam("Rain")] });
-    markManagedTeams("account-a");
+    storage.setItem("pokepilot.savedTeams.pending.v1:old-tab", JSON.stringify({
+      accountId: "account-a", baseline: [], items: [savedTeam("Rain")],
+    }));
+    storage.setItem("pokepilot.savedTeams.managed.v1", "account-a");
 
     clearStoredTeams();
 
     expect(getStoredTeams()).toEqual([]);
     expect(storage.getItem("pokepilot.savedTeams.account.v1")).toBeNull();
-    expect(getPendingTeams()).toBeNull();
-    expect(hasManagedTeams("account-a")).toBe(false);
-  });
-
-  it("round-trips the last unsynced team change and its server baseline", () => {
-    vi.stubGlobal("localStorage", createMemoryStorage());
-    const pending = { accountId: "account-a", baseline: [savedTeam("Rain")], items: [savedTeam("Sun")] };
-    storePendingTeams(pending);
-    expect(getPendingTeams()).toEqual(pending);
-    markManagedTeams("account-a");
-    expect(hasManagedTeams("account-a")).toBe(true);
+    expect(storage.getItem("pokepilot.savedTeams.pending.v1:old-tab")).toBeNull();
+    expect(storage.getItem("pokepilot.savedTeams.managed.v1")).toBeNull();
   });
 
   it("increments duplicate names case-insensitively", () => {

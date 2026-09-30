@@ -33,6 +33,32 @@ it("applies the intended target and opens its Pokemon analysis", async () => {
   expect(hook.current.selectingCandidateId).toBeNull();
 });
 
+it.each([false, true])("preserves a newer tab choice after delayed application (returned=%s)", async (returned) => {
+  const pending = deferred<RecommendedPokemonApplyResult>();
+  const props = options();
+  vi.mocked(props.onSelectRecommendedPokemon).mockReturnValue(pending.promise);
+  const { hook } = await mount(props);
+  let operation!: Promise<void>;
+  await act(async () => { operation = hook.current.handleSelectCandidate("lucario"); });
+  await hook.rerender({ ...props, scope: "team" });
+  if (returned) await hook.rerender(props);
+  await act(async () => { pending.resolve({ status: "applied" }); await operation; });
+  expect(props.setScope).not.toHaveBeenCalled();
+  expect(hook.current.selectingCandidateId).toBeNull();
+});
+
+it("still opens Pokemon analysis when application changes the request but not the tab", async () => {
+  const pending = deferred<RecommendedPokemonApplyResult>();
+  const props = options();
+  vi.mocked(props.onSelectRecommendedPokemon).mockReturnValue(pending.promise);
+  const { hook } = await mount(props);
+  let operation!: Promise<void>;
+  await act(async () => { operation = hook.current.handleSelectCandidate("lucario"); });
+  await hook.rerender({ ...props, requestFingerprint: "applied-team" });
+  await act(async () => { pending.resolve({ status: "applied" }); await operation; });
+  expect(props.setScope).toHaveBeenCalledWith("pokemon");
+});
+
 it.each([true, false])("blocks stale or absent candidates (stale=%s)", async (isStale) => {
   const { hook, props } = await mount({ ...options(), isStale });
   await act(async () => { await hook.current.handleSelectCandidate("missing"); });

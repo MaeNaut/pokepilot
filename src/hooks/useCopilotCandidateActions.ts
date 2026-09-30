@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CopilotAnalysisRequest, CopilotAnalysisScope, CopilotSetOptimizationCandidateSnapshot } from "../utils/copilotContracts";
 import type { RecommendedPokemonApplyResult, RecommendedPokemonSaveResult } from "../utils/recommendedPokemonApplication";
 
@@ -33,6 +33,11 @@ export function useCopilotCandidateActions({
   onSelectRecommendedPokemon, onSaveRecommendedPokemon,
   onApplyOptimizationCandidate, onSaveOptimizationCandidate,
 }: Options) {
+  const scopeVersion = useRef(0);
+  useEffect(() => {
+    scopeVersion.current += 1;
+    return () => { scopeVersion.current += 1; };
+  }, [scope]);
   const [selectingCandidateId, setSelectingCandidateId] = useState<string | null>(
     null,
   );
@@ -68,6 +73,7 @@ export function useCopilotCandidateActions({
     }
 
     setSelectingCandidateId(pokemonId);
+    const initialScopeVersion = scopeVersion.current;
     setCandidateApplyFailure(null);
     setCandidateSaveStatus(null);
     try {
@@ -89,7 +95,7 @@ export function useCopilotCandidateActions({
         return;
       }
 
-      setScope("pokemon");
+      if (scopeVersion.current === initialScopeVersion) setScope("pokemon");
     } catch {
       setCandidateApplyFailure("load-failed");
     } finally {

@@ -8,11 +8,7 @@ import {
   normalizeBuildState,
   type TeamBuildState,
 } from "./teamBuildState";
-import {
-  clearConsumedPendingCollections, clearPendingCollection, readPendingCollection,
-  readPendingCollections, writePendingCollection, pendingTeamsStorageKey, type PendingAccountCollection,
-  type StoredPendingAccountCollection,
-} from "./accountPendingStorage";
+import { clearPendingCollection, pendingTeamsStorageKey } from "./accountPendingStorage";
 export { createEmptyBuildState } from "./teamBuildState";
 
 const savedTeamsStorageKey = "pokepilot.savedTeams.v1";
@@ -110,38 +106,6 @@ export function storeTeams(teams: SavedTeamSummary[]) {
   localStorage.setItem(savedTeamsStorageKey, JSON.stringify(teams));
 }
 
-export function getPendingTeams() {
-  return readPendingCollection(pendingTeamsStorageKey, normalizeSavedTeams);
-}
-
-export function getAllPendingTeams() {
-  return readPendingCollections(pendingTeamsStorageKey, normalizeSavedTeams);
-}
-
-export function storePendingTeams(pending: PendingAccountCollection<SavedTeamSummary>) {
-  writePendingCollection(pendingTeamsStorageKey, pending);
-}
-
-export function clearPendingTeams(accountId?: string) {
-  clearPendingCollection(pendingTeamsStorageKey, accountId);
-}
-
-export function clearConsumedPendingTeams(records: StoredPendingAccountCollection<SavedTeamSummary>[]) {
-  clearConsumedPendingCollections(records);
-}
-
-export function hasManagedTeams(accountId: string) {
-  try {
-    return localStorage.getItem(managedTeamsStorageKey) === accountId;
-  } catch {
-    return false;
-  }
-}
-
-export function markManagedTeams(accountId: string) {
-  localStorage.setItem(managedTeamsStorageKey, accountId);
-}
-
 export function getLastActiveTeamId() {
   try {
     return localStorage.getItem(lastActiveTeamStorageKey);
@@ -168,7 +132,8 @@ export function clearLastActiveTeamId() {
 
 export function clearStoredTeams() {
   const ownerId = getStoredTeamsAccountId();
-  if (ownerId) clearPendingTeams(ownerId);
+  // Remove old team journals on logout, but never replay them over server-owned teams.
+  if (ownerId) clearPendingCollection(pendingTeamsStorageKey, ownerId);
   localStorage.removeItem(managedTeamsStorageKey);
   localStorage.removeItem(savedTeamsStorageKey);
   localStorage.removeItem(savedTeamsAccountStorageKey);

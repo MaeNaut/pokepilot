@@ -1,0 +1,30 @@
+.team-update-dialog {
+  width: min(660px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 28%);
+}
+
+.team-update-dialog[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.team-update-dialog::backdrop { background: rgb(0 0 0 / 58%); }
+.team-update-dialog header,
+.team-update-dialog footer { padding: 16px 18px; }
+.team-update-dialog header { overflow: auto; }
+.team-update-dialog h2 { margin: 0; font-size: 1.05rem; }
+.team-update-dialog p { margin: 5px 0 0; color: var(--color-muted); font-size: 0.82rem; }
+.team-update-dialog footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--color-border); }
+.team-update-dialog footer span { color: var(--color-danger); font-size: 0.75rem; }
+.team-update-dialog footer button { min-height: 36px; flex: 0 0 auto; border: 1px solid var(--color-text); border-radius: var(--radius-sm); padding: 0 12px; background: var(--color-text); color: var(--color-surface); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.team-storage-alert { position: fixed; top: calc(var(--app-header-height) + 8px); left: 50%; z-index: 70; width: min(560px, calc(100vw - 24px)); transform: translateX(-50%); border: 1px solid var(--color-danger); border-radius: var(--radius-sm); padding: 8px 12px; background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-popover); font-size: 0.78rem; }
+
+@media (max-width: 560px) {
+  .team-update-dialog header,
+  .team-update-dialog footer { padding: 12px; }
+  .team-update-dialog footer { align-items: stretch; flex-direction: column; }
+  .team-update-dialog footer button { width: 100%; }
+}

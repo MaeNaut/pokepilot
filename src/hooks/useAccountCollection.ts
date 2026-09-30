@@ -9,7 +9,7 @@ import { registerAccountSyncLifecycle } from "../utils/accountSyncLifecycle";
 import { jsonValueEqual } from "../utils/jsonValueEqual";
 import { reconcileCollectionHydration, type CollectionMergePolicy } from "../utils/accountCollectionHydration";
 
-type AccountCollectionStorage<T, C> = CollectionMergePolicy<T, C> & {
+type AccountCollectionStorage<T> = CollectionMergePolicy<T> & {
   pendingKey?: string;
   readLocal: () => T[];
   writeLocal: (value: T[]) => void;
@@ -23,13 +23,11 @@ type AccountCollectionStorage<T, C> = CollectionMergePolicy<T, C> & {
   writePending: (pending: PendingAccountCollection<T>) => void;
   clearPending: () => void;
   clearPendingEntries?: (records: StoredPendingAccountCollection<T>[]) => void;
-  isManaged?: (accountId: string) => boolean;
-  markManaged?: (accountId: string) => void;
 };
 
 // Storage adapters are module-level constants so UI renders cannot restart hydration.
-export function useAccountCollection<T, C = never>(
-  accountId: string | null, storage: AccountCollectionStorage<T, C>, authResolved = true,
+export function useAccountCollection<T>(
+  accountId: string | null, storage: AccountCollectionStorage<T>, authResolved = true,
 ) {
   const [items, setItems] = useState(storage.readLocal);
   const current = useRef(items);
@@ -50,8 +48,6 @@ export function useAccountCollection<T, C = never>(
   const pendingBaseline = useRef<T[] | null>(null);
   const replayedPendings = useRef<StoredPendingAccountCollection<T>[]>([]);
   const replayTimer = useRef<number | null>(null);
-  const conflictPending = useRef(false);
-  const [conflict, setConflict] = useState<{ merged: T[]; conflicts: C[] } | null>(null);
   const [hasLocalStorageError, setHasLocalStorageError] = useState(false);
 
   const reportSync = useCallback((issue: boolean, pending: boolean) => {
@@ -100,7 +96,6 @@ export function useAccountCollection<T, C = never>(
       return true;
     }
     try {
-      if (accountId) storage.markManaged?.(accountId);
       if (storage.readPendings && storage.clearPendingEntries) {
         const matching = storage.readPendings().filter((pending) =>
           pending.accountId === accountId && jsonValueEqual(pending.items, synced));
@@ -123,7 +118,7 @@ export function useAccountCollection<T, C = never>(
     if (replayTimer.current !== null) return;
     replayTimer.current = window.setTimeout(() => {
       replayTimer.current = null;
-      if (sessionRef.current === session && !session.signal.aborted && !conflictPending.current) {
+      if (sessionRef.current === session && !session.signal.aborted) {
         void retryRef.current();
       }
     }, 0);
@@ -161,11 +156,10 @@ export function useAccountCollection<T, C = never>(
 
   const hydrateSnapshot = useCallback(async (
     session: AccountSyncSession<T[]>, snapshot: VersionedAccountStorage<T[]>,
-    replayAllPendings = false,
   ) => {
     const remote = snapshot.value ?? [];
     // Other tabs' pending journals are recovery data, not live server state.
-    const recovering = serverSnapshot.current === null || replayAllPendings;
+    const recovering = serverSnapshot.current === null;
     serverSnapshot.current = { items: remote, version: snapshot.version };
     const ownerId = readOwnerSafely();
     const pending = ownerId === accountId ? storage.readPending() : null;
@@ -175,60 +169,31 @@ export function useAccountCollection<T, C = never>(
     const pendings = storedPendings.length > 0 ? storedPendings : pending ? [pending] : [];
     const local = ownerId === null || ownerId === accountId ? current.current : [];
     const hasInSessionEdits = localEditVersion.current > 0 && ownerId === accountId;
-    const legacy = ownerId === accountId && !hasInSessionEdits && pendings.length === 0 &&
-      storage.isManaged && !storage.isManaged(accountId!) &&
-      !jsonValueEqual(local, remote);
-    const { replayedCount, ...reconciled } = reconcileCollectionHydration({
+    const merged = reconcileCollectionHydration({
       remote, local, baseline: readBaseline.current, pendings,
       ownership: ownerId === accountId ? "account" : ownerId === null ? "unclaimed" : "other",
-      hasInSessionEdits, unsynced: unsynced.current, legacy: Boolean(legacy),
+      hasInSessionEdits, unsynced: unsynced.current,
     }, storage);
-    replayedPendings.current = storedPendings.slice(0, replayedCount);
+    replayedPendings.current = storedPendings;
     writer.current = session;
     writeOwnerSafely(accountId!);
-    if (reconciled.conflicts.length > 0) {
-      conflictPending.current = true;
-      setConflict(reconciled);
-      reportSync(true, true);
-      return false;
-    }
-    commitLocal(reconciled.merged);
-    if (snapshot.value !== null && jsonValueEqual(remote, reconciled.merged)) {
+    commitLocal(merged);
+    if (snapshot.value !== null && jsonValueEqual(remote, merged)) {
       const outstanding = settlePending();
       reportSync(false, outstanding);
       if (outstanding) scheduleReplay(session);
       return true;
     }
-    persistPending(reconciled.merged, remote);
-    return writeSnapshot(session, reconciled.merged);
+    persistPending(merged, remote);
+    return writeSnapshot(session, merged);
   }, [accountId, commitLocal, persistPending, readOwnerSafely, reportSync, scheduleReplay,
     settlePending, storage, writeOwnerSafely, writeSnapshot]);
-
-  const resolveConflict = useCallback(async (next: T[]) => {
-    if (!accountId || !conflictPending.current) return false;
-    commitLocal(next);
-    persistPending(next, serverSnapshot.current?.items ?? []);
-    conflictPending.current = false;
-    setConflict(null);
-    const session = writer.current;
-    if (!session) return false;
-    const saved = await writeSnapshot(session, next);
-    if (!saved || !storage.readPendings?.().some((entry) => entry.accountId === accountId)) return saved;
-    try {
-      const snapshot = await storage.readRemote(session.signal, accountId);
-      if (!session.signal.aborted) await hydrateSnapshot(session, snapshot, true);
-    } catch {
-      if (!session.signal.aborted) reportSync(true, true);
-    }
-    return saved;
-  }, [accountId, commitLocal, hydrateSnapshot, persistPending, reportSync, storage, writeSnapshot]);
 
   const retrySync = useCallback((): Promise<boolean> => {
     if (retryPromise.current) return retryPromise.current;
     const attempt = async () => {
       const session = sessionRef.current;
       if (!accountId || !session || session.signal.aborted) return false;
-      if (conflictPending.current) return false;
 
       try {
         const snapshot = await storage.readRemote(session.signal, accountId);
@@ -269,15 +234,13 @@ export function useAccountCollection<T, C = never>(
     }
     serverSnapshot.current = null;
     replayedPendings.current = [];
-    conflictPending.current = false;
-    setConflict(null);
     setHydratedAccountId(null);
     reportSync(false, false);
     if (!accountId) return;
 
     const session = createAccountSyncSession<T[]>(async (_queued, signal) => {
       for (let attempt = 0; attempt < 4; attempt += 1) {
-        if (conflictPending.current || signal.aborted) throw new Error("ACCOUNT_STORAGE_PENDING");
+        if (signal.aborted) throw new Error("ACCOUNT_STORAGE_PENDING");
         const previous = serverSnapshot.current;
         if (!previous) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
         const next = current.current;
@@ -292,18 +255,10 @@ export function useAccountCollection<T, C = never>(
           if (signal.aborted) return;
           const remote = fresh.value ?? [];
           const local = current.current;
-          const reconciled = storage.reconcile?.(remote, local, previous.items) ?? {
-            merged: storage.mergeAfterLocalEdits(remote, local, previous.items),
-            conflicts: [] as C[],
-          };
+          const merged = (storage.reconcile ?? storage.mergeAfterLocalEdits)(remote, local, previous.items);
           serverSnapshot.current = { items: remote, version: fresh.version };
-          if (reconciled.conflicts.length > 0) {
-            conflictPending.current = true;
-            setConflict(reconciled);
-            throw error;
-          }
-          commitLocal(reconciled.merged);
-          persistPending(reconciled.merged, remote);
+          commitLocal(merged);
+          persistPending(merged, remote);
         }
       }
       throw new Error("ACCOUNT_STORAGE_CONFLICT_RETRY_EXHAUSTED");
@@ -337,7 +292,7 @@ export function useAccountCollection<T, C = never>(
       showItems = false;
     }
   }
-  return { items: showItems ? items : [], current, commit, retrySync, resolveConflict, conflict, hasUnsyncedChanges,
+  return { items: showItems ? items : [], current, commit, retrySync, hasUnsyncedChanges,
     hasLocalStorageError,
     isHydrated: showItems && accountId === hydratedAccountId };
 }

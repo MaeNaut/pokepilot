@@ -265,6 +265,7 @@ export function SavedTeamRow({
           <strong>{t("team.showdownText")}</strong>
           <textarea
             ref={showdownTextareaRef}
+            readOnly={isImportingShowdown}
             inputMode="none"
             value={showdownDraft}
             placeholder={t("team.pasteShowdownHere")}

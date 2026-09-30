@@ -362,3 +362,172 @@ Pokemon form. No commit, push, or production deployment is part of this pass.
   account-boundary, and atomic stale-write rejection checks are automated tests;
   real separate-device, offline/reconnect, deletion, and mobile-layout checks
   were not repeated in this browser pass. Fresh Google OAuth was unnecessary.
+
+### Synchronization Cleanup After Per-Team Storage (2026-09-29)
+
+- Removed unused client collection-team APIs, legacy team merge/version-choice
+  functions, pending-team read/write wrappers, managed-team accessors, and
+  translation keys for the retired local/server/both dialog.
+- Kept logout cleanup for old browser journals and the Worker migration/legacy
+  write guard. These protect existing accounts and already-open older clients.
+- Reused the team refresh path for initial hydration instead of maintaining a
+  second fetch/accept/error implementation. Added failed-initial-load retry and
+  late-initial-response-after-logout tests.
+- Replaced obsolete whole-team-collection integration tests with current history
+  synchronization cases: independent additions, deletion preservation, delayed
+  writes, focus refresh, and refresh only after a peer commits its journal.
+  Per-team API/hook tests remain the source of truth for team synchronization.
+- Removed unused conflict-list/radio-choice CSS. The update dialog has its own
+  name and two-row layout, matching its header/footer-only content.
+- Preserved shared history/preferences lifecycle and write serialization; no new
+  abstraction or change to the approved server-first team policy was introduced.
+- Removed the remaining unused manual-conflict state/resolution API and managed/
+  legacy policy options from the shared history collection hook. Hydration now
+  returns the reconciled items directly and replays all pending journals.
+  Automatic stale-write reconciliation, retries, and account/session guards remain.
+- Removed tests for retired manual choices; retained actual history conflict
+  retry coverage and verified sequential replay of all pending journals.
+- Local validation: 146 test files / 1,078 passing tests, lint, and Cloudflare
+  build. This cleanup has not been
+  uploaded to the QA preview or deployed to production; the preceding live
+  preview report describes the pre-cleanup version.
+
+### Follow-Up Unused Code Check (2026-09-29)
+
+- Checked exported symbols, module references, evaluation entry points, and
+  tracked ignored files. Removed the unused `classifyHostedAnalysisFailure`
+  classifier and its private metadata reader, plus seven classifier-only tests.
+- Kept the failure-reason validator used to restore older analysis history.
+  Current error messages continue to use `getCopilotFailureMessage`.
+- Kept the previous regulation catalog used by transition regression checks,
+  evaluation replay scripts, and migration files. No additional unused source
+  file was confirmed. Local logs and deployment caches remain Git-ignored.
+- Validation: five focused test files / 29 passing tests, lint, TypeScript build,
+  and no tracked files matching repository ignore rules. No deployment or paid
+  analysis was performed; the full suite was not repeated for this small removal.
+
+### Async UX Review Findings (2026-09-29, Fixed Locally)
+
+- P2: `useCopilotCandidateActions` unconditionally selects the Pokemon analysis
+  tab after awaiting candidate application. Reproduction: defer a successful
+  recommendation application, switch scope to team, then resolve the operation.
+  Expected: preserve the user's latest tab. Observed: `setScope("pokemon")`.
+  Scope buttons remain enabled while candidate application is pending.
+- P2: `usePersonalApiKey` drops peer key-change events while a local mutation is
+  pending and does not refresh after it settles. Reproduction: commit a local
+  save but delay its response, delete the key in another tab, dispatch that peer
+  event, then resolve the save. Expected: re-read server presence (false).
+  Observed: local presence becomes true until a later focus/refresh event.
+  This demonstrates stale UI, not restoration of a deleted server key.
+- Both cases failed correct-behavior assertions in temporary deferred-promise
+  hook tests (two tests, two failures). Temporary tests were removed after
+  recording these findings; production code was not changed in this review.
+  No real account mutations, paid analysis, or live-browser reproduction was
+  performed. Follow-up fixes should retain these scenarios as regression tests.
+
+- Follow-up fix: candidate application only selects the Pokemon tab if the scope
+  has not changed since the action started. Switching away and back also cancels
+  automatic navigation; an application-driven request change alone does not.
+- Key changes now defer/coalesce refresh events during a mutation and replay
+  once it settles, including failure. Effect cleanup drops stale account refresh
+  callbacks, and overlapping local mutations are rejected.
+- Added permanent tests for changed/returned tabs, application-driven request
+  updates, peer refresh after successful/failed saves, and logout cancellation.
+  Validation: 146 files / 1,077 tests passed, lint, and TypeScript build.
+  No live-browser QA, commit, push, or deployment in this follow-up.
+
+### Pre-Deployment Review (2026-09-30, Findings Resolved Below)
+
+- Release blocker: `npm run audit:all` exits 1 with four reported vulnerabilities
+  (two moderate, two high) through brace-expansion and undici/miniflare/Wrangler.
+  CI runs this command before deployment. `npm run audit:prod` reports zero.
+  The installed dependency tree differs from package-lock.json: for example,
+  Wrangler is installed at 4.143.0 but locked at 4.135.0; brace-expansion is
+  installed at 1.1.21/5.0.12 but locked at 1.1.18/5.0.9. Update the affected
+  lockfile dependencies and verify a clean lockfile install before release.
+- P2: `useSavedTeams.refresh` drops peer notifications while a local mutation
+  is busy. Deferred test: save A, receive a peer commit for B while waiting,
+  complete A. No pending update for B appears. Queue/coalesce a refresh after
+  the mutation settles. Server stale-write checks remain, so this test does
+  not demonstrate a server-side overwrite.
+- P2: overlapping team refreshes lack read-order invalidation. Deferred test:
+  hold a revision-2 read, receive and acknowledge revision 3, then release the
+  old read. A stale revision-2 notice reappears. Invalidate older reads when
+  newer reads/acknowledgements supersede them. Confirmation re-reads the server;
+  this test demonstrates misleading/repeated notices, not a saved rollback.
+- P2: saved-team Showdown import leaves its textarea editable while pending.
+  Deferred test: start importing Charizard, type Garchomp, complete the old
+  import. The newer text is cleared when the panel closes. Disable editing
+  during import or preserve newer drafts instead of clearing them.
+- Three correct-behavior assertions failed in temporary hook tests, which were
+  removed after recording the evidence. No product code was changed in this
+  review. Live-browser/account tests and deployment were not performed.
+- Cloudflare frontend build passed in the current installed environment. Main
+  JS is 1,098.16 kB (314.42 kB gzip); the existing chunk-size warning remains.
+  Treat performance work as measurement-driven follow-up, not a reason for
+  speculative module splitting. Repeat authenticated preview QA after fixes;
+  earlier live QA predates the cleanup and asynchronous UX changes.
+
+### Pre-Deployment Fixes and QA (2026-09-30)
+
+- Team refreshes now coalesce while writes or update acknowledgement are in
+  progress and replay when those operations settle. Refreshes have monotonically
+  increasing generations; acknowledgement and writes invalidate older reads.
+  Failed stale reads cannot overwrite current sync status. Concurrent update
+  confirmations are rejected; the confirmation's own draft save remains allowed.
+- Saved-team Showdown input is read-only during import and editable afterwards.
+  Added tests for its rendered read-only state, queued peer updates after success
+  and failure, outdated refresh after acknowledgement, and logout cancellation.
+- Updated only the affected lockfile dependency graph with `npm audit fix
+  --package-lock-only`. Stopped the previous local Vite process to release its
+  Windows binary lock, then completed `npm ci`. Audit: zero vulnerabilities.
+- Clean-install verification: 147 test files / 1,083 passing tests; lint,
+  TypeScript/Vite Cloudflare build, and Wrangler dry-run passed. Existing bundle
+  size warnings remain. QA unauthenticated API safeguard check passed; no paid
+  AI requests were made.
+- Uploaded QA-only version `9a5e3deb-9371-4686-acbd-966d499a2113` at
+  `https://qa-pokepilot.pokepilot-ai.workers.dev`, using isolated QA D1 and Redis
+  prefix. Production traffic was not deployed. No commit or push.
+- Used two real Chrome tabs with the existing authenticated QA session:
+  A saved while B had unsaved EV changes; B received save-before-refresh notice,
+  confirmed, saved its EV 28, and stayed open. A received the clean-update notice.
+  Both tabs edited A; B received discard-before-refresh warning and loaded A's
+  saved EV 27 after confirmation. Showdown import exposed a read-only textarea
+  while pending, completed successfully, and notified the peer. Reload preserved
+  A's EV 27. Final QA fixtures: A Attack EV 27; B Attack EV 28.
+- No application error was observed in the final tab log; the sole reported
+  error came from the Grammarly extension. Screenshot: `.tmp/predeploy-qa.png`.
+  Exact delayed/out-of-order network schedules were verified by automated tests,
+  not forced in the live browser. Safari, separate physical devices, and paid
+  analysis were not repeated in this pass.
+
+### Final Diff Review (2026-09-30, Follow-Up Fixed Locally)
+
+- P2: a peer refresh already in flight when a local save starts is invalidated
+  by the write generation, but is not queued for replacement. The prior fix
+  only queues refreshes requested while busy, leaving this ordering uncovered.
+  Reproduction: B changes remotely; start a deferred refresh, then save A.
+  Whether the old read finishes before or after A's write, B's update notice
+  never appears until a later refresh trigger. Both correct-behavior assertions
+  failed in temporary tests. Server revision checks still reject stale writes;
+  no server-side overwrite was demonstrated.
+- Fix before release: when a write supersedes an active refresh, retain one
+  post-write refresh, scoped to the active account/session. Preserve stale-read
+  rejection rather than accepting the outdated response. Add both completion
+  orders and logout cancellation to permanent regression coverage.
+- Removed the temporary failing tests after recording the finding. No product
+  changes, push, or deployment in this review. Tracked-file ignore-rule audit
+  found no tracked ignored artifacts; new test/CSS files still need inclusion
+  in the eventual commit. Previous passing QA does not cover this new ordering.
+
+- Follow-up: track the current in-flight refresh generation. A write that
+  supersedes that read schedules one replacement refresh after settling. Old
+  completions cannot clear newer tracking; account hydration resets tracking,
+  and acknowledgement supersedes it with its own authoritative read.
+- Added seven regression cases: both read/write completion orders for successful
+  and failed writes, logout/account-switch isolation, and no extra request after
+  an already completed read. All 147 test files / 1,090 tests pass, along with
+  lint and the Cloudflare build (existing bundle-size warning only).
+- This final correction is local only. No commit, push, preview upload, or
+  production deployment; QA version `9a5e3deb-9371-4686-acbd-966d499a2113`
+  predates this correction. No additional live-browser QA in this follow-up.

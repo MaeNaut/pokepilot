@@ -16,7 +16,7 @@ export function TeamUpdateDialog({ mode, name, onConfirm }: {
     return () => { element?.close(); };
   }, []);
   useEffect(() => { setFailed(false); }, [mode]);
-  return createPortal(<dialog ref={dialog} className="team-sync-conflict-dialog"
+  return createPortal(<dialog ref={dialog} className="team-update-dialog"
     aria-labelledby="team-update-title" aria-describedby="team-update-description"
     onCancel={event => event.preventDefault()}>
     <header>

@@ -10,13 +10,17 @@ export function usePersonalApiKey(accountId: string | null) {
   });
   const version = useRef(0);
   const updating = useRef(false);
+  const deferredRefresh = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     ++version.current;
     setState({ accountId, hasKey: false, status: "loading" });
     if (!accountId) return () => { version.current += 1; };
     const refresh = () => {
-      if (updating.current) return;
+      if (updating.current) {
+        deferredRefresh.current = refresh;
+        return;
+      }
       const request = ++version.current;
       void readPersonalApiKeyStatus(accountId).then((hasKey) => {
         if (version.current === request) setState({ accountId, hasKey, status: "ready" });
@@ -33,13 +37,14 @@ export function usePersonalApiKey(accountId: string | null) {
     window.addEventListener("storage", onStorage);
     return () => {
       version.current += 1;
+      if (deferredRefresh.current === refresh) deferredRefresh.current = null;
       window.removeEventListener("focus", refresh);
       window.removeEventListener("storage", onStorage);
     };
   }, [accountId]);
 
   async function update(apiKey: string | null) {
-    if (!accountId) return false;
+    if (!accountId || updating.current) return false;
     // A pending initial read must not overwrite a newer save or removal.
     updating.current = true;
     const request = ++version.current;
@@ -55,6 +60,9 @@ export function usePersonalApiKey(accountId: string | null) {
       return false;
     } finally {
       updating.current = false;
+      const refresh = deferredRefresh.current;
+      deferredRefresh.current = null;
+      refresh?.();
     }
   }
 

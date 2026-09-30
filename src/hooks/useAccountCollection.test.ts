@@ -149,41 +149,12 @@ describe("account collection lifecycle", () => {
     expect(storage.clearLocal).not.toHaveBeenCalled();
   });
 
-  it("pauses an unclaimed first-login collection when the adapter detects a capacity conflict", async () => {
-    const base = adapter([1]);
-    const reconcileUnclaimed = vi.fn(() => ({ merged: [2], conflicts: ["capacity"] }));
-    const storage = { ...base, reconcileUnclaimed };
-    const hook = await renderHook((id: string | null) => useAccountCollection(id, storage), "a" as string | null);
-    cleanups.push(hook.unmount);
-    expect(reconcileUnclaimed).toHaveBeenCalledWith([2], [1]);
-    expect(hook.current.conflict?.conflicts).toEqual(["capacity"]);
-    expect(base.writeRemote).not.toHaveBeenCalled();
-  });
-
   it("does not resurrect a team removed on another device when the local cache is stale", async () => {
     const storage = adapter([1], "a");
     storage.readRemote.mockResolvedValue({ value: [], version: '"v2"' });
     const hook = await mount(storage);
     expect(hook.current.items).toEqual([]);
     expect(storage.writeRemote).not.toHaveBeenCalled();
-  });
-
-  it("pauses a legacy cache migration until the user chooses between divergent versions", async () => {
-    const base = adapter([1], "a");
-    base.readRemote.mockResolvedValue({ value: [], version: '"v2"' });
-    const storage = {
-      ...base,
-      isManaged: () => false,
-      markManaged: vi.fn(),
-      reconcileLegacy: () => ({ merged: [], conflicts: ["deleted-elsewhere"] }),
-    };
-    const hook = await renderHook((id: string | null) => useAccountCollection(id, storage), "a" as string | null);
-    cleanups.push(hook.unmount);
-    expect(hook.current.conflict?.conflicts).toEqual(["deleted-elsewhere"]);
-    expect(base.writeRemote).not.toHaveBeenCalled();
-    await act(async () => { await hook.current.resolveConflict([]); });
-    expect(storage.markManaged).toHaveBeenCalledWith("a");
-    expect(hook.current.items).toEqual([]);
   });
 
   it("replays a persisted unsynced deletion against the latest server copy", async () => {
@@ -264,26 +235,6 @@ describe("account collection lifecycle", () => {
         { value: [2, 3, 4], version: '"v2"' },
       ]);
     expect(hook.current.hasUnsyncedChanges).toBe(false);
-  });
-
-  it("waits for a decision when the same item changed on both devices", async () => {
-    const base = adapter([2], "a");
-    base.writeRemote.mockRejectedValueOnce(new AccountStorageConflictError())
-      .mockResolvedValue('"v3"');
-    base.readRemote.mockResolvedValueOnce({ value: [2], version: '"v1"' })
-      .mockResolvedValueOnce({ value: [4], version: '"v2"' });
-    const storage = {
-      ...base,
-      reconcile: () => ({ merged: [4], conflicts: ["same-item"] }),
-    };
-    const hook = await renderHook((id: string | null) => useAccountCollection(id, storage), "a" as string | null);
-    cleanups.push(hook.unmount);
-    await act(async () => { hook.current.commit([3]); });
-    expect(hook.current.conflict?.conflicts).toEqual(["same-item"]);
-    expect(base.writeRemote).toHaveBeenCalledTimes(1);
-    await act(async () => { await hook.current.resolveConflict([3, 4]); });
-    expect(hook.current.conflict).toBeNull();
-    expect(base.writeRemote).toHaveBeenLastCalledWith([3, 4], '"v2"', expect.any(AbortSignal), "a");
   });
 
   it("keeps saving remotely if browser storage is full", async () => {

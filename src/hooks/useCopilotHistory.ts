@@ -15,7 +15,6 @@ import {
   storePendingCopilotHistory,
   clearPendingCopilotHistory,
   clearConsumedPendingCopilotHistory,
-  type CopilotHistoryEntry,
 } from "../utils/copilotHistory";
 import { useAccountCollection } from "./useAccountCollection";
 import { pendingCopilotHistoryStorageKey } from "../utils/accountPendingStorage";
@@ -36,9 +35,7 @@ const storage = {
   clearPendingEntries: clearConsumedPendingCopilotHistory,
   merge: mergeAccountCopilotHistory,
   mergeAfterLocalEdits: mergeAccountCopilotHistoryAfterLocalEdits,
-  reconcile: (remote: CopilotHistoryEntry[], local: CopilotHistoryEntry[], baseline: CopilotHistoryEntry[]) => ({
-    merged: reconcileAccountCopilotHistory(remote, local, baseline), conflicts: [],
-  }),
+  reconcile: reconcileAccountCopilotHistory,
 };
 
 export function useCopilotHistory(accountId: string | null, authResolved = true) {

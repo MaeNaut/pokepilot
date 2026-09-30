@@ -1,8 +1,4 @@
 import {
-  normalizeSavedTeams,
-  type SavedTeamSummary,
-} from "../utils/teamStorage";
-import {
   normalizeCopilotHistoryEntries,
   type CopilotHistoryEntry,
 } from "../utils/copilotHistory";
@@ -12,7 +8,7 @@ import {
 } from "../utils/accountPreferences";
 import { rejectChangedAccount } from "./accountSessionBoundary";
 
-type AccountStorageKey = "teams" | "analysis-history" | "preferences";
+type AccountStorageKey = "analysis-history" | "preferences";
 
 export type VersionedAccountStorage<T> = { value: T | null; version: string };
 
@@ -24,9 +20,7 @@ export class AccountStorageConflictError extends Error {
 }
 
 function endpoint(key: AccountStorageKey) {
-  if (key === "teams") return "/api/pokepilot/teams";
-  if (key === "analysis-history") return "/api/pokepilot/analysis-history";
-  return "/api/pokepilot/preferences";
+  return `/api/pokepilot/${key}`;
 }
 
 async function readStorage(
@@ -68,19 +62,6 @@ async function writeStorage(
   const nextVersion = response.headers.get("X-PokePilot-Storage-Version") ?? response.headers.get("ETag");
   if (!nextVersion) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
   return nextVersion;
-}
-
-export async function readAccountTeams(
-  signal?: AbortSignal, accountId?: string,
-): Promise<VersionedAccountStorage<SavedTeamSummary[]>> {
-  const snapshot = await readStorage("teams", signal, accountId);
-  return { ...snapshot, value: snapshot.value === null ? null : normalizeSavedTeams(snapshot.value) };
-}
-
-export function writeAccountTeams(
-  teams: SavedTeamSummary[], version: string, signal?: AbortSignal, accountId?: string,
-) {
-  return writeStorage("teams", teams, version, signal, accountId);
 }
 
 export async function readAccountCopilotHistory(

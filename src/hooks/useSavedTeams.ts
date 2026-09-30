@@ -32,7 +32,10 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
   const scope = useRef({ accountId, authResolved });
   scope.current = { accountId, authResolved };
   const busy = useRef(false);
+  const confirming = useRef(false);
+  const refreshPending = useRef(false);
   const generation = useRef(0);
+  const refreshingVersion = useRef<number | null>(null);
   const token = useRef(Symbol("team-library"));
   const refreshRef = useRef<() => Promise<boolean>>(async () => false);
 
@@ -55,8 +58,10 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
 
   const refresh = useCallback(async () => {
     const session = sessionRef.current;
-    if (!session || busy.current) return false;
-    const version = generation.current;
+    if (!session) return false;
+    if (busy.current || confirming.current) { refreshPending.current = true; return false; }
+    const version = ++generation.current;
+    refreshingVersion.current = version;
     try {
       const remote = await readTeamLibrary(session.accountId, session.controller.signal);
       if (!active(session) || busy.current || generation.current !== version) return false;
@@ -69,8 +74,10 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
       report(false);
       return true;
     } catch {
-      if (active(session)) report(true);
+      if (active(session) && generation.current === version) report(true);
       return false;
+    } finally {
+      if (refreshingVersion.current === version) refreshingVersion.current = null;
     }
   }, [accept, notify]);
   refreshRef.current = refresh;
@@ -95,22 +102,14 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
     notify(null);
     setHydrated(!accountId);
     busy.current = false;
+    confirming.current = false;
+    refreshPending.current = false;
+    refreshingVersion.current = null;
     setSaving(false);
     if (!accountId) return;
     const session: Session = { accountId, controller: new AbortController(), ready: false };
     sessionRef.current = session;
     const unregister = registerAccountCollectionSync(token.current, () => refreshRef.current());
-    const load = async () => {
-      try {
-        const remote = await readTeamLibrary(accountId, session.controller.signal);
-        if (!active(session)) return;
-        accept(remote);
-        storeSavedTeamsAccountId(accountId);
-        session.ready = true;
-        setHydrated(true);
-        report(false);
-      } catch { if (active(session)) report(true); }
-    };
     const focus = () => { void refreshRef.current(); };
     const storage = (event: StorageEvent) => {
       if (event.key !== notificationKey || !event.newValue) return;
@@ -119,7 +118,7 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
     window.addEventListener("focus", focus);
     window.addEventListener("online", focus);
     window.addEventListener("storage", storage);
-    void load();
+    void refreshRef.current();
     return () => {
       session.controller.abort();
       if (sessionRef.current === session) sessionRef.current = null;
@@ -131,10 +130,13 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
   }, [accountId, authResolved, accept, notify]);
 
   async function mutate(action: (session: Session | null) => Promise<SavedTeamSummary[]>, allowPending = false) {
-    if (!authResolved || !isHydrated || busy.current || (pending.current && !allowPending)) return false;
+    if (!authResolved || !isHydrated || busy.current || ((pending.current || confirming.current) && !allowPending)) return false;
     const session = sessionRef.current;
     busy.current = true;
     setSaving(true);
+    // Preserve the refresh displaced by this write, without accepting its stale response.
+    if (refreshingVersion.current === generation.current) refreshPending.current = true;
+    refreshingVersion.current = null;
     generation.current += 1;
     try {
       const next = await action(session);
@@ -152,7 +154,14 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
       report(true);
       return false;
     } finally {
-      if (!session || active(session)) { busy.current = false; setSaving(false); }
+      if (!session || active(session)) {
+        busy.current = false;
+        setSaving(false);
+        if (!confirming.current && refreshPending.current) {
+          refreshPending.current = false;
+          void refreshRef.current();
+        }
+      }
     }
   }
 
@@ -180,7 +189,10 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
   async function confirmUpdate(snapshot: TeamSnapshot, activeId: string | null, dirty: boolean, shownMode: TeamRefreshMode,
     apply: (result: { teams: SavedTeamSummary[]; saved: SavedTeamSummary | null; mode: TeamRefreshMode }) => Promise<boolean> = async () => true) {
     const session = sessionRef.current;
-    if (!session || busy.current) return null;
+    if (!session || busy.current || confirming.current) return null;
+    confirming.current = true;
+    refreshingVersion.current = null;
+    generation.current += 1;
     try {
       let remote = await readTeamLibrary(session.accountId, session.controller.signal);
       if (!active(session)) return null;
@@ -202,6 +214,16 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
       report(false);
       return result;
     } catch { if (active(session)) report(true); return null; }
+    finally {
+      if (active(session)) {
+        confirming.current = false;
+        generation.current += 1;
+        if (refreshPending.current) {
+          refreshPending.current = false;
+          void refreshRef.current();
+        }
+      }
+    }
   }
 
   return {

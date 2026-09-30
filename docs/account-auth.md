@@ -86,7 +86,7 @@ account on the same device cannot inherit the prior account's language or theme.
 Each tab keeps its own pending history and preference record. History
 sync refreshes from the server when a peer removes a committed journal;
 they do not treat a peer's live pending edits as committed data. Peer journals
-are replayed during initial recovery or after resolving a recovery conflict.
+are replayed during initial recovery using automatic history reconciliation.
 Preferences retain field-level reconciliation and replay pending records on
 both journal updates and removals. A focused tab checks the server for newer
 account data even when its last write succeeded. Consumed pending records are
@@ -97,9 +97,11 @@ The shared journal reader and compare-before-delete helper live in
 remain in their adapters. `accountCollectionHydration.ts` makes recovery/merge
 decisions without browser or React side effects. `accountSyncLifecycle.ts`
 owns retry-event subscriptions, sync-registry registration, and session cleanup,
-with an explicit journal-event policy for each hook. Merge rules, conflict UI,
-and write-retry state remain in their existing owners; no account-storage schema
-or stored journal format changes are required.
+with an explicit journal-event policy for each hook. History recovery and stale
+writes reconcile automatically without a manual version-choice interface.
+The team-update dialog belongs to the separate per-team storage flow. Merge
+rules and write-retry state remain in their existing owners; no account-storage
+schema or stored journal format changes are required.
 
 History/preferences storage reads return an ETag and an unmodified
 `X-PokePilot-Storage-Version` header. Clients prefer the latter because a CDN

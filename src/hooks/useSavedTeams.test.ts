@@ -39,6 +39,130 @@ async function setup() {
 }
 
 describe("server-first team synchronization", () => {
+  it.each([
+    [false, false], [true, false], [false, true], [true, true],
+  ])("replaces an in-flight refresh after saving (readFirst=%s, writeFails=%s)", async (readFirst, writeFails) => {
+    const hook = await setup();
+    server[1] = team("b", "2");
+    const reading = deferred<SavedTeamSummary[]>();
+    const writing = deferred<SavedTeamSummary>();
+    const peerSnapshot = structuredClone(server);
+    vi.mocked(api.readTeamLibrary).mockClear().mockReturnValueOnce(reading.promise);
+    vi.mocked(api.saveLibraryTeam).mockReturnValueOnce(writing.promise);
+    let read!: Promise<boolean>;
+    let write!: Promise<unknown>;
+    await act(async () => { read = hook.current.refresh(); });
+    await act(async () => { write = hook.current.save(draft(), "a"); });
+    if (readFirst) await act(async () => { reading.resolve(peerSnapshot); await read; });
+    await act(async () => {
+      if (writeFails) writing.reject(new Error("offline"));
+      else { server[0] = team("a", "2"); writing.resolve(server[0]); }
+      await write;
+    });
+    if (!readFirst) await act(async () => { reading.resolve(peerSnapshot); await read; });
+    expect(api.readTeamLibrary).toHaveBeenCalledTimes(2);
+    expect(hook.current.pendingUpdate?.find(t => t.id === "b")?.revision).toBe("2");
+    expect(hook.current.pendingUpdate?.find(t => t.id === "a")?.revision).toBe(writeFails ? "1" : "2");
+  });
+
+  it.each([null, "other-account"])("does not replay a displaced refresh across account change to %s", async (nextAccount) => {
+    const hook = await setup();
+    const reading = deferred<SavedTeamSummary[]>();
+    const writing = deferred<SavedTeamSummary>();
+    vi.mocked(api.readTeamLibrary).mockReturnValueOnce(reading.promise);
+    vi.mocked(api.saveLibraryTeam).mockReturnValueOnce(writing.promise);
+    let read!: Promise<boolean>;
+    let write!: Promise<unknown>;
+    await act(async () => { read = hook.current.refresh(); });
+    await act(async () => { write = hook.current.save(draft(), "a"); });
+    server = [];
+    await hook.rerender(nextAccount);
+    vi.mocked(api.readTeamLibrary).mockClear();
+    await act(async () => {
+      reading.resolve([team("a"), team("b", "2")]);
+      writing.resolve(team("a", "2"));
+      await read; await write;
+    });
+    expect(api.readTeamLibrary).not.toHaveBeenCalled();
+    expect(hook.current.teams).toEqual([]);
+    expect(hook.current.pendingUpdate).toBeNull();
+  });
+
+  it("does not add a refresh to ordinary saves after a completed read", async () => {
+    const hook = await setup();
+    await act(async () => { await hook.current.refresh(); });
+    vi.mocked(api.readTeamLibrary).mockClear();
+    await act(async () => { await hook.current.save(draft(), "a"); });
+    expect(api.readTeamLibrary).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])("replays peer notices after a local write settles (failed=%s)", async (failed) => {
+    const hook = await setup();
+    const writing = deferred<SavedTeamSummary>();
+    vi.mocked(api.saveLibraryTeam).mockReturnValueOnce(writing.promise);
+    let operation!: Promise<unknown>;
+    await act(async () => { operation = hook.current.save(draft(), "a"); });
+    server[1] = team("b", "2");
+    vi.mocked(api.readTeamLibrary).mockClear();
+    await act(async () => {
+      for (let i = 0; i < 2; i += 1) window.dispatchEvent(new StorageEvent("storage", {
+        key: "pokepilot.team-library.commit.v2", newValue: JSON.stringify({ accountId: "account", nonce: i }),
+      }));
+      if (failed) writing.reject(new Error("offline"));
+      else { server[0] = team("a", "2"); writing.resolve(server[0]); }
+      await operation;
+    });
+    expect(api.readTeamLibrary).toHaveBeenCalledTimes(1);
+    expect(hook.current.pendingUpdate?.find(t => t.id === "b")?.revision).toBe("2");
+  });
+
+  it("ignores an older refresh after the newest update has been acknowledged", async () => {
+    const hook = await setup();
+    const stale = deferred<SavedTeamSummary[]>();
+    vi.mocked(api.readTeamLibrary).mockReturnValueOnce(stale.promise);
+    let operation!: Promise<boolean>;
+    await act(async () => { operation = hook.current.refresh(); });
+    server[0] = team("a", "3");
+    await act(async () => { await hook.current.refresh(); });
+    await act(async () => { await hook.current.confirmUpdate(draft(), "a", false, "refresh"); });
+    await act(async () => { stale.resolve([team("a", "2"), team("b")]); await operation; });
+    expect(hook.current.pendingUpdate).toBeNull();
+    expect(hook.current.teams[0].revision).toBe("3");
+  });
+
+  it("drops queued refreshes when logging out during a write", async () => {
+    const hook = await setup();
+    const writing = deferred<SavedTeamSummary>();
+    vi.mocked(api.saveLibraryTeam).mockReturnValueOnce(writing.promise);
+    let operation!: Promise<unknown>;
+    await act(async () => { operation = hook.current.save(draft(), "a"); await hook.current.refresh(); });
+    await hook.rerender(null);
+    vi.mocked(api.readTeamLibrary).mockClear();
+    await act(async () => { writing.resolve(team("a", "2")); await operation; });
+    expect(api.readTeamLibrary).not.toHaveBeenCalled();
+    expect(hook.current.teams).toEqual([]);
+  });
+
+  it("retries a failed initial load through the same refresh path without showing an update notice", async () => {
+    vi.mocked(api.readTeamLibrary).mockRejectedValueOnce(new Error("offline"));
+    const hook = await setup();
+    expect(hook.current.isHydrated).toBe(false);
+    await act(async () => { expect(await hook.current.refresh()).toBe(true); });
+    expect(hook.current.isHydrated).toBe(true);
+    expect(hook.current.teams.map(t => t.id)).toEqual(["a", "b"]);
+    expect(hook.current.pendingUpdate).toBeNull();
+  });
+
+  it("ignores an initial load completed after logout", async () => {
+    const loading = deferred<SavedTeamSummary[]>();
+    vi.mocked(api.readTeamLibrary).mockReturnValueOnce(loading.promise);
+    const hook = await setup();
+    await hook.rerender(null);
+    await act(async () => { loading.resolve(server); });
+    expect(hook.current.teams).toEqual([]);
+    expect(hook.current.pendingUpdate).toBeNull();
+  });
+
   it("preserves guest teams separately when signing in and restores them on logout", async () => {
     storeTeams([team("guest")]);
     const hook = await setup();

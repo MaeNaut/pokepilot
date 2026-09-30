@@ -22,6 +22,44 @@ async function mount(account: string | null = "a") {
 }
 
 describe("personal key lifecycle", () => {
+  it.each([false, true])("replays peer refresh after a pending mutation (failed=%s)", async (failed) => {
+    const pending = deferred<void>();
+    vi.mocked(savePersonalApiKey).mockReturnValue(pending.promise);
+    const hook = await mount();
+    vi.mocked(readPersonalApiKeyStatus).mockClear();
+    let operation!: Promise<boolean>;
+    await act(async () => { operation = hook.current.update("test-key"); });
+    await act(async () => {
+      for (let i = 0; i < 2; i += 1) window.dispatchEvent(new StorageEvent("storage", {
+        key: ACCOUNT_EVENT_STORAGE_KEY,
+        newValue: JSON.stringify({ kind: "personal-key", accountId: "a" }),
+      }));
+    });
+    expect(readPersonalApiKeyStatus).not.toHaveBeenCalled();
+    await act(async () => {
+      if (failed) pending.reject(new Error("response lost"));
+      else pending.resolve();
+      await operation;
+    });
+    expect(readPersonalApiKeyStatus).toHaveBeenCalledTimes(1);
+    expect(hook.current.hasPersonalApiKey).toBe(false);
+    expect(hook.current.personalApiKeyStatus).toBe("ready");
+  });
+
+  it("does not replay a queued refresh after logout", async () => {
+    const pending = deferred<void>();
+    vi.mocked(savePersonalApiKey).mockReturnValue(pending.promise);
+    const hook = await mount();
+    vi.mocked(readPersonalApiKeyStatus).mockClear();
+    let operation!: Promise<boolean>;
+    await act(async () => { operation = hook.current.update("test-key"); });
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await hook.rerender(null);
+    await act(async () => { pending.resolve(); await operation; });
+    expect(readPersonalApiKeyStatus).not.toHaveBeenCalled();
+    expect(hook.current.hasPersonalApiKey).toBe(false);
+  });
+
   it("refreshes another tab after a key changes without exposing the key", async () => {
     const hook = await mount();
     vi.mocked(readPersonalApiKeyStatus).mockResolvedValue(true);
