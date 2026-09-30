@@ -105,6 +105,7 @@ export async function handleAccountStorage(
       parseStoredPayload(row?.payload ?? null, key),
       {
         ETag: payloadVersion(row),
+        "X-PokePilot-Storage-Version": payloadVersion(row),
         ...(session.refreshCookie ? { "Set-Cookie": session.refreshCookie } : {}),
       },
     );
@@ -119,6 +120,11 @@ export async function handleAccountStorage(
     const payload = getPayload(body, key);
     if (!payload) {
       return jsonResponse(400, { ok: false, error: { code: "INVALID_ACCOUNT_STORAGE" } });
+    }
+    if (key === "teams" && await env.DB.prepare(
+      "SELECT payload FROM account_storage WHERE account_id = ? AND storage_key = 'teams-v2'",
+    ).bind(session.account.id).first()) {
+      return jsonResponse(409, { ok: false, error: { code: "CLIENT_UPDATE_REQUIRED" } });
     }
 
     const expectedVersion = request.headers.get("If-Match");
@@ -140,17 +146,22 @@ export async function handleAccountStorage(
     const statement = row
       ? env.DB.prepare(
           `UPDATE account_storage SET payload = ?, updated_at = ?
-           WHERE account_id = ? AND storage_key = ? AND payload = ? AND updated_at = ?`,
+           WHERE account_id = ? AND storage_key = ? AND payload = ? AND updated_at = ?
+           AND (storage_key != 'teams' OR NOT EXISTS (SELECT 1 FROM account_storage AS migrated
+             WHERE migrated.account_id = account_storage.account_id AND migrated.storage_key = 'teams-v2'))`,
         ).bind(payload, updatedAt, accountId, key, row.payload, row.updated_at)
       : env.DB.prepare(
           `INSERT INTO account_storage (account_id, storage_key, payload, updated_at)
-           VALUES (?, ?, ?, ?) ON CONFLICT(account_id, storage_key) DO NOTHING`,
-        ).bind(accountId, key, payload, updatedAt);
+           SELECT ?, ?, ?, ? WHERE ? != 'teams' OR NOT EXISTS
+             (SELECT 1 FROM account_storage WHERE account_id = ? AND storage_key = 'teams-v2')
+           ON CONFLICT(account_id, storage_key) DO NOTHING`,
+        ).bind(accountId, key, payload, updatedAt, key, accountId);
     const result = await statement.run();
     if ((result as { meta?: { changes?: number } }).meta?.changes !== 1) {
       return conflictResponse(env, accountId, key);
     }
-    return withSessionRefresh(emptyResponse({ ETag: payloadVersion({ payload, updated_at: updatedAt }) }), session.refreshCookie);
+    const version = payloadVersion({ payload, updated_at: updatedAt });
+    return withSessionRefresh(emptyResponse({ ETag: version, "X-PokePilot-Storage-Version": version }), session.refreshCookie);
   }
 
   return jsonResponse(

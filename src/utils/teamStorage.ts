@@ -42,6 +42,7 @@ export type SavedBenchPokemon = {
 };
 
 export type SavedTeamSummary = {
+  revision?: string;
   version: typeof SAVED_TEAM_SCHEMA_VERSION;
   id: string;
   name: string;
@@ -76,6 +77,7 @@ export function normalizeSavedTeam(
 
   return {
     version: SAVED_TEAM_SCHEMA_VERSION,
+    ...(typeof team.revision === "string" ? { revision: team.revision } : {}),
     id: team.id,
     name: team.name,
     battleFormat: resolveBattleFormat(team.battleFormat),

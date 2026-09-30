@@ -332,3 +332,33 @@ Pokemon form. No commit, push, or production deployment is part of this pass.
 - Google blocked sign-in from the automation browser with its insecure-browser
   warning. Therefore real OAuth, authenticated Worker/D1 writes, and paid
   analysis were not validated in this preview-browser pass.
+
+### Server-First Team Preview QA (2026-09-29)
+
+- Preview version: `e25a0cc9-da32-4751-b7aa-b0696c2b096f`, alias
+  `https://qa-pokepilot.pokepilot-ai.workers.dev`. Uploaded from the working tree;
+  no commit, push, or production traffic deployment was performed.
+- Used two tabs in the user's normal Chrome profile with its existing QA login.
+  Unlike the earlier run, account endpoints were not mocked: saves and reloads
+  used the authenticated Worker and isolated QA D1 database. No paid analysis.
+- Existing legacy QA teams loaded after the per-team migration. A direct D1
+  metadata query was blocked because it lacked an account-ID filter; it was not
+  retried. Backup-row integrity remains covered by SQLite migration tests,
+  not by a remote database inspection in this pass.
+- A saved while B had an unsaved Attack EV change: B displayed the save-before-
+  refresh notice first. Confirmation saved B's EV 31 and kept B open. A's tab
+  then received a clean-update notice. Loading B from A's tab retained EV 31.
+- Both tabs editing A: the receiver retained EV 28 until confirming the discard
+  notice, then loaded the saved EV 29. Escape did not dismiss the notice.
+- Clean A receiving another save: ordinary update notice, then EV 27 after
+  confirmation. A page reload restored A and EV 27 from the remote store.
+- While B's save-before-refresh notice was open, the other tab saved B too:
+  the notice changed to a discard warning. Confirmation loaded server EV 29,
+  rather than overwriting it with the older local EV 30.
+- Final disposable QA fixture values: `QA Sync A edited` Attack EV 26;
+  `QA Sync B 0929` Attack EV 29. No non-QA teams were changed or deleted.
+- No new defect was observed in these flows. Implementation validation remains
+  146 files / 1,098 passing tests, lint, and Cloudflare build. Network-failure,
+  account-boundary, and atomic stale-write rejection checks are automated tests;
+  real separate-device, offline/reconnect, deletion, and mobile-layout checks
+  were not repeated in this browser pass. Fresh Google OAuth was unnecessary.

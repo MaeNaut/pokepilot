@@ -20,6 +20,7 @@ function createEnvironment(storedPayload: string | null = null) {
         return { first: vi.fn().mockResolvedValue(accountRow) };
       }
       if (query.includes("SELECT payload")) {
+        if (query.includes("'teams-v2'")) return { first: vi.fn().mockResolvedValue(null) };
         return { first: vi.fn().mockImplementation(async () => payload === null ? null : { payload, updated_at: updatedAt }) };
       }
       if (query.includes("INSERT INTO account_storage") || query.includes("UPDATE account_storage")) {

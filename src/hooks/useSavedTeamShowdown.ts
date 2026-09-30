@@ -83,7 +83,9 @@ export function useSavedTeamShowdown({ accountId, pool, pokemonIndex, library, t
       if (generation.current !== request) return;
       const updatedAt = new Date().toISOString();
       const slots = snapshot.members.map(createSavedSlot);
-      library.update(savedTeam.id, (current) => ({ ...current, slots, buildState: snapshot.buildState, updatedAt }));
+      const saved = await library.update(savedTeam.id, (current) => ({ ...current, slots, buildState: snapshot.buildState, updatedAt }));
+      if (generation.current !== request) return;
+      if (!saved) { onMessage(t("team.saveFailed")); return; }
       onImported({ ...savedTeam, slots, buildState: snapshot.buildState, updatedAt }, snapshot, revision);
       onMessage(t("team.importedInto", { name: savedTeam.name }));
       closeSavedTeamShowdown();

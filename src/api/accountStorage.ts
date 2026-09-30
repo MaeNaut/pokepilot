@@ -44,7 +44,7 @@ async function readStorage(
   if (!body || typeof body !== "object") {
     throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
   }
-  const version = response.headers.get("ETag");
+  const version = response.headers.get("X-PokePilot-Storage-Version") ?? response.headers.get("ETag");
   if (!version) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
   return { value: body[key] ?? null, version };
 }
@@ -65,7 +65,7 @@ async function writeStorage(
   if (response.status === 409) throw new AccountStorageConflictError();
   if (response.status === 401) throw new Error("AUTH_REQUIRED");
   if (!response.ok) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
-  const nextVersion = response.headers.get("ETag");
+  const nextVersion = response.headers.get("X-PokePilot-Storage-Version") ?? response.headers.get("ETag");
   if (!nextVersion) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
   return nextVersion;
 }

@@ -17,13 +17,13 @@ import {
   faFloppyDisk,
   faList,
 } from "@fortawesome/free-solid-svg-icons";
-import { useSavedTeams } from "./hooks/useSavedTeams";
+import { useSavedTeams, teamRefreshMode } from "./hooks/useSavedTeams";
 import { hydrateSavedTeamMembers, hydrateSavedBench } from "./utils/savedTeamLibrary";
 import { isPokemonLegal } from "./api/showdownLegality";
 import { NewTeamControl } from "./components/NewTeamControl";
 import { PrivacyControl } from "./components/PrivacyControl";
 import { SavedTeamRow } from "./components/SavedTeamRow";
-import { TeamSyncConflictDialog } from "./components/TeamSyncConflictDialog";
+import { TeamUpdateDialog } from "./components/TeamUpdateDialog";
 import { TeamBuilder } from "./components/TeamBuilder";
 import { TeamDiagnostics } from "./components/TeamDiagnostics";
 import { CopilotDrawer } from "./components/CopilotDrawer";
@@ -79,7 +79,6 @@ import { useAppMode } from "./appMode/useAppMode";
 import { useAccount } from "./hooks/useAccount";
 import { useAccountPreferencesSync } from "./hooks/useAccountPreferencesSync";
 import { DEFAULT_ANALYSIS_PREFERENCE } from "./utils/accountPreferences";
-import type { TeamConflictChoice } from "./utils/accountStorageSync";
 import {
   getWorkspaceTutorialCompleted,
   storeWorkspaceTutorialCompleted,
@@ -895,7 +894,7 @@ function App() {
     setTeamStorageMessage(t("team.importedPokemon"));
   }
 
-  function handleSaveTeam() {
+  async function handleSaveTeam() {
     if (isTeamSaveUnavailable) {
       setTeamStorageMessage(t(account.status === "loading" ? "account.checking" : "account.unavailable"));
       setIsTeamManagerOpen(true);
@@ -903,19 +902,24 @@ function App() {
       return;
     }
     const nextName = commitTeamName();
-    const nextSavedTeam = savedTeamLibrary.save(
-      getCurrentTeamSnapshot(nextName),
+    const scope = teamLoadRequestRef.current;
+    const owner = accountStorageId;
+    const snapshot = getCurrentTeamSnapshot(nextName);
+    const nextSavedTeam = await savedTeamLibrary.save(
+      snapshot,
       activeSavedTeamId,
     );
+    if (scope !== teamLoadRequestRef.current || owner !== previousAccountStorageIdRef.current) return;
 
     if (!nextSavedTeam) {
-      setTeamStorageMessage(t("team.limitReached"));
+      setTeamStorageMessage(t("team.saveFailed"));
       setIsTeamManagerOpen(true);
       setIsSaveConfirmed(false);
       return;
     }
 
     markWorkspaceSaved(nextSavedTeam.id, nextName);
+    setCommittedSnapshot(snapshot);
 
     setTeamStorageMessage(t("team.savedNamed", { name: nextSavedTeam.name }));
     setPendingDeleteTeamId(null);
@@ -1019,12 +1023,12 @@ function App() {
 
 
 
-  function handleReorderSavedTeams(sourceIndex: number, targetIndex: number) {
+  async function handleReorderSavedTeams(sourceIndex: number, targetIndex: number) {
     const order = savedTeamDragOrderRef.current ?? savedTeams.map((team) => team.id);
     savedTeamDragOrderRef.current = null;
     const sourceId = order[sourceIndex];
     const targetId = order[targetIndex];
-    if (sourceId && targetId && savedTeamLibrary.reorderByIds(sourceId, targetId)) {
+    if (sourceId && targetId && await savedTeamLibrary.reorderByIds(sourceId, targetId)) {
       setTeamStorageMessage(t("team.reorderedSaved"));
     }
   }
@@ -1075,13 +1079,18 @@ function App() {
     }
   }
 
-  function renameActiveSavedTeam(nextName: string) {
+  async function renameActiveSavedTeam(nextName: string) {
+    const requestId = teamLoadRequestRef.current;
     if (!activeSavedTeamId) {
       return;
     }
 
-    savedTeamLibrary.rename(activeSavedTeamId, nextName);
+    if (!await savedTeamLibrary.rename(activeSavedTeamId, nextName)) {
+      setTeamStorageMessage(t("team.saveFailed"));
+      return;
+    }
 
+    if (requestId !== teamLoadRequestRef.current) return;
     renameCommittedSnapshot(nextName);
     setTeamStorageMessage(t("team.renamedTo", { name: nextName }));
   }
@@ -1099,7 +1108,8 @@ function App() {
     setRenameDraft("");
   }
 
-  function commitRenameTeam(teamId: string) {
+  async function commitRenameTeam(teamId: string) {
+    const requestId = teamLoadRequestRef.current;
     const nextName = renameDraft.trim();
 
     if (!nextName) {
@@ -1107,8 +1117,12 @@ function App() {
       return;
     }
 
-    savedTeamLibrary.rename(teamId, nextName);
+    if (!await savedTeamLibrary.rename(teamId, nextName)) {
+      setTeamStorageMessage(t("team.saveFailed"));
+      return;
+    }
 
+    if (requestId !== teamLoadRequestRef.current) return;
     if (teamId === activeSavedTeamId) {
       setTeamName(nextName);
       setTeamNameDraft(nextName);
@@ -1133,9 +1147,9 @@ function App() {
     }
   }
 
-  function handleDuplicateTeam(savedTeam: SavedTeamSummary) {
-    if (!savedTeamLibrary.duplicate(savedTeam)) {
-      setTeamStorageMessage(t("team.limitReached"));
+  async function handleDuplicateTeam(savedTeam: SavedTeamSummary) {
+    if (!await savedTeamLibrary.duplicate(savedTeam)) {
+      setTeamStorageMessage(t("team.saveFailed"));
       return;
     }
 
@@ -1181,10 +1195,15 @@ function App() {
     setTeamStorageMessage(null);
   }
 
-  function handleDeleteTeam(teamId: string) {
+  async function handleDeleteTeam(teamId: string) {
+    const requestId = teamLoadRequestRef.current;
     const deletedTeam = savedTeams.find((savedTeam) => savedTeam.id === teamId);
-    savedTeamLibrary.remove(teamId);
+    if (!await savedTeamLibrary.remove(teamId)) {
+      setTeamStorageMessage(t("team.saveFailed"));
+      return;
+    }
 
+    if (requestId !== teamLoadRequestRef.current) return;
     if (teamId === activeSavedTeamId) {
       detachSavedTeam();
     }
@@ -1198,15 +1217,31 @@ function App() {
     );
   }
 
-  function handleResolveTeamConflicts(choices: Record<string, TeamConflictChoice>) {
-    const conflicts = savedTeamLibrary.conflict?.conflicts ?? [];
-    const copies = savedTeamLibrary.resolveTeamConflicts(choices, t("team.syncCopySuffix"));
-    if (!copies) return false;
-    const activeCopy = copies.find((entry) => entry.originalId === activeSavedTeamId);
-    if (activeCopy) markWorkspaceSaved(activeCopy.copy.id, activeCopy.copy.name);
-    else if (conflicts.some((entry) => entry.id === activeSavedTeamId &&
-      (choices[entry.id] === "remote" || !entry.local))) detachSavedTeam();
-    return true;
+  const refreshMode = teamRefreshMode(savedTeams, savedTeamLibrary.pendingUpdate ?? savedTeams,
+    activeSavedTeamId, hasUnsavedTeamChanges());
+
+  async function confirmTeamUpdate() {
+    const scope = teamLoadRequestRef.current;
+    const owner = accountStorageId;
+    const snapshot = getCurrentTeamSnapshot();
+    const result = await savedTeamLibrary.confirmUpdate(snapshot, activeSavedTeamId,
+      hasUnsavedTeamChanges(), refreshMode, async update => {
+        if (scope !== teamLoadRequestRef.current || owner !== previousAccountStorageIdRef.current) return false;
+        if (update.saved) {
+          markWorkspaceSaved(update.saved.id, update.saved.name);
+          setCommittedSnapshot(snapshot);
+          return true;
+        }
+        if (!activeSavedTeamId) return true;
+        const latest = update.teams.find(entry => entry.id === activeSavedTeamId);
+        const before = savedTeams.find(entry => entry.id === activeSavedTeamId);
+        if (latest && latest.revision === before?.revision) return true;
+        if (latest) return loadSavedTeam(latest);
+        beginWorkspaceTransition();
+        resetWorkspace("new-team");
+        return true;
+      });
+    return Boolean(result);
   }
 
   return (
@@ -1616,10 +1651,11 @@ function App() {
           setTutorialCompleted(true);
         }}
       />
-      {savedTeamLibrary.conflict ? (
-        <TeamSyncConflictDialog
-          conflicts={savedTeamLibrary.conflict.conflicts}
-          onResolve={handleResolveTeamConflicts}
+      {savedTeamLibrary.pendingUpdate ? (
+        <TeamUpdateDialog
+          mode={refreshMode}
+          name={teamNameDraft}
+          onConfirm={confirmTeamUpdate}
         />
       ) : null}
     </main>

@@ -14,6 +14,7 @@ import {
 import { handleAccount } from "./accountEndpoint.js";
 import { emptyResponse, jsonResponse, withSessionRefresh } from "./http.js";
 import { handleAccountStorage } from "./accountStorage.js";
+import { handleTeamLibrary } from "./teamLibrary.js";
 import { handlePersonalApiKey, readPersonalApiKey } from "./personalApiKey.js";
 import type { WorkerEnvironment } from "./env.js";
 import type { PokePilotOperationalEvent } from "../server/pokepilotApi.js";
@@ -109,6 +110,9 @@ const router = {
         return emptyResponse({ "Set-Cookie": setCookie });
       }
       if (url.pathname === "/api/pokepilot/account") return await handleAccount(request, env);
+      if (url.pathname === "/api/pokepilot/team-library") {
+        return await handleTeamLibrary(request, env);
+      }
       if (url.pathname === "/api/pokepilot/teams") {
         return await handleAccountStorage(request, env, "teams");
       }

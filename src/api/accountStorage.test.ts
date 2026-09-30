@@ -4,6 +4,12 @@ import { AccountStorageConflictError, readAccountPreferences, readAccountTeams, 
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe("account storage transport", () => {
+  it("uses the application revision when a CDN weakens the ETag", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ teams: [] }), {
+      headers: { ETag: 'W/"rev-123"', "X-PokePilot-Storage-Version": '"rev-123"' },
+    })));
+    expect((await readAccountTeams()).version).toBe('"rev-123"');
+  });
   it("forwards cancellation and reads without cache", async () => {
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ teams: null }), { headers: { ETag: '"empty"' } }));
     vi.stubGlobal("fetch", fetch);

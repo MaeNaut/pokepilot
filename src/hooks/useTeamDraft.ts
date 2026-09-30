@@ -61,6 +61,8 @@ export function useTeamDraft({ team, bench, buildState, battleFormat, activeSave
     teamName, setTeamName, teamNameDraft, setTeamNameDraft, commitTeamName,
     getCurrentTeamSnapshot, setCommittedSnapshot, renameCommittedSnapshot,
     markCurrentTeamCommitted: (name = teamNameDraft) => setCommittedSnapshot(getCurrentTeamSnapshot(name)),
-    hasUnsavedTeamChanges: () => baseline.current !== null && serializeTeamSnapshot(getCurrentTeamSnapshot()) !== baseline.current,
+    hasUnsavedTeamChanges: () => baseline.current !== null
+      ? serializeTeamSnapshot(getCurrentTeamSnapshot()) !== baseline.current
+      : team.some(Boolean) || bench.length > 0 || Boolean(teamNameDraft.trim() && teamNameDraft !== untitledName),
   };
 }

@@ -18,7 +18,7 @@ const team: SavedTeamSummary = {
   createdAt: "2026-09-24T00:00:00Z", updatedAt: "2026-09-24T00:00:00Z",
 };
 function options(): Parameters<typeof useSavedTeamShowdown>[0] {
-  return { accountId: "user-a", pool: [], pokemonIndex: [], library: { update: vi.fn() }, t: (key) => key,
+  return { accountId: "user-a", pool: [], pokemonIndex: [], library: { update: vi.fn().mockResolvedValue(true) }, t: (key) => key,
     onMessage: vi.fn(), getWorkspaceRevision: () => 7, onImported: vi.fn() };
 }
 beforeEach(() => {

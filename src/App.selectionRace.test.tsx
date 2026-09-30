@@ -45,7 +45,10 @@ vi.mock("./hooks/useAccount", () => ({ useAccount: () => ({
 }) }));
 vi.mock("./hooks/useAccountPreferencesSync", () => ({ useAccountPreferencesSync: () => {} }));
 vi.mock("./hooks/useTeamWorkspaceRestore", () => ({ useTeamWorkspaceRestore: () => {} }));
-vi.mock("./hooks/useSavedTeams", () => ({ useSavedTeams: () => ({ teams: state.savedTeams, isHydrated: true }) }));
+vi.mock("./hooks/useSavedTeams", async importOriginal => ({
+  ...await importOriginal<typeof import("./hooks/useSavedTeams")>(),
+  useSavedTeams: () => ({ teams: state.savedTeams, isHydrated: true }),
+}));
 vi.mock("./utils/savedTeamLibrary", async (original) => ({
   ...await original<typeof import("./utils/savedTeamLibrary")>(),
   hydrateSavedTeamMembers: vi.fn(), hydrateSavedBench: vi.fn(),

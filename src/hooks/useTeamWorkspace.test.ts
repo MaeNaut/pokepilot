@@ -67,7 +67,7 @@ it.each(["new-team", "account-change"] as const)("clears team, identity and buil
   expect(hook.current.selectedTeamSlot).toBe(reason === "new-team" ? 1 : 0);
   expect(hook.current.hasUnsavedTeamChanges()).toBe(false);
   await act(async () => { hook.current.setTeam(imported.members); });
-  expect(hook.current.hasUnsavedTeamChanges()).toBe(reason === "new-team");
+  expect(hook.current.hasUnsavedTeamChanges()).toBe(true);
 });
 
 it("detaches a deleted saved team without discarding its working contents", async () => {
@@ -77,7 +77,7 @@ it("detaches a deleted saved team without discarding its working contents", asyn
   await act(async () => { hook.current.detachSavedTeam(); });
   expect(hook.current.activeSavedTeamId).toBeNull();
   expect(hook.current.team).toEqual(imported.members);
-  expect(hook.current.hasUnsavedTeamChanges()).toBe(false);
+  expect(hook.current.hasUnsavedTeamChanges()).toBe(true);
 });
 
 it("moves a Pokemon and its build to the bench and restores them in another slot", async () => {
