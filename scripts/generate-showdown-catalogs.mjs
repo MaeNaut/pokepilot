@@ -301,7 +301,7 @@ function sortedSetEntries(entries) {
     .map(([key, values]) => [key, sortedValues(values)]);
 }
 
-function buildRegulationMcSnapshot({
+export function buildRegulationMcSnapshot({
   baseLearnsets,
   championsFormatsText,
   championsItemsText,
@@ -317,6 +317,17 @@ function buildRegulationMcSnapshot({
   for (const [pokemonId, entry] of formatsData) {
     if (isLegalPokemon(entry, pokedex[pokemonId])) {
       pokemonIds.add(pokemonId);
+    }
+  }
+
+  // Gender variants omitted from format tables inherit legality, not abilities.
+  for (const [pokemonId, species] of Object.entries(pokedex)) {
+    const parent = normalizeId(species.baseSpecies);
+    if (!formatsData.has(pokemonId) && parent && pokemonIds.has(parent) &&
+      (species.gender === "M" || species.gender === "F") && isLegalPokemon({}, species) &&
+      !species.isNonstandard) {
+      pokemonIds.add(pokemonId);
+      knownPokemonIds.add(pokemonId);
     }
   }
 
@@ -356,6 +367,15 @@ function buildRegulationMcSnapshot({
   for (const [pokemonId, moves] of championsLearnsets) {
     if (relevantPokemonIds.has(pokemonId)) {
       moveByPokemon.set(pokemonId, moves);
+    }
+  }
+
+  for (const pokemonId of pokemonIds) {
+    const parent = normalizeId(pokedex[pokemonId]?.baseSpecies);
+    const parentMoves = championsLearnsets.get(parent) ?? moveByPokemon.get(parent);
+    if (parentMoves && !championsLearnsets.has(pokemonId) &&
+      (championsLearnsets.has(parent) || !moveByPokemon.has(pokemonId))) {
+      moveByPokemon.set(pokemonId, new Set(parentMoves));
     }
   }
 
@@ -416,67 +436,73 @@ async function writeDataFile(filename, payload) {
   );
 }
 
-const [
-  abilitySource,
-  baseLearnsets,
-  championsFormatsText,
-  championsItemsText,
-  championsLearnsetsText,
-  itemSource,
-  pokedex,
-  teambuilderTablesText,
-] = await Promise.all([
-  fetchSource(SOURCES.abilities),
-  fetchJson(SOURCES.baseLearnsets),
-  fetchSource(SOURCES.championsFormats),
-  fetchSource(SOURCES.championsItems),
-  fetchSource(SOURCES.championsLearnsets),
-  fetchSource(SOURCES.items),
-  fetchJson(SOURCES.pokedex),
-  fetchSource(SOURCES.teambuilderTables),
-]);
-const rawItems = readShowdownExport(itemSource, "BattleItems", SOURCES.items);
-const rawAbilities = readShowdownExport(
-  abilitySource,
-  "BattleAbilities",
-  SOURCES.abilities,
-);
-const generatedAt = new Date().toISOString();
-const [baseMoves, modMoves] = await Promise.all([
-  fetchJson(`${SHOWDOWN_DATA_URL}/moves.json`),
-  fetchSource(`${SHOWDOWN_MODS_URL}/champions/moves.ts`).then(readModData),
-]);
-const battleSpecies = pokedex;
+export async function generateShowdownCatalogs() {
+  const [
+    abilitySource,
+    baseLearnsets,
+    championsFormatsText,
+    championsItemsText,
+    championsLearnsetsText,
+    itemSource,
+    pokedex,
+    teambuilderTablesText,
+  ] = await Promise.all([
+    fetchSource(SOURCES.abilities),
+    fetchJson(SOURCES.baseLearnsets),
+    fetchSource(SOURCES.championsFormats),
+    fetchSource(SOURCES.championsItems),
+    fetchSource(SOURCES.championsLearnsets),
+    fetchSource(SOURCES.items),
+    fetchJson(SOURCES.pokedex),
+    fetchSource(SOURCES.teambuilderTables),
+  ]);
+  const rawItems = readShowdownExport(itemSource, "BattleItems", SOURCES.items);
+  const rawAbilities = readShowdownExport(
+    abilitySource,
+    "BattleAbilities",
+    SOURCES.abilities,
+  );
+  const generatedAt = new Date().toISOString();
+  const [baseMoves, modMoves] = await Promise.all([
+    fetchJson(`${SHOWDOWN_DATA_URL}/moves.json`),
+    fetchSource(`${SHOWDOWN_MODS_URL}/champions/moves.ts`).then(readModData),
+  ]);
+  const battleSpecies = pokedex;
 
-await mkdir(outputDirectory, { recursive: true });
-await Promise.all([
-  writeDataFile("showdown-battle-mc.json", {
-    species: battleSpecies,
-    moves: mergeModData(baseMoves, modMoves),
-  }),
-  writeDataFile("showdown-items.json", {
-    schemaVersion: 1,
-    generatedAt,
-    source: SOURCES.items,
-    items: normalizeItems(rawItems),
-  }),
-  writeDataFile("showdown-abilities.json", {
-    schemaVersion: 1,
-    generatedAt,
-    source: SOURCES.abilities,
-    abilities: normalizeAbilities(rawAbilities),
-  }),
-  writeDataFile(
-    "showdown-regulation-mc.json",
-    buildRegulationMcSnapshot({
-      baseLearnsets,
-      championsFormatsText,
-      championsItemsText,
-      championsLearnsetsText,
-      pokedex: battleSpecies,
-      teambuilderTablesText,
+  await mkdir(outputDirectory, { recursive: true });
+  await Promise.all([
+    writeDataFile("showdown-battle-mc.json", {
+      species: battleSpecies,
+      moves: mergeModData(baseMoves, modMoves),
     }),
-  ),
-]);
+    writeDataFile("showdown-items.json", {
+      schemaVersion: 1,
+      generatedAt,
+      source: SOURCES.items,
+      items: normalizeItems(rawItems),
+    }),
+    writeDataFile("showdown-abilities.json", {
+      schemaVersion: 1,
+      generatedAt,
+      source: SOURCES.abilities,
+      abilities: normalizeAbilities(rawAbilities),
+    }),
+    writeDataFile(
+      "showdown-regulation-mc.json",
+      buildRegulationMcSnapshot({
+        baseLearnsets,
+        championsFormatsText,
+        championsItemsText,
+        championsLearnsetsText,
+        pokedex: battleSpecies,
+        teambuilderTablesText,
+      }),
+    ),
+  ]);
 
-console.log("Generated compact Showdown catalogs and Regulation M-C snapshot.");
+  console.log("Generated compact Showdown catalogs and Regulation M-C snapshot.");
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await generateShowdownCatalogs();
+}

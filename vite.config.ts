@@ -4,6 +4,7 @@ import { resolveOpenAiApiKey } from "./server/openAiEnvironment";
 import { resolvePokePilotSafeguardMode } from "./server/pokepilotOperations";
 import { createPokePilotViteOperationsRuntime } from "./server/pokepilotOperationsRuntime";
 import { vitePokePilotApiPlugin } from "./server/vitePokePilotApiPlugin";
+import { viteBattleUsagePlugin } from "./server/viteBattleUsagePlugin";
 
 export default defineConfig(({ mode }) => {
   const projectRoot = process.cwd();
@@ -17,17 +18,11 @@ export default defineConfig(({ mode }) => {
     mode,
     serverEnvironment,
   );
-  const smogonStatsProxy = {
-    "/smogon-stats": {
-      target: "https://www.smogon.com",
-      changeOrigin: true,
-      rewrite: (path: string) => path.replace(/^\/smogon-stats/, "/stats"),
-    },
-  };
 
   return {
     plugins: [
       react(),
+      viteBattleUsagePlugin(),
       vitePokePilotApiPlugin(
         openAiApiKey,
         safeguardMode,
@@ -35,11 +30,5 @@ export default defineConfig(({ mode }) => {
         operationsRuntime.kind,
       ),
     ],
-    server: {
-      proxy: smogonStatsProxy,
-    },
-    preview: {
-      proxy: smogonStatsProxy,
-    },
   };
 });

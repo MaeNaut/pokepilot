@@ -101,6 +101,7 @@ export function CopilotAnalyzeControl({
               : t("copilot.estimateUnavailable")}
           </p>
           <small>{t(hasPersonalApiKey ? "copilot.estimateNote" : "copilot.estimateNoteSite")}</small>
+          <small>{t("copilot.autoSaveNotice")}</small>
           <div className="copilot-analyze-confirmation-actions">
             <button type="button" onClick={() => {
               onClose();

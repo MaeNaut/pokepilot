@@ -2,13 +2,13 @@ import {
   defaultEvs,
   normalizeStatPointSpread,
 } from "../data/natures";
-import type { SmogonUsageSet } from "../api/smogonUsage";
+import type { BattleUsageSet } from "../api/battleUsage";
 import { normalizeShowdownId } from "../api/showdownIds";
 import { itemFromIndexEntry } from "../api/showdownCatalog";
 import {
-  resolveSmogonUsageAbility,
-  resolveSmogonUsageMoveIds,
-} from "../api/smogonUsage";
+  resolveBattleUsageAbility,
+  resolveBattleUsageMoveIds,
+} from "../api/battleUsage";
 import type {
   ItemIndexEntry,
   PokemonItem,
@@ -28,13 +28,13 @@ export type CalculatorUsageBuild = {
 
 export function resolveUsageCalculatorMoves(
   member: TeamMember,
-  usageSet: SmogonUsageSet,
+  usageSet: BattleUsageSet,
   fallbackMoves: readonly PokemonMove[] = [],
   limit = 8,
 ) {
   const availableMoves = [...(member.moves ?? []), ...fallbackMoves];
 
-  return resolveSmogonUsageMoveIds(
+  return resolveBattleUsageMoveIds(
     availableMoves,
     usageSet.moveIds,
     limit,
@@ -45,7 +45,7 @@ export function resolveUsageCalculatorMoves(
 }
 
 export function resolveUsageCalculatorItems(
-  usageSet: SmogonUsageSet,
+  usageSet: BattleUsageSet,
   itemOptions: readonly ItemIndexEntry[],
   limit = 3,
 ) {
@@ -98,18 +98,18 @@ export function createDefaultCalculatorBuild(
 
 export function createUsageCalculatorBuild(
   member: TeamMember,
-  usageSet: SmogonUsageSet,
+  usageSet: BattleUsageSet,
   item: PokemonItem | null,
 ): CalculatorUsageBuild {
   const fallback = createDefaultCalculatorBuild(member, item);
-  const resolvedMoveIds = resolveSmogonUsageMoveIds(
+  const resolvedMoveIds = resolveBattleUsageMoveIds(
     member.moves,
     usageSet.moveIds,
   );
 
   return {
     item,
-    ability: resolveSmogonUsageAbility(member, usageSet.ability, fallback.ability),
+    ability: resolveBattleUsageAbility(member, usageSet.ability, fallback.ability),
     natureId: usageSet.nature?.toLowerCase() ?? fallback.natureId,
     evs: usageSet.evs
       ? normalizeStatPointSpread(usageSet.evs)

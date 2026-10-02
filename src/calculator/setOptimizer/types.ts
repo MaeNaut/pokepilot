@@ -14,7 +14,7 @@ import type {
   StatKey,
   TeamMember,
 } from "../../types";
-import type { SmogonUsageSet } from "../../api/smogonUsage";
+import type { BattleUsageSet } from "../../api/battleUsage";
 
 export type CalculatorAnalysisSide = {
   member: TeamMember | null;
@@ -155,7 +155,7 @@ export type GeneralSetOptimizationContext = {
   member: TeamMember;
   build: CalculatorBuildValues;
   reservedItemIds: string[];
-  usageSet: SmogonUsageSet | null;
+  usageSet: BattleUsageSet | null;
   usageItems: PokemonItem[];
 };
 

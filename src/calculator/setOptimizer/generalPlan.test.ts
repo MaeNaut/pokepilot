@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SmogonUsageSet } from "../../api/smogonUsage";
+import type { BattleUsageSet } from "../../api/battleUsage";
 import type { PokemonMove, TeamMember } from "../../types";
 import { createGeneralSetOptimizationPlan } from "./generalPlan";
 import type { GeneralSetOptimizationContext } from "./types";
@@ -103,7 +103,7 @@ const member: TeamMember = {
     speed: 125,
   },
 };
-const usageSet: SmogonUsageSet = {
+const usageSet: BattleUsageSet = {
   pokemonId: "weavile",
   pokemonName: "Weavile",
   sourceMonth: "2026-08",

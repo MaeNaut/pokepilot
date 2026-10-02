@@ -59,7 +59,7 @@ This project is also meant to fill practical skill gaps that have appeared repea
 - GitHub Actions: Add a simple lint/build workflow later to demonstrate basic CI/CD experience.
 - Testing: Use Vitest for deterministic stat, parser, alias, legality, team-diagnostic,
   and local Copilot-contract regression tests. Keep live PokeAPI, Showdown, and
-  Smogon requests out of the unit-test suite.
+  ChampionsBattleData requests out of the unit-test suite.
 - Legality fixtures: Keep small Showdown, PokeAPI, and compact M-B snapshot
   fixtures under `src/test/fixtures`. Use them to exercise snapshot hydration,
   source normalization, and form aliases without making network requests during
@@ -195,14 +195,12 @@ Current direction:
   - legal items
   - legal abilities per Pokemon
   - legal moves per Pokemon
-- Use Smogon monthly moveset usage stats as the first popular-set source. The
-  app tries the latest month first, falls back through recent months, and prefers
-  the 1630 cutoff before lower cutoffs.
-- Fetch Smogon usage stats through the same-origin `/smogon-stats` path. In local
-  development this is handled by the Vite dev proxy because Smogon does not send
-  browser CORS headers.
+- Use Pokemon Champions Battle Data for daily rankings and automatic samples.
+  The same-origin `/api/battle-usage/{singles|doubles}` adapter serves compact
+  summaries and per-Pokemon detail in both Vite and Cloudflare. See
+  `docs/REGULATION_DATA.md` for cache policy and statistical interpretation.
 - Keep external-data feedback local to the control that needs it. Pokemon and
-  item pickers show loading or Retry rows, Smogon usage-order failures leave
+  item pickers show loading or Retry rows, battle usage-order failures leave
   normal Pokemon search available, and Showdown failures are retried from the
   validity popover instead of occupying the global footer. Preserve already
   loaded data while a retry is in progress so the builder does not blank itself.
@@ -291,7 +289,7 @@ claim of affiliation.
   by the nature modifier. IVs are fixed at 31 in the app's build model.
 - Treat the header Singles/Doubles control as shared team context. Persist it with
   each saved team and as the latest browser preference, pass it to PokePilot
-  requests, and use separate Smogon BSS/VGC Regulation M-B usage snapshots.
+  requests, and use separate ChampionsBattleData Singles/Doubles snapshots.
   The calculator follows this shared format, enabling spread damage by default
   only in doubles and removing partner-only controls in singles.
 - The field model currently supports singles/doubles, weather, terrain, Magic
@@ -348,7 +346,7 @@ Desktop UX decisions after the wide-builder layout change:
 - The Pokemon name itself is the selector. Filled slots show large text until the
   picker is opened; empty slots keep the editable field and candidate list visible.
 - With usage stats available, the empty-query name dropdown shows Pokemon in
-  Smogon usage order and labels each result with its usage rank rather than its
+  ChampionsBattleData usage order and labels each result with its usage rank rather than its
   Pokedex number. It loads 20 entries at a time and appends more on scroll.
 - Opening/closing the name picker must not shift the rest of the card layout.
 - Clicking outside or pressing Escape closes a filled-slot picker and clears its
@@ -437,7 +435,7 @@ Desktop UX decisions after the wide-builder layout change:
   settling animation so all four surfaces keep the same interaction feel. A
   drop swaps only the source and target entries; intervening entries stay in
   place while both swap targets animate to their new positions.
-- Pokemon picked from the main name dropdown can auto-apply a popular Smogon
+- Pokemon picked from the main name dropdown can auto-apply a popular ChampionsBattleData
   moveset usage sample. Form changes, Mega toggles, saved-team loads, and
   Showdown imports do not trigger usage auto-application.
 - Saved teams are cached in localStorage with a schema version,
@@ -482,7 +480,7 @@ Desktop UX decisions after the wide-builder layout change:
 
 - Cloudflare D1 is the current account store. `accounts` and `account_sessions`
   support Google OAuth, while `account_storage` holds bounded serialized rows for
-  saved teams, analysis history, and account preferences.
+  each saved team (`team:<id>`), team ordering, analysis history, and account preferences.
 - The browser remains the working editor model. It keeps local copies for
   continuity, migrates unclaimed teams/history on first sign-in, and treats the
   signed-in account copy as authoritative on another device.
@@ -490,15 +488,30 @@ Desktop UX decisions after the wide-builder layout change:
   Pokemon. The account limit is 30 teams; browser and server validation preserve
   the same bound. Analysis history is capped at 60 entries.
 - Account preferences synchronize only language, theme, default battle format,
-  and tutorial completion. Current app mode, selected slots, open panels,
+  tutorial completion, and the latest analysis tab/model/reasoning choice. Current app mode, selected slots, open panels,
   last-opened team, unsaved drafts, and data caches deliberately remain local.
 - Do not store PokeAPI caches, generated Showdown catalogs, M-C legality data,
-  Smogon usage snapshots, unlimited calculator history, raw chat transcripts, or
+  complete usage snapshots, unlimited calculator history, raw chat transcripts, or
   unbounded model output in user-owned D1 rows.
 - Showdown text, calculated stats, validity, diagnostics, and PokePilot request
   data are derived from the current saved build so regulation updates do not
   leave persisted derived values stale. Analysis history is an explicit bounded
   product feature, separate from Redis's short-lived operational cache.
+- Analysis confirmation discloses automatic team saving. The browser waits for
+  server save success before preparing and submitting a paid AI request, passing
+  the returned team ID directly to the history session. It never infers a draft's
+  saved identity from matching Pokemon rosters. Legacy draft records remain
+  readable but are not moved when another saved team is loaded.
+- An unchanged saved team is checked against the remote library without a write
+  or commit broadcast. Pending sync notices, failed saves, changed revisions,
+  workspace/account transitions, and edits during preparation prevent the call.
+  A successfully saved team remains saved if the later AI request fails. Manual
+  saving remains available without analysis.
+- Usage-based history stores a bounded `usageSource` containing provider,
+  season, source date, generated timestamp, and stale flag. History restoration
+  displays that original source, not today's statistics label. Unknown legacy
+  provenance is explicitly marked as not recorded. A source rollover during
+  preparation blocks the AI call; new statistics never rewrite old results.
 - Add normalized D1 tables only if a future feature needs queries D1's current
   serialized storage cannot answer efficiently, such as public share links,
   folders, tags, or collaboration. Any such design needs a new privacy and
@@ -509,9 +522,9 @@ Desktop UX decisions after the wide-builder layout change:
 - Keep UI copy in the typed flat dictionaries under `src/i18n/translations.ts`.
   The Korean dictionary must satisfy the complete English key set at build time,
   so missing keys and misspelled identifiers fail TypeScript verification.
-- Write Korean app-owned UI copy as concise status or action phrases rather than
-  polite full sentences. Preserve full prose for official game descriptions and
-  legal or attribution text where sentence form improves clarity.
+- Use concise Korean labels for controls and polite declarative endings
+  (`~합니다`, `~입니다`) for app-owned sentences. Preserve full prose for official
+  game descriptions and legal or attribution text where it improves clarity.
 - Persist the selected locale under `pokepilot:locale` for immediate browser
   startup, then synchronize it for signed-in accounts with the bounded account
   preference row. Never duplicate team or Pokemon data per language; saved
@@ -814,7 +827,7 @@ not on `MetaBenchmarkSet`, so exact optimization can ship first and meta support
 can be added without creating a second optimizer.
 
 The current exact-target optimizer also evaluates a bounded loadout layer after
-its Stat Point frontier. Smogon parsing preserves the first four observed item
+its Stat Point frontier. The usage adapter preserves the first four observed item
 names; the Calculator resolves at most three against the legal item catalog and
 removes items already held by another active team member. The optimizer tests at
 most two changed-item branches. For moves, it combines at most two observed

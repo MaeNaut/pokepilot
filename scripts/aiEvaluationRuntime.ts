@@ -1,9 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-
-const smogonStatsProxyPrefix = "/smogon-stats";
-const smogonStatsOrigin = "https://www.smogon.com/stats";
+import { BATTLE_USAGE_PATH, createBattleUsageApi } from "../server/battleUsageApi";
 
 class MemoryStorage implements Storage {
   private readonly values: Map<string, string>;
@@ -108,6 +106,7 @@ export function installAiEvaluationRuntime(
   options: AiEvaluationRuntimeOptions = {},
 ) {
   const nativeFetch = globalThis.fetch;
+  const handleBattleUsage = createBattleUsageApi();
   const previousStorage = globalThis.localStorage;
   const hadStorage = "localStorage" in globalThis;
 
@@ -135,11 +134,8 @@ export function installAiEvaluationRuntime(
       }
     }
 
-    if (url.startsWith(smogonStatsProxyPrefix)) {
-      return nativeFetch(
-        `${smogonStatsOrigin}${url.slice(smogonStatsProxyPrefix.length)}`,
-        init,
-      );
+    if (url.startsWith(`${BATTLE_USAGE_PATH}/`)) {
+      return handleBattleUsage(new Request(`https://pokepilot.app${url}`, init));
     }
 
     return nativeFetch(input, init);

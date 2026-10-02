@@ -19,6 +19,8 @@ const state = vi.hoisted(() => ({
   newTeam: null as unknown as ComponentProps<typeof NewTeamControl>,
   savedRow: null as unknown as ComponentProps<typeof SavedTeamRow>,
   savedTeams: [] as SavedTeamSummary[],
+  save: vi.fn(),
+  refresh: vi.fn(),
   accountId: "a" as string | null,
   accountStatus: null as "loading" | "error" | null,
   t: (key: string) => key,
@@ -47,7 +49,7 @@ vi.mock("./hooks/useAccountPreferencesSync", () => ({ useAccountPreferencesSync:
 vi.mock("./hooks/useTeamWorkspaceRestore", () => ({ useTeamWorkspaceRestore: () => {} }));
 vi.mock("./hooks/useSavedTeams", async importOriginal => ({
   ...await importOriginal<typeof import("./hooks/useSavedTeams")>(),
-  useSavedTeams: () => ({ teams: state.savedTeams, isHydrated: true }),
+  useSavedTeams: () => ({ teams: state.savedTeams, isHydrated: true, save: state.save, refresh: state.refresh }),
 }));
 vi.mock("./utils/savedTeamLibrary", async (original) => ({
   ...await original<typeof import("./utils/savedTeamLibrary")>(),
@@ -83,6 +85,12 @@ beforeEach(() => {
   state.accountId = "a";
   state.accountStatus = null;
   state.savedTeams = [];
+  state.save.mockReset().mockImplementation(async (snapshot, id) => {
+    const saved = { ...snapshot, id: id ?? "new-team", version: 1, createdAt: "2026-10-01", updatedAt: "2026-10-01" };
+    state.savedTeams = [saved];
+    return saved;
+  });
+  state.refresh.mockReset().mockResolvedValue(true);
   vi.mocked(resolvePokemonChoice).mockReset();
 });
 afterEach(async () => { for (const cleanup of cleanups.splice(0)) await cleanup(); });
@@ -107,6 +115,51 @@ async function mount() {
   cleanups.push(async () => { await act(async () => root.unmount()); container.remove(); });
   return { render, container };
 }
+
+it("auto-saves a new team once and checks unchanged teams without rewriting them", async () => {
+  vi.mocked(resolvePokemonChoice).mockResolvedValue(result());
+  await mount();
+  await act(async () => { await state.builder.onSelectPokemon(0, "lucario"); });
+  let saved!: Awaited<ReturnType<typeof state.copilot.onSaveTeamForAnalysis>>;
+  await act(async () => { saved = await state.copilot.onSaveTeamForAnalysis(); });
+  expect(saved?.teamId).toBe("new-team");
+  expect(saved?.isCurrent()).toBe(true);
+  expect(state.copilot.savedTeamId).toBe("new-team");
+  await act(async () => { saved = await state.copilot.onSaveTeamForAnalysis(); });
+  expect(saved?.teamId).toBe("new-team");
+  expect(state.save).toHaveBeenCalledTimes(1);
+  expect(state.refresh).toHaveBeenCalledWith(true);
+});
+
+it.each(["save-failure", "peer-update"])("blocks analysis team saving on %s", async (failure) => {
+  await mount();
+  if (failure === "save-failure") state.save.mockResolvedValue(null);
+  else {
+    await act(async () => { await state.copilot.onSaveTeamForAnalysis(); });
+    state.refresh.mockResolvedValue(false);
+  }
+  let saved!: unknown;
+  await act(async () => { saved = await state.copilot.onSaveTeamForAnalysis(); });
+  expect(saved).toBeNull();
+});
+
+it.each(["edit", "new-team", "logout"])("does not start analysis after the workspace changes during saving: %s", async (change) => {
+  const pending = deferred<SavedTeamSummary>();
+  state.save.mockReturnValue(pending.promise);
+  vi.mocked(resolvePokemonChoice).mockResolvedValue(result());
+  const app = await mount();
+  let operation!: ReturnType<typeof state.copilot.onSaveTeamForAnalysis>;
+  await act(async () => { operation = state.copilot.onSaveTeamForAnalysis(); });
+  if (change === "edit") await act(async () => { await state.builder.onSelectPokemon(0, "lucario"); });
+  else if (change === "new-team") await act(async () => { state.newTeam.onCreateTeam(); });
+  else { state.accountId = null; await app.render(); }
+  await act(async () => { pending.resolve({
+    version: 1, id: "late", name: "Untitled Team", battleFormat: "singles", slots: Array(6).fill(null),
+    bench: [], createdAt: "2026-10-01", updatedAt: "2026-10-01",
+  }); });
+  expect(await operation).toBeNull();
+  expect(state.copilot.savedTeamId).toBeNull();
+});
 
 it.each(["new-team", "logout"] as const)("discards a selection completed after %s", async (transition) => {
   const pending = deferred<Selection>();

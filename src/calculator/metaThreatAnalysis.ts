@@ -1,10 +1,10 @@
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
 import { normalizeShowdownId } from "../api/showdownIds";
 import type { ShowdownDataSnapshot } from "../api/showdownData";
-import type { SmogonUsageSet } from "../api/smogonUsage";
+import type { BattleUsageSet } from "../api/battleUsage";
 import {
-  resolveSmogonUsageAbility,
-} from "../api/smogonUsage";
+  resolveBattleUsageAbility,
+} from "../api/battleUsage";
 import {
   createUsageCalculatorBuild,
   resolveUsageCalculatorItems,
@@ -157,7 +157,7 @@ function createRoster(
 }
 
 export function createMetaThreatUsageSide(
-  usageSet: SmogonUsageSet,
+  usageSet: BattleUsageSet,
   showdownData: ShowdownDataSnapshot,
   itemIndex: ItemIndexEntry[],
 ): CalculatorAnalysisSide | null {
@@ -194,7 +194,7 @@ export function createMetaThreatUsageSide(
     member,
     build: {
       ...build,
-      ability: resolveSmogonUsageAbility(
+      ability: resolveBattleUsageAbility(
         member,
         usageSet.ability,
         build.ability,
@@ -221,7 +221,7 @@ export function createMetaThreatAnalysisInput({
   buildState: TeamBuildState;
   pokemonIndex: PokemonIndexEntry[];
   itemIndex: ItemIndexEntry[];
-  usageSets: SmogonUsageSet[];
+  usageSets: BattleUsageSet[];
   showdownData: ShowdownDataSnapshot;
 }): MetaThreatAnalysisInput {
   const roster = createRoster(team, buildState, pokemonIndex);
@@ -233,7 +233,7 @@ export function createMetaThreatAnalysisInput({
     );
     return opponent
       ? [{
-          usageRank: index + 1,
+          usageRank: usageSet.usageRank ?? index + 1,
           sourceMonth: usageSet.sourceMonth,
           cutoff: usageSet.cutoff,
           opponent,

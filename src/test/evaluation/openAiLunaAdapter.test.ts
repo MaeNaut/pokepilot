@@ -359,7 +359,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 91,
+        promptVersion: 92,
       },
       usage: {
         totalTokens: 150,

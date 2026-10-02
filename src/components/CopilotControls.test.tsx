@@ -46,6 +46,7 @@ it("asks for confirmation before analysis and displays the matching estimates", 
   const dialog = container.querySelector('[role="dialog"]')!;
   expect(dialog.textContent).toContain('"seconds":16');
   expect(dialog.textContent).toContain('"cost":"0.0018"');
+  expect(dialog.textContent).toContain("copilot.autoSaveNotice");
   expect(document.activeElement).toBe(dialog.querySelector("strong"));
   await click(dialog.querySelectorAll("button")[1]);
   expect(onConfirm).toHaveBeenCalledTimes(1);

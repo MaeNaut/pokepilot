@@ -1,5 +1,5 @@
 import { normalizeShowdownId } from "../../api/showdownIds";
-import type { SmogonUsageSpread } from "../../api/smogonUsage";
+import type { BattleUsageSpread } from "../../api/battleUsage";
 import {
   calculateChampionsStats,
   CHAMPIONS_MAX_EV_PER_STAT,
@@ -299,8 +299,10 @@ function getCurrentSpread(context: GeneralSetOptimizationContext) {
 }
 
 function getUsageSpreads(context: GeneralSetOptimizationContext) {
-  const raw: SmogonUsageSpread[] = context.usageSet?.spreads?.length
+  const raw: BattleUsageSpread[] = context.usageSet?.spreads?.length
     ? context.usageSet.spreads
+    : context.usageSet?.statPointSpreads?.length && context.usageSet.nature
+      ? context.usageSet.statPointSpreads.map((spread) => ({ ...spread, nature: context.usageSet!.nature! }))
     : context.usageSet?.evs && context.usageSet.nature
       ? [{
           nature: context.usageSet.nature,

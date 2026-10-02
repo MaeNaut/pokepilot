@@ -1,6 +1,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
+import { writeFile } from "node:fs/promises";
 import { fetchPokemonIndex } from "../src/api/pokemonIndex";
 import {
   fetchAbilityIndex,
@@ -8,12 +9,12 @@ import {
 } from "../src/api/showdownCatalog";
 import { loadShowdownData } from "../src/api/showdownData";
 import { loadShowdownLegality } from "../src/api/showdownLegality";
-import { loadSmogonUsageSets } from "../src/api/smogonUsage";
+import { loadBattleUsageSets } from "../src/api/battleUsage";
 import {
   createMetaThreatAnalysisInput,
   createMetaThreatAnalysisPlan,
 } from "../src/calculator/metaThreatAnalysis";
-import { aiTeamDoublesFixtures } from "../src/test/fixtures/aiTeamFixtures";
+import { aiTeamDoublesFixtures, aiTeamSinglesFixtures } from "../src/test/fixtures/aiTeamFixtures";
 import { createAiFixtureAnalysisContext } from "../src/test/evaluation/aiModelEvaluation";
 import { createCopilotAnalysisRequest } from "../src/utils/copilotRequestBuilder";
 import {
@@ -34,14 +35,16 @@ const projectRoot = resolve(scriptDirectory, "..");
 async function main() {
   const restoreRuntime = installAiEvaluationRuntime(projectRoot);
   try {
+    const fixtures = process.argv.includes("--format=singles") ? aiTeamSinglesFixtures : aiTeamDoublesFixtures;
+    const locale = process.argv.includes("--locale=ko") ? "ko" : "en";
     const requestedFixtureId = process.argv
       .find((argument) => argument.startsWith("--fixture="))
       ?.slice("--fixture=".length);
     const fixture = requestedFixtureId
-      ? aiTeamDoublesFixtures.find(({ id }) => id === requestedFixtureId)
-      : aiTeamDoublesFixtures[0];
+      ? fixtures.find(({ id }) => id === requestedFixtureId)
+      : fixtures[0];
     if (!fixture) {
-      throw new Error(`Unknown doubles fixture: ${requestedFixtureId}`);
+      throw new Error(`Unknown fixture: ${requestedFixtureId}`);
     }
     const [pokemonIndex, itemIndex, abilityIndex, legality] = await Promise.all([
       fetchPokemonIndex(),
@@ -57,7 +60,7 @@ async function main() {
         legality,
       });
     const [usageSets, showdownData] = await Promise.all([
-      loadSmogonUsageSets(fixture.battleFormat),
+      loadBattleUsageSets(fixture.battleFormat),
       loadShowdownData(),
     ]);
     const inputStartedAt = performance.now();
@@ -114,7 +117,7 @@ async function main() {
     const selectedSlot = Math.max(0, team.findIndex(Boolean));
     const request = createCopilotAnalysisRequest({
       scope: "matchup",
-      locale: "en",
+      locale,
       battleFormat: fixture.battleFormat,
       teamName: fixture.title,
       team,
@@ -130,7 +133,7 @@ async function main() {
     });
     const baseRequest = createCopilotAnalysisRequest({
       scope: "team",
-      locale: "en",
+      locale,
       battleFormat: fixture.battleFormat,
       teamName: fixture.title,
       team,
@@ -143,7 +146,7 @@ async function main() {
     });
     const requestWithoutOptimization = createCopilotAnalysisRequest({
       scope: "matchup",
-      locale: "en",
+      locale,
       battleFormat: fixture.battleFormat,
       teamName: fixture.title,
       team,
@@ -163,7 +166,7 @@ async function main() {
     });
     const requestWithoutInterventions = createCopilotAnalysisRequest({
       scope: "matchup",
-      locale: "en",
+      locale,
       battleFormat: fixture.battleFormat,
       teamName: fixture.title,
       team,
@@ -181,6 +184,9 @@ async function main() {
       },
       threatReplacementCandidates: [],
     });
+    if (process.argv.includes("--debug")) {
+      await writeFile(resolve(projectRoot, ".tmp/battle-usage-meta-request.json"), JSON.stringify(request, null, 2));
+    }
     const validation = validateCopilotAnalysisRequest(request);
     if (!validation.success) {
       throw new Error(`${validation.errors.join(" ")}\n${JSON.stringify({

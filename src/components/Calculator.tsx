@@ -13,9 +13,9 @@ import { itemFromIndexEntry } from "../api/showdownCatalog";
 import { normalizeShowdownId } from "../api/showdownIds";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
 import {
-  loadPopularSmogonSet,
-  type SmogonUsageSet,
-} from "../api/smogonUsage";
+  loadPopularUsageSet,
+  type BattleUsageSet,
+} from "../api/battleUsage";
 import {
   calculateChampionsDamage,
   type CalculatorPokemon,
@@ -731,10 +731,10 @@ export function Calculator({
     try {
       const selectedMember = await fetchPokemon(pokemonId);
       let member = selectedMember;
-      let usageSet: SmogonUsageSet | null = null;
+      let usageSet: BattleUsageSet | null = null;
 
       if (options.applyUsageStats) {
-        usageSet = await loadPopularSmogonSet(pokemonId, battleFormat);
+        usageSet = await loadPopularUsageSet(pokemonId, battleFormat);
 
         if (usageSet) {
           member = await resolveUsageTargetMember(

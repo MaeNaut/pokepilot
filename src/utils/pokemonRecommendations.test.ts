@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import * as usageApi from "../api/smogonUsage";
+import * as usageApi from "../api/battleUsage";
 import * as showdownApi from "../api/showdownData";
 import type { ShowdownDataSnapshot } from "../api/showdownData";
 import type { PokemonIndexEntry, PokemonMove, TeamMember } from "../types";
@@ -115,6 +115,32 @@ const showdownData: ShowdownDataSnapshot = {
 
 afterEach(() => vi.restoreAllMocks());
 
+it("uses exact gender usage before a higher-ranked base species sample", () => {
+  const candidate = rankPokemonRecommendationCandidates({
+    options: [{ ...options[0], id: "meowstic-female", speciesKey: "meowstic", abilities: [{ id: "competitive", displayName: "Competitive" }] }],
+    filters: { types: [], ability: null, moves: [] },
+    occupiedSpeciesKeys: new Set(), diagnostics, existingMegaOptionCount: 0,
+    usageIds: ["meowstic", "meowstic-f"], showdownData,
+    usageSets: [
+      { pokemonId: "meowstic", pokemonName: "Meowstic", usageRank: 4, sourceMonth: "2026-09", cutoff: 0, ability: "Prankster", moveIds: [] },
+      { pokemonId: "meowstic-f", pokemonName: "Meowstic-F", usageRank: 50, sourceMonth: "2026-09", cutoff: 0, ability: "Competitive", moveIds: [] },
+    ],
+  })[0];
+  expect(candidate.commonSet?.ability).toBe("Competitive");
+  expect(candidate.usageRank).toBe(50);
+});
+
+it("projects a base-species sample onto a Mega without copying an impossible ability or another Mega stone", () => {
+  const candidate = rankPokemonRecommendationCandidates({
+    options: [{ ...options[0], id: "charizard-mega-y", speciesKey: "charizard", isMegaForm: true, abilities: [{ id: "drought", displayName: "Drought" }] }],
+    filters: { types: [], ability: null, moves: [] }, occupiedSpeciesKeys: new Set(), diagnostics, existingMegaOptionCount: 0,
+    usageIds: ["charizard"], showdownData,
+    usageSets: [{ pokemonId: "charizard", pokemonName: "Charizard", sourceMonth: "2026-09", cutoff: 0, ability: "Blaze", itemName: "Charizardite X", moveIds: [] }],
+  })[0];
+  expect(candidate.commonSet?.ability).toBe("Drought");
+  expect(candidate.commonSet?.item).toBeNull();
+});
+
 describe("recommendation loading cancellation", () => {
   const input = {
     options,
@@ -126,8 +152,8 @@ describe("recommendation loading cancellation", () => {
   };
 
   it("skips data loading when cancelled before starting", async () => {
-    const loadUsage = vi.spyOn(usageApi, "loadSmogonUsagePokemonIds").mockResolvedValue([]);
-    const loadSets = vi.spyOn(usageApi, "loadSmogonUsageSets").mockResolvedValue([]);
+    const loadUsage = vi.spyOn(usageApi, "loadBattleUsagePokemonIds").mockResolvedValue([]);
+    const loadSets = vi.spyOn(usageApi, "loadBattleUsageSets").mockResolvedValue([]);
     const loadShowdown = vi.spyOn(showdownApi, "loadShowdownData").mockResolvedValue(showdownData);
     const controller = new AbortController();
     controller.abort();
@@ -140,8 +166,8 @@ describe("recommendation loading cancellation", () => {
   it("skips ranking after cancellation while keeping shared data usable for a later request", async () => {
     let resolveUsage!: (ids: string[]) => void;
     const pending = new Promise<string[]>((resolve) => { resolveUsage = resolve; });
-    vi.spyOn(usageApi, "loadSmogonUsagePokemonIds").mockReturnValue(pending);
-    vi.spyOn(usageApi, "loadSmogonUsageSets").mockResolvedValue([]);
+    vi.spyOn(usageApi, "loadBattleUsagePokemonIds").mockReturnValue(pending);
+    vi.spyOn(usageApi, "loadBattleUsageSets").mockResolvedValue([]);
     vi.spyOn(showdownApi, "loadShowdownData").mockResolvedValue(showdownData);
     const controller = new AbortController();
     const result = createUniversalPokemonRecommendationCandidates(input, controller.signal);

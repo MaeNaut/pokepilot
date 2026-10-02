@@ -21,9 +21,9 @@ import type {
 } from "../types";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
 import {
-  loadSmogonUsageSource,
-  type SmogonUsageSource,
-} from "../api/smogonUsage";
+  loadBattleUsageSource,
+  type BattleUsageSource,
+} from "../api/battleUsage";
 import type {
   CopilotAnalysisScope,
 } from "../utils/copilotContracts";
@@ -55,6 +55,7 @@ type CopilotPanelProps = CopilotCandidateCallbacks & {
   setAnalysisPreference: Dispatch<SetStateAction<AnalysisPreference>>;
   account: ReturnType<typeof useAccount>;
   savedTeamId: string | null;
+  onSaveTeamForAnalysis: () => Promise<{ teamId: string; isCurrent: () => boolean } | null>;
   teamName: string;
   battleFormat: BattleFormat;
   team: TeamSlot[];
@@ -114,6 +115,7 @@ export function CopilotPanel({
   setAnalysisPreference,
   account,
   savedTeamId,
+  onSaveTeamForAnalysis,
   teamName,
   battleFormat,
   team,
@@ -140,10 +142,13 @@ export function CopilotPanel({
   const setReasoningEffort = (next: "low" | "medium") =>
     setAnalysisPreference((current) => ({ ...current, reasoningEffort: next }));
   const [isAnalyzeConfirmationOpen, setIsAnalyzeConfirmationOpen] = useState(false);
+  const [isAnalysisStarting, setIsAnalysisStarting] = useState(false);
+  const [analysisStartError, setAnalysisStartError] = useState(false);
+  const startingAnalysisRef = useRef(false);
   const closeAnalyzeConfirmation = useCallback(() => setIsAnalyzeConfirmationOpen(false), []);
   const [usageSourceState, setUsageSourceState] = useState<{
     battleFormat: BattleFormat;
-    source: SmogonUsageSource | null;
+    source: BattleUsageSource | null;
   } | null>(null);
   const [isLoginGateRevealed, setIsLoginGateRevealed] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -152,7 +157,7 @@ export function CopilotPanel({
     if (!usesUsageData(scope)) return;
 
     let cancelled = false;
-    void loadSmogonUsageSource(battleFormat)
+    void loadBattleUsageSource(battleFormat)
       .then((source) => {
         if (!cancelled) setUsageSourceState({ battleFormat, source });
       })
@@ -204,13 +209,18 @@ export function CopilotPanel({
     reasoningEffort,
     modelId,
   });
+  const recommendationCandidates = response?.recommendationCandidates ?? request.recommendationCandidates;
+  const submissionContext = JSON.stringify([requestFingerprint, scope, reasoningEffort, locale, account.user?.id]);
+  const latestSubmissionContext = useRef(submissionContext);
+  latestSubmissionContext.current = submissionContext;
+  useEffect(() => { setAnalysisStartError(false); }, [submissionContext, savedTeamId]);
   const {
     selectingCandidateId, savingCandidateId, candidateApplyFailure, candidateSaveStatus,
     optimizationActionStatus, setOptimizationActionStatus,
     handleSelectCandidate, handleSaveCandidate,
     handleApplyOptimizationCandidate, handleSaveOptimizationCandidate,
   } = useCopilotCandidateActions({
-    scope, request, requestFingerprint, isStale, setScope,
+    scope, request: { ...request, recommendationCandidates }, requestFingerprint, isStale, setScope,
     onSelectRecommendedPokemon, onSaveRecommendedPokemon,
     onApplyOptimizationCandidate, onSaveOptimizationCandidate,
   });
@@ -219,22 +229,26 @@ export function CopilotPanel({
   const isUsageDataScope = usesUsageData(scope);
   const usageSourceLoaded = usageSourceState?.battleFormat === battleFormat;
   const usageSource = usageSourceLoaded ? usageSourceState.source : null;
-  const isHistoricalUsage = isUsageDataScope && usageSource?.regulation === "mb";
+  const isHistoricalUsage = isUsageDataScope && usageSource?.stale === true;
   const isUsageWarning = isHistoricalUsage || (isUsageDataScope && usageSourceLoaded && !usageSource);
-  const usageDescriptionKey: TranslationKey = !isUsageDataScope || isHistoricalUsage
+  const usageDescriptionKey: TranslationKey = !isUsageDataScope
     ? emptyStateCopy[scope].description
-    : !usageSource && usageSourceLoaded
+    : isHistoricalUsage
+      ? "copilot.usageStale"
+      : !usageSource && usageSourceLoaded
       ? "copilot.usageUnavailable"
       : scope === "recommendation"
         ? "copilot.empty.recommendationCurrentDescription"
         : "copilot.empty.optimizationCurrentDescription";
-  const usageRegulationKey: TranslationKey = usageSource?.regulation === "mb"
-    ? "copilot.regulationMB"
-    : usageSource?.regulation === "mc"
-      ? "toolbar.regulation"
-      : usageSourceLoaded
-        ? "copilot.usageUnavailable"
-        : "copilot.usageChecking";
+  const displayedUsageSource = response ? analysisState.usageSource : usageSource;
+  const usageLabel = response
+    ? displayedUsageSource
+      ? t("copilot.analysisUsage", { season: displayedUsageSource.season, date: displayedUsageSource.sourceDate })
+      : t("copilot.analysisUsageUnknown")
+    : usageSource ? `${usageSource.season} · ${usageSource.sourceDate}`
+      : t(usageSourceLoaded ? "copilot.usageUnavailable" : "copilot.usageChecking");
+  const hasNewerUsage = Boolean(response && displayedUsageSource && usageSource &&
+    (displayedUsageSource.season !== usageSource.season || displayedUsageSource.sourceDate !== usageSource.sourceDate));
   const isAccountGateLocked = account.enabled && account.status === "guest";
   const scopeRequirement = getCopilotScopeRequirement({
     scope,
@@ -247,7 +261,7 @@ export function CopilotPanel({
   );
   const fallbackMessage = t(fallbackTranslationKeys[analysisState.fallbackReason ?? "unavailable"]);
   const analyzeLabel =
-    analysisState.status === "loading" || isAnalysisPreparing
+    analysisState.status === "loading" || isAnalysisPreparing || isAnalysisStarting
       ? t("copilot.analyzing")
       : response
           ? t("copilot.refresh")
@@ -262,6 +276,7 @@ export function CopilotPanel({
                   : t("copilot.optimizeSet");
   const isAnalyzeDisabled =
     analysisState.status === "loading" ||
+    isAnalysisStarting ||
     isAnalysisPreparing ||
     abilityIndexStatus === "loading" ||
     (account.enabled && account.status === "ready" && account.personalApiKeyStatus !== "ready") ||
@@ -292,12 +307,38 @@ export function CopilotPanel({
   }
 
   async function handleAnalyze() {
-    if (isAnalyzeDisabled) return;
+    if (isAnalyzeDisabled || startingAnalysisRef.current) return;
+    startingAnalysisRef.current = true;
+    setIsAnalysisStarting(true);
+    setAnalysisStartError(false);
     setIsAnalyzeConfirmationOpen(false);
-    if (!(await account.ensureAuthenticated())) return;
-    setOptimizationActionStatus(null);
-    const preparedRequest = await prepareRequest();
-    if (preparedRequest) await analyze(preparedRequest);
+    const isCurrent = () => submissionContext === latestSubmissionContext.current;
+    try {
+      if (!(await account.ensureAuthenticated()) || !isCurrent()) return;
+      const saved = await onSaveTeamForAnalysis();
+      if (!saved) { if (isCurrent()) setAnalysisStartError(true); return; }
+      if (!saved.isCurrent() || !isCurrent()) return;
+      setOptimizationActionStatus(null);
+      const source = usesUsageData(scope) ? await loadBattleUsageSource(battleFormat) : null;
+      const preparedRequest = await prepareRequest();
+      if (!preparedRequest || !saved.isCurrent() || !isCurrent()) return;
+      if (usesUsageData(scope)) {
+        const latestSource = await loadBattleUsageSource(battleFormat);
+        setUsageSourceState({ battleFormat, source: latestSource });
+        if (source?.season !== latestSource?.season || source?.sourceDate !== latestSource?.sourceDate ||
+          source?.generatedAt !== latestSource?.generatedAt) {
+          setAnalysisStartError(true);
+          return;
+        }
+      }
+      if (!saved.isCurrent() || !isCurrent()) return;
+      await analyze(preparedRequest, { teamId: saved.teamId, ...(source ? { usageSource: source } : {}) });
+    } catch {
+      if (isCurrent()) setAnalysisStartError(true);
+    } finally {
+      startingAnalysisRef.current = false;
+      setIsAnalysisStarting(false);
+    }
   }
 
 
@@ -348,7 +389,7 @@ export function CopilotPanel({
             reasoningEffort={reasoningEffort}
             isAnalyzeConfirmationOpen={isAnalyzeConfirmationOpen}
             isAnalyzeDisabled={isAnalyzeDisabled}
-            isBusy={analysisState.status === "loading" || isAnalysisPreparing}
+            isBusy={analysisState.status === "loading" || isAnalysisPreparing || isAnalysisStarting}
             hasResponse={Boolean(response)}
             hasPersonalApiKey={account.hasPersonalApiKey}
             analyzeLabel={analyzeLabel}
@@ -407,6 +448,8 @@ export function CopilotPanel({
       </div>
 
       <div ref={contentRef} className="copilot-content" aria-live="polite">
+        {analysisStartError ? <p role="alert">{t("copilot.autoSaveFailed")}</p> : null}
+        {isUsageDataScope && hasNewerUsage ? <p role="status">{t("copilot.usageChanged")}</p> : null}
         {recommendationNotice ? <p role="status">{recommendationNotice}</p> : null}
         {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
         {matchupNotice ? <p role="status">{matchupNotice}</p> : null}
@@ -479,7 +522,7 @@ export function CopilotPanel({
             isAnalyzeDisabled={isAnalyzeDisabled}
             shouldReveal={Boolean(analysisState.shouldReveal)}
             onRevealStart={consumeReveal}
-            recommendationCandidates={request.recommendationCandidates}
+            recommendationCandidates={recommendationCandidates}
             selectingCandidateId={selectingCandidateId}
             savingCandidateId={savingCandidateId}
             candidateApplyFailure={candidateApplyFailure}
@@ -520,7 +563,7 @@ export function CopilotPanel({
 
       <footer className="copilot-footer">
         <span>
-          {t(isUsageDataScope ? usageRegulationKey : "toolbar.regulation")} ·{" "}
+          {isUsageDataScope ? usageLabel : t("toolbar.regulation")} ·{" "}
           {t(
             battleFormat === "singles"
               ? "battleFormat.singles"

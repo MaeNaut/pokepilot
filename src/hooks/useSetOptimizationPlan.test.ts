@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { loadPopularSmogonSet } from "../api/smogonUsage";
+import { loadPopularUsageSet } from "../api/battleUsage";
 import { deferred, renderHook } from "../test/renderHook";
 import { useSetOptimizationPlan } from "./useSetOptimizationPlan";
 
-vi.mock("../api/smogonUsage", () => ({ loadPopularSmogonSet: vi.fn() }));
+vi.mock("../api/battleUsage", () => ({ loadPopularUsageSet: vi.fn() }));
 const context = { member: { id: "garchomp" } } as NonNullable<Parameters<typeof useSetOptimizationPlan>[0]>;
 const items: Parameters<typeof useSetOptimizationPlan>[2] = [];
 const workers: FakeWorker[] = [];
@@ -20,7 +20,7 @@ class FakeWorker {
 }
 beforeEach(() => {
   workers.length = 0;
-  vi.mocked(loadPopularSmogonSet).mockReset().mockResolvedValue(null);
+  vi.mocked(loadPopularUsageSet).mockReset().mockResolvedValue(null);
   vi.stubGlobal("Worker", FakeWorker);
 });
 afterEach(async () => {
@@ -50,8 +50,8 @@ describe("set optimization task lifecycle", () => {
   });
 
   it("settles cancellation before a shared usage fetch completes", async () => {
-    const read = deferred<Awaited<ReturnType<typeof loadPopularSmogonSet>>>();
-    vi.mocked(loadPopularSmogonSet).mockReturnValue(read.promise);
+    const read = deferred<Awaited<ReturnType<typeof loadPopularUsageSet>>>();
+    vi.mocked(loadPopularUsageSet).mockReturnValue(read.promise);
     const hook = await mount();
     let result!: ReturnType<typeof hook.current.run>;
     await act(async () => { result = hook.current.run(); });
@@ -74,7 +74,7 @@ describe("set optimization task lifecycle", () => {
   });
 
   it("reports Worker errors but tolerates unavailable usage data", async () => {
-    vi.mocked(loadPopularSmogonSet).mockRejectedValue(new Error("offline"));
+    vi.mocked(loadPopularUsageSet).mockRejectedValue(new Error("offline"));
     const hook = await mount();
     let result!: ReturnType<typeof hook.current.run>;
     await act(async () => { result = hook.current.run(); });

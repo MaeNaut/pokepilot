@@ -69,6 +69,7 @@ import {
 } from "./utils/showdownImport";
 import {
   createSavedTeamId,
+  serializeTeamSnapshot,
   type SavedTeamSummary,
 } from "./utils/teamStorage";
 import type { TeamMember, TeamSlot } from "./types";
@@ -225,6 +226,8 @@ function App() {
   const pokemonSelectionRequestRef = useRef(0);
   const teamLoadRequestRef = useRef(0);
   const previousAccountStorageIdRef = useRef(accountStorageId);
+  const latestTeamSnapshotRef = useRef(getCurrentTeamSnapshot());
+  latestTeamSnapshotRef.current = getCurrentTeamSnapshot();
   const beginWorkspaceTransition = useCallback(() => {
     pokemonSelectionRequestRef.current += 1;
     setSelectingPokemonSlot(null);
@@ -894,12 +897,17 @@ function App() {
     setTeamStorageMessage(t("team.importedPokemon"));
   }
 
-  async function handleSaveTeam() {
+  async function saveCurrentTeam(skipUnchanged = false) {
     if (isTeamSaveUnavailable) {
       setTeamStorageMessage(t(account.status === "loading" ? "account.checking" : "account.unavailable"));
       setIsTeamManagerOpen(true);
       setIsSaveConfirmed(false);
-      return;
+      return null;
+    }
+    if (skipUnchanged && activeSavedTeamId && !hasUnsavedTeamChanges()) {
+      if (!savedTeamLibrary.isHydrated || savedTeamLibrary.isSaving || savedTeamLibrary.pendingUpdate) return null;
+      if (accountStorageId && !await savedTeamLibrary.refresh(true)) return null;
+      return activeSavedTeamId;
     }
     const nextName = commitTeamName();
     const scope = teamLoadRequestRef.current;
@@ -909,14 +917,16 @@ function App() {
       snapshot,
       activeSavedTeamId,
     );
-    if (scope !== teamLoadRequestRef.current || owner !== previousAccountStorageIdRef.current) return;
+    if (scope !== teamLoadRequestRef.current || owner !== previousAccountStorageIdRef.current) return null;
 
     if (!nextSavedTeam) {
       setTeamStorageMessage(t("team.saveFailed"));
       setIsTeamManagerOpen(true);
       setIsSaveConfirmed(false);
-      return;
+      return null;
     }
+
+    if (serializeTeamSnapshot(snapshot) !== serializeTeamSnapshot(latestTeamSnapshotRef.current)) return null;
 
     markWorkspaceSaved(nextSavedTeam.id, nextName);
     setCommittedSnapshot(snapshot);
@@ -935,6 +945,22 @@ function App() {
       setIsSaveConfirmed(false);
       saveFeedbackTimeoutRef.current = null;
     }, 1800);
+    return nextSavedTeam.id;
+  }
+
+  async function handleSaveTeam() {
+    await saveCurrentTeam();
+  }
+
+  async function handleSaveTeamForAnalysis() {
+    const revision = teamLoadRequestRef.current;
+    const owner = accountStorageId;
+    const fingerprint = serializeTeamSnapshot(getCurrentTeamSnapshot());
+    const isCurrent = () => revision === teamLoadRequestRef.current &&
+      owner === previousAccountStorageIdRef.current &&
+      fingerprint === serializeTeamSnapshot(latestTeamSnapshotRef.current);
+    const teamId = await saveCurrentTeam(true);
+    return teamId && isCurrent() ? { teamId, isCurrent } : null;
   }
 
   function requestLoadSavedTeam(savedTeam: SavedTeamSummary) {
@@ -1581,6 +1607,7 @@ function App() {
               setAnalysisPreference={setAnalysisPreference}
               account={account}
               savedTeamId={activeSavedTeamId}
+              onSaveTeamForAnalysis={handleSaveTeamForAnalysis}
               teamName={teamNameDraft}
               battleFormat={battleFormat}
               team={team}
@@ -1626,6 +1653,7 @@ function App() {
           {t("footer.disclaimer")}
         </p>
           <span className="footer-links">
+            <a href="https://championsbattledata.com/api_guide" target="_blank" rel="noreferrer">Champions Battle Data</a>
             <button className="tutorial-restart" type="button" onClick={() => window.dispatchEvent(new Event("pokepilot:tutorial"))}>{locale === "ko" ? "튜토리얼" : "Tutorial"}</button>
             <PrivacyControl />
             <a

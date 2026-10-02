@@ -3,13 +3,13 @@ import type {
   CopilotAnalysisScope,
 } from "../src/utils/copilotContracts.js";
 
-export const POKEPILOT_AI_PROMPT_VERSION = 91;
+export const POKEPILOT_AI_PROMPT_VERSION = 92;
 export const POKEPILOT_AI_CORE_PROMPT_VERSION = 6;
 const POKEPILOT_AI_SCOPE_PROMPT_VERSIONS = {
   team: 7,
   pokemon: 15,
   recommendation: 13,
-  optimization: 32,
+  optimization: 33,
   matchup: 10,
 } as const satisfies Record<CopilotAnalysisScope, number>;
 
@@ -91,7 +91,7 @@ const pokepilotOptimizationInstructions = `The request scope is optimization. Re
 
 First infer the selected Pokemon's practical responsibilities from its selected moves, item, nature, investment, roleIds, team concepts, teammates, and supplied mechanics. Evaluate every candidate as a complete loadout in that team context. Preserve central offense, Speed control, setup, disruption, protection, ally interaction, coverage, and endgame responsibilities unless the candidate supplies a concrete larger benefit. A lower final stat in generalEvidence.reducedRoleStats is a real tradeoff requiring justification, not an automatic rejection. Do not assume a species must follow its usual stereotype when the current set shows a deliberate different job.
 
-generalEvidence.variant identifies how a candidate was generated. current is the unchanged baseline. standard combines the leading supplied usage spread, item, and moves, which are independent marginal statistics rather than one observed correlated set. spread changes nature and Stat Points while retaining the current item and moves. item changes only the held item from its baseline. move changes one move slot from its baseline. loadout applies one move replacement together with one observed alternative item; its usageRank and usagePercent describe the move, not the combined set or item. Treat usageRank and usagePercent as evidence for that candidate's changed axis only; never describe them as the popularity of the whole complete set. Usage is context, not proof of optimality.
+generalEvidence.variant identifies how a candidate was generated. current is the unchanged baseline. standard combines the leading supplied usage spread, item, and moves, which are independent marginal statistics rather than one observed correlated set. Champions Battle Data measures nature and Stat Point distributions separately: for standard and spread candidates, usagePercent describes only the Stat Point distribution, never the joint nature-and-points combination. sourceMonth identifies the snapshot month, not a full-month sample; cutoff zero means no rating cutoff was supplied. spread changes nature and Stat Points while retaining the current item and moves. item changes only the held item from its baseline. move changes one move slot from its baseline. loadout applies one move replacement together with one observed alternative item; its usageRank and usagePercent describe the move, not the combined set or item. Treat usageRank and usagePercent as evidence for that candidate's changed axis only; never describe them as the popularity of the whole complete set. Usage is context, not proof of optimality.
 
 Treat the candidate array order as arbitrary rather than a ranking. Treat the current sample as a neutral baseline, not a preferred answer. Do not recommend it merely because changing a set carries uncertainty. Recommend set-current only when its exact selected responsibilities or stat commitments make it at least as useful as the supplied alternatives, and explain which concrete responsibility or tradeoff makes keeping it worthwhile. If a changed candidate adds a credible team benefit without sacrificing a more important responsibility, it should outrank set-current. Avoid returning both current and a changed candidate when their strategic value is effectively the same.
 

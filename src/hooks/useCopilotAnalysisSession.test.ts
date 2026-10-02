@@ -11,7 +11,7 @@ import { CopilotApiError } from "../api/copilotApi";
 vi.mock("../api/accountStorage", () => ({ readAccountCopilotHistory: vi.fn(), writeAccountCopilotHistory: vi.fn() }));
 vi.mock("../utils/copilotAnalysisExecution", () => ({ executeCopilotAnalysis: vi.fn() }));
 
-const request = { scope: "team", teamName: "Test" } as CopilotAnalysisRequest;
+const request = { scope: "team", teamName: "Test", battleFormat: "singles", sets: [] } as unknown as CopilotAnalysisRequest;
 const result: Awaited<ReturnType<typeof executeCopilotAnalysis>> = {
   response: { version: 2, scope: "team", source: "hosted", title: "Test", paragraphs: ["Analysis"], recommendations: [] },
   usedFallback: false,
@@ -35,6 +35,90 @@ async function mount() {
 }
 
 describe("analysis account lifecycle", () => {
+  async function mountDraft() {
+    const hook = await renderHook((options: { savedTeamId: string | null; accountId: string; request: CopilotAnalysisRequest }) =>
+      useCopilotAnalysisSession({ ...options, locale: "en", battleFormat: "singles", failedMessage: "Failed" }),
+    { savedTeamId: null as string | null, accountId: "a", request });
+    cleanups.push(hook.unmount);
+    return hook;
+  }
+
+  it("attaches analysis and its usage to an explicitly saved team before the prop updates", async () => {
+    const execution = { durationMs: 11_000, totalTokens: 7_391, estimatedCostUsd: 0.0012 };
+    vi.mocked(executeCopilotAnalysis).mockResolvedValue({ ...result, execution });
+    const hook = await mountDraft();
+    await act(async () => { await hook.current.analyze(request, { teamId: "new-team" }); });
+    expect(hook.current.teamHistory).toHaveLength(0);
+    await hook.rerender({ savedTeamId: "new-team", accountId: "a", request });
+    expect(hook.current.teamHistory).toHaveLength(1);
+    expect(hook.current.teamHistory[0]).toMatchObject({ teamKey: "saved:new-team", execution });
+    expect(hook.current.response?.title).toBe("Test");
+    expect(hook.current.analysisState.execution).toEqual(execution);
+  });
+
+  it("keeps a pending analysis attached to its explicitly saved team", async () => {
+    const pending = deferred<typeof result>();
+    vi.mocked(executeCopilotAnalysis).mockReturnValue(pending.promise);
+    const hook = await mountDraft();
+    let analysis!: Promise<void>;
+    await act(async () => { analysis = hook.current.analyze(request, { teamId: "new-team" }); });
+    await hook.rerender({ savedTeamId: "new-team", accountId: "a", request });
+    expect(hook.current.analysisState.status).toBe("loading");
+    await act(async () => { pending.resolve(result); await analysis; });
+    expect(hook.current.teamHistory[0].teamKey).toBe("saved:new-team");
+    expect(hook.current.response?.title).toBe("Test");
+  });
+
+  it("does not overwrite explicitly selected history during a pending analysis", async () => {
+    const hook = await mountDraft();
+    await hook.rerender({ savedTeamId: "new-team", accountId: "a", request });
+    await act(async () => { await hook.current.analyze(); });
+    const selected = hook.current.teamHistory[0];
+    const pending = deferred<typeof result>();
+    vi.mocked(executeCopilotAnalysis).mockReturnValue(pending.promise);
+    let analysis!: Promise<void>;
+    await act(async () => { analysis = hook.current.analyze(); });
+    await hook.rerender({ savedTeamId: "new-team", accountId: "a", request });
+    await act(async () => { hook.current.selectHistory(selected); });
+    await act(async () => { pending.resolve({ ...result, response: { ...result.response, title: "Later" } }); await analysis; });
+    expect(hook.current.response?.title).toBe("Test");
+    expect(hook.current.teamHistory).toHaveLength(2);
+  });
+
+  it.each(["same", "different"])("does not move legacy draft history when loading a %s roster", async (roster) => {
+    vi.mocked(readAccountCopilotHistory).mockResolvedValue({ value: [{
+      id: "legacy", teamKey: "draft:singles:empty", locale: "en", scope: "team", battleFormat: "singles",
+      requestFingerprint: JSON.stringify(request), createdAt: "2026-09-30T00:00:00Z", response: result.response, usedFallback: false,
+    }], version: '"v1"' });
+    const hook = await mountDraft();
+    expect(hook.current.teamHistory).toHaveLength(1);
+    await hook.rerender({ savedTeamId: "other", accountId: "a", request: roster === "same" ? request : {
+      ...request, sets: [{ slotIndex: 0, pokemonId: "garchomp" }] as CopilotAnalysisRequest["sets"],
+    } });
+    expect(hook.current.teamHistory).toEqual([]);
+    expect(hook.current.response).toBeUndefined();
+  });
+
+  it("does not send any AI request without a saved team", async () => {
+    const hook = await mountDraft();
+    await act(async () => { await hook.current.analyze(); });
+    expect(executeCopilotAnalysis).not.toHaveBeenCalled();
+    expect(hook.current.teamHistory).toEqual([]);
+    expect(hook.current.response).toBeUndefined();
+  });
+
+  it("restores the original statistics provenance after a history reload", async () => {
+    const usageSource = { provider: "champions-battle-data" as const, season: "M6", sourceDate: "2026-10-01", generatedAt: "2026-10-01T00:00:00Z" };
+    const hook = await mount();
+    await act(async () => { await hook.current.analyze(request, { teamId: "saved-a", usageSource }); });
+    expect(hook.current.analysisState.usageSource).toEqual(usageSource);
+    const history = hook.current.teamHistory;
+    await hook.unmount();
+    vi.mocked(readAccountCopilotHistory).mockResolvedValue({ value: history, version: '"v2"' });
+    const reloaded = await mount();
+    expect(reloaded.current.analysisState.usageSource).toEqual(usageSource);
+  });
+
   it.each([
     ["AI_NOT_CONFIGURED", false],
     ["AI_INVALID_RESPONSE", undefined],
@@ -58,6 +142,26 @@ describe("analysis account lifecycle", () => {
     await hook.rerender(null);
     expect(hook.current.response).toBeUndefined();
     expect(hook.current.teamHistory).toEqual([]);
+  });
+
+  it("keeps only recommended candidate snapshots when lazy candidate data resets", async () => {
+    const candidates = [{ pokemonId: "hippowdon" }, { pokemonId: "gyarados" }] as CopilotAnalysisRequest["recommendationCandidates"];
+    const baseline = { ...request, scope: "recommendation", recommendationCandidates: [] } as CopilotAnalysisRequest;
+    const prepared = { ...baseline, recommendationCandidates: candidates };
+    vi.mocked(executeCopilotAnalysis).mockResolvedValue({ ...result, response: {
+      ...result.response, scope: "recommendation", recommendations: [{ id: "hippowdon", title: "Hippowdon", reason: "Sand", priority: "high" }],
+    } });
+    const hook = await renderHook((input: CopilotAnalysisRequest) => useCopilotAnalysisSession({
+      accountId: "a", savedTeamId: "saved-a", request: input, locale: "en", battleFormat: "singles", failedMessage: "Failed",
+    }), prepared);
+    cleanups.push(hook.unmount);
+    await act(async () => { await hook.current.analyze(prepared); });
+    expect(hook.current.response?.recommendationCandidates).toEqual([candidates[0]]);
+    await hook.rerender(baseline);
+    expect(hook.current.isStale).toBe(false);
+    expect(hook.current.response?.recommendationCandidates).toEqual([candidates[0]]);
+    await hook.rerender({ ...baseline, selectedSlot: 1 });
+    expect(hook.current.isStale).toBe(true);
   });
 
   it.each([null, "b"])("discards a late success after switching to %s", async (accountId) => {

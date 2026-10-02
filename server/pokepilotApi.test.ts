@@ -370,7 +370,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-6-luna",
-        promptVersion: 91,
+        promptVersion: 92,
         execution: {
           durationMs: expect.any(Number),
           totalTokens: 150,

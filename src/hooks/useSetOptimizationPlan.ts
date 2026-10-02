@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { runWorkerTask, waitForTask } from "../utils/workerTask";
-import { loadPopularSmogonSet } from "../api/smogonUsage";
+import { loadPopularUsageSet } from "../api/battleUsage";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { resolveUsageCalculatorItems } from "../calculator/calculatorUsageBuild";
 import type { ItemIndexEntry } from "../types";
@@ -46,7 +46,7 @@ export function useSetOptimizationPlan(
     setResult({ ...identity, plan: null, status: "loading" });
     try {
       const usageSet = await waitForTask(
-        loadPopularSmogonSet(context.member.id, battleFormat).catch(() => null), signal,
+        loadPopularUsageSet(context.member.id, battleFormat).catch(() => null), signal,
       );
       if (signal.aborted) return null;
       const output = await runWorkerTask<{ plan?: SetOptimizationPlan; error?: boolean }>(

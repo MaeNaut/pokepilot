@@ -50,6 +50,15 @@ describe("orderPokemonOptionsByUsage", () => {
     expect(result.orderedOptions[0].id).toBe("maushold-family-of-four");
     expect(result.rankByOptionId.get("maushold-family-of-four")).toBe(1);
   });
+  it("maps Champions cosmetic aliases without merging female and male forms", () => {
+    const result = orderPokemonOptionsByUsage([
+      { id: "maushold-family-of-four" }, { id: "vivillon" },
+      { id: "meowstic-male" }, { id: "meowstic-female" },
+    ], ["meowstic-f", "maushold-four", "vivillon-fancy", "meowstic"]);
+    expect(result.orderedOptions.map((entry) => entry.id)).toEqual([
+      "meowstic-female", "maushold-family-of-four", "vivillon", "meowstic-male",
+    ]);
+  });
 
   it("uses the base species when a usage Mega is not selectable", () => {
     const result = orderPokemonOptionsByUsage(options, [
@@ -90,5 +99,17 @@ describe("orderPokemonOptionsByUsage", () => {
       "squawkabilly-yellow",
       "squawkabilly",
     ]);
+  });
+  it("does not rank a male option using an unavailable female form", () => {
+    const result = orderPokemonOptionsByUsage([{ id: "meowstic-male" }], ["meowstic-f"]);
+    expect(result.rankByOptionId.has("meowstic-male")).toBe(false);
+  });
+
+  it("preserves source ranks when a partial refresh omits entries", () => {
+    const result = orderPokemonOptionsByUsage(options, [
+      { pokemonId: "charizard", usageRank: 1 },
+      { pokemonId: "mimikyu", usageRank: 4 },
+    ]);
+    expect(result.rankByOptionId.get("mimikyu-disguised")).toBe(4);
   });
 });

@@ -19,6 +19,7 @@ import { handlePersonalApiKey, readPersonalApiKey } from "./personalApiKey.js";
 import type { WorkerEnvironment } from "./env.js";
 import type { PokePilotOperationalEvent } from "../server/pokepilotApi.js";
 import { metricRoute, recordMetric, pruneMetrics } from "./metrics.js";
+import { handleCachedBattleUsage } from "./battleUsage.js";
 
 let operationsRuntime: PokePilotOperationsRuntime | undefined;
 
@@ -30,17 +31,6 @@ function accountErrorResponse(error: unknown) {
 
 function getOperationsRuntime(env: WorkerEnvironment) {
   return operationsRuntime ??= createPokePilotOperationsRuntime(env);
-}
-
-function proxySmogonStats(request: Request) {
-  const url = new URL(request.url);
-  const path = url.pathname.replace(/^\/smogon-stats/, "/stats");
-  const upstream = new URL(path, "https://www.smogon.com");
-  upstream.search = url.search;
-  return fetch(new Request(upstream, {
-    method: request.method,
-    headers: { Accept: "text/plain" },
-  }));
 }
 
 async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void) {
@@ -124,16 +114,7 @@ const router = {
       }
       if (url.pathname === "/api/pokepilot/personal-api-key") return await handlePersonalApiKey(request, env);
       if (url.pathname === "/api/pokepilot/analyze") return await handleAnalyze(request, env, onOperationalEvent);
-      if (url.pathname.startsWith("/smogon-stats/")) {
-        if (request.method !== "GET" && request.method !== "HEAD") {
-          return jsonResponse(
-            405,
-            { ok: false, error: { code: "METHOD_NOT_ALLOWED" } },
-            { Allow: "GET, HEAD" },
-          );
-        }
-        return await proxySmogonStats(request);
-      }
+      if (url.pathname.startsWith("/api/battle-usage/")) return await handleCachedBattleUsage(request);
       if (url.pathname.startsWith("/api/")) {
         return jsonResponse(404, { ok: false, error: { code: "NOT_FOUND" } });
       }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { nextAnimationFrame, runWorkerTask, waitForTask } from "../utils/workerTask";
 import { loadShowdownData } from "../api/showdownData";
 import type { ShowdownLegalitySnapshot } from "../api/showdownLegality";
-import { loadSmogonUsageSets } from "../api/smogonUsage";
+import { loadBattleUsageSets } from "../api/battleUsage";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import {
   createMetaThreatAnalysisInput,
@@ -98,7 +98,7 @@ export function useMetaThreatAnalysisPlan({
     try {
       if (!await nextAnimationFrame(signal)) return null;
       const loaded = await waitForTask(Promise.all([
-        loadSmogonUsageSets(battleFormat),
+        loadBattleUsageSets(battleFormat),
         loadShowdownData(),
       ]), signal);
       if (signal.aborted || !loaded) return null;

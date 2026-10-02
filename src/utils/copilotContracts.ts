@@ -491,6 +491,7 @@ export type CopilotAnalysisResponse = {
   paragraphs: string[];
   recommendations: CopilotRecommendation[];
   qualityWarnings?: CopilotQualityWarningCode[];
+  recommendationCandidates?: CopilotRecommendationCandidateSnapshot[];
   optimizationCandidates?: CopilotSetOptimizationCandidateSnapshot[];
 };
 

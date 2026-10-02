@@ -2,11 +2,11 @@ import { fetchPokemon } from "../api/pokeApi";
 import { fetchItem } from "../api/showdownCatalog";
 import { normalizeShowdownId } from "../api/showdownIds";
 import {
-  loadPopularSmogonSet,
-  resolveSmogonUsageAbility,
-  resolveSmogonUsageMoveIds,
-  type SmogonUsageSet,
-} from "../api/smogonUsage";
+  loadPopularUsageSet,
+  resolveBattleUsageAbility,
+  resolveBattleUsageMoveIds,
+  type BattleUsageSet,
+} from "../api/battleUsage";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import type { PokemonIndexEntry, PokemonItem, TeamMember } from "../types";
 import { isMegaPokemonName } from "./megaEvolution";
@@ -105,12 +105,12 @@ export async function resolveUsageTargetMember(
 }
 
 async function resolveUsageSetPatch(
-  usageSet: SmogonUsageSet,
+  usageSet: BattleUsageSet,
   selectedMember: TeamMember,
   targetMember: TeamMember,
 ): Promise<ResolvedUsageSetPatch> {
-  const ability = resolveSmogonUsageAbility(targetMember, usageSet.ability);
-  const resolvedMoveIds = resolveSmogonUsageMoveIds(
+  const ability = resolveBattleUsageAbility(targetMember, usageSet.ability);
+  const resolvedMoveIds = resolveBattleUsageMoveIds(
     targetMember.moves,
     usageSet.moveIds,
   );
@@ -171,7 +171,7 @@ export async function resolvePokemonChoice({
   let usageSetFound = false;
 
   if (applyUsageStats) {
-    const usageSet = await loadPopularSmogonSet(lookup, battleFormat);
+    const usageSet = await loadPopularUsageSet(lookup, battleFormat);
     usageSetFound = Boolean(usageSet);
     if (usageSet) {
       targetMember = await resolveUsageTargetMember(

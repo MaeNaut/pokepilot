@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { filterEditorLegalMoves, getEditorLegalMoveIds } from "../utils/editorMoveLegality";
 import { getLegalMoves } from "../api/showdownLegality";
@@ -21,7 +21,7 @@ import {
   isPokemonLegal,
   isItemLegal,
 } from "../api/showdownLegality";
-import { loadSmogonUsagePokemonIds } from "../api/smogonUsage";
+import { loadBattleUsageSets } from "../api/battleUsage";
 import type {
   DataLoadStatus,
   ItemIndexEntry,
@@ -52,7 +52,7 @@ import {
   findMoveByLookup,
   reconcileMoveIds,
 } from "../utils/pokemonMoves";
-import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
+import { orderPokemonOptionsByUsage, type PokemonUsageEntry } from "../utils/pokemonUsageOrder";
 import { getIndexAfterSwap } from "../utils/reorder";
 import { getNextCircularIndex } from "../utils/optionNavigation";
 import {
@@ -321,7 +321,7 @@ export function TeamBuilder({
   const [isNamePickerOpen, setIsNamePickerOpen] = useState(false);
   const [nameQuery, setNameQuery] = useState("");
   const [candidateMoveIndex, setCandidateMoveIndex] = useState<PokemonMove[]>([]);
-  const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(null);
+  const [usageEntries, setUsageEntries] = useState<PokemonUsageEntry[] | null>(null);
   const [isUsageOrderLoading, setIsUsageOrderLoading] = useState(false);
   const [usageOrderError, setUsageOrderError] = useState<string | null>(null);
   const [isBenchOpen, setIsBenchOpen] = useState(false);
@@ -755,9 +755,9 @@ export function TeamBuilder({
   } = useMemo(() => {
     return orderPokemonOptionsByUsage(
       candidateFilteredSelectOptions,
-      usagePokemonIds,
+      usageEntries,
     );
-  }, [candidateFilteredSelectOptions, usagePokemonIds]);
+  }, [candidateFilteredSelectOptions, usageEntries]);
   const itemOptions = useMemo(
     () =>
       prioritizeMegaStoneItems(
@@ -906,12 +906,12 @@ export function TeamBuilder({
   }, [isItemPickerOpen, normalizedItemQuery, resetItemOptions]);
 
   useEffect(() => {
-    setUsagePokemonIds(null);
+    setUsageEntries(null);
     setUsageOrderError(null);
   }, [battleFormat]);
 
   useEffect(() => {
-    if (!isNamePickerVisible || usagePokemonIds !== null) {
+    if (!isNamePickerVisible || usageEntries !== null) {
       return undefined;
     }
 
@@ -919,20 +919,20 @@ export function TeamBuilder({
     setIsUsageOrderLoading(true);
     setUsageOrderError(null);
 
-    void loadSmogonUsagePokemonIds(battleFormat)
-      .then((pokemonIds) => {
+    void loadBattleUsageSets(battleFormat)
+      .then((sets) => {
         if (!isCurrent) {
           return;
         }
 
-        setUsagePokemonIds(pokemonIds);
+        setUsageEntries(sets);
       })
       .catch(() => {
         if (!isCurrent) {
           return;
         }
 
-        setUsagePokemonIds([]);
+        setUsageEntries([]);
         setUsageOrderError("Popular usage data is unavailable.");
       })
       .finally(() => {
@@ -944,7 +944,7 @@ export function TeamBuilder({
     return () => {
       isCurrent = false;
     };
-  }, [battleFormat, isNamePickerVisible, usagePokemonIds]);
+  }, [battleFormat, isNamePickerVisible, usageEntries]);
 
   useEffect(() => {
     setActivePokemonOptionIndex((current) => {
@@ -2006,13 +2006,13 @@ export function TeamBuilder({
             })}
             onRetry={() => {
               setUsageOrderError(null);
-              setUsagePokemonIds(null);
+              setUsageEntries(null);
             }}
           />
         ) : null}
         {!normalizedNameQuery &&
         !isUsageOrderLoading &&
-        usagePokemonIds !== null &&
+        usageEntries !== null &&
         filteredOptions.length === 0 ? (
           <div className="pokemon-name-empty">
             {hasPokemonCandidateFilters(activeCandidateFilters)
