@@ -153,3 +153,12 @@ this repository.
 - Temporary logging was disabled again in the final QA upload. Production stayed
   on version `6a19cef4-f569-4601-907c-77901f30cd29`; no production deployment,
   commit, or push was performed for this checkpoint.
+
+## 2026-10-01 release plan confirmation
+
+- Workers Paid was verified as the account's current plan in the Cloudflare
+  dashboard after the owner completed the upgrade. Detailed endpoint CPU
+  profiling is deferred; it is no longer a pre-release gate. Normal CI,
+  production smoke tests, and post-release error/usage monitoring still apply.
+- This is the account-level Workers plan, not the domain's Pro plan. Application
+  secrets and the production D1 binding remain unchanged by the upgrade.
