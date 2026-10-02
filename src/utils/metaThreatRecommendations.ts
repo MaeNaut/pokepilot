@@ -1,5 +1,5 @@
 import type { ShowdownDataSnapshot } from "../api/showdownData";
-import type { SmogonUsageSet } from "../api/smogonUsage";
+import type { BattleUsageSet } from "../api/battleUsage";
 import { normalizeShowdownId } from "../api/showdownIds";
 import type { ItemIndexEntry } from "../types";
 import {
@@ -29,7 +29,7 @@ export type MetaThreatReplacementCandidate = {
 
 function findUsageSet(
   candidate: CopilotRecommendationCandidateSnapshot,
-  usageSets: SmogonUsageSet[],
+  usageSets: BattleUsageSet[],
 ) {
   const aliases = new Set(
     getPokemonLookupAliases(candidate.pokemonId).map(normalizeShowdownId),
@@ -48,7 +48,7 @@ function createReplacementEvidence({
 }: {
   candidate: CopilotRecommendationCandidateSnapshot;
   threat: Extract<MetaThreatAnalysisPlan, { status: "ready" }>["threats"][number];
-  usageSets: SmogonUsageSet[];
+  usageSets: BattleUsageSet[];
   showdownData: ShowdownDataSnapshot;
   itemIndex: ItemIndexEntry[];
 }): MetaThreatReplacementCandidate | null {
@@ -111,7 +111,7 @@ export function selectMetaThreatReplacementCandidates({
 }: {
   plan: MetaThreatAnalysisPlan;
   candidates: CopilotRecommendationCandidateSnapshot[];
-  usageSets: SmogonUsageSet[];
+  usageSets: BattleUsageSet[];
   showdownData: ShowdownDataSnapshot;
   itemIndex: ItemIndexEntry[];
 }): MetaThreatReplacementCandidate[] {

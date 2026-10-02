@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CopilotAnalysisResponse } from "./copilotAnalysis";
+import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
+import { getCopilotRequestFingerprint } from "./copilotRequestFingerprint";
 import {
   addCopilotHistoryEntry,
   clearStoredCopilotHistory,
@@ -11,6 +13,7 @@ import {
   getPendingCopilotHistory,
   storeCopilotHistory,
   storePendingCopilotHistory,
+  normalizeCopilotHistoryEntry,
 } from "./copilotHistory";
 
 function createMemoryStorage(): Storage {
@@ -37,6 +40,21 @@ const response: CopilotAnalysisResponse = {
   recommendations: [],
 };
 
+const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
+  pokemonId: "hippowdon", displayName: "Hippowdon", types: ["ground"], typeDisplayNames: ["Ground"],
+  abilities: [], baseStats: null, speedTier: "slow", requiresMegaStone: false, usageRank: 5,
+  commonSet: null, responsibilityIds: [],
+  target: {
+    mode: "addition", slotIndex: 3, currentPokemonId: null, currentDisplayName: null,
+    currentRoleIds: [], currentSetterConceptIds: [], currentAceConceptIds: [],
+    currentResponsibilityIds: [], currentSupportElements: [], megaOptionPokemonId: null, allySupportLinks: [],
+  },
+  fit: {
+    weakTo: [], resistsTeamThreats: [], amplifiesTeamThreats: [], addsUnansweredWeaknesses: [],
+    coversTypes: [], roleContributions: [], roleRedundancies: [], conceptSynergies: [], conflicts: [],
+  },
+};
+
 function createEntry(index: number, teamKey = "saved:test") {
   return createCopilotHistoryEntry({
     id: `entry-${index}`,
@@ -56,6 +74,39 @@ afterEach(() => {
 });
 
 describe("PokePilot analysis history", () => {
+  it("retains analysis provenance across serialization, even after the current season changes", () => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const usageSource = { provider: "champions-battle-data" as const, season: "M6", sourceDate: "2026-10-01", generatedAt: "2026-10-01T00:00:00Z", stale: true };
+    storeCopilotHistory([{ ...createEntry(1), usageSource }]);
+    expect(getStoredCopilotHistory()[0]?.usageSource).toEqual(usageSource);
+  });
+
+  it.each([undefined, { provider: "unknown" }, { provider: "champions-battle-data", season: "M6", sourceDate: "invalid", generatedAt: "invalid" }])(
+    "keeps older analysis usable without inventing statistics provenance: %j", (usageSource) => {
+      const restored = normalizeCopilotHistoryEntry({ ...createEntry(1), usageSource });
+      expect(restored?.response.title).toBe("Test Team 1");
+      expect(restored?.usageSource).toBeUndefined();
+    },
+  );
+  it.each([false, true])("restores recommendation cards from %s legacy metadata", (legacy) => {
+    vi.stubGlobal("localStorage", createMemoryStorage());
+    const extraCandidate = { ...recommendationCandidate, pokemonId: "gyarados", displayName: "Gyarados" };
+    const input = { scope: "recommendation", teamName: "Test", recommendationCandidates: [recommendationCandidate, extraCandidate] };
+    const entry = {
+      ...createEntry(1), scope: "recommendation" as const,
+      requestFingerprint: JSON.stringify(input),
+      response: {
+        ...response, scope: "recommendation" as const,
+        recommendations: [{ id: "hippowdon", title: "Hippowdon", reason: "Sand", priority: "high" as const }],
+        ...(legacy ? {} : { recommendationCandidates: [recommendationCandidate, extraCandidate, { pokemonId: "invalid" } as CopilotRecommendationCandidateSnapshot] }),
+      },
+    };
+    storeCopilotHistory([entry]);
+    const restored = getStoredCopilotHistory()[0];
+    expect(restored.response.recommendationCandidates).toEqual([recommendationCandidate]);
+    expect(restored.requestFingerprint).toBe(getCopilotRequestFingerprint(input as unknown as import("./copilotContracts").CopilotAnalysisRequest));
+  });
+
   it("clears account-scoped local history on sign-out", () => {
     const storage = createMemoryStorage();
     vi.stubGlobal("localStorage", storage);

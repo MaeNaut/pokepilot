@@ -2,7 +2,7 @@
 
 Status: complete as of 2026-09-18. `https://pokepilot.app` is served by the
 `pokepilot` Cloudflare Worker. The Worker serves the built Vite assets and owns
-the API, Google OAuth callback, and same-origin Smogon proxy.
+the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 
 ## Current production topology
 
@@ -84,6 +84,13 @@ requires `https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback
 in the OAuth client's authorized redirect URIs. The QA database is separate
 from production; do not use this config with `wrangler deploy` or `wrangler
 versions deploy`.
+
+These aliased version URLs are not separately deployed staging Workers.
+[Version URL limitations](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/)
+include unavailable Workers Logs, Wrangler tail, and Logpush. Do not enable
+production logging to work around a QA-only measurement request. Per-endpoint
+CPU diagnosis requires a separate deployed staging Worker; HTTP response time
+does not measure Worker CPU. `wrangler.qa.jsonc` keeps invocation logs disabled.
 
 ## Rollback
 

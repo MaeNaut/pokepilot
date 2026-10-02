@@ -24,6 +24,7 @@ import {
   getCopilotHistoryForTeam,
   type CopilotHistoryEntry,
 } from "../utils/copilotHistory";
+import type { BattleUsageSource } from "../api/battleUsageData";
 
 type UseCopilotAnalysisSessionOptions = {
   accountId: string | null;
@@ -130,18 +131,23 @@ export function useCopilotAnalysisSession({
     modelId,
   ]);
 
-  async function analyze(submittedRequest: CopilotAnalysisRequest = request) {
+  async function analyze(submittedRequest: CopilotAnalysisRequest = request,
+    savedTarget: { teamId: string; usageSource?: BattleUsageSource } | undefined = savedTeamId ? { teamId: savedTeamId } : undefined) {
+    // Never infer a draft's identity from its roster or a later team selection.
+    if (!savedTarget?.teamId) return;
+    const teamKey = createCopilotHistoryTeamKey(savedTarget.teamId, submittedRequest);
+    const submittedContextKey = getAnalysisContextKey(teamKey, submittedRequest.scope, reasoningEffort, modelId);
     const generation = accountGeneration.current;
     const isCurrentAccount = () => generation === accountGeneration.current;
-    const displayGeneration = (displayGenerationByContext.current[analysisContextKey] ?? 0) + 1;
-    displayGenerationByContext.current[analysisContextKey] = displayGeneration;
+    const displayGeneration = (displayGenerationByContext.current[submittedContextKey] ?? 0) + 1;
+    displayGenerationByContext.current[submittedContextKey] = displayGeneration;
     const isCurrentDisplay = () =>
-      displayGenerationByContext.current[analysisContextKey] === displayGeneration;
+      displayGenerationByContext.current[submittedContextKey] === displayGeneration;
     const submittedFingerprint = getCopilotRequestFingerprint(submittedRequest);
     setAnalysisByContext((current) => ({
       ...current,
-      [analysisContextKey]: {
-        ...current[analysisContextKey],
+      [submittedContextKey]: {
+        ...current[submittedContextKey],
         status: "loading",
         error: undefined,
       },
@@ -153,14 +159,22 @@ export function useCopilotAnalysisSession({
 
       if (!isCurrentAccount()) return;
       const historyEntry = createCopilotHistoryEntry({
-        teamKey: historyTeamKey,
+        teamKey,
         locale,
         scope: submittedRequest.scope,
         battleFormat,
         reasoningEffort,
         modelId,
         requestFingerprint: submittedFingerprint,
-        response: nextResponse,
+        ...(savedTarget.usageSource ? { usageSource: savedTarget.usageSource } : {}),
+        response: {
+          ...nextResponse,
+          ...(submittedRequest.recommendationCandidates?.length ? {
+            recommendationCandidates: submittedRequest.recommendationCandidates.filter(
+              (candidate) => nextResponse.recommendations.some((entry) => entry.id === candidate.pokemonId),
+            ),
+          } : {}),
+        },
         ...(execution ? { execution } : {}),
         usedFallback,
         fallbackReason,
@@ -170,14 +184,14 @@ export function useCopilotAnalysisSession({
       if (!isCurrentDisplay()) return;
       setAnalysisByContext((current) => ({
         ...current,
-        [analysisContextKey]: createReadyAnalysisState(historyEntry, "analysis"),
+        [submittedContextKey]: createReadyAnalysisState(historyEntry, "analysis"),
       }));
     } catch (error) {
       if (!isCurrentAccount() || !isCurrentDisplay()) return;
       setAnalysisByContext((current) => ({
         ...current,
-        [analysisContextKey]: {
-          ...current[analysisContextKey],
+        [submittedContextKey]: {
+          ...current[submittedContextKey],
           status: "error",
           errorCode: error instanceof CopilotApiError ? error.code : undefined,
           providerAttempted: error instanceof CopilotApiError ? error.providerAttempted : undefined,

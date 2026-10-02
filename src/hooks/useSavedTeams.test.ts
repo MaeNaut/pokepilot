@@ -39,6 +39,15 @@ async function setup() {
 }
 
 describe("server-first team synchronization", () => {
+  it.each([false, true])("checks for peer updates without a write before analysis (changed=%s)", async (changed) => {
+    const hook = await setup();
+    if (changed) server[0] = team("a", "2");
+    let ready!: boolean;
+    await act(async () => { ready = await hook.current.refresh(true); });
+    expect(ready).toBe(!changed);
+    expect(Boolean(hook.current.pendingUpdate)).toBe(changed);
+    expect(api.saveLibraryTeam).not.toHaveBeenCalled();
+  });
   it.each([
     [false, false], [true, false], [false, true], [true, true],
   ])("replaces an in-flight refresh after saving (readFirst=%s, writeFails=%s)", async (readFirst, writeFails) => {

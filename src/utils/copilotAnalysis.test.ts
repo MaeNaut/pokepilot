@@ -500,6 +500,20 @@ describe("Copilot analysis", () => {
         success: true,
       });
 
+      const longKoRequest = structuredClone(metaRequest);
+      if (longKoRequest.matchup?.mode === "meta") {
+        const benchmark = longKoRequest.matchup.threats[0].members[0].offenseBenchmarks[0];
+        benchmark.outcome.possibleKoHits = 7;
+        benchmark.outcome.guaranteedKoHits = 8;
+        benchmark.possibleActionTurns = 7;
+        benchmark.guaranteedActionTurns = 8;
+        expect(validateCopilotAnalysisRequest(longKoRequest)).toMatchObject({ success: true });
+        for (const hits of [0, -1, 100_001]) {
+          benchmark.outcome.possibleKoHits = hits;
+          expect(validateCopilotAnalysisRequest(longKoRequest)).toMatchObject({ success: false });
+        }
+      }
+
       const metaOptimizationRequest = createCopilotAnalysisRequest({
         ...input,
         selectedSlot: 1,

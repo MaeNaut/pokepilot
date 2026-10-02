@@ -56,7 +56,7 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
     catch { setLocalError(true); }
   };
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (requireUnchanged = false) => {
     const session = sessionRef.current;
     if (!session) return false;
     if (busy.current || confirming.current) { refreshPending.current = true; return false; }
@@ -70,7 +70,11 @@ export function useSavedTeams(accountId: string | null, authResolved = true) {
         storeSavedTeamsAccountId(session.accountId);
         session.ready = true;
         setHydrated(true);
-      } else if (!jsonValueEqual(remote, current.current)) notify(remote);
+      } else if (!jsonValueEqual(remote, current.current)) {
+        notify(remote);
+        report(false);
+        return !requireUnchanged;
+      }
       report(false);
       return true;
     } catch {

@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { act } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { loadPopularSmogonSet, type SmogonUsageSet } from "../api/smogonUsage";
+import { loadPopularUsageSet, type BattleUsageSet } from "../api/battleUsage";
 import { deferred, renderHook } from "../test/renderHook";
 import type { TeamMember } from "../types";
 import { useCalculatorUsage } from "./useCalculatorUsage";
 
-vi.mock("../api/smogonUsage", async (original) => ({
-  ...await original<typeof import("../api/smogonUsage")>(),
-  loadPopularSmogonSet: vi.fn(),
+vi.mock("../api/battleUsage", async (original) => ({
+  ...await original<typeof import("../api/battleUsage")>(),
+  loadPopularUsageSet: vi.fn(),
 }));
 
 const member: TeamMember = {
@@ -18,7 +18,7 @@ const member: TeamMember = {
     power: 100, accuracy: 100, pp: 10, description: "",
   }],
 };
-const usage: SmogonUsageSet = {
+const usage: BattleUsageSet = {
   pokemonId: member.id, pokemonName: member.name, sourceMonth: "2026-09",
   cutoff: 1630, moveIds: ["earthquake"], itemName: "Life Orb",
 };
@@ -28,7 +28,7 @@ const options: Parameters<typeof useCalculatorUsage>[0] = {
 };
 const cleanups: Array<() => Promise<void>> = [];
 
-beforeEach(() => { vi.mocked(loadPopularSmogonSet).mockReset().mockResolvedValue(usage); });
+beforeEach(() => { vi.mocked(loadPopularUsageSet).mockReset().mockResolvedValue(usage); });
 afterEach(async () => { for (const cleanup of cleanups.splice(0)) await cleanup(); });
 
 it("shares one usage load between moves and items and reapplies item eligibility locally", async () => {
@@ -40,13 +40,13 @@ it("shares one usage load between moves and items and reapplies item eligibility
   await hook.rerender({ ...options, itemOptions: [] });
   expect(hook.current.moves.map(({ id }) => id)).toEqual(["earthquake"]);
   expect(hook.current.items).toEqual([]);
-  expect(loadPopularSmogonSet).toHaveBeenCalledTimes(1);
+  expect(loadPopularUsageSet).toHaveBeenCalledTimes(1);
 });
 
 it("clears both suggestions on format change and ignores the abandoned format response", async () => {
-  const singles = deferred<SmogonUsageSet | null>();
-  const doubles = deferred<SmogonUsageSet | null>();
-  vi.mocked(loadPopularSmogonSet)
+  const singles = deferred<BattleUsageSet | null>();
+  const doubles = deferred<BattleUsageSet | null>();
+  vi.mocked(loadPopularUsageSet)
     .mockReturnValueOnce(singles.promise)
     .mockReturnValueOnce(doubles.promise);
   const hook = await renderHook(useCalculatorUsage, options);
@@ -58,5 +58,5 @@ it("clears both suggestions on format change and ignores the abandoned format re
   await act(async () => { doubles.resolve({ ...usage, itemName: undefined }); });
   expect(hook.current.moves.map(({ id }) => id)).toEqual(["earthquake"]);
   expect(hook.current.items).toEqual([]);
-  expect(loadPopularSmogonSet).toHaveBeenCalledTimes(2);
+  expect(loadPopularUsageSet).toHaveBeenCalledTimes(2);
 });

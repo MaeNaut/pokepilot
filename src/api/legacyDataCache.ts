@@ -1,6 +1,8 @@
-export const POKEMON_CACHE_PREFIX = "pokepilot:pokemon:v24:";
+export const POKEMON_CACHE_PREFIX = "pokepilot:pokemon:v25:";
 
 const LEGACY_DATA_CACHE_PREFIXES = [
+  "pokepilot:smogon-usage:",
+  "pokepilot:showdown-data:mc-v2",
   "pokepilot:move:",
   "pokepilot:pokemon-index:",
   "pokepilot:item-index:",

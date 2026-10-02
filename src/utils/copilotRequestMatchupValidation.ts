@@ -20,9 +20,9 @@ import {
 } from "./copilotRequestOptimizationValidation.js";
 import { isRecord } from "./typeGuards.js";
 
-function isNullableHitCount(value: unknown) {
+function isNullableHitCount(value: unknown, maximum = 100_000) {
   return value === null ||
-    (Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 6);
+    (Number.isInteger(value) && Number(value) >= 1 && Number(value) <= maximum);
 }
 
 function isNullableActionTurnCount(value: unknown) {
@@ -48,8 +48,8 @@ function hasValidPersistentSequence(value: unknown) {
     value.stagesPerHit !== 1 ||
     typeof value.boostAffectedDamage !== "boolean" ||
     value.includesBetweenHitRecovery !== false ||
-    !isNullableHitCount(value.possibleKoHits) ||
-    !isNullableHitCount(value.guaranteedKoHits) ||
+    !isNullableHitCount(value.possibleKoHits, 6) ||
+    !isNullableHitCount(value.guaranteedKoHits, 6) ||
     !Array.isArray(value.hits) ||
     value.hits.length < 1 ||
     value.hits.length > 6

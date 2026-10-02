@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchPokemon } from "../api/pokeApi";
 import { fetchItem } from "../api/showdownCatalog";
 import {
-  loadPopularSmogonSet,
-  resolveSmogonUsageAbility,
-  type SmogonUsageSet,
-} from "../api/smogonUsage";
+  loadPopularUsageSet,
+  resolveBattleUsageAbility,
+  type BattleUsageSet,
+} from "../api/battleUsage";
 import type { PokemonIndexEntry, TeamMember } from "../types";
 import {
   getCompatiblePokemonAbility,
@@ -17,9 +17,9 @@ import { createEmptyBuildState, patchBuildStateSlot } from "./teamBuildState";
 
 vi.mock("../api/pokeApi", () => ({ fetchPokemon: vi.fn() }));
 vi.mock("../api/showdownCatalog", () => ({ fetchItem: vi.fn() }));
-vi.mock("../api/smogonUsage", async (importOriginal) => ({
-  ...await importOriginal<typeof import("../api/smogonUsage")>(),
-  loadPopularSmogonSet: vi.fn(),
+vi.mock("../api/battleUsage", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../api/battleUsage")>(),
+  loadPopularUsageSet: vi.fn(),
 }));
 
 const member: TeamMember = {
@@ -31,7 +31,7 @@ const member: TeamMember = {
     power: 60, accuracy: 100, pp: 20, description: "",
   }],
 };
-const usageSet: SmogonUsageSet = {
+const usageSet: BattleUsageSet = {
   pokemonId: "scizor", pokemonName: "Scizor", sourceMonth: "2026-06", cutoff: 1630,
   ability: "technician", itemName: "Life Orb", nature: "Adamant",
   evs: { hp: 32, attack: 32, defense: 32 }, moveIds: ["bugbite", "missing"],
@@ -50,7 +50,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(fetchPokemon).mockResolvedValue(member);
   vi.mocked(fetchItem).mockResolvedValue({ id: "life-orb", name: "Life Orb" });
-  vi.mocked(loadPopularSmogonSet).mockResolvedValue(usageSet);
+  vi.mocked(loadPopularUsageSet).mockResolvedValue(usageSet);
 });
 
 describe("usage ability matching", () => {
@@ -62,10 +62,11 @@ describe("usage ability matching", () => {
       .toBe("Huge Power");
   });
   it("preserves canonical names and caller-specific missing-data defaults", () => {
-    expect(resolveSmogonUsageAbility(member, "TECHNICIAN")).toBe("Technician");
-    expect(resolveSmogonUsageAbility(member, undefined)).toBe("");
-    expect(resolveSmogonUsageAbility(member, undefined, "Swarm")).toBe("Swarm");
-    expect(resolveSmogonUsageAbility(member, "New Ability")).toBe("New Ability");
+    expect(resolveBattleUsageAbility(member, "TECHNICIAN")).toBe("Technician");
+    expect(resolveBattleUsageAbility(member, undefined)).toBe("");
+    expect(resolveBattleUsageAbility(member, undefined, "Swarm")).toBe("Swarm");
+    expect(resolveBattleUsageAbility(member, "New Ability")).toBe("");
+    expect(resolveBattleUsageAbility(member, "New Ability", "Swarm")).toBe("Swarm");
   });
 });
 
@@ -143,7 +144,7 @@ describe("team Pokemon choice", () => {
     state.abilityBySlot[1] = "Intimidate";
     const before = structuredClone(state);
     const result = await resolvePokemonChoice(options({ battleFormat, getBuildStateSnapshot: () => state }));
-    expect(loadPopularSmogonSet).toHaveBeenCalledWith("scizor", battleFormat);
+    expect(loadPopularUsageSet).toHaveBeenCalledWith("scizor", battleFormat);
     expect(fetchItem).toHaveBeenCalledWith("lifeorb");
     expect(result.usageSetFound).toBe(true);
     expect(result.usageSetPatch?.itemLoadFailed).toBe(false);
@@ -161,7 +162,7 @@ describe("team Pokemon choice", () => {
     const result = await resolvePokemonChoice(options({ applyUsageStats: false, getBuildStateSnapshot: () => state }));
     expect(result.proposedBuildState).toBe(state);
     expect(result.usageSetPatch).toBeNull();
-    expect(loadPopularSmogonSet).not.toHaveBeenCalled();
+    expect(loadPopularUsageSet).not.toHaveBeenCalled();
     expect(fetchItem).not.toHaveBeenCalled();
   });
 
@@ -181,7 +182,7 @@ describe("team Pokemon choice", () => {
   });
 
   it("clears only the selected slot when usage is unavailable", async () => {
-    vi.mocked(loadPopularSmogonSet).mockResolvedValue(null);
+    vi.mocked(loadPopularUsageSet).mockResolvedValue(null);
     const state = createEmptyBuildState();
     state.natureBySlot = { 0: "Adamant", 1: "Careful" };
     const result = await resolvePokemonChoice(options({ getBuildStateSnapshot: () => state }));
@@ -191,7 +192,7 @@ describe("team Pokemon choice", () => {
   });
 
   it("leaves absent optional fields out of the builder patch", async () => {
-    vi.mocked(loadPopularSmogonSet).mockResolvedValue({
+    vi.mocked(loadPopularUsageSet).mockResolvedValue({
       pokemonId: member.id, pokemonName: member.name, sourceMonth: "2026-06", cutoff: 1630, moveIds: [],
     });
     const result = await resolvePokemonChoice(options());
@@ -206,7 +207,7 @@ describe("team Pokemon choice", () => {
 
   it("remembers the pre-mega member when usage selects a mega form", async () => {
     const mega = { ...member, id: "scizor-mega" };
-    vi.mocked(loadPopularSmogonSet).mockResolvedValue({ ...usageSet, pokemonName: "Scizor-Mega" });
+    vi.mocked(loadPopularUsageSet).mockResolvedValue({ ...usageSet, pokemonName: "Scizor-Mega" });
     vi.mocked(fetchPokemon).mockResolvedValueOnce(member).mockResolvedValueOnce(mega);
     const result = await resolvePokemonChoice(options());
     expect(result.targetMember).toBe(mega);
@@ -226,6 +227,6 @@ describe("team Pokemon choice", () => {
   it("propagates initial lookup failures to the caller's error handling", async () => {
     vi.mocked(fetchPokemon).mockRejectedValue(new Error("lookup failed"));
     await expect(resolvePokemonChoice(options())).rejects.toThrow("lookup failed");
-    expect(loadPopularSmogonSet).not.toHaveBeenCalled();
+    expect(loadPopularUsageSet).not.toHaveBeenCalled();
   });
 });

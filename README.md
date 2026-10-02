@@ -17,13 +17,14 @@ responsive web app.
 - Edit forms, items, abilities, natures, EVs, moves, Mega Evolution, and current HP.
 - Filter Pokemon, items, abilities, and moves against Regulation M-C legality.
 - Import and export Pokemon Showdown text for individual sets and complete teams.
-- Load usage-ranked Pokemon and popular sets from monthly Smogon statistics.
+- Load usage-ranked Pokemon and automatic samples from daily Champions battle statistics.
 - Inspect defensive matchups, offensive coverage, validity, and damage ranges.
 - Analyze teams and individual Pokemon, compare samples, recommend roster additions, and audit metagame threats.
 - Export individual builds and full teams as shareable PNG images.
 - Use English or Korean with system, light, and dark themes across desktop, tablet, and mobile layouts.
 - Sign in with Google to synchronize saved teams, bounded analysis history, language, theme, default battle format, tutorial completion, and the last selected analysis tab/model/reasoning level across devices.
 - Register a personal OpenAI API key to use AI analysis. OpenAI bills your account; PokePilot currently provides no site-funded trials or advertising credits.
+- Confirming analysis saves the current team before the AI call. Save/sync failures block the call; unchanged saved teams are checked without rewriting them. Usage-based history retains the statistics season/date used for that analysis.
 
 ## Stack
 
@@ -93,7 +94,9 @@ account authentication, and intentionally makes a fresh hosted analysis.
 
 - [Pokemon Showdown](https://pokemonshowdown.com/) supplies canonical Pokemon,
   form, item, ability, move, and legality data.
-- [Smogon usage stats](https://www.smogon.com/stats/) supply rankings and popular sets.
+- [Pokemon Champions Battle Data](https://championsbattledata.com/api_guide) supplies
+  ranked usage and independent build statistics. Samples combine popular options;
+  they are not claimed to be complete, jointly observed sets.
 - [PokeAPI](https://pokeapi.co/) supplies selected sprites and development-time
   Korean localization source data.
 - [Smogon damage calculator](https://github.com/smogon/damage-calc) powers the
@@ -101,9 +104,11 @@ account authentication, and intentionally makes a fresh hosted analysis.
 
 Large source catalogs are converted into compact checked-in snapshots and
 cached locally so the browser does not repeatedly request or parse upstream data.
-Smogon usage prefers the latest available Regulation M-C monthly statistics
-per battle format. Until that format's M-C file is available, the app labels
-and uses historical Regulation M-B statistics instead.
+Battle usage is fetched through a same-origin, read-only adapter with bounded
+server/browser caching. Singles and Doubles retain their source dates and seasons.
+Recent last-known data can survive an upstream outage for up to seven days and is
+marked stale; outdated or invalid data is not presented as current statistics.
+Usage updates do not change the app's supported regulation or battle rules.
 
 ## Documentation
 

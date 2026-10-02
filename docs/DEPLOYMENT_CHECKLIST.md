@@ -98,6 +98,16 @@ this repository.
 - Confirm PokePilot gating when signed out and when no personal key is registered,
   personal-key analysis for each supported model, and an appropriate error when the
   provider is unavailable. Check the account history and aggregate metrics.
+- Confirm the analysis confirmation explains automatic team saving. New/edited
+  teams must finish saving before preparation or the paid AI request begins.
+  Save failures, pending remote updates, and workspace/account changes must block
+  the request. An unchanged saved team must not cause a duplicate write.
+- Reload analysis history in a second tab: the submitted saved-team ID, result,
+  timing/tokens/cost, and original battle-data season/date must remain intact.
+  Do not infer a saved-team destination from a matching draft roster.
+- Check battle-data rollover: preparation must stop if its source changes before
+  submission. Historical results keep their original source; legacy entries with
+  no provenance show "not recorded" rather than today's source.
 - QA and production use separate D1 databases. Keys registered in QA do not
   transfer to production; register a key on the production site to test it there.
 - Verify the privacy notice, help pages, `ads.txt`, `robots.txt`, and sitemap at
@@ -114,3 +124,41 @@ this repository.
   Google sign-in, OpenAI processing, Redis controls, and any advertising change.
 - Repeat representative real-device Safari and Android Chrome checks after major
   layout, authentication, or browser-storage changes.
+
+## 2026-10-01 pre-release checkpoint
+
+- Lint and the complete suite passed: 153 files, 1,166 tests. Cloudflare build,
+  Worker dry run, dependency audit, and whitespace checks passed. The existing
+  Vite large-chunk warning remains.
+- QA usage-adapter audit passed for 524 ranked sets and 10 detail samples, with no
+  catalog issues (M6, source date 2026-10-01). The unsigned deployment smoke test
+  passed without a paid AI call.
+- Chrome QA created `QA Auto Save 2026-10-01` and ran one sample analysis after
+  automatic saving. A second tab restored the same saved team and history,
+  including 7.6 seconds, 10,466 tokens, estimated $0.0014, and its original source.
+  This is a workflow check, not a new model-accuracy benchmark or load test.
+- Per-endpoint cold/warm CPU measurement is **not completed**. The current aliased
+  Worker version URL cannot emit Workers Logs; turning on QA observability did
+  not produce events. HTTP probe durations must not be reported as CPU time.
+  Separate deployed staging infrastructure is needed for invocation-log-based
+  measurement without changing production. See [Version URL limitations](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/).
+- The earlier aggregate QA CPU P90/P99 of 21/86 ms remains a risk signal, not a
+  measurement of this final version or any specific endpoint. Workers Free has
+  a 10 ms CPU allowance; intermittent bursting is not a release guarantee. Review
+  the CPU plan before public launch. See [Worker limits](https://developers.cloudflare.com/workers/platform/limits/).
+- If Workers Paid is confirmed active, detailed endpoint CPU profiling can be
+  deferred until after release; retain routine error and usage monitoring. Paid
+  has a default 30-second HTTP CPU limit and a $5 monthly minimum, not unlimited
+  fixed-price usage. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/).
+- Temporary logging was disabled again in the final QA upload. Production stayed
+  on version `6a19cef4-f569-4601-907c-77901f30cd29`; no production deployment,
+  commit, or push was performed for this checkpoint.
+
+## 2026-10-01 release plan confirmation
+
+- Workers Paid was verified as the account's current plan in the Cloudflare
+  dashboard after the owner completed the upgrade. Detailed endpoint CPU
+  profiling is deferred; it is no longer a pre-release gate. Normal CI,
+  production smoke tests, and post-release error/usage monitoring still apply.
+- This is the account-level Workers plan, not the domain's Pro plan. Application
+  secrets and the production D1 binding remain unchanged by the upgrade.

@@ -89,7 +89,7 @@ type ShowdownDataCachePayload = ShowdownDataSnapshot & {
   cachedAt: number;
 };
 
-const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:mc-v2";
+const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:mc-v3";
 const SHOWDOWN_DATA_CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 
 const MOVE_FLAG_TAG_LABELS: Record<string, string> = {

@@ -1,9 +1,9 @@
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import {
-  loadSmogonUsagePokemonIds,
-  loadSmogonUsageSets,
-  type SmogonUsageSet,
-} from "../api/smogonUsage";
+  loadBattleUsagePokemonIds,
+  loadBattleUsageSets,
+  type BattleUsageSet,
+} from "../api/battleUsage";
 import { getPokemonLookupAliases } from "./pokemonAliases";
 import { normalizeShowdownId } from "../api/showdownIds";
 import { loadShowdownData } from "../api/showdownData";
@@ -41,7 +41,7 @@ import {
   matchesPokemonCandidateFilters,
 } from "./pokemonCandidateFilters";
 import { compactCopilotMechanicEffect } from "./copilotMechanics";
-import { getMegaEvolutionIndexEntry } from "./megaEvolution";
+import { getMegaEvolutionIndexEntry, getMegaSpeciesKey } from "./megaEvolution";
 import {
   createCopilotResponsibilityCounts,
   inferCopilotResponsibilities,
@@ -198,7 +198,7 @@ type RankUniversalPokemonRecommendationCandidatesInput = Omit<
   "battleFormat"
 > & {
   usageIds: string[] | null;
-  usageSets?: SmogonUsageSet[] | null;
+  usageSets?: BattleUsageSet[] | null;
   showdownData: ShowdownDataSnapshot | null;
 };
 
@@ -207,7 +207,7 @@ type RankPokemonRecommendationCandidatesInput = Omit<
   "battleFormat"
 > & {
   usageIds: string[] | null;
-  usageSets?: SmogonUsageSet[] | null;
+  usageSets?: BattleUsageSet[] | null;
   showdownData: ShowdownDataSnapshot | null;
 };
 
@@ -648,27 +648,24 @@ function resolveShowdownSpecies(
 
 function resolveUsageSet(
   option: PokemonRecommendationOption,
-  usageSets: SmogonUsageSet[] | null | undefined,
+  usageSets: BattleUsageSet[] | null | undefined,
 ) {
   if (!usageSets?.length) {
     return null;
   }
 
-  const lookupIds = new Set(
-    [option.id, option.speciesKey]
-      .flatMap((id) => getPokemonLookupAliases(id))
-      .map(normalizeShowdownId),
-  );
-
-  return (
-    usageSets.find((set) => lookupIds.has(normalizeShowdownId(set.pokemonId))) ??
-    null
-  );
+  const lookupIds = getPokemonLookupAliases(option.id).map(normalizeShowdownId);
+  const exact = lookupIds.map((id) => usageSets.find((set) => normalizeShowdownId(set.pokemonId) === id)).find(Boolean);
+  if (exact) return exact;
+  if (!option.isMegaForm) return null;
+  const baseIds = getPokemonLookupAliases(getMegaSpeciesKey(option.id)).map(normalizeShowdownId);
+  return baseIds.map((id) => usageSets.find((set) => normalizeShowdownId(set.pokemonId) === id)).find(Boolean) ?? null;
 }
 
 function createCommonSet(
-  usageSet: SmogonUsageSet | null,
+  usageSet: BattleUsageSet | null,
   showdownData: ShowdownDataSnapshot | null,
+  option: PokemonRecommendationOption,
 ): PokemonRecommendationCommonSet | null {
   if (!usageSet) {
     return null;
@@ -693,9 +690,12 @@ function createCommonSet(
       ];
     });
 
+  const projectedMega = option.isMegaForm && normalizeShowdownId(option.id) !== normalizeShowdownId(usageSet.pokemonId);
   return {
-    ability: usageSet.ability ?? null,
-    item: usageSet.itemName ?? null,
+    ability: projectedMega
+      ? option.abilities[0]?.displayName ?? null
+      : usageSet.ability ?? null,
+    item: projectedMega ? null : usageSet.itemName ?? null,
     nature: usageSet.nature ?? null,
     moves,
   };
@@ -711,7 +711,7 @@ function getSpeedTier(baseStats: StatBlock | null) {
 }
 
 function getCommonMoves(
-  usageSet: SmogonUsageSet | null,
+  usageSet: BattleUsageSet | null,
   showdownData: ShowdownDataSnapshot | null,
 ) {
   return (usageSet?.moveIds ?? []).flatMap((moveId) => {
@@ -722,7 +722,7 @@ function getCommonMoves(
 
 function inferCandidateRoles(
   baseStats: StatBlock | null,
-  usageSet: SmogonUsageSet | null,
+  usageSet: BattleUsageSet | null,
   moves: PokemonMove[],
 ) {
   const roles = new Set<TeamRoleId>();
@@ -971,17 +971,17 @@ function scorePokemonRecommendationCandidates({
   );
 
   return orderedOptions.map((option) => {
-    const usageRank = rankByOptionId.get(option.id) ?? null;
     const usageSet = resolveUsageSet(option, usageSets);
+    const usageRank = usageSet?.usageRank ?? rankByOptionId.get(option.id) ?? null;
     const species = resolveShowdownSpecies(option, showdownData);
     const baseStats = species?.baseStats ?? null;
     const commonMoves = getCommonMoves(usageSet, showdownData);
-    const commonAbility = usageSet?.ability ?? option.abilities[0]?.id ?? "";
+    const commonSet = createCommonSet(usageSet, showdownData, option);
+    const commonAbility = commonSet?.ability ?? option.abilities[0]?.id ?? "";
     const defensiveProfile = createPokemonDefensiveProfile(option, commonAbility);
-    const commonSet = createCommonSet(usageSet, showdownData);
     const normalizedAbilities = normalizeRecommendationAbilities(
       option.abilities,
-      usageSet?.ability ?? null,
+      commonSet?.ability ?? null,
     );
     const commonAbilitySnapshot =
       normalizedAbilities.find(
@@ -1117,8 +1117,8 @@ export function rankPokemonRecommendationCandidates(
 
 async function loadRecommendationData(battleFormat: BattleFormat) {
   const [usageIds, usageSets, showdownData] = await Promise.all([
-    loadSmogonUsagePokemonIds(battleFormat).catch(() => null),
-    loadSmogonUsageSets(battleFormat).catch(() => null),
+    loadBattleUsagePokemonIds(battleFormat).catch(() => null),
+    loadBattleUsageSets(battleFormat).catch(() => null),
     loadShowdownData().catch(() => null),
   ]);
 

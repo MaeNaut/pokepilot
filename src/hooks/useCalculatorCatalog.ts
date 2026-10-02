@@ -7,7 +7,7 @@ import {
   type ShowdownLegalitySnapshot,
 } from "../api/showdownLegality";
 import { loadShowdownData } from "../api/showdownData";
-import { loadSmogonUsagePokemonIds } from "../api/smogonUsage";
+import { loadBattleUsageSets } from "../api/battleUsage";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import type { CalculatorPokemonOption } from "../calculator/calculatorEditorTypes";
 import { useLocalization } from "../i18n/useLocalization";
@@ -16,7 +16,7 @@ import type {
   PokemonIndexEntry,
   PokemonMove,
 } from "../types";
-import { orderPokemonOptionsByUsage } from "../utils/pokemonUsageOrder";
+import { orderPokemonOptionsByUsage, type PokemonUsageEntry } from "../utils/pokemonUsageOrder";
 import {
   getPokemonNameFallback,
   shouldIncludePokemonForm,
@@ -36,7 +36,7 @@ export function useCalculatorCatalog({
   showdownLegality,
 }: UseCalculatorCatalogOptions) {
   const { gameName, pokemonName } = useLocalization();
-  const [usagePokemonIds, setUsagePokemonIds] = useState<string[] | null>(
+  const [usageEntries, setUsageEntries] = useState<PokemonUsageEntry[] | null>(
     null,
   );
   const [candidateMoveIndex, setCandidateMoveIndex] = useState<PokemonMove[]>(
@@ -45,17 +45,17 @@ export function useCalculatorCatalog({
 
   useEffect(() => {
     let isCurrent = true;
-    setUsagePokemonIds(null);
+    setUsageEntries(null);
 
-    void loadSmogonUsagePokemonIds(battleFormat)
-      .then((ids) => {
+    void loadBattleUsageSets(battleFormat)
+      .then((sets) => {
         if (isCurrent) {
-          setUsagePokemonIds(ids);
+          setUsageEntries(sets);
         }
       })
       .catch(() => {
         if (isCurrent) {
-          setUsagePokemonIds([]);
+          setUsageEntries([]);
         }
       });
 
@@ -139,14 +139,14 @@ export function useCalculatorCatalog({
   const pokemonOptions = useMemo(() => {
     const { orderedOptions, rankByOptionId } = orderPokemonOptionsByUsage(
       basePokemonOptions,
-      usagePokemonIds,
+      usageEntries,
     );
 
     return orderedOptions.map((option) => ({
       ...option,
       usageRank: rankByOptionId.get(option.id),
     }));
-  }, [basePokemonOptions, usagePokemonIds]);
+  }, [basePokemonOptions, usageEntries]);
 
   const selectableItems = useMemo(
     () =>

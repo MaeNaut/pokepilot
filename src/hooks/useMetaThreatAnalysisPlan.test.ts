@@ -4,13 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deferred, renderHook } from "../test/renderHook";
 import { useMetaThreatAnalysisPlan } from "./useMetaThreatAnalysisPlan";
 import { runWorkerTask } from "../utils/workerTask";
-import { loadSmogonUsageSets } from "../api/smogonUsage";
+import { loadBattleUsageSets } from "../api/battleUsage";
 import { selectMetaThreatReplacementCandidates } from "../utils/metaThreatRecommendations";
 import type { MetaThreatAnalysisPlan } from "../calculator/metaThreatAnalysis";
 import { createEmptyBuildState } from "../utils/teamBuildState";
 import { analyzeTeam } from "../utils/teamDiagnostics";
 
-vi.mock("../api/smogonUsage", () => ({ loadSmogonUsageSets: vi.fn() }));
+vi.mock("../api/battleUsage", () => ({ loadBattleUsageSets: vi.fn() }));
 vi.mock("../api/showdownData", () => ({ loadShowdownData: vi.fn().mockResolvedValue({}) }));
 vi.mock("../calculator/metaThreatAnalysis", () => ({ createMetaThreatAnalysisInput: vi.fn(() => ({})) }));
 vi.mock("../utils/pokemonRecommendations", () => ({
@@ -38,7 +38,7 @@ const options: Omit<Parameters<typeof useMetaThreatAnalysisPlan>[0], "enabled"> 
 const plan = { threats: [] } as unknown as MetaThreatAnalysisPlan;
 const cleanups: Array<() => Promise<void>> = [];
 beforeEach(() => {
-  vi.mocked(loadSmogonUsageSets).mockReset().mockResolvedValue([]);
+  vi.mocked(loadBattleUsageSets).mockReset().mockResolvedValue([]);
   vi.mocked(runWorkerTask).mockReset().mockResolvedValue(plan);
   vi.mocked(selectMetaThreatReplacementCandidates).mockReset().mockReturnValue([]);
 });
@@ -67,7 +67,7 @@ describe("meta threat task lifecycle", () => {
   });
 
   it("reports shared catalog failure without running the Worker", async () => {
-    vi.mocked(loadSmogonUsageSets).mockRejectedValue(new Error("offline"));
+    vi.mocked(loadBattleUsageSets).mockRejectedValue(new Error("offline"));
     const hook = await mount();
     await act(async () => { await hook.current.run(); });
     expect(hook.current.error).toBe(true);

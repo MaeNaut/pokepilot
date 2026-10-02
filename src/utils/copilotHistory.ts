@@ -12,8 +12,12 @@ import type {
   CopilotQualityWarningCode,
   CopilotSetOptimizationCandidateSnapshot,
 } from "./copilotContracts";
+import type { CopilotRecommendationCandidateSnapshot } from "./pokemonRecommendations";
 import { isCopilotQualityWarningCode, normalizeCopilotExecutionInfo } from "./copilotContracts";
 import { isRecord } from "./typeGuards";
+import { BATTLE_USAGE_PROVIDER, type BattleUsageSource } from "../api/battleUsageData";
+import { normalizeCopilotRequestFingerprint } from "./copilotRequestFingerprint";
+import { hasValidRecommendationCandidateShape } from "./copilotRequestCandidateValidation";
 import { validateCopilotModelOutput } from "./copilotModelValidation";
 import { isValidCopilotOptimizationCandidateSnapshot } from "./copilotRequestContract";
 import {
@@ -40,6 +44,7 @@ export type CopilotHistoryEntry = {
   createdAt: string;
   response: CopilotAnalysisResponse;
   execution?: CopilotExecutionInfo;
+  usageSource?: BattleUsageSource;
   usedFallback: boolean;
   fallbackReason?: HostedAnalysisFailureReason;
 };
@@ -87,7 +92,7 @@ function migrateLegacyModelOutput(value: unknown): unknown {
   };
 }
 
-function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
+function normalizeResponse(value: unknown, legacyCandidates?: unknown): CopilotAnalysisResponse | null {
   if (!isRecord(value) || (value.source !== "hosted" && value.source !== "local")) {
     return null;
   }
@@ -95,6 +100,7 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
   const {
     source,
     optimizationCandidates,
+    recommendationCandidates,
     qualityWarnings,
     ...modelOutput
   } = value;
@@ -112,6 +118,14 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
     Array.isArray(qualityWarnings)
       ? [...new Set(qualityWarnings.filter(isCopilotQualityWarningCode))]
       : [];
+  const candidates = recommendationCandidates ?? legacyCandidates;
+  const normalizedRecommendationCandidates = Array.isArray(candidates) && validation.success
+    ? candidates.slice(0, 30).filter(
+        (candidate): candidate is CopilotRecommendationCandidateSnapshot =>
+          hasValidRecommendationCandidateShape(candidate) &&
+          validation.data.recommendations.some((entry) => entry.id === candidate.pokemonId),
+      )
+    : [];
 
   if (
     validation.success &&
@@ -129,6 +143,9 @@ function normalizeResponse(value: unknown): CopilotAnalysisResponse | null {
         ...(normalizedOptimizationCandidates
           ? { optimizationCandidates: normalizedOptimizationCandidates }
           : {}),
+        ...(normalizedRecommendationCandidates.length > 0
+          ? { recommendationCandidates: normalizedRecommendationCandidates }
+          : {}),
         ...(normalizedQualityWarnings.length > 0
           ? { qualityWarnings: normalizedQualityWarnings }
           : {}),
@@ -141,11 +158,27 @@ export function normalizeCopilotHistoryEntry(value: unknown): CopilotHistoryEntr
     return null;
   }
 
-  const response = normalizeResponse(value.response);
+  let legacyCandidates: unknown;
+  if (typeof value.requestFingerprint === "string") {
+    try {
+      const legacyRequest: unknown = JSON.parse(value.requestFingerprint);
+      if (isRecord(legacyRequest)) legacyCandidates = legacyRequest.recommendationCandidates;
+    } catch {
+      // Older opaque fingerprints do not contain candidate snapshots.
+    }
+  }
+  const response = normalizeResponse(value.response, legacyCandidates);
   const fallbackReason = isHostedAnalysisFailureReason(value.fallbackReason)
     ? value.fallbackReason
     : undefined;
   const execution = normalizeCopilotExecutionInfo(value.execution);
+  const source = value.usageSource;
+  const usageSource: BattleUsageSource | undefined = isRecord(source) &&
+    source.provider === BATTLE_USAGE_PROVIDER && typeof source.season === "string" && /^M\d+$/.test(source.season) &&
+    typeof source.sourceDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.sourceDate) && Number.isFinite(Date.parse(source.sourceDate)) &&
+    typeof source.generatedAt === "string" && Number.isFinite(Date.parse(source.generatedAt))
+    ? { provider: BATTLE_USAGE_PROVIDER, season: source.season, sourceDate: source.sourceDate,
+        generatedAt: source.generatedAt, ...(source.stale === true ? { stale: true } : {}) } : undefined;
   const hasValidMetadata =
     typeof value.id === "string" &&
     typeof value.teamKey === "string" &&
@@ -177,10 +210,11 @@ export function normalizeCopilotHistoryEntry(value: unknown): CopilotHistoryEntr
       ? { reasoningEffort: value.reasoningEffort }
       : {}),
     ...(value.modelId === "gpt-6-sol" ? { modelId: value.modelId } : {}),
-    requestFingerprint: value.requestFingerprint as string,
+    requestFingerprint: normalizeCopilotRequestFingerprint(value.requestFingerprint as string),
     createdAt: value.createdAt as string,
     response,
     ...(execution ? { execution } : {}),
+    ...(usageSource ? { usageSource } : {}),
     usedFallback: value.usedFallback as boolean,
     ...(fallbackReason ? { fallbackReason } : {}),
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SmogonUsageSet } from "../api/smogonUsage";
+import type { BattleUsageSet } from "../api/battleUsage";
 import type {
   ItemIndexEntry,
   PokemonItem,
@@ -60,7 +60,7 @@ const item: PokemonItem = {
   name: "Sitrus Berry",
 };
 
-const usageSet: SmogonUsageSet = {
+const usageSet: BattleUsageSet = {
   pokemonId: "incineroar",
   pokemonName: "Incineroar",
   sourceMonth: "2026-06",

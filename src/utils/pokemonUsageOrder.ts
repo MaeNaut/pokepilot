@@ -5,23 +5,23 @@ type PokemonUsageOption = {
   id: string;
 };
 
+export type PokemonUsageEntry = {
+  pokemonId: string;
+  usageRank?: number;
+};
+
 export type PokemonUsageOrder<T> = {
   orderedOptions: T[];
   rankByOptionId: Map<string, number>;
 };
 
 export function getBaseUsageLookup(value: string) {
-  const withoutMega = value.replace(/-mega(?:-.+)?$/, "");
-  const regionalMatch = withoutMega.match(
-    /^(.+)-(alola|galar|hisui|paldea)$/,
-  );
-
-  return regionalMatch ? withoutMega : withoutMega.split("-")[0];
+  return value.replace(/-mega(?:-.+)?$/, "");
 }
 
 export function orderPokemonOptionsByUsage<T extends PokemonUsageOption>(
   options: T[],
-  usagePokemonIds: string[] | null,
+  usageEntries: (string | PokemonUsageEntry)[] | null,
 ): PokemonUsageOrder<T> {
   const optionsByLookup = new Map<string, T>();
 
@@ -35,7 +35,9 @@ export function orderPokemonOptionsByUsage<T extends PokemonUsageOption>(
   const rankByOptionId = new Map<string, number>();
   const seenOptionIds = new Set<string>();
 
-  for (const [usageIndex, usageId] of (usagePokemonIds ?? []).entries()) {
+  for (const [usageIndex, entry] of (usageEntries ?? []).entries()) {
+    const usageId = typeof entry === "string" ? entry : entry.pokemonId;
+    const usageRank = typeof entry === "string" ? usageIndex + 1 : entry.usageRank ?? usageIndex + 1;
     const exactOption = getPokemonLookupAliases(usageId)
       .map((lookup) => optionsByLookup.get(normalizeShowdownId(lookup)))
       .find((option): option is T => Boolean(option));
@@ -49,7 +51,7 @@ export function orderPokemonOptionsByUsage<T extends PokemonUsageOption>(
 
     seenOptionIds.add(option.id);
     orderedOptions.push(option);
-    rankByOptionId.set(option.id, usageIndex + 1);
+    rankByOptionId.set(option.id, usageRank);
   }
 
   for (const option of options) {

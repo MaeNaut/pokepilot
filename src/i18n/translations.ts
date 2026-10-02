@@ -396,6 +396,11 @@ export const en = {
   "copilot.estimateSite": "Typical: ~{seconds}s · no charge to you",
   "copilot.estimateUnavailable": "Time and cost vary for sample analysis.",
   "copilot.confirmAnalysis": "Confirm analysis",
+  "copilot.autoSaveNotice": "Your team is saved automatically before analysis starts.",
+  "copilot.autoSaveFailed": "Analysis could not be started. Resolve any sync notice or try again. No AI request was sent and no API cost was incurred.",
+  "copilot.analysisUsage": "Analysis data: {season} · {date}",
+  "copilot.analysisUsageUnknown": "Analysis data: not recorded",
+  "copilot.usageChanged": "Battle statistics have changed since this analysis. Run a new analysis to use the latest data.",
   "copilot.startAnalysis": "Start analysis",
   "copilot.estimateNote": "Actual time and API cost may vary.",
   "copilot.estimateNoteSite": "Actual time may vary.",
@@ -406,7 +411,7 @@ export const en = {
   "copilot.execution.cost": "Estimated cost",
   "copilot.keyStatusError": "Could not check your API key. Please refresh and try again.",
   "copilot.aiReady": "AI analysis ready",
-  "copilot.regulationMB": "Regulation M-B",
+  "copilot.usageStale": "Using the last available Champions battle statistics. Check the data date below.",
   "copilot.usageChecking": "Checking usage data",
   "copilot.usageUnavailable": "Usage statistics unavailable",
   "copilot.teamChanged": "Team changed",
@@ -488,7 +493,7 @@ export const en = {
     "Review the selected Pokemon's role, sample, and fit with the team.",
   "copilot.empty.recommendationTitle": "Pokemon recommendations",
   "copilot.empty.recommendationDescription":
-    "M-C usage data could not be loaded for this format. Recommendations use historical M-B data.",
+    "Find Pokemon that fit the team using Champions battle statistics.",
   "copilot.empty.recommendationCurrentDescription":
     "Find Pokemon that fit the team using the available usage statistics.",
   "copilot.empty.matchupTitle": "Meta threat analysis",
@@ -496,7 +501,7 @@ export const en = {
     "Find metagame threats that pressure the team and review its current answers.",
   "copilot.empty.optimizationTitle": "Sample recommendations",
   "copilot.empty.optimizationDescription":
-    "M-C usage data could not be loaded for this format. Samples use historical M-B data.",
+    "Compare sample options using Champions battle statistics.",
   "copilot.empty.optimizationCurrentDescription":
     "Compare sample options using the available usage statistics.",
   "copilot.activeSets": "{count}/6 active sets",
@@ -964,6 +969,11 @@ export const ko = {
   "copilot.estimateSite": "예상: 약 {seconds}초 · 이용자 부담 없음",
   "copilot.estimateUnavailable": "샘플 분석의 시간과 비용은 분석 내용에 따라 달라집니다.",
   "copilot.confirmAnalysis": "분석 확인",
+  "copilot.autoSaveNotice": "분석을 시작하기 전에 현재 팀이 자동 저장됩니다.",
+  "copilot.autoSaveFailed": "분석을 시작하지 못했습니다. 동기화 알림을 확인하거나 다시 시도해 주십시오. AI 호출이 시작되지 않아 API 비용은 발생하지 않았습니다.",
+  "copilot.analysisUsage": "분석 기준: {season} · {date}",
+  "copilot.analysisUsageUnknown": "분석 기준: 기록 없음",
+  "copilot.usageChanged": "분석 이후 배틀 통계가 변경되었습니다. 최신 통계를 반영하려면 다시 분석해야 합니다.",
   "copilot.startAnalysis": "분석 시작",
   "copilot.estimateNote": "실제 소요 시간과 API 비용은 달라질 수 있습니다.",
   "copilot.estimateNoteSite": "실제 소요 시간은 달라질 수 있습니다.",
@@ -974,7 +984,7 @@ export const ko = {
   "copilot.execution.cost": "예상 비용",
   "copilot.keyStatusError": "API 키 상태를 확인하지 못했습니다. 새로고침 후 다시 시도하시기 바랍니다.",
   "copilot.aiReady": "AI 분석 준비됨",
-  "copilot.regulationMB": "레귤레이션 M-B",
+  "copilot.usageStale": "마지막으로 확보한 포챔스 배틀 통계를 사용합니다. 아래의 데이터 날짜를 확인해 주십시오.",
   "copilot.usageChecking": "사용률 데이터 확인 중",
   "copilot.usageUnavailable": "사용률 통계를 불러올 수 없습니다.",
   "copilot.teamChanged": "팀이 변경됨",
@@ -1056,7 +1066,7 @@ export const ko = {
     "선택한 포켓몬의 역할과 샘플, 팀과의 조화를 살펴봅니다.",
   "copilot.empty.recommendationTitle": "포켓몬 추천",
   "copilot.empty.recommendationDescription":
-    "이 형식의 M-C 사용률 데이터를 불러오지 못해, 과거 M-B 통계를 기준으로 추천합니다.",
+    "포챔스 배틀 통계를 바탕으로 팀에 어울리는 포켓몬을 찾습니다.",
   "copilot.empty.recommendationCurrentDescription":
     "사용 가능한 사용률 통계를 바탕으로 팀에 어울리는 포켓몬을 찾습니다.",
   "copilot.empty.matchupTitle": "메타 위협 분석",
@@ -1064,7 +1074,7 @@ export const ko = {
     "현재 팀을 압박하는 메타 위협과 팀이 가진 대응책을 살펴봅니다.",
   "copilot.empty.optimizationTitle": "샘플 추천",
   "copilot.empty.optimizationDescription":
-    "이 형식의 M-C 사용률 데이터를 불러오지 못해, 과거 M-B 통계를 기준으로 샘플을 추천합니다.",
+    "포챔스 배틀 통계를 바탕으로 샘플 후보를 비교합니다.",
   "copilot.empty.optimizationCurrentDescription":
     "사용 가능한 사용률 통계를 바탕으로 샘플 후보를 비교합니다.",
   "copilot.activeSets": "활성 샘플 {count}/6",

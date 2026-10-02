@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountAuthError } from "./accountAuth";
 import worker from "./index";
 import type { WorkerEnvironment } from "./env";
+import { battleUsageFixture } from "../src/test/fixtures/battleUsageFixture";
 
 vi.mock("./accountAuth.js", async (original) => ({
   ...await original<typeof import("./accountAuth")>(),
@@ -20,7 +21,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(readAccountSession).mockResolvedValue(null);
 });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("Worker routing error boundary", () => {
   it("schedules guest metrics without changing the authentication response", async () => {
@@ -77,7 +78,7 @@ describe("Worker routing error boundary", () => {
   });
 
   it("rejects writes to the read-only usage proxy", async () => {
-    const response = await worker.fetch(new Request("https://pokepilot.app/smogon-stats/test", { method: "POST" }), env);
+    const response = await worker.fetch(new Request("https://pokepilot.app/api/battle-usage/singles", { method: "POST" }), env);
     expect(response.status).toBe(405);
     expect(response.headers.get("Allow")).toBe("GET, HEAD");
   });
@@ -94,17 +95,18 @@ describe("Worker routing error boundary", () => {
     expect(logoutCurrentAccount).not.toHaveBeenCalled();
   });
 
-  it("does not forward account credentials to Smogon", async () => {
-    const upstream = vi.fn().mockResolvedValue(new Response("stats"));
+  it("does not forward account credentials to the battle data provider", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-09-30T12:00:00Z"));
+    const upstream = vi.fn().mockImplementation(async () => Response.json(battleUsageFixture().index));
     vi.stubGlobal("fetch", upstream);
-    const response = await worker.fetch(new Request("https://pokepilot.app/smogon-stats/test.txt", {
+    const response = await worker.fetch(new Request("https://pokepilot.app/api/battle-usage/singles", {
       headers: { Cookie: "pokepilot_session=secret", Authorization: "Bearer secret" },
     }), env);
     expect(response.status).toBe(200);
     const forwarded = upstream.mock.calls[0][0] as Request;
-    expect(forwarded.url).toBe("https://www.smogon.com/stats/test.txt");
+    expect(forwarded.url).toBe("https://championsbattledata.com/api");
     expect(forwarded.headers.get("Cookie")).toBeNull();
     expect(forwarded.headers.get("Authorization")).toBeNull();
-    expect(forwarded.headers.get("Accept")).toBe("text/plain");
+    expect(forwarded.headers.get("Accept")).toBe("application/json");
   });
 });
