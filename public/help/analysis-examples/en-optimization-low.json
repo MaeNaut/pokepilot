@@ -1,29 +1,105 @@
 {
   "id": "en-optimization-low",
-  "generatedAt": "2026-10-04T06:34:13.943Z",
+  "generatedAt": "2026-10-04T15:29:21.741Z",
   "model": "gpt-6-luna",
   "reasoningEffort": "low",
-  "promptVersion": 92,
-  "inputHash": "80343774d833ec18a1a1db618853c9cc3fb3a3d49852ab239c8a110424312f1e",
+  "promptVersion": 93,
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 1
+  },
+  "inputHash": "aaff7b08757e4e86f8399b0da5fe592d6ab8cb945e6661339bce9111e42ad12e",
   "execution": {
-    "durationMs": 6919,
-    "totalTokens": 14065,
-    "estimatedCostUsd": 0.0013337800000000001
+    "durationMs": 4782,
+    "totalTokens": 13768,
+    "estimatedCostUsd": 0.0011985799999999999
   },
   "response": {
     "version": 2,
     "scope": "optimization",
     "title": "Salamence Mega",
     "paragraphs": [
-      "Salamence Mega is built around physical offense and Speed, with Dragon Dance as setup, Double-Edge as its high-power attack, Earthquake for coverage, and Roost for recovery. Adamant and the maximum Attack and Speed investment reinforce that role, while Aerilate gives Double-Edge a supplied ability interaction that the special move candidates do not share.",
-      "Each Draco Meteor option changes a different move slot, but the move adds special-category offense without changing the build’s investment or nature, and its effect lowers Special Attack by two stages. Replacing Dragon Dance would give up setup, replacing Double-Edge would give up a central physical attack, and replacing Earthquake or Roost would surrender coverage or recovery. The current set therefore remains the more coherent broad-use sample; the supplied usage figure describes the move only, not a complete set."
+      "Salamence Mega is built as a fast physical attacker: its Attack and Speed are maximized, and Dragon Dance can raise both further. Double-Edge supplies strong physical pressure but causes recoil, while Roost offers recovery; Earthquake adds a distinct attack type. The team also has multiple entry-hazard setters, so preserving these offense and longevity options has clear value.",
+      "The Draco Meteor variants keep the same nature, investment, item, and Speed, but trade away one of those established roles for a special attack despite the build's zero Special Attack investment. Replacing Dragon Dance discards the selected setup option; replacing Double-Edge or Earthquake sacrifices a physical attack, and replacing Roost gives up recovery. The usage figure applies to the move, not to the full set, and does not outweigh those concrete costs here. The smaller spread adjustment preserves the same moves and final Attack and Speed, changing only one point between HP and Defense, so it offers little strategic distinction from the current sample."
     ],
     "recommendations": [
       {
         "id": "set-current",
-        "title": "Keep the current physical setup set.",
-        "reason": "Its Attack and Speed investment align with Dragon Dance and the physical attacks, while Roost preserves recovery. The Draco Meteor alternatives trade away one of these concrete responsibilities without a supplied change to the build that would support a special-attacking role.",
+        "title": "Keep the current physical setup and recovery set.",
+        "reason": "It retains Dragon Dance, Double-Edge, Earthquake, and Roost while committing fully to Attack and Speed. The supplied Draco Meteor alternatives add special offense without changing the investment, but each removes a distinct physical or support responsibility.",
         "priority": "high"
+      },
+      {
+        "id": "usage-spread-2",
+        "title": "Consider the near-identical spread variant if its small HP-for-Defense adjustment suits your preference.",
+        "reason": "It preserves the same moves and the displayed Attack and Speed, while changing final HP by one point and Defense by one point in the opposite direction. That is a minor alternative rather than a meaningful upgrade over the current sample.",
+        "priority": "low"
       }
     ],
     "source": "hosted",
@@ -464,144 +540,6 @@
         }
       },
       {
-        "id": "usage-spread-3",
-        "slotIndex": 1,
-        "focuses": [
-          "offense",
-          "defense",
-          "speed"
-        ],
-        "profiles": [],
-        "maxedStats": [
-          "specialAttack",
-          "speed"
-        ],
-        "natureId": "adamant",
-        "natureDisplayName": "Adamant",
-        "evs": {
-          "hp": 1,
-          "attack": 0,
-          "defense": 1,
-          "specialAttack": 32,
-          "specialDefense": 0,
-          "speed": 32
-        },
-        "evTotal": 66,
-        "finalStats": {
-          "hp": 171,
-          "attack": 181,
-          "defense": 151,
-          "specialAttack": 154,
-          "specialDefense": 110,
-          "speed": 172
-        },
-        "itemId": "salamencite",
-        "itemDisplayName": "Salamencite",
-        "itemChanged": false,
-        "moveIds": [
-          "earthquake",
-          "doubleedge",
-          "roost",
-          "dragondance"
-        ],
-        "moveChanges": [],
-        "changedStatPoints": 64,
-        "statPointChanges": {
-          "hp": 0,
-          "attack": -32,
-          "defense": 0,
-          "specialAttack": 32,
-          "specialDefense": 0,
-          "speed": 0
-        },
-        "offenseBenchmarks": [],
-        "defenseBenchmarks": [],
-        "generalEvidence": {
-          "source": "usage",
-          "variant": "spread",
-          "sourceMonth": "2026-10",
-          "cutoff": 0,
-          "usageRank": 3,
-          "usagePercent": 4.8,
-          "roleStats": [
-            "attack",
-            "speed"
-          ],
-          "reducedRoleStats": [
-            "attack"
-          ]
-        }
-      },
-      {
-        "id": "usage-spread-4",
-        "slotIndex": 1,
-        "focuses": [
-          "offense",
-          "defense",
-          "speed"
-        ],
-        "profiles": [],
-        "maxedStats": [
-          "specialAttack",
-          "speed"
-        ],
-        "natureId": "adamant",
-        "natureDisplayName": "Adamant",
-        "evs": {
-          "hp": 2,
-          "attack": 0,
-          "defense": 0,
-          "specialAttack": 32,
-          "specialDefense": 0,
-          "speed": 32
-        },
-        "evTotal": 66,
-        "finalStats": {
-          "hp": 172,
-          "attack": 181,
-          "defense": 150,
-          "specialAttack": 154,
-          "specialDefense": 110,
-          "speed": 172
-        },
-        "itemId": "salamencite",
-        "itemDisplayName": "Salamencite",
-        "itemChanged": false,
-        "moveIds": [
-          "earthquake",
-          "doubleedge",
-          "roost",
-          "dragondance"
-        ],
-        "moveChanges": [],
-        "changedStatPoints": 66,
-        "statPointChanges": {
-          "hp": 1,
-          "attack": -32,
-          "defense": -1,
-          "specialAttack": 32,
-          "specialDefense": 0,
-          "speed": 0
-        },
-        "offenseBenchmarks": [],
-        "defenseBenchmarks": [],
-        "generalEvidence": {
-          "source": "usage",
-          "variant": "spread",
-          "sourceMonth": "2026-10",
-          "cutoff": 0,
-          "usageRank": 4,
-          "usagePercent": 3.9,
-          "roleStats": [
-            "attack",
-            "speed"
-          ],
-          "reducedRoleStats": [
-            "attack"
-          ]
-        }
-      },
-      {
         "id": "usage-spread-5",
         "slotIndex": 1,
         "focuses": [
@@ -742,74 +680,6 @@
   "scenario": "Five-member Kabamanda; Primarina slot empty",
   "teamSize": 5,
   "qualityWarnings": [],
-  "inputSummary": {
-    "sets": [
-      {
-        "slotIndex": 0,
-        "pokemonId": "hippowdon",
-        "nature": "Impish",
-        "evs": {
-          "hp": 32,
-          "attack": 0,
-          "defense": 2,
-          "specialAttack": 0,
-          "specialDefense": 32,
-          "speed": 0
-        }
-      },
-      {
-        "slotIndex": 1,
-        "pokemonId": "salamence-mega",
-        "nature": "Adamant",
-        "evs": {
-          "hp": 1,
-          "attack": 32,
-          "defense": 1,
-          "specialAttack": 0,
-          "specialDefense": 0,
-          "speed": 32
-        }
-      },
-      {
-        "slotIndex": 2,
-        "pokemonId": "lucario-mega-z",
-        "nature": "Timid",
-        "evs": {
-          "hp": 2,
-          "attack": 0,
-          "defense": 0,
-          "specialAttack": 32,
-          "specialDefense": 0,
-          "speed": 32
-        }
-      },
-      {
-        "slotIndex": 3,
-        "pokemonId": "archaludon",
-        "nature": "Bold",
-        "evs": {
-          "hp": 32,
-          "attack": 0,
-          "defense": 16,
-          "specialAttack": 0,
-          "specialDefense": 18,
-          "speed": 0
-        }
-      },
-      {
-        "slotIndex": 4,
-        "pokemonId": "meowscarada",
-        "nature": "Jolly",
-        "evs": {
-          "hp": 2,
-          "attack": 32,
-          "defense": 0,
-          "specialAttack": 0,
-          "specialDefense": 0,
-          "speed": 32
-        }
-      }
-    ],
-    "selectedSlot": 1
-  }
+  "publicationRevision": 4,
+  "publicationSelection": "Reviewed prompt-v93 example response"
 }

@@ -89,7 +89,7 @@ type ShowdownDataCachePayload = ShowdownDataSnapshot & {
   cachedAt: number;
 };
 
-const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:mc-v3";
+const SHOWDOWN_DATA_CACHE_KEY = "pokepilot:showdown-data:mc-v4";
 const SHOWDOWN_DATA_CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 
 const MOVE_FLAG_TAG_LABELS: Record<string, string> = {
@@ -413,7 +413,8 @@ function normalizeMove(id: string, move: RawShowdownMove): PokemonMove | null {
     accuracy: typeof move.accuracy === "number" ? move.accuracy : null,
     pp: typeof move.pp === "number" ? move.pp : 0,
     description:
-      move.shortDesc ?? move.desc ?? "Move description is not available from Showdown.",
+      (move.weather ? move.desc ?? move.shortDesc : move.shortDesc ?? move.desc) ??
+      "Move description is not available from Showdown.",
     tags: getMoveTags(move),
     ...(target ? { target } : {}),
     ...(typeof move.priority === "number" && move.priority !== 0

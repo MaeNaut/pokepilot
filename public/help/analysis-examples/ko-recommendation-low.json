@@ -1,40 +1,110 @@
 {
   "id": "ko-recommendation-low",
-  "generatedAt": "2026-10-04T06:32:47.484Z",
+  "generatedAt": "2026-10-04T07:25:31.448Z",
   "model": "gpt-6-luna",
   "reasoningEffort": "low",
-  "promptVersion": 92,
-  "inputHash": "75127b04bda3e5d890ebc05587591699a4a4578cdfa6be5df8c4eb6a7ee46a02",
+  "promptVersion": 93,
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 5
+  },
+  "inputHash": "093797dba8dee7ceee0e48d308da95ce3d428cf6321687c3335962e5be66cac4",
   "execution": {
-    "durationMs": 11490,
-    "totalTokens": 25569,
-    "estimatedCostUsd": 0.0029486450000000006
+    "durationMs": 13406,
+    "totalTokens": 26208,
+    "estimatedCostUsd": 0.003111045
   },
   "response": {
     "version": 2,
     "scope": "recommendation",
     "title": "Kabamanda",
     "paragraphs": [
-      "현재 구성은 하마돈의 하품·날려버리기와 스텔스록, 마스카나의 독압정으로 교체를 압박하고, 메가보만다와 메가루카리오Z의 각기 다른 물리·특수 전개로 이를 활용합니다. 빈자리는 기존 압박을 보완할 방해 수단이나 수비 전환을 더하는 후보를 우선 살폈습니다. 다만 현재 얼음과 격투에 취약한 구성원이 여럿이라, 그 두 타입에 대한 대응도 함께 고려했습니다.",
-      "누리레느는 앙코르로 상대의 행동을 제한하면서 불꽃·얼음·격투에 저항하는 기여가 기대됩니다. 갸라도스는 위협과 도발로 상대 공격과 변화기 사용을 견제하고 불꽃·격투에 저항하지만, 전기와 바위 약점은 감수해야 합니다. 워시로토무는 부유와 볼트체인지로 땅 공격을 피하는 교체 압박을 제공하며 불꽃·얼음에 저항하지만, 풀 약점이 분명한 단점입니다."
+      "현재 구성은 하마돈과 브리두라스의 스텔스록, 마스카나의 독압정으로 교체 압박을 쌓고, 메가보만다의 용의춤이나 메가루카리오Z의 나쁜음모로 마무리를 노리는 흐름입니다. 빈자리는 이 압박을 보완하면서 현재 세 명이 약점을 보이는 격투에 대응하거나, 상대의 행동을 제한하는 선택지가 특히 어울립니다. 싱글 형식이므로 아군 보호나 동시 행동 연계보다는 교체와 방어 상성을 중심으로 비교했습니다.",
+      "누리레느는 앙코르로 상대의 행동을 묶고 불꽃·격투·얼음 공격에 대한 타입상 저항을 더합니다. 갸라도스는 위협과 도발로 상대의 물리 화력이나 변화기 사용을 견제하며, 워시로토무는 볼트체인지로 교체 흐름을 보탭니다. 세 후보 모두 공통 세트에서 확인되는 구체적 기능이 있지만, 누리레느와 워시로토무는 전기나 풀 약점이 있고 갸라도스는 전기에 약하므로 상대 구성에 맞춰 선택하는 편이 좋습니다."
     ],
     "recommendations": [
       {
         "id": "primarina",
-        "title": "누리레느를 추가해 상대의 행동을 제한하고 불꽃·얼음·격투에 대한 방어를 보완하는 편이 좋습니다.",
-        "reason": "앙코르로 상대가 직전에 사용한 기술을 반복하게 만들어 하품이나 설치 기술로 확보한 압박을 이어갈 수 있습니다. 불꽃·얼음·격투에 저항하는 후보라는 점도 현재 구성의 약점을 고려한 장점입니다. 다만 전기·풀·독에 약하므로 해당 공격에 대한 전환 수단을 함께 준비해야 합니다.",
-        "priority": "high"
+        "title": "누리레느를 넣어 상대의 행동을 제한하고 특수 공격 선택지를 더합니다.",
+        "reason": "공통 세트의 앙코르는 상대가 직전에 사용한 기술을 반복하게 해 교체 압박과 연결될 수 있으며, 문포스와 물거품아리아는 특수 공격을 제공합니다. 격투 공격에 대한 타입상 저항도 현재 구성의 격투 약점 분산에 도움이 됩니다. 다만 전기·풀·독에 약하므로 해당 공격이 예상되는 상대에게는 교체 선택을 신중히 해야 합니다.",
+        "priority": "medium"
       },
       {
         "id": "gyarados",
-        "title": "갸라도스를 추가해 상대의 공격과 변화기 사용을 견제하는 선택을 고려할 수 있습니다.",
-        "reason": "위협은 등장 시 상대의 공격을 낮추고, 도발은 상대의 변화기 사용을 막아 현재의 설치·교체 압박을 보조합니다. 불꽃과 격투에 저항하는 이점이 있지만, 전기와 바위 약점은 팀의 수비 선택지를 좁힐 수 있습니다.",
+        "title": "갸라도스로 상대의 물리 화력과 변화기 사용을 견제합니다.",
+        "reason": "공통 세트의 위협은 등장할 때 상대의 공격을 낮추고, 도발은 상대가 변화기를 쓰지 못하게 하므로 스텔스록과 독압정으로 교체를 유도하는 흐름을 보완합니다. 폭포오르기와 파워휩은 물리 공격 선택지이며, 불꽃과 격투 공격에 대한 타입상 저항도 제공합니다. 대신 전기와 바위에 약하므로 특히 전기 공격을 가진 상대를 상대로는 하마돈이나 다른 적절한 교체 대상을 함께 고려해야 합니다.",
         "priority": "medium"
       },
       {
         "id": "rotom-wash",
-        "title": "워시로토무를 추가해 땅 공격에 대한 전환과 교체 압박을 확보할 수 있습니다.",
-        "reason": "부유로 땅 공격에 면역이며, 볼트체인지는 공격 후 교체하는 수단이어서 설치 기술을 활용한 전개와 잘 맞습니다. 불꽃과 얼음에 저항하지만 풀 공격에는 약하므로, 풀 타입 상대를 마스카나나 메가보만다로 받아내는 운영이 필요합니다.",
+        "title": "워시로토무로 교체 압박에 유연성을 더합니다.",
+        "reason": "공통 세트의 볼트체인지는 공격 후 교체하는 기술이어서, 하품과 날려버리기 및 양쪽 설치 기술로 상대 교체를 유도하는 현재 흐름에 맞는 선택입니다. 부유는 땅 공격에 대한 면역을 제공하며 하이드로펌프와 10만볼트로 특수 공격도 보탭니다. 다만 풀 타입 공격에 약하고, 제공된 적합도 정보에는 풀 공격에 대한 팀 차원의 추가 방어가 제시되지 않아 상대의 풀 공격 구성을 확인해야 합니다.",
         "priority": "medium"
       }
     ],
@@ -1067,7 +1137,7 @@
       },
       {
         "pokemonId": "aegislash-shield",
-        "displayName": "킬가르도",
+        "displayName": "킬가르도 실드폼",
         "target": {
           "mode": "addition",
           "slotIndex": 5,
@@ -1965,7 +2035,7 @@
       },
       {
         "pokemonId": "mimikyu-disguised",
-        "displayName": "따라큐",
+        "displayName": "따라큐 둔갑한 모습",
         "target": {
           "mode": "addition",
           "slotIndex": 5,
@@ -2191,7 +2261,7 @@
       },
       {
         "pokemonId": "lycanroc-midday",
-        "displayName": "루가루암",
+        "displayName": "루가루암 한낮의 모습",
         "target": {
           "mode": "addition",
           "slotIndex": 5,
@@ -3478,74 +3548,7 @@
   "scenario": "Five-member Kabamanda; Primarina slot empty",
   "teamSize": 5,
   "qualityWarnings": [],
-  "inputSummary": {
-    "sets": [
-      {
-        "slotIndex": 0,
-        "pokemonId": "hippowdon",
-        "nature": "Impish",
-        "evs": {
-          "hp": 32,
-          "attack": 0,
-          "defense": 2,
-          "specialAttack": 0,
-          "specialDefense": 32,
-          "speed": 0
-        }
-      },
-      {
-        "slotIndex": 1,
-        "pokemonId": "salamence-mega",
-        "nature": "Adamant",
-        "evs": {
-          "hp": 1,
-          "attack": 32,
-          "defense": 1,
-          "specialAttack": 0,
-          "specialDefense": 0,
-          "speed": 32
-        }
-      },
-      {
-        "slotIndex": 2,
-        "pokemonId": "lucario-mega-z",
-        "nature": "Timid",
-        "evs": {
-          "hp": 2,
-          "attack": 0,
-          "defense": 0,
-          "specialAttack": 32,
-          "specialDefense": 0,
-          "speed": 32
-        }
-      },
-      {
-        "slotIndex": 3,
-        "pokemonId": "archaludon",
-        "nature": "Bold",
-        "evs": {
-          "hp": 32,
-          "attack": 0,
-          "defense": 16,
-          "specialAttack": 0,
-          "specialDefense": 18,
-          "speed": 0
-        }
-      },
-      {
-        "slotIndex": 4,
-        "pokemonId": "meowscarada",
-        "nature": "Jolly",
-        "evs": {
-          "hp": 2,
-          "attack": 32,
-          "defense": 0,
-          "specialAttack": 0,
-          "specialDefense": 0,
-          "speed": 32
-        }
-      }
-    ],
-    "selectedSlot": 5
-  }
+  "generatedAtSource": "record-file-time",
+  "publicationSelection": "Reviewed response from the earlier prompt-v93 quality evaluation",
+  "publicationRevision": 4
 }

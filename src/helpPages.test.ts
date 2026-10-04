@@ -83,6 +83,22 @@ it("offers public navigation to JavaScript-disabled visitors without replacing t
 });
 
 describe.each(["api-key", "kabamanda"])("%s article preferences", (page) => {
+  it("preserves the initial hash and the currently read section when changing language", () => {
+    const dom = new JSDOM(readFileSync(new URL(`help/${page}-ko.html`, publicRoot), "utf8"), {
+      url: `https://pokepilot.app/help/${page}-ko.html#overview`, runScripts: "outside-only", pretendToBeVisual: true,
+    });
+    dom.window.matchMedia = () => ({ matches: false, addEventListener() {} }) as unknown as MediaQueryList;
+    dom.window.eval(readFileSync(new URL("help/help.js", publicRoot), "utf8"));
+    const link = dom.window.document.querySelector<HTMLAnchorElement>('a[data-locale="en"]')!;
+    expect(link.getAttribute('href')).toBe(`/help/${page}-en.html#overview`);
+    dom.window.document.querySelectorAll('aside a').forEach(a => a.removeAttribute('aria-current'));
+    const current = dom.window.document.querySelectorAll('aside a')[1];
+    current.setAttribute('aria-current', 'location');
+    link.addEventListener('click', event => event.preventDefault());
+    link.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(link.getAttribute('href')).toBe(`/help/${page}-en.html${current.getAttribute('href')}`);
+    dom.window.close();
+  });
   it.each(["ko", "en"])("preserves the article when changing language from %s", (locale) => {
     const dom = new JSDOM(readFileSync(new URL(`help/${page}-${locale}.html`, publicRoot), "utf8"), {
       url: `https://pokepilot.app/help/${page}-${locale}.html`, runScripts: "outside-only", pretendToBeVisual: true,

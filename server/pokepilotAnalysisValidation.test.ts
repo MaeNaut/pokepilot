@@ -43,6 +43,32 @@ function createOutput(recommendationIds: string[]) {
 }
 
 describe("hosted optimization validation", () => {
+  it.each([
+    "The standard sample's 14.5% figure describes its Stat Point distribution, not the popularity of the complete set.",
+    "이 노력치 분포의 사용률은 14.5%이며 전체 샘플의 채용률을 뜻하지 않습니다.",
+    "The HP and Special Defense distribution has 14.5% usage.",
+  ])("preserves usage evidence without deleting the analysis: %s", (usageParagraph) => {
+    const output = createOutput(["set-balanced"]);
+    output.analysis.paragraphs = ["Attack and Speed investment supports the selected physical moves.", usageParagraph];
+    output.analysis.recommendations[0].reason = usageParagraph;
+    const reviewed = reviewHostedCopilotAnalysis(output, request);
+    expect(reviewed.analysis.paragraphs).toEqual(output.analysis.paragraphs);
+    expect(reviewed.analysis.recommendations[0].reason).toBe(usageParagraph);
+    expect(reviewed.qualityWarnings).not.toContain("content-repaired");
+  });
+
+  it("repairs damage percentages without deleting unrelated paragraphs", () => {
+    const output = createOutput(["set-balanced"]);
+    output.analysis.paragraphs = [
+      "Usage is 14.5%, and this move deals 50% damage.",
+      "Keeping Roost preserves recovery.",
+    ];
+    const reviewed = reviewHostedCopilotAnalysis(output, request);
+    expect(reviewed.analysis.paragraphs).toContain("Keeping Roost preserves recovery.");
+    expect(reviewed.analysis.paragraphs.join(" ")).not.toContain("50%");
+    expect(reviewed.qualityWarnings).toContain("content-repaired");
+  });
+
   it("accepts fewer than three recommendations when only one is useful", () => {
     expect(
       validateHostedCopilotAnalysis(

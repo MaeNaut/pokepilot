@@ -1,46 +1,9 @@
 {
   "id": "en-team-medium",
-  "generatedAt": "2026-10-04T06:34:53.380Z",
+  "generatedAt": "2026-10-04T15:28:50.176Z",
   "model": "gpt-6-luna",
   "reasoningEffort": "medium",
-  "promptVersion": 92,
-  "inputHash": "fda90fa0647144c35441c61e04e527bcad5984b253624b017c19e3d0b91577bd",
-  "execution": {
-    "durationMs": 39433,
-    "totalTokens": 17135,
-    "estimatedCostUsd": 0.00324705
-  },
-  "response": {
-    "version": 2,
-    "scope": "team",
-    "title": "Kabamanda",
-    "paragraphs": [
-      "Build around entry hazards and switch pressure, then use your selected attackers to capitalize. A practical Lucario Mega Z lineup is Hippowdon, Lucario Mega Z, and Meowscarada: Hippowdon can set Stealth Rock and use Yawn or Whirlwind to pressure switches, while Meowscarada offers Toxic Spikes and direct attacks. Lucario Mega Z supplies special pressure and can use Nasty Plot when it has room to set up.",
-      "Salamence Mega and Lucario Mega Z are both rostered Mega options, but only one can be activated per battle. Choose Lucario Mega Z for its special-attacking route, or branch to Salamence Mega for a physical setup route with Dragon Dance; the latter lineup can use Hippowdon, Salamence Mega, and Meowscarada. Ice is a notable concern for that branch because Salamence Mega is four-times weak to Ice, while Lucario Mega Z resists Ice. The roster has five valid sets and one unfilled slot, so the best final roster addition cannot be assessed from the supplied data."
-    ],
-    "recommendations": [
-      {
-        "id": "lucario-branch",
-        "title": "Use Hippowdon, Lucario Mega Z, and Meowscarada as your hazard-pressure lineup.",
-        "reason": "Lead Hippowdon when you want to establish Stealth Rock, then use Yawn or Whirlwind to make switching costly. Bring Meowscarada's Toxic Spikes when that hazard suits the matchup, and preserve Lucario Mega Z for a special-pressure or Nasty Plot opportunity.",
-        "priority": "high"
-      },
-      {
-        "id": "salamence-branch",
-        "title": "Choose Salamence Mega instead of Lucario Mega Z when its physical setup route better fits the matchup.",
-        "reason": "Use Hippowdon, Salamence Mega, and Meowscarada for this branch, and treat Dragon Dance as a setup opportunity rather than a required opening. Keep the Ice weakness in mind when selecting this lineup; the two Mega options are alternatives for a battle, not a reason to remove either from the roster.",
-        "priority": "medium"
-      }
-    ],
-    "source": "hosted",
-    "recommendationCandidates": [],
-    "optimizationCandidates": []
-  },
-  "currentItem": null,
-  "scenarioVersion": 3,
-  "scenario": "Five-member Kabamanda; Primarina slot empty",
-  "teamSize": 5,
-  "qualityWarnings": [],
+  "promptVersion": 93,
   "inputSummary": {
     "sets": [
       {
@@ -110,5 +73,45 @@
       }
     ],
     "selectedSlot": 0
-  }
+  },
+  "inputHash": "a192f83a113b8f10ceace6fdafdbf23156c88a92a9cc5172b62d25c07adad933",
+  "execution": {
+    "durationMs": 49159,
+    "totalTokens": 18096,
+    "estimatedCostUsd": 0.00347156
+  },
+  "response": {
+    "version": 2,
+    "scope": "team",
+    "title": "Kabamanda",
+    "paragraphs": [
+      "Kabamanda is best approached as a hazard-and-switch-pressure team with a flexible three-Pokémon selection, not as a dedicated Sand mode: the supplied roster has no attacker whose ability depends on Sandstorm. Hippowdon can lead with Stealth Rock and use Whirlwind to take advantage of opposing switches. Meowscarada offers Toxic Spikes and fast physical pressure, while Archaludon also carries Stealth Rock if you want to select it instead of one of the other options.",
+      "The supplied Mega choices are Salamence Mega and Lucario Mega Z, and they should be treated as alternative selections because no base-form data is supplied for using both in one lineup. A Salamence Mega branch of Hippowdon, Salamence Mega, and Meowscarada trades Lucario Mega Z’s special pressure and Ice resistance for Salamence Mega’s 216 Attack and Dragon Dance setup; Salamence Mega is 4× weak to Ice. The Lucario Mega Z branch of Hippowdon, Lucario Mega Z, and Meowscarada instead brings 216 Special Attack, 223 Speed, and an Ice resistance, but gives up Salamence Mega’s physical setup and Fighting resistance.",
+      "Keep the Sandstorm–Focus Sash interaction in mind when using either branch with Meowscarada. Sand Stream does not break Focus Sash at battle start, but if Meowscarada is active at the end of a turn while Sandstorm is still running, the supplied weather effect damages it and can remove the full-HP condition the Sash requires. Hippowdon’s investment is 32 HP and 32 Special Defense, with 2 Defense points; its Impish nature does not mean it is heavily invested in Defense. Meowscarada’s speed and Attack, plus its Sash, make it a useful pressure option, but its timing in Sandstorm matters."
+    ],
+    "recommendations": [
+      {
+        "id": "branch-choice",
+        "title": "Choose one Mega branch for each battle and build a complete three-Pokémon selection around it.",
+        "reason": "Use Hippowdon, Salamence Mega, and Meowscarada when Dragon Dance physical pressure and Salamence Mega’s Fighting resistance fit the matchup, while accounting for its 4× Ice weakness. Use Hippowdon, Lucario Mega Z, and Meowscarada when special pressure and an Ice resistance are more useful; this choice gives up Salamence Mega’s physical setup and Fighting resistance. Do not combine the two supplied Mega forms in the same selection without base-form evidence.",
+        "priority": "high"
+      },
+      {
+        "id": "hazard-and-sand",
+        "title": "Use Hippowdon’s switch pressure while managing Meowscarada’s Focus Sash around Sandstorm.",
+        "reason": "Hippowdon can establish Stealth Rock and use Whirlwind to exploit switches, while Meowscarada can add Toxic Spikes when appropriate. If Sandstorm is active, avoid leaving Meowscarada on the field through an end-of-turn weather tick when preserving its full-HP Focus Sash matters.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "publicationRevision": 4,
+  "publicationSelection": "Reviewed prompt-v93 example response"
 }

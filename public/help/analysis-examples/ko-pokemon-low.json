@@ -1,46 +1,9 @@
 {
   "id": "ko-pokemon-low",
-  "generatedAt": "2026-10-04T06:32:22.514Z",
+  "generatedAt": "2026-10-04T15:25:41.619Z",
   "model": "gpt-6-luna",
   "reasoningEffort": "low",
-  "promptVersion": 92,
-  "inputHash": "a0fe5c6b6e73526c62f8a35d38e6df0557b41c5b965b13ca9fa36456a2470281",
-  "execution": {
-    "durationMs": 10857,
-    "totalTokens": 12099,
-    "estimatedCostUsd": 0.0016954749999999999
-  },
-  "response": {
-    "version": 2,
-    "scope": "pokemon",
-    "title": "하마돈",
-    "paragraphs": [
-      "하마돈은 체력 215, 방어 154, 특수방어 124의 내구와 먹다남은음식 회복을 바탕으로 전장에 오래 머물며 압박을 누적하는 땅 타입 지원형입니다. 모래날림으로 교대 시 모래바람을 일으키고, 스텔스록으로 상대의 교대를 부담스럽게 만들 수 있습니다. 장난꾸러기 성격과 스탯 포인트 배분은 물리 방어에 치우쳐 있으며, 공격 기술은 지진 하나뿐이므로 직접 공격보다 보조 행동과 교대 압박에 무게가 실립니다.",
-      "하품은 상대에게 다음 턴 수면을 유도해 교대나 행동 선택을 압박하고, 날려버리기는 우선도 -6으로 상대를 강제 교대시키므로 스텔스록과 함께 쓸 때 누적 압박을 강화할 수 있습니다. 다만 물·풀·얼음 공격에 약하며, 특히 얼음 약점은 팀의 메가보만다와 마스카나에도 겹칩니다. 메가 진화가 없는 하마돈은 자체적으로 속도 조절이나 회복 기술을 갖추지 않았으므로, 상대의 공격을 받아내는 상황과 스텔스록을 깔 기회를 신중히 골라야 합니다."
-    ],
-    "recommendations": [
-      {
-        "id": "ice-cover",
-        "title": "얼음 공격을 받기 전 메가루카리오Z를 교대 선택지로 고려하십시오.",
-        "reason": "하마돈은 얼음 타입에 약하지만, 메가루카리오Z는 얼음 공격을 반감합니다. 따라서 하마돈이 얼음 공격에 노출될 가능성이 큰 대면에서는 메가루카리오Z로 교대하는 방안을 검토할 수 있습니다.",
-        "priority": "medium"
-      },
-      {
-        "id": "support-sequence",
-        "title": "하품과 스텔스록으로 교대를 유도한 뒤 날려버리기로 압박을 이어가십시오.",
-        "reason": "하품은 상대에게 다음 턴 수면 압박을 주고, 스텔스록은 상대가 교대할 때 피해를 줍니다. 날려버리기는 강제 교대 효과가 있지만 우선도가 -6이므로, 상대의 공격을 감수해도 되는 상황에서 사용하고 스텔스록이 설치된 뒤 교대 압박을 노리십시오.",
-        "priority": "high"
-      }
-    ],
-    "source": "hosted",
-    "recommendationCandidates": [],
-    "optimizationCandidates": []
-  },
-  "currentItem": null,
-  "scenarioVersion": 3,
-  "scenario": "Five-member Kabamanda; Primarina slot empty",
-  "teamSize": 5,
-  "qualityWarnings": [],
+  "promptVersion": 93,
   "inputSummary": {
     "sets": [
       {
@@ -110,5 +73,45 @@
       }
     ],
     "selectedSlot": 0
-  }
+  },
+  "inputHash": "9f36c806ad168dac15cdb42ef95bdcc0ddbe6df0cdbc843f16642385c4279102",
+  "execution": {
+    "durationMs": 13633,
+    "totalTokens": 12837,
+    "estimatedCostUsd": 0.0019034250000000003
+  },
+  "response": {
+    "version": 2,
+    "scope": "pokemon",
+    "title": "하마돈",
+    "paragraphs": [
+      "하마돈은 먹다남은음식과 모래날림을 바탕으로 전장을 오래 유지하면서 스텔스록을 깔고, 하품과 날려버리기로 상대의 교체를 압박하는 지원형입니다. 공격 기술은 지진 하나이므로 직접 공격을 이어가기보다 상대의 교체를 유도하고 설치물을 누적하는 운용이 중심입니다.",
+      "장난꾸러기 성격은 방어를 올리지만, 실제 능력치 배분은 HP와 특수방어에 각각 32 Stat Points, 방어에 2 Stat Points입니다. 최종 능력치는 HP 215, 공격 132, 방어 154, 특수방어 124, 스피드 67이므로, 성격과 별개로 특수방어에도 투자한 내구 구성이며 물리 방어 역시 최종 수치가 높습니다. 물·풀·얼음 공격에는 약하고 전기에는 면역이며, 독과 바위에는 저항합니다.",
+      "모래날림은 하마돈이 등장할 때 모래바람을 일으켜 매 턴 종료 시 일부 포켓몬에게 피해를 줍니다. 특히 기합의띠를 든 마스카나가 모래바람 피해를 받는 위치에 남아 있으면 HP가 가득 찬 상태를 유지하기 어려워지므로, 하마돈과 마스카나를 함께 선택할 때는 마스카나가 먼저 기합의띠를 활용해야 하는 상황인지 살펴야 합니다. 브리두라스도 스텔스록을 배워 설치 역할이 겹치므로, 상대 조정에 따라 하마돈의 하품·날려버리기 압박이 필요한지 선택하면 됩니다."
+    ],
+    "recommendations": [
+      {
+        "id": "hippowdon-entry-plan",
+        "title": "하마돈은 설치물과 교체 압박을 이용해 전장을 정돈하는 역할로 운용하는 편이 좋습니다.",
+        "reason": "스텔스록으로 상대가 교체할 때 부담을 주고, 하품으로 행동이나 교체를 유도한 뒤 날려버리기로 상대를 다시 밀어낼 수 있습니다. 지진은 공격 수단이지만 공격 투자 없이도 선택되어 있으므로, 무리하게 공격 역할을 맡기기보다 이 압박을 이어가는 데 집중하는 편이 세트 구성에 맞습니다.",
+        "priority": "high"
+      },
+      {
+        "id": "sand-focus-sash-timing",
+        "title": "마스카나의 기합의띠를 살려야 하는 상황에서는 모래바람 피해가 누적되기 전에 위치를 조정하십시오.",
+        "reason": "모래날림이 만든 모래바람은 면역 조건에 해당하지 않는 포켓몬에게 턴 종료 피해를 줍니다. 마스카나가 전장에 나와 있는 동안 모래바람이 지속되면 기합의띠의 발동 조건인 최대 HP 상태를 잃을 수 있으므로, 마스카나를 내보내기 전이나 교체 시점에 그 턴 종료 피해가 발생하는지를 고려해야 합니다. 이는 세트 간 운용상의 절충점이며, 하마돈의 모래바람이나 마스카나의 기합의띠 자체가 부적절하다는 뜻은 아닙니다.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "publicationRevision": 4,
+  "publicationSelection": "Reviewed prompt-v93 example response"
 }

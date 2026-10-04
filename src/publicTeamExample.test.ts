@@ -3,7 +3,7 @@ import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { getLegalAbilities, getLegalMoves, hydrateShowdownLegalitySnapshot, isItemLegal, isPokemonLegal } from "./api/showdownLegality";
 import { normalizeShowdownId } from "./api/showdownIds";
-import { publicExampleCalculations, publicExampleTeam } from "./test/fixtures/publicTeamExample";
+import { publicExampleTeam } from "./test/fixtures/publicTeamExample";
 
 const publicRoot = new URL("../public/", import.meta.url);
 const rules = hydrateShowdownLegalitySnapshot(JSON.parse(readFileSync(new URL("data/showdown-regulation-mc.json", publicRoot), "utf8")));
@@ -32,9 +32,9 @@ describe.each(["ko", "en"])("public team example %s", (locale) => {
 
   it("contains an accessible static article, working anchors, assets, and alternate languages", () => {
     expect(document.documentElement.lang).toBe(locale);
-    expect(document.querySelectorAll("main > section")).toHaveLength(8);
-    expect(document.querySelectorAll(".team-member")).toHaveLength(6);
-    expect(document.querySelector("main")?.textContent?.length).toBeGreaterThan(3000);
+    expect(document.querySelectorAll("main > section")).toHaveLength(7);
+    expect(document.querySelector(".example-transcript, .example-review-note, #input")).toBeNull();
+    expect(document.querySelector("main")?.textContent).not.toMatch(/결과 전문 읽기|Read the complete result/);
     const ids = Array.from(document.querySelectorAll("[id]"), (element) => element.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
@@ -61,7 +61,7 @@ describe.each(["ko", "en"])("public team example %s", (locale) => {
     expect(sitemap.window.document.documentElement.textContent).toContain(`https://pokepilot.app/help/kabamanda-${locale}.html`);
   });
 
-  it("shows recorded results in accessible text with high-resolution images and matched comparison inputs", () => {
+  it("shows recorded images with concise descriptions and matched comparison inputs", () => {
     const readResult = (id: string) => JSON.parse(readFileSync(new URL(`help/analysis-examples/${locale}-${id}.json`, publicRoot), "utf8"));
     const low = readResult("team-low");
     const medium = readResult("team-medium");
@@ -77,7 +77,7 @@ describe.each(["ko", "en"])("public team example %s", (locale) => {
         for (const recommendation of result.response.recommendations) {
           expect(result.response.recommendationCandidates.some((candidate: { pokemonId: string; target: { mode: string; slotIndex: number } }) => candidate.pokemonId === recommendation.id && candidate.target.mode === "addition" && candidate.target.slotIndex === 5)).toBe(true);
         }
-        expect(section.textContent).toContain(locale === "ko" ? "빈 슬롯" : "sixth member");
+        expect(section.textContent).toContain(locale === "ko" ? "누리레느" : "sixth member");
       }
       if (scope === "optimization") {
         expect(result.scenarioVersion).toBe(3);
@@ -85,24 +85,24 @@ describe.each(["ko", "en"])("public team example %s", (locale) => {
         expect(current).toMatchObject({ slotIndex: 1, natureId: "adamant", itemId: "salamencite", evs: { attack: 32, specialAttack: 0, speed: 32 } });
       }
       expect(result.response.scope).toBe(scope);
+      expect(result.promptVersion).toBe(93);
+      expect(result.publicationRevision).toBe(locale === "en" && scope === "team" ? 5 : 4);
       expect(result.model).toBe("gpt-6-luna");
       expect(result.reasoningEffort).toBe("low");
       expect(result.execution.durationMs).toBeGreaterThan(0);
       expect(result.execution.totalTokens).toBeGreaterThan(0);
       expect(result.execution.estimatedCostUsd).toBeGreaterThan(0);
-      for (const paragraph of result.response.paragraphs) expect(section.textContent).toContain(paragraph);
-      for (const recommendation of result.response.recommendations) {
-        expect(section.textContent).toContain(recommendation.title);
-        expect(section.textContent).toContain(recommendation.reason);
-      }
+      expect(section.querySelector(".analysis-showcase-copy")?.textContent?.length).toBeGreaterThan(10);
       const img = section.querySelector(`.analysis-figure img[src="/help/analysis-examples/${locale}-${scope}-low.png"]`)!;
       expect(Number(img.getAttribute("width"))).toBe(1040);
+      const png = readFileSync(new URL(`help/analysis-examples/${locale}-${scope}-low.png`, publicRoot));
+      expect(Number(img.getAttribute("height"))).toBe(png.readUInt32BE(20));
       expect(img.getAttribute("src")).toBe(`/help/analysis-examples/${locale}-${scope}-low.png`);
       expect(section.querySelector(".analysis-showcase-copy + .analysis-figure")).not.toBeNull();
       expect(img.closest("a")?.hasAttribute("data-analysis-image")).toBe(true);
       expect(img.closest("a")?.getAttribute("href")).toBe(`/help/analysis-examples/${locale}-${scope}-low.png`);
       expect(img.getAttribute("alt")).toBeTruthy();
-      expect(section.querySelector("details > summary")).not.toBeNull();
+      expect(section.querySelector("details > summary")).toBeNull();
     }
     for (const id of ["pokemon-low", "team-low", "team-medium", "recommendation-low", "optimization-low", "optimization-change-low"]) {
       const result = readResult(id);
@@ -116,9 +116,8 @@ describe.each(["ko", "en"])("public team example %s", (locale) => {
     expect(Object.values(untrained.evs).reduce<number>((total, value) => total + Number(value), 0)).toBe(0);
     expect(change.response.recommendations.some((rec: { id: string }) => rec.id !== "set-current")).toBe(true);
     const changeSection = document.getElementById("optimization-change")!;
-    for (const paragraph of change.response.paragraphs) expect(changeSection.textContent).toContain(paragraph);
+    expect(changeSection.querySelector("img")).not.toBeNull();
     for (const rec of change.response.recommendations) {
-      expect(changeSection.textContent).toContain(rec.reason);
       expect(change.response.optimizationCandidates.some((c: { id: string }) => c.id === rec.id)).toBe(true);
     }
     const comparison = document.getElementById("comparison")!;
@@ -133,22 +132,6 @@ describe.each(["ko", "en"])("public team example %s", (locale) => {
     for (const result of [low, medium]) {
       expect(comparison.textContent).toContain(`$${result.execution.estimatedCostUsd.toFixed(5)}`);
       expect(comparison.textContent).toContain(`${(result.execution.durationMs / 1000).toFixed(1)}s`);
-      for (const paragraph of result.response.paragraphs) expect(comparison.textContent).toContain(paragraph);
-    }
-  });
-
-  it("keeps published numbers aligned with the actual Champions calculator", () => {
-    expect(document.querySelectorAll("[data-calculation]")).toHaveLength(publicExampleCalculations.length);
-    for (const { id, result } of publicExampleCalculations) {
-      expect(result.status).toBe("ready");
-      if (result.status !== "ready") throw new Error(`Example calculation unavailable: ${id}`);
-      const element = document.querySelector<HTMLElement>(`[data-calculation="${id}"]`)!;
-      expect(Number(element.dataset.minDamage), id).toBe(result.minDamage);
-      expect(Number(element.dataset.maxDamage), id).toBe(result.maxDamage);
-      expect(Number(element.dataset.targetHp), id).toBe(result.defenderMaxHp);
-      const text = element.querySelector(".damage-value")?.textContent;
-      expect(text).toContain(`${result.minDamage}–${result.maxDamage}`);
-      expect(text).toContain(`${result.minPercent.toFixed(1)}–${result.maxPercent.toFixed(1)}%`);
     }
   });
 
@@ -156,6 +139,56 @@ describe.each(["ko", "en"])("public team example %s", (locale) => {
     const help = new JSDOM(readFileSync(new URL(`help/${locale}.html`, publicRoot), "utf8"));
     expect(help.window.document.querySelector(`a[href="/help/kabamanda-${locale}.html"]`)).not.toBeNull();
     help.window.close();
+  });
+
+  it("keeps the team-report headings in sync with navigation and descriptions concise", () => {
+    for (const section of document.querySelectorAll("main > section")) {
+      const heading = section.querySelector("h2")!.textContent!.replace(/^\d+\.\s*/, "");
+      expect(document.querySelector(`a[href="#${section.id}"]`)?.textContent).toBe(heading);
+    }
+    for (const copy of document.querySelectorAll(".analysis-showcase-copy")) {
+      expect(copy.querySelectorAll("p").length).toBeGreaterThan(0);
+      expect(copy.querySelectorAll("p").length).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("provides recorded analysis text to assistive technology without visible transcript controls", () => {
+    const texts = document.querySelectorAll<HTMLElement>(".analysis-accessible-text");
+    expect(texts).toHaveLength(7);
+    for (const text of texts) {
+      const result = JSON.parse(readFileSync(new URL(`help/analysis-examples/${text.dataset.source}.json`, publicRoot), "utf8"));
+      expect(text.hidden).toBe(false);
+      expect(text.getAttribute("aria-hidden")).not.toBe("true");
+      expect(document.querySelector(`[aria-details="${text.id}"]`)).not.toBeNull();
+      for (const paragraph of result.response.paragraphs) {
+        const displayed = locale === "ko" ? paragraph.replace(/\b(\d+)\s+Stat Points?\b/gi, "노력치 $1").replace(/\bStat Points?\b/gi, "노력치") : paragraph;
+        expect(text.textContent).toContain(displayed);
+      }
+    }
+    expect(document.querySelector(".example-transcript")).toBeNull();
+    expect(document.querySelector('#pokemon img')?.getAttribute('alt')).not.toContain('pokemon-low');
+  });
+
+  it("ties each explanation to its own language's result, including the optional English spread", () => {
+    for (const scope of ["pokemon", "team", "recommendation", "optimization", "optimization-change"]) {
+      const copy = document.querySelector(`#${scope} > .analysis-showcase .analysis-showcase-copy`)!;
+      expect(copy.getAttribute("data-source")).toBe(`${locale}-${scope}-low`);
+      expect(document.querySelector(`#${scope} > .analysis-showcase img`)?.getAttribute("src"))
+        .toBe(`/help/analysis-examples/${locale}-${scope}-low.png`);
+    }
+    const result = JSON.parse(readFileSync(new URL(`help/analysis-examples/${locale}-optimization-low.json`, publicRoot), "utf8"));
+    const copy = document.querySelector('#optimization > .analysis-showcase .analysis-showcase-copy')!.textContent;
+    if (locale === "en") {
+      expect(result.response.recommendations.map((rec: { id: string }) => rec.id)).toEqual(["set-current", "usage-spread-2"]);
+      const [current, alternative] = ["set-current", "usage-spread-2"].map(id =>
+        result.response.optimizationCandidates.find((candidate: { id: string }) => candidate.id === id));
+      expect(alternative.finalStats.hp - current.finalStats.hp).toBe(1);
+      expect(alternative.finalStats.defense - current.finalStats.defense).toBe(-1);
+      expect(copy).toContain("one more point of final HP for one less point of Defense");
+    } else {
+      expect(result.response.recommendations.map((rec: { id: string }) => rec.id)).toEqual(["set-current"]);
+      expect(copy).toContain("현재 구성 유지만 추천");
+    }
   });
 
   it("progressively adds localized inline expansion without modifying the image", () => {

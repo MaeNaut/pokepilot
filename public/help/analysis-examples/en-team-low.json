@@ -1,47 +1,9 @@
 {
   "id": "en-team-low",
-  "generatedAt": "2026-10-04T06:33:55.219Z",
+  "generatedAt": "2026-10-04T18:24:31.066Z",
   "model": "gpt-6-luna",
   "reasoningEffort": "low",
-  "promptVersion": 92,
-  "inputHash": "fda90fa0647144c35441c61e04e527bcad5984b253624b017c19e3d0b91577bd",
-  "execution": {
-    "durationMs": 9713,
-    "totalTokens": 13160,
-    "estimatedCostUsd": 0.0012595500000000001
-  },
-  "response": {
-    "version": 2,
-    "scope": "team",
-    "title": "Kabamanda",
-    "paragraphs": [
-      "Kabamanda is a flexible singles roster built around entry hazards, forced switches, and powerful setup attackers. Hippowdon can establish Stealth Rock, pressure foes with Yawn, and use Whirlwind to disrupt attempts to settle in; Meowscarada adds Toxic Spikes, while Archaludon offers a second Stealth Rock user. Choose one hazard setter for a given three-Pokémon selection rather than spending too many turns setting hazards when immediate pressure is needed.",
-      "The two Mega options are Salamence Mega and Lucario Mega Z, and only one can be activated in a battle. Salamence Mega offers a physical Dragon Dance route with Double-Edge, while Lucario Mega Z supplies a special Nasty Plot route and broad attacking coverage. They share the available hazard and disruption support, so treat them as matchup-dependent ace choices rather than separate field modes. Their existing Mega-form sets are valid as supplied.",
-      "Ice is a notable pressure point: it threatens Hippowdon, Salamence Mega, and Meowscarada, while Lucario Mega Z resists it. Fighting also pressures three members, and Salamence Mega is the roster’s supplied resistance to that type. The roster has five filled slots, so the final slot remains open; without details for that slot or a specific matchup, its best role cannot be determined."
-    ],
-    "recommendations": [
-      {
-        "id": "hazard-core",
-        "title": "Use Hippowdon as the opening hazard setter when its matchup is favorable.",
-        "reason": "A three-Pokémon selection of Hippowdon, Salamence Mega, and Lucario Mega Z gives Hippowdon Stealth Rock, Yawn, and Whirlwind support while preserving either attacker for the endgame. Bring Salamence Mega or Lucario Mega Z as the chosen Mega ace, not both as simultaneous activation plans.",
-        "priority": "high"
-      },
-      {
-        "id": "ace-branch",
-        "title": "Choose the Mega ace to fit the opposing team and its likely answers.",
-        "reason": "Select Salamence Mega for a physical Dragon Dance win condition, or Lucario Mega Z when its special coverage and Ice resistance are more useful. A selection of Hippowdon, Lucario Mega Z, and Meowscarada trades Salamence Mega's setup option for Toxic Spikes and additional immediate physical pressure.",
-        "priority": "medium"
-      }
-    ],
-    "source": "hosted",
-    "recommendationCandidates": [],
-    "optimizationCandidates": []
-  },
-  "currentItem": null,
-  "scenarioVersion": 3,
-  "scenario": "Five-member Kabamanda; Primarina slot empty",
-  "teamSize": 5,
-  "qualityWarnings": [],
+  "promptVersion": 93,
   "inputSummary": {
     "sets": [
       {
@@ -111,5 +73,45 @@
       }
     ],
     "selectedSlot": 0
-  }
+  },
+  "inputHash": "a192f83a113b8f10ceace6fdafdbf23156c88a92a9cc5172b62d25c07adad933",
+  "execution": {
+    "durationMs": 15810,
+    "totalTokens": 14237,
+    "estimatedCostUsd": 0.002204
+  },
+  "response": {
+    "version": 2,
+    "scope": "team",
+    "title": "Kabamanda",
+    "paragraphs": [
+      "Kabamanda has a hazard-and-disruption core: Hippowdon can set Stealth Rock, use Yawn to pressure a switch, and use Whirlwind to force one, while Meowscarada can add Toxic Spikes. Salamence Mega and Lucario Mega Z are the two mutually exclusive Mega options. Salamence Mega is the physical setup branch, with Dragon Dance and Double-Edge; Lucario Mega Z is the special setup branch, with Nasty Plot and three special attacks.",
+      "Sand Stream creates an important timing cost for Meowscarada. It is not among the supplied Sandstorm exceptions, so if Meowscarada is active when Sandstorm damage occurs, its Focus Sash will no longer have its full-HP condition; the Sash is not automatically broken at the start of battle. Lucario Mega Z, as a Steel type, avoids that Sandstorm damage, making it a more compatible Mega partner for Hippowdon's weather plan. Salamence Mega resists Water and Grass attacks by typing, but is four-times weak to Ice, so that resistance is not a general guarantee of a safe switch.",
+      "The roster has five valid sets, so each proposed Singles selection below uses three. Both Mega branches can use Hippowdon's Stealth Rock and Yawn support, but the available data does not establish that either is globally preferable. Ice is a notable pressure point: Hippowdon and Salamence Mega are weak to it, and Lucario Mega Z is the supplied type-based resistance. Fighting also pressures Lucario Mega Z and Archaludon, with Salamence Mega providing the listed resistance. The supplied roster leaves one team slot open, but no replacement candidates were provided, so these recommendations compare only the existing sets."
+    ],
+    "recommendations": [
+      {
+        "id": "salamence-branch",
+        "title": "Use Salamence Mega as the physical setup option when its matchup is favorable.",
+        "reason": "A three-Pokemon selection of Hippowdon, Salamence Mega, and Lucario Mega Z is not appropriate because it contains both supplied Mega forms. Instead, bring Hippowdon, Salamence Mega, and Meowscarada, and leave Lucario Mega Z out. Hippowdon supplies hazards and disruption, while Salamence Mega offers Dragon Dance setup; account for Sandstorm damage if Meowscarada's Focus Sash still matters.",
+        "priority": "medium"
+      },
+      {
+        "id": "lucario-branch",
+        "title": "Use Lucario Mega Z as the special setup option when Sandstorm compatibility or Ice resistance matters.",
+        "reason": "Bring Hippowdon, Lucario Mega Z, and Meowscarada, leaving Salamence Mega out. Lucario Mega Z offers Nasty Plot and is a Steel type that avoids the supplied Sandstorm damage, while its type profile resists Ice; Meowscarada remains vulnerable to Sandstorm chip that can remove Focus Sash's full-HP protection.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "publicationRevision": 5,
+  "publicationSelection": "Reviewed prompt-v93 example response"
 }

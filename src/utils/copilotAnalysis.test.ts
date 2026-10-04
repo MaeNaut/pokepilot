@@ -1205,6 +1205,60 @@ describe("Copilot analysis", () => {
     ).toMatchObject({ success: false });
   });
 
+  it("relocalizes cached recommendation names at the request boundary", () => {
+    const candidate: CopilotRecommendationCandidateSnapshot = {
+      pokemonId: "primarina", displayName: "누리레느",
+      types: ["water", "fairy"], typeDisplayNames: ["물", "페어리"],
+      abilities: [{ id: "torrent", displayName: "급류" }],
+      baseStats: null, speedTier: "slow", requiresMegaStone: false, usageRank: 1,
+      responsibilityIds: [],
+      target: {
+        mode: "replacement", slotIndex: 0, currentPokemonId: member.id,
+        currentDisplayName: "이전 언어 이름", currentRoleIds: [], currentSetterConceptIds: [],
+        currentAceConceptIds: [], currentResponsibilityIds: [], currentSupportElements: [],
+        megaOptionPokemonId: null, allySupportLinks: [],
+      },
+      commonSet: {
+        ability: "torrent", item: null, nature: "modest",
+        moves: [{ id: "moonblast", displayName: "문포스", type: "fairy", category: "special", power: 95 }],
+      },
+      fit: { weakTo: [], resistsTeamThreats: [], amplifiesTeamThreats: [], addsUnansweredWeaknesses: [],
+        coversTypes: [], roleContributions: [], roleRedundancies: [], conceptSynergies: [], conflicts: [] },
+    };
+    const input: CreateCopilotRequestInput = {
+      scope: "recommendation", locale: "en", teamName: "Test Team", team: [member],
+      selectedSlot: 0, buildState, diagnostics, validity, recommendationCandidates: [candidate],
+      showdownData: { speciesById: {}, movesById: {
+        moonblast: { ...closeCombat, id: "moonblast", name: "Moonblast", type: "fairy", category: "Special", power: 95 },
+      } },
+    };
+    const english = createCopilotAnalysisRequest(input).recommendationCandidates[0];
+    expect(english).toMatchObject({ displayName: "Primarina", typeDisplayNames: ["Water", "Fairy"],
+      abilities: [{ displayName: "Torrent" }], target: { currentDisplayName: member.name },
+      commonSet: { moves: [{ displayName: "Moonblast" }] },
+    });
+    const korean = createCopilotAnalysisRequest({ ...input, locale: "ko", recommendationCandidates: [english] }).recommendationCandidates[0];
+    expect(korean).toMatchObject({ displayName: "누리레느", abilities: [{ displayName: "급류" }],
+      commonSet: { moves: [{ displayName: "문포스" }] },
+    });
+    expect(candidate.displayName).toBe("누리레느");
+  });
+
+  it("supplies canonical sand weather rules without inventing a selected move", () => {
+    const request = createCopilotAnalysisRequest({
+      scope: "team", locale: "en", teamName: "Weather", team: [member], selectedSlot: 0,
+      buildState: { ...buildState, abilityBySlot: { 0: "Sand Stream" } }, diagnostics, validity,
+      abilityIndex: [{ id: "sandstream", name: "Sand Stream", effect: "On switch-in, summons Sandstorm." }],
+      showdownData: { speciesById: {}, movesById: {
+        sandstorm: { ...closeCombat, id: "sandstorm", name: "Sandstorm", category: "Status", power: null,
+          description: "Active Pokemon lose HP except Ground, Rock, or Steel types and protected abilities." },
+      } },
+    });
+    expect(request.mechanics.abilities.find((ability) => ability.id === "sandstream")?.effect).toContain("Weather rules:");
+    expect(request.mechanics.abilities.find((ability) => ability.id === "sandstream")?.effect).toContain("Ground, Rock, or Steel");
+    expect(request.sets[0].moves.some((move) => move.id === "sandstorm")).toBe(false);
+  });
+
   it("validates exact full-team replacement targets", () => {
     const candidate: CopilotRecommendationCandidateSnapshot = {
       pokemonId: "replacement-pokemon",

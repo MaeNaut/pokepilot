@@ -11,19 +11,152 @@ This is useful public product documentation, not a guarantee of AdSense approval
 - Pokemon analysis selects Hippowdon (slot 0); sample analysis selects Mega
   Salamence (slot 1). Every scope leaves Primarina's slot 5 empty. Recommendation
   asks for an addition; team low and medium use the same five-member input.
-- `kabamanda-five-team.txt` is the analysis input. The original six legal M-C
-  builds in `kabamanda-team.txt` remain as a clearly labeled reference appendix.
+- `kabamanda-five-team.txt` is the analysis input and journal download. The
+  original six-member `kabamanda-team.txt` remains available as a separate asset.
 - The overview includes the actual TeamShareCard rendered at 960px/2x in both
   languages, with an empty sixth slot, and links to the starting Game8 roster:
   https://game8.jp/pokemon-champions/779319 (checked October 4, 2026).
 - Two sample scenarios use the same roster: the original Adamant Attack/Speed
   Salamence (keep current) and a disclosed Hardy/zero-investment variant (change
   recommended). Teammates, item and moves are unchanged in that variant.
-- Authored build notes and reproducible damage checks remain in a collapsed
-  appendix, explicitly separate from model-generated text.
-- Viewing images/transcripts never triggers API calls or changes the user's team.
+- The journal uses short scope descriptions and expandable result screenshots.
+  Duplicate full-text dropdowns, review notes and the long build/calculation
+  appendix were removed in the October 4 readability pass. Source attribution,
+  sample input differences and a brief selected-response disclosure remain.
+- Viewing examples never triggers API calls or changes the user's team.
 
-## Recorded run
+Readability verification: 23 article/help tests passed. Browser checks passed
+at 360, 390, 768 and 1440px across Korean/English and light/dark themes, with
+five loaded result images, working expansion and no horizontal overflow or
+page errors. Images remain available with JavaScript disabled. Raw records and
+result screenshots were not changed by the editorial pass.
+
+Capture correction: Korean Hippowdon now renders `Stat Points` as `노력치`
+through the app's display-only terminology mapping; the recorded JSON, numeric
+values and strategy remain unchanged. The English recommendation capture was
+retaken after all three candidate sprites loaded. Capture checks must wait for
+an actual visible, decoded image in every candidate sprite slot, not merely
+for images already present in the DOM (the Pokemon fetch is asynchronous).
+Abort rather than publish if any panel image is missing or hidden.
+
+## Journal voice
+
+Locale alignment audit: all six results per language were compared with the
+journal explanations. Common setup/role descriptions can agree, but authored
+copy is not a translation contract. Each showcase now records its own result
+ID in `data-source` next to the matching screenshot. Preserve these differences:
+
+- Korean team low/medium: Hippowdon + Salamence + Archaludon, or Hippowdon +
+  Lucario Z + Meowscarada in both outputs.
+- English team low/medium now both pair either Mega with Hippowdon and
+  Meowscarada. The revision-5 low result replaced the earlier Archaludon
+  lineups and misleading sand/Focus Sash wording. The comparison describes
+  the actual details each selected response adds, not presumed higher quality.
+- Korean keep-current optimization recommends only `set-current`. English
+  also recommends `usage-spread-2` at low priority: final HP +1, Defense -1,
+  unchanged Attack/Speed/moves. These are final stats, not a new EV conversion.
+- Both open-slot recommendations rank Primarina, Gyarados and Rotom Wash;
+  English copy now includes the tradeoffs emphasized by its own response.
+- Pokemon and untrained optimization explanations already match their local
+  results; no artificial differences or new model calls were introduced.
+
+The October 4 writing pass adapts team-report conventions rather than presenting
+each scope as a feature description. Korean headings follow team introduction,
+individual role, selection/game plan, the open slot and set adjustments. English
+uses core, game plan, lineup and set naturally instead of translating Korean
+`sample` literally. Keep polite Korean `-입니다/-했습니다` prose, short paragraphs,
+concrete Pokemon/move names and reasons for choices. Do not invent ladder results,
+battle experience or authorship of the source roster. The analysis screenshots,
+recorded quotes and original response files are not editorial prose to rewrite.
+
+Style references inspected (not sources for this team's battle claims):
+
+- [Korean original: M-4 Gardevoir/Maushold report](https://gall.dcinside.com/mgallery/board/view/?id=pkmchampions&no=319806):
+  roles, reasons for changing sets, matchup-specific selections; personal but
+  concrete explanations rather than lists of feature promises.
+- [Korean community translation: M-4 rank 147](https://enter.dcinside.com/mgallery/board/view/?id=pkmchampions&no=318894):
+  compact set details followed by adoption reasons and selection frequency.
+  This is a translated report, not an independent Korean original.
+- [Smogon: Take Me To Your Leader](https://www.smogon.com/forums/threads/take-me-to-your-leader-salamence-bo-ft-banded-samurott-and-maushold-peak-rank-6.3732125/):
+  starting core, changes to address weaknesses, and each member's contribution.
+- [Smogon: Salamence's Slaughterhouse](https://www.smogon.com/forums/threads/salamences-slaughterhouse.3593449/):
+  direct first-person building rationale and short role explanations.
+- [Reddit VGC: Hartford team report](https://www.reddit.com/r/VGC/comments/13obw3z):
+  conversational set choices and tradeoffs tied to a specific game plan.
+
+These are representative Korean and English-language community samples, not an
+exhaustive survey or a claim about the nationality of every English author.
+Borrow only structural conventions; do not copy authors' sentences or transfer
+their format-specific battle advice to M-C Singles.
+
+## Current Publication Revisions 4 and 5
+
+The English team-low record alone is now publication revision 5. One additional
+evaluation-key call reused the frozen v93 input (15.810 s, 14,237 tokens,
+estimated USD 0.002204). It correctly explains that end-of-turn sand damage
+removes Focus Sash's full-HP condition without requiring earlier damage. The
+previous result and new raw response remain in ignored
+`.tmp/public-examples-v4/team-retry-1791138255246/`. No model prose was edited.
+Its genuine UI capture, authored explanation, comparison quote and metrics were
+refreshed together. These are selected responses, not an accuracy benchmark.
+
+Full-result dropdowns remain removed. Visually hidden static equivalents now
+make the seven displayed/linked analysis results per language available to
+screen readers without adding visible article copy. Run
+`node scripts/sync-analysis-example-text.mjs` after changing public records or
+captures; it synchronizes accessible text, quotes, metrics and image dimensions.
+It never calls a model. Language switching preserves the active article section.
+Follow-up verification: 31 article/help tests passed. Chromium checked the
+360/390/768/1440px layout matrix, loaded images and expansion without page
+errors or horizontal overflow. At 390/1440px, language navigation retained the
+comparison section and the browser accessibility tree included the hidden
+result text, also with JavaScript disabled. Cloudflare build passed with the
+existing bundle-size warning. A real screen-reader/Safari session was not run.
+
+Updated October 4 after the prompt-v93 quality follow-up. All 12 public JSON
+records, result captures, static transcripts, metrics and comparison excerpts
+now use prompt v93. The input scenario remains version 3 (five members); the
+separate `publicationRevision: 4` tracks this refresh. Team source, roster images,
+URLs, layout and expand/zoom behavior are unchanged.
+
+Fourteen evaluation-key calls were made for this refresh (12 conditions and two
+English optimization retries), costing an estimated USD 0.02809418. Rejected
+responses remain in `.tmp/public-examples-v4/raw/`. The Korean recommendation
+and team-low records reuse reviewed v93 results from the preceding quality run;
+their costs are not counted again in that new-call total. Korean recommendation
+rejected a Fighting-immunity-as-resistance statement; Korean team-low rejected
+ambiguous weather-owner timing. The English optimization retries replaced a
+Singles spread-role claim and a reversed HP/Defense allocation explanation.
+No AI response prose was manually rewritten.
+
+These are reviewed, selected product examples, not first-try success-rate or
+accuracy samples. Both public pages explicitly disclose this selection. Raw
+requests and responses are private; previous public JSON/PNGs are archived in
+`.tmp/public-examples-v4/previous-public/` and remain recoverable from Git.
+
+| Language | Effort | Model time | Tokens | Estimated USD |
+| --- | --- | ---: | ---: | ---: |
+| ko | low | 13.461 s | 14,512 | 0.001524360 |
+| ko | medium | 52.297 s | 18,386 | 0.004123300 |
+| en | low | 14.546 s | 14,336 | 0.001591560 |
+| en | medium | 49.159 s | 18,096 | 0.003471560 |
+
+Within each language, low and medium have identical request hashes and prompt
+versions. The comparison commentary was rewritten to match these actual outputs,
+not to claim that medium is always superior. Korean low still omits the Focus
+Sash cost of its Meowscarada selection; the comparison explicitly flags this.
+English commentary clarifies that sand alone can remove full HP and persists
+after the setter leaves. The obsolete Hippowdon investment correction is removed
+because the new Pokemon response describes its investment correctly.
+
+Verification: 25 article/help tests passed, including transcript/record agreement,
+same-input comparisons, publication metadata and actual PNG dimensions. Chromium
+checked 1440px ko/light and en/dark, 390px ko/light, 360px en/dark and 768px ko/dark:
+all five previews loaded, with no horizontal overflow or page errors. No-JS
+transcripts also worked. Capture width remains 1040px (520 CSS px at 2x).
+Real Safari QA and production deployment were not performed for this refresh.
+
+## Historical v92 Run (Superseded)
 
 Generated October 4, 2026 US Eastern time, GPT 6 Luna, prompt v92,
 Standard tier, using the existing evaluation key. No production/user key was used.
@@ -63,7 +196,7 @@ calls had no automatic warnings. A warning-free result is not proof of accuracy.
 Private raw outputs and frozen requests are in ignored `.tmp/public-examples`;
 the public files contain no keys, account details or provider response IDs.
 
-## Comparison and quality review
+## Historical v92 Comparison and Quality Review
 
 | Language | Effort | Model time | Tokens | Estimated USD |
 | --- | --- | ---: | ---: | ---: |

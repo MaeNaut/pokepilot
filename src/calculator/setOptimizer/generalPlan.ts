@@ -366,6 +366,25 @@ function flattenCandidateGroups(groups: SetOptimizationCandidate[][]) {
   return groups.flat();
 }
 
+function hasUnusedOffensiveInvestment(
+  candidate: SetOptimizationCandidate,
+  context: GeneralSetOptimizationContext,
+) {
+  const moveById = getMoveById(context);
+  const moves = candidate.moveIds.map((id) => moveById.get(normalizeShowdownId(id)));
+  // Keep user sets and uncertain mechanics; this only screens generated marginals.
+  if (candidate.id === "set-current" || moves.some((move) => !move?.category)) return false;
+  return ([["attack", "physical"], ["specialAttack", "special"]] as const).some(([stat, category]) => {
+    if (candidate.evs[stat] !== CHAMPIONS_MAX_EV_PER_STAT) return false;
+    if (moves.some((move) => move?.category?.toLowerCase() === category)) return false;
+    const statReference = stat === "attack" ? /\bAttack\b/i : /\bSp\.?\s*Atk\b|\bSpecial Attack\b/i;
+    // A category-changing or unusual stat-scaling move needs semantic review.
+    if (moves.some((move) => statReference.test(move!.description ?? "") ||
+      /\b(?:higher|highest|category|changes? form|transform)\b/i.test(move!.description ?? ""))) return false;
+    return true;
+  });
+}
+
 function createGeneralCandidates(context: GeneralSetOptimizationContext) {
   const buckets: CandidateBuckets = {
     current: [], standard: [], spread: [], item: [], move: [], loadout: [],
@@ -509,6 +528,9 @@ function createGeneralCandidates(context: GeneralSetOptimizationContext) {
     }
     buckets.move = flattenCandidateGroups(moveGroups);
     buckets.loadout = flattenCandidateGroups(loadoutGroups);
+  }
+  for (const key of Object.keys(buckets) as Array<keyof CandidateBuckets>) {
+    buckets[key] = buckets[key].filter((candidate) => !hasUnusedOffensiveInvestment(candidate, context));
   }
   return buckets;
 }

@@ -1,46 +1,9 @@
 {
   "id": "en-pokemon-low",
-  "generatedAt": "2026-10-04T06:33:45.502Z",
+  "generatedAt": "2026-10-04T15:27:27.592Z",
   "model": "gpt-6-luna",
   "reasoningEffort": "low",
-  "promptVersion": 92,
-  "inputHash": "a06b99e1056e2075bd87c33ddb214c468eaab8407ca37c3099f1accd6e9a6d56",
-  "execution": {
-    "durationMs": 10649,
-    "totalTokens": 11784,
-    "estimatedCostUsd": 0.00123697
-  },
-  "response": {
-    "version": 2,
-    "scope": "pokemon",
-    "title": "Hippowdon",
-    "paragraphs": [
-      "Hippowdon is a slow, durable support setter with 215 HP, 154 Defense, and 124 Special Defense. Sand Stream brings in Sandstorm, while Leftovers provides end-of-turn recovery. Stealth Rock pressures opposing switches; Yawn can discourage an opponent from staying in, and Whirlwind can force a switch. Earthquake is its sole damaging move, so its direct offensive options are limited.",
-      "Its Ground typing leaves it weak to Water, Grass, and Ice, though the supplied teammates offer useful defensive support against those attacks. Lucario Mega Z resists Ice, while Salamence Mega, Archaludon, and Meowscarada resist Water. Hippowdon’s slower Speed makes it better suited to establishing hazards or disrupting opponents than to racing faster attackers."
-    ],
-    "recommendations": [
-      {
-        "id": "ice-partner",
-        "title": "Use Lucario Mega Z as an Ice-resistant switch-in when Hippowdon is threatened by Ice attacks.",
-        "reason": "Hippowdon is weak to Ice, while Lucario Mega Z resists it, giving the team a concrete defensive option against that threat.",
-        "priority": "medium"
-      },
-      {
-        "id": "hazard-pressure",
-        "title": "Use Stealth Rock to support Hippowdon’s switching pressure from Yawn and Whirlwind.",
-        "reason": "Stealth Rock damages foes when they switch in, while Yawn discourages staying in and Whirlwind forces a switch. Together, these moves can make repeated switches costly.",
-        "priority": "medium"
-      }
-    ],
-    "source": "hosted",
-    "recommendationCandidates": [],
-    "optimizationCandidates": []
-  },
-  "currentItem": null,
-  "scenarioVersion": 3,
-  "scenario": "Five-member Kabamanda; Primarina slot empty",
-  "teamSize": 5,
-  "qualityWarnings": [],
+  "promptVersion": 93,
   "inputSummary": {
     "sets": [
       {
@@ -110,5 +73,44 @@
       }
     ],
     "selectedSlot": 0
-  }
+  },
+  "inputHash": "2ab3300d93678d5a6955863b2d04e1acfd2c3ea622dd4b8873be908f218c04d1",
+  "execution": {
+    "durationMs": 9168,
+    "totalTokens": 12153,
+    "estimatedCostUsd": 0.00122477
+  },
+  "response": {
+    "version": 2,
+    "scope": "pokemon",
+    "title": "Hippowdon",
+    "paragraphs": [
+      "Hippowdon is a slow support setter with Yawn, Stealth Rock, and Whirlwind to pressure switches and shape the pace of a battle; Earthquake is its sole attack. Its final stats are 215 HP, 154 Defense, and 124 Special Defense, with the 32 Stat Points in HP and Special Defense and only 2 in Defense. Impish is its nature, but the displayed allocation—not the nature label—shows where most of its investment lies.",
+      "Sand Stream gives the team weather pressure, but sand damage can chip Meowscarada and break the full-HP condition for Focus Sash if Meowscarada remains active through an affected end-of-turn tick. This is a timing and positioning concern, not a battle-start loss of the item: use Meowscarada before sand damage accumulates or keep it off the field during those ticks. Hippowdon is weak to Water, Grass, and Ice; the supplied profiles show Salamence Mega and Archaludon resist Water, Salamence Mega resists Grass, and Lucario Mega Z resists Ice, though resistance alone does not establish a safe switch-in."
+    ],
+    "recommendations": [
+      {
+        "id": "sand-timing",
+        "title": "Plan Meowscarada’s Focus Sash around Hippowdon’s sand turns.",
+        "reason": "Sand Stream’s residual damage can remove Meowscarada’s full-HP condition if it is active at an affected end-of-turn tick. Lead or deploy it before that chip, or preserve it off the field while sand is active; the item is not automatically broken when battle begins.",
+        "priority": "medium"
+      },
+      {
+        "id": "status-pressure",
+        "title": "Use Hippowdon to establish hazards and force choices before committing an attacker.",
+        "reason": "Stealth Rock creates switch-in pressure, while Yawn can threaten sleep after a turn and Whirlwind can force a switch. Earthquake is its only selected attack, so use the faster teammates to capitalize on the openings rather than expecting Hippowdon to supply broad attacking coverage.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "publicationRevision": 4,
+  "publicationSelection": "Reviewed prompt-v93 example response"
 }

@@ -927,6 +927,11 @@ team interpretation.
 
 ## Runtime Failure Handling
 
+The October 4 Kabamanda quality follow-up is documented in
+[AI_QUALITY_REVIEW_2026_10_04.md](AI_QUALITY_REVIEW_2026_10_04.md). It separates
+verified post-processing/input fixes from remaining semantic model failures;
+successful schema validation must not be reported as factual accuracy.
+
 New PokePilot analyses no longer generate a rules-based answer when the hosted
 request fails. Confirmed pre-provider failures (invalid request, missing
 configuration or missing sign-in/key) may show that no AI call or

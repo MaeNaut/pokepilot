@@ -81,6 +81,14 @@ const candidateApplyFailureTranslationKeys: Record<
   "load-failed": "copilot.candidateApplyLoadFailed",
 };
 
+function localizeAnalysisTerminology(text: string, locale: string) {
+  if (locale !== "ko") return text;
+  // Localize the unit without altering stored model output or numeric values.
+  return text
+    .replace(/\b(\d+)\s+Stat Points?\b/gi, "노력치 $1")
+    .replace(/\bStat Points?\b/gi, "노력치");
+}
+
 function CopilotCandidateSprite({
   candidate,
 }: {
@@ -159,16 +167,20 @@ export function CopilotAnalysisResult({
   );
   const sortedRecommendations = useMemo(
     () =>
-      [...response.recommendations].sort(
+      response.recommendations.map((recommendation) => ({
+        ...recommendation,
+        title: localizeAnalysisTerminology(recommendation.title, locale),
+        reason: localizeAnalysisTerminology(recommendation.reason, locale),
+      })).sort(
         (left, right) =>
           recommendationPriorityOrder[left.priority] -
           recommendationPriorityOrder[right.priority],
       ),
-    [response.recommendations],
+    [response.recommendations, locale],
   );
   const narrativeTexts = useMemo(
-    () => [response.title, ...response.paragraphs],
-    [response.paragraphs, response.title],
+    () => [response.title, ...response.paragraphs].map((text) => localizeAnalysisTerminology(text, locale)),
+    [response.paragraphs, response.title, locale],
   );
   const [revealOnThisMount] = useState(shouldReveal);
   const narrativeReveal = useSequentialTextReveal(
@@ -249,9 +261,9 @@ export function CopilotAnalysisResult({
       ) : null}
 
       <section className="copilot-narrative">
-        <h3>{renderNarrativeText(response.title, 0)}</h3>
+        <h3>{renderNarrativeText(narrativeTexts[0], 0)}</h3>
         <div className="copilot-narrative-copy">
-          {response.paragraphs.map((paragraph, index) => (
+          {narrativeTexts.slice(1).map((paragraph, index) => (
             <p key={`${index}-${paragraph}`}>
               {renderNarrativeText(paragraph, index + 1)}
             </p>

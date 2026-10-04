@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { normalizeShowdownSnapshot } from "./showdownData";
 
 describe("Showdown move mechanics normalization", () => {
+  it("retains weather damage and immunity rules omitted from short descriptions", () => {
+    const description = "Active Pokemon lose 1/16 HP unless Ground, Rock, or Steel type.";
+    const snapshot = normalizeShowdownSnapshot({}, {
+      sandstorm: { name: "Sandstorm", type: "Rock", category: "Status", weather: "Sandstorm",
+        shortDesc: "A sandstorm rages.", desc: description },
+    });
+    expect(snapshot.movesById.sandstorm.description).toBe(description);
+  });
   it("preserves target, priority, deterministic target stages, and field effects", () => {
     const snapshot = normalizeShowdownSnapshot({}, {
       charm: {

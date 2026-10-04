@@ -66,8 +66,17 @@ function renderHeader() {
 renderHeader();
 const helpSubpage = { "api-key": "api-key", kabamanda: "kabamanda" }[document.body.dataset.helpPage];
 if (helpSubpage) {
+  let menuTopic = null;
+  const currentTopicHash = () => document.querySelector('aside a[aria-current="location"]')?.getAttribute("href") || location.hash;
+  document.querySelector(".help-account-trigger")?.addEventListener("click", () => {
+    menuTopic = document.querySelector(".help-account-menu")?.open ? null : currentTopicHash();
+  });
   document.querySelectorAll(".help-account-choice-group a[data-locale]").forEach((link) => {
-    link.href = `/help/${helpSubpage}-${link.dataset.locale}.html`;
+    const articlePath = `/help/${helpSubpage}-${link.dataset.locale}.html`;
+    link.href = articlePath + location.hash;
+    link.addEventListener("click", () => {
+      link.href = articlePath + (menuTopic || currentTopicHash());
+    });
   });
 }
 

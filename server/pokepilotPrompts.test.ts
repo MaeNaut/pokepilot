@@ -5,6 +5,14 @@ import {
 } from "./pokepilotPrompts";
 
 describe("PokePilot matchup prompt", () => {
+  it("requires allocation, internal-conflict and bounded-comparison checks", () => {
+    expect(pokepilotCommonInstructions).toContain("separate nature effects from Stat Point allocation");
+    expect(pokepilotCommonInstructions).toContain("item requires full HP");
+    expect(pokepilotCommonInstructions).toContain("explain the other's non-Mega role");
+    expect(pokepilotCommonInstructions).toContain("Type resistance alone is not proof of a safe switch-in");
+    expect(pokepilotCommonInstructions).toContain("not globally optimal");
+    expect(getPokePilotScopeInstructions("team")).toContain("separate selections with one Mega each");
+  });
   it("requires bounded meta-threat and persistent-mechanics checks", () => {
     const instructions = getPokePilotScopeInstructions("matchup");
 

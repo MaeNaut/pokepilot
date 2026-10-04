@@ -188,6 +188,37 @@ function createContext(overrides: Partial<GeneralSetOptimizationContext> = {}) {
 }
 
 describe("general sample recommendation candidates", () => {
+  it("excludes full investment in an unused attacking stat but preserves mixed bulk", () => {
+    const context = createContext({
+      usageSet: {
+        ...usageSet,
+        spreads: [
+          { nature: "adamant", evs: { hp: 2, specialAttack: 32, speed: 32 }, usagePercent: 50 },
+          { nature: "impish", evs: { hp: 32, specialDefense: 32, defense: 2 }, usagePercent: 40 },
+        ],
+      },
+    });
+    const plan = createGeneralSetOptimizationPlan(context);
+    expect(plan.candidates.some((candidate) => candidate.evs.specialAttack === 32)).toBe(false);
+    expect(plan.candidates.some((candidate) => candidate.evs.specialDefense === 32)).toBe(true);
+  });
+
+  it("never filters the user's current spread even when its offense is mismatched", () => {
+    const context = createContext();
+    context.build.evs = { hp: 2, attack: 0, defense: 0, specialAttack: 32, specialDefense: 0, speed: 32 };
+    const plan = createGeneralSetOptimizationPlan(context);
+    expect(plan.candidates.find((candidate) => candidate.id === "set-current")?.evs.specialAttack).toBe(32);
+  });
+
+  it("keeps special investment when a selected special move can use it", () => {
+    const context = createContext();
+    context.member = { ...member, moves: [...member.moves!, round] };
+    context.build.moveIds = ["round", "icepunch", "protect", "knockoff"];
+    context.usageSet = { ...usageSet, spreads: [{ nature: "modest", evs: { hp: 2, specialAttack: 32, speed: 32 }, usagePercent: 50 }] };
+    const plan = createGeneralSetOptimizationPlan(context);
+    expect(plan.candidates.some((candidate) => candidate.evs.specialAttack === 32 && candidate.moveIds.includes("round"))).toBe(true);
+  });
+
   it("builds a bounded, diverse general pool without matchup candidates", () => {
     const plan = createGeneralSetOptimizationPlan(createContext());
 

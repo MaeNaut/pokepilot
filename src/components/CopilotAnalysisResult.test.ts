@@ -21,12 +21,16 @@ const localization: LocalizationContextValue = {
 };
 
 describe("CopilotAnalysisResult", () => {
-  it("places completed execution metrics after the analysis body", () => {
+  it.each(["en", "ko"] as const)("localizes displayed units without changing stored output and places metrics last (%s)", (locale) => {
     const response = {
       version: 2 as const, source: "hosted" as const, scope: "team" as const,
-      title: "Team analysis", paragraphs: ["The analysis body."], recommendations: [],
+      title: "Team analysis", paragraphs: ["The analysis body. 32 Stat Points, 1 Stat Point."],
+      recommendations: [{ id: "step", title: "Stat Points", reason: "2 Stat Points", priority: "high" as const }],
     };
-    const html = renderToStaticMarkup(createElement(LocalizationContext.Provider, { value: localization },
+    const html = renderToStaticMarkup(createElement(LocalizationContext.Provider, { value: {
+      ...localization, locale,
+      t: (key, variables) => getUiTranslation(locale, key, variables),
+    } },
       createElement(CopilotAnalysisResult, {
         response,
         execution: { durationMs: 12_400, totalTokens: 1_840, estimatedCostUsd: 0.0018 },
@@ -45,6 +49,11 @@ describe("CopilotAnalysisResult", () => {
     expect(html).toContain("1,840");
     expect(html).toContain("$0.0018");
     expect(html).not.toContain("Input tokens");
+    expect(html).toContain(locale === "ko" ? "노력치 32, 노력치 1" : "32 Stat Points, 1 Stat Point");
+    expect(html).toContain(locale === "ko" ? "노력치 2" : "2 Stat Points");
+    if (locale === "ko") expect(html).not.toContain("Stat Point");
+    expect(response.paragraphs[0]).toBe("The analysis body. 32 Stat Points, 1 Stat Point.");
+    expect(response.recommendations[0].reason).toBe("2 Stat Points");
   });
   it("renders a verified matchup replacement as an actionable Pokemon card", () => {
     const candidate = {

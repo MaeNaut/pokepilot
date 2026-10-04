@@ -367,7 +367,6 @@ function repairImpossibleActiveRosterNarrative(
 
 const optimizationOutcomePattern = new RegExp(
   [
-    String.raw`\d+(?:\.\d+)?\s*%`,
     String.raw`(?:확정\s*)?\d+(?:\s*[-~–]\s*\d+)?\s*타`,
     String.raw`\b(?:OHKO|\d+\s*HKO)\b`,
     String.raw`\b(?:guaranteed|possible)\s+(?:(?:one|two|three|four|five|six|seven|eight|nine|ten)[- ]?)?(?:hit|hits|HKO)\b`,
@@ -376,6 +375,18 @@ const optimizationOutcomePattern = new RegExp(
   ].join("|"),
   "iu",
 );
+
+function hasOptimizationOutcome(text: string) {
+  if (optimizationOutcomePattern.test(text)) return true;
+  // A usage percentage describes the sample source, not a damage benchmark.
+  const sentences = text.split(/(?<=[.!?])\s+/u);
+  return sentences.some((sentence) =>
+    /\d+(?:\.\d+)?\s*%/u.test(sentence) && (
+      !/\busage\b|\bpopularity\b|\bdistribution\b|사용률|채용률|분포/iu.test(sentence) ||
+      /\bdamage\b|\bsurviv\w*\b|\bKO\b|피해|데미지|대미지|견딜|견디|생존/iu.test(sentence)
+    ),
+  );
+}
 
 function leaksOptimizationCandidateId(
   text: string,
@@ -484,25 +495,22 @@ function sanitizeOptimizationNarrative(
     : "Use the verified matchup option.";
   // Sentence deletion can leave a conclusion without its premise or only a drawback.
   // Replace the complete affected block with calculator-grounded prose instead.
-  const hasRepeatedOutcomes = analysis.paragraphs.some((paragraph) => optimizationOutcomePattern.test(paragraph));
   return {
     ...analysis,
-    paragraphs: hasRepeatedOutcomes
-      ? [fallbackParagraph]
-      : analysis.paragraphs.map((paragraph) =>
-          leaksOptimizationCandidateId(paragraph, request)
+    paragraphs: [...new Set(analysis.paragraphs.map((paragraph) =>
+          hasOptimizationOutcome(paragraph) || leaksOptimizationCandidateId(paragraph, request)
             ? fallbackParagraph
             : paragraph,
-        ),
+        ))],
     recommendations: analysis.recommendations.map((recommendation) => ({
       ...recommendation,
       title:
-        optimizationOutcomePattern.test(recommendation.title) ||
+        hasOptimizationOutcome(recommendation.title) ||
         leaksOptimizationCandidateId(recommendation.title, request)
           ? fallbackTitle
           : recommendation.title,
       reason:
-        optimizationOutcomePattern.test(recommendation.reason) ||
+        hasOptimizationOutcome(recommendation.reason) ||
         leaksOptimizationCandidateId(recommendation.reason, request)
           ? verifiedOptimizationReason(recommendation.id, request)
           : recommendation.reason,
@@ -567,13 +575,13 @@ function hasOptimizationNarrativeRepair(
 ) {
   return request.scope === "optimization" && (
     analysis.paragraphs.some((paragraph) =>
-      optimizationOutcomePattern.test(paragraph) ||
+      hasOptimizationOutcome(paragraph) ||
       leaksOptimizationCandidateId(paragraph, request),
     ) ||
     analysis.recommendations.some(
       (recommendation) =>
-        optimizationOutcomePattern.test(recommendation.title) ||
-        optimizationOutcomePattern.test(recommendation.reason) ||
+        hasOptimizationOutcome(recommendation.title) ||
+        hasOptimizationOutcome(recommendation.reason) ||
         leaksOptimizationCandidateId(recommendation.title, request) ||
         leaksOptimizationCandidateId(recommendation.reason, request),
     )

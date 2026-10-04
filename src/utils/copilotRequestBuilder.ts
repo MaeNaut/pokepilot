@@ -19,9 +19,41 @@ import { createPokemonDefensiveProfile, type TeamDiagnosticsResult, type TeamRol
 function localizeRecommendationCandidates(
   locale: Locale,
   candidates: CopilotRecommendationCandidateSnapshot[],
+  pokemonIndex: PokemonIndexEntry[],
+  showdownData: ShowdownDataSnapshot | null | undefined,
+  sets: CopilotSetSnapshot[],
+  abilityIndex: NonNullable<CreateCopilotRequestInput["abilityIndex"]>,
 ) {
+  const pokemonName = (id: string, fallback: string) => {
+    const entry = pokemonIndex.find((pokemon) => normalizeShowdownId(pokemon.name) === normalizeShowdownId(id));
+    return translatePokemonName(locale, {
+      id,
+      fallback: entry ? getPokemonNameFallback(entry, true) :
+        showdownData?.speciesById[normalizeShowdownId(id)]?.name ??
+        (/[\uac00-\ud7a3]/u.test(fallback) ? formatIdLabel(id) : fallback),
+      speciesId: entry?.speciesKey,
+      formKind: entry?.formKind,
+      formLabel: entry?.formLabel,
+      includeForm: true,
+    });
+  };
   return candidates.map((candidate) => ({
     ...candidate,
+    displayName: pokemonName(candidate.pokemonId, candidate.displayName),
+    typeDisplayNames: candidate.types.map((type) => localizeType(locale, type)),
+    abilities: candidate.abilities.map((ability) => ({
+      ...ability,
+      displayName: translateGameName(locale, "abilities", ability.id,
+        abilityIndex.find((entry) => normalizeShowdownId(entry.id) === normalizeShowdownId(ability.id))?.name ??
+          (/[\uac00-\ud7a3]/u.test(ability.displayName) ? formatIdLabel(ability.id) : ability.displayName)),
+    })),
+    target: {
+      ...candidate.target,
+      currentDisplayName: candidate.target.currentPokemonId
+        ? sets.find((set) => set.slotIndex === candidate.target.slotIndex)?.displayName ??
+          pokemonName(candidate.target.currentPokemonId, candidate.target.currentDisplayName ?? candidate.target.currentPokemonId)
+        : null,
+    },
     commonSet: candidate.commonSet
       ? {
           ...candidate.commonSet,
@@ -31,7 +63,8 @@ function localizeRecommendationCandidates(
               locale,
               "moves",
               move.id,
-              move.displayName,
+              showdownData?.movesById[normalizeShowdownId(move.id)]?.name ??
+                (/[\uac00-\ud7a3]/u.test(move.displayName) ? formatIdLabel(move.id) : move.displayName),
             ),
           })),
         }
@@ -382,6 +415,14 @@ export function createCopilotAnalysisRequest({
   const abilityById = new Map(
     abilityIndex.map((ability) => [normalizeShowdownId(ability.id), ability]),
   );
+  const abilityEffect = (ability: string) => {
+    const id = normalizeShowdownId(ability);
+    const effect = abilityById.get(id)?.effect;
+    // The setter description only says that weather starts. Supply the canonical
+    // weather rules as well, without assigning the weather move to this Pokemon.
+    const weather = id === "sandstream" ? showdownData?.movesById.sandstorm?.description : undefined;
+    return weather ? [effect, `Weather rules: ${weather}`].filter(Boolean).join(" ") : effect;
+  };
   const sets = team.flatMap((member, slotIndex) => {
     if (!member) {
       return [];
@@ -446,7 +487,7 @@ export function createCopilotAnalysisRequest({
               {
                 id: ability,
                 displayName: abilityDisplayName,
-                effect: abilityById.get(normalizeShowdownId(ability))?.effect,
+                effect: abilityEffect(ability),
               },
             ]
           : []),
@@ -455,9 +496,7 @@ export function createCopilotAnalysisRequest({
               {
                 id: megaEvolution.ability,
                 displayName: megaEvolution.abilityDisplayName,
-                effect: abilityById.get(
-                  normalizeShowdownId(megaEvolution.ability),
-                )?.effect,
+                effect: abilityEffect(megaEvolution.ability),
               },
             ]
           : []),
@@ -628,6 +667,10 @@ export function createCopilotAnalysisRequest({
             scope === "matchup"
               ? threatReplacementCandidates.map(({ candidate }) => candidate)
               : recommendationCandidates,
+            pokemonIndex,
+            showdownData,
+            sets,
+            abilityIndex,
           )
         : [],
     optimization,
