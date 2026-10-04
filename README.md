@@ -119,6 +119,8 @@ Usage updates do not change the app's supported regulation or battle rules.
 - [Account authentication](./docs/account-auth.md)
 - [Personal API keys and model selection](./docs/personal-api-key.md)
 - [API key setup guide](https://pokepilot.app/help/api-key-en.html) / [한국어](https://pokepilot.app/help/api-key-ko.html)
+- [PokePilot analysis examples](https://pokepilot.app/help/kabamanda-en.html) / [한국어](https://pokepilot.app/help/kabamanda-ko.html): real recorded results, screenshots, and a single-input Luna low/medium comparison.
+- [AdSense readiness and review checklist](./docs/ADSENSE_READINESS.md)
 - [Operational metrics](./docs/OPERATIONAL_METRICS.md)
 - [Cloudflare deployment and migration record](./docs/CLOUDFLARE_MIGRATION.md)
 - [Deployment checklist](./docs/DEPLOYMENT_CHECKLIST.md)

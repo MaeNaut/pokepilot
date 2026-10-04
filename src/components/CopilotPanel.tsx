@@ -458,6 +458,9 @@ export function CopilotPanel({
             <FontAwesomeIcon icon={faLock} aria-hidden="true" />
             <strong>{keyRequiredMessage}</strong>
             <span>{locale === "ko" ? "우측 상단 계정 설정에서 키를 등록하면 분석을 사용할 수 있습니다." : "Add your key in account settings at the top right to use analysis."}</span>
+            <a className="copilot-example-link" href={`/help/kabamanda-${locale}.html`} target="_blank" rel="noopener noreferrer">
+              {locale === "ko" ? "PokePilot 분석 예시 보기 (키 없이)" : "See PokePilot analysis examples (no key needed)"}
+            </a>
           </div>
         ) : scopeRequirement ? (
           <div className="copilot-empty-state is-requirement">
@@ -603,6 +606,9 @@ export function CopilotPanel({
             >
               {t("account.signIn")}
             </button>
+            <a className="copilot-example-link" href={`/help/kabamanda-${locale}.html`} target="_blank" rel="noopener noreferrer">
+              {locale === "ko" ? "PokePilot 분석 예시 보기 (로그인 없이)" : "See PokePilot analysis examples (no sign-in)"}
+            </a>
           </div>
         </div>
       ) : null}

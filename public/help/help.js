@@ -64,9 +64,10 @@ function renderHeader() {
 }
 
 renderHeader();
-if (document.body.dataset.helpPage === "api-key") {
+const helpSubpage = { "api-key": "api-key", kabamanda: "kabamanda" }[document.body.dataset.helpPage];
+if (helpSubpage) {
   document.querySelectorAll(".help-account-choice-group a[data-locale]").forEach((link) => {
-    link.href = `/help/api-key-${link.dataset.locale}.html`;
+    link.href = `/help/${helpSubpage}-${link.dataset.locale}.html`;
   });
 }
 

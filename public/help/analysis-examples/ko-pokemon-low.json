@@ -1,0 +1,114 @@
+{
+  "id": "ko-pokemon-low",
+  "generatedAt": "2026-10-04T06:32:22.514Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "promptVersion": 92,
+  "inputHash": "a0fe5c6b6e73526c62f8a35d38e6df0557b41c5b965b13ca9fa36456a2470281",
+  "execution": {
+    "durationMs": 10857,
+    "totalTokens": 12099,
+    "estimatedCostUsd": 0.0016954749999999999
+  },
+  "response": {
+    "version": 2,
+    "scope": "pokemon",
+    "title": "하마돈",
+    "paragraphs": [
+      "하마돈은 체력 215, 방어 154, 특수방어 124의 내구와 먹다남은음식 회복을 바탕으로 전장에 오래 머물며 압박을 누적하는 땅 타입 지원형입니다. 모래날림으로 교대 시 모래바람을 일으키고, 스텔스록으로 상대의 교대를 부담스럽게 만들 수 있습니다. 장난꾸러기 성격과 스탯 포인트 배분은 물리 방어에 치우쳐 있으며, 공격 기술은 지진 하나뿐이므로 직접 공격보다 보조 행동과 교대 압박에 무게가 실립니다.",
+      "하품은 상대에게 다음 턴 수면을 유도해 교대나 행동 선택을 압박하고, 날려버리기는 우선도 -6으로 상대를 강제 교대시키므로 스텔스록과 함께 쓸 때 누적 압박을 강화할 수 있습니다. 다만 물·풀·얼음 공격에 약하며, 특히 얼음 약점은 팀의 메가보만다와 마스카나에도 겹칩니다. 메가 진화가 없는 하마돈은 자체적으로 속도 조절이나 회복 기술을 갖추지 않았으므로, 상대의 공격을 받아내는 상황과 스텔스록을 깔 기회를 신중히 골라야 합니다."
+    ],
+    "recommendations": [
+      {
+        "id": "ice-cover",
+        "title": "얼음 공격을 받기 전 메가루카리오Z를 교대 선택지로 고려하십시오.",
+        "reason": "하마돈은 얼음 타입에 약하지만, 메가루카리오Z는 얼음 공격을 반감합니다. 따라서 하마돈이 얼음 공격에 노출될 가능성이 큰 대면에서는 메가루카리오Z로 교대하는 방안을 검토할 수 있습니다.",
+        "priority": "medium"
+      },
+      {
+        "id": "support-sequence",
+        "title": "하품과 스텔스록으로 교대를 유도한 뒤 날려버리기로 압박을 이어가십시오.",
+        "reason": "하품은 상대에게 다음 턴 수면 압박을 주고, 스텔스록은 상대가 교대할 때 피해를 줍니다. 날려버리기는 강제 교대 효과가 있지만 우선도가 -6이므로, 상대의 공격을 감수해도 되는 상황에서 사용하고 스텔스록이 설치된 뒤 교대 압박을 노리십시오.",
+        "priority": "high"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 0
+  }
+}

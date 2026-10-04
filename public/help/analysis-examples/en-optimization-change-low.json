@@ -1,0 +1,800 @@
+{
+  "id": "en-optimization-change-low",
+  "generatedAt": "2026-10-04T06:34:58.139Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "promptVersion": 92,
+  "inputHash": "0191bc1ea954df179f66dc821ea6bc2a99e4e7014f41e3ea626b484943b983ff",
+  "execution": {
+    "durationMs": 4757,
+    "totalTokens": 13875,
+    "estimatedCostUsd": 0.00124758
+  },
+  "response": {
+    "version": 2,
+    "scope": "optimization",
+    "title": "Salamence Mega",
+    "paragraphs": [
+      "The current sample and observed usage alternatives were compared against this Pokemon's role on the team."
+    ],
+    "recommendations": [
+      {
+        "id": "usage-standard",
+        "title": "Use the Adamant standard sample while preserving the selected moves.",
+        "reason": "It improves the final Attack and Speed values while retaining Dragon Dance, Roost, Double-Edge, and Earthquake, so it supports the existing physical setup role without giving up a distinct move responsibility.",
+        "priority": "high"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": [
+      {
+        "id": "usage-standard",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "standard",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 1,
+          "usagePercent": 14.5,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-3",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dracometeor"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 3,
+            "currentMoveId": "dragondance",
+            "currentMoveDisplayName": "Dragon Dance",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "Draco Meteor",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-0",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "dracometeor",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 0,
+            "currentMoveId": "earthquake",
+            "currentMoveDisplayName": "Earthquake",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "Draco Meteor",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-1",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "dracometeor",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 1,
+            "currentMoveId": "doubleedge",
+            "currentMoveDisplayName": "Double-Edge",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "Draco Meteor",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-2",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "dracometeor",
+          "dragondance"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 2,
+            "currentMoveId": "roost",
+            "currentMoveDisplayName": "Roost",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "Draco Meteor",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-spread-2",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 172,
+          "attack": 216,
+          "defense": 150,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 2,
+          "usagePercent": 12.6,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-spread-3",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "specialAttack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 0,
+          "defense": 1,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 181,
+          "defense": 151,
+          "specialAttack": 154,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": 0,
+          "defense": 1,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 3,
+          "usagePercent": 4.8,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-spread-4",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "specialAttack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 172,
+          "attack": 181,
+          "defense": 150,
+          "specialAttack": 154,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 4,
+          "usagePercent": 3.9,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-spread-5",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 21,
+          "attack": 15,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 30
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 191,
+          "attack": 198,
+          "defense": 150,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 170
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 21,
+          "attack": 15,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 30
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 2.8,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-spread-6",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [],
+        "natureId": "adamant",
+        "natureDisplayName": "Adamant",
+        "evs": {
+          "hp": 27,
+          "attack": 25,
+          "defense": 5,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 9
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 197,
+          "attack": 209,
+          "defense": 155,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 149
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 27,
+          "attack": 25,
+          "defense": 5,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 9
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 6,
+          "usagePercent": 2.6,
+          "roleStats": [
+            "attack"
+          ],
+          "reducedRoleStats": []
+        }
+      }
+    ]
+  },
+  "currentItem": "Salamencite",
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Salamence Hardy with zero investment for training demonstration",
+  "teamSize": 5,
+  "qualityWarnings": [
+    "content-repaired"
+  ],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Hardy",
+        "evs": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 1
+  }
+}

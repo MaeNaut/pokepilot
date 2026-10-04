@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
+import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 
 const publicRoot = new URL("../public/", import.meta.url);
@@ -10,6 +11,7 @@ describe.each(["ko", "en"])("API key guide %s", (locale) => {
     expect(html).toContain(`<html lang="${locale}">`);
     expect(html).toContain('data-help-page="api-key"');
     expect(html).toContain("/v1/responses");
+    expect(sitemap).toContain(`https://pokepilot.app/help/api-key-${locale}.html`);
     expect(html).not.toContain("<input");
     expect([...html.matchAll(/<section id=/g)]).toHaveLength(5);
     for (const match of html.matchAll(/href="#([^"]+)"/g)) {
@@ -69,5 +71,31 @@ describe("privacy notice", () => {
     expect(html).toContain("확인된 실패 호출");
     expect(html).not.toContain("may optionally register");
     expect(html).not.toContain("선택적으로 등록");
+  });
+});
+
+it("offers public navigation to JavaScript-disabled visitors without replacing the interactive app", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  expect(html).toContain('<div id="root"></div>');
+  const fallback = html.match(/<noscript>([\s\S]*?)<\/noscript>/)?.[1];
+  expect(fallback).toContain("/help/kabamanda-ko.html");
+  expect(fallback).toContain("/help/kabamanda-en.html");
+});
+
+describe.each(["api-key", "kabamanda"])("%s article preferences", (page) => {
+  it.each(["ko", "en"])("preserves the article when changing language from %s", (locale) => {
+    const dom = new JSDOM(readFileSync(new URL(`help/${page}-${locale}.html`, publicRoot), "utf8"), {
+      url: `https://pokepilot.app/help/${page}-${locale}.html`, runScripts: "outside-only", pretendToBeVisual: true,
+    });
+    dom.window.matchMedia = () => ({ matches: false, addEventListener() {} }) as unknown as MediaQueryList;
+    dom.window.eval(readFileSync(new URL("help/help.js", publicRoot), "utf8"));
+    for (const language of ["ko", "en"]) {
+      expect(dom.window.document.querySelector(`a[data-locale="${language}"]`)?.getAttribute("href"))
+        .toBe(`/help/${page}-${language}.html`);
+    }
+    dom.window.document.querySelector<HTMLButtonElement>('[data-theme-value="dark"]')!.click();
+    expect(dom.window.document.documentElement.dataset.theme).toBe("dark");
+    expect(dom.window.localStorage.getItem("pokepilot:theme")).toBe("dark");
+    dom.window.close();
   });
 });

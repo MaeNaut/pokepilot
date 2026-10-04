@@ -1,0 +1,115 @@
+{
+  "id": "en-team-low",
+  "generatedAt": "2026-10-04T06:33:55.219Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "promptVersion": 92,
+  "inputHash": "fda90fa0647144c35441c61e04e527bcad5984b253624b017c19e3d0b91577bd",
+  "execution": {
+    "durationMs": 9713,
+    "totalTokens": 13160,
+    "estimatedCostUsd": 0.0012595500000000001
+  },
+  "response": {
+    "version": 2,
+    "scope": "team",
+    "title": "Kabamanda",
+    "paragraphs": [
+      "Kabamanda is a flexible singles roster built around entry hazards, forced switches, and powerful setup attackers. Hippowdon can establish Stealth Rock, pressure foes with Yawn, and use Whirlwind to disrupt attempts to settle in; Meowscarada adds Toxic Spikes, while Archaludon offers a second Stealth Rock user. Choose one hazard setter for a given three-Pokémon selection rather than spending too many turns setting hazards when immediate pressure is needed.",
+      "The two Mega options are Salamence Mega and Lucario Mega Z, and only one can be activated in a battle. Salamence Mega offers a physical Dragon Dance route with Double-Edge, while Lucario Mega Z supplies a special Nasty Plot route and broad attacking coverage. They share the available hazard and disruption support, so treat them as matchup-dependent ace choices rather than separate field modes. Their existing Mega-form sets are valid as supplied.",
+      "Ice is a notable pressure point: it threatens Hippowdon, Salamence Mega, and Meowscarada, while Lucario Mega Z resists it. Fighting also pressures three members, and Salamence Mega is the roster’s supplied resistance to that type. The roster has five filled slots, so the final slot remains open; without details for that slot or a specific matchup, its best role cannot be determined."
+    ],
+    "recommendations": [
+      {
+        "id": "hazard-core",
+        "title": "Use Hippowdon as the opening hazard setter when its matchup is favorable.",
+        "reason": "A three-Pokémon selection of Hippowdon, Salamence Mega, and Lucario Mega Z gives Hippowdon Stealth Rock, Yawn, and Whirlwind support while preserving either attacker for the endgame. Bring Salamence Mega or Lucario Mega Z as the chosen Mega ace, not both as simultaneous activation plans.",
+        "priority": "high"
+      },
+      {
+        "id": "ace-branch",
+        "title": "Choose the Mega ace to fit the opposing team and its likely answers.",
+        "reason": "Select Salamence Mega for a physical Dragon Dance win condition, or Lucario Mega Z when its special coverage and Ice resistance are more useful. A selection of Hippowdon, Lucario Mega Z, and Meowscarada trades Salamence Mega's setup option for Toxic Spikes and additional immediate physical pressure.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 0
+  }
+}

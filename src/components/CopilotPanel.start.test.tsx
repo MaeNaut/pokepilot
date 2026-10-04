@@ -68,6 +68,19 @@ it("waits for team save before preparation/AI and prevents duplicate submissions
   expect(state.analyze).toHaveBeenCalledWith({ scope: "pokemon", sets: [] }, { teamId: "new-team" });
 });
 
+it.each(["guest", "no-key"])("offers a public example without starting analysis: %s", async (kind) => {
+  const app = await mount();
+  app.props.account = { ...app.props.account, ...(kind === "guest" ? { status: "guest", user: null } : { hasPersonalApiKey: false }) } as Props["account"];
+  await app.render();
+  const link = app.container.querySelector<HTMLAnchorElement>('a[href="/help/kabamanda-en.html"]');
+  expect(link).not.toBeNull();
+  expect(link?.target).toBe("_blank");
+  expect(link?.closest("[inert]")).toBeNull();
+  expect(state.save).not.toHaveBeenCalled();
+  expect(state.prepare).not.toHaveBeenCalled();
+  expect(state.analyze).not.toHaveBeenCalled();
+});
+
 it.each(["failed", "conflict", "auth"])("does not call AI or preparation when saving/auth is blocked: %s", async (kind) => {
   if (kind === "auth") state.authenticate.mockResolvedValue(false);
   else state.save.mockResolvedValue(null);

@@ -1,0 +1,18 @@
+# The app lives at /; preserve query strings used by authentication.
+/ /index.html 200
+
+# Keep previously served extensionless document URLs working.
+/privacy /privacy.html 301
+/privacy/ /privacy.html 301
+/help/en /help/en.html 301
+/help/en/ /help/en.html 301
+/help/ko /help/ko.html 301
+/help/ko/ /help/ko.html 301
+/help/api-key-en /help/api-key-en.html 301
+/help/api-key-en/ /help/api-key-en.html 301
+/help/api-key-ko /help/api-key-ko.html 301
+/help/api-key-ko/ /help/api-key-ko.html 301
+/help/kabamanda-en /help/kabamanda-en.html 301
+/help/kabamanda-en/ /help/kabamanda-en.html 301
+/help/kabamanda-ko /help/kabamanda-ko.html 301
+/help/kabamanda-ko/ /help/kabamanda-ko.html 301

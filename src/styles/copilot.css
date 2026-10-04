@@ -199,6 +199,23 @@
   opacity: 0.7;
 }
 
+.copilot-example-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-height: 44px;
+  color: var(--copilot-copy-muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  text-underline-offset: 3px;
+}
+
+.copilot-example-link:focus-visible {
+  outline: 2px solid var(--copilot-accent);
+  outline-offset: 3px;
+}
+
 .copilot-panel.is-account-locked.is-login-gate-revealed .copilot-panel-content,
 .copilot-panel.is-account-locked:has(.copilot-login-gate:focus-within)
   .copilot-panel-content {

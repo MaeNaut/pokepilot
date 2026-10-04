@@ -112,6 +112,10 @@ this repository.
   transfer to production; register a key on the production site to test it there.
 - Verify the privacy notice, help pages, `ads.txt`, `robots.txt`, and sitemap at
   the production domain.
+- Verify both public M-C example pages, their team-text download, and guest/no-key
+  links. Recheck published calculations after mechanics changes. Follow the
+  [AdSense readiness checklist](./ADSENSE_READINESS.md) before requesting review;
+  a successful deployment is not advertising approval.
 - Review Cloudflare Worker errors and Upstash/OpenAI dashboards without exposing
   team contents, identifiers, or secrets in logs.
 
