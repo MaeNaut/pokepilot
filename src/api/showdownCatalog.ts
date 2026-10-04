@@ -45,6 +45,8 @@ let itemCatalogPromise: Promise<ItemCatalog> | null = null;
 let abilityCatalogPromise: Promise<Map<string, PokemonAbility>> | null = null;
 
 function getItemSpriteUrl(assetId: string) {
+  // PokeAPI has no gen9 Garchompite image; avoid a failed request before fallback.
+  if (assetId === "garchompite") return getItemFallbackSpriteUrl(assetId);
   return `${POKEAPI_GEN9_ITEM_SPRITES_URL}/${assetId}.png`;
 }
 

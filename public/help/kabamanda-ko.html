@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PokePilot 분석 예시 | PokePilot</title>
+  <meta name="description" content="카바만다 팀으로 살펴보는 PokePilot의 실제 포켓몬·팀·추천·샘플 분석 화면과 Luna low·medium 비교입니다. 로그인이나 API 키 없이 결과를 확인할 수 있습니다.">
+  <link rel="canonical" href="https://pokepilot.app/help/kabamanda-ko.html">
+  <link rel="alternate" hreflang="ko" href="https://pokepilot.app/help/kabamanda-ko.html">
+  <link rel="alternate" hreflang="en" href="https://pokepilot.app/help/kabamanda-en.html">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/help/help.css">
+  <link rel="stylesheet" href="/help/team-example.css">
+  <script src="/help/help.js" defer=""></script>
+<script src="/help/analysis-images.js" defer=""></script></head>
+<body data-help-page="kabamanda">
+  <a class="skip" href="#content">본문으로 이동</a>
+  <header><a href="/"><img src="/favicon.svg" width="22" height="22" alt=""> PokePilot</a></header>
+  <div class="layout">
+    <aside><details open=""><summary>목차</summary><nav aria-label="분석 예시 목차"><ol><li><a href="#overview">예시의 입력과 범위</a></li>
+<li><a href="#pokemon">포켓몬 분석</a></li>
+<li><a href="#team">팀 분석</a></li>
+<li><a href="#recommendation">포켓몬 추천</a></li>
+<li><a href="#optimization">샘플 분석</a></li>
+<li><a href="#comparison">Luna low와 medium</a></li>
+<li><a href="#input">팀 구성과 계산 검토</a></li>
+<li><a href="#use">직접 사용하기와 출처</a></li></ol></nav></details></aside>
+    <main id="content">
+ <a class="article-back" href="/help/ko.html">도움말</a>
+ <h1>PokePilot 분석 예시</h1><p class="intro">개인 API 키를 등록하기 전에, 어떤 결과를 받는지 먼저 확인합니다. 누리레느 자리를 비운 카바만다 5마리 팀으로 실행한 포켓몬·팀·추천·샘플 분석과 Luna low·medium 비교입니다. 읽는 데 로그인이나 API 키가 필요하지 않으며, 분석 비용도 발생하지 않습니다.</p>
+ <p class="article-meta">PokePilot · <time datetime="2026-10-04">2026-10-04</time> · M-C / Singles / GPT 6 Luna</p>
+ <section id="overview"><h2>1. 예시의 입력과 범위</h2><p>모든 분석의 기본 입력은 아래 5마리 팀입니다. 하마돈, 메가보만다, 메가루카리오Z, 브리두라스, 마스카나를 넣고 여섯 번째 자리는 비웠습니다. 포켓몬 분석은 하마돈, 샘플 분석은 메가보만다를 선택했습니다. 샘플 변경 사례만 보만다의 성격·노력치를 미설정 상태로 바꿨으며, 멤버와 기술·도구는 같습니다.</p><figure class="example-team-figure"><a href="/help/analysis-examples/ko-team-input.png" data-analysis-image="" target="_blank" rel="noopener noreferrer" aria-label="전체 화면 확대"><img src="/help/analysis-examples/ko-team-input.png" width="1920" height="1080" alt="PokePilot · team-input · 누리레느 제외 5마리" loading="lazy" decoding="async"></a><figcaption>실제 분석 입력: 5마리 + 빈 슬롯 1개. 위 이미지는 PokePilot 팀 이미지 기능으로 만들었습니다. 선택하면 확대할 수 있습니다.</figcaption></figure><p class="example-team-source">팀 구성의 출발점은 <a href="https://game8.jp/pokemon-champions/779319" target="_blank" rel="noopener noreferrer">Game8의 카바만다 공개 구성</a>입니다. 원문의 6마리 구성에서 누리레느를 제외해 추천 기능을 보여주는 입력으로 만들었습니다. 게임 내 폼·특성 표기와 이 페이지의 해설은 PokePilot 기준이며, 원문 그대로의 복제나 특정 대회 우승 팀으로 소개하는 것은 아닙니다.</p><p><a href="/help/kabamanda-five-team.txt" download="">분석 입력 5마리 팀 내려받기</a></p><p class="article-meta">2026-10-04(미국 동부 시간), M-C 싱글, GPT 6 Luna, 프롬프트 v92로 실행했습니다. 한국어와 영어는 별도로 호출한 실제 결과이며 번역본이 아닙니다. 각 조건의 첫 성공 응답을 사용하고 앱의 검증·보정 처리를 그대로 적용했습니다. 화면은 기록된 결과를 실제 앱 구성요소로 다시 표시해 캡처했습니다. 결과를 더 좋아 보이게 고쳐 쓰지 않았습니다.</p><p class="article-meta">분석 이미지의 아래쪽 음영은 이어지는 내용이 있다는 표시입니다. 전체 펼치기, 확대 보기, 텍스트 전문 읽기를 제공합니다.</p></section>
+ <section id="pokemon"><h2>2. 포켓몬 분석</h2><div class="analysis-showcase"><div class="analysis-showcase-copy"><p>같은 5마리 팀에서 하마돈을 선택했습니다. 현재 기술·특성·도구·배분을 바탕으로 역할과 주의할 점을 설명합니다.</p></div><figure class="analysis-figure"><a href="/help/analysis-examples/ko-pokemon-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer" aria-label="전체 화면 확대"><img src="/help/analysis-examples/ko-pokemon-low.png" width="1040" height="1788" alt="PokePilot · pokemon-low · 누리레느 제외 5마리" loading="lazy" decoding="async"></a><figcaption><a href="/help/analysis-examples/ko-pokemon-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer">전체 화면 확대</a></figcaption></figure></div><details class="example-transcript"><summary>결과 전문 읽기</summary><div><h3>하마돈</h3><p>하마돈은 체력 215, 방어 154, 특수방어 124의 내구와 먹다남은음식 회복을 바탕으로 전장에 오래 머물며 압박을 누적하는 땅 타입 지원형입니다. 모래날림으로 교대 시 모래바람을 일으키고, 스텔스록으로 상대의 교대를 부담스럽게 만들 수 있습니다. 장난꾸러기 성격과 스탯 포인트 배분은 물리 방어에 치우쳐 있으며, 공격 기술은 지진 하나뿐이므로 직접 공격보다 보조 행동과 교대 압박에 무게가 실립니다.</p><p>하품은 상대에게 다음 턴 수면을 유도해 교대나 행동 선택을 압박하고, 날려버리기는 우선도 -6으로 상대를 강제 교대시키므로 스텔스록과 함께 쓸 때 누적 압박을 강화할 수 있습니다. 다만 물·풀·얼음 공격에 약하며, 특히 얼음 약점은 팀의 메가보만다와 마스카나에도 겹칩니다. 메가 진화가 없는 하마돈은 자체적으로 속도 조절이나 회복 기술을 갖추지 않았으므로, 상대의 공격을 받아내는 상황과 스텔스록을 깔 기회를 신중히 골라야 합니다.</p><h4>얼음 공격을 받기 전 메가루카리오Z를 교대 선택지로 고려하십시오.</h4><p>하마돈은 얼음 타입에 약하지만, 메가루카리오Z는 얼음 공격을 반감합니다. 따라서 하마돈이 얼음 공격에 노출될 가능성이 큰 대면에서는 메가루카리오Z로 교대하는 방안을 검토할 수 있습니다.</p><h4>하품과 스텔스록으로 교대를 유도한 뒤 날려버리기로 압박을 이어가십시오.</h4><p>하품은 상대에게 다음 턴 수면 압박을 주고, 스텔스록은 상대가 교대할 때 피해를 줍니다. 날려버리기는 강제 교대 효과가 있지만 우선도가 -6이므로, 상대의 공격을 감수해도 되는 상황에서 사용하고 스텔스록이 설치된 뒤 교대 압박을 노리십시오.</p><dl class="example-metrics"><div><dt>실측 시간</dt><dd>10.9s</dd></div><div><dt>총 토큰</dt><dd>12,099</dd></div><div><dt>추정 비용</dt><dd>$0.00170</dd></div></dl></div></details><p class="example-review-note">검토 주석: 원문의 “스탯 포인트 배분은 물리 방어에 치우쳐”라는 설명은 입력과 맞지 않습니다. 실제 배분은 HP 32·방어 2·특수방어 32이고, 장난꾸러기 성격만 방어를 올립니다. 성격과 노력치 배분을 구분해 읽어야 합니다.</p></section>
+<section id="team"><h2>3. 팀 분석</h2><div class="analysis-showcase"><div class="analysis-showcase-copy"><p>누리레느가 없는 5마리 상태에서 팀 운영과 3마리 선출을 검토합니다. 여섯 번째 멤버를 넣은 완성 팀의 분석과는 구분합니다.</p></div><figure class="analysis-figure"><a href="/help/analysis-examples/ko-team-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer" aria-label="전체 화면 확대"><img src="/help/analysis-examples/ko-team-low.png" width="1040" height="2112" alt="PokePilot · team-low · 누리레느 제외 5마리" loading="lazy" decoding="async"></a><figcaption><a href="/help/analysis-examples/ko-team-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer">전체 화면 확대</a></figcaption></figure></div><details class="example-transcript"><summary>결과 전문 읽기</summary><div><h3>Kabamanda</h3><p>이 팀은 하마돈의 하품과 스텔스록으로 교체를 압박한 뒤, 선택한 공격수로 빈틈을 공략하는 싱글스 구성이 적합합니다. 하마돈은 체력 215, 방어 154이며 먹다남은음식으로 턴마다 회복하므로, 상대를 흔드는 지원과 스텔스록 설치를 맡길 수 있습니다. 다만 날려버리기는 우선도 -6이므로 상대의 행동을 먼저 막는 기술로 보아서는 안 됩니다.</p><p>메가 진화 선택지는 메가보만다와 메가루카리오Z이며, 한 전투에서 둘 중 하나만 메가 진화시킬 수 있습니다. 메가보만다는 공격 216, 스피드 172의 물리형으로 용의춤과 날개쉬기를 갖춰 강화 후 공략을 노릴 수 있고, 메가루카리오Z는 특수공격 216, 스피드 223으로 악의파동·파동탄·러스터캐논을 활용하는 별도 공격 선택지입니다. 두 선택지는 하마돈과 함께 편성할 수 있으므로 상대에 맞춰 세 명을 고르고, 그 전투에서 사용할 메가 진화만 정하면 됩니다.</p><p>현재 다섯 포켓몬 중 싱글스에 가져갈 수 있는 수는 세 마리이므로, 남은 두 자리는 상대에 따라 바꾸는 편이 좋습니다. 얼음 기술은 메가보만다에게 4배 약점이고 하마돈과 마스카나에게도 약점으로 작용하지만, 메가루카리오Z는 얼음 타입 공격을 반감합니다. 격투 기술은 메가루카리오Z·브리두라스·마스카나를 압박하며, 이 중 메가보만다가 반감으로 받아낼 수 있습니다. 따라서 공격수 선택뿐 아니라 상대의 얼음·격투 압박을 고려해 세 명을 구성해야 합니다.</p><h4>하마돈을 앞세워 교체 압박을 만들고 공격수 한 마리를 선택하십시오.</h4><p>하품과 스텔스록으로 상대의 교체를 유도하고, 메가보만다 또는 메가루카리오Z를 후속 공격수로 고르는 구성이 가능합니다. 메가보만다를 고르면 마스카나를 함께 넣을 수 있고, 메가루카리오Z를 고르면 브리두라스를 함께 넣어 특수 공격 선택지를 보완할 수 있습니다.</p><h4>얼음과 격투 압박을 확인한 뒤 세 번째 포켓몬을 조정하십시오.</h4><p>메가보만다와 하마돈, 마스카나는 얼음 기술에 각각 취약하며, 메가보만다는 얼음 기술에 특히 큰 피해를 받습니다. 메가루카리오Z는 얼음 타입을 반감하지만 격투에는 약하므로, 상대의 공격 유형에 따라 메가 진화 선택과 동료 구성을 달리하는 편이 안전합니다.</p><dl class="example-metrics"><div><dt>실측 시간</dt><dd>13.5s</dd></div><div><dt>총 토큰</dt><dd>13,895</dd></div><div><dt>추정 비용</dt><dd>$0.00183</dd></div></dl></div></details></section>
+<section id="recommendation"><h2>4. 포켓몬 추천</h2><div class="analysis-showcase"><div class="analysis-showcase-copy"><p>여섯 번째 빈 슬롯에 들어갈 포켓몬을 추천받았습니다. 이번 결과는 누리레느를 첫 후보로 제시하며 갸라도스·워시로토무를 대안으로 설명합니다. 실제 앱에서는 선택 또는 벤치에 저장할 수 있습니다.</p></div><figure class="analysis-figure"><a href="/help/analysis-examples/ko-recommendation-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer" aria-label="전체 화면 확대"><img src="/help/analysis-examples/ko-recommendation-low.png" width="1040" height="2404" alt="PokePilot · recommendation-low · 누리레느 제외 5마리" loading="lazy" decoding="async"></a><figcaption><a href="/help/analysis-examples/ko-recommendation-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer">전체 화면 확대</a></figcaption></figure></div><details class="example-transcript"><summary>결과 전문 읽기</summary><div><h3>Kabamanda</h3><p>현재 구성은 하마돈의 하품·날려버리기와 스텔스록, 마스카나의 독압정으로 교체를 압박하고, 메가보만다와 메가루카리오Z의 각기 다른 물리·특수 전개로 이를 활용합니다. 빈자리는 기존 압박을 보완할 방해 수단이나 수비 전환을 더하는 후보를 우선 살폈습니다. 다만 현재 얼음과 격투에 취약한 구성원이 여럿이라, 그 두 타입에 대한 대응도 함께 고려했습니다.</p><p>누리레느는 앙코르로 상대의 행동을 제한하면서 불꽃·얼음·격투에 저항하는 기여가 기대됩니다. 갸라도스는 위협과 도발로 상대 공격과 변화기 사용을 견제하고 불꽃·격투에 저항하지만, 전기와 바위 약점은 감수해야 합니다. 워시로토무는 부유와 볼트체인지로 땅 공격을 피하는 교체 압박을 제공하며 불꽃·얼음에 저항하지만, 풀 약점이 분명한 단점입니다.</p><h4>누리레느를 추가해 상대의 행동을 제한하고 불꽃·얼음·격투에 대한 방어를 보완하는 편이 좋습니다.</h4><p>앙코르로 상대가 직전에 사용한 기술을 반복하게 만들어 하품이나 설치 기술로 확보한 압박을 이어갈 수 있습니다. 불꽃·얼음·격투에 저항하는 후보라는 점도 현재 구성의 약점을 고려한 장점입니다. 다만 전기·풀·독에 약하므로 해당 공격에 대한 전환 수단을 함께 준비해야 합니다.</p><h4>갸라도스를 추가해 상대의 공격과 변화기 사용을 견제하는 선택을 고려할 수 있습니다.</h4><p>위협은 등장 시 상대의 공격을 낮추고, 도발은 상대의 변화기 사용을 막아 현재의 설치·교체 압박을 보조합니다. 불꽃과 격투에 저항하는 이점이 있지만, 전기와 바위 약점은 팀의 수비 선택지를 좁힐 수 있습니다.</p><h4>워시로토무를 추가해 땅 공격에 대한 전환과 교체 압박을 확보할 수 있습니다.</h4><p>부유로 땅 공격에 면역이며, 볼트체인지는 공격 후 교체하는 수단이어서 설치 기술을 활용한 전개와 잘 맞습니다. 불꽃과 얼음에 저항하지만 풀 공격에는 약하므로, 풀 타입 상대를 마스카나나 메가보만다로 받아내는 운영이 필요합니다.</p><dl class="example-metrics"><div><dt>실측 시간</dt><dd>11.5s</dd></div><div><dt>총 토큰</dt><dd>25,569</dd></div><div><dt>추정 비용</dt><dd>$0.00295</dd></div></dl></div></details></section>
+<section id="optimization"><h2>5. 샘플 분석</h2><div id="optimization-change"><h3>5.1. 다른 샘플을 제안하는 경우</h3><div class="analysis-showcase"><div class="analysis-showcase-copy"><p>같은 5마리 팀에서 보만다만 노력 성격·노력치 0으로 둔 미육성 예시입니다. 기술과 보만다나이트는 바꾸지 않았습니다. AI는 고집 성격과 공격·스피드 투자를 갖춘 다른 샘플을 제안했습니다. 카드에서 성격·배분을 확인하고 실제 앱에서는 샘플 적용 또는 벤치 저장을 선택할 수 있습니다.</p></div><figure class="analysis-figure"><a href="/help/analysis-examples/ko-optimization-change-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer" aria-label="전체 화면 확대"><img src="/help/analysis-examples/ko-optimization-change-low.png" width="1040" height="1734" alt="PokePilot · optimization-change-low · 누리레느 제외 5마리" loading="lazy" decoding="async"></a><figcaption><a href="/help/analysis-examples/ko-optimization-change-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer">전체 화면 확대</a></figcaption></figure></div><details class="example-transcript"><summary>결과 전문 읽기</summary><div><h3>메가보만다</h3><p>현재 메가보만다는 물리 공격과 용의춤을 중심으로, 지진과 이판사판태클로 공격 범위를 확보하고 날개쉬기로 회복하는 구성입니다. 제안 후보 중 고집 성격과 공격·스피드 투자를 선택하면 공격과 스피드가 모두 높아지며, 네 기술을 그대로 유지해 용의춤을 통한 전개와 회복 역할도 보존합니다.</p><p>용성군 후보들은 용의춤이나 공격 기술을 바꾸지만, 특수공격 투자 없이 고집 성격을 채택한 구성에서는 특수 공격에 힘을 싣는 이점이 제한적입니다. 용의춤을 유지하면서 공격·스피드를 높이는 변경이 현재 기술 구성과 더 잘 맞습니다. 후보의 사용 비율은 해당 후보의 통계 축에 관한 정보이지 완성된 세트 전체의 성능을 보장하지는 않습니다.</p><h4>고집 성격과 공격·스피드 중심 투자를 채택하는 편이 좋습니다.</h4><p>공격과 스피드가 상승하면서 지진, 이판사판태클, 날개쉬기, 용의춤을 모두 유지하므로 물리 전개와 회복 역할이 함께 살아납니다. 제공된 후보 중 현재 구성의 책임을 훼손하지 않고 공격 성능과 빠른 운용을 강화하는 변경입니다.</p><dl class="example-metrics"><div><dt>실측 시간</dt><dd>5.9s</dd></div><div><dt>총 토큰</dt><dd>14,388</dd></div><div><dt>추정 비용</dt><dd>$0.00134</dd></div></dl></div></details></div><h3>5.2. 현재 샘플을 유지하는 경우</h3><div class="analysis-showcase"><div class="analysis-showcase-copy"><p>기본 입력의 고집 성격·보만다나이트·공격 32 및 스피드 32 투자를 그대로 분석했습니다. 이번에는 현재 물리형 샘플을 유지하라는 결과가 나왔습니다. 반드시 변경을 권하는 것은 아닙니다.</p></div><figure class="analysis-figure"><a href="/help/analysis-examples/ko-optimization-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer" aria-label="전체 화면 확대"><img src="/help/analysis-examples/ko-optimization-low.png" width="1040" height="1788" alt="PokePilot · optimization-low · 누리레느 제외 5마리" loading="lazy" decoding="async"></a><figcaption><a href="/help/analysis-examples/ko-optimization-low.png" data-analysis-image="" target="_blank" rel="noopener noreferrer">전체 화면 확대</a></figcaption></figure></div><details class="example-transcript"><summary>결과 전문 읽기</summary><div><h3>메가보만다</h3><p>메가보만다는 공격과 스피드에 집중한 고집 성격의 물리 스위퍼이며, 스카이스킨을 활용하는 이판사판태클과 공격·스피드를 함께 높이는 용의춤이 현재 구성의 핵심입니다. 지진은 별도의 공격 범위를 제공하고, 날개쉬기는 체력을 회복해 전개 기회를 다시 만들 수 있으므로 네 기술이 서로 다른 역할을 맡고 있습니다.</p><p>용성군을 넣는 후보들은 모두 이판사판태클, 지진, 날개쉬기, 용의춤 중 하나를 잃지만, 특수공격에 투자하지 않은 현재 배분에서 이를 보완할 구체적인 이점은 제시되지 않았습니다. 특히 용의춤을 빼면 강화 수단을 잃고, 날개쉬기를 빼면 회복 수단을 잃습니다. 공격·스피드 배분을 유지하는 편이 현재의 물리 공격 역할을 가장 잘 보존합니다. 공격 투자를 크게 줄이는 후보들은 이 역할과도 맞지 않으며, 체력 쪽으로 옮기는 후보는 공격과 스피드를 모두 낮춥니다.</p><h4>현재의 물리 중심 구성을 유지하는 편이 적절합니다.</h4><p>현재 배분은 메가보만다의 물리 공격과 스피드를 살리고, 용의춤·날개쉬기·지진으로 강화, 회복, 공격 범위를 모두 확보합니다. 용성군 후보는 이 구성의 기술 하나를 대체할 만큼의 특수 공격 뒷받침이나 역할상 이점을 보여 주지 않습니다.</p><dl class="example-metrics"><div><dt>실측 시간</dt><dd>5.6s</dd></div><div><dt>총 토큰</dt><dd>14,424</dd></div><div><dt>추정 비용</dt><dd>$0.00150</dd></div></dl></div></details></section>
+ <section id="comparison"><h2>6. Luna low와 medium</h2><p>동일한 5마리, 기술, 도구, 배분과 팀 분석 요청을 고정하고 추론 강도만 바꿨습니다. 각 결과는 한 번의 호출입니다. 아래 발췌와 전문은 실제 결과 그대로입니다.</p><div class="example-model-pair"><div><h3>Luna low</h3><blockquote class="example-output-quote" data-source="ko-team-low" data-recommendation="0"><p>하품과 스텔스록으로 상대의 교체를 유도하고, 메가보만다 또는 메가루카리오Z를 후속 공격수로 고르는 구성이 가능합니다. 메가보만다를 고르면 마스카나를 함께 넣을 수 있고, 메가루카리오Z를 고르면 브리두라스를 함께 넣어 특수 공격 선택지를 보완할 수 있습니다.</p></blockquote><a class="example-full-image" data-analysis-image="" href="/help/analysis-examples/ko-team-low.png" target="_blank" rel="noopener noreferrer">전체 화면 확대</a><details class="example-transcript"><summary>결과 전문 읽기</summary><div><h3>Kabamanda</h3><p>이 팀은 하마돈의 하품과 스텔스록으로 교체를 압박한 뒤, 선택한 공격수로 빈틈을 공략하는 싱글스 구성이 적합합니다. 하마돈은 체력 215, 방어 154이며 먹다남은음식으로 턴마다 회복하므로, 상대를 흔드는 지원과 스텔스록 설치를 맡길 수 있습니다. 다만 날려버리기는 우선도 -6이므로 상대의 행동을 먼저 막는 기술로 보아서는 안 됩니다.</p><p>메가 진화 선택지는 메가보만다와 메가루카리오Z이며, 한 전투에서 둘 중 하나만 메가 진화시킬 수 있습니다. 메가보만다는 공격 216, 스피드 172의 물리형으로 용의춤과 날개쉬기를 갖춰 강화 후 공략을 노릴 수 있고, 메가루카리오Z는 특수공격 216, 스피드 223으로 악의파동·파동탄·러스터캐논을 활용하는 별도 공격 선택지입니다. 두 선택지는 하마돈과 함께 편성할 수 있으므로 상대에 맞춰 세 명을 고르고, 그 전투에서 사용할 메가 진화만 정하면 됩니다.</p><p>현재 다섯 포켓몬 중 싱글스에 가져갈 수 있는 수는 세 마리이므로, 남은 두 자리는 상대에 따라 바꾸는 편이 좋습니다. 얼음 기술은 메가보만다에게 4배 약점이고 하마돈과 마스카나에게도 약점으로 작용하지만, 메가루카리오Z는 얼음 타입 공격을 반감합니다. 격투 기술은 메가루카리오Z·브리두라스·마스카나를 압박하며, 이 중 메가보만다가 반감으로 받아낼 수 있습니다. 따라서 공격수 선택뿐 아니라 상대의 얼음·격투 압박을 고려해 세 명을 구성해야 합니다.</p><h4>하마돈을 앞세워 교체 압박을 만들고 공격수 한 마리를 선택하십시오.</h4><p>하품과 스텔스록으로 상대의 교체를 유도하고, 메가보만다 또는 메가루카리오Z를 후속 공격수로 고르는 구성이 가능합니다. 메가보만다를 고르면 마스카나를 함께 넣을 수 있고, 메가루카리오Z를 고르면 브리두라스를 함께 넣어 특수 공격 선택지를 보완할 수 있습니다.</p><h4>얼음과 격투 압박을 확인한 뒤 세 번째 포켓몬을 조정하십시오.</h4><p>메가보만다와 하마돈, 마스카나는 얼음 기술에 각각 취약하며, 메가보만다는 얼음 기술에 특히 큰 피해를 받습니다. 메가루카리오Z는 얼음 타입을 반감하지만 격투에는 약하므로, 상대의 공격 유형에 따라 메가 진화 선택과 동료 구성을 달리하는 편이 안전합니다.</p><dl class="example-metrics"><div><dt>실측 시간</dt><dd>13.5s</dd></div><div><dt>총 토큰</dt><dd>13,895</dd></div><div><dt>추정 비용</dt><dd>$0.00183</dd></div></dl></div></details></div><div><h3>Luna medium</h3><blockquote class="example-output-quote" data-source="ko-team-medium" data-recommendation="0"><p>하마돈의 스텔스록, 하품, 날려버리기로 교체와 전개를 압박하고, 마스카나의 독압정으로 교체 압박을 더할 수 있습니다. 메가보만다는 후반에 용의춤을 활용해 마무리를 노릴 수 있습니다.</p></blockquote><a class="example-full-image" data-analysis-image="" href="/help/analysis-examples/ko-team-medium.png" target="_blank" rel="noopener noreferrer">전체 화면 확대</a><details class="example-transcript"><summary>결과 전문 읽기</summary><div><h3>Kabamanda</h3><p>이 팀은 하마돈의 스텔스록과 하품·날려버리기로 교체와 전개를 압박한 뒤, 선택한 메가 포켓몬이 마무리를 노리는 구성이 잘 어울립니다. 하마돈·메가보만다·마스카나를 가져가는 경우에는 하마돈으로 스텔스록을 설치하고, 상황에 따라 하품이나 날려버리기로 상대의 행동과 교체를 압박할 수 있습니다. 마스카나는 독압정을 보태고, 후반에는 메가보만다가 용의춤으로 기회를 노리는 흐름이 가능합니다.</p><p>메가보만다와 메가루카리오Z는 상대에 따라 고를 수 있는 메가진화 선택지이며, 한 배틀에서는 둘 중 하나를 활성화하는 구성이 적절합니다. 얼음 공격을 특히 경계한다면 하마돈·메가루카리오Z·마스카나로 바꾸는 선택을 고려할 수 있습니다. 메가보만다는 얼음에 4배 약점을 지니지만 메가루카리오Z는 얼음에 저항하므로, 이 선택지에서는 메가루카리오Z가 나쁜음모와 파동탄으로 특수 공격을 노릴 수 있습니다. 두 구성 모두 하마돈의 기점 압박은 유지하지만, 실제로 어느 쪽을 가져갈지는 상대의 위협과 전개에 맞추는 편이 좋습니다.</p><h4>하마돈·메가보만다·마스카나를 기본적인 공격 압박 구성으로 고려하십시오.</h4><p>하마돈의 스텔스록, 하품, 날려버리기로 교체와 전개를 압박하고, 마스카나의 독압정으로 교체 압박을 더할 수 있습니다. 메가보만다는 후반에 용의춤을 활용해 마무리를 노릴 수 있습니다.</p><h4>얼음 공격이 부담스러운 상대에게는 메가루카리오Z 선택지를 고려하십시오.</h4><p>메가보만다는 얼음에 4배 약점이지만 메가루카리오Z는 얼음에 저항하므로, 하마돈·메가루카리오Z·마스카나 구성으로 바꾸면 그 위협에 대응하기 쉽습니다. 메가루카리오Z는 나쁜음모와 파동탄을 선택한 특수 공격 수단으로 활용할 수 있습니다.</p><dl class="example-metrics"><div><dt>실측 시간</dt><dd>35.9s</dd></div><div><dt>총 토큰</dt><dd>16,931</dd></div><div><dt>추정 비용</dt><dd>$0.00360</dd></div></dl></div></details></div></div><div class="example-table-wrap"><table class="example-comparison"><caption>동일한 5마리 입력, 강도별 1회 호출</caption><thead><tr><th scope="col">Luna</th><th scope="col">실측 시간</th><th scope="col">총 토큰</th><th scope="col">추정 비용</th></tr></thead><tbody><tr><th scope="row">low</th><td>13.5s</td><td>13,895</td><td>$0.00183</td></tr><tr><th scope="row">medium</th><td>35.9s</td><td>16,931</td><td>$0.00360</td></tr></tbody></table></div><p>low는 팀의 역할과 메가 선택, 얼음·격투 압박을 설명합니다. medium은 하마돈·메가보만다·마스카나와 하마돈·메가루카리오Z·마스카나처럼 선출 분기를 더 명시적으로 제시합니다. 두 결과 모두 실전 검토가 필요하며, 한 사례가 일반적인 정확도 차이를 증명하지는 않습니다.</p><p class="example-review-note">두 결과 모두 하마돈의 모래바람이 마스카나의 기합의띠에 미치는 영향을 충분히 설명하지 못했습니다. 특히 두 포켓몬을 함께 선출하는 제안은 이 조건을 별도로 확인해야 합니다. 더 긴 추론이 모든 오류를 없애는 것은 아닙니다.</p></section>
+ <section id="input"><h2>7. 팀 구성과 계산 검토</h2><p>아래는 출처를 바탕으로 정리했던 참고용 6마리 구성과 별도 계산 자료입니다. 위 분석에는 누리레느가 포함되지 않으며, 샘플 변경 사례의 미육성 설정도 별도로 명시했습니다.</p><details class="example-transcript"><summary>6마리 샘플, 선출 해설, 대미지 검토 펼치기</summary><div id="roster" class="example-appendix-part"><h2>6마리 샘플과 역할</h2>
+        <p>배분은 챔피언스 기준으로 능력치당 최대 32, 합계 66입니다. 기재하지 않은 능력치는 0입니다. 이미지는 기본 모습이며, 메가진화 후 특성은 텍스트에 표시했습니다.</p>
+        <div class="team-roster">
+          <article class="team-member" data-species="hippowdon">
+            <div class="team-member-heading"><img src="https://play.pokemonshowdown.com/sprites/gen5/hippowdon.png" width="64" height="64" alt=""><h3>하마돈</h3></div>
+            <dl><dt>도구 · 특성 · 성격</dt><dd>먹다남은음식 · 모래날림 · 장난꾸러기</dd><dt>배분</dt><dd>HP 32 / 방어 2 / 특방 32</dd><dt>기술</dt><dd>하품 / 지진 / 스텔스록 / 날려버리기</dd></dl>
+            <p>스텔스록을 설치하고 하품으로 교체를 유도합니다. 날려버리기는 상대의 랭크 상승을 끊는 수단이지만, 후공으로 기술을 버텨야 하므로 현재 HP부터 확인합니다.</p>
+          </article>
+          <article class="team-member" data-species="salamencemega">
+            <div class="team-member-heading"><img src="https://play.pokemonshowdown.com/sprites/gen5/salamence.png" width="64" height="64" alt=""><h3>메가보만다</h3></div>
+            <dl><dt>도구 · 메가 특성 · 성격</dt><dd>보만다나이트 · 스카이스킨 · 고집</dd><dt>배분</dt><dd>HP 1 / 공격 32 / 방어 1 / 스피드 32</dd><dt>기술</dt><dd>지진 / 이판사판태클 / 날개쉬기 / 용의춤</dd></dl>
+            <p>물리 마무리 역할입니다. 스카이스킨으로 이판사판태클이 비행 기술이 됩니다. 용의춤을 쓸 여유와 반동까지 감당할 HP가 남았는지가 중요합니다.</p>
+          </article>
+          <article class="team-member" data-species="lucariomegaz">
+            <div class="team-member-heading"><img src="https://play.pokemonshowdown.com/sprites/gen5/lucario.png" width="64" height="64" alt=""><h3>메가루카리오Z</h3></div>
+            <dl><dt>도구 · 메가 특성 · 성격</dt><dd>루카리오나이트Z · 파동의방호 · 겁쟁이</dd><dt>배분</dt><dd>HP 2 / 특공 32 / 스피드 32</dd><dt>기술</dt><dd>악의파동 / 파동탄 / 러스터캐논 / 나쁜음모</dd></dl>
+            <p>보만다 대신 선택하는 특수 공격수입니다. 나쁜음모가 가능한 턴을 찾되, 접촉 공격 경감 특성만 믿고 모든 공격을 받아내는 역할로 취급하지 않습니다.</p>
+          </article>
+          <article class="team-member" data-species="archaludon">
+            <div class="team-member-heading"><img src="https://play.pokemonshowdown.com/sprites/gen5/archaludon.png" width="64" height="64" alt=""><h3>브리두라스</h3></div>
+            <dl><dt>도구 · 특성 · 성격</dt><dd>자뭉열매 · 지구력 · 대담</dd><dt>배분</dt><dd>HP 32 / 방어 16 / 특방 18</dd><dt>기술</dt><dd>10만볼트 / 스텔스록 / 드래곤테일 / 용성군</dd></dl>
+            <p>하마돈을 내보내기 어려운 상대에게 스텔스록을 맡길 수 있는 대안입니다. 지구력의 방어 상승은 특수 공격을 줄이지 않으며, 드래곤테일은 페어리에게 통하지 않습니다.</p>
+          </article>
+          <article class="team-member" data-species="meowscarada">
+            <div class="team-member-heading"><img src="https://play.pokemonshowdown.com/sprites/gen5/meowscarada.png" width="64" height="64" alt=""><h3>마스카나</h3></div>
+            <dl><dt>도구 · 특성 · 성격</dt><dd>기합의띠 · 심록 · 명랑</dd><dt>배분</dt><dd>HP 2 / 공격 32 / 스피드 32</dd><dt>기술</dt><dd>독압정 / 트릭플라워 / 트리플악셀 / 탁쳐서떨구기</dd></dl>
+            <p>빠른 공격과 도구 제거, 독압정을 제공합니다. 기합의띠는 PokePilot에서 정한 예시 도구입니다. 모래바람 피해를 받으면 최대 HP 조건이 깨지므로 하마돈과의 동시 선출에 주의합니다.</p>
+          </article>
+          <article class="team-member" data-species="primarina">
+            <div class="team-member-heading"><img src="https://play.pokemonshowdown.com/sprites/gen5/primarina.png" width="64" height="64" alt=""><h3>누리레느</h3></div>
+            <dl><dt>도구 · 특성 · 성격</dt><dd>유루열매 · 급류 · 대담</dd><dt>배분</dt><dd>HP 32 / 방어 18 / 스피드 16</dd><dt>기술</dt><dd>물거품아리아 / 잠자기 / 문포스 / 명상</dd></dl>
+            <p>물·페어리 타점과 명상, 잠자기 회복을 맡습니다. 유루열매는 한 번만 사용할 수 있으며, 회복할 기회까지 포함해야 지속력을 판단할 수 있습니다.</p>
+          </article>
+        </div>
+        <p class="article-meta">원문과의 차이: 비어 있던 마스카나 도구에 기합의띠를 선택했습니다. 누리레느의 스피드 배분을 14에서 16으로 바꿔 합계 66을 맞췄습니다. 특정 상대 추월을 검증한 배분은 아닙니다. 메가 특성은 진화 후 기준으로 맞췄습니다.</p>
+      </div>
+<div id="selection" class="example-appendix-part"><h2>선출과 운영 기준</h2>
+        <h3>하마돈 + 보만다 + 보완 멤버</h3>
+        <p>상대에게 하품을 걸고 교체를 유도할 여유가 있다면 기본 출발점입니다. 먼저 스텔스록을 설치할지, 즉시 하품으로 공격을 멈추게 할지 판단합니다. 상대가 이미 높은 화력을 갖췄거나 수면을 막는 수단이 있으면 같은 순서가 통하지 않습니다.</p>
+        <p>세 번째는 부족한 역할을 채웁니다. 물·페어리 공격과 회복이 필요하면 누리레느를, 다른 스텔스록 설치 수단과 물리 대응을 원하면 브리두라스를 검토합니다. 마스카나를 넣는다면 기합의띠를 모래로 소모하지 않을 운영이 필요합니다.</p>
+        <h3>메가루카리오Z를 선택하는 경우</h3>
+        <p>상대의 물리 대응 때문에 보만다가 용의춤을 써도 돌파하기 어렵다면 특수 공격 방향을 비교합니다. 상대 드래곤·얼음·강철에 타점이 있더라도 행동 순서, 선공기, 기합의띠까지 확인해야 합니다. 루카리오와 브리두라스는 모두 땅 약점이 있으므로 보완 멤버 없이 둘을 고정 선출하지 않습니다.</p>
+        <p>선출의 기준은 “사용률 상위 3마리”가 아니라, 승리 수단을 만들 턴과 그 수단을 막는 상대를 처리할 방법입니다. 상대 6마리를 보고 메가 선택, 기점 마련, 마무리를 한 세트로 정합니다.</p>
+      </div>
+<div id="calculations" class="example-appendix-part"><h2>대미지로 확인하기</h2>
+        <p>아래 수치는 PokePilot의 챔피언스 계산기로 산출했습니다. 싱글 레벨 50, 양쪽 최대 HP, 날씨·필드·벽·급소 없음이 공통 조건입니다. 별도 표기가 없으면 랭크 변화도 없습니다. 명중률과 교체 판단을 포함하는 배틀 시뮬레이션은 아닙니다.</p>
+        <div class="damage-example" data-calculation="double-edge" data-min-damage="144" data-max-damage="169" data-target-hp="187">
+          <h3>메가보만다 → 누리레느: 이판사판태클</h3>
+          <p class="damage-value">144–169 <span>77.0–90.4% · 상대 HP 187</span></p>
+          <p>위 샘플끼리, 공격 랭크 0에서 계산하면 누리레느는 최대 HP 기준 한 번 버팁니다. 드래곤 기술을 무효로 한다는 이유만으로 보만다 전체를 막는다고 해석해서는 안 됩니다.</p>
+        </div>
+        <div class="damage-example" data-calculation="boosted-double-edge" data-min-damage="213" data-max-damage="252" data-target-hp="187">
+          <h3>용의춤 후 공격 +1: 같은 이판사판태클</h3>
+          <p class="damage-value">213–252 <span>113.9–134.8% · 상대 HP 187</span></p>
+          <p>공격 +1이면 최소 대미지가 누리레느의 최대 HP를 넘습니다. 상대가 춤을 춘 다음 교체하는 것과 춤을 추기 전에 압박하는 것은 다릅니다. 보만다의 반동과 다음 상대의 선공기도 함께 봐야 합니다.</p>
+        </div>
+        <div class="damage-example" data-calculation="ice-shard" data-min-damage="132" data-max-damage="160" data-target-hp="171">
+          <h3>드닐레이브 → 메가보만다: 얼음뭉치</h3>
+          <p class="damage-value">132–160 <span>77.2–93.6% · 상대 HP 171</span></p>
+          <p>고집·공격 32 드닐레이브의 공격 랭크가 0인 경우입니다. 얼음 4배 약점이어도 최대 HP 보만다는 한 번 버팁니다. 그러나 스텔스록으로 42가 줄어 HP 129가 되면 최소 대미지에도 쓰러집니다. 메가진화 전 위협으로 공격이 낮아졌다면 이 수치를 그대로 적용할 수 없습니다.</p>
+        </div>
+        <div class="damage-example" data-calculation="aura-sphere" data-min-damage="186" data-max-damage="218" data-target-hp="191">
+          <h3>메가루카리오Z → 드닐레이브: 파동탄</h3>
+          <p class="damage-value">186–218 <span>97.4–114.1% · 상대 HP 191</span></p>
+          <p>드닐레이브는 고집·HP 1 / 공격 32 / 특방 1 / 스피드 32, 열교환, 기합의띠로 가정했습니다. 대미지가 최대 HP를 넘는 경우가 있어도 기합의띠가 유지되면 HP 1로 살아남습니다. “상성이 유리하니 확정 처리”가 아니라, 스텔스록 등으로 띠가 깨졌는지부터 확인해야 합니다.</p>
+        </div>
+        <p>재현하려면 내려받은 팀에서 해당 포켓몬을 계산기로 불러오고, 메가 모습·특성·배분을 맞춥니다. 세 번째와 네 번째 계산에는 본문에 적힌 드닐레이브 샘플을 따로 설정합니다. 실제 대전에서는 현재 HP와 랭크, 날씨를 그때의 상황으로 바꿉니다.</p>
+      </div>
+<div id="weaknesses" class="example-appendix-part"><h2>약점과 조정 방향</h2>
+        <ul>
+          <li><strong>기합의띠와 모래의 충돌:</strong> 마스카나를 먼저 활용하거나 하마돈을 제외하는 선출도 검토합니다. 매번 동시에 내보내야 한다면 도구 자체를 다시 비교할 이유가 있습니다.</li>
+          <li><strong>설치기 중복:</strong> 하마돈과 브리두라스의 스텔스록은 선출 대안이지 두 번 설치해 효과를 중첩하는 기술이 아닙니다. 늘 함께 사용한다면 한쪽 기술 슬롯의 기회비용을 검토합니다.</li>
+          <li><strong>보만다의 체력 관리:</strong> 스텔스록, 모래, 이판사판태클 반동이 쌓이면 한 번 버티던 선공기에 쓰러질 수 있습니다. 날개쉬기를 쓸 수 있는 턴이 있는지도 확인합니다.</li>
+          <li><strong>기점 차단:</strong> 도발, 수면 방지, 빠른 고화력에 하마돈의 정해진 순서가 막힐 수 있습니다. 상대를 보지 않고 하품부터 반복하지 않습니다.</li>
+          <li><strong>조건부 내구:</strong> 지구력은 특수 공격 대책이 아니며 파동의방호도 모든 공격의 피해를 줄이지 않습니다. 타입 표와 특성 이름만으로 안전한 교체를 단정하지 않습니다.</li>
+        </ul>
+        <p>팀을 바꿀 때는 한 번에 여러 항목을 고치기보다, 자주 지는 상대 하나를 골라 선출과 대미지를 비교합니다. 예를 들어 보만다가 얼음뭉치에 쓰러졌다면 공격 배분부터 바꾸기 전에, 스텔스록 제거 여부와 진입 당시 HP, 위협 적용 여부를 먼저 확인합니다.</p>
+      </div></details></section>
+ <section id="use"><h2>8. 직접 사용하기와 출처</h2><p>팀 빌더와 계산기는 로그인이나 키 없이 이용할 수 있습니다. 내 팀의 PokePilot AI 분석은 Google 로그인과 개인 OpenAI API 키가 필요하며, OpenAI API 사용료는 해당 키의 계정에 청구됩니다. ChatGPT 구독과는 별도입니다.</p><p><a href="/help/api-key-ko.html">API 키 발급 가이드</a></p><div class="sample-actions"><a href="/help/kabamanda-team.txt" download="">참고용 6마리 팀 내려받기</a><a href="/">PokePilot 열기</a></div><h3>출처와 검토 범위</h3><ul>
+          <li><a href="https://game8.jp/pokemon-champions/779319" target="_blank" rel="noopener noreferrer">Game8: 카바만다 공개 팀 구성</a> — 구성의 출발점입니다. 위에 기재한 조정과 조건별 해설은 PokePilot의 검토 내용입니다.</li>
+          <li><a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">Pokémon HOME: 레귤레이션 M-C 안내</a> — 형식과 제한의 공식 참고 자료입니다.</li>
+          <li><a href="https://github.com/smogon/damage-calc" target="_blank" rel="noopener noreferrer">Pokémon Showdown 대미지 계산 라이브러리</a> — 앱의 챔피언스 계산 기반입니다. 앱에 포함된 M-C 데이터로 적법성과 기재 수치를 검사합니다.</li>
+        </ul><p class="article-meta">계산기는 판단을 돕는 자료이며 게임 내 결과나 승리를 보장하지 않습니다. 규칙 또는 계산 데이터가 바뀌면 이 예시도 재검토해야 합니다. 오류 제보는 <a href="https://github.com/MaeNaut/pokepilot/issues" target="_blank" rel="noopener noreferrer">피드백</a>으로 받습니다. PokePilot은 비공식 팬 도구이며 Pokémon 및 스프라이트의 권리는 각 권리자에게 있습니다. 스프라이트 출처: Pokémon Showdown.</p></section>
+ </main>
+  </div>
+  <footer>PokePilot · <a href="/help/ko.html">도움말</a> · <a href="/privacy.html">개인정보 안내</a></footer>
+
+
+
+
+
+
+
+</body></html>

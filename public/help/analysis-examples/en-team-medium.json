@@ -1,0 +1,114 @@
+{
+  "id": "en-team-medium",
+  "generatedAt": "2026-10-04T06:34:53.380Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "medium",
+  "promptVersion": 92,
+  "inputHash": "fda90fa0647144c35441c61e04e527bcad5984b253624b017c19e3d0b91577bd",
+  "execution": {
+    "durationMs": 39433,
+    "totalTokens": 17135,
+    "estimatedCostUsd": 0.00324705
+  },
+  "response": {
+    "version": 2,
+    "scope": "team",
+    "title": "Kabamanda",
+    "paragraphs": [
+      "Build around entry hazards and switch pressure, then use your selected attackers to capitalize. A practical Lucario Mega Z lineup is Hippowdon, Lucario Mega Z, and Meowscarada: Hippowdon can set Stealth Rock and use Yawn or Whirlwind to pressure switches, while Meowscarada offers Toxic Spikes and direct attacks. Lucario Mega Z supplies special pressure and can use Nasty Plot when it has room to set up.",
+      "Salamence Mega and Lucario Mega Z are both rostered Mega options, but only one can be activated per battle. Choose Lucario Mega Z for its special-attacking route, or branch to Salamence Mega for a physical setup route with Dragon Dance; the latter lineup can use Hippowdon, Salamence Mega, and Meowscarada. Ice is a notable concern for that branch because Salamence Mega is four-times weak to Ice, while Lucario Mega Z resists Ice. The roster has five valid sets and one unfilled slot, so the best final roster addition cannot be assessed from the supplied data."
+    ],
+    "recommendations": [
+      {
+        "id": "lucario-branch",
+        "title": "Use Hippowdon, Lucario Mega Z, and Meowscarada as your hazard-pressure lineup.",
+        "reason": "Lead Hippowdon when you want to establish Stealth Rock, then use Yawn or Whirlwind to make switching costly. Bring Meowscarada's Toxic Spikes when that hazard suits the matchup, and preserve Lucario Mega Z for a special-pressure or Nasty Plot opportunity.",
+        "priority": "high"
+      },
+      {
+        "id": "salamence-branch",
+        "title": "Choose Salamence Mega instead of Lucario Mega Z when its physical setup route better fits the matchup.",
+        "reason": "Use Hippowdon, Salamence Mega, and Meowscarada for this branch, and treat Dragon Dance as a setup opportunity rather than a required opening. Keep the Ice weakness in mind when selecting this lineup; the two Mega options are alternatives for a battle, not a reason to remove either from the roster.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 0
+  }
+}

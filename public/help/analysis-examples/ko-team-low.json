@@ -1,0 +1,115 @@
+{
+  "id": "ko-team-low",
+  "generatedAt": "2026-10-04T06:32:35.987Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "promptVersion": 92,
+  "inputHash": "e3daf2c53601370baf05ddec021ccac440e577aabbdeae2fe6ae52f6e374d495",
+  "execution": {
+    "durationMs": 13469,
+    "totalTokens": 13895,
+    "estimatedCostUsd": 0.001832145
+  },
+  "response": {
+    "version": 2,
+    "scope": "team",
+    "title": "Kabamanda",
+    "paragraphs": [
+      "이 팀은 하마돈의 하품과 스텔스록으로 교체를 압박한 뒤, 선택한 공격수로 빈틈을 공략하는 싱글스 구성이 적합합니다. 하마돈은 체력 215, 방어 154이며 먹다남은음식으로 턴마다 회복하므로, 상대를 흔드는 지원과 스텔스록 설치를 맡길 수 있습니다. 다만 날려버리기는 우선도 -6이므로 상대의 행동을 먼저 막는 기술로 보아서는 안 됩니다.",
+      "메가 진화 선택지는 메가보만다와 메가루카리오Z이며, 한 전투에서 둘 중 하나만 메가 진화시킬 수 있습니다. 메가보만다는 공격 216, 스피드 172의 물리형으로 용의춤과 날개쉬기를 갖춰 강화 후 공략을 노릴 수 있고, 메가루카리오Z는 특수공격 216, 스피드 223으로 악의파동·파동탄·러스터캐논을 활용하는 별도 공격 선택지입니다. 두 선택지는 하마돈과 함께 편성할 수 있으므로 상대에 맞춰 세 명을 고르고, 그 전투에서 사용할 메가 진화만 정하면 됩니다.",
+      "현재 다섯 포켓몬 중 싱글스에 가져갈 수 있는 수는 세 마리이므로, 남은 두 자리는 상대에 따라 바꾸는 편이 좋습니다. 얼음 기술은 메가보만다에게 4배 약점이고 하마돈과 마스카나에게도 약점으로 작용하지만, 메가루카리오Z는 얼음 타입 공격을 반감합니다. 격투 기술은 메가루카리오Z·브리두라스·마스카나를 압박하며, 이 중 메가보만다가 반감으로 받아낼 수 있습니다. 따라서 공격수 선택뿐 아니라 상대의 얼음·격투 압박을 고려해 세 명을 구성해야 합니다."
+    ],
+    "recommendations": [
+      {
+        "id": "hazard-plan",
+        "title": "하마돈을 앞세워 교체 압박을 만들고 공격수 한 마리를 선택하십시오.",
+        "reason": "하품과 스텔스록으로 상대의 교체를 유도하고, 메가보만다 또는 메가루카리오Z를 후속 공격수로 고르는 구성이 가능합니다. 메가보만다를 고르면 마스카나를 함께 넣을 수 있고, 메가루카리오Z를 고르면 브리두라스를 함께 넣어 특수 공격 선택지를 보완할 수 있습니다.",
+        "priority": "high"
+      },
+      {
+        "id": "matchup-selection",
+        "title": "얼음과 격투 압박을 확인한 뒤 세 번째 포켓몬을 조정하십시오.",
+        "reason": "메가보만다와 하마돈, 마스카나는 얼음 기술에 각각 취약하며, 메가보만다는 얼음 기술에 특히 큰 피해를 받습니다. 메가루카리오Z는 얼음 타입을 반감하지만 격투에는 약하므로, 상대의 공격 유형에 따라 메가 진화 선택과 동료 구성을 달리하는 편이 안전합니다.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 0
+  }
+}

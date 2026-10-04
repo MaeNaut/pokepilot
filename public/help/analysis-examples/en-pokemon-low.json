@@ -1,0 +1,114 @@
+{
+  "id": "en-pokemon-low",
+  "generatedAt": "2026-10-04T06:33:45.502Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "promptVersion": 92,
+  "inputHash": "a06b99e1056e2075bd87c33ddb214c468eaab8407ca37c3099f1accd6e9a6d56",
+  "execution": {
+    "durationMs": 10649,
+    "totalTokens": 11784,
+    "estimatedCostUsd": 0.00123697
+  },
+  "response": {
+    "version": 2,
+    "scope": "pokemon",
+    "title": "Hippowdon",
+    "paragraphs": [
+      "Hippowdon is a slow, durable support setter with 215 HP, 154 Defense, and 124 Special Defense. Sand Stream brings in Sandstorm, while Leftovers provides end-of-turn recovery. Stealth Rock pressures opposing switches; Yawn can discourage an opponent from staying in, and Whirlwind can force a switch. Earthquake is its sole damaging move, so its direct offensive options are limited.",
+      "Its Ground typing leaves it weak to Water, Grass, and Ice, though the supplied teammates offer useful defensive support against those attacks. Lucario Mega Z resists Ice, while Salamence Mega, Archaludon, and Meowscarada resist Water. Hippowdon’s slower Speed makes it better suited to establishing hazards or disrupting opponents than to racing faster attackers."
+    ],
+    "recommendations": [
+      {
+        "id": "ice-partner",
+        "title": "Use Lucario Mega Z as an Ice-resistant switch-in when Hippowdon is threatened by Ice attacks.",
+        "reason": "Hippowdon is weak to Ice, while Lucario Mega Z resists it, giving the team a concrete defensive option against that threat.",
+        "priority": "medium"
+      },
+      {
+        "id": "hazard-pressure",
+        "title": "Use Stealth Rock to support Hippowdon’s switching pressure from Yawn and Whirlwind.",
+        "reason": "Stealth Rock damages foes when they switch in, while Yawn discourages staying in and Whirlwind forces a switch. Together, these moves can make repeated switches costly.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 0
+  }
+}

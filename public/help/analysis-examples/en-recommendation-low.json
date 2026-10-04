@@ -1,0 +1,3551 @@
+{
+  "id": "en-recommendation-low",
+  "generatedAt": "2026-10-04T06:34:07.017Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "promptVersion": 92,
+  "inputHash": "f3420f1d4c3a6deef9180a9f8b13b7247ddcc5e80e32b79af6d4dafc09a4c128",
+  "execution": {
+    "durationMs": 11792,
+    "totalTokens": 25274,
+    "estimatedCostUsd": 0.00271323
+  },
+  "response": {
+    "version": 2,
+    "scope": "recommendation",
+    "title": "Kabamanda",
+    "paragraphs": [
+      "The open slot should round out a Singles team built around Stealth Rock and Toxic Spikes, with Salamence Mega and Lucario Mega Z as distinct attacking branches. I favored candidates whose sampled moves offer a useful new role or help against the team’s stated Ice and Fighting pressures, while weighing their listed weaknesses and fit signals rather than treating shortlist order as a ranking.",
+      "The strongest additions provide either reliable action denial or pivoting alongside their offensive contribution. Several candidates also add useful resistances, but no single fit signal outweighs a candidate’s concrete tradeoff. These recommendations are additions to the open slot, not replacements for an existing teammate."
+    ],
+    "recommendations": [
+      {
+        "id": "primarina",
+        "title": "Add 누리레느 for action denial and a complementary special attacker.",
+        "reason": "앙코르 can lock a foe into its last move, giving the team a way to disrupt opposing setup or recovery, while 문포스 and 물거품아리아 provide special attacks. It also resists Fire, Ice, and Fighting according to the supplied fit data; its listed Electric, Grass, and Poison weaknesses are the tradeoff.",
+        "priority": "high"
+      },
+      {
+        "id": "rotom-wash",
+        "title": "Add 워시로토무 for pivoting and useful defensive coverage.",
+        "reason": "하이드로펌프 and 10만볼트 provide special attacks, while 볼트체인지 offers pivoting to bring an attacker in safely. The fit data lists Fire and Ice among its resisted team threats, but it is weak to Grass, so it does not solve every defensive concern.",
+        "priority": "medium"
+      },
+      {
+        "id": "gholdengo",
+        "title": "Add 타부자고 for a setup-capable special attacker.",
+        "reason": "나쁜음모 gives it a way to raise its Special Attack, and 섀도볼 supplies a selected special attack alongside 골드러시. Its fit data lists Fighting and Fairy among resisted team threats, but also lists Fire as a threat it amplifies, making that defensive tradeoff important.",
+        "priority": "medium"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [
+      {
+        "pokemonId": "charizard",
+        "displayName": "리자몽",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "fire",
+          "flying"
+        ],
+        "typeDisplayNames": [
+          "불꽃",
+          "비행"
+        ],
+        "abilities": [
+          {
+            "id": "blaze",
+            "displayName": "맹화",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Fire-type attack."
+          },
+          {
+            "id": "solarpower",
+            "displayName": "선파워",
+            "effect": "If Sun is active, this Pokemon's Special Attack is multiplied by 1.5 and it loses 1/8 of its maximum HP, rounded down, at the end of each turn. These effects are prevented if the Pokemon is holding a Utility Umbrella."
+          },
+          {
+            "id": "toughclaws",
+            "displayName": "단단한발톱",
+            "effect": "This Pokemon's contact moves have their power multiplied by 1.3."
+          }
+        ],
+        "baseStats": {
+          "hp": 78,
+          "attack": 84,
+          "defense": 78,
+          "specialAttack": 109,
+          "specialDefense": 85,
+          "speed": 100
+        },
+        "speedTier": "fast",
+        "requiresMegaStone": false,
+        "usageRank": 12,
+        "commonSet": {
+          "ability": "Blaze",
+          "item": "Charizardite Y",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "solarbeam",
+              "displayName": "솔라빔",
+              "type": "grass",
+              "category": "Special",
+              "power": 120,
+              "effect": "Charges turn 1. Hits turn 2. No charge in sunlight."
+            },
+            {
+              "id": "flamethrower",
+              "displayName": "화염방사",
+              "type": "fire",
+              "category": "Special",
+              "power": 90,
+              "effect": "10% chance to burn the target."
+            },
+            {
+              "id": "dragonpulse",
+              "displayName": "용의파동",
+              "type": "dragon",
+              "category": "Special",
+              "power": 85
+            },
+            {
+              "id": "roost",
+              "displayName": "날개쉬기",
+              "type": "flying",
+              "category": "Status",
+              "power": null,
+              "effect": "Heals 50% HP. Flying-type removed 'til turn ends."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "electric",
+            "rock"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "fighting",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [
+            "sand"
+          ],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "skeledirge",
+        "displayName": "라우드본",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "fire",
+          "ghost"
+        ],
+        "typeDisplayNames": [
+          "불꽃",
+          "고스트"
+        ],
+        "abilities": [
+          {
+            "id": "unaware",
+            "displayName": "천진",
+            "effect": "This Pokemon ignores other Pokemon's Attack, Special Attack, and accuracy stat stages when taking damage, and ignores other Pokemon's Defense, Special Defense, and evasiveness stat stages when dealing damage."
+          },
+          {
+            "id": "blaze",
+            "displayName": "맹화",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Fire-type attack."
+          }
+        ],
+        "baseStats": {
+          "hp": 104,
+          "attack": 75,
+          "defense": 100,
+          "specialAttack": 110,
+          "specialDefense": 75,
+          "speed": 66
+        },
+        "speedTier": "slow",
+        "requiresMegaStone": false,
+        "usageRank": 33,
+        "commonSet": {
+          "ability": "Unaware",
+          "item": "Leftovers",
+          "nature": "bold",
+          "moves": [
+            {
+              "id": "torchsong",
+              "displayName": "플레어송",
+              "type": "fire",
+              "category": "Special",
+              "power": 80,
+              "effect": "100% chance to raise the user's Sp. Atk by 1."
+            },
+            {
+              "id": "slackoff",
+              "displayName": "게으름피우기",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Heals the user by 50% of its max HP."
+            },
+            {
+              "id": "willowisp",
+              "displayName": "도깨비불",
+              "type": "fire",
+              "category": "Status",
+              "power": null,
+              "effect": "Burns the target."
+            },
+            {
+              "id": "shadowball",
+              "displayName": "섀도볼",
+              "type": "ghost",
+              "category": "Special",
+              "power": 80,
+              "effect": "20% chance to lower the target's Sp. Def by 1."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "ground",
+            "rock",
+            "ghost",
+            "dark"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice",
+            "fighting",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "delphox",
+        "displayName": "마폭시",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "fire",
+          "psychic"
+        ],
+        "typeDisplayNames": [
+          "불꽃",
+          "에스퍼"
+        ],
+        "abilities": [
+          {
+            "id": "blaze",
+            "displayName": "맹화",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Fire-type attack."
+          },
+          {
+            "id": "magician",
+            "displayName": "매지션",
+            "effect": "If this Pokemon has no item, it steals the item off a Pokemon it hits with an attack. Does not affect Doom Desire and Future Sight. If multiple targets are hit by an attack the item is stolen from the fastest Pokemon, while considering the effect of Trick Room and prioritizing opposing Pokemon before allies."
+          },
+          {
+            "id": "levitate",
+            "displayName": "부유",
+            "effect": "This Pokemon is immune to Ground-type attacks and the effects of Spikes, Toxic Spikes, Sticky Web, and the Arena Trap Ability. The effects of Gravity, Ingrain, Smack Down, Thousand Arrows, and Iron Ball nullify the immunity. Thousand Arrows can hit this Pokemon as if it did not have this Ability."
+          }
+        ],
+        "baseStats": {
+          "hp": 75,
+          "attack": 69,
+          "defense": 72,
+          "specialAttack": 114,
+          "specialDefense": 100,
+          "speed": 104
+        },
+        "speedTier": "fast",
+        "requiresMegaStone": false,
+        "usageRank": 41,
+        "commonSet": {
+          "ability": "Blaze",
+          "item": "Delphoxite",
+          "nature": "timid",
+          "moves": [
+            {
+              "id": "flamethrower",
+              "displayName": "화염방사",
+              "type": "fire",
+              "category": "Special",
+              "power": 90,
+              "effect": "10% chance to burn the target."
+            },
+            {
+              "id": "psychic",
+              "displayName": "사이코키네시스",
+              "type": "psychic",
+              "category": "Special",
+              "power": 90,
+              "effect": "10% chance to lower the target's Sp. Def by 1."
+            },
+            {
+              "id": "nastyplot",
+              "displayName": "나쁜음모",
+              "type": "dark",
+              "category": "Status",
+              "power": null,
+              "effect": "Raises the user's Sp. Atk by 2."
+            },
+            {
+              "id": "dazzlinggleam",
+              "displayName": "매지컬샤인",
+              "type": "fairy",
+              "category": "Special",
+              "power": 80,
+              "effect": "No additional effect. Hits adjacent foes."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "ground",
+            "rock",
+            "ghost",
+            "dark"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice",
+            "fighting",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "toxapex",
+        "displayName": "더시마사리",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "poison",
+          "water"
+        ],
+        "typeDisplayNames": [
+          "독",
+          "물"
+        ],
+        "abilities": [
+          {
+            "id": "regenerator",
+            "displayName": "재생력",
+            "effect": "This Pokemon restores 1/3 of its maximum HP, rounded down, when it switches out."
+          },
+          {
+            "id": "limber",
+            "displayName": "유연",
+            "effect": "This Pokemon cannot be paralyzed. Gaining this Ability while paralyzed cures it."
+          },
+          {
+            "id": "merciless",
+            "displayName": "무도한행동",
+            "effect": "This Pokemon's attacks are critical hits if the target is poisoned."
+          }
+        ],
+        "baseStats": {
+          "hp": 50,
+          "attack": 63,
+          "defense": 152,
+          "specialAttack": 53,
+          "specialDefense": 142,
+          "speed": 35
+        },
+        "speedTier": "very-slow",
+        "requiresMegaStone": false,
+        "usageRank": 42,
+        "commonSet": {
+          "ability": "Regenerator",
+          "item": "Leftovers",
+          "nature": "careful",
+          "moves": [
+            {
+              "id": "recover",
+              "displayName": "HP회복",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Heals the user by 50% of its max HP."
+            },
+            {
+              "id": "toxic",
+              "displayName": "맹독",
+              "type": "poison",
+              "category": "Status",
+              "power": null,
+              "effect": "Badly poisons the target. Poison types can't miss."
+            },
+            {
+              "id": "infestation",
+              "displayName": "엉겨붙기",
+              "type": "bug",
+              "category": "Special",
+              "power": 20,
+              "effect": "Traps and damages the target for 4-5 turns."
+            },
+            {
+              "id": "haze",
+              "displayName": "흑안개",
+              "type": "ice",
+              "category": "Status",
+              "power": null,
+              "effect": "Eliminates all stat changes."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "electric",
+            "ground",
+            "psychic"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice",
+            "fighting",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "armarouge",
+        "displayName": "카디나르마",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "fire",
+          "psychic"
+        ],
+        "typeDisplayNames": [
+          "불꽃",
+          "에스퍼"
+        ],
+        "abilities": [
+          {
+            "id": "weakarmor",
+            "displayName": "깨어진갑옷",
+            "effect": "If a physical attack hits this Pokemon, its Defense is lowered by 1 stage and its Speed is raised by 2 stages."
+          },
+          {
+            "id": "flashfire",
+            "displayName": "타오르는불꽃",
+            "effect": "This Pokemon is immune to Fire-type moves. The first time it is hit by a Fire-type move, its offensive stat is multiplied by 1.5 while using a Fire-type attack as long as it remains active and has this Ability. If this Pokemon is frozen, it cannot be defrosted by Fire-type attacks."
+          }
+        ],
+        "baseStats": {
+          "hp": 85,
+          "attack": 60,
+          "defense": 100,
+          "specialAttack": 125,
+          "specialDefense": 80,
+          "speed": 75
+        },
+        "speedTier": "slow",
+        "requiresMegaStone": false,
+        "usageRank": 54,
+        "commonSet": {
+          "ability": "Weak Armor",
+          "item": "Focus Sash",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "armorcannon",
+              "displayName": "아머캐논",
+              "type": "fire",
+              "category": "Special",
+              "power": 120,
+              "effect": "Lowers the user's Defense and Sp. Def by 1."
+            },
+            {
+              "id": "expandingforce",
+              "displayName": "와이드포스",
+              "type": "psychic",
+              "category": "Special",
+              "power": 80,
+              "effect": "User on Psychic Terrain: 1.5× power, hits foes."
+            },
+            {
+              "id": "destinybond",
+              "displayName": "길동무",
+              "type": "ghost",
+              "category": "Status",
+              "power": null,
+              "effect": "If an opponent knocks out the user, it also faints."
+            },
+            {
+              "id": "endure",
+              "displayName": "버티기",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "User survives attacks this turn with at least 1 HP."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "ground",
+            "rock",
+            "ghost",
+            "dark"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice",
+            "fighting",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "primarina",
+        "displayName": "누리레느",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "water",
+          "fairy"
+        ],
+        "typeDisplayNames": [
+          "물",
+          "페어리"
+        ],
+        "abilities": [
+          {
+            "id": "torrent",
+            "displayName": "급류",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Water-type attack."
+          },
+          {
+            "id": "liquidvoice",
+            "displayName": "촉촉보이스",
+            "effect": "This Pokemon's sound-based moves become Water-type moves. This effect comes after other effects that change a move's type, but before Ion Deluge and Electrify's effects."
+          }
+        ],
+        "baseStats": {
+          "hp": 80,
+          "attack": 74,
+          "defense": 74,
+          "specialAttack": 126,
+          "specialDefense": 116,
+          "speed": 60
+        },
+        "speedTier": "slow",
+        "requiresMegaStone": false,
+        "usageRank": 3,
+        "commonSet": {
+          "ability": "Torrent",
+          "item": "Sitrus Berry",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "moonblast",
+              "displayName": "문포스",
+              "type": "fairy",
+              "category": "Special",
+              "power": 95,
+              "effect": "30% chance to lower the target's Sp. Atk by 1."
+            },
+            {
+              "id": "sparklingaria",
+              "displayName": "물거품아리아",
+              "type": "water",
+              "category": "Special",
+              "power": 90,
+              "effect": "The target is cured of its burn."
+            },
+            {
+              "id": "aquajet",
+              "displayName": "아쿠아제트",
+              "type": "water",
+              "category": "Physical",
+              "power": 40,
+              "effect": "Usually goes first."
+            },
+            {
+              "id": "encore",
+              "displayName": "앙코르",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Target repeats its last move for its next 3 turns."
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "action-denial"
+        ],
+        "fit": {
+          "weakTo": [
+            "electric",
+            "grass",
+            "poison"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice",
+            "fighting"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "cinderace",
+        "displayName": "에이스번",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "fire"
+        ],
+        "typeDisplayNames": [
+          "불꽃"
+        ],
+        "abilities": [
+          {
+            "id": "libero",
+            "displayName": "리베로",
+            "effect": "This Pokemon's type changes to match the type of the move it is about to use. This effect comes after all effects that change a move's type. This effect can only happen once per switch-in, and only if this Pokemon is not Terastallized."
+          },
+          {
+            "id": "blaze",
+            "displayName": "맹화",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Fire-type attack."
+          }
+        ],
+        "baseStats": {
+          "hp": 80,
+          "attack": 116,
+          "defense": 75,
+          "specialAttack": 65,
+          "specialDefense": 75,
+          "speed": 119
+        },
+        "speedTier": "fast",
+        "requiresMegaStone": false,
+        "usageRank": 17,
+        "commonSet": {
+          "ability": "Libero",
+          "item": "Focus Sash",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "pyroball",
+              "displayName": "화염볼",
+              "type": "fire",
+              "category": "Physical",
+              "power": 120,
+              "effect": "10% chance to burn the target. Thaws user."
+            },
+            {
+              "id": "highjumpkick",
+              "displayName": "무릎차기",
+              "type": "fighting",
+              "category": "Physical",
+              "power": 130,
+              "effect": "User is hurt by 50% of its max HP if it misses."
+            },
+            {
+              "id": "gunkshot",
+              "displayName": "더스트슈트",
+              "type": "poison",
+              "category": "Physical",
+              "power": 120,
+              "effect": "30% chance to poison the target."
+            },
+            {
+              "id": "suckerpunch",
+              "displayName": "기습",
+              "type": "dark",
+              "category": "Physical",
+              "power": 70,
+              "effect": "Usually goes first. Fails if target is not attacking."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "ground",
+            "rock"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "basculegion-male",
+        "displayName": "수컷 대쓰여너",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "water",
+          "ghost"
+        ],
+        "typeDisplayNames": [
+          "물",
+          "고스트"
+        ],
+        "abilities": [
+          {
+            "id": "adaptability",
+            "displayName": "적응력",
+            "effect": "This Pokemon's moves that match one of its types have a same-type attack bonus (STAB) of 2 instead of 1.5."
+          },
+          {
+            "id": "moldbreaker",
+            "displayName": "틀깨기",
+            "effect": "This Pokemon's moves and their effects ignore certain Abilities of other Pokemon. The Abilities that can be negated are Armor Tail, Aroma Veil, Aura Break, Battle Armor, Big Pecks, Bulletproof, Clear Body, Contrary, Damp, Dazzling, Disguise, Dry Skin, Earth Eater, Filter, Flash Fire, Flower Gift, Flower Veil, Fluffy..."
+          },
+          {
+            "id": "swiftswim",
+            "displayName": "쓱쓱",
+            "effect": "If Rain is active, this Pokemon's Speed is doubled. This effect is prevented if this Pokemon is holding a Utility Umbrella."
+          }
+        ],
+        "baseStats": {
+          "hp": 120,
+          "attack": 112,
+          "defense": 65,
+          "specialAttack": 80,
+          "specialDefense": 75,
+          "speed": 78
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 19,
+        "commonSet": {
+          "ability": "Adaptability",
+          "item": "Choice Scarf",
+          "nature": "jolly",
+          "moves": [
+            {
+              "id": "lastrespects",
+              "displayName": "성묘",
+              "type": "ghost",
+              "category": "Physical",
+              "power": 50,
+              "effect": "+50 power for each time a party member fainted."
+            },
+            {
+              "id": "wavecrash",
+              "displayName": "웨이브태클",
+              "type": "water",
+              "category": "Physical",
+              "power": 120,
+              "effect": "Has 33% recoil."
+            },
+            {
+              "id": "aquajet",
+              "displayName": "아쿠아제트",
+              "type": "water",
+              "category": "Physical",
+              "power": 40,
+              "effect": "Usually goes first."
+            },
+            {
+              "id": "flipturn",
+              "displayName": "퀵턴",
+              "type": "water",
+              "category": "Physical",
+              "power": 60,
+              "effect": "User switches out after damaging the target."
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "pivoting"
+        ],
+        "fit": {
+          "weakTo": [
+            "electric",
+            "grass",
+            "ghost",
+            "dark"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice",
+            "fighting"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "gholdengo",
+        "displayName": "타부자고",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "steel",
+          "ghost"
+        ],
+        "typeDisplayNames": [
+          "강철",
+          "고스트"
+        ],
+        "abilities": [
+          {
+            "id": "goodasgold",
+            "displayName": "황금몸",
+            "effect": "This Pokemon is immune to Status moves."
+          }
+        ],
+        "baseStats": {
+          "hp": 87,
+          "attack": 60,
+          "defense": 95,
+          "specialAttack": 133,
+          "specialDefense": 91,
+          "speed": 84
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 9,
+        "commonSet": {
+          "ability": "Good as Gold",
+          "item": "Air Balloon",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "shadowball",
+              "displayName": "섀도볼",
+              "type": "ghost",
+              "category": "Special",
+              "power": 80,
+              "effect": "20% chance to lower the target's Sp. Def by 1."
+            },
+            {
+              "id": "makeitrain",
+              "displayName": "골드러시",
+              "type": "steel",
+              "category": "Special",
+              "power": 120,
+              "effect": "Lowers the user's Sp. Atk by 1. Hits foe(s)."
+            },
+            {
+              "id": "nastyplot",
+              "displayName": "나쁜음모",
+              "type": "dark",
+              "category": "Status",
+              "power": null,
+              "effect": "Raises the user's Sp. Atk by 2."
+            },
+            {
+              "id": "recover",
+              "displayName": "HP회복",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Heals the user by 50% of its max HP."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "fire",
+            "ground",
+            "ghost",
+            "dark"
+          ],
+          "resistsTeamThreats": [
+            "ice",
+            "fighting",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [
+            "fire"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "aegislash-shield",
+        "displayName": "킬가르도",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "steel",
+          "ghost"
+        ],
+        "typeDisplayNames": [
+          "강철",
+          "고스트"
+        ],
+        "abilities": [
+          {
+            "id": "stancechange",
+            "displayName": "배틀스위치",
+            "effect": "If this Pokemon is an Aegislash, it changes to Blade Forme before using an attacking move, and changes to Shield Forme before using King's Shield."
+          }
+        ],
+        "baseStats": {
+          "hp": 60,
+          "attack": 50,
+          "defense": 140,
+          "specialAttack": 50,
+          "specialDefense": 140,
+          "speed": 60
+        },
+        "speedTier": "slow",
+        "requiresMegaStone": false,
+        "usageRank": 21,
+        "commonSet": {
+          "ability": "Stance Change",
+          "item": "Leftovers",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "shadowsneak",
+              "displayName": "야습",
+              "type": "ghost",
+              "category": "Physical",
+              "power": 40,
+              "effect": "Usually goes first."
+            },
+            {
+              "id": "kingsshield",
+              "displayName": "킹실드",
+              "type": "steel",
+              "category": "Status",
+              "power": null,
+              "effect": "Protects from damaging attacks. Contact: -1 Atk."
+            },
+            {
+              "id": "poltergeist",
+              "displayName": "폴터가이스트",
+              "type": "ghost",
+              "category": "Physical",
+              "power": 110,
+              "effect": "Fails if the target has no held item."
+            },
+            {
+              "id": "sacredsword",
+              "displayName": "성스러운칼",
+              "type": "fighting",
+              "category": "Physical",
+              "power": 90,
+              "effect": "Ignores the target's stat stage changes."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "fire",
+            "ground",
+            "ghost",
+            "dark"
+          ],
+          "resistsTeamThreats": [
+            "ice",
+            "fighting",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [
+            "fire"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "glimmora",
+        "displayName": "킬라플로르",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "rock",
+          "poison"
+        ],
+        "typeDisplayNames": [
+          "바위",
+          "독"
+        ],
+        "abilities": [
+          {
+            "id": "toxicdebris",
+            "displayName": "독치장",
+            "effect": "If this Pokemon is hit by a physical attack, Toxic Spikes are set on the opposing side."
+          },
+          {
+            "id": "corrosion",
+            "displayName": "부식",
+            "effect": "This Pokemon can poison or badly poison a Pokemon regardless of its typing."
+          },
+          {
+            "id": "adaptability",
+            "displayName": "적응력",
+            "effect": "This Pokemon's moves that match one of its types have a same-type attack bonus (STAB) of 2 instead of 1.5."
+          }
+        ],
+        "baseStats": {
+          "hp": 83,
+          "attack": 55,
+          "defense": 90,
+          "specialAttack": 130,
+          "specialDefense": 81,
+          "speed": 86
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 15,
+        "commonSet": {
+          "ability": "Toxic Debris",
+          "item": "Focus Sash",
+          "nature": "timid",
+          "moves": [
+            {
+              "id": "powergem",
+              "displayName": "파워젬",
+              "type": "rock",
+              "category": "Special",
+              "power": 80
+            },
+            {
+              "id": "stealthrock",
+              "displayName": "스텔스록",
+              "type": "rock",
+              "category": "Status",
+              "power": null,
+              "effect": "Hurts foes on switch-in. Factors Rock weakness."
+            },
+            {
+              "id": "earthpower",
+              "displayName": "대지의힘",
+              "type": "ground",
+              "category": "Special",
+              "power": 90,
+              "effect": "10% chance to lower the target's Sp. Def by 1."
+            },
+            {
+              "id": "sludgewave",
+              "displayName": "오물웨이브",
+              "type": "poison",
+              "category": "Special",
+              "power": 95,
+              "effect": "10% chance to poison adjacent Pokemon."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "ground",
+            "psychic",
+            "steel"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "blastoise",
+        "displayName": "거북왕",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "water"
+        ],
+        "typeDisplayNames": [
+          "물"
+        ],
+        "abilities": [
+          {
+            "id": "torrent",
+            "displayName": "급류",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Water-type attack."
+          },
+          {
+            "id": "raindish",
+            "displayName": "젖은접시",
+            "effect": "If Rain is active, this Pokemon restores 1/16 of its maximum HP, rounded down, at the end of each turn. This effect is prevented if this Pokemon is holding a Utility Umbrella."
+          },
+          {
+            "id": "megalauncher",
+            "displayName": "메가런처",
+            "effect": "This Pokemon's pulse moves have their power multiplied by 1.5. Heal Pulse restores 3/4 of a target's maximum HP, rounded half down."
+          }
+        ],
+        "baseStats": {
+          "hp": 79,
+          "attack": 83,
+          "defense": 100,
+          "specialAttack": 85,
+          "specialDefense": 105,
+          "speed": 78
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 25,
+        "commonSet": {
+          "ability": "Torrent",
+          "item": "Blastoisinite",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "shellsmash",
+              "displayName": "껍질깨기",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Lowers Def, SpD by 1; raises Atk, SpA, Spe by 2."
+            },
+            {
+              "id": "aurasphere",
+              "displayName": "파동탄",
+              "type": "fighting",
+              "category": "Special",
+              "power": 80,
+              "effect": "This move does not check accuracy."
+            },
+            {
+              "id": "darkpulse",
+              "displayName": "악의파동",
+              "type": "dark",
+              "category": "Special",
+              "power": 80,
+              "effect": "20% chance to make the target flinch."
+            },
+            {
+              "id": "terrainpulse",
+              "displayName": "대지의파동",
+              "type": "normal",
+              "category": "Special",
+              "power": 50,
+              "effect": "User on terrain: power doubles, type varies."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "electric",
+            "grass"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "gyarados",
+        "displayName": "갸라도스",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "water",
+          "flying"
+        ],
+        "typeDisplayNames": [
+          "물",
+          "비행"
+        ],
+        "abilities": [
+          {
+            "id": "intimidate",
+            "displayName": "위협",
+            "effect": "On switch-in, this Pokemon lowers the Attack of opposing Pokemon by 1 stage. Pokemon with the Inner Focus, Oblivious, Own Tempo, or Scrappy Abilities and Pokemon behind a substitute are immune."
+          },
+          {
+            "id": "moxie",
+            "displayName": "자기과신",
+            "effect": "This Pokemon's Attack is raised by 1 stage if it attacks and knocks out another Pokemon."
+          },
+          {
+            "id": "moldbreaker",
+            "displayName": "틀깨기",
+            "effect": "This Pokemon's moves and their effects ignore certain Abilities of other Pokemon. The Abilities that can be negated are Armor Tail, Aroma Veil, Aura Break, Battle Armor, Big Pecks, Bulletproof, Clear Body, Contrary, Damp, Dazzling, Disguise, Dry Skin, Earth Eater, Filter, Flash Fire, Flower Gift, Flower Veil, Fluffy..."
+          }
+        ],
+        "baseStats": {
+          "hp": 95,
+          "attack": 125,
+          "defense": 79,
+          "specialAttack": 60,
+          "specialDefense": 100,
+          "speed": 81
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 18,
+        "commonSet": {
+          "ability": "Intimidate",
+          "item": "Rocky Helmet",
+          "nature": "impish",
+          "moves": [
+            {
+              "id": "powerwhip",
+              "displayName": "파워휩",
+              "type": "grass",
+              "category": "Physical",
+              "power": 120
+            },
+            {
+              "id": "avalanche",
+              "displayName": "눈사태",
+              "type": "ice",
+              "category": "Physical",
+              "power": 60,
+              "effect": "Power doubles if user is damaged by the target."
+            },
+            {
+              "id": "waterfall",
+              "displayName": "폭포오르기",
+              "type": "water",
+              "category": "Physical",
+              "power": 80,
+              "effect": "20% chance to make the target flinch."
+            },
+            {
+              "id": "taunt",
+              "displayName": "도발",
+              "type": "dark",
+              "category": "Status",
+              "power": null,
+              "effect": "Target can't use status moves its next 3 turns."
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "opponent-offense-control",
+          "action-denial"
+        ],
+        "fit": {
+          "weakTo": [
+            "electric",
+            "rock"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "fighting"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "golisopod",
+        "displayName": "갑주무사",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "bug",
+          "water"
+        ],
+        "typeDisplayNames": [
+          "벌레",
+          "물"
+        ],
+        "abilities": [
+          {
+            "id": "emergencyexit",
+            "displayName": "위기회피",
+            "effect": "When this Pokemon has more than 1/2 its maximum HP and takes damage bringing it to 1/2 or less of its maximum HP, it immediately switches out to a chosen ally. This effect applies after all hits from a multi-hit move. This effect is prevented if the move had a secondary effect removed by the Sheer Force Ability. Thi..."
+          },
+          {
+            "id": "toughclaws",
+            "displayName": "단단한발톱",
+            "effect": "This Pokemon's contact moves have their power multiplied by 1.3."
+          }
+        ],
+        "baseStats": {
+          "hp": 75,
+          "attack": 125,
+          "defense": 140,
+          "specialAttack": 60,
+          "specialDefense": 90,
+          "speed": 40
+        },
+        "speedTier": "very-slow",
+        "requiresMegaStone": false,
+        "usageRank": 6,
+        "commonSet": {
+          "ability": "Emergency Exit",
+          "item": "Golisopite",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "ironhead",
+              "displayName": "아이언헤드",
+              "type": "steel",
+              "category": "Physical",
+              "power": 80,
+              "effect": "30% chance to make the target flinch."
+            },
+            {
+              "id": "suckerpunch",
+              "displayName": "기습",
+              "type": "dark",
+              "category": "Physical",
+              "power": 70,
+              "effect": "Usually goes first. Fails if target is not attacking."
+            },
+            {
+              "id": "firstimpression",
+              "displayName": "만나자마자",
+              "type": "bug",
+              "category": "Physical",
+              "power": 100,
+              "effect": "Nearly always goes first. First turn out only."
+            },
+            {
+              "id": "leechlife",
+              "displayName": "흡혈",
+              "type": "bug",
+              "category": "Physical",
+              "power": 80,
+              "effect": "User recovers 50% of the damage dealt."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "electric",
+            "flying",
+            "rock"
+          ],
+          "resistsTeamThreats": [
+            "ice",
+            "fighting"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "rotom-wash",
+        "displayName": "워시로토무",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "electric",
+          "water"
+        ],
+        "typeDisplayNames": [
+          "전기",
+          "물"
+        ],
+        "abilities": [
+          {
+            "id": "levitate",
+            "displayName": "부유",
+            "effect": "This Pokemon is immune to Ground-type attacks and the effects of Spikes, Toxic Spikes, Sticky Web, and the Arena Trap Ability. The effects of Gravity, Ingrain, Smack Down, Thousand Arrows, and Iron Ball nullify the immunity. Thousand Arrows can hit this Pokemon as if it did not have this Ability."
+          }
+        ],
+        "baseStats": {
+          "hp": 50,
+          "attack": 65,
+          "defense": 107,
+          "specialAttack": 105,
+          "specialDefense": 107,
+          "speed": 86
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 28,
+        "commonSet": {
+          "ability": "Levitate",
+          "item": "Leftovers",
+          "nature": "bold",
+          "moves": [
+            {
+              "id": "hydropump",
+              "displayName": "하이드로펌프",
+              "type": "water",
+              "category": "Special",
+              "power": 110
+            },
+            {
+              "id": "voltswitch",
+              "displayName": "볼트체인지",
+              "type": "electric",
+              "category": "Special",
+              "power": 70,
+              "effect": "User switches out after damaging the target."
+            },
+            {
+              "id": "willowisp",
+              "displayName": "도깨비불",
+              "type": "fire",
+              "category": "Status",
+              "power": null,
+              "effect": "Burns the target."
+            },
+            {
+              "id": "thunderbolt",
+              "displayName": "10만볼트",
+              "type": "electric",
+              "category": "Special",
+              "power": 90,
+              "effect": "10% chance to paralyze the target."
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "pivoting"
+        ],
+        "fit": {
+          "weakTo": [
+            "grass"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "metagross",
+        "displayName": "메타그로스",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "steel",
+          "psychic"
+        ],
+        "typeDisplayNames": [
+          "강철",
+          "에스퍼"
+        ],
+        "abilities": [
+          {
+            "id": "clearbody",
+            "displayName": "클리어바디",
+            "effect": "Prevents other Pokemon from lowering this Pokemon's stat stages."
+          },
+          {
+            "id": "lightmetal",
+            "displayName": "라이트메탈",
+            "effect": "This Pokemon's weight is halved, rounded down to a tenth of a kilogram. This effect is calculated after the effect of Autotomize, and before the effect of Float Stone. A Pokemon's weight will not drop below 0.1 kg."
+          },
+          {
+            "id": "toughclaws",
+            "displayName": "단단한발톱",
+            "effect": "This Pokemon's contact moves have their power multiplied by 1.3."
+          }
+        ],
+        "baseStats": {
+          "hp": 80,
+          "attack": 135,
+          "defense": 130,
+          "specialAttack": 95,
+          "specialDefense": 90,
+          "speed": 70
+        },
+        "speedTier": "slow",
+        "requiresMegaStone": false,
+        "usageRank": 20,
+        "commonSet": {
+          "ability": "Clear Body",
+          "item": "Metagrossite",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "bulletpunch",
+              "displayName": "불릿펀치",
+              "type": "steel",
+              "category": "Physical",
+              "power": 40,
+              "effect": "Usually goes first."
+            },
+            {
+              "id": "psychicfangs",
+              "displayName": "사이코팽",
+              "type": "psychic",
+              "category": "Physical",
+              "power": 85,
+              "effect": "Destroys screens, unless the target is immune."
+            },
+            {
+              "id": "icepunch",
+              "displayName": "냉동펀치",
+              "type": "ice",
+              "category": "Physical",
+              "power": 75,
+              "effect": "10% chance to freeze the target."
+            },
+            {
+              "id": "earthquake",
+              "displayName": "지진",
+              "type": "ground",
+              "category": "Physical",
+              "power": 100,
+              "effect": "Hits adjacent Pokemon. Double damage on Dig."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "fire",
+            "ground",
+            "ghost",
+            "dark"
+          ],
+          "resistsTeamThreats": [
+            "ice",
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [
+            "fire"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "sneasler",
+        "displayName": "포푸니크",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "fighting",
+          "poison"
+        ],
+        "typeDisplayNames": [
+          "격투",
+          "독"
+        ],
+        "abilities": [
+          {
+            "id": "unburden",
+            "displayName": "곡예",
+            "effect": "If this Pokemon loses its held item for any reason, its Speed is doubled as long as it remains active, has this Ability, and is not holding an item."
+          },
+          {
+            "id": "poisontouch",
+            "displayName": "독수",
+            "effect": "This Pokemon's contact moves have a 30% chance of poisoning. This effect comes after a move's inherent secondary effect chance."
+          },
+          {
+            "id": "pressure",
+            "displayName": "프레셔",
+            "effect": "If this Pokemon is the target of an opposing Pokemon's move, that move loses one additional PP. Imprison, Snatch, and Tera Blast also lose one additional PP when used by an opposing Pokemon, but Sticky Web does not."
+          }
+        ],
+        "baseStats": {
+          "hp": 80,
+          "attack": 130,
+          "defense": 60,
+          "specialAttack": 40,
+          "specialDefense": 80,
+          "speed": 120
+        },
+        "speedTier": "very-fast",
+        "requiresMegaStone": false,
+        "usageRank": 16,
+        "commonSet": {
+          "ability": "Unburden",
+          "item": "Psychic Seed",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "closecombat",
+              "displayName": "인파이트",
+              "type": "fighting",
+              "category": "Physical",
+              "power": 120,
+              "effect": "Lowers the user's Defense and Sp. Def by 1."
+            },
+            {
+              "id": "direclaw",
+              "displayName": "페이탈클로",
+              "type": "poison",
+              "category": "Physical",
+              "power": 80,
+              "effect": "50% chance to sleep, poison, or paralyze target."
+            },
+            {
+              "id": "swordsdance",
+              "displayName": "칼춤",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Raises the user's Attack by 2."
+            },
+            {
+              "id": "throatchop",
+              "displayName": "지옥찌르기",
+              "type": "dark",
+              "category": "Physical",
+              "power": 80,
+              "effect": "For 2 turns, the target cannot use sound moves."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "ground",
+            "flying",
+            "psychic"
+          ],
+          "resistsTeamThreats": [
+            "fighting"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "mimikyu-disguised",
+        "displayName": "따라큐",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "ghost",
+          "fairy"
+        ],
+        "typeDisplayNames": [
+          "고스트",
+          "페어리"
+        ],
+        "abilities": [
+          {
+            "id": "disguise",
+            "displayName": "탈",
+            "effect": "If this Pokemon is a Mimikyu, the first hit it takes in battle deals 0 neutral damage. Its disguise is then broken, it changes to Busted Form, and it loses 1/8 of its max HP. Confusion damage also breaks the disguise."
+          }
+        ],
+        "baseStats": {
+          "hp": 55,
+          "attack": 90,
+          "defense": 80,
+          "specialAttack": 50,
+          "specialDefense": 105,
+          "speed": 96
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 10,
+        "commonSet": {
+          "ability": "Disguise",
+          "item": "Life Orb",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "playrough",
+              "displayName": "치근거리기",
+              "type": "fairy",
+              "category": "Physical",
+              "power": 90,
+              "effect": "10% chance to lower the target's Attack by 1."
+            },
+            {
+              "id": "shadowsneak",
+              "displayName": "야습",
+              "type": "ghost",
+              "category": "Physical",
+              "power": 40,
+              "effect": "Usually goes first."
+            },
+            {
+              "id": "swordsdance",
+              "displayName": "칼춤",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Raises the user's Attack by 2."
+            },
+            {
+              "id": "shadowclaw",
+              "displayName": "섀도클로",
+              "type": "ghost",
+              "category": "Physical",
+              "power": 70,
+              "effect": "High critical hit ratio."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "ghost",
+            "steel"
+          ],
+          "resistsTeamThreats": [
+            "fighting"
+          ],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker",
+            "setter"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "greninja",
+        "displayName": "개굴닌자",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "water",
+          "dark"
+        ],
+        "typeDisplayNames": [
+          "물",
+          "악"
+        ],
+        "abilities": [
+          {
+            "id": "protean",
+            "displayName": "변환자재",
+            "effect": "This Pokemon's type changes to match the type of the move it is about to use. This effect comes after all effects that change a move's type. This effect can only happen once per switch-in, and only if this Pokemon is not Terastallized."
+          },
+          {
+            "id": "battlebond",
+            "displayName": "유대변화",
+            "effect": "If this Pokemon is a Greninja, its Attack, Special Attack, and Speed are raised by 1 stage if it attacks and knocks out another Pokemon. This effect can only happen once per battle."
+          },
+          {
+            "id": "torrent",
+            "displayName": "급류",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Water-type attack."
+          }
+        ],
+        "baseStats": {
+          "hp": 72,
+          "attack": 95,
+          "defense": 67,
+          "specialAttack": 103,
+          "specialDefense": 71,
+          "speed": 122
+        },
+        "speedTier": "very-fast",
+        "requiresMegaStone": false,
+        "usageRank": 23,
+        "commonSet": {
+          "ability": "Protean",
+          "item": "Greninjite",
+          "nature": "timid",
+          "moves": [
+            {
+              "id": "icebeam",
+              "displayName": "냉동빔",
+              "type": "ice",
+              "category": "Special",
+              "power": 90,
+              "effect": "10% chance to freeze the target."
+            },
+            {
+              "id": "darkpulse",
+              "displayName": "악의파동",
+              "type": "dark",
+              "category": "Special",
+              "power": 80,
+              "effect": "20% chance to make the target flinch."
+            },
+            {
+              "id": "sludgewave",
+              "displayName": "오물웨이브",
+              "type": "poison",
+              "category": "Special",
+              "power": 95,
+              "effect": "10% chance to poison adjacent Pokemon."
+            },
+            {
+              "id": "watershuriken",
+              "displayName": "물수리검",
+              "type": "water",
+              "category": "Special",
+              "power": 15,
+              "effect": "Usually goes first. Hits 2-5 times in one turn."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "electric",
+            "grass",
+            "fighting",
+            "bug",
+            "fairy"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "ice"
+          ],
+          "amplifiesTeamThreats": [
+            "fighting",
+            "fairy"
+          ],
+          "addsUnansweredWeaknesses": [
+            "fairy"
+          ],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "lycanroc-midday",
+        "displayName": "루가루암",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "rock"
+        ],
+        "typeDisplayNames": [
+          "바위"
+        ],
+        "abilities": [
+          {
+            "id": "sandrush",
+            "displayName": "모래헤치기",
+            "effect": "If Sandstorm is active, this Pokemon's Speed is doubled. This Pokemon takes no damage from Sandstorm."
+          },
+          {
+            "id": "keeneye",
+            "displayName": "날카로운눈",
+            "effect": "Prevents other Pokemon from lowering this Pokemon's accuracy stat stage. This Pokemon ignores a target's evasiveness stat stage."
+          },
+          {
+            "id": "steadfast",
+            "displayName": "불굴의마음",
+            "effect": "If this Pokemon flinches, its Speed is raised by 1 stage."
+          }
+        ],
+        "baseStats": {
+          "hp": 75,
+          "attack": 115,
+          "defense": 65,
+          "specialAttack": 55,
+          "specialDefense": 65,
+          "speed": 112
+        },
+        "speedTier": "fast",
+        "requiresMegaStone": false,
+        "usageRank": 247,
+        "commonSet": {
+          "ability": "Sand Rush",
+          "item": "Focus Sash",
+          "nature": "jolly",
+          "moves": [
+            {
+              "id": "accelerock",
+              "displayName": "액셀록",
+              "type": "rock",
+              "category": "Physical",
+              "power": 40,
+              "effect": "Usually goes first."
+            },
+            {
+              "id": "endeavor",
+              "displayName": "죽기살기",
+              "type": "normal",
+              "category": "Physical",
+              "power": null,
+              "effect": "Lowers the target's HP to the user's HP."
+            },
+            {
+              "id": "stealthrock",
+              "displayName": "스텔스록",
+              "type": "rock",
+              "category": "Status",
+              "power": null,
+              "effect": "Hurts foes on switch-in. Factors Rock weakness."
+            },
+            {
+              "id": "closecombat",
+              "displayName": "인파이트",
+              "type": "fighting",
+              "category": "Physical",
+              "power": 120,
+              "effect": "Lowers the user's Defense and Sp. Def by 1."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "grass",
+            "fighting",
+            "ground",
+            "steel"
+          ],
+          "resistsTeamThreats": [
+            "fire"
+          ],
+          "amplifiesTeamThreats": [
+            "fighting"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [
+            "sand"
+          ],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "corviknight",
+        "displayName": "아머까오",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "flying",
+          "steel"
+        ],
+        "typeDisplayNames": [
+          "비행",
+          "강철"
+        ],
+        "abilities": [
+          {
+            "id": "pressure",
+            "displayName": "프레셔",
+            "effect": "If this Pokemon is the target of an opposing Pokemon's move, that move loses one additional PP. Imprison, Snatch, and Tera Blast also lose one additional PP when used by an opposing Pokemon, but Sticky Web does not."
+          },
+          {
+            "id": "mirrorarmor",
+            "displayName": "미러아머",
+            "effect": "When one of this Pokemon's stat stages would be lowered by another Pokemon, that Pokemon's stat stage is lowered instead. This effect does not happen if this Pokemon's stat stage was already -6. If the other Pokemon has a substitute, neither Pokemon has its stat stage lowered."
+          },
+          {
+            "id": "unnerve",
+            "displayName": "긴장감",
+            "effect": "While this Pokemon is active, it prevents opposing Pokemon from using their Berries. This Ability activates before hazards and other Abilities take effect."
+          }
+        ],
+        "baseStats": {
+          "hp": 98,
+          "attack": 87,
+          "defense": 105,
+          "specialAttack": 53,
+          "specialDefense": 85,
+          "speed": 67
+        },
+        "speedTier": "slow",
+        "requiresMegaStone": false,
+        "usageRank": 14,
+        "commonSet": {
+          "ability": "Pressure",
+          "item": "Rocky Helmet",
+          "nature": "impish",
+          "moves": [
+            {
+              "id": "roost",
+              "displayName": "날개쉬기",
+              "type": "flying",
+              "category": "Status",
+              "power": null,
+              "effect": "Heals 50% HP. Flying-type removed 'til turn ends."
+            },
+            {
+              "id": "uturn",
+              "displayName": "유턴",
+              "type": "bug",
+              "category": "Physical",
+              "power": 70,
+              "effect": "User switches out after damaging the target."
+            },
+            {
+              "id": "bodypress",
+              "displayName": "바디프레스",
+              "type": "fighting",
+              "category": "Physical",
+              "power": 80,
+              "effect": "Uses user's Def stat as Atk in damage calculation."
+            },
+            {
+              "id": "irondefense",
+              "displayName": "철벽",
+              "type": "steel",
+              "category": "Status",
+              "power": null,
+              "effect": "Raises the user's Defense by 2."
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "pivoting"
+        ],
+        "fit": {
+          "weakTo": [
+            "fire",
+            "electric"
+          ],
+          "resistsTeamThreats": [
+            "fairy"
+          ],
+          "amplifiesTeamThreats": [
+            "fire"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "dragonite",
+        "displayName": "망나뇽",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "dragon",
+          "flying"
+        ],
+        "typeDisplayNames": [
+          "드래곤",
+          "비행"
+        ],
+        "abilities": [
+          {
+            "id": "multiscale",
+            "displayName": "멀티스케일",
+            "effect": "If this Pokemon is at full HP, damage taken from attacks is halved."
+          },
+          {
+            "id": "innerfocus",
+            "displayName": "정신력",
+            "effect": "This Pokemon cannot be made to flinch. This Pokemon is immune to the effect of the Intimidate Ability."
+          }
+        ],
+        "baseStats": {
+          "hp": 91,
+          "attack": 134,
+          "defense": 95,
+          "specialAttack": 100,
+          "specialDefense": 100,
+          "speed": 80
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 24,
+        "commonSet": {
+          "ability": "Multiscale",
+          "item": "Dragoninite",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "roost",
+              "displayName": "날개쉬기",
+              "type": "flying",
+              "category": "Status",
+              "power": null,
+              "effect": "Heals 50% HP. Flying-type removed 'til turn ends."
+            },
+            {
+              "id": "extremespeed",
+              "displayName": "신속",
+              "type": "normal",
+              "category": "Physical",
+              "power": 80,
+              "effect": "Nearly always goes first."
+            },
+            {
+              "id": "flamethrower",
+              "displayName": "화염방사",
+              "type": "fire",
+              "category": "Special",
+              "power": 90,
+              "effect": "10% chance to burn the target."
+            },
+            {
+              "id": "dracometeor",
+              "displayName": "용성군",
+              "type": "dragon",
+              "category": "Special",
+              "power": 130,
+              "effect": "Lowers the user's Sp. Atk by 2."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "ice",
+            "rock",
+            "dragon",
+            "fairy"
+          ],
+          "resistsTeamThreats": [
+            "fire",
+            "fighting"
+          ],
+          "amplifiesTeamThreats": [
+            "ice",
+            "fairy"
+          ],
+          "addsUnansweredWeaknesses": [
+            "fairy"
+          ],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "indeedee-male",
+        "displayName": "수컷 에써르",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "psychic",
+          "normal"
+        ],
+        "typeDisplayNames": [
+          "에스퍼",
+          "노말"
+        ],
+        "abilities": [
+          {
+            "id": "psychicsurge",
+            "displayName": "사이코메이커",
+            "effect": "On switch-in, this Pokemon summons Psychic Terrain."
+          },
+          {
+            "id": "innerfocus",
+            "displayName": "정신력",
+            "effect": "This Pokemon cannot be made to flinch. This Pokemon is immune to the effect of the Intimidate Ability."
+          },
+          {
+            "id": "synchronize",
+            "displayName": "싱크로",
+            "effect": "If another Pokemon burns, paralyzes, poisons, or badly poisons this Pokemon, that Pokemon receives the same non-volatile status condition."
+          }
+        ],
+        "baseStats": {
+          "hp": 60,
+          "attack": 65,
+          "defense": 55,
+          "specialAttack": 105,
+          "specialDefense": 95,
+          "speed": 95
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 22,
+        "commonSet": {
+          "ability": "Psychic Surge",
+          "item": "Terrain Extender",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "expandingforce",
+              "displayName": "와이드포스",
+              "type": "psychic",
+              "category": "Special",
+              "power": 80,
+              "effect": "User on Psychic Terrain: 1.5× power, hits foes."
+            },
+            {
+              "id": "mysticalfire",
+              "displayName": "매지컬플레임",
+              "type": "fire",
+              "category": "Special",
+              "power": 75,
+              "effect": "100% chance to lower the target's Sp. Atk by 1."
+            },
+            {
+              "id": "encore",
+              "displayName": "앙코르",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Target repeats its last move for its next 3 turns."
+            },
+            {
+              "id": "dazzlinggleam",
+              "displayName": "매지컬샤인",
+              "type": "fairy",
+              "category": "Special",
+              "power": 80,
+              "effect": "No additional effect. Hits adjacent foes."
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "action-denial"
+        ],
+        "fit": {
+          "weakTo": [
+            "bug",
+            "dark"
+          ],
+          "resistsTeamThreats": [],
+          "amplifiesTeamThreats": [],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "tyranitar",
+        "displayName": "마기라스",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "rock",
+          "dark"
+        ],
+        "typeDisplayNames": [
+          "바위",
+          "악"
+        ],
+        "abilities": [
+          {
+            "id": "sandstream",
+            "displayName": "모래날림",
+            "effect": "On switch-in, this Pokemon summons Sandstorm."
+          },
+          {
+            "id": "unnerve",
+            "displayName": "긴장감",
+            "effect": "While this Pokemon is active, it prevents opposing Pokemon from using their Berries. This Ability activates before hazards and other Abilities take effect."
+          }
+        ],
+        "baseStats": {
+          "hp": 100,
+          "attack": 134,
+          "defense": 110,
+          "specialAttack": 95,
+          "specialDefense": 100,
+          "speed": 61
+        },
+        "speedTier": "slow",
+        "requiresMegaStone": false,
+        "usageRank": 45,
+        "commonSet": {
+          "ability": "Sand Stream",
+          "item": "Tyranitarite",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "knockoff",
+              "displayName": "탁쳐서떨구기",
+              "type": "dark",
+              "category": "Physical",
+              "power": 65,
+              "effect": "1.5× damage if foe holds an item. Removes item."
+            },
+            {
+              "id": "stoneedge",
+              "displayName": "스톤에지",
+              "type": "rock",
+              "category": "Physical",
+              "power": 100,
+              "effect": "High critical hit ratio."
+            },
+            {
+              "id": "icepunch",
+              "displayName": "냉동펀치",
+              "type": "ice",
+              "category": "Physical",
+              "power": 75,
+              "effect": "10% chance to freeze the target."
+            },
+            {
+              "id": "stealthrock",
+              "displayName": "스텔스록",
+              "type": "rock",
+              "category": "Status",
+              "power": null,
+              "effect": "Hurts foes on switch-in. Factors Rock weakness."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "water",
+            "grass",
+            "fighting",
+            "ground",
+            "bug",
+            "steel",
+            "fairy"
+          ],
+          "resistsTeamThreats": [
+            "fire"
+          ],
+          "amplifiesTeamThreats": [
+            "fighting",
+            "fairy"
+          ],
+          "addsUnansweredWeaknesses": [
+            "fairy"
+          ],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [
+            "sand"
+          ],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "garchomp",
+        "displayName": "한카리아스",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "dragon",
+          "ground"
+        ],
+        "typeDisplayNames": [
+          "드래곤",
+          "땅"
+        ],
+        "abilities": [
+          {
+            "id": "roughskin",
+            "displayName": "까칠한피부",
+            "effect": "Pokemon making contact with this Pokemon lose 1/8 of their maximum HP, rounded down."
+          },
+          {
+            "id": "sandveil",
+            "displayName": "모래숨기",
+            "effect": "If Sandstorm is active, the accuracy of moves used against this Pokemon is multiplied by 0.8. This Pokemon takes no damage from Sandstorm."
+          },
+          {
+            "id": "sandforce",
+            "displayName": "모래의힘",
+            "effect": "If Sandstorm is active, this Pokemon's Ground-, Rock-, and Steel-type attacks have their power multiplied by 1.3. This Pokemon takes no damage from Sandstorm."
+          }
+        ],
+        "baseStats": {
+          "hp": 108,
+          "attack": 130,
+          "defense": 95,
+          "specialAttack": 80,
+          "specialDefense": 85,
+          "speed": 102
+        },
+        "speedTier": "fast",
+        "requiresMegaStone": false,
+        "usageRank": 1,
+        "commonSet": {
+          "ability": "Rough Skin",
+          "item": "Garchompite Z",
+          "nature": "jolly",
+          "moves": [
+            {
+              "id": "earthquake",
+              "displayName": "지진",
+              "type": "ground",
+              "category": "Physical",
+              "power": 100,
+              "effect": "Hits adjacent Pokemon. Double damage on Dig."
+            },
+            {
+              "id": "stealthrock",
+              "displayName": "스텔스록",
+              "type": "rock",
+              "category": "Status",
+              "power": null,
+              "effect": "Hurts foes on switch-in. Factors Rock weakness."
+            },
+            {
+              "id": "dracometeor",
+              "displayName": "용성군",
+              "type": "dragon",
+              "category": "Special",
+              "power": 130,
+              "effect": "Lowers the user's Sp. Atk by 2."
+            },
+            {
+              "id": "dragontail",
+              "displayName": "드래곤테일",
+              "type": "dragon",
+              "category": "Physical",
+              "power": 60,
+              "effect": "Forces the target to switch to a random ally."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "ice",
+            "dragon",
+            "fairy"
+          ],
+          "resistsTeamThreats": [
+            "fire"
+          ],
+          "amplifiesTeamThreats": [
+            "ice",
+            "fairy"
+          ],
+          "addsUnansweredWeaknesses": [
+            "fairy"
+          ],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "ninetales-alola",
+        "displayName": "알로라 나인테일",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "ice",
+          "fairy"
+        ],
+        "typeDisplayNames": [
+          "얼음",
+          "페어리"
+        ],
+        "abilities": [
+          {
+            "id": "snowwarning",
+            "displayName": "눈퍼뜨리기",
+            "effect": "On switch-in, this Pokemon summons Snow."
+          },
+          {
+            "id": "snowcloak",
+            "displayName": "눈숨기",
+            "effect": "If Snow is active, the accuracy of moves used against this Pokemon is multiplied by 0.8."
+          }
+        ],
+        "baseStats": {
+          "hp": 73,
+          "attack": 67,
+          "defense": 75,
+          "specialAttack": 81,
+          "specialDefense": 100,
+          "speed": 109
+        },
+        "speedTier": "fast",
+        "requiresMegaStone": false,
+        "usageRank": 26,
+        "commonSet": {
+          "ability": "Snow Warning",
+          "item": "Light Clay",
+          "nature": "timid",
+          "moves": [
+            {
+              "id": "auroraveil",
+              "displayName": "오로라베일",
+              "type": "ice",
+              "category": "Status",
+              "power": null,
+              "effect": "For 5 turns, damage to allies halved. Snow only."
+            },
+            {
+              "id": "freezedry",
+              "displayName": "프리즈드라이",
+              "type": "ice",
+              "category": "Special",
+              "power": 70,
+              "effect": "10% chance to freeze. Super effective on Water."
+            },
+            {
+              "id": "encore",
+              "displayName": "앙코르",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Target repeats its last move for its next 3 turns."
+            },
+            {
+              "id": "blizzard",
+              "displayName": "눈보라",
+              "type": "ice",
+              "category": "Special",
+              "power": 110,
+              "effect": "10% chance to freeze foe(s). Can't miss in Snow."
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "action-denial"
+        ],
+        "fit": {
+          "weakTo": [
+            "fire",
+            "poison",
+            "rock",
+            "steel"
+          ],
+          "resistsTeamThreats": [
+            "ice"
+          ],
+          "amplifiesTeamThreats": [
+            "fire"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [],
+          "conflicts": [
+            "common-ability-sets-snow-not-active-sand"
+          ]
+        }
+      },
+      {
+        "pokemonId": "pawmot",
+        "displayName": "빠르모트",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "electric",
+          "fighting"
+        ],
+        "typeDisplayNames": [
+          "전기",
+          "격투"
+        ],
+        "abilities": [
+          {
+            "id": "ironfist",
+            "displayName": "철주먹",
+            "effect": "This Pokemon's punch-based attacks have their power multiplied by 1.2."
+          },
+          {
+            "id": "naturalcure",
+            "displayName": "자연회복",
+            "effect": "This Pokemon has its non-volatile status condition cured when it switches out."
+          },
+          {
+            "id": "voltabsorb",
+            "displayName": "축전",
+            "effect": "This Pokemon is immune to Electric-type moves and restores 1/4 of its maximum HP, rounded down, when hit by an Electric-type move."
+          }
+        ],
+        "baseStats": {
+          "hp": 70,
+          "attack": 115,
+          "defense": 70,
+          "specialAttack": 70,
+          "specialDefense": 60,
+          "speed": 105
+        },
+        "speedTier": "fast",
+        "requiresMegaStone": false,
+        "usageRank": 27,
+        "commonSet": {
+          "ability": "Iron Fist",
+          "item": "Focus Sash",
+          "nature": "jolly",
+          "moves": [
+            {
+              "id": "doubleshock",
+              "displayName": "전광쌍격",
+              "type": "electric",
+              "category": "Physical",
+              "power": 120,
+              "effect": "User's Electric type: typeless; must be Electric."
+            },
+            {
+              "id": "revivalblessing",
+              "displayName": "회생의기도",
+              "type": "normal",
+              "category": "Status",
+              "power": null,
+              "effect": "Revives a fainted Pokemon to 50% HP."
+            },
+            {
+              "id": "icepunch",
+              "displayName": "냉동펀치",
+              "type": "ice",
+              "category": "Physical",
+              "power": 75,
+              "effect": "10% chance to freeze the target."
+            },
+            {
+              "id": "closecombat",
+              "displayName": "인파이트",
+              "type": "fighting",
+              "category": "Physical",
+              "power": 120,
+              "effect": "Lowers the user's Defense and Sp. Def by 1."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "ground",
+            "psychic",
+            "fairy"
+          ],
+          "resistsTeamThreats": [],
+          "amplifiesTeamThreats": [
+            "fairy"
+          ],
+          "addsUnansweredWeaknesses": [
+            "fairy"
+          ],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "meganium",
+        "displayName": "메가니움",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "grass"
+        ],
+        "typeDisplayNames": [
+          "풀"
+        ],
+        "abilities": [
+          {
+            "id": "overgrow",
+            "displayName": "심록",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Grass-type attack."
+          },
+          {
+            "id": "leafguard",
+            "displayName": "리프가드",
+            "effect": "If Sun is active, this Pokemon cannot become affected by a non-volatile status condition or Yawn, and Rest will fail for it. This effect is prevented if this Pokemon is holding a Utility Umbrella."
+          },
+          {
+            "id": "megasol",
+            "displayName": "메가솔라",
+            "effect": "This Pokemon's moves are used as if the effects of Sun were active."
+          }
+        ],
+        "baseStats": {
+          "hp": 80,
+          "attack": 82,
+          "defense": 100,
+          "specialAttack": 83,
+          "specialDefense": 100,
+          "speed": 80
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 69,
+        "commonSet": {
+          "ability": "Overgrow",
+          "item": "Meganiumite",
+          "nature": "modest",
+          "moves": [
+            {
+              "id": "weatherball",
+              "displayName": "웨더볼",
+              "type": "normal",
+              "category": "Special",
+              "power": 50,
+              "effect": "Power doubles and type varies in each weather."
+            },
+            {
+              "id": "dazzlinggleam",
+              "displayName": "매지컬샤인",
+              "type": "fairy",
+              "category": "Special",
+              "power": 80,
+              "effect": "No additional effect. Hits adjacent foes."
+            },
+            {
+              "id": "solarbeam",
+              "displayName": "솔라빔",
+              "type": "grass",
+              "category": "Special",
+              "power": 120,
+              "effect": "Charges turn 1. Hits turn 2. No charge in sunlight."
+            },
+            {
+              "id": "synthesis",
+              "displayName": "광합성",
+              "type": "grass",
+              "category": "Status",
+              "power": null,
+              "effect": "Heals the user by a weather-dependent amount."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "fire",
+            "ice",
+            "poison",
+            "flying",
+            "bug"
+          ],
+          "resistsTeamThreats": [],
+          "amplifiesTeamThreats": [
+            "fire",
+            "ice"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [],
+          "conceptSynergies": [
+            "sand"
+          ],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "rillaboom",
+        "displayName": "고릴타",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "grass"
+        ],
+        "typeDisplayNames": [
+          "풀"
+        ],
+        "abilities": [
+          {
+            "id": "grassysurge",
+            "displayName": "그래스메이커",
+            "effect": "On switch-in, this Pokemon summons Grassy Terrain."
+          },
+          {
+            "id": "overgrow",
+            "displayName": "심록",
+            "effect": "When this Pokemon has 1/3 or less of its maximum HP, rounded down, its offensive stat is multiplied by 1.5 while using a Grass-type attack."
+          }
+        ],
+        "baseStats": {
+          "hp": 100,
+          "attack": 125,
+          "defense": 90,
+          "specialAttack": 60,
+          "specialDefense": 70,
+          "speed": 85
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 11,
+        "commonSet": {
+          "ability": "Grassy Surge",
+          "item": "Life Orb",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "grassyglide",
+              "displayName": "그래스슬라이더",
+              "type": "grass",
+              "category": "Physical",
+              "power": 55,
+              "effect": "User on Grassy Terrain: +1 priority."
+            },
+            {
+              "id": "uturn",
+              "displayName": "유턴",
+              "type": "bug",
+              "category": "Physical",
+              "power": 70,
+              "effect": "User switches out after damaging the target."
+            },
+            {
+              "id": "knockoff",
+              "displayName": "탁쳐서떨구기",
+              "type": "dark",
+              "category": "Physical",
+              "power": 65,
+              "effect": "1.5× damage if foe holds an item. Removes item."
+            },
+            {
+              "id": "highhorsepower",
+              "displayName": "10만마력",
+              "type": "ground",
+              "category": "Physical",
+              "power": 95
+            }
+          ]
+        },
+        "responsibilityIds": [
+          "pivoting"
+        ],
+        "fit": {
+          "weakTo": [
+            "fire",
+            "ice",
+            "poison",
+            "flying",
+            "bug"
+          ],
+          "resistsTeamThreats": [],
+          "amplifiesTeamThreats": [
+            "fire",
+            "ice"
+          ],
+          "addsUnansweredWeaknesses": [],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      },
+      {
+        "pokemonId": "baxcalibur",
+        "displayName": "드닐레이브",
+        "target": {
+          "mode": "addition",
+          "slotIndex": 5,
+          "currentPokemonId": null,
+          "currentDisplayName": null,
+          "currentRoleIds": [],
+          "currentSetterConceptIds": [],
+          "currentAceConceptIds": [],
+          "currentResponsibilityIds": [],
+          "currentSupportElements": [],
+          "megaOptionPokemonId": null,
+          "allySupportLinks": []
+        },
+        "types": [
+          "dragon",
+          "ice"
+        ],
+        "typeDisplayNames": [
+          "드래곤",
+          "얼음"
+        ],
+        "abilities": [
+          {
+            "id": "thermalexchange",
+            "displayName": "열교환",
+            "effect": "This Pokemon's Attack is raised 1 stage after it is damaged by a Fire-type move. This Pokemon cannot be burned. Gaining this Ability while burned cures it."
+          },
+          {
+            "id": "icebody",
+            "displayName": "아이스바디",
+            "effect": "If Snow is active, this Pokemon restores 1/16 of its maximum HP, rounded down, at the end of each turn."
+          }
+        ],
+        "baseStats": {
+          "hp": 115,
+          "attack": 145,
+          "defense": 92,
+          "specialAttack": 75,
+          "specialDefense": 86,
+          "speed": 87
+        },
+        "speedTier": "mid",
+        "requiresMegaStone": false,
+        "usageRank": 4,
+        "commonSet": {
+          "ability": "Thermal Exchange",
+          "item": "Focus Sash",
+          "nature": "adamant",
+          "moves": [
+            {
+              "id": "iceshard",
+              "displayName": "얼음뭉치",
+              "type": "ice",
+              "category": "Physical",
+              "power": 40,
+              "effect": "Usually goes first."
+            },
+            {
+              "id": "earthquake",
+              "displayName": "지진",
+              "type": "ground",
+              "category": "Physical",
+              "power": 100,
+              "effect": "Hits adjacent Pokemon. Double damage on Dig."
+            },
+            {
+              "id": "glaiverush",
+              "displayName": "대검돌격",
+              "type": "dragon",
+              "category": "Physical",
+              "power": 120,
+              "effect": "User takes sure-hit 2× damage until its next turn."
+            },
+            {
+              "id": "iciclecrash",
+              "displayName": "고드름떨구기",
+              "type": "ice",
+              "category": "Physical",
+              "power": 85,
+              "effect": "30% chance to make the target flinch."
+            }
+          ]
+        },
+        "responsibilityIds": [],
+        "fit": {
+          "weakTo": [
+            "fighting",
+            "rock",
+            "dragon",
+            "steel",
+            "fairy"
+          ],
+          "resistsTeamThreats": [],
+          "amplifiesTeamThreats": [
+            "fighting",
+            "fairy"
+          ],
+          "addsUnansweredWeaknesses": [
+            "fairy"
+          ],
+          "coversTypes": [
+            "fighting",
+            "bug"
+          ],
+          "roleContributions": [],
+          "roleRedundancies": [
+            "physical-attacker"
+          ],
+          "conceptSynergies": [],
+          "conflicts": []
+        }
+      }
+    ],
+    "optimizationCandidates": []
+  },
+  "currentItem": null,
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 5
+  }
+}

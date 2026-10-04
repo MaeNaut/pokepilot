@@ -1,0 +1,815 @@
+{
+  "id": "ko-optimization-low",
+  "generatedAt": "2026-10-04T06:32:53.108Z",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "promptVersion": 92,
+  "inputHash": "57f2d9f850663b625027dae540be9167f83728ae92160e3351d59e92bfb06e1a",
+  "execution": {
+    "durationMs": 5619,
+    "totalTokens": 14424,
+    "estimatedCostUsd": 0.0014971200000000002
+  },
+  "response": {
+    "version": 2,
+    "scope": "optimization",
+    "title": "메가보만다",
+    "paragraphs": [
+      "메가보만다는 공격과 스피드에 집중한 고집 성격의 물리 스위퍼이며, 스카이스킨을 활용하는 이판사판태클과 공격·스피드를 함께 높이는 용의춤이 현재 구성의 핵심입니다. 지진은 별도의 공격 범위를 제공하고, 날개쉬기는 체력을 회복해 전개 기회를 다시 만들 수 있으므로 네 기술이 서로 다른 역할을 맡고 있습니다.",
+      "용성군을 넣는 후보들은 모두 이판사판태클, 지진, 날개쉬기, 용의춤 중 하나를 잃지만, 특수공격에 투자하지 않은 현재 배분에서 이를 보완할 구체적인 이점은 제시되지 않았습니다. 특히 용의춤을 빼면 강화 수단을 잃고, 날개쉬기를 빼면 회복 수단을 잃습니다. 공격·스피드 배분을 유지하는 편이 현재의 물리 공격 역할을 가장 잘 보존합니다. 공격 투자를 크게 줄이는 후보들은 이 역할과도 맞지 않으며, 체력 쪽으로 옮기는 후보는 공격과 스피드를 모두 낮춥니다."
+    ],
+    "recommendations": [
+      {
+        "id": "set-current",
+        "title": "현재의 물리 중심 구성을 유지하는 편이 적절합니다.",
+        "reason": "현재 배분은 메가보만다의 물리 공격과 스피드를 살리고, 용의춤·날개쉬기·지진으로 강화, 회복, 공격 범위를 모두 확보합니다. 용성군 후보는 이 구성의 기술 하나를 대체할 만큼의 특수 공격 뒷받침이나 역할상 이점을 보여 주지 않습니다.",
+        "priority": "high"
+      }
+    ],
+    "source": "hosted",
+    "recommendationCandidates": [],
+    "optimizationCandidates": [
+      {
+        "id": "set-current",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 0,
+        "statPointChanges": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "current",
+          "variant": "current",
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-3",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dracometeor"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 3,
+            "currentMoveId": "dragondance",
+            "currentMoveDisplayName": "용의춤",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "용성군",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 0,
+        "statPointChanges": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-0",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "dracometeor",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 0,
+            "currentMoveId": "earthquake",
+            "currentMoveDisplayName": "지진",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "용성군",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 0,
+        "statPointChanges": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-1",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "dracometeor",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 1,
+            "currentMoveId": "doubleedge",
+            "currentMoveDisplayName": "이판사판태클",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "용성군",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 0,
+        "statPointChanges": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-move-dracometeor-2",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 216,
+          "defense": 151,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "dracometeor",
+          "dragondance"
+        ],
+        "moveChanges": [
+          {
+            "slotIndex": 2,
+            "currentMoveId": "roost",
+            "currentMoveDisplayName": "날개쉬기",
+            "optimizedMoveId": "dracometeor",
+            "optimizedMoveDisplayName": "용성군",
+            "sameTypeAndCategory": false
+          }
+        ],
+        "changedStatPoints": 0,
+        "statPointChanges": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "move",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 31.6,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-spread-2",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "attack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 172,
+          "attack": 216,
+          "defense": 150,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 2,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": 0,
+          "defense": -1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 2,
+          "usagePercent": 12.6,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": []
+        }
+      },
+      {
+        "id": "usage-spread-3",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "specialAttack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 1,
+          "attack": 0,
+          "defense": 1,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 171,
+          "attack": 181,
+          "defense": 151,
+          "specialAttack": 154,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 64,
+        "statPointChanges": {
+          "hp": 0,
+          "attack": -32,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 3,
+          "usagePercent": 4.8,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": [
+            "attack"
+          ]
+        }
+      },
+      {
+        "id": "usage-spread-4",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [
+          "specialAttack",
+          "speed"
+        ],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 172,
+          "attack": 181,
+          "defense": 150,
+          "specialAttack": 154,
+          "specialDefense": 110,
+          "speed": 172
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 66,
+        "statPointChanges": {
+          "hp": 1,
+          "attack": -32,
+          "defense": -1,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 4,
+          "usagePercent": 3.9,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": [
+            "attack"
+          ]
+        }
+      },
+      {
+        "id": "usage-spread-5",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 21,
+          "attack": 15,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 30
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 191,
+          "attack": 198,
+          "defense": 150,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 170
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 40,
+        "statPointChanges": {
+          "hp": 20,
+          "attack": -17,
+          "defense": -1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": -2
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 5,
+          "usagePercent": 2.8,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": [
+            "attack",
+            "speed"
+          ]
+        }
+      },
+      {
+        "id": "usage-spread-6",
+        "slotIndex": 1,
+        "focuses": [
+          "offense",
+          "defense",
+          "speed"
+        ],
+        "profiles": [],
+        "maxedStats": [],
+        "natureId": "adamant",
+        "natureDisplayName": "고집",
+        "evs": {
+          "hp": 27,
+          "attack": 25,
+          "defense": 5,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 9
+        },
+        "evTotal": 66,
+        "finalStats": {
+          "hp": 197,
+          "attack": 209,
+          "defense": 155,
+          "specialAttack": 126,
+          "specialDefense": 110,
+          "speed": 149
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "보만다나이트",
+        "itemChanged": false,
+        "moveIds": [
+          "earthquake",
+          "doubleedge",
+          "roost",
+          "dragondance"
+        ],
+        "moveChanges": [],
+        "changedStatPoints": 60,
+        "statPointChanges": {
+          "hp": 26,
+          "attack": -7,
+          "defense": 4,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": -23
+        },
+        "offenseBenchmarks": [],
+        "defenseBenchmarks": [],
+        "generalEvidence": {
+          "source": "usage",
+          "variant": "spread",
+          "sourceMonth": "2026-10",
+          "cutoff": 0,
+          "usageRank": 6,
+          "usagePercent": 2.6,
+          "roleStats": [
+            "attack",
+            "speed"
+          ],
+          "reducedRoleStats": [
+            "attack",
+            "speed"
+          ]
+        }
+      }
+    ]
+  },
+  "currentItem": "보만다나이트",
+  "scenarioVersion": 3,
+  "scenario": "Five-member Kabamanda; Primarina slot empty",
+  "teamSize": 5,
+  "qualityWarnings": [],
+  "inputSummary": {
+    "sets": [
+      {
+        "slotIndex": 0,
+        "pokemonId": "hippowdon",
+        "nature": "Impish",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 2,
+          "specialAttack": 0,
+          "specialDefense": 32,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 1,
+        "pokemonId": "salamence-mega",
+        "nature": "Adamant",
+        "evs": {
+          "hp": 1,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 2,
+        "pokemonId": "lucario-mega-z",
+        "nature": "Timid",
+        "evs": {
+          "hp": 2,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 32,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      },
+      {
+        "slotIndex": 3,
+        "pokemonId": "archaludon",
+        "nature": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 16,
+          "specialAttack": 0,
+          "specialDefense": 18,
+          "speed": 0
+        }
+      },
+      {
+        "slotIndex": 4,
+        "pokemonId": "meowscarada",
+        "nature": "Jolly",
+        "evs": {
+          "hp": 2,
+          "attack": 32,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 32
+        }
+      }
+    ],
+    "selectedSlot": 1
+  }
+}

@@ -1,0 +1,5 @@
+.not-found { max-width: 640px; margin: 64px auto; padding: 24px; }
+.not-found-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.not-found h1 { font-size: 28px; }
+.not-found h2 { font-size: 22px; }
+.not-found section { margin-top: 32px; }

@@ -1,0 +1,59 @@
+Hippowdon @ Leftovers
+Ability: Sand Stream
+Level: 50
+EVs: 32 HP / 2 Def / 32 SpD
+Impish Nature
+- Yawn
+- Earthquake
+- Stealth Rock
+- Whirlwind
+
+Salamence-Mega @ Salamencite
+Ability: Aerilate
+Level: 50
+EVs: 1 HP / 32 Atk / 1 Def / 32 Spe
+Adamant Nature
+- Earthquake
+- Double-Edge
+- Roost
+- Dragon Dance
+
+Lucario-Mega-Z @ Lucarionite Z
+Ability: Aura Guard
+Level: 50
+EVs: 2 HP / 32 SpA / 32 Spe
+Timid Nature
+- Dark Pulse
+- Aura Sphere
+- Flash Cannon
+- Nasty Plot
+
+Archaludon @ Sitrus Berry
+Ability: Stamina
+Level: 50
+EVs: 32 HP / 16 Def / 18 SpD
+Bold Nature
+- Thunderbolt
+- Stealth Rock
+- Dragon Tail
+- Draco Meteor
+
+Meowscarada @ Focus Sash
+Ability: Overgrow
+Level: 50
+EVs: 2 HP / 32 Atk / 32 Spe
+Jolly Nature
+- Toxic Spikes
+- Flower Trick
+- Triple Axel
+- Knock Off
+
+Primarina @ Chesto Berry
+Ability: Torrent
+Level: 50
+EVs: 32 HP / 18 Def / 16 Spe
+Bold Nature
+- Sparkling Aria
+- Rest
+- Moonblast
+- Calm Mind
