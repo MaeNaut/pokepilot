@@ -105,6 +105,26 @@ screens, blocked analysis, and navigation controls must not become ad-only views
   deployment or AdSense review submission was made. Real Safari testing and
   production crawl/index inspection remain outside this local verification.
 
+## Production verification - 2026-10-04
+
+- PR #5 merged as `73ca2c9`; GitHub Actions run `37184213774` completed
+  successfully, including Cloudflare deployment and unpaid authentication checks.
+- Release checks passed: 1,184 tests across 154 files, lint, build, Wrangler dry
+  run, and dependency audits with zero reported vulnerabilities.
+- Production public-routing verification passed all 31 HTTP responses. Both
+  example translations and 26 asset/download responses passed; neither article
+  has a noindex directive or an ad placement.
+- Live Chrome checks covered image expansion/collapse, image dialog opening and
+  closing, desktop layout and 390px mobile navigation. Images loaded without
+  horizontal overflow. These checks did not make paid AI calls.
+- AdSense Sites still reports `Low value content` from October 1. The current
+  notice mentions authentic value, ongoing maintenance, and genuine user interest.
+  Technical verification does not establish that all approval criteria are met.
+- After explicit user confirmation of the "I confirm I have fixed the issues"
+  checkbox, the review request was submitted on October 4. AdSense's site detail
+  changed to `Getting ready` / `Review requested`. Approval remains pending.
+  Search Console rendering/indexing remains unverified.
+
 ## References
 
 - [AdSense content and user experience](https://support.google.com/adsense/answer/10015918)
