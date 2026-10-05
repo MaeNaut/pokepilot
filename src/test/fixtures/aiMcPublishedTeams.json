@@ -1,0 +1,118 @@
+[
+  {
+    "schemaVersion": 1,
+    "id": "mc-rillaboom-lucario",
+    "title": "Rillaboom Lucario Z",
+    "regulation": "M-C",
+    "battleFormat": "singles",
+    "source": {
+      "origin": "published",
+      "name": "Game8 M-C sample",
+      "url": "https://game8.jp/pokemon-champions/779319",
+      "retrievedAt": "2026-10-04",
+      "notes": "Popular published reference, not a tournament placing."
+    },
+    "showdownText": "Lucario @ Lucarionite Z\nAbility: Steadfast\nEVs: 14 HP / 32 SpA / 20 Spe\nModest Nature\n- Dark Pulse\n- Vacuum Wave\n- Flash Cannon\n- Nasty Plot\n\nDragonite @ Rocky Helmet\nAbility: Multiscale\nEVs: 31 HP / 25 Def / 10 Spe\nImpish Nature\n- Earthquake\n- Dragon Tail\n- Roost\n- Substitute\n\nEmpoleon @ Sitrus Berry\nAbility: Torrent\nEVs: 32 HP / 32 Def / 2 SpD\nRelaxed Nature\n- Yawn\n- Flip Turn\n- Stealth Rock\n- Roar\n\nBaxcalibur @ Life Orb\nAbility: Thermal Exchange\nEVs: 1 HP / 32 Atk / 1 SpD / 32 Spe\nJolly Nature\n- Glaive Rush\n- Ice Shard\n- Earthquake\n- Swords Dance\n\nRillaboom @ Miracle Seed\nAbility: Grassy Surge\nEVs: 32 Atk / 2 SpD / 32 Spe\nAdamant Nature\n- High Horsepower\n- Grassy Glide\n- Drum Beating\n- U-turn\n\nGlimmora @ Focus Sash\nAbility: Toxic Debris\nEVs: 1 HP / 32 SpA / 1 SpD / 32 Spe\nTimid Nature\n- Stealth Rock\n- Power Gem\n- Sludge Wave\n- Mud Shot",
+    "expectations": {
+      "teamIdentities": [
+        "Hazard and pivot support into special Mega Lucario Z or Baxcalibur"
+      ],
+      "criticalObservations": [
+        "Lucarionite Z projects Lucario Mega Z with Aura Shield, not ordinary Mega Lucario with Adaptability.",
+        "Dragonite resists Fighting and is immune to Ground."
+      ],
+      "forbiddenConclusions": [
+        "Dragonite is weak to Fighting.",
+        "All Ground moves are weakened by Grassy Terrain."
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-tagerau",
+    "title": "Tagerau Swampert Salamence",
+    "regulation": "M-C",
+    "battleFormat": "singles",
+    "source": {
+      "origin": "published",
+      "name": "Tagerau September monthly ranked team",
+      "url": "https://tagerau.hatenablog.com/entry/2026/09/21/151620",
+      "placement": "82nd, 1799.516",
+      "retrievedAt": "2026-10-04",
+      "notes": "Published screenshots transcribed; base forms retained to expose alternative Mega activation."
+    },
+    "showdownText": "Swampert @ Sitrus Berry\nAbility: Torrent\nEVs: 32 HP / 2 Def / 32 SpD\nSassy Nature\n- Yawn\n- Stealth Rock\n- Earthquake\n- Flip Turn\n\nSalamence @ Salamencite\nAbility: Intimidate\nEVs: 1 HP / 19 Atk / 14 SpA / 32 Spe\nNaive Nature\n- Dragon Dance\n- Earthquake\n- Fire Blast\n- Double-Edge\n\nSylveon @ Leftovers\nAbility: Pixilate\nEVs: 32 HP / 32 Def / 2 SpD\nBold Nature\n- Wish\n- Protect\n- Hyper Voice\n- Yawn\n\nKingambit @ Black Glasses\nAbility: Supreme Overlord\nEVs: 32 Atk / 1 Def / 1 SpD / 32 Spe\nAdamant Nature\n- Kowtow Cleave\n- Iron Head\n- Swords Dance\n- Sucker Punch\n\nGlimmora @ Focus Sash\nAbility: Toxic Debris\nEVs: 1 HP / 1 Def / 32 SpA / 32 Spe\nModest Nature\n- Sludge Wave\n- Power Gem\n- Energy Ball\n- Earth Power\n\nMetagross @ Metagrossite\nAbility: Clear Body\nEVs: 20 HP / 20 Def / 26 Spe\nImpish Nature\n- Iron Defense\n- Body Press\n- Psychic Fangs\n- Bullet Punch",
+    "expectations": {
+      "teamIdentities": [
+        "Swampert support with alternative Salamence and Metagross Mega branches"
+      ],
+      "criticalObservations": [
+        "Aerilate makes Double-Edge a central Flying STAB attack after Mega Evolution.",
+        "Swampert and Kingambit are not immune to Ground."
+      ],
+      "forbiddenConclusions": [
+        "Singles requires avoiding allied Earthquake friendly fire.",
+        "Removing Double-Edge is automatically the least costly recovery swap."
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-ddee",
+    "title": "DDee Talon Fight Club 101",
+    "regulation": "M-C",
+    "battleFormat": "doubles",
+    "source": {
+      "origin": "published",
+      "name": "Talon Fight Club 101 public team sheet",
+      "url": "https://www.pokemon-zone.com/champions/tournaments/talons-fight-club-101-pokemon-champions-reg-m-c/",
+      "placement": "1st, 12-0, 98 players",
+      "retrievedAt": "2026-10-04",
+      "notes": "EVs unpublished. Zero Stat Points are an explicit evaluation reconstruction, not the winning player spread. Same six: 126 teams / 717 matches in Pokemon Zone snapshot."
+    },
+    "showdownText": "Floette-Eternal @ Floettite\nAbility: Flower Veil\nEVs: 0 HP\nModest Nature\n- Moonblast\n- Dazzling Gleam\n- Calm Mind\n- Protect\n\nSneasler @ Grassy Seed\nAbility: Unburden\nEVs: 0 HP\nAdamant Nature\n- Close Combat\n- Dire Claw\n- Rock Slide\n- Protect\n\nIncineroar @ Sitrus Berry\nAbility: Intimidate\nEVs: 0 HP\nImpish Nature\n- Flare Blitz\n- Throat Chop\n- Fake Out\n- Parting Shot\n\nRillaboom @ Miracle Seed\nAbility: Grassy Surge\nEVs: 0 HP\nAdamant Nature\n- Wood Hammer\n- Grassy Glide\n- High Horsepower\n- Fake Out\n\nGholdengo @ Life Orb\nAbility: Good as Gold\nEVs: 0 HP\nModest Nature\n- Make It Rain\n- Shadow Ball\n- Nasty Plot\n- Protect\n\nRaichu @ Raichunite Y\nAbility: Lightning Rod\nEVs: 0 HP\nTimid Nature\n- Zap Cannon\n- Focus Blast\n- Encore\n- Protect",
+    "expectations": {
+      "teamIdentities": [
+        "Fake Out support with Floette and Raichu Y Mega alternatives"
+      ],
+      "criticalObservations": [
+        "No Guard Zap Cannon is conditional paralysis speed control.",
+        "Sneasler is weak to Ground, not resistant."
+      ],
+      "forbiddenConclusions": [
+        "There is no speed control of any kind.",
+        "The zero-point reconstruction is the player original spread."
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-lloyd",
+    "title": "Lloyd Villar Make It Rain",
+    "regulation": "M-C",
+    "battleFormat": "doubles",
+    "source": {
+      "origin": "published",
+      "name": "Limitless Make It Rain team sheet",
+      "url": "https://play.limitlesstcg.com/tournament/6a7ba8f62b308b6067b5199c/player/lloyd5/teamlist",
+      "placement": "1st, 13-1, 266 players",
+      "retrievedAt": "2026-10-04",
+      "notes": "EVs unpublished. Zero Stat Points are an explicit evaluation reconstruction, not the winning player spread. Same six: 103 teams / 582 matches in Pokemon Zone snapshot."
+    },
+    "showdownText": "Sneasler @ Psychic Seed\nAbility: Unburden\nEVs: 0 HP\nAdamant Nature\n- Close Combat\n- Dire Claw\n- Protect\n- Acrobatics\n\nSalamence @ Salamencite\nAbility: Intimidate\nEVs: 0 HP\nTimid Nature\n- Hyper Voice\n- Protect\n- Tailwind\n- Draco Meteor\n\nTyranitar @ Tyranitarite\nAbility: Sand Stream\nEVs: 0 HP\nJolly Nature\n- Protect\n- Rock Slide\n- Knock Off\n- Dragon Dance\n\nExcadrill @ Focus Sash\nAbility: Sand Rush\nEVs: 0 HP\nJolly Nature\n- High Horsepower\n- Protect\n- Rock Slide\n- Iron Head\n\nIndeedee @ Choice Scarf\nAbility: Psychic Surge\nEVs: 0 HP\nModest Nature\n- Expanding Force\n- Trick\n- Trick Room\n- Dazzling Gleam\n\nMilotic @ Leftovers\nAbility: Competitive\nEVs: 0 HP\nCalm Nature\n- Protect\n- Muddy Water\n- Hypnosis\n- Coil",
+    "expectations": {
+      "teamIdentities": [
+        "Sand offense with Psychic Seed and Tailwind options"
+      ],
+      "criticalObservations": [
+        "Coil accuracy and Defense boosts have value with Hypnosis and Muddy Water.",
+        "Sand Rush and Choice Scarf make default Trick Room activation questionable."
+      ],
+      "forbiddenConclusions": [
+        "Coil requires a physical attack to be useful.",
+        "Excadrill loses Focus Sash to sand damage.",
+        "Rillaboom terrain does not conflict with Psychic Seed support."
+      ]
+    }
+  }
+]

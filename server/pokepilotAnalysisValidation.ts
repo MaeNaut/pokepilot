@@ -13,711 +13,124 @@ import {
 } from "../src/utils/copilotStrategyAudit.js";
 import { isRecord } from "../src/utils/typeGuards.js";
 
-function invalidAnalysis(message: string): Error & {
-  code: "AI_INVALID_RESPONSE";
-} {
-  return Object.assign(new Error(message), {
-    code: "AI_INVALID_RESPONSE" as const,
-  });
-}
-
-function validateRecommendationIds(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.scope !== "recommendation") {
-    return;
-  }
-
-  const candidateIds = new Set(
-    request.recommendationCandidates.map((candidate) => candidate.pokemonId),
-  );
-  const recommendationIds = analysis.recommendations.map(
-    (recommendation) => recommendation.id,
-  );
-  const replacementMode = request.recommendationCandidates.every(
-    (candidate) => candidate.target.mode === "replacement",
-  );
-  const expectedMinimum = replacementMode ? 0 : Math.min(3, candidateIds.size);
-  const hasInvalidRecommendationList =
-    recommendationIds.length < expectedMinimum ||
-    recommendationIds.length > 3 ||
-    new Set(recommendationIds).size !== recommendationIds.length ||
-    recommendationIds.some((id) => !candidateIds.has(id));
-
-  if (hasInvalidRecommendationList) {
-    throw invalidAnalysis(
-      "Hosted recommendation returned an invalid candidate list.",
-    );
-  }
-}
-
-function validateOptimizationIds(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.scope !== "optimization") {
-    return;
-  }
-
-  const candidateIds = new Set(
-    request.optimization?.candidates.map((candidate) => candidate.id) ?? [],
-  );
-  const recommendationIds = analysis.recommendations.map(
-    (recommendation) => recommendation.id,
-  );
-  const hasInvalidRecommendationList =
-    recommendationIds.length < 1 ||
-    recommendationIds.length > Math.min(3, candidateIds.size) ||
-    new Set(recommendationIds).size !== recommendationIds.length ||
-    recommendationIds.some((id) => !candidateIds.has(id));
-
-  if (hasInvalidRecommendationList) {
-    throw invalidAnalysis(
-      "Hosted optimization returned an invalid candidate list.",
-    );
-  }
-}
-
-function validateOptimizationMoveNarrative(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.scope !== "optimization" && request.scope !== "matchup") return;
-
-  const candidates = new Map(
-    (request.optimization?.candidates ?? []).map((candidate) => [
-      candidate.id,
-      candidate,
-    ]),
-  );
-
-  for (const recommendation of analysis.recommendations) {
-    const candidate = candidates.get(recommendation.id);
-    if (!candidate?.moveChanges?.length) continue;
-    const narrative = `${recommendation.title} ${recommendation.reason}`
-      .toLocaleLowerCase(request.locale);
-
-    if (candidate.moveChanges.some((change) =>
-      !narrative.includes(
-        change.optimizedMoveDisplayName.toLocaleLowerCase(request.locale),
-      ),
-    )) {
-      throw invalidAnalysis(
-        "Hosted optimization move explanation does not match its candidate.",
-      );
-    }
-  }
-}
-
-function validateMetaReplacementNarrative(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.scope !== "matchup" || request.matchup?.mode !== "meta") return;
-  const candidates = new Map(
-    request.recommendationCandidates.map((candidate) => [
-      candidate.pokemonId,
-      candidate,
-    ]),
-  );
-
-  for (const recommendation of analysis.recommendations) {
-    const candidate = candidates.get(recommendation.id);
-    if (!candidate) continue;
-    const narrative = `${recommendation.title} ${recommendation.reason}`
-      .toLocaleLowerCase(request.locale);
-    const expectedNames = [
-      candidate.displayName,
-      candidate.target.currentDisplayName,
-    ].filter((name): name is string => Boolean(name));
-    if (expectedNames.some((name) =>
-      !narrative.includes(name.toLocaleLowerCase(request.locale)),
-    )) {
-      throw invalidAnalysis(
-        "Hosted meta replacement explanation does not match its exact target.",
-      );
-    }
-  }
-}
-
-function repairMetaReplacementNarrative(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.scope !== "matchup" || request.matchup?.mode !== "meta") {
-    return { analysis, repaired: false };
-  }
-  const candidates = new Map(
-    request.recommendationCandidates.map((candidate) => [
-      candidate.pokemonId,
-      candidate,
-    ]),
-  );
-  let repaired = false;
-  const recommendations = analysis.recommendations.map((recommendation) => {
-    const candidate = candidates.get(recommendation.id);
-    if (!candidate) return recommendation;
-    const currentName = candidate.target.currentDisplayName;
-    const narrative = `${recommendation.title} ${recommendation.reason}`
-      .toLocaleLowerCase(request.locale);
-    if (
-      narrative.includes(candidate.displayName.toLocaleLowerCase(request.locale)) &&
-      (!currentName ||
-        narrative.includes(currentName.toLocaleLowerCase(request.locale)))
-    ) {
-      return recommendation;
-    }
-
-    const evidence = request.matchup!.mode === "meta"
-      ? request.matchup!.replacementEvidence.find(
-          (entry) =>
-            entry.candidatePokemonId === candidate.pokemonId &&
-            entry.targetSlotIndex === candidate.target.slotIndex,
-        )
-      : undefined;
-    if (!evidence) return recommendation;
-    const threat = request.matchup!.mode === "meta"
-      ? request.matchup!.threats.find(
-          ({ opponent }) => opponent.pokemonId === evidence.threatPokemonId,
-        )
-      : undefined;
-    repaired = true;
-    return {
-      ...recommendation,
-      title: request.locale === "ko"
-        ? `${currentName ?? "현재 포켓몬"} 대신 ${candidate.displayName}을 검토하는 것이 좋습니다.`
-        : `Consider ${candidate.displayName} over ${currentName ?? "the current Pokemon"}.`,
-      reason: request.locale === "ko"
-        ? `${candidate.displayName}은(는) 대표 사용률 샘플 기준으로 ${threat?.opponent.displayName ?? "해당 위협"}에게 ${evidence.member.responseTier === "answer" ? "확실한 대응" : "조건부 견제"}이 됩니다. 다만 ${currentName ?? "현재 포켓몬"}의 역할과 지원 연계를 잃는 비용은 별도로 비교해야 합니다.`
-        : `${candidate.displayName} is a ${evidence.member.responseTier === "answer" ? "verified answer" : "conditional check"} to ${threat?.opponent.displayName ?? "the identified threat"} with its representative usage sample. Weigh that gain against losing ${currentName ?? "the current Pokemon"} and its supplied team responsibilities.`,
-    };
-  });
-
-  return {
-    analysis: repaired ? { ...analysis, recommendations } : analysis,
-    repaired,
-  };
+function invalidAnalysis(message: string): Error & { code: "AI_INVALID_RESPONSE" } {
+  return Object.assign(new Error(message), { code: "AI_INVALID_RESPONSE" as const });
 }
 
 function getActionableCandidateIds(request: CopilotAnalysisRequest) {
   if (request.scope === "recommendation") {
-    return new Set(
-      request.recommendationCandidates.map((candidate) => candidate.pokemonId),
-    );
+    return new Set(request.recommendationCandidates.map((candidate) => candidate.pokemonId));
   }
   if (request.scope === "optimization") {
-    return new Set(
-      request.optimization?.candidates.map((candidate) => candidate.id) ?? [],
-    );
+    return new Set(request.optimization?.candidates.map((candidate) => candidate.id) ?? []);
   }
   return null;
 }
 
-function recoverActionableRecommendations(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  const candidateIds = getActionableCandidateIds(request);
-  if (!candidateIds) {
-    const seen = new Set<string>();
-    const recommendations = analysis.recommendations.filter(
-      (recommendation) => {
-        if (seen.size >= 3 || seen.has(recommendation.id)) return false;
-        seen.add(recommendation.id);
-        return true;
-      },
-    );
-    const adjusted = recommendations.length !== analysis.recommendations.length;
-    return {
-      analysis: adjusted ? { ...analysis, recommendations } : analysis,
-      adjusted,
-    };
-  }
-
-  const seen = new Set<string>();
-  const recommendations = analysis.recommendations.filter(
-    (recommendation) => {
-      if (
-        seen.size >= 3 ||
-        seen.has(recommendation.id) ||
-        !candidateIds.has(recommendation.id)
-      ) {
-        return false;
-      }
-      seen.add(recommendation.id);
-      return true;
-    },
-  );
-
-  const permitsKeepingCurrentTeam =
-    request.scope === "recommendation" &&
+function permitsKeepingCurrentTeam(request: CopilotAnalysisRequest) {
+  return request.scope === "recommendation" &&
     request.recommendationCandidates.length > 0 &&
-    request.recommendationCandidates.every(
-      (candidate) => candidate.target.mode === "replacement",
-    );
-  if (recommendations.length === 0 && !permitsKeepingCurrentTeam) {
-    throw invalidAnalysis(
-      `Hosted ${request.scope} returned no usable candidate.`,
-    );
-  }
-
-  const expectedRecommendationCount = request.scope === "recommendation"
-    ? permitsKeepingCurrentTeam
-      ? Math.min(analysis.recommendations.length, 3)
-      : Math.min(3, candidateIds.size)
-    : Math.min(analysis.recommendations.length, 3);
-  const adjusted =
-    recommendations.length !== analysis.recommendations.length ||
-    recommendations.length < expectedRecommendationCount;
-
-  return {
-    analysis: adjusted ? { ...analysis, recommendations } : analysis,
-    adjusted,
-  };
+    request.recommendationCandidates.every((candidate) => candidate.target.mode === "replacement");
 }
 
-function repairSinglesAllySpreadNarrative(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.battleFormat !== "singles") {
-    return { analysis, repaired: false };
-  }
-
-  const spreadMoves = [...new Set(request.sets.flatMap((set) =>
-    set.moves
-      .filter((move) => move.spreadTarget !== null)
-      .flatMap((move) => [move.displayName, move.name]),
-  ))].filter(Boolean);
-  if (spreadMoves.length === 0) {
-    return { analysis, repaired: false };
-  }
-
-  let repaired = false;
-  const repairText = (text: string) => text.split(/(?<=[.!?])\s+/u).map((sentence) => {
-    const moveName = spreadMoves.find((name) =>
-      sentence.toLocaleLowerCase(request.locale).includes(name.toLocaleLowerCase(request.locale))
-    );
-    if (
-      !moveName ||
-      !/(?:아군|동료|파트너|함께\s*(?:내보내|나오|있는|행동)|다른\s*포켓몬이\s*행동|\b(?:ally|allies|teammate|partner)\b)/iu.test(sentence) ||
-      !/(?:배치|피해|맞|보호|방어|순서|행동|기다|\b(?:damage|hit|hurt|protect|position|order|wait)\b)/iu.test(sentence) ||
-      /(?:않|없|아니|\b(?:not|never|no|cannot|can't|doesn't|don't)\b)/iu.test(sentence)
-    ) {
-      return sentence;
-    }
-
-    repaired = true;
-    return request.locale === "ko"
-      ? `싱글에서는 ${moveName} 사용 시 다른 팀 포켓몬이 피해를 받지 않습니다.`
-      : `In Singles, ${moveName} does not damage other members of your team.`;
-  }).join(" ");
-
-  const paragraphs = analysis.paragraphs.map(repairText);
-  const recommendations = analysis.recommendations.map((recommendation) => ({
-    ...recommendation,
-    title: repairText(recommendation.title),
-    reason: repairText(recommendation.reason),
-  }));
-  return {
-    analysis: repaired ? { ...analysis, paragraphs, recommendations } : analysis,
-    repaired,
-  };
-}
-
-function repairImpossibleActiveRosterNarrative(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  const impossibleCount = request.battleFormat === "doubles"
-    ? /(?:세\s*마리|3\s*마리|셋|three(?:\s+Pokemon)?)/iu
-    : /(?:두\s*마리|2\s*마리|둘|two(?:\s+Pokemon)?)/iu;
-  const simultaneousActive = /(?:한\s*번에|동시에|한꺼번에|at\s+once|simultaneously).{0,20}(?:전면|필드|앞에|on\s+the\s+field|in\s+front|active)/iu;
-  let repaired = false;
-  const repairText = (text: string) => text.split(/(?<=[.!?])\s+/u).map((sentence) => {
-    const count = impossibleCount.exec(sentence);
-    if (!count) return sentence;
-    const afterCount = sentence.slice(count.index + count[0].length, count.index + count[0].length + 50);
-    const active = simultaneousActive.exec(afterCount);
-    if (
-      !active ||
-      /(?:선출|선발|select|choose|두\s*마리|둘|two)/iu.test(afterCount.slice(0, active.index))
-    ) {
-      return sentence;
-    }
-    repaired = true;
-    const activeCount = request.battleFormat === "doubles" ? 2 : 1;
-    return request.locale === "ko"
-      ? `${request.battleFormat === "doubles" ? "더블" : "싱글"}에서는 한 번에 최대 ${activeCount}마리만 필드에 나올 수 있습니다.`
-      : `In ${request.battleFormat === "doubles" ? "Doubles" : "Singles"}, at most ${activeCount} Pokemon can be active at once.`;
-  }).join(" ");
-
-  const paragraphs = analysis.paragraphs.map(repairText);
-  const recommendations = analysis.recommendations.map((recommendation) => ({
-    ...recommendation,
-    title: repairText(recommendation.title),
-    reason: repairText(recommendation.reason),
-  }));
-  return {
-    analysis: repaired ? { ...analysis, paragraphs, recommendations } : analysis,
-    repaired,
-  };
-}
-
-const optimizationOutcomePattern = new RegExp(
-  [
-    String.raw`(?:확정\s*)?\d+(?:\s*[-~–]\s*\d+)?\s*타`,
-    String.raw`\b(?:OHKO|\d+\s*HKO)\b`,
-    String.raw`\b(?:guaranteed|possible)\s+(?:(?:one|two|three|four|five|six|seven|eight|nine|ten)[- ]?)?(?:hit|hits|HKO)\b`,
-    String.raw`\bKO\s*(?:chance|odds|probability)\b`,
-    String.raw`(?:KO|기절)\s*(?:확률|가능성)`,
-  ].join("|"),
-  "iu",
-);
-
-function hasOptimizationOutcome(text: string) {
-  if (optimizationOutcomePattern.test(text)) return true;
-  // A usage percentage describes the sample source, not a damage benchmark.
-  const sentences = text.split(/(?<=[.!?])\s+/u);
-  return sentences.some((sentence) =>
-    /\d+(?:\.\d+)?\s*%/u.test(sentence) && (
-      !/\busage\b|\bpopularity\b|\bdistribution\b|사용률|채용률|분포/iu.test(sentence) ||
-      /\bdamage\b|\bsurviv\w*\b|\bKO\b|피해|데미지|대미지|견딜|견디|생존/iu.test(sentence)
-    ),
-  );
-}
-
-function leaksOptimizationCandidateId(
-  text: string,
-  request: CopilotAnalysisRequest,
-) {
-  const normalized = text.toLocaleLowerCase(request.locale);
-  return (request.optimization?.candidates ?? []).some((candidate) =>
-    normalized.includes(candidate.id.toLocaleLowerCase(request.locale)),
-  );
-}
-
-function verifiedOptimizationReason(id: string, request: CopilotAnalysisRequest) {
-  const candidate = request.optimization?.candidates.find((entry) => entry.id === id);
-  const ko = request.locale === "ko";
-  const isGeneral = request.optimization?.mode === "general";
-  if (id === "set-current") {
-    if (isGeneral) {
-      return ko
-        ? "현재 샘플은 선택된 기술, 도구, 공격 및 스피드 역할을 그대로 유지하므로 사용률 후보가 팀의 구체적인 이점을 만들지 못한다면 충분히 좋은 선택입니다."
-        : "The current sample preserves its selected moves, item, offense, and Speed role, so it remains a sound choice when the usage alternatives do not add a concrete team benefit.";
-    }
-    return ko
-      ? "현재 샘플의 화력, 스피드, 내구, 도구와 기술 구성을 그대로 유지하는 선택입니다. 확인한 조정안의 이득과 기존 성능을 바꾸는 비용을 비교할 수 있으며, 다른 상대까지 검증한 결과는 아닙니다."
-      : "Keeping the current sample preserves its damage, Speed, bulk, item, and moves. The checked adjustments can be weighed against the cost of changing that performance; other opponents have not been verified.";
-  }
-
-  const parts: string[] = [];
-  if (candidate?.generalEvidence?.source === "usage") {
-    parts.push(ko
-      ? "이 구성은 현재 사용률 자료에서 관찰된 범용 샘플입니다."
-      : "This is an observed general-purpose sample from the current usage data.");
-  }
-  for (const [direction, benchmarks] of [
-    ["offense", candidate?.offenseBenchmarks ?? []],
-    ["defense", candidate?.defenseBenchmarks ?? []],
-  ] as const) {
-    for (const comparison of ["better", "worse"] as const) {
-      const names = benchmarks.filter((entry) => entry.optimizedVsCurrent === comparison)
-        .map((entry) => {
-          if (entry.source !== "usage") return entry.moveDisplayName;
-          const isApplied = candidate?.moveChanges.some(
-            (change) => change.optimizedMoveId === entry.moveId,
-          );
-          const label = isApplied
-            ? (ko ? "적용되는 기술 교체" : "applied move replacement")
-            : (ko ? "선택 가능한 기술 교체" : "optional move replacement");
-          return `${entry.moveDisplayName} (${label})`;
-        }).join(", ");
-      if (!names) continue;
-      parts.push(ko
-        ? `${names}의 ${direction === "offense" ? "공격" : "피격 시 생존"} 결과는 현재 샘플보다 ${comparison === "better" ? "좋아집니다" : "불리해집니다"}.`
-        : `The checked ${direction === "offense" ? "offensive" : "survival"} outcome for ${names} ${comparison === "better" ? "improves" : "worsens"} compared with the current sample.`);
-    }
-  }
-  const baseline = request.optimization?.currentBuild?.finalStats;
-  const labels = {
-    hp: ko ? "체력" : "HP", attack: ko ? "공격" : "Attack",
-    defense: ko ? "방어" : "Defense", specialAttack: ko ? "특수공격" : "Special Attack",
-    specialDefense: ko ? "특수방어" : "Special Defense", speed: ko ? "스피드" : "Speed",
-  };
-  const lowerStats = baseline && candidate?.finalStats
-    ? (Object.keys(labels) as Array<keyof typeof labels>)
-      .filter((stat) => candidate.finalStats[stat] < baseline[stat]).map((stat) => labels[stat])
-    : [];
-  if (lowerStats.length) {
-    parts.push(ko
-      ? `대신 현재 샘플보다 ${lowerStats.join(", ")} 실수치가 낮아지는 점을 고려해야 합니다.`
-      : `The tradeoff is lower ${lowerStats.join(", ")} than the current sample.`);
-  }
-  if (candidate?.itemChanged) {
-    parts.push(ko
-      ? `도구는 ${candidate.itemDisplayName ?? "없음"}(으)로 변경됩니다.`
-      : `The held item changes to ${candidate.itemDisplayName ?? "none"}.`);
-  }
-  for (const change of candidate?.moveChanges ?? []) {
-    parts.push(ko
-      ? `기술 구성은 다음과 같이 변경됩니다: ${change.currentMoveDisplayName} → ${change.optimizedMoveDisplayName}.`
-      : `${change.optimizedMoveDisplayName} replaces ${change.currentMoveDisplayName}.`);
-  }
-  parts.push(isGeneral
-    ? (ko
-        ? "사용률은 이 팀에서의 최적성을 보장하지 않으므로 현재 역할과의 교환 비용을 함께 확인해야 합니다."
-        : "Usage does not guarantee that this is optimal for the team, so weigh it against the current role and loadout.")
-    : (ko
-        ? "이 결과는 설정된 상대와 전투 조건에 한정되며, 다른 상대에 대한 성능은 검증하지 않았습니다."
-        : "These results are limited to the configured opponent and battle conditions; performance against other opponents has not been verified."));
-  return parts.join(" ");
-}
-
-function sanitizeOptimizationNarrative(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-): CopilotModelOutput {
-  if (request.scope !== "optimization") return analysis;
-
-  const isKorean = request.locale === "ko";
-  const fallbackParagraph = request.optimization?.mode === "general"
-    ? (isKorean
-        ? "현재 역할과 팀 구성을 기준으로 현재 샘플과 관찰된 사용률 후보를 함께 비교했습니다."
-        : "The current sample and observed usage alternatives were compared against this Pokemon's role on the team.")
-    : isKorean
-      ? "표시된 계산 결과와 현재 팀에서 맡는 역할을 함께 고려한 상대 조정입니다."
-      : "This matchup tuning weighs the displayed calculator results against the set's current team role.";
-  const fallbackTitle = isKorean
-    ? "검증된 상대 조정을 사용할 수 있습니다."
-    : "Use the verified matchup option.";
-  // Sentence deletion can leave a conclusion without its premise or only a drawback.
-  // Replace the complete affected block with calculator-grounded prose instead.
-  return {
-    ...analysis,
-    paragraphs: [...new Set(analysis.paragraphs.map((paragraph) =>
-          hasOptimizationOutcome(paragraph) || leaksOptimizationCandidateId(paragraph, request)
-            ? fallbackParagraph
-            : paragraph,
-        ))],
-    recommendations: analysis.recommendations.map((recommendation) => ({
-      ...recommendation,
-      title:
-        hasOptimizationOutcome(recommendation.title) ||
-        leaksOptimizationCandidateId(recommendation.title, request)
-          ? fallbackTitle
-          : recommendation.title,
-      reason:
-        hasOptimizationOutcome(recommendation.reason) ||
-        leaksOptimizationCandidateId(recommendation.reason, request)
-          ? verifiedOptimizationReason(recommendation.id, request)
-          : recommendation.reason,
-    })),
-  };
-}
-
-function repairOptimizationMoveNarrative(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.scope !== "optimization" && request.scope !== "matchup") {
-    return { analysis, repaired: false };
-  }
-
-  const candidates = new Map(
-    (request.optimization?.candidates ?? []).map((candidate) => [
-      candidate.id,
-      candidate,
-    ]),
-  );
-  let repaired = false;
-  const recommendations = analysis.recommendations.map((recommendation) => {
-    const candidate = candidates.get(recommendation.id);
-    if (!candidate?.moveChanges?.length) return recommendation;
-
-    const narrative = `${recommendation.title} ${recommendation.reason}`
-      .toLocaleLowerCase(request.locale);
-    const hasEveryReplacement = candidate.moveChanges.every((change) =>
-      narrative.includes(
-        change.optimizedMoveDisplayName.toLocaleLowerCase(request.locale),
-      ),
-    );
-    if (hasEveryReplacement) return recommendation;
-
-    repaired = true;
-    const moveSummary = candidate.moveChanges
-      .map(
-        (change) =>
-          `${change.currentMoveDisplayName} → ${change.optimizedMoveDisplayName}`,
-      )
-      .join(", ");
-    return {
-      ...recommendation,
-      title:
-        request.locale === "ko"
-          ? `${moveSummary} 기술 교체를 검토하는 것이 좋습니다.`
-          : `Consider the ${moveSummary} move change.`,
-      reason: verifiedOptimizationReason(recommendation.id, request),
-    };
-  });
-
-  return {
-    analysis: repaired ? { ...analysis, recommendations } : analysis,
-    repaired,
-  };
-}
-
-function hasOptimizationNarrativeRepair(
-  analysis: CopilotModelOutput,
-  request: CopilotAnalysisRequest,
-) {
-  return request.scope === "optimization" && (
-    analysis.paragraphs.some((paragraph) =>
-      hasOptimizationOutcome(paragraph) ||
-      leaksOptimizationCandidateId(paragraph, request),
-    ) ||
-    analysis.recommendations.some(
-      (recommendation) =>
-        hasOptimizationOutcome(recommendation.title) ||
-        hasOptimizationOutcome(recommendation.reason) ||
-        leaksOptimizationCandidateId(recommendation.title, request) ||
-        leaksOptimizationCandidateId(recommendation.reason, request),
-    )
-  );
-}
-
-function normalizeCalculatorGroundedAudit(
-  output: ReturnType<typeof completeCopilotStrategyAudit>,
-  request: CopilotAnalysisRequest,
-) {
-  if (request.scope !== "optimization" && request.scope !== "matchup") {
-    return output;
-  }
-
-  return {
-    ...output,
-    strategyAudit: {
-      plans: [],
-      interactions: [],
-      facts: [],
-      candidateFacts: [],
-      recommendationEvidence: [],
-    },
-  };
-}
-
-export function validateHostedCopilotAnalysis(
-  output: unknown,
-  request: CopilotAnalysisRequest,
-): CopilotModelOutput {
-  const outputValidation = validateCopilotGroundedModelOutput(output);
-
+function validateRecommendationIds(analysis: CopilotModelOutput, request: CopilotAnalysisRequest) {
+  const candidateIds = getActionableCandidateIds(request);
+  if (!candidateIds) return;
+  const ids = analysis.recommendations.map((recommendation) => recommendation.id);
+  const minimum = request.scope === "optimization"
+    ? 1
+    : permitsKeepingCurrentTeam(request) ? 0 : Math.min(3, candidateIds.size);
   if (
-    !outputValidation.success ||
-    outputValidation.data.analysis.scope !== request.scope
+    ids.length < minimum || ids.length > Math.min(3, candidateIds.size) ||
+    new Set(ids).size !== ids.length || ids.some((id) => !candidateIds.has(id))
   ) {
+    throw invalidAnalysis(`Hosted ${request.scope} returned an invalid candidate list.`);
+  }
+}
+
+function recoverActionableRecommendations(analysis: CopilotModelOutput, request: CopilotAnalysisRequest) {
+  const candidateIds = getActionableCandidateIds(request);
+  const seen = new Set<string>();
+  const recommendations = analysis.recommendations.filter(({ id }) => {
+    if (seen.size >= 3 || seen.has(id) || (candidateIds && !candidateIds.has(id))) return false;
+    seen.add(id);
+    return true;
+  });
+  // An intentional keep-current answer is different from discarding every invalid action.
+  const intentionallyEmpty = analysis.recommendations.length === 0 && permitsKeepingCurrentTeam(request);
+  if (candidateIds && recommendations.length === 0 && !intentionallyEmpty) {
+    throw invalidAnalysis(`Hosted ${request.scope} returned no usable candidate.`);
+  }
+  const incompleteAddition = request.scope === "recommendation" && !permitsKeepingCurrentTeam(request) &&
+    recommendations.length < Math.min(3, candidateIds?.size ?? 0);
+  const adjusted = recommendations.length !== analysis.recommendations.length || incompleteAddition;
+  return { analysis: adjusted ? { ...analysis, recommendations } : analysis, adjusted };
+}
+
+export type HostedAnalysisDiagnostics = {
+  rawAuditErrors: string[];
+  auditErrors: string[];
+  auditNormalized: boolean;
+  suppliedRecommendations: number;
+  retainedRecommendations: number;
+  // Deterministic fact/ID validation does not establish natural-language accuracy.
+  proseVerified: false;
+};
+
+function inspectAudit(output: unknown, request: CopilotAnalysisRequest, analysis: CopilotModelOutput) {
+  const validation = validateCopilotGroundedModelOutput(output);
+  if (!validation.success) {
+    return { rawAuditErrors: validation.errors, auditErrors: validation.errors, auditNormalized: false };
+  }
+  const rawAuditErrors = validateCopilotStrategyAuditForRequest(validation.data, request);
+  const completed = completeCopilotStrategyAudit(validation.data, request);
+  return {
+    rawAuditErrors,
+    auditErrors: validateCopilotStrategyAuditForRequest({ ...completed, analysis }, request),
+    auditNormalized: JSON.stringify(validation.data.strategyAudit) !== JSON.stringify(completed.strategyAudit),
+  };
+}
+
+/** Strict structural/audit evaluation, not a factual-accuracy certification. Never rewrites prose. */
+export function validateHostedCopilotAnalysis(output: unknown, request: CopilotAnalysisRequest): CopilotModelOutput {
+  const validation = validateCopilotGroundedModelOutput(output);
+  if (!validation.success || validation.data.analysis.scope !== request.scope) {
     throw invalidAnalysis("Hosted analysis returned an invalid response.");
   }
-
-  const groundedOutput = normalizeCalculatorGroundedAudit(
-    completeCopilotStrategyAudit(outputValidation.data, request),
-    request,
-  );
-  validateRecommendationIds(groundedOutput.analysis, request);
-  validateOptimizationIds(groundedOutput.analysis, request);
-  validateOptimizationMoveNarrative(groundedOutput.analysis, request);
-  validateMetaReplacementNarrative(groundedOutput.analysis, request);
-  if (repairSinglesAllySpreadNarrative(groundedOutput.analysis, request).repaired) {
-    throw invalidAnalysis("Hosted analysis assumes ally spread damage in Singles.");
-  }
-  if (repairImpossibleActiveRosterNarrative(groundedOutput.analysis, request).repaired) {
-    throw invalidAnalysis("Hosted analysis assumes too many simultaneous active Pokemon.");
-  }
-
-  const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
-    groundedOutput,
-    request,
-  );
-
-  if (strategyAuditErrors.length > 0) {
-    throw invalidAnalysis("Hosted analysis returned an invalid response.");
-  }
-
-  return sanitizeOptimizationNarrative(groundedOutput.analysis, request);
+  const analysis = validation.data.analysis;
+  validateRecommendationIds(analysis, request);
+  const audit = inspectAudit(output, request, analysis);
+  if (audit.auditErrors.length) throw invalidAnalysis("Hosted analysis returned an invalid response.");
+  return analysis;
 }
 
 export type ReviewedHostedCopilotAnalysis = {
   analysis: CopilotModelOutput;
   qualityWarnings: CopilotQualityWarningCode[];
+  diagnostics: HostedAnalysisDiagnostics;
 };
 
-/**
- * Production keeps a renderable, correctly scoped answer when only private
- * grounding or recoverable candidate details fail. Strict evaluation continues
- * to use validateHostedCopilotAnalysis so those quality regressions stay visible.
- */
-export function reviewHostedCopilotAnalysis(
-  output: unknown,
-  request: CopilotAnalysisRequest,
-): ReviewedHostedCopilotAnalysis {
-  const publicOutput =
-    isRecord(output) && "analysis" in output ? output.analysis : output;
-  const publicValidation = validateCopilotModelOutput(
-    publicOutput,
-  );
-  if (
-    !publicValidation.success ||
-    publicValidation.data.scope !== request.scope
-  ) {
+/** Keep renderable prose unchanged; only invalid or duplicate action cards may be removed. */
+export function reviewHostedCopilotAnalysis(output: unknown, request: CopilotAnalysisRequest): ReviewedHostedCopilotAnalysis {
+  const publicOutput = isRecord(output) && "analysis" in output ? output.analysis : output;
+  const validation = validateCopilotModelOutput(publicOutput);
+  if (!validation.success || validation.data.scope !== request.scope) {
     throw invalidAnalysis("Hosted analysis returned an invalid response.");
   }
 
+  const recovered = recoverActionableRecommendations(validation.data, request);
+  const audit = inspectAudit(output, request, recovered.analysis);
   const warnings = new Set<CopilotQualityWarningCode>();
-  const recovered = recoverActionableRecommendations(
-    publicValidation.data,
-    request,
-  );
-  let analysis = recovered.analysis;
   if (recovered.adjusted) warnings.add("recommendations-adjusted");
-  const replacementRepair = repairMetaReplacementNarrative(analysis, request);
-  analysis = replacementRepair.analysis;
-  if (replacementRepair.repaired) warnings.add("content-repaired");
-  const singlesRepair = repairSinglesAllySpreadNarrative(analysis, request);
-  analysis = singlesRepair.analysis;
-  if (singlesRepair.repaired) warnings.add("content-repaired");
-  const rosterRepair = repairImpossibleActiveRosterNarrative(analysis, request);
-  analysis = rosterRepair.analysis;
-  if (rosterRepair.repaired) warnings.add("content-repaired");
-
-  const groundedValidation = validateCopilotGroundedModelOutput(output);
-  if (!groundedValidation.success) {
-    warnings.add("grounding-incomplete");
-  } else {
-    const groundedOutput = normalizeCalculatorGroundedAudit(
-      completeCopilotStrategyAudit(groundedValidation.data, request),
-      request,
-    );
-    const strategyAuditErrors = validateCopilotStrategyAuditForRequest(
-      { ...groundedOutput, analysis },
-      request,
-    );
-    if (strategyAuditErrors.length > 0) {
-      warnings.add("grounding-incomplete");
-    }
-  }
-
-  const moveRepair = repairOptimizationMoveNarrative(analysis, request);
-  analysis = moveRepair.analysis;
-  const needsNarrativeRepair = hasOptimizationNarrativeRepair(
-    analysis,
-    request,
-  );
-  analysis = sanitizeOptimizationNarrative(analysis, request);
-  if (moveRepair.repaired || needsNarrativeRepair) {
-    warnings.add("content-repaired");
-  }
-
-  return { analysis, qualityWarnings: [...warnings] };
+  if (audit.auditErrors.length) warnings.add("grounding-incomplete");
+  return {
+    analysis: recovered.analysis,
+    qualityWarnings: [...warnings],
+    diagnostics: {
+      ...audit,
+      suppliedRecommendations: validation.data.recommendations.length,
+      retainedRecommendations: recovered.analysis.recommendations.length,
+      proseVerified: false,
+    },
+  };
 }

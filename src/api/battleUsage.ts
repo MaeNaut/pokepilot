@@ -14,7 +14,7 @@ const memory = new Map<BattleFormat, Cached>();
 const pending = new Map<BattleFormat, Promise<Cached | null>>();
 const details = new Map<string, Promise<BattleUsageSet>>();
 const retryAfter = new Map<BattleFormat, number>();
-const keyFor = (format: BattleFormat) => `pokepilot:battle-usage:v1:${format}`;
+const keyFor = (format: BattleFormat) => `pokepilot:battle-usage:v2:${format}`;
 
 function valid(value: unknown, format: BattleFormat): value is Cached {
   const item = value as Cached | null;

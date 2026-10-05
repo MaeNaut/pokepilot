@@ -58,4 +58,17 @@ describe("copilot responsibilities", () => {
       "ally-damage-amplification": 0,
     });
   });
+
+  it("recognizes conditional Psychic Terrain protection without treating all terrain as priority denial", () => {
+    expect(inferCopilotResponsibilities({ abilities: [{ id: "Psychic Surge" }] }))
+      .toEqual(["priority-denial"]);
+    expect(inferCopilotResponsibilities({ moves: [{ id: "Psychic Terrain" }] }))
+      .toEqual(["priority-denial"]);
+    expect(inferCopilotResponsibilities({
+      abilities: [{ id: "Grassy Surge" }], moves: [{ id: "Electric Terrain" }],
+    })).not.toContain("priority-denial");
+    expect(inferCopilotResponsibilities({
+      abilities: [{ id: "psychicsurge" }], moves: [{ id: "psychicterrain" }],
+    })).toEqual(["priority-denial"]);
+  });
 });

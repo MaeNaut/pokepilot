@@ -56,7 +56,7 @@ function createOptimizationMoveMechanics(
   }
 
   return [...movesById.values()].map((move) => {
-    const effect = compactCopilotMechanicEffect(move.description);
+    const effect = compactCopilotMechanicEffect(move.detailedDescription ?? move.description);
     const tags = [...new Set(
       (move.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
     )];

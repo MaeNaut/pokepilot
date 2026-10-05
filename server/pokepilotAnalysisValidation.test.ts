@@ -1,558 +1,225 @@
 import { describe, expect, it } from "vitest";
 import type { CopilotAnalysisRequest } from "../src/utils/copilotAnalysis";
-import {
-  reviewHostedCopilotAnalysis,
-  validateHostedCopilotAnalysis,
-} from "./pokepilotAnalysisValidation";
+import type { CopilotGroundedModelOutput } from "../src/utils/copilotModelTypes";
+import { validateCopilotModelOutput } from "../src/utils/copilotModelValidation";
+import { reviewHostedCopilotAnalysis, validateHostedCopilotAnalysis } from "./pokepilotAnalysisValidation";
 
 const request = {
   locale: "en",
   scope: "optimization",
-  optimization: {
-    candidates: [
-      { id: "set-balanced" },
-      { id: "set-bulky" },
-      { id: "set-fast" },
-      { id: "set-slow" },
-    ],
-  },
+  optimization: { candidates: [{ id: "set-balanced" }, { id: "set-bulky" }, { id: "set-fast" }] },
 } as CopilotAnalysisRequest;
 
-function createOutput(recommendationIds: string[]) {
+function createOutput(ids = ["set-balanced"]): CopilotGroundedModelOutput {
   return {
     analysis: {
-      version: 2,
-      scope: "optimization",
-      title: "Garchomp vs. Incineroar",
-      paragraphs: ["This is verified exact-target tuning."],
-      recommendations: recommendationIds.map((recommendationId) => ({
-          id: recommendationId,
-          title: "Keep the smallest verified adjustment",
-          reason: "It reaches the configured target with the cleanest tradeoff.",
-          priority: "high",
-        })),
+      version: 2, scope: "optimization", title: "Compare the supplied options",
+      paragraphs: ["Keep the current role in mind."],
+      recommendations: ids.map((id) => ({ id, title: "Consider this option.", reason: "Weigh the tradeoff.", priority: "medium" })),
     },
-    strategyAudit: {
-      plans: [],
-      interactions: [],
-      facts: [],
-      candidateFacts: [],
-      recommendationEvidence: [],
-    },
+    strategyAudit: { plans: [], interactions: [], facts: [], candidateFacts: [], recommendationEvidence: [] },
   };
 }
 
-describe("hosted optimization validation", () => {
+describe("hosted validation boundaries", () => {
   it.each([
-    "The standard sample's 14.5% figure describes its Stat Point distribution, not the popularity of the complete set.",
-    "이 노력치 분포의 사용률은 14.5%이며 전체 샘플의 채용률을 뜻하지 않습니다.",
-    "The HP and Special Defense distribution has 14.5% usage.",
-  ])("preserves usage evidence without deleting the analysis: %s", (usageParagraph) => {
-    const output = createOutput(["set-balanced"]);
-    output.analysis.paragraphs = ["Attack and Speed investment supports the selected physical moves.", usageParagraph];
-    output.analysis.recommendations[0].reason = usageParagraph;
+    "Hurricane has 50% accuracy in harsh sunlight.",
+    "Dark Pulse has a 20% chance to make the target flinch.",
+    "폭풍은 햇살 아래에서 명중률이 50%가 됩니다.",
+    "악의파동의 20% 풀죽음 효과를 잃고, 용성군 사용 후 특수공격이 하락합니다.",
+    "An OHKO has not been verified for this set.",
+    "The spread has 14.5% usage, not the popularity of the complete set.",
+    "확정 2타인지는 검증하지 않았습니다.",
+    "Guaranteed 2HKO after investment. Keep the support role intact.",
+    "The set-balanced candidate keeps the selected role.",
+  ])("preserves prose without pretending to certify it: %s", (text) => {
+    const output = createOutput();
+    output.analysis.paragraphs = [text, text];
+    output.analysis.recommendations[0].title = text;
+    output.analysis.recommendations[0].reason = text;
+    const before = structuredClone(output);
     const reviewed = reviewHostedCopilotAnalysis(output, request);
-    expect(reviewed.analysis.paragraphs).toEqual(output.analysis.paragraphs);
-    expect(reviewed.analysis.recommendations[0].reason).toBe(usageParagraph);
-    expect(reviewed.qualityWarnings).not.toContain("content-repaired");
+    expect(reviewed.analysis).toEqual(before.analysis);
+    expect(validateHostedCopilotAnalysis(output, request)).toEqual(before.analysis);
+    expect(output).toEqual(before);
+    expect(reviewed.qualityWarnings).toEqual([]);
+    expect(reviewed.diagnostics).toMatchObject({ proseVerified: false, auditNormalized: false });
   });
 
-  it("repairs damage percentages without deleting unrelated paragraphs", () => {
-    const output = createOutput(["set-balanced"]);
-    output.analysis.paragraphs = [
-      "Usage is 14.5%, and this move deals 50% damage.",
-      "Keeping Roost preserves recovery.",
-    ];
+  it("does not hide unexpected calculator audit entries", () => {
+    const output = createOutput();
+    output.strategyAudit.plans.push({ id: "unused", lineupSlotIndexes: [], leadSlotIndexes: [], backlineSlotIndexes: [], actions: [] });
     const reviewed = reviewHostedCopilotAnalysis(output, request);
-    expect(reviewed.analysis.paragraphs).toContain("Keeping Roost preserves recovery.");
-    expect(reviewed.analysis.paragraphs.join(" ")).not.toContain("50%");
-    expect(reviewed.qualityWarnings).toContain("content-repaired");
+    expect(reviewed.analysis).toEqual(output.analysis);
+    expect(reviewed.qualityWarnings).toEqual(["grounding-incomplete"]);
+    expect(reviewed.diagnostics.rawAuditErrors).toEqual(reviewed.diagnostics.auditErrors);
+    expect(reviewed.diagnostics.auditNormalized).toBe(false);
+    expect(() => validateHostedCopilotAnalysis(output, request)).toThrow("invalid response");
   });
 
-  it("accepts fewer than three recommendations when only one is useful", () => {
-    expect(
-      validateHostedCopilotAnalysis(
-        createOutput(["set-balanced"]),
-        request,
-      ),
-    ).toMatchObject({ scope: "optimization" });
-  });
-
-  it("accepts up to three supplied deterministic candidate ids", () => {
-    expect(
-      validateHostedCopilotAnalysis(
-        createOutput(["set-balanced", "set-bulky", "set-fast"]),
-        request,
-      ),
-    ).toMatchObject({ scope: "optimization" });
-  });
-
-  it("ignores unused private audit entries for optimization analysis", () => {
-    const output = createOutput(["set-balanced"]);
-    output.strategyAudit.plans.push({
-      id: "unused-model-plan",
-      lineupSlotIndexes: [],
-      leadSlotIndexes: [],
-      backlineSlotIndexes: [],
-      actions: [],
-    } as never);
-
-    expect(validateHostedCopilotAnalysis(output, request)).toMatchObject({
-      scope: "optimization",
-      recommendations: [{ id: "set-balanced" }],
-    });
-  });
-
-  it("rejects an empty optimization recommendation list", () => {
-    expect(() =>
-      validateHostedCopilotAnalysis(createOutput([]), request),
-    ).toThrow("invalid candidate list");
-  });
-
-  it("rejects an invented optimization candidate", () => {
-    expect(() =>
-      validateHostedCopilotAnalysis(createOutput(["invented-spread"]), request),
-    ).toThrow("invalid candidate list");
-  });
-
-  it("rejects a move explanation that names a different replacement", () => {
-    const output = createOutput(["set-move"]);
-    output.analysis.recommendations[0].title = "Use Superpower in this matchup.";
-    output.analysis.recommendations[0].reason =
-      "Superpower provides the strongest direct pressure.";
-    const moveRequest = {
-      ...request,
-      optimization: {
-        candidates: [{
-          id: "set-move",
-          moveChanges: [{ optimizedMoveDisplayName: "High Horsepower" }],
-        }],
-      },
-    } as unknown as CopilotAnalysisRequest;
-
-    expect(() => validateHostedCopilotAnalysis(output, moveRequest)).toThrow(
-      "move explanation does not match its candidate",
-    );
-  });
-
-  it("accepts a move explanation that names its applied replacement", () => {
-    const output = createOutput(["set-move"]);
-    output.analysis.recommendations[0].title =
-      "Use High Horsepower in this matchup.";
-    const moveRequest = {
-      ...request,
-      optimization: {
-        candidates: [{
-          id: "set-move",
-          moveChanges: [{ optimizedMoveDisplayName: "High Horsepower" }],
-        }],
-      },
-    } as CopilotAnalysisRequest;
-
-    expect(validateHostedCopilotAnalysis(output, moveRequest)).toMatchObject({
-      recommendations: [{ id: "set-move" }],
-    });
-  });
-
-  it("replaces affected blocks without leaving detached conclusions or only drawbacks", () => {
-    const output = createOutput(["set-balanced"]);
-    output.analysis.paragraphs = [
-      "Guaranteed 2HKO after investment. Keeps the support role intact.",
-      "Bug Bite becomes a guaranteed 2HKO. Preserves reserve special bulk.",
-    ];
-    output.analysis.recommendations[0].reason =
-      "Takes 34.4% to 41.4% from the target. Preserves the verified survival threshold with reserve bulk.";
-
-    const analysis = validateHostedCopilotAnalysis(output, request);
-
-    expect(analysis.paragraphs).toEqual([
-      "This matchup tuning weighs the displayed calculator results against the set's current team role.",
-    ]);
-    expect(analysis.recommendations[0].reason).toContain("limited to the configured opponent");
-    expect(analysis.recommendations[0].reason).not.toContain("34.4%");
-  });
-
-  it("removes Korean hit-count paraphrases from optimization prose", () => {
-    const output = createOutput(["set-balanced"]);
-    const koreanRequest = { ...request, locale: "ko" } as CopilotAnalysisRequest;
-    output.analysis.recommendations[0].reason =
-      "벌레먹기를 확정 2타로 견딘다. 남는 투자는 반대쪽 내구에 배분한다.";
-
-    const analysis = validateHostedCopilotAnalysis(output, koreanRequest);
-
-    expect(analysis.recommendations[0].reason).toContain("다른 상대에 대한 성능은 검증하지 않았습니다.");
-    expect(analysis.recommendations[0].reason).not.toContain("남는 투자는");
-  });
-
-  it("removes unsupported qualitative KO-probability claims", () => {
-    const output = createOutput(["set-balanced"]);
-    const koreanRequest = { ...request, locale: "ko" } as CopilotAnalysisRequest;
-    output.analysis.paragraphs = [
-      "This option keeps the requested matchup role. Its KO probability rises significantly.",
-    ];
-    output.analysis.recommendations[0].reason =
-      "밀로틱보다 빠르게 움직인다. 에너지볼의 KO 확률이 크게 상승한다.";
-
-    const analysis = validateHostedCopilotAnalysis(output, koreanRequest);
-
-    expect(analysis.paragraphs.join(" ")).not.toContain("KO probability");
-    expect(analysis.recommendations[0].reason).not.toContain("밀로틱보다");
-  });
-
-  it("removes private sample candidate ids from public prose", () => {
-    const output = createOutput(["set-balanced"]);
-    output.analysis.paragraphs = [
-      "The set-balanced candidate keeps this role intact.",
-    ];
-
-    const analysis = validateHostedCopilotAnalysis(output, request);
-
-    expect(analysis.paragraphs).toEqual([
-      "This matchup tuning weighs the displayed calculator results against the set's current team role.",
-    ]);
-    expect(analysis.paragraphs.join(" ")).not.toContain("set-balanced");
-  });
-
-  it("retains the verified benefit and stat cost when replacing a numeric reason", () => {
-    const output = createOutput(["set-adjusted"]);
-    output.analysis.recommendations[0].reason =
-      "Drain Punch gains an OHKO chance. However, special bulk falls.";
-    const stats = { hp: 100, attack: 100, defense: 100, specialAttack: 100, specialDefense: 100, speed: 100 };
-    const groundedRequest = { ...request, optimization: {
-      currentBuild: { finalStats: stats },
-      candidates: [{ id: "set-adjusted", finalStats: { ...stats, attack: 120, specialDefense: 80 },
-        offenseBenchmarks: [{ moveDisplayName: "Drain Punch", optimizedVsCurrent: "better" }],
-        defenseBenchmarks: [{ moveDisplayName: "Shadow Ball", optimizedVsCurrent: "same" }],
-      }],
-    } } as CopilotAnalysisRequest;
-    const reason = validateHostedCopilotAnalysis(output, groundedRequest).recommendations[0].reason;
-    expect(reason).toContain("offensive outcome for Drain Punch improves");
-    expect(reason).toContain("lower Special Defense");
-    expect(reason).not.toContain("Shadow Ball");
-    expect(reason).not.toContain("OHKO");
-  });
-
-  it("preserves an intact qualitative explanation and current-only recommendation", () => {
-    const output = createOutput(["set-current"]);
-    const currentRequest = { ...request, optimization: { candidates: [{ id: "set-current" }] } } as CopilotAnalysisRequest;
-    expect(validateHostedCopilotAnalysis(output, currentRequest)).toEqual(output.analysis);
-    output.analysis.recommendations[0].reason = "It already reaches a guaranteed 2HKO.";
-    const result = validateHostedCopilotAnalysis(output, currentRequest);
-    expect(result.recommendations[0].reason).toContain("preserves its damage, Speed, bulk, item, and moves");
-  });
-});
-
-describe("hosted Pokemon recommendation validation", () => {
-  const recommendationCandidate = {
-    pokemonId: "rotom-wash",
-    target: {
-      mode: "replacement",
-      slotIndex: 2,
-      currentPokemonId: "pelipper",
-      currentDisplayName: "Pelipper",
-    },
-  } as CopilotAnalysisRequest["recommendationCandidates"][number];
-
-  function createRecommendationOutput() {
+  it("reports raw audit failures separately from harmless unary-slot normalization", () => {
     const output = createOutput([]);
-    output.analysis.scope = "recommendation";
-    output.analysis.title = "Keep the current six";
-    output.analysis.paragraphs = [
-      "None of the supplied exchanges is a clear team-level improvement.",
-    ];
-    return output;
-  }
-
-  it("accepts keeping a complete team when no replacement is worthwhile", () => {
-    expect(
-      validateHostedCopilotAnalysis(createRecommendationOutput(), {
-        locale: "en",
-        scope: "recommendation",
-        recommendationCandidates: [recommendationCandidate],
-        diagnostics: { concepts: [] },
-      } as unknown as CopilotAnalysisRequest),
-    ).toMatchObject({
-      scope: "recommendation",
-      recommendations: [],
-    });
-  });
-
-  it("still requires candidate cards when filling an empty slot", () => {
-    expect(() =>
-      validateHostedCopilotAnalysis(createRecommendationOutput(), {
-        locale: "en",
-        scope: "recommendation",
-        diagnostics: { concepts: [] },
-        recommendationCandidates: [
-          {
-            ...recommendationCandidate,
-            target: {
-              mode: "addition",
-              slotIndex: 2,
-              currentPokemonId: null,
-              currentDisplayName: null,
-            },
-          },
-        ],
-      } as unknown as CopilotAnalysisRequest),
-    ).toThrow("invalid candidate list");
-  });
-});
-
-describe("hosted meta threat replacement validation", () => {
-  const candidate = {
-    pokemonId: "rotom-wash",
-    displayName: "Rotom Wash",
-    target: {
-      mode: "replacement",
-      slotIndex: 2,
-      currentPokemonId: "pelipper",
-      currentDisplayName: "Pelipper",
-    },
-  } as CopilotAnalysisRequest["recommendationCandidates"][number];
-  const metaRequest = {
-    ...request,
-    scope: "matchup",
-    optimization: null,
-    recommendationCandidates: [candidate],
-    matchup: { mode: "meta", replacementEvidence: [] },
-  } as unknown as CopilotAnalysisRequest;
-
-  function createMetaOutput(title: string) {
-    const output = createOutput([candidate.pokemonId]);
-    output.analysis.scope = "matchup";
-    output.analysis.title = "Meta threat audit";
-    output.analysis.recommendations[0].title = title;
-    output.analysis.recommendations[0].reason =
-      "This replacement provides a verified response to the selected threat.";
-    return output;
-  }
-
-  it("accepts an exact candidate and replacement target explanation", () => {
-    expect(
-      validateHostedCopilotAnalysis(
-        createMetaOutput("Consider Rotom Wash over Pelipper."),
-        metaRequest,
-      ),
-    ).toMatchObject({
-      scope: "matchup",
-      recommendations: [{ id: "rotom-wash" }],
-    });
-  });
-
-  it("rejects a candidate explanation that names another teammate as its target", () => {
-    expect(() =>
-      validateHostedCopilotAnalysis(
-        createMetaOutput("Consider Rotom Wash over Venusaur."),
-        metaRequest,
-      ),
-    ).toThrow("replacement explanation does not match its exact target");
-  });
-
-  it("repairs a mismatched replacement target for the production response", () => {
-    const reviewed = reviewHostedCopilotAnalysis(
-      createMetaOutput("Consider Rotom Wash over Venusaur."),
-      {
-        ...metaRequest,
-        matchup: {
-          mode: "meta",
-          replacementEvidence: [{
-            candidatePokemonId: "rotom-wash",
-            targetSlotIndex: 2,
-            threatPokemonId: "archaludon",
-            member: { responseTier: "answer" },
-          }],
-          threats: [{
-            opponent: {
-              pokemonId: "archaludon",
-              displayName: "Archaludon",
-            },
-          }],
-        },
-      } as unknown as CopilotAnalysisRequest,
-    );
-
-    expect(reviewed.analysis.recommendations[0]).toMatchObject({
-      title: "Consider Rotom Wash over Pelipper.",
-    });
-    expect(reviewed.analysis.recommendations[0].reason).toContain(
-      "losing Pelipper",
-    );
-    expect(reviewed.qualityWarnings).toContain("content-repaired");
-  });
-});
-
-describe("recoverable hosted analysis review", () => {
-  const spreadRequest = {
-    ...request,
-    locale: "ko",
-    scope: "pokemon",
-    battleFormat: "singles",
-    sets: [{ moves: [{ name: "Earthquake", displayName: "지진", spreadTarget: "adjacent" }] }],
-  } as unknown as CopilotAnalysisRequest;
-
-  it("repairs ally-spread advice in Singles without discarding the analysis", () => {
-    const output = createOutput(["hippowdon-disruption"]);
     output.analysis.scope = "pokemon";
-    output.analysis.paragraphs = [
-      "하마돈은 회복할 수 있습니다. 지진은 함께 내보내는 아군의 안전한 배치를 고려한 뒤 사용하세요.",
-    ];
-    output.analysis.recommendations[0].reason =
-      "하품으로 압박하세요. 지진은 아군의 배치를 확인한 뒤 사용하세요.";
-
-    const reviewed = reviewHostedCopilotAnalysis(output, spreadRequest);
-
-    expect(reviewed.analysis.paragraphs[0]).toBe(
-      "하마돈은 회복할 수 있습니다. 싱글에서는 지진 사용 시 다른 팀 포켓몬이 피해를 받지 않습니다.",
-    );
-    expect(reviewed.analysis.recommendations[0].reason).toBe(
-      "하품으로 압박하세요. 싱글에서는 지진 사용 시 다른 팀 포켓몬이 피해를 받지 않습니다.",
-    );
-    expect(reviewed.qualityWarnings).toContain("content-repaired");
+    output.strategyAudit.facts = [{
+      id: "ground", kind: "weak-to", subjectSlotIndex: 0, objectSlotIndex: 0, state: "current", valueId: "ground",
+    }];
+    const pokemonRequest = { scope: "pokemon", selectedSlot: 0, typeLabels: [], sets: [{
+      slotIndex: 0, displayName: "Archaludon", moves: [],
+      defensiveProfile: { weaknesses: [{ type: "ground", multiplier: 2 }], resistances: [], immunities: [] },
+    }] } as unknown as CopilotAnalysisRequest;
+    const reviewed = reviewHostedCopilotAnalysis(output, pokemonRequest);
+    expect(reviewed.diagnostics.rawAuditErrors.length).toBeGreaterThan(0);
+    expect(reviewed.diagnostics.auditErrors).toEqual([]);
+    expect(reviewed.diagnostics.auditNormalized).toBe(true);
+    expect(reviewed.diagnostics.proseVerified).toBe(false);
+    expect(output.strategyAudit.facts[0].objectSlotIndex).toBe(0);
   });
 
-  it("preserves correct Singles negation and Doubles ally-spread advice", () => {
-    const output = createOutput(["hippowdon-disruption"]);
+  it("keeps uncited contradictory facts visible internally without blocking public prose", () => {
+    const output = createOutput([]);
     output.analysis.scope = "pokemon";
-    output.analysis.paragraphs = ["싱글에서는 지진으로 아군을 맞힐 걱정이 없습니다."];
-    expect(reviewHostedCopilotAnalysis(output, spreadRequest).analysis.paragraphs)
-      .toEqual(output.analysis.paragraphs);
-
-    output.analysis.paragraphs = ["지진은 아군도 맞힐 수 있으니 배치를 확인하세요."];
-    expect(reviewHostedCopilotAnalysis(output, {
-      ...spreadRequest,
-      battleFormat: "doubles",
-    }).analysis.paragraphs).toEqual(output.analysis.paragraphs);
+    output.strategyAudit.facts = [{
+      id: "false-weakness", kind: "weak-to", subjectSlotIndex: 0, objectSlotIndex: -1, state: "current", valueId: "fire",
+    }];
+    const pokemonRequest = { scope: "pokemon", selectedSlot: 0, typeLabels: [], sets: [{
+      slotIndex: 0, displayName: "Archaludon", moves: [],
+      defensiveProfile: { weaknesses: [{ type: "ground", multiplier: 2 }], resistances: [], immunities: [] },
+    }] } as unknown as CopilotAnalysisRequest;
+    const reviewed = reviewHostedCopilotAnalysis(output, pokemonRequest);
+    expect(reviewed.analysis).toEqual(output.analysis);
+    expect(reviewed.qualityWarnings).toEqual(["grounding-incomplete"]);
+    expect(reviewed.diagnostics.auditErrors).toContain("strategyAudit.facts[0] contradicts the supplied defensive profile.");
+    expect(reviewed.diagnostics.rawAuditErrors).toEqual(reviewed.diagnostics.auditErrors);
+    expect(reviewed.diagnostics.auditNormalized).toBe(false);
+    expect(() => validateHostedCopilotAnalysis(output, pokemonRequest)).toThrow("invalid response");
   });
 
-  it("repairs an impossible three-Pokemon active lineup in Doubles", () => {
-    const output = createOutput(["weather-warning"]);
-    output.analysis.scope = "team";
-    output.analysis.recommendations[0].reason =
-      "알로라 나인테일과 눈여아는 바위에 약하고, 대도각참은 불꽃에 약하므로 이 셋을 한 번에 전면에 배치하면 상대 광역 공격에 취약해집니다. 상대의 공격 유형에 따라 선발을 조정하세요.";
-
-    const reviewed = reviewHostedCopilotAnalysis(output, {
-      ...request,
-      locale: "ko",
-      scope: "team",
-      battleFormat: "doubles",
-      sets: [],
-    });
-
-    expect(reviewed.analysis.recommendations[0].reason).toBe(
-      "더블에서는 한 번에 최대 2마리만 필드에 나올 수 있습니다. 상대의 공격 유형에 따라 선발을 조정하세요.",
-    );
-    expect(reviewed.qualityWarnings).toContain("content-repaired");
+  it("accepts one to three known sample candidates", () => {
+    for (const ids of [["set-balanced"], ["set-balanced", "set-bulky", "set-fast"]]) {
+      expect(validateHostedCopilotAnalysis(createOutput(ids), request).recommendations.map(r => r.id)).toEqual(ids);
+    }
   });
 
-  it("keeps a three-Pokemon Doubles selection distinct from an active pair", () => {
-    const output = createOutput(["selection"]);
-    output.analysis.scope = "team";
-    output.analysis.paragraphs = [
-      "세 마리를 선출하더라도 한 번에 필드에는 두 마리만 나옵니다.",
-    ];
-
-    expect(reviewHostedCopilotAnalysis(output, {
-      ...request,
-      locale: "ko",
-      scope: "team",
-      battleFormat: "doubles",
-      sets: [],
-    }).analysis.paragraphs).toEqual(output.analysis.paragraphs);
+  it.each([[], ["invented"], ["set-balanced", "set-balanced"]].map(ids => ({ ids })))("rejects invalid strict action lists: $ids", ({ ids }) => {
+    expect(() => validateHostedCopilotAnalysis(createOutput(ids), request)).toThrow("invalid candidate list");
   });
 
-  it("deduplicates non-actionable strategy cards without discarding the analysis", () => {
-    const output = createOutput(["one", "one", "two", "three", "four"]);
-    output.analysis.scope = "team";
-    const teamRequest = {
-      ...request,
-      scope: "team",
-      sets: [],
-    } as CopilotAnalysisRequest;
-
-    const reviewed = reviewHostedCopilotAnalysis(output, teamRequest);
-
-    expect(reviewed.analysis.recommendations.map(({ id }) => id)).toEqual([
-      "one",
-      "two",
-      "three",
-    ]);
-    expect(reviewed.qualityWarnings).toContain("recommendations-adjusted");
+  it("filters unknown and duplicate actions without editing retained prose", () => {
+    const output = createOutput(["set-balanced", "invented", "set-balanced", "set-bulky"]);
+    const reviewed = reviewHostedCopilotAnalysis(output, request);
+    expect(reviewed.analysis.recommendations).toEqual([output.analysis.recommendations[0], output.analysis.recommendations[3]]);
+    expect(reviewed.analysis.paragraphs).toEqual(output.analysis.paragraphs);
+    expect(reviewed.qualityWarnings).toEqual(["recommendations-adjusted"]);
+    expect(reviewed.diagnostics).toMatchObject({ suppliedRecommendations: 4, retainedRecommendations: 2 });
   });
 
-  it("keeps a valid public analysis when the private audit is missing", () => {
-    expect(
-      reviewHostedCopilotAnalysis(createOutput(["set-balanced"]).analysis, request),
-    ).toMatchObject({
-      analysis: { recommendations: [{ id: "set-balanced" }] },
-      qualityWarnings: ["grounding-incomplete"],
-    });
+  it("rejects an actionable response with no usable candidate", () => {
+    expect(() => reviewHostedCopilotAnalysis(createOutput(["invented"]), request)).toThrow("no usable candidate");
   });
 
-  it("removes only unknown actionable candidates when a valid option remains", () => {
-    const reviewed = reviewHostedCopilotAnalysis(
-      createOutput(["set-balanced", "invented-spread"]),
-      request,
-    );
-
-    expect(reviewed.analysis.recommendations.map(({ id }) => id)).toEqual([
-      "set-balanced",
-    ]);
-    expect(reviewed.qualityWarnings).toContain("recommendations-adjusted");
-  });
-
-  it("still rejects an actionable response with no usable candidate", () => {
-    expect(() =>
-      reviewHostedCopilotAnalysis(
-        createOutput(["invented-spread"]),
-        request,
-      ),
-    ).toThrow("no usable candidate");
-  });
-
-  it("repairs a move explanation that names a different replacement", () => {
-    const output = createOutput(["set-move"]);
-    output.analysis.recommendations[0].title = "Use Superpower.";
-    output.analysis.recommendations[0].reason = "Superpower is stronger.";
-    const moveRequest = {
-      ...request,
-      optimization: {
-        currentBuild: {
-          finalStats: {
-            hp: 100,
-            attack: 100,
-            defense: 100,
-            specialAttack: 100,
-            specialDefense: 100,
-            speed: 100,
-          },
-        },
-        candidates: [{
-          id: "set-move",
-          finalStats: {
-            hp: 100,
-            attack: 100,
-            defense: 100,
-            specialAttack: 100,
-            specialDefense: 100,
-            speed: 100,
-          },
-          offenseBenchmarks: [],
-          defenseBenchmarks: [],
-          itemChanged: false,
-          moveChanges: [{
-            currentMoveDisplayName: "Ice Punch",
-            optimizedMoveDisplayName: "High Horsepower",
-          }],
-        }],
-      },
-    } as unknown as CopilotAnalysisRequest;
-
+  it("does not manufacture a different move explanation", () => {
+    const output = createOutput(["move-solarbeam"]);
+    output.analysis.recommendations[0].reason = "Replace Hurricane with Solar Beam while keeping Weather Ball.";
+    const moveRequest = { ...request, optimization: { candidates: [{
+      id: "move-solarbeam", moveChanges: [{ currentMoveDisplayName: "Weather Ball", optimizedMoveDisplayName: "Solar Beam" }],
+    }] } } as CopilotAnalysisRequest;
     const reviewed = reviewHostedCopilotAnalysis(output, moveRequest);
-    expect(reviewed.analysis.recommendations[0]).toMatchObject({
-      title: expect.stringContaining("High Horsepower"),
-      reason: expect.stringContaining("High Horsepower replaces Ice Punch"),
-    });
-    expect(reviewed.qualityWarnings).toContain("content-repaired");
+    expect(reviewed.analysis).toEqual(output.analysis);
+    expect(reviewed.diagnostics.proseVerified).toBe(false);
+    expect(moveRequest.optimization!.candidates[0].moveChanges[0].currentMoveDisplayName).toBe("Weather Ball");
+  });
+
+  it("keeps a renderable answer when its private audit is absent", () => {
+    const output = createOutput().analysis;
+    const reviewed = reviewHostedCopilotAnalysis(output, request);
+    expect(reviewed.analysis).toEqual(output);
+    expect(reviewed.qualityWarnings).toEqual(["grounding-incomplete"]);
+    expect(reviewed.diagnostics.auditErrors.length).toBeGreaterThan(0);
+    expect(() => validateHostedCopilotAnalysis(output, request)).toThrow("invalid response");
+  });
+
+  it("rejects wrong scope and unexpected public fields", () => {
+    const wrongScope = createOutput();
+    wrongScope.analysis.scope = "team";
+    for (const output of [wrongScope, { ...createOutput().analysis, debug: "not public" }]) {
+      expect(() => reviewHostedCopilotAnalysis(output, request)).toThrow("invalid response");
+    }
+  });
+
+  it.each([null, 7, {}, [], true, "", "   "])("returns a structured failure for malformed paragraph %j", (paragraph) => {
+    const output = { ...createOutput().analysis, paragraphs: [paragraph] };
+    expect(validateCopilotModelOutput(output).success).toBe(false);
+    expect(() => reviewHostedCopilotAnalysis(output, request)).toThrow("invalid response");
+    try {
+      reviewHostedCopilotAnalysis(output, request);
+    } catch (error) {
+      expect(error).toMatchObject({ code: "AI_INVALID_RESPONSE" });
+      expect(error).not.toBeInstanceOf(TypeError);
+    }
+  });
+});
+
+describe("keeping a team versus losing all actionable recommendations", () => {
+  const replacementRequest = {
+    locale: "en", scope: "recommendation", diagnostics: { concepts: [] },
+    recommendationCandidates: [{ pokemonId: "rotom-wash", target: {
+      mode: "replacement", slotIndex: 2, currentPokemonId: "pelipper", currentDisplayName: "Pelipper",
+    } }],
+  } as unknown as CopilotAnalysisRequest;
+  function output(ids: string[]) {
+    const result = createOutput(ids);
+    result.analysis.scope = "recommendation";
+    return result;
+  }
+
+  it("allows an originally empty replacement list", () => {
+    expect(reviewHostedCopilotAnalysis(output([]), replacementRequest).analysis.recommendations).toEqual([]);
+    expect(validateHostedCopilotAnalysis(output([]), replacementRequest).recommendations).toEqual([]);
+  });
+
+  it("does not turn a wholly invalid replacement list into keep-current success", () => {
+    expect(() => reviewHostedCopilotAnalysis(output(["invented"]), replacementRequest)).toThrow("no usable candidate");
+  });
+
+  it("still requires an actionable candidate when filling an empty slot", () => {
+    const addition = { ...replacementRequest, recommendationCandidates: [{
+      ...replacementRequest.recommendationCandidates[0],
+      target: { mode: "addition", slotIndex: 2, currentPokemonId: null, currentDisplayName: null },
+    }] } as CopilotAnalysisRequest;
+    expect(() => reviewHostedCopilotAnalysis(output([]), addition)).toThrow("no usable candidate");
+    expect(() => validateHostedCopilotAnalysis(output([]), addition)).toThrow("invalid candidate list");
+  });
+});
+
+describe("prose is not repaired using word co-occurrence", () => {
+  it.each([
+    ["singles", "지진으로 상대를 압박한 뒤 동료에게 교대해 피해를 분산합니다."],
+    ["singles", "싱글에서는 양쪽 포켓몬 두 마리가 동시에 필드에 있지만 우리 팀은 한 마리씩 교대합니다."],
+    ["singles", "지진은 아군에게 피해를 주지만 상대에게는 효과가 없습니다."],
+    ["doubles", "세 마리가 동시에 필드에 나올 수 없으므로 비 요원은 후발 교체로 투입합니다."],
+    ["doubles", "세 마리를 동시에 필드에 내보내세요."],
+  ] as const)("preserves %s prose even when it cannot certify its meaning", (battleFormat, text) => {
+    const output = createOutput(["strategy"]);
+    output.analysis.scope = "team";
+    output.analysis.paragraphs = [text];
+    output.analysis.recommendations[0].reason = text;
+    const teamRequest = { ...request, scope: "team", battleFormat, sets: [] } as CopilotAnalysisRequest;
+    expect(reviewHostedCopilotAnalysis(output, teamRequest).analysis).toEqual(output.analysis);
+  });
+
+  it("does not reverse cautious meta replacement advice", () => {
+    const output = createOutput(["rotom-wash"]);
+    output.analysis.scope = "matchup";
+    output.analysis.recommendations[0].title = "Keep the rain setter.";
+    output.analysis.recommendations[0].reason = "Avoid switching to Rotom Wash because losing rain breaks the weather plan.";
+    const metaRequest = { ...request, scope: "matchup", optimization: null,
+      recommendationCandidates: [{ pokemonId: "rotom-wash", displayName: "Rotom Wash",
+        target: { mode: "replacement", slotIndex: 2, currentPokemonId: "pelipper", currentDisplayName: "Pelipper" } }],
+      matchup: { mode: "meta", replacementEvidence: [{
+        candidatePokemonId: "rotom-wash", targetSlotIndex: 2, threatPokemonId: "archaludon", member: { responseTier: "check" },
+      }], threats: [{ opponent: { pokemonId: "archaludon", displayName: "Archaludon" } }] },
+    } as unknown as CopilotAnalysisRequest;
+    expect(reviewHostedCopilotAnalysis(output, metaRequest).analysis).toEqual(output.analysis);
+    expect(validateHostedCopilotAnalysis(output, metaRequest)).toEqual(output.analysis);
   });
 });

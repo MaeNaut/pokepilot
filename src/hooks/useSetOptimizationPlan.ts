@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { runWorkerTask, waitForTask } from "../utils/workerTask";
 import { loadPopularUsageSet } from "../api/battleUsage";
+import { BATTLE_USAGE_OPTION_LIMITS } from "../api/battleUsageData";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { resolveUsageCalculatorItems } from "../calculator/calculatorUsageBuild";
 import type { ItemIndexEntry } from "../types";
@@ -46,7 +47,7 @@ export function useSetOptimizationPlan(
     setResult({ ...identity, plan: null, status: "loading" });
     try {
       const usageSet = await waitForTask(
-        loadPopularUsageSet(context.member.id, battleFormat).catch(() => null), signal,
+        loadPopularUsageSet(context.usagePokemonId ?? context.member.id, battleFormat).catch(() => null), signal,
       );
       if (signal.aborted) return null;
       const output = await runWorkerTask<{ plan?: SetOptimizationPlan; error?: boolean }>(
@@ -55,7 +56,7 @@ export function useSetOptimizationPlan(
           generalContext: {
             ...context,
             usageSet,
-            usageItems: usageSet ? resolveUsageCalculatorItems(usageSet, itemOptions, 4) : [],
+            usageItems: usageSet ? resolveUsageCalculatorItems(usageSet, itemOptions, BATTLE_USAGE_OPTION_LIMITS.items) : [],
           },
         },
         signal,

@@ -7,6 +7,8 @@ import {
 import { getPokemonLookupAliases } from "./pokemonAliases";
 import { normalizeShowdownId } from "../api/showdownIds";
 import { loadShowdownData } from "../api/showdownData";
+import { fetchItemIndex } from "../api/showdownCatalog";
+import { enrichRecommendationUsage, type PokemonRecommendationUsageOptions } from "./pokemonRecommendationUsage";
 import type {
   ShowdownDataSnapshot,
   ShowdownSpeciesData,
@@ -138,6 +140,15 @@ export type CopilotRecommendationCandidateSnapshot = {
   requiresMegaStone: boolean;
   usageRank: number | null;
   commonSet: PokemonRecommendationCommonSet | null;
+  megaEvolution?: {
+    pokemonId: string;
+    displayName: string;
+    types: PokemonType[];
+    typeDisplayNames: string[];
+    ability: PokemonRecommendationAbility | null;
+    baseStats: StatBlock | null;
+  } | null;
+  usageOptions?: PokemonRecommendationUsageOptions;
   responsibilityIds: CopilotResponsibilityId[];
   fit: {
     weakTo: PokemonType[];
@@ -1116,23 +1127,39 @@ export function rankPokemonRecommendationCandidates(
 }
 
 async function loadRecommendationData(battleFormat: BattleFormat) {
-  const [usageIds, usageSets, showdownData] = await Promise.all([
+  const [usageIds, usageSets, showdownData, itemIndex] = await Promise.all([
     loadBattleUsagePokemonIds(battleFormat).catch(() => null),
     loadBattleUsageSets(battleFormat).catch(() => null),
     loadShowdownData().catch(() => null),
+    fetchItemIndex().catch(() => []),
   ]);
 
-  return { usageIds, usageSets, showdownData };
+  return { usageIds, usageSets, showdownData, itemIndex };
+}
+
+function enrichCandidates(
+  candidates: CopilotRecommendationCandidateSnapshot[],
+  options: PokemonRecommendationOption[],
+  battleFormat: BattleFormat,
+  data: Awaited<ReturnType<typeof loadRecommendationData>>,
+  signal?: AbortSignal,
+) {
+  const sources = candidates.map((candidate) => {
+    const option = options.find((option) => option.id === candidate.pokemonId)!;
+    return { option, usage: resolveUsageSet(option, data.usageSets) };
+  });
+  return enrichRecommendationUsage(candidates, sources, battleFormat, data.showdownData, data.itemIndex, signal);
 }
 
 export async function createPokemonRecommendationCandidates(
   input: CreatePokemonRecommendationCandidatesInput,
 ) {
   const data = await loadRecommendationData(input.battleFormat);
-  return rankPokemonRecommendationCandidates({
+  const candidates = rankPokemonRecommendationCandidates({
     ...input,
     ...data,
   });
+  return enrichCandidates(candidates, input.options, input.battleFormat, data);
 }
 
 function subtractScores(
@@ -1177,10 +1204,11 @@ export async function createUniversalPokemonRecommendationCandidates(
   const data = await loadRecommendationData(input.battleFormat);
   if (signal?.aborted) return [];
 
-  return rankUniversalPokemonRecommendationCandidates({
+  const candidates = rankUniversalPokemonRecommendationCandidates({
     ...input,
     ...data,
   });
+  return enrichCandidates(candidates, input.options, input.battleFormat, data, signal);
 }
 
 export function rankUniversalPokemonRecommendationCandidates({

@@ -7,6 +7,7 @@ export const BATTLE_USAGE_PROVIDER = "champions-battle-data" as const;
 export const BATTLE_USAGE_TTL = 60 * 60 * 1000;
 export const BATTLE_USAGE_MAX_AGE = 7 * 24 * BATTLE_USAGE_TTL;
 export const BATTLE_USAGE_PATH = "/api/battle-usage";
+export const BATTLE_USAGE_OPTION_LIMITS = { moves: 12, items: 6, spreads: 10, natures: 3 } as const;
 
 export type BattleUsageOption = { id: string; usagePercent: number };
 export type BattleUsageSpread = {
@@ -28,6 +29,7 @@ export type BattleUsageSet = {
   itemNames?: string[];
   itemOptions?: BattleUsageOption[];
   nature?: string;
+  natureOptions?: BattleUsageOption[];
   evs?: Partial<StatBlock>;
   spreads?: BattleUsageSpread[];
   statPointSpreads?: { evs: StatBlock; usagePercent: number }[];
@@ -65,7 +67,9 @@ export function isBattleUsageSet(value: unknown, date: string, season: string): 
     (set.itemName === undefined || typeof set.itemName === "string") &&
     (set.itemNames === undefined || (Array.isArray(set.itemNames) && set.itemNames.every((name) => typeof name === "string"))) &&
     Array.isArray(set.moveIds) && set.moveIds.length > 0 && set.moveIds.every((id) => !!text(id)) &&
-    validOptions(set.moveOptions) && validOptions(set.itemOptions) &&
+    validOptions(set.moveOptions) && validOptions(set.itemOptions) && validOptions(set.natureOptions) &&
+    (set.natureOptions === undefined || (set.natureOptions as BattleUsageOption[]).every((option) =>
+      natures.some((nature) => nature.id === option.id))) &&
     (set.statPointSpreads === undefined || (Array.isArray(set.statPointSpreads) && set.statPointSpreads.every((spread) =>
       validPoints(record(spread).evs) && percent(record(spread).usagePercent) !== null)));
 }
@@ -123,12 +127,12 @@ function optionRows(rows: RecordValue[], category: string): BattleUsageOption[] 
 function createSet(name: string, rank: number, date: string, season: string, rows: RecordValue[], values?: RecordValue): BattleUsageSet {
   const first = (category: string) => rows.find((row) => row.category === category) ?? {};
   const categoryNames = (category: string) => names(values?.[category] ?? rows.filter((row) => row.category === category).map((row) => row.name));
-  const itemNames = categoryNames("held_item").filter((name) => normalizeShowdownId(name) !== "nothing").slice(0, 4);
+  const itemNames = categoryNames("held_item").filter((name) => normalizeShowdownId(name) !== "nothing").slice(0, BATTLE_USAGE_OPTION_LIMITS.items);
   const statPointSpreads = rows.filter((row) => row.category === "stat_points").flatMap((row) => {
     const evs = points(row);
     const usagePercent = percent(row.percentage_value);
     return evs && usagePercent !== null ? [{ evs, usagePercent }] : [];
-  }).slice(0, 6);
+  }).slice(0, BATTLE_USAGE_OPTION_LIMITS.spreads);
   return {
     pokemonId: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
     pokemonName: name, sourceMonth: date.slice(0, 7), cutoff: 0,
@@ -139,10 +143,13 @@ function createSet(name: string, rank: number, date: string, season: string, row
     evs: statPointSpreads[0]?.evs,
     statPointSpreads,
     // Nature and point distributions are separate measurements, not joint sets.
-    moveIds: categoryNames("move").map(normalizeShowdownId).filter((id) => id && id !== "nothing").slice(0, 8),
+    moveIds: categoryNames("move").map(normalizeShowdownId).filter((id) => id && id !== "nothing").slice(0, BATTLE_USAGE_OPTION_LIMITS.moves),
     ...(values ? {} : {
-      itemOptions: optionRows(rows, "held_item").slice(0, 4),
-      moveOptions: optionRows(rows, "move").slice(0, 8),
+      itemOptions: optionRows(rows, "held_item").slice(0, BATTLE_USAGE_OPTION_LIMITS.items),
+      moveOptions: optionRows(rows, "move").slice(0, BATTLE_USAGE_OPTION_LIMITS.moves),
+      natureOptions: optionRows(rows, "stat_alignment")
+        .filter((option) => natures.some((nature) => nature.id === option.id))
+        .slice(0, BATTLE_USAGE_OPTION_LIMITS.natures),
     }),
   };
 }

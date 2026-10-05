@@ -1,0 +1,2188 @@
+{
+  "date": "2026-10-04",
+  "paidCalls": 0,
+  "notes": [
+    "Frozen historical and rejected-experiment responses; not a current-model accuracy score.",
+    "All public outputs equal raw model analyses. Structural/audit acceptance does not certify prose."
+  ],
+  "summary": {
+    "optimization": {
+      "total": 70,
+      "beforeChanged": 4,
+      "afterChanged": 0,
+      "beforeWarned": 4,
+      "afterWarned": 0,
+      "beforeStrictRejected": 0,
+      "afterStrictRejected": 0,
+      "normalizedAuditCount": 0
+    },
+    "pokemon": {
+      "total": 10,
+      "beforeChanged": 0,
+      "afterChanged": 0,
+      "beforeWarned": 4,
+      "afterWarned": 2,
+      "beforeStrictRejected": 4,
+      "afterStrictRejected": 2,
+      "normalizedAuditCount": 0
+    },
+    "recommendation": {
+      "total": 10,
+      "beforeChanged": 0,
+      "afterChanged": 0,
+      "beforeWarned": 0,
+      "afterWarned": 0,
+      "beforeStrictRejected": 0,
+      "afterStrictRejected": 0,
+      "normalizedAuditCount": 3
+    },
+    "team": {
+      "total": 10,
+      "beforeChanged": 0,
+      "afterChanged": 0,
+      "beforeWarned": 4,
+      "afterWarned": 4,
+      "beforeStrictRejected": 4,
+      "afterStrictRejected": 4,
+      "normalizedAuditCount": 3
+    }
+  },
+  "rows": [
+    {
+      "id": "mc-danjinesu-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "330d08dcfee37944b9d424c89536a8a9d2f5efac1a1621037e081e97dbf2f44c",
+      "outputHash": "5811bc866230cf52fd462796a149f9a388022f6a23776e8bddb2f792c68696bb",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "74da30ef199389d8ad84964166d0ee83ed6fd99dab4d3caed8cd593bde934972",
+      "outputHash": "525b6a2142af5fde35164cefe0a39ced16a2e78d1a66594722be4244c1b78aa8",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+      "outputHash": "e54fd10ef13269a5dbef4355a528761344fc68827c41cdc0dacd98e379d563c9",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "365d25f05e5f614ff5edff6fddc1dd3a5d93f203df6bb7d9b5a6c4f9df804fd9",
+      "outputHash": "515e204c1831786954aa8f321ff3e39f52ccb63da3571151bc1853c7791023e5",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 1,
+        "auditErrorCount": 1,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "56702f44a92d652d5ae2878c9f51689088b9844cf64ed3e738125361443406f9",
+      "outputHash": "8dfc252074c349fa3051358ece2f13bfc2374044669b1877f4e289e021345d98",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "outputHash": "47bd2e4242b689a364195ea81252dc7b5981313950f7205916635aca319da305",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "702cd7a9d0a81e348d06f72f04782a0d1961038e402fba4f610dc1369692f854",
+      "outputHash": "c25e85857479a4fc8636eafcf72251d76ff3e107b3339d83b9784de8da8ef53b",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "12de00f3e35e40543fcad7c811b9fb050f4bd2887d00703f4aac041a0027b9ae",
+      "outputHash": "aa7599c90c5f203a1561f9ab5165c644f6ab000f16493f46c384f28dc7550464",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "38bc868433689cd6f07e9ccd0378787876a06dba92ef33a1de77951a12a110c0",
+      "before": {
+        "publicOutputChanged": true,
+        "qualityWarnings": [
+          "content-repaired"
+        ],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "fa4f4505ece2d5734a7f22eebb9b0fe0ab11a68a6862eae4a64231ae943558b3",
+      "outputHash": "e0a0d5de566ccdc16adbd34126fef786d7f9a6f709426bc94f43ed72d714fb9b",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 1,
+        "auditErrorCount": 1,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "9644f8a87fa24546b876d1c13423440db5588c37f9e5609a5fad87adb329f99f",
+      "outputHash": "4f389008115211d8f8663f186a397c919cc23e3cacb2b4a43bf5a3178eddf862",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "ca8d7f54f7c2b892de0fa8880140c5b5ffc4df2ea225c3d5086e12aaff3bccb8",
+      "outputHash": "63d92b1a5b505892323eb4d9eb3fee6b4a3e25d1680bb2ff1ccaf8d69cdf41ba",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "73b2aa42524cfd1974bf8833afb75bf69c2872b6762678b09821c2ee8e3dc8ff",
+      "outputHash": "5a5f23500e502b1cb807596d21660c6adbb0b337e1c996decf78101d2381e580",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "d068d530da0fa1f67d6425a2f26a57b828083e8c6f777e3d4ce4d60b070290d1",
+      "outputHash": "3b8c5d58109e61d4061de93459cb120602c4ea73022ce32293f819f519a71dfc",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "928822a275718e9d6a16fa9072d734873fe439e474fd4eccfec6fe39f1701f7d",
+      "outputHash": "1fe68d2c1c683113a2c2753d180c023cabb90540adf0a125aae542a6b684e09b",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "2cdd5d86f7b44cf364b5503b37cdded8a933f288cea7eac86aa64f7f270f0e00",
+      "outputHash": "09e1d3e03d83c4876ff32df33f9ce93c0470dbceaafad1fc4346dc2f3496e921",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "3f6aaa5b650725ad1a75bb68f56fa89e946b3a0f8e08eb3734e548f5b6168a32",
+      "outputHash": "fc90f2037c65c0f1e8d7d66d9b5770324657042348f3a58b29b3836b0a80ab8e",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "3e9e14f57a30f55fddf0114e9199d03139d9f2d6e9d8f7eff11358d53bf089cf",
+      "outputHash": "f30336c824c9a2c4a1084a31219d096f12b4554bd4a92d1725c91bdbc5765b2a",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "ab882bb938f10ecc68a165fca87f529240ec863da64965d25c50a1d7714130d0",
+      "outputHash": "06fef9922e22ca8caefe0a860134cb099747331f4a94aac7b924ca14f1ab0b66",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 2,
+        "auditErrorCount": 0,
+        "auditNormalized": true,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "c8bf8a23e90de428c85f1da7949bd2b1e4524f8ebbb4af8bf8a9840a318cca9e",
+      "outputHash": "4bc64bf2652fbd9c7f868ea7070256a8c15a70620b4b6ee012846f185761f336",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 1,
+        "auditErrorCount": 0,
+        "auditNormalized": true,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "34e787ec285648d4274c888c88fe750a3da1a69d1306fc3252e11ef7a8ea7270",
+      "outputHash": "f130cd330f6d140b3a0477b13cd59a44c1c782012ceade53bf973e6c9a179fe2",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "a4f20c99e5a0c482de3573246574ce6430e431b606d7a1861ba560a0ab49db1e",
+      "outputHash": "a28e1a7d4d188db0144c89bdb5d078e43db98ca0352cc06609ba778bcb0751b8",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "b2ee2214e0753d8630c5dc38e3288f49899c27f93002ea354b4a7ed7e0973c6c",
+      "outputHash": "1440ce5ca40c2dae371ea6a08529c2a652ff9db0e1a5f8a05ee85033fe00044f",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 5,
+        "auditErrorCount": 0,
+        "auditNormalized": true,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "outputHash": "e5dae4e6f3f7be642843f269afbb885437576f96b03eeb7b78b64377489eec6d",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 4,
+        "auditErrorCount": 4,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "726c140d82d6ccbf22cb129bd28e403dbc8eda9e68e2a4f257293d5d1faabc0b",
+      "outputHash": "efd4bf50f44ec899bf90497bed9d82d238de0944e7757a2140f45bbfb57603e0",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "a91cf49d59a3f03835144a78acfff55a27d93e1a2848c3850688ec69148d12e0",
+      "outputHash": "7c5f5a4356db6333e46f219a85b80ab33651708462cbafaff83a7010a3cf9703",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "e8c35ba34aa94528a7a3919455257fa0282c0f3f087e53cf613957d1a589a46b",
+      "outputHash": "bd0a8fa315451e836a2e422c11d108ad5dd88ddb93bcf344d5297c90e7398548",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 1,
+        "auditErrorCount": 0,
+        "auditNormalized": true,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "944c743c42a05e684d237f5b773eeae051311e74ee845dedb5ea89aa368571f5",
+      "outputHash": "2fd4675253337566970ee5178ea69bcce081bbf5d412985228076e26fab63a4a",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 2,
+        "auditErrorCount": 1,
+        "auditNormalized": true,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "c208d55f2a4b3f506fec6da0c4b7e013e97e64ff52420b2b5deda7fbd8cddf36",
+      "outputHash": "50b77666a8804b89952453726cff4759f372a1731bbdba4a269523cad2cba43c",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "9f593ed688c07aae1a0c621ab9a5c82b241cef17a034fb031363ab66dcdde6db",
+      "outputHash": "b7a5a7a61212fcb8eb36ad04e8743935dda588764e5adb13b4335aff34d90e08",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "2850cd8319997aa7b0b8dd64346cc8e3ca583119bd6b4f0943b4f18140eae1ad",
+      "outputHash": "4add0634bf5b62fd630152209f935ed5ac3ff2470d9ff4db8bb398a6d467b481",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "e6a768204de681397449a74619cc4ed412a73e2bf1b0da2de1a1bab18ae49d03",
+      "outputHash": "d20fd40e2579440624cf67e6f51dbcff4d900e2ff7295db03c7d4a0e43b6c306",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "8b154c9a873e8860159d1b06b02b8ebbc3ede238e0785028d9b3b2d89c1a918d",
+      "outputHash": "754509300912d310685707661ee416221be2796714c1cf0d0c32070a29db8ddc",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "6e202ce23037b16782a1742f3fb0bc6312d3047ffda7e333a17ef54de4239f81",
+      "outputHash": "050d3aa36ad2637cb850842d3a0be37c8a6c065b18b2d64cefa47409f8b74463",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 1,
+        "auditErrorCount": 1,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "5309b59905e75656561efd5a6f3e7d18b3c985c37d1e0e2537910e0247f2b4c7",
+      "outputHash": "6c18d469e505c090f9965246648d4a8c1dffe1926dbb716d9dbe167aae6c47ff",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "62c215bc8c9a494019b9949bb3c6c25217eb42e29e90a5a04b2983aca8b65c0e",
+      "outputHash": "87b079630f0b5c8d3faf2fdec4c6dddf014fca19d1e22f50cb5252067aea3d67",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-optimization",
+      "source": ".tmp/mc-final",
+      "scope": "optimization",
+      "requestHash": "e79d05f25918e9ff1005dd7845a15b6b2f5bac4593e1bab49a27cad9d6a76726",
+      "outputHash": "f5b4908dfb63c6dab2c10e4149e7a619d4493d34c53e7a52a374623ae9d1dab4",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-pokemon",
+      "source": ".tmp/mc-final",
+      "scope": "pokemon",
+      "requestHash": "3f42615186e8797a6b8597dd11078b76d03e9e975605a71e6cb9fd1492c39822",
+      "outputHash": "684d4ee3f9b4a059f8026859af67fb73d05df99a79dd53c9ed8495b8727aa536",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-recommendation",
+      "source": ".tmp/mc-final",
+      "scope": "recommendation",
+      "requestHash": "b2d47e2343b1105928affc56894ca15661e49c878831502148042e66dc0d7c88",
+      "outputHash": "767e5d273e46eb05cbe6c9c186d90f0af24951c8d20cd50adbe1a6da93f9bc34",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-team",
+      "source": ".tmp/mc-final",
+      "scope": "team",
+      "requestHash": "7cf7124f6c01c76f607e62c2ac0e34394f7c050b0919de796ae9ca1e53a0e8e3",
+      "outputHash": "45d3cbd3ee2c3273710155545290de10610298af943bd3c74e65e849b6a34ee7",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 3,
+        "auditErrorCount": 1,
+        "auditNormalized": true,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "330d08dcfee37944b9d424c89536a8a9d2f5efac1a1621037e081e97dbf2f44c",
+      "outputHash": "6302c10c73e553c03c4f0e9f5c791865b1a798024197c6e7708aef89becec109",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "330d08dcfee37944b9d424c89536a8a9d2f5efac1a1621037e081e97dbf2f44c",
+      "outputHash": "d4b07654f40c61d3422c4e0a42c97476e151051b5513cdf7170e0a2fddd1a780",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "330d08dcfee37944b9d424c89536a8a9d2f5efac1a1621037e081e97dbf2f44c",
+      "outputHash": "b43386cf109970c0d1532896870fb7c1f2174eed1e97147089f89118b804d7a3",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "330d08dcfee37944b9d424c89536a8a9d2f5efac1a1621037e081e97dbf2f44c",
+      "outputHash": "c0d488e7a55ad54bbaea70c23b9bf59dacbd9d74640feec9e4791fd5241e8522",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "330d08dcfee37944b9d424c89536a8a9d2f5efac1a1621037e081e97dbf2f44c",
+      "outputHash": "c7a665b6f9b7d527822b9747610fc28f35beb0bced6120e9644e628ba0e931ff",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-danjinesu-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "330d08dcfee37944b9d424c89536a8a9d2f5efac1a1621037e081e97dbf2f44c",
+      "outputHash": "d1719dec83102f73c1abf854ec0021f71c4440390d419102f92af6de16a9bb5b",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "56702f44a92d652d5ae2878c9f51689088b9844cf64ed3e738125361443406f9",
+      "outputHash": "e171c9b229d6ecf2438ecfb4fece2add13af4c2dd56d3963d65924367384b317",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "56702f44a92d652d5ae2878c9f51689088b9844cf64ed3e738125361443406f9",
+      "outputHash": "bb320865ab7191b42f4d20b7e43d9e1007c2f8bcef5cba27060b0da12f2e8cdf",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "56702f44a92d652d5ae2878c9f51689088b9844cf64ed3e738125361443406f9",
+      "outputHash": "eab5805d62e7fe79a96dc2bdde1f8ee43dea91c52ed6e471edfd47b8c2a521a1",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "56702f44a92d652d5ae2878c9f51689088b9844cf64ed3e738125361443406f9",
+      "outputHash": "e10144276ca1acfadee6682a35d1d7bf79aee3d2ece2e6d1ef146bc30991eb96",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "56702f44a92d652d5ae2878c9f51689088b9844cf64ed3e738125361443406f9",
+      "outputHash": "12379cb98da32f58b865b671c6825b97cdce28c9bcaa9756d588eb3251d5f466",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-ddee-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "56702f44a92d652d5ae2878c9f51689088b9844cf64ed3e738125361443406f9",
+      "outputHash": "a339babd0d515ff02fb6a0153a6e6bbeaaa5651c0669f13158bd871a9d62c62c",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "178a9bab8bcb63fd7af190b8029e5ec662d6260d2038938cda94dff0ad2291d8",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "28ce6cf8f5f059d9557a533d970cd3037f7f4f26bd0f8c29fdf4f1d9b7f2568d",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "8c9cbf05e77605c249d735ae085107a4d1d301c7c99944389110ab60749752fb",
+      "before": {
+        "publicOutputChanged": true,
+        "qualityWarnings": [
+          "content-repaired"
+        ],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "8e0d4f456e9e04e421a9cf1af8425453f3bb7a540e27305ec58239436899916e",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "fd7dc027bbc3e6edbdea8c4848023375c94cb3d2b9a100fe08eea39a0157fda3",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-kiran-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "c979cc96c32c623a29ea05077798694058ee14519212b808f036fdbdfbd9727a",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "73b2aa42524cfd1974bf8833afb75bf69c2872b6762678b09821c2ee8e3dc8ff",
+      "outputHash": "c0573be9cb3e43bc3f3d3fc54581bba092b8775ef096670965ff9dcb7c3d110a",
+      "before": {
+        "publicOutputChanged": true,
+        "qualityWarnings": [
+          "content-repaired"
+        ],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "73b2aa42524cfd1974bf8833afb75bf69c2872b6762678b09821c2ee8e3dc8ff",
+      "outputHash": "34293beeee45e142c6805eed727f4ebd204278845e5f4972ca2b646ab653a40a",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "73b2aa42524cfd1974bf8833afb75bf69c2872b6762678b09821c2ee8e3dc8ff",
+      "outputHash": "efeaa9052cd9648745b8138d6af0fcf931a05be190407d476d9091c53f1e1cd9",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "73b2aa42524cfd1974bf8833afb75bf69c2872b6762678b09821c2ee8e3dc8ff",
+      "outputHash": "ba1cf3454d9c59e4243cb4af87c3ec45372ece3aedd3ce633612020a98cf6a81",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "73b2aa42524cfd1974bf8833afb75bf69c2872b6762678b09821c2ee8e3dc8ff",
+      "outputHash": "7853b8f764b3e1e9dd9f6774993f608d69fb4f67998a2d96229a3cc69e2f7f96",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-liuzzo-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "73b2aa42524cfd1974bf8833afb75bf69c2872b6762678b09821c2ee8e3dc8ff",
+      "outputHash": "69beaf62b7909078b4f52f93d05749d408cda3e55486372615245400bcea5043",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "3f6aaa5b650725ad1a75bb68f56fa89e946b3a0f8e08eb3734e548f5b6168a32",
+      "outputHash": "ddbfc480bad6fae01580dc7ddaf83d0239f1f2b10e5ee74c4f8b99e606b064ec",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "3f6aaa5b650725ad1a75bb68f56fa89e946b3a0f8e08eb3734e548f5b6168a32",
+      "outputHash": "2a275ee6e23a0a9452184e89a8a5ad32d42a4f78b7087a3979830be8d3f5d9c1",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "3f6aaa5b650725ad1a75bb68f56fa89e946b3a0f8e08eb3734e548f5b6168a32",
+      "outputHash": "cfac623e564c6796a0e89e274241986dd087cb3fda80bb1159f1cd542ad52bdc",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "3f6aaa5b650725ad1a75bb68f56fa89e946b3a0f8e08eb3734e548f5b6168a32",
+      "outputHash": "81de6dcbdf875aa278089dfda1aa2a900712ddc01a7a393c4b906e137b29ab02",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "3f6aaa5b650725ad1a75bb68f56fa89e946b3a0f8e08eb3734e548f5b6168a32",
+      "outputHash": "20ba3ba43c7da2009eaf0bda42122e84ff82a1d589cee20e6717466901b8895f",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-lloyd-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "3f6aaa5b650725ad1a75bb68f56fa89e946b3a0f8e08eb3734e548f5b6168a32",
+      "outputHash": "5d16c1b0c044624448f36a1d400700bb437661509accba310c94c8144a0d25a0",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "34e787ec285648d4274c888c88fe750a3da1a69d1306fc3252e11ef7a8ea7270",
+      "outputHash": "f6ed99abcb1b66a3cea65e8cdb1741d4c737c3e1a4aa45f05778138352f81078",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "34e787ec285648d4274c888c88fe750a3da1a69d1306fc3252e11ef7a8ea7270",
+      "outputHash": "63aa9c51c5be5ea69f9e06d56da6542722967cd7a7567d3356404cf5b7ae10c7",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "34e787ec285648d4274c888c88fe750a3da1a69d1306fc3252e11ef7a8ea7270",
+      "outputHash": "e0056d908e6ed8bb73593cd28871821d6f23e8ec1677cd5690c56d10f45dcf1f",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "34e787ec285648d4274c888c88fe750a3da1a69d1306fc3252e11ef7a8ea7270",
+      "outputHash": "b0c409b648cd244a1eaea5e239072a1fddb1d30fa251a7b22373999532605f14",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "34e787ec285648d4274c888c88fe750a3da1a69d1306fc3252e11ef7a8ea7270",
+      "outputHash": "2212ae315dc9a6bbb4700b405f279cdf531a62e972dd6449d8d1a6df0624cc64",
+      "before": {
+        "publicOutputChanged": true,
+        "qualityWarnings": [
+          "content-repaired"
+        ],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-mugepome-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "34e787ec285648d4274c888c88fe750a3da1a69d1306fc3252e11ef7a8ea7270",
+      "outputHash": "bc9cb991b5a2563c5aaede2b537c4be1edc98eacf124e85fe0cd457cb0668574",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "726c140d82d6ccbf22cb129bd28e403dbc8eda9e68e2a4f257293d5d1faabc0b",
+      "outputHash": "42ba579566b02397e3f28487031490b15e2738ee234a4e30c48ca0d77ad4c295",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "726c140d82d6ccbf22cb129bd28e403dbc8eda9e68e2a4f257293d5d1faabc0b",
+      "outputHash": "db94fb21b475aa74d6210ec415796036104c0f5f3a61c01fc71c4743b4776b21",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "726c140d82d6ccbf22cb129bd28e403dbc8eda9e68e2a4f257293d5d1faabc0b",
+      "outputHash": "084fc407bcb1fff055f0a1cc3b6ece049eeca17bacfeaa55320610c6fcf0ed84",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "726c140d82d6ccbf22cb129bd28e403dbc8eda9e68e2a4f257293d5d1faabc0b",
+      "outputHash": "c153b633aa60565dfa1ea37451ac6d67de850650f95425e4f6c665c1a6d8516d",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "726c140d82d6ccbf22cb129bd28e403dbc8eda9e68e2a4f257293d5d1faabc0b",
+      "outputHash": "df4297cdbb7d55712f35630b2044774f928832c38a7b44ad4390bfb0f0bda6e1",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "726c140d82d6ccbf22cb129bd28e403dbc8eda9e68e2a4f257293d5d1faabc0b",
+      "outputHash": "c397c6de0774d6e43a079addfdf3c7cb17dd6e112072d9e91cf6d677ffcbec73",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "c208d55f2a4b3f506fec6da0c4b7e013e97e64ff52420b2b5deda7fbd8cddf36",
+      "outputHash": "ce4adff7f42916a2cc76fe32459000262ddad58d0eb8d1fde29c5058aa681830",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "c208d55f2a4b3f506fec6da0c4b7e013e97e64ff52420b2b5deda7fbd8cddf36",
+      "outputHash": "6586431ba07070b41415ad217d029f93befb38a7dcbb7010f9e0a8235e149a89",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "c208d55f2a4b3f506fec6da0c4b7e013e97e64ff52420b2b5deda7fbd8cddf36",
+      "outputHash": "a1e262fffd982347bad5bda2d07ccfa70fa302df7eb030dbfe5235fa18c15b51",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "c208d55f2a4b3f506fec6da0c4b7e013e97e64ff52420b2b5deda7fbd8cddf36",
+      "outputHash": "da4b9f02b69fcc7cf0a6e57dadc6cf9963db8c3a344cfcc0f7a52a72b0796552",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "c208d55f2a4b3f506fec6da0c4b7e013e97e64ff52420b2b5deda7fbd8cddf36",
+      "outputHash": "c63e0fed2adc0f379bdcaea3e1e64026c8a038c4c061064b7cbc556c60dceb03",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rillaboom-lucario-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "c208d55f2a4b3f506fec6da0c4b7e013e97e64ff52420b2b5deda7fbd8cddf36",
+      "outputHash": "5c5ccde82f23a8a8218ddcd2855e3558b4edddfd93faf6f06128535af85bdf46",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "8b154c9a873e8860159d1b06b02b8ebbc3ede238e0785028d9b3b2d89c1a918d",
+      "outputHash": "772f4106687425c81b346ce70d822fd683ee48bd5c2a4d6b64687d2ada6a4605",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "8b154c9a873e8860159d1b06b02b8ebbc3ede238e0785028d9b3b2d89c1a918d",
+      "outputHash": "c1b6c4613a2a9f9ad313d44de36f67515242f3732f7484a4c4c63cc29e9c4cb8",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "8b154c9a873e8860159d1b06b02b8ebbc3ede238e0785028d9b3b2d89c1a918d",
+      "outputHash": "a8304a18c306c8ac1e1e28466e89e17f868b11e414e354a35255a9183b8a8530",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "8b154c9a873e8860159d1b06b02b8ebbc3ede238e0785028d9b3b2d89c1a918d",
+      "outputHash": "debdd72f87193f2d46f246bcc0439c7e67105d39dc5ae54312a790527ab59e03",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "8b154c9a873e8860159d1b06b02b8ebbc3ede238e0785028d9b3b2d89c1a918d",
+      "outputHash": "d910c608d0a0cf6c8da589509eafa959e29627ffdae63cffd947a448f83c126d",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-rios-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "8b154c9a873e8860159d1b06b02b8ebbc3ede238e0785028d9b3b2d89c1a918d",
+      "outputHash": "0dfc8210b8b74cf9853ad6154dd6b24eebdd895dee8645df854c1f04e553c8e9",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-optimization-baseline-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "e79d05f25918e9ff1005dd7845a15b6b2f5bac4593e1bab49a27cad9d6a76726",
+      "outputHash": "6aea07acc9e4a2d372eabce4e00aba29940a90c64c35654071624a801e6e3f35",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-optimization-baseline-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "e79d05f25918e9ff1005dd7845a15b6b2f5bac4593e1bab49a27cad9d6a76726",
+      "outputHash": "d84ab7b0cbcfc2680b290a72bad3cb319e654aa70727cce874b2086a35f9abc4",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-optimization-comparison-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "e79d05f25918e9ff1005dd7845a15b6b2f5bac4593e1bab49a27cad9d6a76726",
+      "outputHash": "785d2ae3b9d2dd61f8d43d0cb734adb9e3aa6d56561d81c8c939473059c19680",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-optimization-comparison-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "e79d05f25918e9ff1005dd7845a15b6b2f5bac4593e1bab49a27cad9d6a76726",
+      "outputHash": "c06a05ace297a7fd78b503eba048065ae5a2ea6f4315de442373c839b3aad2e4",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-optimization-examples-r1",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "e79d05f25918e9ff1005dd7845a15b6b2f5bac4593e1bab49a27cad9d6a76726",
+      "outputHash": "258cfffb70012b9d8fc4bd94b3b97286a1ca9a8045b67e8ed8a1f08ba9a56d12",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-optimization-examples-r2",
+      "source": "mc-comparison",
+      "scope": "optimization",
+      "requestHash": "e79d05f25918e9ff1005dd7845a15b6b2f5bac4593e1bab49a27cad9d6a76726",
+      "outputHash": "cddd105c6120d6d227379df6c8aa0607f13a181145f52a00076a75a1aa0221a4",
+      "before": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true
+      },
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [],
+        "strictAccepted": true,
+        "rawAuditErrorCount": 0,
+        "auditErrorCount": 0,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    }
+  ]
+}

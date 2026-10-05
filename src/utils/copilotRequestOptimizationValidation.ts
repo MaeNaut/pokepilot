@@ -1,4 +1,7 @@
 import type { CopilotSetOptimizationCandidateSnapshot } from "./copilotContracts.js";
+import { getNatureById } from "../data/natures.js";
+import { MAX_GENERAL_CANDIDATES, MAX_OPTIMIZATION_CANDIDATES } from "../calculator/setOptimizer/constants.js";
+import { BATTLE_USAGE_OPTION_LIMITS } from "../api/battleUsageData.js";
 import {
   getStatBlockTotal,
   hasOnlyKeys,
@@ -145,15 +148,19 @@ function hasValidGeneralEvidence(value: unknown) {
       "cutoff",
       "usageRank",
       "usagePercent",
+      "usagePokemonId",
+      "requestedUsagePokemonId",
       "roleStats",
       "reducedRoleStats",
+      "losesSlowSpeedRole",
     ]) ||
     !["current", "usage", "matchup"].includes(String(value.source)) ||
     !["current", "standard", "spread", "item", "move", "loadout", "matchup"].includes(
       String(value.variant),
     ) ||
     !isUniqueEnumArray(value.roleStats, statIdSet, 6) ||
-    !isUniqueEnumArray(value.reducedRoleStats, statIdSet, 6)
+    !isUniqueEnumArray(value.reducedRoleStats, statIdSet, 6) ||
+    ("losesSlowSpeedRole" in value && typeof value.losesSlowSpeedRole !== "boolean")
   ) {
     return false;
   }
@@ -169,7 +176,9 @@ function hasValidGeneralEvidence(value: unknown) {
       "sourceMonth" in value ||
       "cutoff" in value ||
       "usageRank" in value ||
-      "usagePercent" in value
+      "usagePercent" in value ||
+      "usagePokemonId" in value ||
+      "requestedUsagePokemonId" in value
     );
   }
   return (
@@ -179,7 +188,9 @@ function hasValidGeneralEvidence(value: unknown) {
     isNonEmptyString(value.sourceMonth) &&
     isBoundedInteger(value.cutoff, 0, 100_000) &&
     isBoundedInteger(value.usageRank, 1, 20) &&
-    isFiniteNumber(value.usagePercent, 0, 100)
+    isFiniteNumber(value.usagePercent, 0, 100) &&
+    (!("usagePokemonId" in value) || isNonEmptyString(value.usagePokemonId)) &&
+    (!("requestedUsagePokemonId" in value) || isNonEmptyString(value.requestedUsagePokemonId))
   );
 }
 
@@ -211,7 +222,7 @@ export function hasValidOptimizationMoveMechanic(value: unknown) {
 function hasValidOptimizationMoveMechanics(value: unknown) {
   return (
     Array.isArray(value) &&
-    value.length <= 8 &&
+    value.length <= BATTLE_USAGE_OPTION_LIMITS.moves + 4 &&
     value.every(hasValidOptimizationMoveMechanic) &&
     new Set(
       value.map((entry) => (isRecord(entry) ? entry.id : null)),
@@ -222,7 +233,7 @@ function hasValidOptimizationMoveMechanics(value: unknown) {
 function hasValidOptimizationItemMechanics(value: unknown) {
   return (
     Array.isArray(value) &&
-    value.length <= 5 &&
+    value.length <= BATTLE_USAGE_OPTION_LIMITS.items + 1 &&
     value.every((item) =>
       isRecord(item) &&
       hasOnlyKeys(item, ["id", "displayName", "effect"]) &&
@@ -281,7 +292,9 @@ export function isValidCopilotOptimizationCandidateSnapshot(
     isNonEmptyString(value.natureId) &&
     isNonEmptyString(value.natureDisplayName) &&
     isBoundedIntegerStatBlock(value.evs, 0, 32) &&
-    value.evTotal === 66 &&
+    isBoundedInteger(value.evTotal, 0, 66) &&
+    (value.evTotal === 66 || (isRecord(value.generalEvidence) &&
+      ["current", "item", "move", "loadout"].includes(String(value.generalEvidence.variant)))) &&
     getStatBlockTotal(value.evs) === value.evTotal &&
     isBoundedIntegerStatBlock(value.finalStats, 1, 10_000) &&
     isNullableString(value.itemId) &&
@@ -424,7 +437,7 @@ export function hasValidOptimizationShape(value: unknown) {
     hasValidOptimizationItemMechanics(value.itemMechanics) &&
     Array.isArray(value.candidates) &&
     value.candidates.length > 0 &&
-    value.candidates.length <= 12 &&
+    value.candidates.length <= (value.mode === "general" ? MAX_GENERAL_CANDIDATES : MAX_OPTIMIZATION_CANDIDATES) &&
     value.candidates.every(isValidCopilotOptimizationCandidateSnapshot) &&
     value.candidates.every(
       (candidate) => candidate.slotIndex === value.slotIndex,
@@ -443,6 +456,18 @@ export function hasValidOptimizationShape(value: unknown) {
       }
 
       const currentEvs = value.currentBuild.evs as Record<string, number>;
+      const currentStats = value.currentBuild.finalStats as Record<string, number>;
+      const evidence = candidate.generalEvidence;
+      const consistentRoleLoss = evidence?.losesSlowSpeedRole === undefined || (
+        evidence.losesSlowSpeedRole === (
+          currentEvs.speed === 0 &&
+          getNatureById(String(value.currentBuild.natureId)).down === "speed" &&
+          candidate.finalStats.speed > currentStats.speed
+        ) &&
+        evidence.roleStats.every((stat) =>
+          evidence.reducedRoleStats.includes(stat) === (candidate.finalStats[stat] < currentStats[stat]),
+        )
+      );
       const expectedChanges = Object.fromEntries(
         Object.keys(candidate.evs).map((stat) => [
           stat,
@@ -466,6 +491,16 @@ export function hasValidOptimizationShape(value: unknown) {
         : [];
 
       return (
+        consistentRoleLoss &&
+        (candidate.evTotal === 66 || (
+          candidate.changedStatPoints === 0 &&
+          candidate.natureId === value.currentBuild.natureId
+        )) &&
+        (candidate.generalEvidence?.variant !== "current" || (
+          candidate.changedStatPoints === 0 &&
+          candidate.natureId === value.currentBuild.natureId &&
+          !candidate.itemChanged && changedMoveSlots.length === 0
+        )) &&
         Object.entries(expectedChanges).every(
           ([stat, change]) =>
             candidate.statPointChanges[

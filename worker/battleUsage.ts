@@ -9,7 +9,7 @@ export async function handleCachedBattleUsage(request: Request) {
   const key = new Request(`${url.origin}${url.pathname}`);
   if (cacheable && typeof caches !== "undefined") {
     try {
-      cache = await caches.open("battle-usage-v1");
+      cache = await caches.open("battle-usage-v2");
       const cached = await cache.match(key);
       if (cached) return cached;
     } catch { /* Cache availability must not block public data. */ }

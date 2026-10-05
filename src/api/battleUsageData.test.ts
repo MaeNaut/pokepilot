@@ -16,6 +16,30 @@ describe("Champions battle statistics conversion", () => {
     expect(detail.moveOptions).toEqual([{ id: "earthquake", usagePercent: 80 }, { id: "dragonclaw", usagePercent: 40 }]);
     expect(detail.statPointSpreads?.[0].usagePercent).toBe(25);
     expect(detail.spreads).toBeUndefined();
+    expect(detail.natureOptions).toEqual([{ id: "jolly", usagePercent: 60 }]);
+  });
+  it("retains the expanded move, item, nature and point distributions independently", () => {
+    const fixture = battleUsageFixture();
+    const base = parseBattleUsageIndex(fixture.index, "singles", now).sets[0];
+    const pointRow = fixture.rows.find((row) => row.attack_points !== undefined)!;
+    if (pointRow.attack_points === undefined) throw new Error("Missing point fixture");
+    for (let rank = 2; rank <= 14; rank++) {
+      fixture.rows.push({ category: "move", rank: rank + 1, name: `Move ${rank}`, percentage_value: 1 });
+      fixture.rows.push({ category: "held_item", rank, name: `Item ${rank}`, percentage_value: 1 });
+      fixture.rows.push({ ...pointRow, rank, hp_points: rank, speed_points: 34 - rank, percentage_value: 1 });
+    }
+    for (const [index, name] of ["Adamant", "Impish", "Careful"].entries()) {
+      fixture.rows.push({ category: "stat_alignment", rank: index + 2, name, percentage_value: 5 });
+    }
+    const detail = parseBattleUsageDetail(fixture.detail(), base, "singles");
+    expect(detail.moveIds).toHaveLength(12);
+    expect(detail.moveOptions).toHaveLength(12);
+    expect(detail.itemNames).toHaveLength(6);
+    expect(detail.itemOptions).toHaveLength(6);
+    expect(detail.statPointSpreads).toHaveLength(10);
+    expect(detail.natureOptions?.map((option) => option.id)).toEqual(["jolly", "adamant", "impish"]);
+    expect(detail.spreads).toBeUndefined();
+    expect(isBattleUsageSet(detail, base.sourceDate!, base.season!)).toBe(true);
   });
   it("discovers a new season/date without a hardcoded month", () => {
     expect(parseBattleUsageIndex(battleUsageFixture("01_10_2026", "M7").index, "singles", Date.parse("2026-10-01T12:00:00Z")))

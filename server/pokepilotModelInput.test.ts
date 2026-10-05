@@ -92,6 +92,28 @@ function expandModelInput(text: string): unknown {
 }
 
 describe("model input sharing", () => {
+  it("retains canonical mechanics and current/Mega owners without duplicating their records", () => {
+    const request = createRequest();
+    request.sets[0].ability = "Intimidate";
+    request.sets[0].item = "Choice Scarf";
+    request.sets[0].megaEvolution = {
+      pokemonId: "test-mega", pokemonName: "Test Mega", displayName: "Test Mega",
+      types: ["flying"], typeDisplayNames: ["Flying"], ability: "Aerilate",
+      abilityDisplayName: "Aerilate", baseStats: { ...defaultEvs },
+      stats: { ...defaultEvs }, defensiveProfile: request.sets[0].defensiveProfile,
+    };
+    request.mechanics.abilities = [
+      { id: "intimidate", displayName: "Intimidate", effect: "Lowers opposing Attack." },
+      { id: "aerilate", displayName: "Aerilate", effect: "Normal moves become Flying." },
+    ];
+    request.mechanics.items = [{ id: "choicescarf", displayName: "Choice Scarf", effect: "Speed is 1.5x." }];
+    const original = JSON.stringify(request);
+    const result = serializePokePilotModelRequest(request);
+    expect(expandModelInput(result.text)).toEqual(request);
+    expect(result.text).not.toContain('"abilityMechanic"');
+    expect(result.text).not.toContain('"itemMechanic"');
+    expect(JSON.stringify(request)).toBe(original);
+  });
   it("preserves every candidate, outcome, ownership and direction without mutating the request", () => {
     const request = createSampleRequest();
     const original = JSON.stringify(request);
@@ -143,6 +165,14 @@ describe("model input sharing", () => {
         power: 40, effect: index === 0 ? "Different supplied description." :
           "Causes the target to flinch. Only succeeds on the first turn after the user enters battle.",
       }] },
+      usageOptions: {
+        sourcePokemonId: `candidate${index}`, sourceMonth: "2026-10", sourceDate: "2026-10-04", season: "M-C",
+        alternativeMoves: [{ id: "protect", displayName: "Protect", type: "normal", category: "Status", power: null,
+          effect: "Protects the user from most attacks this turn. Consecutive use can fail.", usagePercent: index === 0 ? 15 : 70 }],
+        items: [{ id: "sitrusberry", displayName: "Sitrus Berry", usagePercent: 40, effect: "Restores one quarter of maximum HP at half HP or less." }],
+        natures: [{ id: "jolly", displayName: "Jolly", usagePercent: 60 }],
+        statPointSpreads: [{ evs: { hp: 2, attack: 32, defense: 0, specialAttack: 0, specialDefense: 0, speed: 32 }, usagePercent: 30 }],
+      },
       responsibilityIds: [], fit: { weakTo: [], resistsTeamThreats: [],
         amplifiesTeamThreats: [], addsUnansweredWeaknesses: [], coversTypes: [],
         roleContributions: [], roleRedundancies: [], conceptSynergies: [], conflicts: [] },
@@ -155,6 +185,10 @@ describe("model input sharing", () => {
     );
     expect(JSON.parse(result.text).recommendationCandidates[0].commonSet.moves[0].effect)
       .toBe("Different supplied description.");
+    expect(JSON.parse(result.text).recommendationCandidates[0].usageOptions.alternativeMoves[0].usagePercent).toBe(15);
+    expect(JSON.stringify(JSON.parse(result.text).sharedData)).toContain("usage-move");
+    expect(JSON.stringify(JSON.parse(result.text).sharedData)).toContain("usage-item");
+    expect(JSON.stringify(JSON.parse(result.text).sharedData)).toContain("usage-spread");
   });
 
   it("leaves a small or unshared request byte-for-byte unchanged", () => {

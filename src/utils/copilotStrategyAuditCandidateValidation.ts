@@ -125,29 +125,32 @@ export function validateNegativeDefensiveClaims(
       recommendation.title,
       recommendation.reason,
     ]),
-  ];
+  ].flatMap((text) => text.split(/[.!?\n;]+/));
 
   publicStatements.forEach((statement) => {
-    if (!claimsNoTeammateDefense(statement)) {
+    if (!claimsNoTeammateDefense(statement) || /\b(?:but|however|unless)\b|하지만|반면|지만/i.test(statement)) {
       return;
     }
 
-    request.typeLabels.forEach((typeLabel) => {
-      if (
-        !textMentionsTypeLabel(statement, typeLabel.displayName, typeLabel.id)
-      ) {
-        return;
-      }
+    const types = request.typeLabels.filter((label) =>
+      textMentionsTypeLabel(statement, label.displayName, label.id),
+    );
+    // Multiple predicates/types need semantic interpretation, not a cross-product.
+    if (types.length !== 1) return;
+    const deniesResistance = /\bresist\w*\b|반감|저항/i.test(statement);
+    const deniesImmunity = /\bimmun\w*\b|무효|면역/i.test(statement);
+    if (!deniesResistance && !deniesImmunity) return;
 
+    types.forEach((typeLabel) => {
       const matchingTeammates = request.sets.filter(
         (set) =>
           set.slotIndex !== excludedSlotIndex &&
-          (set.defensiveProfile.resistances.some(
+          ((deniesResistance && set.defensiveProfile.resistances.some(
             (entry) => normalizeId(entry.type) === normalizeId(typeLabel.id),
-          ) ||
-            set.defensiveProfile.immunities.some(
+          )) ||
+            (deniesImmunity && set.defensiveProfile.immunities.some(
               (entry) => normalizeId(entry.type) === normalizeId(typeLabel.id),
-            )),
+            ))),
       );
       if (matchingTeammates.length > 0) {
         errors.push(
@@ -170,6 +173,10 @@ export function isCandidateFactSupported(
   switch (fact.kind) {
     case "type":
       return matchesCandidateValue(candidate.types, fact.valueId);
+    case "mega-type":
+      return matchesCandidateValue(candidate.megaEvolution?.types ?? [], fact.valueId);
+    case "mega-ability":
+      return Boolean(candidate.megaEvolution?.ability && normalizeId(candidate.megaEvolution.ability.id) === normalizeId(fact.valueId));
     case "ability":
       return matchesCandidateValue(
         candidate.abilities.map((ability) => ability.id),
@@ -180,6 +187,12 @@ export function isCandidateFactSupported(
         candidate.commonSet?.moves.map((move) => move.id) ?? [],
         fact.valueId,
       );
+    case "usage-move":
+      return matchesCandidateValue(candidate.usageOptions?.alternativeMoves.map((move) => move.id) ?? [], fact.valueId);
+    case "usage-item":
+      return matchesCandidateValue(candidate.usageOptions?.items.map((item) => item.id) ?? [], fact.valueId);
+    case "usage-nature":
+      return matchesCandidateValue(candidate.usageOptions?.natures.map((nature) => nature.id) ?? [], fact.valueId);
     case "common-item":
       return (
         Boolean(candidate.commonSet?.item) &&
@@ -298,7 +311,10 @@ const recommendationFitFactKinds = new Set<
 >([
   "type",
   "ability",
+  "mega-ability",
+  "mega-type",
   "common-move",
+  "usage-move",
   "responsibility",
   "resists-team-threat",
   "covers-type",
@@ -393,6 +409,7 @@ export function validateRecommendationCandidateEvidenceCoverage(
           normalizeId(ability.displayName) === commonAbilityId,
       );
       const namesCommonElement =
+        Boolean(candidate.megaEvolution?.ability && textMentionsDisplayName(recommendationText, candidate.megaEvolution.ability.displayName)) ||
         Boolean(
           commonAbility &&
             textMentionsDisplayName(
@@ -400,13 +417,13 @@ export function validateRecommendationCandidateEvidenceCoverage(
               commonAbility.displayName,
             ),
         ) ||
-        candidate.commonSet.moves.some((move) =>
+        [...candidate.commonSet.moves, ...(candidate.usageOptions?.alternativeMoves ?? [])].some((move) =>
           textMentionsDisplayName(recommendationText, move.displayName),
         );
 
       if (!namesCommonElement) {
         errors.push(
-          `Recommendation ${recommendation.id} must name at least one supplied common ability or move.`,
+          `Recommendation ${recommendation.id} must name at least one supplied common ability or observed move.`,
         );
       }
     }
@@ -438,6 +455,19 @@ export function validateRecommendationCandidateEvidenceCoverage(
         );
       }
     });
+    for (const [kind, options] of [
+      ["mega-ability", candidate.megaEvolution?.ability ? [candidate.megaEvolution.ability] : []],
+      ["usage-move", candidate.usageOptions?.alternativeMoves],
+      ["usage-item", candidate.usageOptions?.items],
+      ["usage-nature", candidate.usageOptions?.natures],
+    ] as const) {
+      for (const option of options ?? []) {
+        if (textMentionsDisplayName(recommendationText, option.displayName) &&
+          !linkedFacts.some((fact) => fact.kind === kind && normalizeId(fact.valueId) === normalizeId(option.id))) {
+          errors.push(`Recommendation ${recommendation.id} names ${option.displayName} without matching candidate evidence.`);
+        }
+      }
+    }
   });
 
   output.strategyAudit.candidateFacts.forEach((fact) => {
@@ -472,20 +502,6 @@ function validatePokemonDefensiveRecommendationEvidence(
       fact.subjectSlotIndex !== selectedSet.slotIndex &&
       (fact.kind === "resists" || fact.kind === "immune-to"),
   );
-  const selectedWeaknessIds = new Set(
-    selectedWeaknessFacts.map((fact) => normalizeId(fact.valueId)),
-  );
-
-  if (selectedWeaknessFacts.length > 0) {
-    teammateDefensiveFacts.forEach((fact) => {
-      if (!selectedWeaknessIds.has(normalizeId(fact.valueId))) {
-        errors.push(
-          `Recommendation ${recommendationId} links teammate slot ${fact.subjectSlotIndex}'s ${fact.valueId} defense to an unrelated selected-Pokemon weakness.`,
-        );
-      }
-    });
-  }
-
   if (
     selectedWeaknessFacts.length === 0 &&
     teammateDefensiveFacts.length === 0
@@ -493,7 +509,11 @@ function validatePokemonDefensiveRecommendationEvidence(
     return;
   }
 
-  const claimedWeaknessTypes = request.typeLabels.filter(
+  const mentionedTypes = request.typeLabels.filter((label) =>
+    textMentionsTypeLabel(recommendationText, label.displayName, label.id),
+  );
+  if (mentionedTypes.length !== 1) return;
+  const claimedWeaknessTypes = mentionedTypes.filter(
     (label) =>
       selectedSet.defensiveProfile.weaknesses.some(
         (weakness) => normalizeId(weakness.type) === normalizeId(label.id),
@@ -610,14 +630,17 @@ export function validatePokemonRecommendationEvidenceCoverage(
         }
       });
 
-    validatePokemonDefensiveRecommendationEvidence(
-      recommendation.id,
-      recommendationText,
-      evidenceFacts,
-      mentionedSets,
-      request,
-      errors,
-    );
+    // Facts remain exact; prose checks are limited to unambiguous local mentions.
+    for (const statement of recommendationText.split(/[.!?\n;]+/)) {
+      validatePokemonDefensiveRecommendationEvidence(
+        recommendation.id,
+        statement,
+        evidenceFacts,
+        mentionedSets.filter((set) => textMentionsDisplayName(statement, set.displayName)),
+        request,
+        errors,
+      );
+    }
 
     const checkedMoveIds = new Set<string>();
     request.sets.forEach((set) => {

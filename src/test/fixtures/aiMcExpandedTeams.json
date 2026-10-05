@@ -1,0 +1,187 @@
+[
+  {
+    "schemaVersion": 1,
+    "id": "mc-nautilasu",
+    "title": "Nautilasu September 37th",
+    "regulation": "M-C",
+    "battleFormat": "singles",
+    "source": {
+      "origin": "published",
+      "name": "Nautilasu September 37th",
+      "url": "https://note.com/db_nautilasu/n/nfb208a7ca747",
+      "placement": "37th, September 2026 Monthly Challenge",
+      "retrievedAt": "2026-10-04",
+      "notes": "Published screenshots; Metagross Iron Head uses tournament version, not later Psychic Fangs rental."
+    },
+    "showdownText": "Umbreon @ Leftovers\nAbility: Inner Focus\nLevel: 50\nEVs: 32 HP / 32 Def / 2 SpD\nBold Nature\n- Foul Play\n- Yawn\n- Protect\n- Wish\n\nBasculegion @ Choice Scarf\nAbility: Adaptability\nLevel: 50\nEVs: 32 Atk / 1 Def / 1 SpD / 32 Spe\nAdamant Nature\n- Last Respects\n- Wave Crash\n- Flip Turn\n- Aqua Jet\n\nSalamence @ Salamencite\nAbility: Intimidate\nLevel: 50\nEVs: 4 HP / 32 SpA / 30 Spe\nModest Nature\n- Draco Meteor\n- Hyper Voice\n- Flamethrower\n- Roost\n\nMetagross @ Metagrossite\nAbility: Clear Body\nLevel: 50\nEVs: 11 HP / 27 Atk / 28 Spe\nJolly Nature\n- Iron Head\n- Ice Punch\n- Earthquake\n- Bullet Punch\n\nGholdengo @ Air Balloon\nAbility: Good as Gold\nLevel: 50\nEVs: 32 HP / 32 SpD / 2 Spe\nCalm Nature\n- Make It Rain\n- Shadow Ball\n- Nasty Plot\n- Recover\n\nGarchomp @ Sitrus Berry\nAbility: Rough Skin\nLevel: 50\nEVs: 32 HP / 32 Def / 2 SpD\nImpish Nature\n- Earthquake\n- Spikes\n- Stealth Rock\n- Dragon Tail",
+    "expectations": {
+      "teamIdentities": [
+        "offensive pivot cycle",
+        "Wish support"
+      ],
+      "criticalObservations": [
+        "Foul Play uses target Attack; Bold is not an attacking mismatch.",
+        "Special Salamence uses Aerilate Hyper Voice.",
+        "Choice Scarf Basculegion has Adaptability, not Swift Swim."
+      ],
+      "forbiddenConclusions": [
+        "Labeling team as pure stall",
+        "Claiming Umbreon needs Attack investment for Foul Play"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-mugepome",
+    "title": "Mugepome September 91st rain",
+    "regulation": "M-C",
+    "battleFormat": "singles",
+    "source": {
+      "origin": "published",
+      "name": "Mugepome September 91st rain",
+      "url": "https://note.com/mugepome/n/n66d700149daa",
+      "placement": "91st, September 2026 Monthly Challenge; rating 1797",
+      "retrievedAt": "2026-10-04",
+      "notes": "Exact published stat points and moves; base abilities used before Mega Evolution."
+    },
+    "showdownText": "Archaludon @ Sitrus Berry\nAbility: Stamina\nLevel: 50\nEVs: 32 HP / 31 SpD / 3 Spe\nBold Nature\n- Flash Cannon\n- Dragon Pulse\n- Electro Shot\n- Dark Pulse\n\nPelipper @ Focus Sash\nAbility: Drizzle\nLevel: 50\nEVs: 32 HP / 2 Def / 32 SpA\nQuiet Nature\n- Surf\n- Hurricane\n- Ice Beam\n- U-turn\n\nBasculegion @ Choice Scarf\nAbility: Adaptability\nLevel: 50\nEVs: 32 Atk / 2 Def / 32 Spe\nJolly Nature\n- Wave Crash\n- Last Respects\n- Flip Turn\n- Ice Fang\n\nGolisopod @ Golisopite\nAbility: Emergency Exit\nLevel: 50\nEVs: 31 HP / 32 Atk / 1 Def / 2 SpD\nBrave Nature\n- Iron Head\n- U-turn\n- Aqua Jet\n- Drill Run\n\nFloette-Eternal @ Floettite\nAbility: Flower Veil\nLevel: 50\nEVs: 32 HP / 11 Def / 5 SpA / 18 Spe\nModest Nature\n- Moonblast\n- Draining Kiss\n- Psychic\n- Calm Mind\n\nRillaboom @ Miracle Seed\nAbility: Grassy Surge\nLevel: 50\nEVs: 32 HP / 30 Atk / 1 Def / 3 Spe\nAdamant Nature\n- Grassy Glide\n- Drum Beating\n- High Horsepower\n- U-turn",
+    "expectations": {
+      "teamIdentities": [
+        "rain",
+        "rain-independent scarf endgame"
+      ],
+      "criticalObservations": [
+        "Rain removes Electro Shot charge turn.",
+        "Bold Archaludon invests special bulk; does not require Body Press.",
+        "Basculegion remains fast outside rain via Choice Scarf."
+      ],
+      "forbiddenConclusions": [
+        "Calling Adaptability Swift Swim",
+        "Calling Surf allied damage in Singles"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-danjinesu",
+    "title": "Danjinesu September 71st Substitute Salamence",
+    "regulation": "M-C",
+    "battleFormat": "singles",
+    "source": {
+      "origin": "published",
+      "name": "Danjinesu September 71st Substitute Salamence",
+      "url": "https://ameblo.jp/danjinesu-club/entry-12979542246.html",
+      "placement": "71st, September 2026 Monthly Challenge; 35-9, rating 1801.894",
+      "retrievedAt": "2026-10-04",
+      "notes": "Exact stat points and moves transcribed from six published screenshots."
+    },
+    "showdownText": "Salamence @ Salamencite\nAbility: Intimidate\nLevel: 50\nEVs: 32 HP / 6 Atk / 13 SpD / 15 Spe\nAdamant Nature\n- Double-Edge\n- Substitute\n- Dragon Dance\n- Roost\n\nPrimarina @ Lum Berry\nAbility: Torrent\nLevel: 50\nEVs: 30 HP / 32 SpA / 4 Spe\nModest Nature\n- Sparkling Aria\n- Moonblast\n- Aqua Jet\n- Encore\n\nArchaludon @ Sitrus Berry\nAbility: Stamina\nLevel: 50\nEVs: 32 HP / 10 Def / 9 SpA / 11 SpD / 4 Spe\nBold Nature\n- Draco Meteor\n- Dark Pulse\n- Roar\n- Stealth Rock\n\nMeowscarada @ Life Orb\nAbility: Overgrow\nLevel: 50\nEVs: 32 Atk / 2 Def / 32 Spe\nJolly Nature\n- Flower Trick\n- Knock Off\n- Triple Axel\n- Sucker Punch\n\nCeruledge @ Focus Sash\nAbility: Weak Armor\nLevel: 50\nEVs: 1 HP / 32 Atk / 1 Def / 32 Spe\nAdamant Nature\n- Poltergeist\n- Close Combat\n- Shadow Sneak\n- Swords Dance\n\nLucario @ Lucarionite Z\nAbility: Inner Focus\nLevel: 50\nEVs: 2 HP / 32 SpA / 32 Spe\nTimid Nature\n- Aura Sphere\n- Flash Cannon\n- Dark Pulse\n- Nasty Plot",
+    "expectations": {
+      "teamIdentities": [
+        "one-attack Substitute Dragon Dance win condition"
+      ],
+      "criticalObservations": [
+        "Aerilate makes Double-Edge Flying STAB.",
+        "Substitute/Roost protects setup, not automatically redundant.",
+        "Alternate Mega Lucario Z is a separate selection mode."
+      ],
+      "forbiddenConclusions": [
+        "Calling Double-Edge non-STAB Normal coverage",
+        "Removing the sole attack for a support move"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-rios",
+    "title": "Eric Rios Frankfurt champion",
+    "regulation": "M-C",
+    "battleFormat": "doubles",
+    "source": {
+      "origin": "published",
+      "name": "Eric Rios Frankfurt champion",
+      "url": "https://standings.limitlessvgc.com/0039/player/1025/teamlist",
+      "placement": "1st, Frankfurt Regional, 17-0, 1129 Masters",
+      "retrievedAt": "2026-10-04",
+      "notes": "Public OTS has no stat points. Explicit zero-point reconstruction; investment and exact speed/damage conclusions cannot be attributed to player."
+    },
+    "showdownText": "Raichu @ Raichunite Y\nAbility: Lightning Rod\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nTimid Nature\n- Zap Cannon\n- Focus Blast\n- Fake Out\n- Protect\n\nGholdengo @ Life Orb\nAbility: Good as Gold\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nModest Nature\n- Protect\n- Shadow Ball\n- Nasty Plot\n- Make It Rain\n\nVolcarona @ Rocky Helmet\nAbility: Flame Body\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nTimid Nature\n- Overheat\n- Struggle Bug\n- Rage Powder\n- Tailwind\n\nGarchomp @ Garchompite Z\nAbility: Rough Skin\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nModest Nature\n- Dragon Pulse\n- Earth Power\n- Power Gem\n- Protect\n\nIncineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nImpish Nature\n- Parting Shot\n- Fake Out\n- Flare Blitz\n- Darkest Lariat\n\nRillaboom @ Miracle Seed\nAbility: Grassy Surge\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nAdamant Nature\n- Grassy Glide\n- Wood Hammer\n- Fake Out\n- U-turn",
+    "expectations": {
+      "teamIdentities": [
+        "Tailwind balance",
+        "alternate special Mega attackers"
+      ],
+      "criticalObservations": [
+        "Raichu Y post-Mega ability must inform Zap Cannon accuracy.",
+        "Fake Out is utility despite Timid.",
+        "Rage Powder supports setup without guaranteeing all redirection."
+      ],
+      "forbiddenConclusions": [
+        "Treating Mega Raichu Y as ordinary Lightning Rod Raichu",
+        "Recommending both Megas simultaneously"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-kiran",
+    "title": "Kiran Singh Brisbane champion dual weather",
+    "regulation": "M-C",
+    "battleFormat": "doubles",
+    "source": {
+      "origin": "published",
+      "name": "Kiran Singh Brisbane champion dual weather",
+      "url": "https://standings.limitlessvgc.com/0038/player/267/teamlist",
+      "placement": "1st, Brisbane Regional, 14-1, 327 Masters",
+      "retrievedAt": "2026-10-04",
+      "notes": "Public OTS has no stat points. Explicit zero-point reconstruction; investment and exact speed/damage conclusions cannot be attributed to player."
+    },
+    "showdownText": "Charizard @ Charizardite Y\nAbility: Blaze\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nTimid Nature\n- Heat Wave\n- Weather Ball\n- Hurricane\n- Protect\n\nArchaludon @ Leftovers\nAbility: Stamina\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nCalm Nature\n- Electro Shot\n- Flash Cannon\n- Dragon Pulse\n- Protect\n\nPelipper @ Sitrus Berry\nAbility: Drizzle\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nBold Nature\n- Hurricane\n- Weather Ball\n- Tailwind\n- Wide Guard\n\nGrimmsnarl @ Light Clay\nAbility: Prankster\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nSassy Nature\n- Spirit Break\n- Light Screen\n- Reflect\n- Parting Shot\n\nGarchomp @ Garchompite Z\nAbility: Rough Skin\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nModest Nature\n- Draco Meteor\n- Earth Power\n- Power Gem\n- Protect\n\nVenusaur @ Focus Sash\nAbility: Chlorophyll\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nModest Nature\n- Leaf Storm\n- Sludge Bomb\n- Sleep Powder\n- Protect",
+    "expectations": {
+      "teamIdentities": [
+        "dual weather",
+        "screens"
+      ],
+      "criticalObservations": [
+        "Sun enables Chlorophyll; rain enables Electro Shot and Hurricane.",
+        "Weather Ball changes type with active weather.",
+        "Sun and rain are alternate modes, cannot both be active."
+      ],
+      "forbiddenConclusions": [
+        "Calling dual weather inherently broken",
+        "Counting Chlorophyll speed under rain"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "mc-liuzzo",
+    "title": "Anthony Liuzzo Frankfurt fifth Perish trap",
+    "regulation": "M-C",
+    "battleFormat": "doubles",
+    "source": {
+      "origin": "published",
+      "name": "Anthony Liuzzo Frankfurt fifth Perish trap",
+      "url": "https://standings.limitlessvgc.com/0039/player/0219/teamlist",
+      "placement": "5th, Frankfurt Regional, 12-3, 1129 Masters",
+      "retrievedAt": "2026-10-04",
+      "notes": "Public OTS has no stat points. Explicit zero-point reconstruction; investment and exact speed/damage conclusions cannot be attributed to player."
+    },
+    "showdownText": "Gengar @ Gengarite\nAbility: Cursed Body\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nModest Nature\n- Shadow Ball\n- Sludge Bomb\n- Perish Song\n- Protect\n\nVivillon @ Focus Sash\nAbility: Compound Eyes\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nTimid Nature\n- Sleep Powder\n- Rage Powder\n- Hurricane\n- Protect\n\nPolitoed @ Sitrus Berry\nAbility: Drizzle\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nCalm Nature\n- Weather Ball\n- Perish Song\n- Encore\n- Protect\n\nIncineroar @ Passho Berry\nAbility: Intimidate\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nRelaxed Nature\n- Protect\n- Fake Out\n- Flare Blitz\n- Parting Shot\n\nRillaboom @ Occa Berry\nAbility: Grassy Surge\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nAdamant Nature\n- Fake Out\n- Grassy Glide\n- U-turn\n- Protect\n\nKommo-o @ Leftovers\nAbility: Soundproof\nLevel: 50\nEVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\nModest Nature\n- Clanging Scales\n- Clangorous Soul\n- Aura Sphere\n- Protect",
+    "expectations": {
+      "teamIdentities": [
+        "Perish trap",
+        "setup alternate win condition"
+      ],
+      "criticalObservations": [
+        "Shadow Tag + Perish Song needs protect/switch sequencing.",
+        "Soundproof Kommo-o is immune to Perish Song.",
+        "Ghost types escape Shadow Tag; rain supports Hurricane."
+      ],
+      "forbiddenConclusions": [
+        "Calling Soundproof incompatible with own sound attacks",
+        "Claiming Perish Song only affects opponents"
+      ]
+    }
+  }
+]

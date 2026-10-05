@@ -3,6 +3,9 @@ import type { BattleUsageSet } from "../../api/battleUsage";
 import type { PokemonMove, TeamMember } from "../../types";
 import { createGeneralSetOptimizationPlan } from "./generalPlan";
 import type { GeneralSetOptimizationContext } from "./types";
+import { createCopilotOptimizationSnapshot } from "../../utils/copilotRequestOptimizationSnapshot";
+import { hasValidOptimizationShape } from "../../utils/copilotRequestOptimizationValidation";
+import { resolveOptimizationCandidatePatch } from "../../utils/optimizationCandidateApplication";
 
 const fakeOut: PokemonMove = {
   id: "fakeout",
@@ -188,6 +191,94 @@ function createContext(overrides: Partial<GeneralSetOptimizationContext> = {}) {
 }
 
 describe("general sample recommendation candidates", () => {
+  it("includes low-usage role spreads with the user's nature and later move options", () => {
+    const context = createContext();
+    const alternatives = Array.from({ length: 8 }, (_, index) => ({ ...icePunch, id: `alternative${index}`, name: `Alternative ${index}` }));
+    context.member = { ...member, moves: [...member.moves!, ...alternatives, round] };
+    context.build.natureId = "timid";
+    context.build.moveIds = ["round", "icepunch", "protect", "knockoff"];
+    context.usageSet = {
+      ...usageSet, spreads: undefined, nature: "adamant",
+      natureOptions: [{ id: "adamant", usagePercent: 70 }, { id: "jolly", usagePercent: 25 }, { id: "modest", usagePercent: 5 }],
+      statPointSpreads: Array.from({ length: 10 }, (_, index) => ({
+        evs: { hp: 2 + index, attack: index === 9 ? 0 : 32, defense: 0, specialAttack: index === 9 ? 32 : 0, specialDefense: 0, speed: 32 - index },
+        usagePercent: index === 0 ? 90 : 1,
+      })),
+      moveIds: [...context.build.moveIds, ...alternatives.map((move) => move.id)],
+      moveOptions: [...context.build.moveIds, ...alternatives.map((move) => move.id)].map((id, index) => ({ id, usagePercent: index < 4 ? 99 : 1 })),
+    };
+    const plan = createGeneralSetOptimizationPlan(context);
+    expect(plan.candidates).toHaveLength(24);
+    expect(plan.candidates.some((candidate) => candidate.natureId === "timid" && candidate.evs.specialAttack === 32 &&
+      candidate.generalEvidence?.usageRank === 10 && candidate.generalEvidence.usagePercent === 1)).toBe(true);
+    expect(plan.candidates.some((candidate) => candidate.moveIds.includes("alternative7"))).toBe(true);
+    expect(new Set(plan.candidates.map((candidate) => JSON.stringify([candidate.evs, candidate.natureId, candidate.itemId, candidate.moveIds]))).size).toBe(plan.candidates.length);
+    const snapshot = createCopilotOptimizationSnapshot(null, "en", [], plan, { member: context.member, ...context.build });
+    expect(hasValidOptimizationShape(snapshot)).toBe(true);
+    expect(snapshot!.moveMechanics!.length).toBeGreaterThan(8);
+  });
+  it.each([0, 12])("preserves the actual %i-point baseline in focused changes", (points) => {
+    const context = createContext();
+    context.build = {
+      ...context.build,
+      natureId: "timid",
+      evs: { hp: 0, attack: 0, defense: 0, specialAttack: points, specialDefense: 0, speed: 0 },
+    };
+    const before = structuredClone(context);
+    const plan = createGeneralSetOptimizationPlan(context);
+    expect(context).toEqual(before);
+    expect(plan.candidates[0]).toMatchObject({
+      id: "set-current", natureId: "timid", evTotal: points,
+      evs: context.build.evs, changedStatPoints: 0,
+    });
+    const focused = plan.candidates.filter((candidate) =>
+      ["item", "move", "loadout"].includes(candidate.generalEvidence!.variant),
+    );
+    expect(new Set(focused.map((candidate) => candidate.generalEvidence!.variant)))
+      .toEqual(new Set(["item", "move", "loadout"]));
+    for (const candidate of focused) {
+      expect(candidate).toMatchObject({
+        natureId: "timid", evs: context.build.evs, evTotal: points, changedStatPoints: 0,
+      });
+    }
+    const snapshot = createCopilotOptimizationSnapshot(null, "en", [], plan, {
+      member: context.member, ...context.build,
+    })!;
+    expect(hasValidOptimizationShape(snapshot)).toBe(true);
+    const move = snapshot.candidates.find((candidate) => candidate.generalEvidence!.variant === "move")!;
+    expect(resolveOptimizationCandidatePatch(move, [])).toMatchObject({
+      nature: "timid", evs: context.build.evs,
+    });
+    const forged = structuredClone(snapshot);
+    forged.candidates[0].natureId = "adamant";
+    expect(hasValidOptimizationShape(forged)).toBe(false);
+    const wrongRole = structuredClone(snapshot);
+    wrongRole.candidates[0].generalEvidence!.losesSlowSpeedRole = true;
+    expect(hasValidOptimizationShape(wrongRole)).toBe(false);
+    const incompleteSpread = structuredClone(snapshot);
+    const spread = incompleteSpread.candidates.find((candidate) => candidate.generalEvidence!.variant === "spread")!;
+    spread.evs = { ...context.build.evs };
+    spread.evTotal = points;
+    expect(hasValidOptimizationShape(incompleteSpread)).toBe(false);
+  });
+
+  it("keeps an incomplete current build available when usage is absent", () => {
+    const context = createContext({ usageSet: null, usageItems: [] });
+    context.build.evs = { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 };
+    const plan = createGeneralSetOptimizationPlan(context);
+    expect(plan.status).toBe("ready");
+    expect(plan.candidates).toHaveLength(1);
+    expect(plan.candidates[0]).toMatchObject({ id: "set-current", evTotal: 0 });
+  });
+
+  it("labels the actual usage species when a projected form uses aggregate data", () => {
+    const context = createContext();
+    context.usagePokemonId = "weavile-mega";
+    const plan = createGeneralSetOptimizationPlan(context);
+    expect(plan.candidates.find((candidate) => candidate.id === "usage-standard")?.generalEvidence)
+      .toMatchObject({ usagePokemonId: "weavile", requestedUsagePokemonId: "weavile-mega" });
+  });
+
   it("excludes full investment in an unused attacking stat but preserves mixed bulk", () => {
     const context = createContext({
       usageSet: {
@@ -224,7 +315,7 @@ describe("general sample recommendation candidates", () => {
 
     expect(plan).toMatchObject({ mode: "general", status: "ready", opponentId: null });
     expect(plan.candidates.length).toBeGreaterThan(3);
-    expect(plan.candidates.length).toBeLessThanOrEqual(12);
+    expect(plan.candidates.length).toBeLessThanOrEqual(24);
     expect(new Set(plan.candidates.map((candidate) => candidate.generalEvidence?.variant)))
       .toEqual(new Set(["current", "standard", "spread", "item", "move", "loadout"]));
     expect(plan.candidates.every(
@@ -267,8 +358,10 @@ describe("general sample recommendation candidates", () => {
     expect(usage).toMatchObject({
       itemId: "lifeorb",
       itemChanged: false,
-      generalEvidence: { reducedRoleStats: ["attack", "speed"] },
+      generalEvidence: { reducedRoleStats: ["attack"], losesSlowSpeedRole: true },
     });
+    expect(usage!.finalStats.speed).toBeGreaterThan(plan.candidates[0].finalStats.speed);
+    expect(plan.candidates[0].generalEvidence?.losesSlowSpeedRole).toBe(false);
   });
 
   it("does not turn empty move slots into unverified replacements", () => {

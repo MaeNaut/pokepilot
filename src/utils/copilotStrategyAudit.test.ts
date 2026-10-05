@@ -157,6 +157,76 @@ const sets = [
   createSet(3, "Tyranitar", ["rockslide"]),
 ];
 
+describe("defensive audit regressions", () => {
+  it("does not hide a Ground-weak Salamence claim by moving it to Archaludon", () => {
+    const request = createRequest([
+      createSet(0, "Salamence", [], { defensiveProfile: {
+        weaknesses: [], resistances: [], immunities: [{ type: "ground", cause: "typing" }],
+      } }),
+      createSet(1, "Archaludon", [], { defensiveProfile: {
+        weaknesses: [{ type: "ground", multiplier: 2 }], resistances: [], immunities: [],
+      } }),
+    ], { scope: "pokemon" });
+    const output = createOutput({ plans: [], facts: [{
+      id: "ground", kind: "weak-to", subjectSlotIndex: 0, objectSlotIndex: -1, state: "current", valueId: "ground",
+    }], recommendationEvidence: [{ recommendationId: "switch", planIds: [], interactionIds: [], factIds: ["ground"], candidateFactIds: [] }] });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [{ id: "switch", title: "Switch to Archaludon.",
+      reason: "Salamence is weak to Ground, so switch to Archaludon.", priority: "medium" }];
+    const before = structuredClone(output);
+    const completed = completeCopilotStrategyAudit(output, request);
+    expect(output).toEqual(before);
+    expect(completed.strategyAudit.facts).toEqual(before.strategyAudit.facts);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toContain(
+      "strategyAudit.facts[0] contradicts the supplied defensive profile.",
+    );
+  });
+
+  it.each([
+    ["en", "Primarina", "Archaludon", "Primarina resists Ice and Archaludon resists Rock."],
+    ["en", "Primarina", "Archaludon", "Primarina resists Ice. Archaludon resists Rock."],
+    ["ko", "누리레느", "브리두라스", "얼음은 누리레느가 반감하며 바위는 브리두라스가 반감합니다."],
+    ["ko", "누리레느", "브리두라스", "얼음은 누리레느가 반감합니다. 바위는 브리두라스가 반감합니다."],
+  ] as const)("does not cross-multiply separate %s coverage claims", (locale, first, second, reason) => {
+    const request = createRequest([
+      createSet(0, "Salamence", [], { defensiveProfile: {
+        weaknesses: [{ type: "ice", multiplier: 4 }, { type: "rock", multiplier: 2 }], resistances: [], immunities: [],
+      } }),
+      createSet(1, first, [], { defensiveProfile: { weaknesses: [], resistances: [{ type: "ice", multiplier: 0.5 }], immunities: [] } }),
+      createSet(2, second, [], { defensiveProfile: { weaknesses: [], resistances: [{ type: "rock", multiplier: 0.5 }], immunities: [] } }),
+    ], { scope: "pokemon", locale, typeLabels: createCopilotTypeLabels(locale) });
+    const facts = [
+      { id: "weak-ice", kind: "weak-to", subjectSlotIndex: 0, valueId: "ice" },
+      { id: "weak-rock", kind: "weak-to", subjectSlotIndex: 0, valueId: "rock" },
+      { id: "resist-ice", kind: "resists", subjectSlotIndex: 1, valueId: "ice" },
+      { id: "resist-rock", kind: "resists", subjectSlotIndex: 2, valueId: "rock" },
+    ].map((fact) => ({ ...fact, objectSlotIndex: -1, state: "current" })) as CopilotGroundedModelOutput["strategyAudit"]["facts"];
+    const output = createOutput({ plans: [], facts, recommendationEvidence: [{
+      recommendationId: "cover", planIds: [], interactionIds: [], factIds: facts.map(f => f.id), candidateFactIds: [],
+    }] });
+    output.analysis.scope = "pokemon";
+    output.analysis.recommendations = [{ id: "cover", title: "Defensive options", reason, priority: "medium" }];
+    expect(validateCopilotStrategyAuditForRequest(output, request)).toEqual([]);
+  });
+
+  it.each([
+    ["en", "No teammate is immune to Fairy."],
+    ["ko", "팀에 페어리 무효 동료는 없습니다."],
+    ["en", "No teammate is immune to Fairy. This team resists Ice."],
+    ["en", "No teammate is immune to Fairy, but another member resists Fairy."],
+  ] as const)("does not confuse %s immunity with resistance", (locale, paragraph) => {
+    const request = createRequest([createSet(0, "Selected", []), createSet(1, "Partner", [], {
+      defensiveProfile: { weaknesses: [], resistances: [{ type: "fairy", multiplier: 0.5 }, { type: "ice", multiplier: 0.5 }], immunities: [] },
+    })], { scope: "pokemon", locale, typeLabels: createCopilotTypeLabels(locale) });
+    const output = createOutput({ plans: [] });
+    output.analysis.scope = "pokemon";
+    output.analysis.paragraphs = [paragraph];
+    expect(validateCopilotStrategyAuditForRequest(output, request)).toEqual([]);
+    output.analysis.paragraphs = [locale === "ko" ? "팀에 페어리 반감 동료는 없습니다." : "No teammate resists Fairy."];
+    expect(validateCopilotStrategyAuditForRequest(output, request).length).toBeGreaterThan(0);
+  });
+});
+
 describe("Copilot strategy audit", () => {
   it("accepts a legal Doubles opening with owned moves", () => {
     const output = createOutput({
@@ -594,7 +664,7 @@ describe("Copilot strategy audit", () => {
     ).toEqual([]);
   });
 
-  it("removes only surplus participant moves when another plan action is valid", () => {
+  it("preserves unsupported interaction links for validation even when other links are valid", () => {
     const singlesSets = [
       createSet(0, "Gengar Mega", ["perishsong", "protect", "shadowball"], {
         pokemonId: "gengar-mega",
@@ -657,8 +727,11 @@ describe("Copilot strategy audit", () => {
     expect(completed.strategyAudit.interactions[0].participants[0].moveIds).toEqual([
       "perishsong",
       "protect",
+      "shadowball",
     ]);
-    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual([]);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toContain(
+      "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+    );
     expect(output.strategyAudit.interactions[0].participants[0].moveIds).toEqual([
       "perishsong",
       "protect",
@@ -666,7 +739,7 @@ describe("Copilot strategy audit", () => {
     ]);
   });
 
-  it("removes an unreferenced false defensive fact but preserves cited facts", () => {
+  it("preserves false defensive facts whether or not recommendations cite them", () => {
     const output = createOutput({
       plans: [
         {
@@ -725,6 +798,7 @@ describe("Copilot strategy audit", () => {
     const completed = completeCopilotStrategyAudit(output, request);
 
     expect(completed.strategyAudit.facts.map((fact) => fact.id)).toEqual([
+      "unused-false-weakness",
       "cited-false-weakness",
     ]);
     expect(validateCopilotStrategyAuditForRequest(completed, request)).toContain(
@@ -1341,7 +1415,7 @@ describe("Copilot strategy audit", () => {
     );
   });
 
-  it("rebinds a defensive fact to the only named Pokemon with exact support", () => {
+  it("preserves a mismatched defensive fact instead of inferring a new subject", () => {
     const pokemonSets = [
       createSet(0, "Swampert", [], {
         defensiveProfile: {
@@ -1403,9 +1477,9 @@ describe("Copilot strategy audit", () => {
     });
     const completed = completeCopilotStrategyAudit(output, request);
 
-    expect(completed.strategyAudit.facts[1].subjectSlotIndex).toBe(1);
-    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual(
-      [],
+    expect(completed.strategyAudit.facts[1].subjectSlotIndex).toBe(0);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toContain(
+      "strategyAudit.facts[1] contradicts the supplied defensive profile.",
     );
   });
 
@@ -1680,9 +1754,6 @@ describe("Copilot strategy audit", () => {
       }),
     );
 
-    expect(errors).toContain(
-      "Recommendation grass-cover links teammate slot 1's fire defense to an unrelated selected-Pokemon weakness.",
-    );
     expect(errors).toContain(
       "Recommendation grass-cover names Pelipper in Grass coverage advice without matching resistance or immunity evidence.",
     );
@@ -2289,7 +2360,7 @@ describe("Copilot strategy audit", () => {
     expect(output.strategyAudit.candidateFacts).toHaveLength(2);
   });
 
-  it("downgrades an over-specific candidate weakness fact to exact typing evidence", () => {
+  it("preserves overstated candidate claims and invented fit instead of downgrading or deleting them", () => {
     const recommendationCandidate: CopilotRecommendationCandidateSnapshot = {
       pokemonId: "raichu",
       displayName: "Raichu",
@@ -2386,25 +2457,13 @@ describe("Copilot strategy audit", () => {
 
     const completed = completeCopilotRecommendationAudit(output, request);
 
-    expect(completed.strategyAudit.candidateFacts[1]).toMatchObject({
-      id: "raichu-ground",
-      kind: "weak-to",
-      valueId: "ground",
-    });
-    expect(completed.strategyAudit.candidateFacts[2]).toMatchObject({
-      id: "raichu-redirection",
-      kind: "responsibility",
-      valueId: "attack-redirection",
-    });
-    expect(completed.strategyAudit.candidateFacts).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: "raichu-invented-rain-fit" }),
-      ]),
+    expect(completed.strategyAudit.candidateFacts).toEqual(output.strategyAudit.candidateFacts);
+    expect(completed.strategyAudit.recommendationEvidence).toEqual(output.strategyAudit.recommendationEvidence);
+    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual(
+      expect.arrayContaining([1, 2, 3].map((index) =>
+        `strategyAudit.candidateFacts[${index}] contradicts the supplied recommendation candidate.`,
+      )),
     );
-    expect(
-      completed.strategyAudit.recommendationEvidence[0]?.candidateFactIds,
-    ).not.toContain("raichu-invented-rain-fit");
-    expect(validateCopilotStrategyAuditForRequest(completed, request)).toEqual([]);
   });
 
   it("rejects invented recommendation fit and ungrounded named elements", () => {

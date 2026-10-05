@@ -113,6 +113,10 @@ function render(input: Candidate, currentItemDisplayName: string | null = null) 
 }
 
 describe("optimization evidence card", () => {
+  it("renders zero investment explicitly instead of leaving the spread empty", () => {
+    expect(render(candidate({ id: "set-current" })))
+      .toContain('<small>copilot.optimization.ev-spread-label</small><strong>0</strong>');
+  });
   it("shows current sample status instead of an apply button or comparison evidence", () => {
     const html = render(candidate({ id: "set-current", offenseBenchmarks: [early] }));
     expect(html).toContain("copilot.currentSample");

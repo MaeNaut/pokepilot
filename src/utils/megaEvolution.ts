@@ -83,7 +83,8 @@ function getItemNameCandidates(item: PokemonItem) {
       .filter((value): value is string => Boolean(value))
       .flatMap((value) => {
         const hyphenated = value.trim().toLowerCase().replace(/\s+/g, "-");
-        return [hyphenated, normalizeShowdownId(value)];
+        // Compact Showdown IDs must retain their form suffix for fuzzy stone matching.
+        return [hyphenated.replace(/ite([xyz])$/, "ite-$1")];
       }),
   );
 }
@@ -127,7 +128,6 @@ export function createProjectedMegaMember(
     abilities: [...megaEntry.abilities],
   };
 }
-import { normalizeShowdownId } from "../api/showdownIds";
 import {
   isExactPokemonFormLegal,
   type ShowdownLegalitySnapshot,

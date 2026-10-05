@@ -97,7 +97,7 @@ export function createOpenAiLunaAdapter({
         return {
           ...result,
           output: null,
-          debugOutput: groundedOutput,
+          debugOutput: result.output,
           validationErrors: strategyAuditErrors,
         };
       }
@@ -105,14 +105,14 @@ export function createOpenAiLunaAdapter({
       try {
         return {
           ...result,
-          output: validateHostedCopilotAnalysis(groundedOutput, request),
-          debugOutput: groundedOutput,
+          output: validateHostedCopilotAnalysis(result.output, request),
+          debugOutput: result.output,
         };
       } catch (error) {
         return {
           ...result,
           output: null,
-          debugOutput: groundedOutput,
+          debugOutput: result.output,
           validationErrors: [error instanceof Error ? error.message : "Invalid hosted analysis."],
         };
       }

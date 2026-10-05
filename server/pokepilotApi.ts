@@ -33,7 +33,7 @@ import {
   type ReviewedHostedCopilotAnalysis,
 } from "./pokepilotAnalysisValidation.js";
 
-export const POKEPILOT_API_MAX_BODY_BYTES = 256_000;
+export const POKEPILOT_API_MAX_BODY_BYTES = 512_000;
 export type PokePilotHostedModel = Extract<PokePilotEvaluationModel, "gpt-6-luna" | "gpt-6-sol">;
 
 export type PokePilotApiErrorCode =
@@ -91,10 +91,23 @@ type HandlePokePilotAnalysisOptions = {
   clock?: () => number;
   onUpstreamError?: (error: unknown) => void;
   onQualityWarning?: (warnings: CopilotQualityWarningCode[]) => void;
+  onValidationReview?: (review: PokePilotValidationReview) => void;
   onOperationalEvent?: (event: PokePilotOperationalEvent) => void;
   operations?: PokePilotOperations;
   requester?: PokePilotRequester;
   safeguardMode?: PokePilotSafeguardMode;
+};
+
+export type PokePilotValidationReview = {
+  requestKey: string;
+  scope: CopilotAnalysisScope;
+  rawAuditErrorCount: number;
+  auditErrorCount: number;
+  auditNormalized: boolean;
+  suppliedRecommendations: number;
+  retainedRecommendations: number;
+  qualityWarnings: CopilotQualityWarningCode[];
+  proseVerified: false;
 };
 
 export type PokePilotOperationalEvent =
@@ -241,6 +254,7 @@ export async function handlePokePilotAnalysis(
     onOperationalEvent,
     onUpstreamError,
     onQualityWarning,
+    onValidationReview,
     operations,
     requester,
     safeguardMode = "enforced",
@@ -351,6 +365,18 @@ export async function handlePokePilotAnalysis(
       if (reviewed.qualityWarnings.length) {
         reportDiagnostic(onQualityWarning, reviewed.qualityWarnings);
       }
+      const { diagnostics } = reviewed;
+      reportDiagnostic(onValidationReview, {
+        requestKey: publicRequestKey,
+        scope: requestValidation.data.scope,
+        rawAuditErrorCount: diagnostics.rawAuditErrors.length,
+        auditErrorCount: diagnostics.auditErrors.length,
+        auditNormalized: diagnostics.auditNormalized,
+        suppliedRecommendations: diagnostics.suppliedRecommendations,
+        retainedRecommendations: diagnostics.retainedRecommendations,
+        qualityWarnings: reviewed.qualityWarnings,
+        proseVerified: false,
+      });
       return { kind: "completed", analysis: reviewed.analysis, qualityWarnings: reviewed.qualityWarnings, result };
     };
     const execution = operations

@@ -1,0 +1,496 @@
+{
+  "date": "2026-10-04",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "keyPurpose": "evaluation",
+  "automatedRetries": 0,
+  "liveCalls": 8,
+  "estimatedCostUsd": 0.017574950000000002,
+  "totalTokens": 153609,
+  "minDurationMs": 8200,
+  "maxDurationMs": 17645,
+  "medianDurationMs": 11712.5,
+  "publicOutputsUnchanged": 8,
+  "rawAuditWarningResponses": 2,
+  "checkedAuditWarningResponses": 1,
+  "malformedJsonProbes": {
+    "probes": 7007,
+    "acceptedWithRenderablePublicOutput": 5849,
+    "expectedInvalidResponseRejects": 1158,
+    "unexpectedThrows": 0
+  },
+  "browser": [
+    {
+      "id": "mc-mugepome-team-ko",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-kiran-team-en",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-mugepome-pokemon-en",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-ddee-pokemon-ko",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-danjinesu-recommendation-ko",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-lloyd-recommendation-en",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-tagerau-optimization-en",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-kiran-optimization-ko",
+      "width": 360,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-mugepome-team-ko",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-kiran-team-en",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-mugepome-pokemon-en",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-ddee-pokemon-ko",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-danjinesu-recommendation-ko",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-lloyd-recommendation-en",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-tagerau-optimization-en",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "id": "mc-kiran-optimization-ko",
+      "width": 1280,
+      "historyPreserved": true,
+      "metricsVisible": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "replayChanges": [
+    {
+      "id": "mc-lloyd-team",
+      "scope": "team",
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 1,
+        "auditErrorCount": 1,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-nautilasu-team",
+      "scope": "team",
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 2,
+        "auditErrorCount": 2,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    },
+    {
+      "id": "mc-tagerau-team",
+      "scope": "team",
+      "after": {
+        "publicOutputChanged": false,
+        "qualityWarnings": [
+          "grounding-incomplete"
+        ],
+        "strictAccepted": false,
+        "rawAuditErrorCount": 3,
+        "auditErrorCount": 3,
+        "auditNormalized": false,
+        "proseVerified": false
+      }
+    }
+  ],
+  "manualReview": [
+    {
+      "id": "mc-mugepome-team-ko",
+      "status": "state-qualification-risk",
+      "note": "The main recommendation chooses Mega Golisopod/Tough Claws, then discusses Emergency Exit without limiting it to the pre-Mega state. Audit validity does not certify this prose."
+    },
+    {
+      "id": "mc-kiran-optimization-ko",
+      "status": "tradeoff-imprecision",
+      "note": "The paragraph says no defensive investment although the recommended usage-spread-1 and usage-standard contain 2 HP Stat Points. The saved candidate data is unchanged."
+    },
+    {
+      "id": "mc-ddee-pokemon-ko",
+      "status": "evidence-link-omission-not-demonstrated-factual-error",
+      "note": "Raichu is named only as an alternative Mega not to activate together. The mandatory teammate fact link is missing; the warning alone does not prove wrong battle advice."
+    }
+  ],
+  "boundaries": [
+    "Not a representative model-accuracy benchmark.",
+    "Browser QA used an isolated component harness with real saved low responses, not production login/D1 writes.",
+    "JSON shape probes use a stringify/parse boundary; sparse in-memory arrays are not transport fixtures.",
+    "No prompt changes, automatic paid repair, production-key use, deployment or additional user-data collection."
+  ],
+  "records": [
+    {
+      "id": "mc-mugepome-team-ko",
+      "locale": "ko",
+      "battleFormat": "singles",
+      "scope": "team",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "outputHash": "704375023cb8b5719c4f72685541f1c6347db6d90239994d0901ecf15e827500",
+      "durationMs": 17645,
+      "usage": {
+        "inputTokens": 12456,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 3564,
+        "outputTokens": 2306,
+        "reasoningTokens": 165,
+        "totalTokens": 14762,
+        "costUsd": 0.0024877
+      },
+      "metadata": {
+        "responseId": "resp_0cbd54ac90b1eb35016ac2f97fea7087d2a4066947df827b53",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 3,
+        "retainedRecommendations": 3,
+        "proseVerified": false
+      },
+      "qualityWarnings": [],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-mugepome-team-ko.json"
+    },
+    {
+      "id": "mc-kiran-team-en",
+      "locale": "en",
+      "battleFormat": "doubles",
+      "scope": "team",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "outputHash": "699fd353ecbf83e4e98bbcc8d9fdf4faaf9ad2d9abab582dc45715027c69c511",
+      "durationMs": 15262,
+      "usage": {
+        "inputTokens": 15084,
+        "cachedInputTokens": 3145,
+        "cacheWriteTokens": 3254,
+        "outputTokens": 1853,
+        "reasoningTokens": 300,
+        "totalTokens": 16937,
+        "costUsd": 0.0022332
+      },
+      "metadata": {
+        "responseId": "resp_060951d5364c402c016ac2f990d12487d28f7532b47cb8742d",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 3,
+        "retainedRecommendations": 3,
+        "proseVerified": false
+      },
+      "qualityWarnings": [],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-kiran-team-en.json"
+    },
+    {
+      "id": "mc-mugepome-pokemon-en",
+      "locale": "en",
+      "battleFormat": "singles",
+      "scope": "pokemon",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "outputHash": "d02fee4ca4887aa2f3cf096e04248fc97f082bc1ee6d6884c92270fb1b7ce42f",
+      "durationMs": 8200,
+      "usage": {
+        "inputTokens": 13361,
+        "cachedInputTokens": 3145,
+        "cacheWriteTokens": 1775,
+        "outputTokens": 912,
+        "reasoningTokens": 264,
+        "totalTokens": 14273,
+        "costUsd": 0.0015534250000000002
+      },
+      "metadata": {
+        "responseId": "resp_0f5294614c58d0c0016ac2f9a00bd087d2b7c7f6049f4bee02",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "qualityWarnings": [],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-mugepome-pokemon-en.json"
+    },
+    {
+      "id": "mc-ddee-pokemon-ko",
+      "locale": "ko",
+      "battleFormat": "doubles",
+      "scope": "pokemon",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "outputHash": "4f38b5d3942c4948fea1ec3204b13ce79a7361972c1c0485729ff9bc6d16c1b2",
+      "durationMs": 12049,
+      "usage": {
+        "inputTokens": 13588,
+        "cachedInputTokens": 4920,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1202,
+        "reasoningTokens": 299,
+        "totalTokens": 14790,
+        "costUsd": 0.001517
+      },
+      "metadata": {
+        "responseId": "resp_0a425e117d348b5d016ac2f9a8480c87d2b58992c1c0f1928b",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [
+          "Recommendation mega-activate names 라이츄 without fact evidence for slot 5."
+        ],
+        "auditErrors": [
+          "Recommendation mega-activate names 라이츄 without fact evidence for slot 5."
+        ],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "qualityWarnings": [
+        "grounding-incomplete"
+      ],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-ddee-pokemon-ko.json"
+    },
+    {
+      "id": "mc-danjinesu-recommendation-ko",
+      "locale": "ko",
+      "battleFormat": "singles",
+      "scope": "recommendation",
+      "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+      "outputHash": "b7e0b6f993d39e311dd66fb829e8fb15be6dd3800f308764ae90e657e853b85e",
+      "durationMs": 13856,
+      "usage": {
+        "inputTokens": 27987,
+        "cachedInputTokens": 3145,
+        "cacheWriteTokens": 1961,
+        "outputTokens": 1668,
+        "reasoningTokens": 192,
+        "totalTokens": 29655,
+        "costUsd": 0.003398675
+      },
+      "metadata": {
+        "responseId": "resp_0908c331ce208b89016ac2f9b44e2487d29e2ccc206619aa28",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 3,
+        "retainedRecommendations": 3,
+        "proseVerified": false
+      },
+      "qualityWarnings": [],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-danjinesu-recommendation-ko.json"
+    },
+    {
+      "id": "mc-lloyd-recommendation-en",
+      "locale": "en",
+      "battleFormat": "doubles",
+      "scope": "recommendation",
+      "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+      "outputHash": "0849a300750662e21d2d5dd002da1e72da39a3493c58d14bbb07c7ff7ddeeccb",
+      "durationMs": 10990,
+      "usage": {
+        "inputTokens": 26608,
+        "cachedInputTokens": 5106,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1253,
+        "reasoningTokens": 273,
+        "totalTokens": 27861,
+        "costUsd": 0.0028277600000000003
+      },
+      "metadata": {
+        "responseId": "resp_0e347fe574d874fc016ac2f9c22c4487d2b95ffde4e1940bcc",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [
+          "Recommendation farigiraf names Trick Room without matching candidate evidence."
+        ],
+        "auditErrors": [],
+        "auditNormalized": true,
+        "suppliedRecommendations": 3,
+        "retainedRecommendations": 3,
+        "proseVerified": false
+      },
+      "qualityWarnings": [],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-lloyd-recommendation-en.json"
+    },
+    {
+      "id": "mc-tagerau-optimization-en",
+      "locale": "en",
+      "battleFormat": "singles",
+      "scope": "optimization",
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "outputHash": "cdf4f84d8123f40d0b65303186fc1df98ce9d9a78f0d20237a3275d414846ebe",
+      "durationMs": 10163,
+      "usage": {
+        "inputTokens": 17036,
+        "cachedInputTokens": 3145,
+        "cacheWriteTokens": 1394,
+        "outputTokens": 615,
+        "reasoningTokens": 255,
+        "totalTokens": 17651,
+        "costUsd": 0.0017629000000000002
+      },
+      "metadata": {
+        "responseId": "resp_06094cec42df865a016ac2f9cd2e3087d295cf634f141debe7",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "qualityWarnings": [],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-tagerau-optimization-en.json"
+    },
+    {
+      "id": "mc-kiran-optimization-ko",
+      "locale": "ko",
+      "battleFormat": "doubles",
+      "scope": "optimization",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "outputHash": "d18238b85032b552e12468026d70be7ef58c4ab340aeead68b17115f903bb104",
+      "durationMs": 11376,
+      "usage": {
+        "inputTokens": 16593,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1087,
+        "reasoningTokens": 436,
+        "totalTokens": 17680,
+        "costUsd": 0.0017942900000000003
+      },
+      "metadata": {
+        "responseId": "resp_0e7337fa68429c78016ac2f9d7563087d2b33f39d2850750e5",
+        "serviceTier": "default",
+        "reasoningEffort": "low",
+        "promptVersion": 100
+      },
+      "publicOutputUnchanged": true,
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "qualityWarnings": [],
+      "rawEvidencePath": ".tmp/validator-qa-2026-10-04/mc-kiran-optimization-ko.json"
+    }
+  ]
+}

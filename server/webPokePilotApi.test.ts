@@ -10,6 +10,7 @@ import {
   POKEPILOT_CLIENT_COOKIE,
 } from "./pokepilotIdentity";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
+import { POKEPILOT_API_MAX_BODY_BYTES } from "./pokepilotApi";
 
 const validRequest = {
   version: 34,
@@ -66,6 +67,23 @@ function createRequest(
 }
 
 describe("PokePilot web API boundary", () => {
+  it.each([true, false])("rejects expanded payload overflow with content-length=%s", async (withLength) => {
+    const body = JSON.stringify({ padding: "x".repeat(POKEPILOT_API_MAX_BODY_BYTES) });
+    const response = await handleWebPokePilotApi(new Request("https://pokepilot.example/api/pokepilot/analyze", {
+      method: "POST", body,
+      headers: { "content-type": "application/json", ...(withLength ? { "content-length": String(body.length) } : {}) },
+    }));
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toMatchObject({ error: { providerAttempted: false } });
+  });
+
+  it("accepts transport payloads above the previous cap without calling the provider", async () => {
+    const body = JSON.stringify(validRequest) + " ".repeat(300_000);
+    const response = await handleWebPokePilotApi(new Request("https://pokepilot.example/api/pokepilot/analyze", {
+      method: "POST", body, headers: { "content-type": "application/json" },
+    }), { apiKey: "", clientSecret: "test-secret", onOperationalEvent: vi.fn() });
+    expect(response.status).toBe(503);
+  });
   it("rejects cross-origin browser requests before resolving a requester", async () => {
     const response = await handleWebPokePilotApi(
       createRequest({ origin: "https://attacker.example" }),

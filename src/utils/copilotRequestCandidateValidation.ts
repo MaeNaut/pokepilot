@@ -1,6 +1,7 @@
 import { hasOnlyKeys, isBoundedInteger, isFiniteNumber, isNonEmptyString, isNullableString, isPokemonTypeArray, isSlotIndex, isStatBlock, isStringArray, isUniqueEnumArray, pokemonTypeSet, teamConceptIds, teamConceptIdSet, teamRoleIds, teamRoleIdSet } from "./copilotRequestValidationPrimitives.js";
 import { copilotResponsibilityIds } from "./copilotResponsibilities.js";
 import { isRecord } from "./typeGuards.js";
+import { natures, statKeys } from "../data/natures.js";
 
 function hasValidFilterValue(value: unknown) {
   return (
@@ -54,6 +55,33 @@ function hasValidCommonSet(value: unknown) {
   );
 }
 
+function hasValidUsageOptions(value: unknown) {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["sourcePokemonId", "sourceMonth", "sourceDate", "season", "alternativeMoves", "items", "natures", "statPointSpreads"])) return false;
+  const percentage = (value: unknown) => value === null || isFiniteNumber(value, 0, 100);
+  const uniqueOptions = (options: unknown, limit: number, valid: (option: Record<string, unknown>) => boolean) =>
+    Array.isArray(options) && options.length <= limit && options.every((option) => isRecord(option) && valid(option)) &&
+    new Set(options.map((option) => option.id)).size === options.length;
+  const namedOption = (option: Record<string, unknown>) => isNonEmptyString(option.id) &&
+    isNonEmptyString(option.displayName) && percentage(option.usagePercent);
+  return isNonEmptyString(value.sourcePokemonId) &&
+    typeof value.sourceMonth === "string" && /^\d{4}-\d{2}$/.test(value.sourceMonth) &&
+    (value.sourceDate === null || (typeof value.sourceDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.sourceDate) && value.sourceDate.startsWith(value.sourceMonth))) &&
+    isNullableString(value.season) &&
+    uniqueOptions(value.alternativeMoves, 8, (move) => {
+      const { usagePercent, ...commonMove } = move;
+      return percentage(usagePercent) && hasValidCommonSet({ ability: null, item: null, nature: null, moves: [commonMove] });
+    }) &&
+    uniqueOptions(value.items, 6, (item) => hasOnlyKeys(item, ["id", "displayName", "usagePercent", "effect"]) &&
+      namedOption(item) && (!("effect" in item) || (typeof item.effect === "string" && item.effect.length <= 500))) &&
+    uniqueOptions(value.natures, 3, (nature) => hasOnlyKeys(nature, ["id", "displayName", "usagePercent"]) &&
+      namedOption(nature) && natures.some((entry) => entry.id === nature.id)) &&
+    Array.isArray(value.statPointSpreads) && value.statPointSpreads.length <= 10 && value.statPointSpreads.every((spread) =>
+      isRecord(spread) && hasOnlyKeys(spread, ["evs", "usagePercent"]) && percentage(spread.usagePercent) &&
+      isRecord(spread.evs) && hasOnlyKeys(spread.evs, statKeys) &&
+      statKeys.every((stat) => isBoundedInteger((spread.evs as Record<string, unknown>)[stat], 0, 32)) &&
+      Object.values(spread.evs).reduce<number>((sum, point) => sum + Number(point), 0) <= 66);
+}
+
 export function hasValidRecommendationCandidateShape(value: unknown) {
   return (
     isRecord(value) &&
@@ -69,6 +97,8 @@ export function hasValidRecommendationCandidateShape(value: unknown) {
       "requiresMegaStone",
       "usageRank",
       "commonSet",
+      "megaEvolution",
+      "usageOptions",
       "responsibilityIds",
       "fit",
     ]) &&
@@ -171,6 +201,25 @@ export function hasValidRecommendationCandidateShape(value: unknown) {
     typeof value.requiresMegaStone === "boolean" &&
     (value.usageRank === null || isBoundedInteger(value.usageRank, 1, 100_000)) &&
     (value.commonSet === null || hasValidCommonSet(value.commonSet)) &&
+    (!("megaEvolution" in value) || value.megaEvolution === null || (
+      isRecord(value.commonSet) && isNonEmptyString(value.commonSet.item) &&
+      value.requiresMegaStone === false &&
+      isRecord(value.megaEvolution) &&
+      hasOnlyKeys(value.megaEvolution, ["pokemonId", "displayName", "types", "typeDisplayNames", "ability", "baseStats"]) &&
+      isNonEmptyString(value.megaEvolution.pokemonId) && value.megaEvolution.pokemonId !== value.pokemonId &&
+      isNonEmptyString(value.megaEvolution.displayName) &&
+      isPokemonTypeArray(value.megaEvolution.types, 2, 1) &&
+      isStringArray(value.megaEvolution.typeDisplayNames, 2) &&
+      value.megaEvolution.types.length === value.megaEvolution.typeDisplayNames.length &&
+      (value.megaEvolution.baseStats === null || isStatBlock(value.megaEvolution.baseStats)) &&
+      (value.megaEvolution.ability === null || (
+        isRecord(value.megaEvolution.ability) &&
+        hasOnlyKeys(value.megaEvolution.ability, ["id", "displayName", "effect"]) &&
+        isNonEmptyString(value.megaEvolution.ability.id) && isNonEmptyString(value.megaEvolution.ability.displayName) &&
+        (!("effect" in value.megaEvolution.ability) || (typeof value.megaEvolution.ability.effect === "string" && value.megaEvolution.ability.effect.length <= 500))
+      ))
+    )) &&
+    (!("usageOptions" in value) || hasValidUsageOptions(value.usageOptions)) &&
     isUniqueEnumArray(
       value.responsibilityIds,
       new Set<string>(copilotResponsibilityIds),

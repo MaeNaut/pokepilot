@@ -14,6 +14,7 @@ import type { TeamValidityResult } from "../utils/teamValidity";
 import { useCopilotRecommendationCandidates } from "./useCopilotRecommendationCandidates";
 import { useSetOptimizationPlan } from "./useSetOptimizationPlan";
 import { useMetaThreatAnalysisPlan } from "./useMetaThreatAnalysisPlan";
+import { getMegaEvolutionIndexEntry } from "../utils/megaEvolution";
 
 type Options = {
   scope: CopilotAnalysisScope;
@@ -79,6 +80,9 @@ export function useCopilotRequestPreparation({
     return {
       selectedSlot,
       member,
+      usagePokemonId: getMegaEvolutionIndexEntry(
+        member.id, buildState.itemBySlot[selectedSlot], pokemonIndex,
+      )?.name ?? member.id,
       build: {
         item: buildState.itemBySlot[selectedSlot] ?? null,
         ability:
@@ -102,7 +106,7 @@ export function useCopilotRequestPreparation({
         return id ? [id] : [];
       }),
     };
-  }, [buildState, selectedSlot, team]);
+  }, [buildState, pokemonIndex, selectedSlot, team]);
   const optimizationState = useSetOptimizationPlan(
     optimizationInput,
     battleFormat,

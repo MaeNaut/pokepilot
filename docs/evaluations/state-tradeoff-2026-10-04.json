@@ -1,0 +1,4115 @@
+{
+  "date": "2026-10-04",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "keyPurpose": "evaluation",
+  "retries": 0,
+  "calls": 100,
+  "decision": "Reject all three candidates: no demonstrated overall explanation-accuracy gain. Restore prompt v100/core v12; the two original issues remain unresolved.",
+  "methodology": {
+    "dataLocaleSchemaSettingsIdentical": true,
+    "source": "validator-qa-2026-10-04/requests.json",
+    "review": "Same-agent manual review of public paragraphs and cards against supplied request facts; not independent or statistically powered.",
+    "coverage": "Four scopes, Singles and Doubles, KO and EN across each pair; eight reused sourced-team cases, not eight new held-out teams.",
+    "targetRubric": "Unqualified former-ability advice or incorrect current/Mega defensive-state claims; incorrect zero-investment or candidate/baseline stat-tradeoff claims. Related state and sibling errors are included, with exact evidence per record.",
+    "limitations": "No target mention is not proof of a correct explicit explanation. Other-issue notes are review observations, not an exhaustive accuracy score. No validators or prose rewriting were added.",
+    "pricing": "Recorded estimates use repository usage accounting. No-cache counterfactual uses repository GPT-6 Luna short-context rates, input $0.10/M and output $0.50/M; not an invoice."
+  },
+  "trials": [
+    {
+      "name": "expanded-instructions",
+      "localDirectory": ".tmp/state-tradeoff-2026-10-04",
+      "manifestHash": "365cca4b5a5de75aa4a827fff1bba570d9b532d8fbfb19fb460795cc176fcb30",
+      "beforeVersion": 100,
+      "afterVersion": 102,
+      "summaries": {
+        "before": {
+          "calls": 16,
+          "estimatedCostUsd": 0.03446638,
+          "noCacheCounterfactualCostUsd": 0.040129100000000015,
+          "inputTokens": 285426,
+          "outputTokens": 23173,
+          "reasoningTokens": 4699,
+          "totalTokens": 308599,
+          "medianDurationMs": 10838.5,
+          "publicOutputsPreserved": 16,
+          "auditWarningResponses": 2,
+          "flaggedTargetResponses": 1,
+          "flaggedOtherResponses": 1
+        },
+        "after": {
+          "calls": 16,
+          "estimatedCostUsd": 0.034159115000000004,
+          "noCacheCounterfactualCostUsd": 0.040015600000000005,
+          "inputTokens": 287846,
+          "outputTokens": 22462,
+          "reasoningTokens": 4644,
+          "totalTokens": 310308,
+          "medianDurationMs": 10654,
+          "publicOutputsPreserved": 16,
+          "auditWarningResponses": 1,
+          "flaggedTargetResponses": 1,
+          "flaggedOtherResponses": 3
+        }
+      },
+      "records": [
+        {
+          "key": "mc-danjinesu-recommendation-ko-after-r1",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "5f7a256b62f0cdcdf6981dfada380e1c9e48e40e4959d449010e32875823a7f2",
+          "outputHash": "45ae5ea7b418df10adce5de293bd6502299f8b5d535690ec5f7f5d53930afa94",
+          "publicAnalysisHash": "4628bda16d7b72e2a29b545db0d9268bf48d7b62df4051da6a15ee5bc523fa19",
+          "durationMs": 10888,
+          "usage": {
+            "inputTokens": 28119,
+            "cachedInputTokens": 3277,
+            "cacheWriteTokens": 1961,
+            "outputTokens": 1451,
+            "reasoningTokens": 285,
+            "totalTokens": 29570,
+            "costUsd": 0.0032914949999999998
+          },
+          "noCacheCounterfactualCostUsd": 0.0035374,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation tinkaton names 거대해머 without matching candidate evidence.",
+              "Recommendation glimmora names 독치장 without matching candidate evidence.",
+              "Recommendation glimmora names 대지의힘 without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Suggests using Archaludon or Ceruledge to cover the proposed Gholdengo Ground weakness, although both supplied teammates are also Ground-weak."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-danjinesu-recommendation-ko-after-r2",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "5f7a256b62f0cdcdf6981dfada380e1c9e48e40e4959d449010e32875823a7f2",
+          "outputHash": "e9e3db79ba13e9c6fca3d1815de252f6b943f1acdb5a161758699fe8ce2e5b04",
+          "publicAnalysisHash": "0bf2106a13c7445434f63588028bff8d3709f77e063edf9fd227c44cc8976b34",
+          "durationMs": 12568,
+          "usage": {
+            "inputTokens": 28119,
+            "cachedInputTokens": 5238,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1499,
+            "reasoningTokens": 323,
+            "totalTokens": 29618,
+            "costUsd": 0.00308998
+          },
+          "noCacheCounterfactualCostUsd": 0.0035614,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation gholdengo names 나쁜음모 without matching candidate evidence.",
+              "Recommendation tinkaton names 전기자석파 without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-danjinesu-recommendation-ko-before-r1",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "534943182694b57bd55c415f3807bd9d413d6f5af45ec59ff3dc08d2b62cf418",
+          "outputHash": "3357eceeca83509ef7358f87e4b047ab106bac67cb9114f307388a0f58619938",
+          "publicAnalysisHash": "cde5b0e8e5f203e10c63a3fbcce5ce93a35f3b318f090ce60aff6540f357e573",
+          "durationMs": 10948,
+          "usage": {
+            "inputTokens": 27987,
+            "cachedInputTokens": 3145,
+            "cacheWriteTokens": 1961,
+            "outputTokens": 1741,
+            "reasoningTokens": 231,
+            "totalTokens": 29728,
+            "costUsd": 0.0034351749999999995
+          },
+          "noCacheCounterfactualCostUsd": 0.0036692,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation empoleon names 하품 without matching candidate evidence.",
+              "Recommendation empoleon names 스텔스록 without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-danjinesu-recommendation-ko-before-r2",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "534943182694b57bd55c415f3807bd9d413d6f5af45ec59ff3dc08d2b62cf418",
+          "outputHash": "5808f48c456b0a84aa02a6f2d27036a693963e0b412c146f709cccb48a4b897f",
+          "publicAnalysisHash": "2b14cdbd1088788e5bfa9cfb027d481699fb644bf8c11723c4eacc7734b1e012",
+          "durationMs": 12652,
+          "usage": {
+            "inputTokens": 27987,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1747,
+            "reasoningTokens": 283,
+            "totalTokens": 29734,
+            "costUsd": 0.00321266
+          },
+          "noCacheCounterfactualCostUsd": 0.0036722000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation gholdengo names HP회복 without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-after-r1",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "1e6cafa989491ee4ab3b26c76a028fc8b4e5d6b656cfc7881af36151195f070e",
+          "outputHash": "9a3c068efececdc94cd1a80f12394672ec433e11d0e2f3b442c2b8d45a546e0d",
+          "publicAnalysisHash": "18a34cdf3a280ccf63a879a219e112b1630e6ec0da54eac19317b4fd52d826c2",
+          "durationMs": 9748,
+          "usage": {
+            "inputTokens": 13720,
+            "cachedInputTokens": 5052,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1293,
+            "reasoningTokens": 256,
+            "totalTokens": 15013,
+            "costUsd": 0.0015638200000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.0020185,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-after-r2",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "1e6cafa989491ee4ab3b26c76a028fc8b4e5d6b656cfc7881af36151195f070e",
+          "outputHash": "b606265d93321872b957557b2bacac98645d5c73b4ad3b1c971475c4e74d27ec",
+          "publicAnalysisHash": "377440aa84fbb781cdffab46bf5c385ddd8b0c57b66bf880290a672402ccaa5f",
+          "durationMs": 12501,
+          "usage": {
+            "inputTokens": 13720,
+            "cachedInputTokens": 5052,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1604,
+            "reasoningTokens": 301,
+            "totalTokens": 15324,
+            "costUsd": 0.00171932
+          },
+          "noCacheCounterfactualCostUsd": 0.002174,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-before-r1",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "ec010e9b768df318c9c1ca980596448045e8b52334ae25d279ccb6e61f262806",
+          "outputHash": "ce1f8250ade9a55c87116210f1d1bc21a92f931cde1dbfa89068d8db40d91d77",
+          "publicAnalysisHash": "37d1ec551f66109888f87a0e5f8627b05191431c1ce45eb169308adf42c8ad1a",
+          "durationMs": 9107,
+          "usage": {
+            "inputTokens": 13588,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1272,
+            "reasoningTokens": 206,
+            "totalTokens": 14860,
+            "costUsd": 0.001552
+          },
+          "noCacheCounterfactualCostUsd": 0.0019948,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": [
+              "Separate Mega and Flower Veil cards do not repeat pre-Mega timing. The body distinguishes current from Mega, so this is not counted as a definite same-plan contradiction."
+            ]
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-before-r2",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "ec010e9b768df318c9c1ca980596448045e8b52334ae25d279ccb6e61f262806",
+          "outputHash": "e6cf11702612548a99b8bf1396c0b4cf57dd7ea638ce16d6b9b096a67722fb06",
+          "publicAnalysisHash": "6276c813e1e10035ae49702b802d6c72b98784e0a265a754fe6d2feeea5fcbe3",
+          "durationMs": 10829,
+          "usage": {
+            "inputTokens": 13588,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1485,
+            "reasoningTokens": 174,
+            "totalTokens": 15073,
+            "costUsd": 0.0016585
+          },
+          "noCacheCounterfactualCostUsd": 0.0021013000000000004,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r1",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "8ab95ffd4038e2ab63df4d8fbefc76a1d0e8bb5db1cf6c36b100737e77893a20",
+          "outputHash": "09b524a7e95e7ab6b59af30792e871d759227edbbce56ea4a99c4ca646635f3c",
+          "publicAnalysisHash": "7d6849935689d34b40081b533a2c15e2a0d28c6c468878f9392fcabb4033c5ad",
+          "durationMs": 7675,
+          "usage": {
+            "inputTokens": 16802,
+            "cachedInputTokens": 4748,
+            "cacheWriteTokens": 0,
+            "outputTokens": 915,
+            "reasoningTokens": 303,
+            "totalTokens": 17717,
+            "costUsd": 0.00171038
+          },
+          "noCacheCounterfactualCostUsd": 0.0021376999999999998,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r2",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "8ab95ffd4038e2ab63df4d8fbefc76a1d0e8bb5db1cf6c36b100737e77893a20",
+          "outputHash": "a0c7364cfc0910ade7bba2d97241478b3fdc309e5732e162014dbbdcc5f2d16b",
+          "publicAnalysisHash": "9f643114799f38403d6520eecf74deac805af9c42543a0cea4c1e8693328d4d8",
+          "durationMs": 8167,
+          "usage": {
+            "inputTokens": 16802,
+            "cachedInputTokens": 4748,
+            "cacheWriteTokens": 0,
+            "outputTokens": 989,
+            "reasoningTokens": 244,
+            "totalTokens": 17791,
+            "costUsd": 0.0017473800000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0021747,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [
+              "The spread-3 explanation mixes sibling HP 155 with current HP 153 and describes SpA/Speed as falling versus current. Its actual stats are HP165/Def112/SpA150/Spe152 versus current153/98/129/132: all four rise. The paragraph also assigns177 SpA to this candidate."
+            ],
+            "otherIssues": [
+              "Card usage-move-solarbeam-3 claims to replace Hurricane and keep Protect, but its canonical moveChanges replace Protect."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r1",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "358d6ae837b5360640b550cfd57909c515d220f5f9d89e5c9dea2ea99e03e698",
+          "publicAnalysisHash": "cbfcabb3d18dedba62a80c8905f67eace8493011b9a89f78fcc995aa9a757d78",
+          "durationMs": 9227,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1075,
+            "reasoningTokens": 365,
+            "totalTokens": 17668,
+            "costUsd": 0.00178829
+          },
+          "noCacheCounterfactualCostUsd": 0.0021968,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r2",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "7c27b35c4047bd59a048a7713006c85a59fc2c204d03a0447bc0fcbd43bc976b",
+          "publicAnalysisHash": "3a13f7f7cb385f9b1581511848cdbf968ba370bdb6f7cec0440320a99b12234a",
+          "durationMs": 9009,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 941,
+            "reasoningTokens": 346,
+            "totalTokens": 17534,
+            "costUsd": 0.00172129
+          },
+          "noCacheCounterfactualCostUsd": 0.0021298000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": [
+              "Leaks private candidate labels spread-1 and standard into public paragraphs."
+            ]
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-after-r1",
+          "caseId": "mc-kiran-team-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "72e38c706ee82793efcece67d6f12825967768a82a935983101a8c6ebb991720",
+          "outputHash": "2614c32e9745f239f215ba162cce82506dac350c0a51c95a433b1acf849056c6",
+          "publicAnalysisHash": "fccb037524a7d564d2afae951f5ea2056081a0487666dc63817d84bf00584169",
+          "durationMs": 13393,
+          "usage": {
+            "inputTokens": 15216,
+            "cachedInputTokens": 3277,
+            "cacheWriteTokens": 3254,
+            "outputTokens": 1879,
+            "reasoningTokens": 427,
+            "totalTokens": 17095,
+            "costUsd": 0.00224752
+          },
+          "noCacheCounterfactualCostUsd": 0.0024611000000000004,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-after-r2",
+          "caseId": "mc-kiran-team-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "72e38c706ee82793efcece67d6f12825967768a82a935983101a8c6ebb991720",
+          "outputHash": "1ceeae75748258d2fac5dd9cbf2782745e44ea710b09d5ca5545f5307a0fe887",
+          "publicAnalysisHash": "0e47a185ebdd8ffb3694d25f70225828d1445334fefa296f861e693dc4aea4fc",
+          "durationMs": 11686,
+          "usage": {
+            "inputTokens": 15216,
+            "cachedInputTokens": 6531,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1699,
+            "reasoningTokens": 325,
+            "totalTokens": 16915,
+            "costUsd": 0.00178331
+          },
+          "noCacheCounterfactualCostUsd": 0.0023711000000000006,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-before-r1",
+          "caseId": "mc-kiran-team-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "ad86e26e8fae9e8c28eca48409c6a2b5959122de34b9a9bd8c631ef31ead916b",
+          "outputHash": "103260b288390433c6b546ce669464c43ba5be22b3ad6487752519025f215180",
+          "publicAnalysisHash": "f4c0b5150a70535a51a1ebbd5087d1d1661f40fa707f48779373d8d829ac896e",
+          "durationMs": 12975,
+          "usage": {
+            "inputTokens": 15084,
+            "cachedInputTokens": 3145,
+            "cacheWriteTokens": 3254,
+            "outputTokens": 1590,
+            "reasoningTokens": 387,
+            "totalTokens": 16674,
+            "costUsd": 0.0021016999999999997
+          },
+          "noCacheCounterfactualCostUsd": 0.0023034,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-before-r2",
+          "caseId": "mc-kiran-team-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "ad86e26e8fae9e8c28eca48409c6a2b5959122de34b9a9bd8c631ef31ead916b",
+          "outputHash": "cf6f81d60454d319f436800eee79dbfa064b07604e1643a8a6b3603d6d27505a",
+          "publicAnalysisHash": "56667c70115627d54332d4c57fbdeba9ce06e741e8c61176a21f929306698719",
+          "durationMs": 13071,
+          "usage": {
+            "inputTokens": 15084,
+            "cachedInputTokens": 6399,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2022,
+            "reasoningTokens": 286,
+            "totalTokens": 17106,
+            "costUsd": 0.00194349
+          },
+          "noCacheCounterfactualCostUsd": 0.0025194,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": [
+              "Current-versus-Mega Speed wording could imply both values change; Charizard Speed remains132. The text labels source states rather than explicitly asserting a different value, so not scored as a hard numerical error."
+            ]
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-after-r1",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "4d4d72d0a5cf3528340fb77e041547e1e7899d833fa71ac1e1f446d0da6bb40d",
+          "outputHash": "d32a739fead0e73029fa854e395901234b928cebb54a2feec86dad8286302675",
+          "publicAnalysisHash": "ccbbe877ddea72020ba44be84ecde2a1467b34ee72f71298310a843d351abebd",
+          "durationMs": 11474,
+          "usage": {
+            "inputTokens": 26740,
+            "cachedInputTokens": 5238,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1604,
+            "reasoningTokens": 326,
+            "totalTokens": 28344,
+            "costUsd": 0.00300458
+          },
+          "noCacheCounterfactualCostUsd": 0.003476,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation sinistcha names Trick Room without matching candidate evidence.",
+              "Recommendation farigiraf names Trick Room without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-after-r2",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "4d4d72d0a5cf3528340fb77e041547e1e7899d833fa71ac1e1f446d0da6bb40d",
+          "outputHash": "73e4b1ba5b8bef96d840eec4bb224cddf697624c6c4b85577ba70fa81efe3f4d",
+          "publicAnalysisHash": "3f62a118baa4400b143e763eaaaae8a26c62020b083c1c01b35820ca7dbdb730",
+          "durationMs": 10420,
+          "usage": {
+            "inputTokens": 26740,
+            "cachedInputTokens": 5238,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1337,
+            "reasoningTokens": 326,
+            "totalTokens": 28077,
+            "costUsd": 0.0028710800000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0033425,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation sinistcha names Trick Room without matching candidate evidence.",
+              "Recommendation farigiraf names Trick Room without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-before-r1",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "fbffc009207a2394b600cf74b1ebe7156e7abba2a0e05ba08e24ea753dfa9861",
+          "outputHash": "891668ebd2d614848d851d100350cc4a2083a904db47703be697a035690862a4",
+          "publicAnalysisHash": "5e4e21e6a3591dd66be1eea7946a38d946710ede93dc7bc480acd1acff532dfb",
+          "durationMs": 12871,
+          "usage": {
+            "inputTokens": 26608,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1732,
+            "reasoningTokens": 605,
+            "totalTokens": 28340,
+            "costUsd": 0.00306726
+          },
+          "noCacheCounterfactualCostUsd": 0.0035268,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation sinistcha names Trick Room without matching candidate evidence.",
+              "Recommendation golisopod names Emergency Exit without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Calls Farigiraf Ice-weak together with Sinistcha; Farigiraf is Normal/Psychic and its supplied weaknesses are Bug/Dark."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-before-r2",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "fbffc009207a2394b600cf74b1ebe7156e7abba2a0e05ba08e24ea753dfa9861",
+          "outputHash": "5f06aa17df72200f82c9ea4d711691791c3119721864fb7d398b6b78a30b5444",
+          "publicAnalysisHash": "6765d62dc471bf2c8eb69d33571a967e0ab5111d45f9410234a915fa3d284b9f",
+          "durationMs": 10848,
+          "usage": {
+            "inputTokens": 26608,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1318,
+            "reasoningTokens": 352,
+            "totalTokens": 27926,
+            "costUsd": 0.0028602600000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.0033198000000000004,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation sinistcha names Trick Room without matching candidate evidence.",
+              "Recommendation farigiraf names Trick Room without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-after-r1",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "7995b5ee0d1c45bef87fd46ed5be60d2347f3a867c4ad3022ade7536ff4236cb",
+          "outputHash": "552595a33850a1200a8dd7c184b05429159ea6a18bc76c4631c33d6df6c6f3bb",
+          "publicAnalysisHash": "827cb3ef85b25eda818339b9eb561d9f2b9138d41bb9624b461b1e03f472cb60",
+          "durationMs": 10023,
+          "usage": {
+            "inputTokens": 13493,
+            "cachedInputTokens": 3277,
+            "cacheWriteTokens": 1775,
+            "outputTokens": 1206,
+            "reasoningTokens": 221,
+            "totalTokens": 14699,
+            "costUsd": 0.001701745
+          },
+          "noCacheCounterfactualCostUsd": 0.0019523000000000001,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Says Archaludon and Pelipper are both active in a Singles input."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-after-r2",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "7995b5ee0d1c45bef87fd46ed5be60d2347f3a867c4ad3022ade7536ff4236cb",
+          "outputHash": "6865e87fc5b960bd518dd8e1bf837889f0807ce64e78c74529998b5097a47770",
+          "publicAnalysisHash": "9829724cefa975390496ff1e9697fd12491fc1169e5b2f11836d55a45de7fb0f",
+          "durationMs": 6775,
+          "usage": {
+            "inputTokens": 13493,
+            "cachedInputTokens": 5052,
+            "cacheWriteTokens": 0,
+            "outputTokens": 913,
+            "reasoningTokens": 207,
+            "totalTokens": 14406,
+            "costUsd": 0.00135112
+          },
+          "noCacheCounterfactualCostUsd": 0.0018058000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-before-r1",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "25a25b0f647c4d529cc7a8b1cc0c920cc8ae0a808eaa35ce111c10d20dc24582",
+          "outputHash": "c174696cee55d32cfd3e33f1155da7b0970c073d03e1f7b7349d651d437bc3f9",
+          "publicAnalysisHash": "b08974c7887e38fa0b36b0214089e5fbb6a2faf1571b6276d4d2346829bbad2e",
+          "durationMs": 8848,
+          "usage": {
+            "inputTokens": 13361,
+            "cachedInputTokens": 3145,
+            "cacheWriteTokens": 1775,
+            "outputTokens": 945,
+            "reasoningTokens": 232,
+            "totalTokens": 14306,
+            "costUsd": 0.0015699250000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0018086,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-before-r2",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "25a25b0f647c4d529cc7a8b1cc0c920cc8ae0a808eaa35ce111c10d20dc24582",
+          "outputHash": "d89e9992d5fac0e897f2f75cd02478fef0b412043027c0e5099fc2b10bc8a21a",
+          "publicAnalysisHash": "906f1f9c2ae6b523bad3032cd7f87fa12afef97f64555fefc6402ae4b2e7109b",
+          "durationMs": 6874,
+          "usage": {
+            "inputTokens": 13361,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 667,
+            "reasoningTokens": 216,
+            "totalTokens": 14028,
+            "costUsd": 0.0012268000000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0016696,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r1",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "dcfd9e313b602f3e4f647d85954e503c53bbf0a463467ac834f0f31379fbc5a5",
+          "outputHash": "663a6fe7256e5e7c2d930dfe02255fbb59efcdd717bfe14715d58264a1f7f190",
+          "publicAnalysisHash": "0e8781fb6df656f050adf62e3455b826c7d6a731e85a42f0b7a95b0890c65642",
+          "durationMs": 13955,
+          "usage": {
+            "inputTokens": 12588,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3696,
+            "outputTokens": 2147,
+            "reasoningTokens": 301,
+            "totalTokens": 14735,
+            "costUsd": 0.0024246999999999997
+          },
+          "noCacheCounterfactualCostUsd": 0.0023323000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r2",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "dcfd9e313b602f3e4f647d85954e503c53bbf0a463467ac834f0f31379fbc5a5",
+          "outputHash": "1b9ac1101fea301e236a0afa50c33063d5f134b74312ec2edb4c24517ead699d",
+          "publicAnalysisHash": "6da0a474155d6cf47d5873ff435b467f341dbc89e870b76e7740f4d6963c0184",
+          "durationMs": 16557,
+          "usage": {
+            "inputTokens": 12588,
+            "cachedInputTokens": 3696,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2537,
+            "reasoningTokens": 213,
+            "totalTokens": 15125,
+            "costUsd": 0.0021946599999999998
+          },
+          "noCacheCounterfactualCostUsd": 0.0025273,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r1",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "28a0d68e71df1c86ffc1e76bfd0215cfe07b25083e4812e8835c448009df2509",
+          "publicAnalysisHash": "2d7e6d8400054ef6e9c138756fceedefaf1ba8945315a5f7db4f999b06d3fdf1",
+          "durationMs": 16447,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3564,
+            "outputTokens": 2629,
+            "reasoningTokens": 169,
+            "totalTokens": 15085,
+            "costUsd": 0.0026492
+          },
+          "noCacheCounterfactualCostUsd": 0.0025601000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r2",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "9afd1e4041052a0cf77b6c44e3219540128aec8466077a6f03bf3722f0b68058",
+          "publicAnalysisHash": "3b1c5b4ebca1a843e7de82a9eb9767fccb91db7766c03322e4e41663ef267513",
+          "durationMs": 15719,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2559,
+            "reasoningTokens": 230,
+            "totalTokens": 15015,
+            "costUsd": 0.00220434
+          },
+          "noCacheCounterfactualCostUsd": 0.0025251,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [
+              "The opening selects Mega Golisopod, then advises Emergency Exit at half HP in the same plan without timing that advice before Mega. A later paragraph correctly lists Tough Claws, but does not qualify the earlier action."
+            ],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-after-r1",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "c576b3a925839926d716047b9069366c7ac1db3a542ac9d0ca168acc4bcf8eb2",
+          "outputHash": "e97fec3d91a9b34f04ad88a4221b6145c78023be7539a5e1c4be3f3fc89f573e",
+          "publicAnalysisHash": "49ccc73ae865084781c5fab51b48b71bf1d2205bcfe66abf98f5826b5556e467",
+          "durationMs": 5865,
+          "usage": {
+            "inputTokens": 17245,
+            "cachedInputTokens": 3277,
+            "cacheWriteTokens": 1471,
+            "outputTokens": 586,
+            "reasoningTokens": 204,
+            "totalTokens": 17831,
+            "costUsd": 0.001759345
+          },
+          "noCacheCounterfactualCostUsd": 0.0020175,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-after-r2",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "c576b3a925839926d716047b9069366c7ac1db3a542ac9d0ca168acc4bcf8eb2",
+          "outputHash": "1bf1c52926a8540dc0cd699195ce0a992e5e33918a7b374cccded019a3e07b13",
+          "publicAnalysisHash": "2432ca043709936d629570e8f9b982bff2bd23183f89128c2f59fed48d22948c",
+          "durationMs": 9094,
+          "usage": {
+            "inputTokens": 17245,
+            "cachedInputTokens": 4748,
+            "cacheWriteTokens": 0,
+            "outputTokens": 803,
+            "reasoningTokens": 382,
+            "totalTokens": 18048,
+            "costUsd": 0.0016986800000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.002126,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-before-r1",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "e1eef4f81178999b577b1aa7a4f477b4e3f78c21684f6b3c2ad8dfa551da30f7",
+          "publicAnalysisHash": "05a0b396330bd7eafd7b67b7bbef0320717cc3a18d659e3fb5a46f499fe38285",
+          "durationMs": 6947,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 3145,
+            "cacheWriteTokens": 1394,
+            "outputTokens": 756,
+            "reasoningTokens": 337,
+            "totalTokens": 17792,
+            "costUsd": 0.0018334
+          },
+          "noCacheCounterfactualCostUsd": 0.0020816000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-before-r2",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "8ac83b34d0861016b0e6361dcd4365279e7a53e810cb8bd13f9a7df07ea238f7",
+          "publicAnalysisHash": "c2bc72ab518e142f8cf093382e5093479fb1bb7ecd251ff9208a7a97132143cc",
+          "durationMs": 7454,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 694,
+            "reasoningTokens": 280,
+            "totalTokens": 17730,
+            "costUsd": 0.0016420900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0020506000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "compact-instructions",
+      "localDirectory": ".tmp/state-tradeoff-compact-2026-10-04",
+      "manifestHash": "1c2b2a738b0fcde759d3b7a01bb479bb5573d293e8148b9fe0b60bf488710fa0",
+      "beforeVersion": 100,
+      "afterVersion": 103,
+      "summaries": {
+        "before": {
+          "calls": 22,
+          "estimatedCostUsd": 0.04416925,
+          "noCacheCounterfactualCostUsd": 0.053393800000000005,
+          "inputTokens": 372573,
+          "outputTokens": 32273,
+          "reasoningTokens": 6955,
+          "totalTokens": 404846,
+          "medianDurationMs": 10645.5,
+          "publicOutputsPreserved": 21,
+          "auditWarningResponses": 8,
+          "flaggedTargetResponses": 1,
+          "flaggedOtherResponses": 6
+        },
+        "after": {
+          "calls": 22,
+          "estimatedCostUsd": 0.045004100000000005,
+          "noCacheCounterfactualCostUsd": 0.05432969999999999,
+          "inputTokens": 375477,
+          "outputTokens": 33564,
+          "reasoningTokens": 6338,
+          "totalTokens": 409041,
+          "medianDurationMs": 11183,
+          "publicOutputsPreserved": 22,
+          "auditWarningResponses": 11,
+          "flaggedTargetResponses": 2,
+          "flaggedOtherResponses": 4
+        }
+      },
+      "records": [
+        {
+          "key": "mc-danjinesu-recommendation-ko-after-r1",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "5f7a256b62f0cdcdf6981dfada380e1c9e48e40e4959d449010e32875823a7f2",
+          "outputHash": "8bc5e22d8e8c5eb7f04ded90f5dce91b5d572e1f8b783add36ea3d5ecab490d3",
+          "publicAnalysisHash": "c6054302054820ae1731a487f603ea32bd1e94fff4a68ab8e8c0e3ef70a7b55c",
+          "durationMs": 11093,
+          "usage": {
+            "inputTokens": 28119,
+            "cachedInputTokens": 5238,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1515,
+            "reasoningTokens": 215,
+            "totalTokens": 29634,
+            "costUsd": 0.00309798
+          },
+          "noCacheCounterfactualCostUsd": 0.0035694,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.candidateFacts[2] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[3] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[4] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[7] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[8] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[9] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[12] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[13] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[14] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[15] contradicts the supplied recommendation candidate.",
+              "Recommendation gholdengo names 골드러시 without matching candidate evidence.",
+              "Recommendation gholdengo names 나쁜음모 without matching candidate evidence.",
+              "Recommendation gholdengo names HP회복 without matching candidate evidence.",
+              "Recommendation tinkaton names 거대해머 without matching candidate evidence.",
+              "Recommendation tinkaton names 앙코르 without matching candidate evidence.",
+              "Recommendation tinkaton names 전기자석파 without matching candidate evidence.",
+              "Recommendation empoleon names 냉동빔 without matching candidate evidence.",
+              "Recommendation empoleon names 하품 without matching candidate evidence.",
+              "Recommendation empoleon names 스텔스록 without matching candidate evidence.",
+              "Recommendation empoleon names 퀵턴 without matching candidate evidence."
+            ],
+            "auditErrors": [
+              "strategyAudit.candidateFacts[2] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[3] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[4] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[7] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[8] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[9] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[12] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[13] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[14] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[15] contradicts the supplied recommendation candidate."
+            ],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-danjinesu-recommendation-ko-after-r2",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "5f7a256b62f0cdcdf6981dfada380e1c9e48e40e4959d449010e32875823a7f2",
+          "outputHash": "cfe04663bf5f436f61c539ec14780927ebc2532beabed6c0806dcd07a3bcaa76",
+          "publicAnalysisHash": "6786585c37396ab8c7c37a976f9357d9eb6f219f0430c62188352671c78e768e",
+          "durationMs": 12618,
+          "usage": {
+            "inputTokens": 28119,
+            "cachedInputTokens": 5238,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1558,
+            "reasoningTokens": 186,
+            "totalTokens": 29677,
+            "costUsd": 0.00311948
+          },
+          "noCacheCounterfactualCostUsd": 0.0035909,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation gholdengo names 골드러시 without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-danjinesu-recommendation-ko-before-r1",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "534943182694b57bd55c415f3807bd9d413d6f5af45ec59ff3dc08d2b62cf418",
+          "outputHash": "8fb4dbdb37097b02dac499bbb8aee0a0adeaaa396ffa5bb7cd8fdceebeaab6c2",
+          "publicAnalysisHash": "5275eac005fbae5e19c2245109b4377c3151e43395bf99808292c44de7688ee8",
+          "durationMs": 11219,
+          "usage": {
+            "inputTokens": 27987,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1405,
+            "reasoningTokens": 308,
+            "totalTokens": 29392,
+            "costUsd": 0.00304166
+          },
+          "noCacheCounterfactualCostUsd": 0.0035012000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation glimmora names 스텔스록 without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-danjinesu-recommendation-ko-before-r2",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "534943182694b57bd55c415f3807bd9d413d6f5af45ec59ff3dc08d2b62cf418",
+          "outputHash": "09732da1a1ac8763980ff18f235edb80a8aa40033af31d66f6ce11038023180f",
+          "publicAnalysisHash": "5d34485616aec14c5f2137023a9f8c3f94bd39310f422821f7a0b7d166adec41",
+          "durationMs": 10072,
+          "usage": {
+            "inputTokens": 27987,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1332,
+            "reasoningTokens": 298,
+            "totalTokens": 29319,
+            "costUsd": 0.0030051599999999998
+          },
+          "noCacheCounterfactualCostUsd": 0.0034647000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-after-r1",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "1e6cafa989491ee4ab3b26c76a028fc8b4e5d6b656cfc7881af36151195f070e",
+          "outputHash": "1aa097dd2bce87957fdfe5e87af8c69632b86a864365ef5958803ec342834939",
+          "publicAnalysisHash": "e3c304e42d2c5988bbb3cf75587416853c55930afa099539d96e0d10ed65aab7",
+          "durationMs": 11273,
+          "usage": {
+            "inputTokens": 13720,
+            "cachedInputTokens": 5052,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1401,
+            "reasoningTokens": 204,
+            "totalTokens": 15121,
+            "costUsd": 0.00161782
+          },
+          "noCacheCounterfactualCostUsd": 0.0020725,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation mega-branch names 라이츄 without fact evidence for slot 5."
+            ],
+            "auditErrors": [
+              "Recommendation mega-branch names 라이츄 without fact evidence for slot 5."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-after-r2",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "1e6cafa989491ee4ab3b26c76a028fc8b4e5d6b656cfc7881af36151195f070e",
+          "outputHash": "13278d2e5c5facd6c397eacf1d0af4ed03fedd3bf4b059e0127ab040d408e48e",
+          "publicAnalysisHash": "5867d5b6ba1eab00df509fe9e5850aa7f29833f49fcdb0b9fe6838c0d73847b9",
+          "durationMs": 9361,
+          "usage": {
+            "inputTokens": 13720,
+            "cachedInputTokens": 5052,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1266,
+            "reasoningTokens": 260,
+            "totalTokens": 14986,
+            "costUsd": 0.0015503200000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.002005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": [
+              "Says four stats are uninvested although the input has six all-zero allocations. The zero-investment substance is true, but the count is sloppy."
+            ]
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-before-r1",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "ec010e9b768df318c9c1ca980596448045e8b52334ae25d279ccb6e61f262806",
+          "outputHash": "a28c2c107487ff266e7688be6c78d36e0326204424ebb54f3e612829b15865cb",
+          "publicAnalysisHash": "be49cc6ae8146352aa575fcaf3f3fe127961f2fad5c3a5743d3b9c9033102df2",
+          "durationMs": 13396,
+          "usage": {
+            "inputTokens": 13588,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1977,
+            "reasoningTokens": 165,
+            "totalTokens": 15565,
+            "costUsd": 0.0019045
+          },
+          "noCacheCounterfactualCostUsd": 0.0023473,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation mega-plan names 라이츄 without fact evidence for slot 5."
+            ],
+            "auditErrors": [
+              "Recommendation mega-plan names 라이츄 without fact evidence for slot 5."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Warns not to assume Dazzling Gleam misses allies despite supplied allAdjacentFoes targeting; implies erroneous friendly fire."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-before-r2",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "ec010e9b768df318c9c1ca980596448045e8b52334ae25d279ccb6e61f262806",
+          "outputHash": "9eb6b03e7e0b162555815777cec792e394a32cb42f108c69fcfc19c850cd02b3",
+          "publicAnalysisHash": "4eda37651357dbf062001ad13d5304a25e88ae7b52e8c24924df73d885f9a558",
+          "durationMs": 9235,
+          "usage": {
+            "inputTokens": 13588,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1260,
+            "reasoningTokens": 279,
+            "totalTokens": 14848,
+            "costUsd": 0.001546
+          },
+          "noCacheCounterfactualCostUsd": 0.0019888,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation mega names 고릴타 without fact evidence for slot 3."
+            ],
+            "auditErrors": [
+              "Recommendation mega names 고릴타 without fact evidence for slot 3."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r1",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "62b04e84fd9d5c1ecd7a2843d38a0528f1f4085a6acfa664c0122849e63d8f0b",
+          "outputHash": "8ec361bdd5624b6e234f70035da0b7e8a5509d1a4f4b108cce4410c46fda6895",
+          "publicAnalysisHash": "95f66f32c06c80951e0cccb67a6ef1dfcee77ca8ca8c05c1a636def42996a509",
+          "durationMs": 6226,
+          "usage": {
+            "inputTokens": 16725,
+            "cachedInputTokens": 4671,
+            "cacheWriteTokens": 0,
+            "outputTokens": 689,
+            "reasoningTokens": 271,
+            "totalTokens": 17414,
+            "costUsd": 0.00159661
+          },
+          "noCacheCounterfactualCostUsd": 0.002017,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r2",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "62b04e84fd9d5c1ecd7a2843d38a0528f1f4085a6acfa664c0122849e63d8f0b",
+          "outputHash": "10aa67543d1a5bde1b5bca2bf191006fc5b2486c6b1874570ce19942c8a8c72c",
+          "publicAnalysisHash": "b9aac965a4de99de16c4f70656fa72a0883468c455fa18aa7d8713ba0ed0dd85",
+          "durationMs": 10612,
+          "usage": {
+            "inputTokens": 16725,
+            "cachedInputTokens": 4671,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1176,
+            "reasoningTokens": 463,
+            "totalTokens": 17901,
+            "costUsd": 0.00184011
+          },
+          "noCacheCounterfactualCostUsd": 0.0022605,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "One paragraph says replacing Hurricane with Solar Beam preserves both Weather Ball and Hurricane, although the cards correctly describe Hurricane removal."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r3",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 3,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "62b04e84fd9d5c1ecd7a2843d38a0528f1f4085a6acfa664c0122849e63d8f0b",
+          "outputHash": "213292ad38075889688b847747e548fe976a81761cc246cf674ed28c0bba8959",
+          "publicAnalysisHash": "07190ce739eb7958d143952268005a66d64ba425dd1fc8c6b5fac08947d6a6c4",
+          "durationMs": 8450,
+          "usage": {
+            "inputTokens": 16725,
+            "cachedInputTokens": 4671,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1012,
+            "reasoningTokens": 250,
+            "totalTokens": 17737,
+            "costUsd": 0.0017581100000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0021785,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r4",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 4,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "62b04e84fd9d5c1ecd7a2843d38a0528f1f4085a6acfa664c0122849e63d8f0b",
+          "outputHash": "9a88a1fef36ee2ddd50e2babca1028c9b43c7bfcaf2ba83aa74dcffc90d05296",
+          "publicAnalysisHash": "c44830690f3ce48627d4ff0c832b859abe5b8885d2291933b3e19937e445ef0b",
+          "durationMs": 6533,
+          "usage": {
+            "inputTokens": 16725,
+            "cachedInputTokens": 4671,
+            "cacheWriteTokens": 0,
+            "outputTokens": 672,
+            "reasoningTokens": 245,
+            "totalTokens": 17397,
+            "costUsd": 0.0015881100000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0020085,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r5",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 5,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "62b04e84fd9d5c1ecd7a2843d38a0528f1f4085a6acfa664c0122849e63d8f0b",
+          "outputHash": "a53b601cb916ae9f5802b57d5e772a7536869a875a8c2701e82d5175f907db3e",
+          "publicAnalysisHash": "ea1baa3ca45ab5ddbb72efc7e7fa5fb31d804a626efe22a0cc194e31f36f015b",
+          "durationMs": 6972,
+          "usage": {
+            "inputTokens": 16725,
+            "cachedInputTokens": 4671,
+            "cacheWriteTokens": 0,
+            "outputTokens": 774,
+            "reasoningTokens": 268,
+            "totalTokens": 17499,
+            "costUsd": 0.00163911
+          },
+          "noCacheCounterfactualCostUsd": 0.0020595,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [
+              "Generalizes bulk-oriented candidates as losing the speed-focused profile. Supplied spread-3 adds HP/Defense but still has32 Speed points and152 Speed, identical to the recommended spread-1. Spread-5 is slower; its loss must not be assigned to all bulk siblings."
+            ],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r1",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "b195c16453a30bb73c6aeaa4e15890610cfd018210b0ad7b66cf0fa865ab02db",
+          "publicAnalysisHash": "b47ed5643f3cb5c9a23913ff2d3e2b2030c220af56f83977fce71f2124ef1ec2",
+          "durationMs": 8314,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 974,
+            "reasoningTokens": 360,
+            "totalTokens": 17567,
+            "costUsd": 0.0017377900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0021463000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r2",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "196fa526bb533172b8b0d1afa4855d37d6d39f63d3d0c2ad6791a204cb54971f",
+          "publicAnalysisHash": "fba3d591a310802ad06817104380ff66077b508c7925ebcb9f6050fbfb3d628f",
+          "durationMs": 8566,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 915,
+            "reasoningTokens": 418,
+            "totalTokens": 17508,
+            "costUsd": 0.0017082900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0021168000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r3",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 3,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "2151cc6beed5581d84f8d705708e02336ef85e4af7833a9720d439fb2f9931ab",
+          "publicAnalysisHash": "95d7332ff42625e876fef042509ea3adf3e8123aaa6328f54b3d7a39f3b02b5c",
+          "durationMs": 7128,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 824,
+            "reasoningTokens": 256,
+            "totalTokens": 17417,
+            "costUsd": 0.0016627900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0020713000000000003,
+          "publicOutputPreserved": false,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "recommendations-adjusted"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Recommends set-current although that ID is not in the supplied candidate list. Existing canonical-action validation drops only that invalid card, retaining the other card and paragraphs."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r4",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 4,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "bc3c1c8d458080488125e90d3b6e8a468328a3b94eb418edbe4e2d259186ce50",
+          "publicAnalysisHash": "11c4881cd54e57fed1667ad040ae949c65010c2b9a4b5bb8bb1a95bb92c4c290",
+          "durationMs": 8628,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 993,
+            "reasoningTokens": 380,
+            "totalTokens": 17586,
+            "costUsd": 0.00174729
+          },
+          "noCacheCounterfactualCostUsd": 0.0021558000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r5",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 5,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "3aac34e7bb0095e10f2a7c5a071e923973e7a8ce4db9e7033276a6d775b41ec7",
+          "publicAnalysisHash": "40247b9cf954a06da0097c879dc2f5ea5d2522a5880a1df82b55f29780b4312c",
+          "durationMs": 9610,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1118,
+            "reasoningTokens": 433,
+            "totalTokens": 17711,
+            "costUsd": 0.0018097900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0022183000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-after-r1",
+          "caseId": "mc-kiran-team-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "72e38c706ee82793efcece67d6f12825967768a82a935983101a8c6ebb991720",
+          "outputHash": "de1a272b477d02a4cc07bfb7104311d6729e1d14a7f34f96964b3bd23b7ba39d",
+          "publicAnalysisHash": "d1b03a053c8e7509dd080f954ed359fe91676bb7377a4ebce1d1737fe328e6a0",
+          "durationMs": 11949,
+          "usage": {
+            "inputTokens": 15216,
+            "cachedInputTokens": 6531,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1751,
+            "reasoningTokens": 375,
+            "totalTokens": 16967,
+            "costUsd": 0.00180931
+          },
+          "noCacheCounterfactualCostUsd": 0.0023971000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0] must bind at least one move and one ability.",
+              "strategyAudit.facts[2] contradicts the supplied defensive profile.",
+              "strategyAudit.facts[3] contradicts the supplied defensive profile."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0] must bind at least one move and one ability.",
+              "strategyAudit.facts[2] contradicts the supplied defensive profile.",
+              "strategyAudit.facts[3] contradicts the supplied defensive profile."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [
+              "Says non-Mega Garchomp retains current Ground immunity. The current Ground/Dragon set is immune to Electric; Ground immunity belongs to projected Mega Z with Levitate."
+            ],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-after-r2",
+          "caseId": "mc-kiran-team-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "72e38c706ee82793efcece67d6f12825967768a82a935983101a8c6ebb991720",
+          "outputHash": "fc25f9a7527fab2e94e76980f38abf85fb8332e7c6dad4ee96406c0879d43b21",
+          "publicAnalysisHash": "791a82495c2f3c5accb255668c8c36525d71d6f09f7b2747c9aa870c248d3979",
+          "durationMs": 16390,
+          "usage": {
+            "inputTokens": 15216,
+            "cachedInputTokens": 6531,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1861,
+            "reasoningTokens": 548,
+            "totalTokens": 17077,
+            "costUsd": 0.0018643099999999999
+          },
+          "noCacheCounterfactualCostUsd": 0.0024521000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-before-r1",
+          "caseId": "mc-kiran-team-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "ad86e26e8fae9e8c28eca48409c6a2b5959122de34b9a9bd8c631ef31ead916b",
+          "outputHash": "4c21a13a61b1d65732a25007fc21d4cb60809b42e21b84ef9adc5ce1d428907f",
+          "publicAnalysisHash": "2767020f8ca0d17d3ae2c472e4135777a4437c8bb3adfa26e143870b061f6802",
+          "durationMs": 12476,
+          "usage": {
+            "inputTokens": 15084,
+            "cachedInputTokens": 6399,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1468,
+            "reasoningTokens": 402,
+            "totalTokens": 16552,
+            "costUsd": 0.00166649
+          },
+          "noCacheCounterfactualCostUsd": 0.0022424000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Describes the roster final Speed range as72 through85 although current Charizard reaches132."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-before-r2",
+          "caseId": "mc-kiran-team-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "ad86e26e8fae9e8c28eca48409c6a2b5959122de34b9a9bd8c631ef31ead916b",
+          "outputHash": "a3c7ebc3cd3ba38558a65eca0ea8f9f1b856d444a88d3029c5cff9f8f0e7545a",
+          "publicAnalysisHash": "eb72629b0718f26186085bc0a05c355f4ebc71f5bf78a46221ebc678b3378872",
+          "durationMs": 11681,
+          "usage": {
+            "inputTokens": 15084,
+            "cachedInputTokens": 6399,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1577,
+            "reasoningTokens": 332,
+            "totalTokens": 16661,
+            "costUsd": 0.00172099
+          },
+          "noCacheCounterfactualCostUsd": 0.0022969,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": [
+              "Chooses Pelipper as a default Sun lead while acknowledging weather competition; strategic coherence is debatable, not a deterministic impossibility."
+            ]
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-after-r1",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "4d4d72d0a5cf3528340fb77e041547e1e7899d833fa71ac1e1f446d0da6bb40d",
+          "outputHash": "610fdbab0953da99ac986cb9c8e7f0e2f2456a86e146692b80651e9687fc9182",
+          "publicAnalysisHash": "d2d086276201febaff48c417b5d507ad5d51f0a2d35ec207cd59473112e00bbc",
+          "durationMs": 14232,
+          "usage": {
+            "inputTokens": 26740,
+            "cachedInputTokens": 5238,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1311,
+            "reasoningTokens": 289,
+            "totalTokens": 28051,
+            "costUsd": 0.0028580800000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.0033295,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.candidateFacts[4] contradicts the supplied recommendation candidate.",
+              "Recommendation farigiraf must cite one concrete tradeoff fact.",
+              "Recommendation farigiraf names Armor Tail without matching candidate evidence.",
+              "Recommendation pelipper names Drizzle without matching candidate evidence."
+            ],
+            "auditErrors": [
+              "strategyAudit.candidateFacts[4] contradicts the supplied recommendation candidate.",
+              "Recommendation farigiraf must cite one concrete tradeoff fact."
+            ],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": [
+              "Refers to both Grass-type candidates after naming Sinistcha/Farigiraf/Pelipper, leaving the second referent unclear; no explicit named Farigiraf typing claim is scored."
+            ]
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-after-r2",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "4d4d72d0a5cf3528340fb77e041547e1e7899d833fa71ac1e1f446d0da6bb40d",
+          "outputHash": "33a964ff0ccef1f7dc04ec85ae95b5d53edae9ed119a7c861e43ae759e6089f4",
+          "publicAnalysisHash": "4733a1305ebdfacdb19c9a7b2900e3280776d813ace06c389dc38dde5841bcaf",
+          "durationMs": 12806,
+          "usage": {
+            "inputTokens": 26740,
+            "cachedInputTokens": 5238,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1508,
+            "reasoningTokens": 474,
+            "totalTokens": 28248,
+            "costUsd": 0.0029565800000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.003428,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.candidateFacts[13] contradicts the supplied recommendation candidate.",
+              "Recommendation sinistcha names Trick Room without matching candidate evidence.",
+              "Recommendation pelipper names Drizzle without matching candidate evidence."
+            ],
+            "auditErrors": [
+              "strategyAudit.candidateFacts[13] contradicts the supplied recommendation candidate."
+            ],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-before-r1",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "fbffc009207a2394b600cf74b1ebe7156e7abba2a0e05ba08e24ea753dfa9861",
+          "outputHash": "52177634d952ff88299e4f8f770a1fb24807500bc89a5763d4af9bb38540fbe7",
+          "publicAnalysisHash": "ea4542f821da0c22c722d5505d29c79c70d76d8832ab98ec4d02abbe2cf0c946",
+          "durationMs": 12096,
+          "usage": {
+            "inputTokens": 26608,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1581,
+            "reasoningTokens": 417,
+            "totalTokens": 28189,
+            "costUsd": 0.0029917600000000004
+          },
+          "noCacheCounterfactualCostUsd": 0.0034513,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.candidateFacts[14] contradicts the supplied recommendation candidate.",
+              "Recommendation pelipper names Drizzle without matching candidate evidence."
+            ],
+            "auditErrors": [
+              "strategyAudit.candidateFacts[14] contradicts the supplied recommendation candidate."
+            ],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-before-r2",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "fbffc009207a2394b600cf74b1ebe7156e7abba2a0e05ba08e24ea753dfa9861",
+          "outputHash": "f1d69ce04e0b0ee7c6d6ebfd14bf79e6890de6c6621e533c6f126934fca1a71e",
+          "publicAnalysisHash": "812f397c141e0db04a7242299b31ef6db0ea6e199d4bc9d38d0324eb22b09c37",
+          "durationMs": 13345,
+          "usage": {
+            "inputTokens": 26608,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1490,
+            "reasoningTokens": 422,
+            "totalTokens": 28098,
+            "costUsd": 0.00294626
+          },
+          "noCacheCounterfactualCostUsd": 0.0034058,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation farigiraf names Trick Room without matching candidate evidence.",
+              "Recommendation farigiraf names Protect without matching candidate evidence.",
+              "Recommendation sinistcha names Trick Room without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-after-r1",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "7995b5ee0d1c45bef87fd46ed5be60d2347f3a867c4ad3022ade7536ff4236cb",
+          "outputHash": "b462789fb364917a9f53f9546557df3d7c7365dcc73fd7af8715c0c3d83e5252",
+          "publicAnalysisHash": "71987605c9c3b5363d9f4bff39c1503bf9075b22e60993a93fc8154c7ca8a0df",
+          "durationMs": 9316,
+          "usage": {
+            "inputTokens": 13493,
+            "cachedInputTokens": 5052,
+            "cacheWriteTokens": 0,
+            "outputTokens": 948,
+            "reasoningTokens": 264,
+            "totalTokens": 14441,
+            "costUsd": 0.0013686199999999999
+          },
+          "noCacheCounterfactualCostUsd": 0.0018233000000000001,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-after-r2",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "7995b5ee0d1c45bef87fd46ed5be60d2347f3a867c4ad3022ade7536ff4236cb",
+          "outputHash": "e06942b4d9adb3e52c5bbfeff96658bea14911305751f496f4c4b69ce459a7a9",
+          "publicAnalysisHash": "419fa1c926b458be9c690a3fdc48fa0a28ba44c7aae105023fa807830e0ad35c",
+          "durationMs": 7715,
+          "usage": {
+            "inputTokens": 13493,
+            "cachedInputTokens": 5052,
+            "cacheWriteTokens": 0,
+            "outputTokens": 845,
+            "reasoningTokens": 240,
+            "totalTokens": 14338,
+            "costUsd": 0.00131712
+          },
+          "noCacheCounterfactualCostUsd": 0.0017718000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-before-r1",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "25a25b0f647c4d529cc7a8b1cc0c920cc8ae0a808eaa35ce111c10d20dc24582",
+          "outputHash": "b276e8aaff121f0c907ac0139c8c0778f4f3d83714b9f6ea99486fec2d62be9b",
+          "publicAnalysisHash": "a21533fc51abbbe497cc53339f3d80ed03ec16102940e55037c5927d0252a9ee",
+          "durationMs": 8854,
+          "usage": {
+            "inputTokens": 13361,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 989,
+            "reasoningTokens": 267,
+            "totalTokens": 14350,
+            "costUsd": 0.0013878000000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0018306000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-before-r2",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "25a25b0f647c4d529cc7a8b1cc0c920cc8ae0a808eaa35ce111c10d20dc24582",
+          "outputHash": "bbe9979aff149193a974b9a5ccaa6082d9c728a439b0f92a770ee5738302556f",
+          "publicAnalysisHash": "4f9c56168e14b589665c10ca299500f9f4378b2eb67a509280efa5d81169f963",
+          "durationMs": 9151,
+          "usage": {
+            "inputTokens": 13361,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 983,
+            "reasoningTokens": 234,
+            "totalTokens": 14344,
+            "costUsd": 0.0013848000000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.0018276000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r1",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "dcfd9e313b602f3e4f647d85954e503c53bbf0a463467ac834f0f31379fbc5a5",
+          "outputHash": "b95832b222edaf359613ea2c0100f15c2ed799a9b71053a9ebfc1b080ef9e406",
+          "publicAnalysisHash": "3f1e30c0f4872b48776ee4d521dcb9086756a87847458720579b125bf05c904d",
+          "durationMs": 16989,
+          "usage": {
+            "inputTokens": 12588,
+            "cachedInputTokens": 3696,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2829,
+            "reasoningTokens": 270,
+            "totalTokens": 15417,
+            "costUsd": 0.00234066
+          },
+          "noCacheCounterfactualCostUsd": 0.0026733,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.facts[13] contradicts the supplied defensive profile."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.facts[13] contradicts the supplied defensive profile."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": [
+              "A card describes a Floette-to-Golisopod swap while citing Archaludon/Rillaboom cover not both selected in that swap; the body proposes a different three. Branch clarity remains weak."
+            ]
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r2",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "dcfd9e313b602f3e4f647d85954e503c53bbf0a463467ac834f0f31379fbc5a5",
+          "outputHash": "0ed8731cff39b869581097f54af001410cd61da2523427301a01d042f94edcfe",
+          "publicAnalysisHash": "4139bff700d5d86ef50e03a505c7fc12f0b5c6275b8b9b058ec22eb49ca71f08",
+          "durationMs": 17767,
+          "usage": {
+            "inputTokens": 12588,
+            "cachedInputTokens": 3696,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2694,
+            "reasoningTokens": 211,
+            "totalTokens": 15282,
+            "costUsd": 0.0022731599999999998
+          },
+          "noCacheCounterfactualCostUsd": 0.0026058,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].activeSlotIndexes must contain between 1 and 1 slots.",
+              "strategyAudit.interactions[0].activeSlotIndexes must be part of the referenced lineup.",
+              "strategyAudit.interactions[0].participants[0].slotIndex must be part of the lineup.",
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.facts[14] contradicts the supplied defensive profile."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].activeSlotIndexes must contain between 1 and 1 slots.",
+              "strategyAudit.interactions[0].activeSlotIndexes must be part of the referenced lineup.",
+              "strategyAudit.interactions[0].participants[0].slotIndex must be part of the lineup.",
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.facts[14] contradicts the supplied defensive profile."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r3",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 3,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "dcfd9e313b602f3e4f647d85954e503c53bbf0a463467ac834f0f31379fbc5a5",
+          "outputHash": "6c0a618c9756b35cd886fca02855f0a0f22cb9d859fbac07ed1217119d33bbeb",
+          "publicAnalysisHash": "b9227866966b205171b38401fa84769246513af4480aa6bd06411fd72e70f5dd",
+          "durationMs": 16404,
+          "usage": {
+            "inputTokens": 12588,
+            "cachedInputTokens": 3696,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2846,
+            "reasoningTokens": 300,
+            "totalTokens": 15434,
+            "costUsd": 0.00234916
+          },
+          "noCacheCounterfactualCostUsd": 0.0026818000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0] must bind at least one move and one ability.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0] must bind at least one move and one ability.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Says Grassy Terrain and Rain cannot persist simultaneously."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r4",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 4,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "dcfd9e313b602f3e4f647d85954e503c53bbf0a463467ac834f0f31379fbc5a5",
+          "outputHash": "b3a6f81bb4f135a976bbfc2be5418ece9a09c2de176ddb03dd59789b9757657c",
+          "publicAnalysisHash": "37c4034df8e7ea08624585a015d0516b4fe5b3e7d88d4831bdda1e9180b4ef7b",
+          "durationMs": 17672,
+          "usage": {
+            "inputTokens": 12588,
+            "cachedInputTokens": 3696,
+            "cacheWriteTokens": 0,
+            "outputTokens": 3119,
+            "reasoningTokens": 154,
+            "totalTokens": 15707,
+            "costUsd": 0.0024856599999999998
+          },
+          "noCacheCounterfactualCostUsd": 0.0028183,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[1] must bind at least one move and one ability."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[1] must bind at least one move and one ability."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Calls adding Archaludon an increase in Water attackers although its selected moves are Steel/Dragon/Electric/Dark. Also imports a Sun/Hurricane conflict into a Rillaboom Terrain branch with no Sun setter."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r5",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 5,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "dcfd9e313b602f3e4f647d85954e503c53bbf0a463467ac834f0f31379fbc5a5",
+          "outputHash": "de51bd1b3112c14fbebc04038878db899d252dc6c78a0956474beebdc4131b04",
+          "publicAnalysisHash": "bbe6a35869cf46ad1cd5d81a8c4d1d209da7bf46849c62f890e4871f62a6ffca",
+          "durationMs": 14633,
+          "usage": {
+            "inputTokens": 12588,
+            "cachedInputTokens": 3696,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2500,
+            "reasoningTokens": 329,
+            "totalTokens": 15088,
+            "costUsd": 0.00217616
+          },
+          "noCacheCounterfactualCostUsd": 0.0025088000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.recommendationEvidence[2].factIds references unknown IDs."
+            ],
+            "auditErrors": [
+              "strategyAudit.recommendationEvidence[2].factIds references unknown IDs."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Says Last Respects strengthens as opponents faint; the supplied mechanic counts allies fainting."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r1",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "8671fe2c3f1ff8114a2b749ada1a71165b49d8046f8a640c3f945e466d0d025e",
+          "publicAnalysisHash": "9e661335b0fdf6e5eeede06b3c038a4c5f8ce496ec08bdcfd49ebe35ed6b4c73",
+          "durationMs": 15328,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2201,
+            "reasoningTokens": 186,
+            "totalTokens": 14657,
+            "costUsd": 0.00202534
+          },
+          "noCacheCounterfactualCostUsd": 0.0023461000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r2",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "0b22f34e8d1504f474a8ac769177486cf8ba72796409b1a9208acb420d671c9c",
+          "publicAnalysisHash": "bfb4c0f48c7eccf826332fabb7c8f52642ee9d2c8ab757105984c8d3c0203be6",
+          "durationMs": 17020,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2411,
+            "reasoningTokens": 217,
+            "totalTokens": 14867,
+            "costUsd": 0.00213034
+          },
+          "noCacheCounterfactualCostUsd": 0.0024511000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].activeSlotIndexes must contain between 1 and 1 slots.",
+              "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].activeSlotIndexes must contain between 1 and 1 slots.",
+              "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Calls Aqua Jet and Drill Run noncontact and not boosted by Tough Claws; all four Golisopod moves have contact flags in the supplied mechanics."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r3",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 3,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "ef34daab8c8cbc4d10b56a74449aa9908ed87bd65f25cd9360ea50e581d96db0",
+          "publicAnalysisHash": "9a9dfe7311eaed9cd7c4f5f7e2fcd4b8b96e206cf8d19fbd89d082ea1e2217da",
+          "durationMs": 16358,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2642,
+            "reasoningTokens": 327,
+            "totalTokens": 15098,
+            "costUsd": 0.0022458400000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0025666000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.facts[8] contradicts the supplied defensive profile."
+            ],
+            "auditErrors": [
+              "strategyAudit.facts[8] contradicts the supplied defensive profile."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [
+              "Says Golisopod is Electric-weak both before and after Mega. Projected Bug/Steel Mega is neutral to Electric, unlike current Bug/Water."
+            ],
+            "otherIssues": [
+              "Says Grassy Terrain replaces Rain. The supplied weather and terrain effects are different fields and can coexist."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r4",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 4,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "85f66f4bf01f612101bce789e932c4dee7a8197c76a59ce84649100bb0f0af57",
+          "publicAnalysisHash": "9a1bee8924bc9ed465f77161798c82691087f24cb8434e1dc546744b78e8dd75",
+          "durationMs": 14529,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2247,
+            "reasoningTokens": 327,
+            "totalTokens": 14703,
+            "costUsd": 0.00204834
+          },
+          "noCacheCounterfactualCostUsd": 0.0023691000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Reverses the Ground relation: says Archaludon is immune and covers Pelipper Ground weakness. Pelipper is Ground-immune and Archaludon Ground-weak."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r5",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 5,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "74e0bf4c52bb63327077b4498339ef97532e9600ad0cd79fdb8ca83136e3c0d9",
+          "publicAnalysisHash": "f59d868eaa18ff8004f8d94722e0564d9257414df334a4ba8ec476b447d848a8",
+          "durationMs": 15921,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2561,
+            "reasoningTokens": 338,
+            "totalTokens": 15017,
+            "costUsd": 0.00220534
+          },
+          "noCacheCounterfactualCostUsd": 0.0025261000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-after-r1",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "c072970a9517fbb2a48e6815af181dd78b0e4835302339c710e7a6ccd4649697",
+          "outputHash": "a990c3c87f2b61d60f63ba429b214596e27f43a0e33c94b438bd397fc939e5d8",
+          "publicAnalysisHash": "73ebb938ba5eec5b3fedfa69c003a9990baf8427183d11439dcc6faf6decf040",
+          "durationMs": 7491,
+          "usage": {
+            "inputTokens": 17168,
+            "cachedInputTokens": 3277,
+            "cacheWriteTokens": 1394,
+            "outputTokens": 561,
+            "reasoningTokens": 237,
+            "totalTokens": 17729,
+            "costUsd": 0.00173722
+          },
+          "noCacheCounterfactualCostUsd": 0.0019973,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-after-r2",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "c072970a9517fbb2a48e6815af181dd78b0e4835302339c710e7a6ccd4649697",
+          "outputHash": "c9455bf02d84595acfd8ec404f4eee7faeb82185e07d7f206f92c597c7747f3a",
+          "publicAnalysisHash": "decb8ec77c8d5dcd9334597272050c63bc78ee7e4126ea5b5af48c81d4ae8334",
+          "durationMs": 7495,
+          "usage": {
+            "inputTokens": 17168,
+            "cachedInputTokens": 4671,
+            "cacheWriteTokens": 0,
+            "outputTokens": 728,
+            "reasoningTokens": 285,
+            "totalTokens": 17896,
+            "costUsd": 0.0016604100000000002
+          },
+          "noCacheCounterfactualCostUsd": 0.0020808000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-before-r1",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "9cc12117cde7a1bce47ce0796c47641ef665f8944ad4bf3116bbc7b4dadbe027",
+          "publicAnalysisHash": "1a3fb02809417cc5672c3baa59b6680343e6885aa38207278be9abf2c67b46a6",
+          "durationMs": 7191,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 498,
+            "reasoningTokens": 197,
+            "totalTokens": 17534,
+            "costUsd": 0.0015440900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0019526,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-before-r2",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "bdccfb906155cb7a0af7ee1ffa17b3ac201dfde99e6abae72c6e75daf09cf0c3",
+          "publicAnalysisHash": "c246cd1473ea230f5d8ae6e555ebdb13e452b15136e6b5ae42f553f9694801ce",
+          "durationMs": 7206,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 827,
+            "reasoningTokens": 392,
+            "totalTokens": 17863,
+            "costUsd": 0.00170859
+          },
+          "noCacheCounterfactualCostUsd": 0.0021171000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "minimal-instructions",
+      "localDirectory": ".tmp/state-tradeoff-minimal-2026-10-04",
+      "manifestHash": "34cc469253f719c9110afca059f3783eda5d8e64df22136c4892aeb7afb4a383",
+      "beforeVersion": 100,
+      "afterVersion": 104,
+      "summaries": {
+        "before": {
+          "calls": 12,
+          "estimatedCostUsd": 0.02328169,
+          "noCacheCounterfactualCostUsd": 0.028258600000000005,
+          "inputTokens": 200811,
+          "outputTokens": 16355,
+          "reasoningTokens": 3770,
+          "totalTokens": 217166,
+          "medianDurationMs": 10355,
+          "publicOutputsPreserved": 12,
+          "auditWarningResponses": 1,
+          "flaggedTargetResponses": 0,
+          "flaggedOtherResponses": 2
+        },
+        "after": {
+          "calls": 12,
+          "estimatedCostUsd": 0.025615765,
+          "noCacheCounterfactualCostUsd": 0.0293277,
+          "inputTokens": 202167,
+          "outputTokens": 18222,
+          "reasoningTokens": 3214,
+          "totalTokens": 220389,
+          "medianDurationMs": 10758.5,
+          "publicOutputsPreserved": 12,
+          "auditWarningResponses": 5,
+          "flaggedTargetResponses": 0,
+          "flaggedOtherResponses": 4
+        }
+      },
+      "records": [
+        {
+          "key": "mc-danjinesu-recommendation-ko-after-r1",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "cbf7fb722cf479708ad0b8fb8febd9be7e7b31e8e59234b3ec66de08dc3ed680",
+          "outputHash": "68720454d36e86e5947994b836be20763037c4e38e679c866cfd426565e72aa0",
+          "publicAnalysisHash": "d59a396b6f504786d7ef52a89641ff55e87aebf142e6553cacb91f6d621b1d8e",
+          "durationMs": 9947,
+          "usage": {
+            "inputTokens": 28100,
+            "cachedInputTokens": 3258,
+            "cacheWriteTokens": 1961,
+            "outputTokens": 1395,
+            "reasoningTokens": 235,
+            "totalTokens": 29495,
+            "costUsd": 0.0032633049999999998
+          },
+          "noCacheCounterfactualCostUsd": 0.0035075,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.candidateFacts[10] contradicts the supplied recommendation candidate.",
+              "Recommendation ninetales-alola names 눈퍼뜨리기 without matching candidate evidence.",
+              "Recommendation ninetales-alola names 눈보라 without matching candidate evidence."
+            ],
+            "auditErrors": [
+              "strategyAudit.candidateFacts[10] contradicts the supplied recommendation candidate."
+            ],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Recommends Alolan Ninetales but denies a Snow Warning condition for Blizzard, overlooking its proposed commonSet Snow Warning and supplied on-switch Snow effect."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-danjinesu-recommendation-ko-before-r1",
+          "caseId": "mc-danjinesu-recommendation-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "422cb83f61f86f5ef3cf3790a2ad156ed2e00eefaa7de8a9c358f87c1cad0bf2",
+          "messagesHash": "534943182694b57bd55c415f3807bd9d413d6f5af45ec59ff3dc08d2b62cf418",
+          "outputHash": "e6bb1590dee3f140d53613d80e56336f09a8f9e5464f97f5cebef1d83778afa6",
+          "publicAnalysisHash": "bbc6804c46a5cc3e9d586cc43607921de678c1ff65197026e394cf7b78fe1f69",
+          "durationMs": 10521,
+          "usage": {
+            "inputTokens": 27987,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1549,
+            "reasoningTokens": 289,
+            "totalTokens": 29536,
+            "costUsd": 0.00311366
+          },
+          "noCacheCounterfactualCostUsd": 0.0035732000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-after-r1",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "644cd7dd73d78dd3456db797e022194ddfb8377315e0ba6f6f315e60e49c0e6c",
+          "outputHash": "d3cf5d508ae12dd068d6e5dd813bd482ee92d3321cef15164a4e1b3e0bfea3eb",
+          "publicAnalysisHash": "ee6a6c4459ebeacaa26b1a988b82eb14236e9dac282107f01264a076b990936c",
+          "durationMs": 11349,
+          "usage": {
+            "inputTokens": 13701,
+            "cachedInputTokens": 5033,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1521,
+            "reasoningTokens": 304,
+            "totalTokens": 15222,
+            "costUsd": 0.00167763
+          },
+          "noCacheCounterfactualCostUsd": 0.0021306000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation mega-choice names 고릴타 without fact evidence for slot 3."
+            ],
+            "auditErrors": [
+              "Recommendation mega-choice names 고릴타 without fact evidence for slot 3."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Says Incineroar is faster than Floette; supplied Speeds80 and112 contradict that. Sneasler140 and Raichu143 really are faster."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-ddee-pokemon-ko-before-r1",
+          "caseId": "mc-ddee-pokemon-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+          "messagesHash": "ec010e9b768df318c9c1ca980596448045e8b52334ae25d279ccb6e61f262806",
+          "outputHash": "784220cdca26fc70522a6ad4ffb3b778d913a4aa22f6d1c986989b3a82d26fa2",
+          "publicAnalysisHash": "4e83072dd6244a8931155ee0893e86fb32c864aadd58ceacfacf7ba63b488355",
+          "durationMs": 11310,
+          "usage": {
+            "inputTokens": 13588,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1357,
+            "reasoningTokens": 323,
+            "totalTokens": 14945,
+            "costUsd": 0.0015945
+          },
+          "noCacheCounterfactualCostUsd": 0.0020373,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Says current Floette is faster than Sneasler and Incineroar; supplied Speeds112,140,80 only support the Incineroar comparison."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r1",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "aecfdcbc37fd992ddddf375e3f0c32ae259c50f5d5323d227d4c2a24d51dc1bb",
+          "outputHash": "9ff82a8fb5734f4febab22e4cd7fd295449c3a0a469058622736dbf613139f51",
+          "publicAnalysisHash": "ba4081fdbb424999365c16985307ae5c9b0331ac7effb39648ce6f67549710d0",
+          "durationMs": 9415,
+          "usage": {
+            "inputTokens": 16706,
+            "cachedInputTokens": 4652,
+            "cacheWriteTokens": 0,
+            "outputTokens": 986,
+            "reasoningTokens": 354,
+            "totalTokens": 17692,
+            "costUsd": 0.00174492
+          },
+          "noCacheCounterfactualCostUsd": 0.0021636000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r2",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "aecfdcbc37fd992ddddf375e3f0c32ae259c50f5d5323d227d4c2a24d51dc1bb",
+          "outputHash": "bd7a5c6e0e85b30c279b7ba829a0ed772eda213e00feb84a4d3ce40cd612eae7",
+          "publicAnalysisHash": "80f4032e0d682339c63cb73cd789cc9fcf5740d50189bb123a4de7e4cf0a7eb1",
+          "durationMs": 9449,
+          "usage": {
+            "inputTokens": 16706,
+            "cachedInputTokens": 4652,
+            "cacheWriteTokens": 0,
+            "outputTokens": 867,
+            "reasoningTokens": 289,
+            "totalTokens": 17573,
+            "costUsd": 0.00168542
+          },
+          "noCacheCounterfactualCostUsd": 0.0021041000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-after-r3",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "after",
+          "repetition": 3,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "aecfdcbc37fd992ddddf375e3f0c32ae259c50f5d5323d227d4c2a24d51dc1bb",
+          "outputHash": "58bec0e13ac0527938ce73f90e815a303a66f680062d3e70b7be88da70ce253d",
+          "publicAnalysisHash": "239b1a8ea2ab9d3b6c7aa865e84d13401431c062266c2b34bf064b1fa71f35bc",
+          "durationMs": 12136,
+          "usage": {
+            "inputTokens": 16706,
+            "cachedInputTokens": 4652,
+            "cacheWriteTokens": 0,
+            "outputTokens": 845,
+            "reasoningTokens": 271,
+            "totalTokens": 17551,
+            "costUsd": 0.00167442
+          },
+          "noCacheCounterfactualCostUsd": 0.0020931000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Same canonical action mismatch as the paired baseline: usage-move-solarbeam-1 is described as Hurricane replacement rather than Weather Ball replacement."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r1",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "338c15464f35a837cc6fa0af0e1f2e682fafd177f0d561c6cd287c923438f65c",
+          "publicAnalysisHash": "da79adcc562de2aaca56d3b50fe7a4df93422e980a01e61279ec028a1f7d8d91",
+          "durationMs": 9601,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 670,
+            "reasoningTokens": 234,
+            "totalTokens": 17263,
+            "costUsd": 0.0015857900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0019943,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r2",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "984d2952806dc68adc2f09d39edf87d29b54db3bbc84614b18b7a4e48e3d1efa",
+          "publicAnalysisHash": "e4eef1e786ce0000dc3e9beabf3204063578330b0fce9b5b88b3f16cdee67f8a",
+          "durationMs": 9595,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1009,
+            "reasoningTokens": 287,
+            "totalTokens": 17602,
+            "costUsd": 0.0017552900000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.0021638,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-optimization-ko-before-r3",
+          "caseId": "mc-kiran-optimization-ko",
+          "arm": "before",
+          "repetition": 3,
+          "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+          "messagesHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "e5798d9466c5b1cebab91c095fb2c3dc1825a7bdbd1961bb3221e3688259ad1f",
+          "publicAnalysisHash": "5f689cf2e5bf40e82c9234e6c9f58944f08808dc3198893a02e739d06eb23759",
+          "durationMs": 9863,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 886,
+            "reasoningTokens": 383,
+            "totalTokens": 17479,
+            "costUsd": 0.0016937900000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0021023,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 1,
+            "retainedRecommendations": 1,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Card usage-move-solarbeam-1 says Hurricane is removed and Weather Ball retained; the canonical candidate replaces Weather Ball."
+            ],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-after-r1",
+          "caseId": "mc-kiran-team-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "f5623639603f4e4085197512ce6aaf46531a25c15a3ffcf0ba94c3527df2b9f5",
+          "outputHash": "7117d6a6eda0d32dc5ad3896ce56fd5ab5997cd92b65b771f419cb099cc3b4ac",
+          "publicAnalysisHash": "b9df5cb7dfd5157e8f489e1e08e06fb002c85f8edc1134c83d6d82a1b168fd57",
+          "durationMs": 10168,
+          "usage": {
+            "inputTokens": 15197,
+            "cachedInputTokens": 3258,
+            "cacheWriteTokens": 3254,
+            "outputTokens": 1403,
+            "reasoningTokens": 290,
+            "totalTokens": 16600,
+            "costUsd": 0.00200933
+          },
+          "noCacheCounterfactualCostUsd": 0.0022212,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-kiran-team-en-before-r1",
+          "caseId": "mc-kiran-team-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+          "messagesHash": "ad86e26e8fae9e8c28eca48409c6a2b5959122de34b9a9bd8c631ef31ead916b",
+          "outputHash": "f6292c0fce0cdf66df4aa39cbe0072b98dd4789434a55758af86d9155dd8abd3",
+          "publicAnalysisHash": "f2864f11ae350b8b3ac9526afaeea9261c26f6aea41844eb472c8fc52ec84220",
+          "durationMs": 12305,
+          "usage": {
+            "inputTokens": 15084,
+            "cachedInputTokens": 6399,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1541,
+            "reasoningTokens": 483,
+            "totalTokens": 16625,
+            "costUsd": 0.00170299
+          },
+          "noCacheCounterfactualCostUsd": 0.0022789,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-after-r1",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "b680b8e5d4ee1eb8089b088d33d26ba752b41bd19003a65e7321c9781124ee81",
+          "outputHash": "c8041aee82429c8e5ef94d8c32897f785b71dd66f298cf4d465f0374018145a1",
+          "publicAnalysisHash": "ceb36c48258b9514a4016a079b80fa4d562fd14bb7464ad8cbbabbc7ba66a6b1",
+          "durationMs": 11748,
+          "usage": {
+            "inputTokens": 26721,
+            "cachedInputTokens": 5219,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1472,
+            "reasoningTokens": 400,
+            "totalTokens": 28193,
+            "costUsd": 0.0029383900000000004
+          },
+          "noCacheCounterfactualCostUsd": 0.0034081000000000003,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.candidateFacts[0] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[5] contradicts the supplied recommendation candidate.",
+              "strategyAudit.recommendationEvidence[0].candidateFactIds references unknown IDs.",
+              "Recommendation sinistcha names Protect without matching candidate evidence.",
+              "Candidate fact sinistcha-dragondance is not linked to a recommendation."
+            ],
+            "auditErrors": [
+              "strategyAudit.candidateFacts[0] contradicts the supplied recommendation candidate.",
+              "strategyAudit.candidateFacts[5] contradicts the supplied recommendation candidate.",
+              "strategyAudit.recommendationEvidence[0].candidateFactIds references unknown IDs."
+            ],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-lloyd-recommendation-en-before-r1",
+          "caseId": "mc-lloyd-recommendation-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "ba01fbe1b1300cea0c6110816a74ad914a3c9ac4906f80d64330057b4174cf84",
+          "messagesHash": "fbffc009207a2394b600cf74b1ebe7156e7abba2a0e05ba08e24ea753dfa9861",
+          "outputHash": "2168717f5cf0e95e827199d595b7a2a133e063f6c6cfdbb82ca85491cca5e7d5",
+          "publicAnalysisHash": "4a75cc42f009c26ac109fa871b1404ff577f5d288c218349835e8cfa8c7f8459",
+          "durationMs": 10189,
+          "usage": {
+            "inputTokens": 26608,
+            "cachedInputTokens": 5106,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1377,
+            "reasoningTokens": 350,
+            "totalTokens": 27985,
+            "costUsd": 0.0028897600000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.0033493000000000004,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "Recommendation armarouge names Protect without matching candidate evidence.",
+              "Recommendation farigiraf names Trick Room without matching candidate evidence."
+            ],
+            "auditErrors": [],
+            "auditNormalized": true,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-after-r1",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "537d4978e24ea398ee59f161c7c436bfcf96b7db98f782277a68b43ace280565",
+          "outputHash": "2850e18a1fd7b5b04f8bea7ecd1b5501f4d1d3e48aab40ffd7020f03e6d130fe",
+          "publicAnalysisHash": "ddfb911d8ff15dcf6cd6ca6025bb62ae8e00ef0eba23a843fe51c44c81db7e6d",
+          "durationMs": 7831,
+          "usage": {
+            "inputTokens": 13474,
+            "cachedInputTokens": 3258,
+            "cacheWriteTokens": 1775,
+            "outputTokens": 941,
+            "reasoningTokens": 270,
+            "totalTokens": 14415,
+            "costUsd": 0.001569055
+          },
+          "noCacheCounterfactualCostUsd": 0.0018179000000000001,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-pokemon-en-before-r1",
+          "caseId": "mc-mugepome-pokemon-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+          "messagesHash": "25a25b0f647c4d529cc7a8b1cc0c920cc8ae0a808eaa35ce111c10d20dc24582",
+          "outputHash": "b506050727dbb58155435794f6ba410a9fe44b4aa2890dfad2abcd27f866a2d8",
+          "publicAnalysisHash": "7037b054d45e7996076a63a790b40d725d877eb3789e21867574415a6884eafe",
+          "durationMs": 9563,
+          "usage": {
+            "inputTokens": 13361,
+            "cachedInputTokens": 4920,
+            "cacheWriteTokens": 0,
+            "outputTokens": 1238,
+            "reasoningTokens": 368,
+            "totalTokens": 14599,
+            "costUsd": 0.0015123000000000003
+          },
+          "noCacheCounterfactualCostUsd": 0.0019551,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r1",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "1f8a8758f5240b9d70be947ebfb8eef4012b4fae00b3343355cfa5ac3caa1d1e",
+          "outputHash": "9299b4e5c033bfc8d73442d67a7f105ff1594bfaa264fa35470535edefc97377",
+          "publicAnalysisHash": "eecf448a1cb9e1dedae5ff7187582207c66cc7a2e5245dcecbf306eed6c845f8",
+          "durationMs": 16909,
+          "usage": {
+            "inputTokens": 12569,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3677,
+            "outputTokens": 2495,
+            "reasoningTokens": 289,
+            "totalTokens": 15064,
+            "costUsd": 0.002596325
+          },
+          "noCacheCounterfactualCostUsd": 0.0025044,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r2",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 2,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "1f8a8758f5240b9d70be947ebfb8eef4012b4fae00b3343355cfa5ac3caa1d1e",
+          "outputHash": "804ffe69969f01f1b6bd5810e66b2a5f60b091b904305e9dd90fb4ac55758fb1",
+          "publicAnalysisHash": "14967ad658dd7070fc1e7f7a863b4e6652db292c6989ffe721c15751cd7822db",
+          "durationMs": 18798,
+          "usage": {
+            "inputTokens": 12569,
+            "cachedInputTokens": 3677,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2681,
+            "reasoningTokens": 139,
+            "totalTokens": 15250,
+            "costUsd": 0.0022664700000000005
+          },
+          "noCacheCounterfactualCostUsd": 0.0025974,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[1].activeSlotIndexes must contain between 1 and 1 slots.",
+              "strategyAudit.interactions[1].activeSlotIndexes must be part of the referenced lineup.",
+              "strategyAudit.interactions[1].participants[0].slotIndex must be part of the lineup.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[1].activeSlotIndexes must contain between 1 and 1 slots.",
+              "strategyAudit.interactions[1].activeSlotIndexes must be part of the referenced lineup.",
+              "strategyAudit.interactions[1].participants[0].slotIndex must be part of the lineup.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[3].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [
+              "Presents Archaludon as a complement to a Fighting/Ground-weak axis despite Archaludon itself being weak to both; nearby correctly states its allocation."
+            ],
+            "cautions": [
+              "Positive target example: explicitly uses Emergency Exit before Mega, then Tough Claws after activation. This is one observed correct explanation, not a causal accuracy estimate."
+            ]
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-after-r3",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "after",
+          "repetition": 3,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "1f8a8758f5240b9d70be947ebfb8eef4012b4fae00b3343355cfa5ac3caa1d1e",
+          "outputHash": "9bc7a7e2213a4ce344e647820b0af9f0ed2ac6d7fd711823dd60fb96731fbcc5",
+          "publicAnalysisHash": "46ab0c295c3e36b602d9c20605ff08b9ae9eb59ff777042b2f5e6d688b9df713",
+          "durationMs": 21428,
+          "usage": {
+            "inputTokens": 12569,
+            "cachedInputTokens": 3677,
+            "cacheWriteTokens": 0,
+            "outputTokens": 3056,
+            "reasoningTokens": 189,
+            "totalTokens": 15625,
+            "costUsd": 0.00245397
+          },
+          "noCacheCounterfactualCostUsd": 0.0027849,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+              "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r1",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "2b928d6aaa002f8aa486d32c6f487819d027582c8a799a78c79357f34bc079d8",
+          "publicAnalysisHash": "138745451d8bd91a2f01ab273701f3940def2b95f13c3d8289c27aed5e15a7b8",
+          "durationMs": 14677,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2052,
+            "reasoningTokens": 289,
+            "totalTokens": 14508,
+            "costUsd": 0.0019508400000000001
+          },
+          "noCacheCounterfactualCostUsd": 0.0022716000000000004,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [
+              "strategyAudit.interactions[0].activeSlotIndexes must contain between 1 and 1 slots."
+            ],
+            "auditErrors": [
+              "strategyAudit.interactions[0].activeSlotIndexes must contain between 1 and 1 slots."
+            ],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [
+            "grounding-incomplete"
+          ],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r2",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 2,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "452c51e2e300c236f99c970b1365a046cbdd67cac254687675bcef2224241adc",
+          "publicAnalysisHash": "1ce05ae7f8f0baffc8ca386ac3210fbee1c529cd58c65f47f5514771f07c4b4a",
+          "durationMs": 16432,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2009,
+            "reasoningTokens": 211,
+            "totalTokens": 14465,
+            "costUsd": 0.00192934
+          },
+          "noCacheCounterfactualCostUsd": 0.0022501000000000005,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 3,
+            "retainedRecommendations": 3,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-mugepome-team-ko-before-r3",
+          "caseId": "mc-mugepome-team-ko",
+          "arm": "before",
+          "repetition": 3,
+          "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+          "messagesHash": "2fcbeaf738a04451be7ac40639108a4cc156a0ae5cfa80732458f1afc8f3bc52",
+          "outputHash": "65727bc8b17248e1e51fd6fbe27126d4dbf416de1a878b03dadb203c986535b6",
+          "publicAnalysisHash": "6e29759d9439608a2deb597e6deb5b4b6c9e0a6b397a62a3ac0cbee2ac21edfd",
+          "durationMs": 16921,
+          "usage": {
+            "inputTokens": 12456,
+            "cachedInputTokens": 3564,
+            "cacheWriteTokens": 0,
+            "outputTokens": 2147,
+            "reasoningTokens": 385,
+            "totalTokens": 14603,
+            "costUsd": 0.0019983400000000004
+          },
+          "noCacheCounterfactualCostUsd": 0.0023191,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-after-r1",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "after",
+          "repetition": 1,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "85fd079af36705c0fcd08f1fd070222c08b0d2846fcd65aeb542dd7c74abeddc",
+          "outputHash": "765e10c8c5a61f2d2eec82915e7fa308cd2b9a66db69767b030e45829b22274e",
+          "publicAnalysisHash": "17e71fc3c6ba4e7b457e17a8b5b1fa10d6671544951c3a6f4c83fd476bf8141f",
+          "durationMs": 5711,
+          "usage": {
+            "inputTokens": 17149,
+            "cachedInputTokens": 3258,
+            "cacheWriteTokens": 1394,
+            "outputTokens": 560,
+            "reasoningTokens": 184,
+            "totalTokens": 17709,
+            "costUsd": 0.00173653
+          },
+          "noCacheCounterfactualCostUsd": 0.0019949,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        },
+        {
+          "key": "mc-tagerau-optimization-en-before-r1",
+          "caseId": "mc-tagerau-optimization-en",
+          "arm": "before",
+          "repetition": 1,
+          "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+          "messagesHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "3dbc11b6b63714abd6f97f275ccc4a5d8eb9adf68846060ddb7905173a1cdb23",
+          "publicAnalysisHash": "af715cd3ed93485bff70a29e0c918f2b27b9dc9634e4e70533aa81b81b020570",
+          "durationMs": 5505,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 520,
+            "reasoningTokens": 168,
+            "totalTokens": 17556,
+            "costUsd": 0.00155509
+          },
+          "noCacheCounterfactualCostUsd": 0.0019636000000000002,
+          "publicOutputPreserved": true,
+          "diagnostics": {
+            "rawAuditErrors": [],
+            "auditErrors": [],
+            "auditNormalized": false,
+            "suppliedRecommendations": 2,
+            "retainedRecommendations": 2,
+            "proseVerified": false
+          },
+          "qualityWarnings": [],
+          "manualReview": {
+            "targetIssues": [],
+            "otherIssues": [],
+            "cautions": []
+          }
+        }
+      ]
+    }
+  ]
+}

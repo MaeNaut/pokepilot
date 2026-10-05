@@ -105,8 +105,11 @@ export type SetOptimizationGeneralEvidence = {
   cutoff?: number;
   usageRank?: number;
   usagePercent?: number;
+  usagePokemonId?: string;
+  requestedUsagePokemonId?: string;
   roleStats: StatKey[];
   reducedRoleStats: StatKey[];
+  losesSlowSpeedRole?: boolean;
 };
 
 export type SetOptimizationCandidate = {
@@ -153,6 +156,7 @@ export type SetOptimizationPlan = {
 export type GeneralSetOptimizationContext = {
   selectedSlot: number;
   member: TeamMember;
+  usagePokemonId?: string;
   build: CalculatorBuildValues;
   reservedItemIds: string[];
   usageSet: BattleUsageSet | null;

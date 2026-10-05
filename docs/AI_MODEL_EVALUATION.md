@@ -18,7 +18,20 @@ retain their original models and settings.
 
 ## Purpose
 
-Latest frozen-input comparison: [September 24 GPT-6 Luna low/medium comparison](AI_MODEL_COMPARISON_2026_09_24.md).
+Latest state-data fix: [October 5 recommendation Mega-state review](AI_RECOMMENDATION_MEGA_REVIEW_2026_10_05.md). Prompt v103/recommendation v15 keeps a candidate's current form separate from its held-stone Mega projection, with distinct ability/type evidence. A 24-call fixed-v103 Luna low data comparison cost an estimated $0.053761. Mega-choice explanations became more frequent, but the weather/Solar Beam connection appeared only once and incorrect prose remains. Input grew 1.45% and no-cache equivalent cost 0.92% in this limited mix; this excludes the instruction/schema change. All 1,283 tests, lint and Cloudflare build passed. No deployment was performed.
+
+Previous input adjustment: [October 5 selective Pokemon recommendation input](AI_RECOMMENDATION_SELECTIVE_REVIEW_2026_10_05.md). Keep 30 representative candidates and the expanded sample pool; send at most three relevant alternative moves and two conditional item alternatives per Pokemon. A 24-call fixed-prompt Luna low comparison reduced input by 48.2% and no-cache equivalent cost by 42.7%, without a latency improvement or proven quality gain. A six-call follow-up separates stale fixture roles from current behavior. Thirty calls cost an estimated $0.148146; all 1,269 tests passed. No deployment was performed.
+
+Earlier controlled data trial: [October 5 recommendation data A/B review](AI_RECOMMENDATION_AB_REVIEW_2026_10_05.md). Forty-eight fixed-prompt Luna low calls plus six targeted follow-up calls cost an estimated $0.197158. Expanded sample candidates were used in 9/12 outputs; expanded Pokemon detail did not demonstrate a quality gain despite 125% more input. Contradictory prose remains. A verified Psychic Surge responsibility/terrain-rule input omission was fixed without changing prompts or rewriting results. No deployment was performed.
+
+Latest data expansion: [October 5 recommendation battle-data enrichment](AI_RECOMMENDATION_DATA_REVIEW_2026_10_05.md). Working-tree prompt v102/core v13 (recommendation v14, optimization v36) retains compact input encoding, adds observed move/item/nature/point alternatives, and expands general sample candidates to 24. Eight evaluation-key Luna low smoke calls completed, costing an estimated $0.034770. This verifies the data path, not a general accuracy improvement; manual review still found contradictory prose. No deployment was performed.
+
+Latest architecture/model pilot: [October 4 Sample Recommendation pipeline comparison](AI_SAMPLE_PIPELINE_REVIEW_2026_10_04.md). GPT-6.1 Sol low showed stronger explanations in 18 reviewed outputs; two-stage Luna did not justify promotion. This small pilot does not establish general error rates, and production remains unchanged.
+Input-contract follow-up: [sample candidate fixes](AI_SAMPLE_PIPELINE_REVIEW_2026_10_04.md#input-contract-fix-follow-up). That v101/core v12 patch (optimization v35) preserves incomplete baselines, separates numeric stat reductions from loss of a slow role, and labels actual versus requested usage forms. Further Sol testing is deferred; keep Luna low/medium and compact input encoding. No paid generation or deployment was performed for that patch.
+Latest controlled comparison: [October 4 input encoding x reasoning evaluation](AI_MC_ENCODING_REVIEW_2026_10_04.md).
+Validator follow-up: [October 4 validator and postprocessing review](AI_VALIDATOR_POSTPROCESS_REVIEW_2026_10_04.md). Semantic block rewrites and defensive-subject reassignment have been removed; strict passes still must not be treated as factual-accuracy scores.
+Explanation follow-up: [October 4 state and spread review](AI_STATE_TRADEOFF_REVIEW_2026_10_04.md). Three instruction candidates were rejected after 100 low evaluation calls; that experiment retained prompt v100/core v12 and did not establish a solution to the original two wording issues. The subsequent v101 input-contract patch is separate and does not claim a measured prose-accuracy improvement.
+Earlier frozen-input comparison: [September 24 GPT-6 Luna low/medium comparison](AI_MODEL_COMPARISON_2026_09_24.md).
 Earlier quality-first pilot: [September 19 model comparison](AI_MODEL_COMPARISON_2026_09_19.md).
 
 Use a stable offline team suite to compare hosted models without turning a
@@ -947,3 +960,102 @@ renderable analysis. A failed model response with known usage is counted in
 operational aggregates, including token and estimated cost totals. Historical
 rules-based entries remain readable, but the client no longer generates new
 ones.
+
+### Validator Follow-up (October 4)
+
+The runtime now preserves all model-authored titles, paragraphs, and retained
+recommendation reasons. It no longer replaces percentage/KO statements,
+Singles/active-count advice, candidate-name mentions, move explanations, or
+meta replacement explanations with generated stock prose. Invalid or duplicate
+actionable cards may still be filtered; a wholly invalid action list is an
+`AI_INVALID_RESPONSE`, not an intentional keep-current answer. An originally
+empty replacement list remains valid. Private audit failures remain nonfatal
+in production, and failed paid calls still retain usage accounting.
+
+Defensive facts are no longer assigned to a different Pokemon based on name
+mentions. Defensive prose checks no longer cross-multiply every type and
+teammate across an entire recommendation or equate immunity with resistance.
+Ambiguous multi-type statements are not declared verified. Non-string
+paragraph entries now produce a structured validation failure, not a TypeError.
+
+Internal review results retain raw and normalized audit errors separately.
+Server diagnostic logs contain only counts, flags, scope, warning codes, and
+the existing truncated request hash, never raw model prose or audit error text.
+`proseVerified: false` makes the validation boundary explicit. The generic
+evaluation adapter now keeps the original model output in `debugOutput` instead
+of overwriting that evidence with a completed audit.
+
+Offline replay of 100 saved responses preserved all public text. Previously
+rewritten sample responses fell from 4 to 0; two confirmed Pokemon coverage
+false positives no longer warn or fail strict validation. These are validator
+regressions, not improved model-accuracy figures. See the review's implementation
+follow-up and `docs/evaluations/validator-regressions-2026-10-04.json` for evidence.
+
+The subsequent focused QA removed three remaining semantic audit repairs:
+candidate-claim downgrading/deletion, deletion of uncited false defensive facts,
+and trimming of unsupported interaction move links. These claims now remain
+visible to internal validation without blocking renderable production prose.
+Only unused unary comparison-slot formatting and request-backed presence/link
+completion remain; added links do not certify a sentence's meaning.
+
+The QA covered all four public scopes in Korean/English, history restoration,
+canonical action binding, 7,007 malformed JSON variants, and 16 isolated browser
+cases (each with initial display and history reload). Eight fresh evaluation-key
+Luna low calls cost an estimated $0.01757495 and preserved all public outputs.
+One checked audit warning was an omitted teammate reference, not demonstrated
+wrong advice; separate manual review still found state/tradeoff wording risks.
+See [the focused QA follow-up](AI_VALIDATOR_POSTPROCESS_REVIEW_2026_10_04.md#focused-qa-follow-up)
+and [the measurement summary](evaluations/validator-qa-2026-10-04.json).
+
+## Published M-C Low Follow-up (2026-10-04)
+
+See [the published-team follow-up](AI_MC_PUBLISHED_REVIEW_2026_10_04.md) for
+four sourced Singles/Doubles teams, all four analysis scopes, prompt v93-v96
+comparisons, and the remaining factual errors. Passing structural validation
+is not a factual-accuracy score. Doubles spreads were unpublished and were
+explicitly reconstructed with zero Stat Points, not attributed to the players.
+
+The [expanded six-team review](AI_MC_EXPANDED_REVIEW_2026_10_04.md) adds monthly
+Singles finishers, regional Doubles champions and tricky strategy cases,
+including Wish passing, one-attack setup, dual weather and Perish trapping.
+It documents owner-local evidence, format-specific team instructions, detailed
+move mechanics, corrected-fixture exclusions and remaining semantic failures.
+
+The [low/medium comparison](AI_MC_LOW_MEDIUM_REVIEW_2026_10_04.md) runs medium
+on the same forty current requests and restores v93 for a sixteen-case
+before/after cost comparison. It documents both better tactical explanations
+and new factual/output failures; effort level and private warning counts must
+not be presented as guaranteed public accuracy.
+
+The [controlled encoding comparison](AI_MC_ENCODING_REVIEW_2026_10_04.md)
+separates compact/shared references from inline/owner-local duplication and
+low from medium in a 2 x 2 design, twice per case. Instructions, facts, schema
+and output cap are held constant, unlike the effort-dependent product paths
+in the preceding comparison. It reports cache-normalized costs and blinded
+public-output review, not private warning counts as an accuracy proxy.
+
+### Encoding Policy After the Controlled Comparison
+
+Prompt v100 uses compact/shared-reference input at every reasoning effort.
+Low remains the default and medium remains optional; Sol low is deferred until
+there is user demand and a separate product decision. Both efforts receive
+the same source facts, explicit battle-size rules and developer instructions.
+Effort, output allowance and timeout still differ. The inline-duplication
+serializer is retained only inside the historical evaluation runner, not the
+product request path. No new paid verification/repair stage is enabled.
+
+The [same-call self-review experiment](AI_MC_SELF_REVIEW_2026_10_04.md) compared
+v100 with an explicit final-review rewrite using 48 fresh compact low calls.
+Clear factual-error responses remained 10/24 in each arm; small team gains did
+not generalize to other scopes. The candidate was rejected and v100 retained.
+This is a rewrite of an existing self-review instruction, not evidence that
+self-review never helps. Raw/displayed outputs, costs and review notes are
+preserved for follow-up work.
+
+The [sample-comparison experiment](AI_MC_COMPARISON_REVIEW_2026_10_04.md) tested
+signed final-stat differences and two short examples with 60 fresh low calls.
+Clear factual-error responses were 2/20 for baseline, 7/20 with deltas, and
+10/20 with deltas plus examples. Both candidates were rejected; compact v100
+remains unchanged. This small, reused-case experiment is not a universal claim
+against computed evidence or examples. It also records existing narrative
+postprocessing false positives for separate, bounded follow-up work.

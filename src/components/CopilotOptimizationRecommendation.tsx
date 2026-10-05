@@ -245,7 +245,7 @@ export function CopilotOptimizationRecommendation({
       ) : null}
       <div className="copilot-optimization-spread">
         <small>{t("copilot.optimization.ev-spread-label")}</small>
-        <strong>{formatSpread(candidate)}</strong>
+        <strong>{formatSpread(candidate) || "0"}</strong>
       </div>
       <p>{reason}</p>
       {hasEvidence ? <details className="copilot-optimization-evidence">

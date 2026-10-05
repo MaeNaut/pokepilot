@@ -24,7 +24,7 @@ describe("battle usage client", () => {
   });
   it("falls back to recent cached data and marks it stale", async () => {
     const snapshot = parseBattleUsageIndex(battleUsageFixture().index, "singles");
-    localStorage.setItem("pokepilot:battle-usage:v1:singles", JSON.stringify({ ...snapshot, cachedAt: Date.now() - 7_200_000 }));
+    localStorage.setItem("pokepilot:battle-usage:v2:singles", JSON.stringify({ ...snapshot, cachedAt: Date.now() - 7_200_000 }));
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     const api = await import("./battleUsage");
     expect(await api.loadBattleUsageSource("singles")).toMatchObject({ stale: true, sourceDate: "2026-09-30" });
@@ -39,7 +39,7 @@ describe("battle usage client", () => {
     expect(await api.loadPopularUsageSet("indeedee-male", "singles")).toBeNull();
   });
   it("rejects corrupt and expired caches instead of using old Smogon data", async () => {
-    localStorage.setItem("pokepilot:battle-usage:v1:singles", '{"provider":"champions-battle-data"}');
+    localStorage.setItem("pokepilot:battle-usage:v2:singles", '{"provider":"champions-battle-data"}');
     localStorage.setItem("pokepilot:smogon-usage:v7:singles", '{}');
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     const api = await import("./battleUsage");
@@ -49,7 +49,7 @@ describe("battle usage client", () => {
   it("expires a recent browser cache when its source data is over seven days old", async () => {
     const snapshot = parseBattleUsageIndex(battleUsageFixture().index, "singles");
     vi.setSystemTime(new Date("2026-10-08T12:00:00Z"));
-    localStorage.setItem("pokepilot:battle-usage:v1:singles", JSON.stringify({ ...snapshot, cachedAt: Date.now() }));
+    localStorage.setItem("pokepilot:battle-usage:v2:singles", JSON.stringify({ ...snapshot, cachedAt: Date.now() }));
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     const api = await import("./battleUsage");
     expect(await api.loadBattleUsageSource("singles")).toBeNull();
@@ -127,5 +127,21 @@ describe("battle usage client", () => {
     const api = await import("./battleUsage");
     expect(await api.loadPopularUsageSet("garchomp-mega-z", "singles")).toMatchObject({ pokemonId: "garchomp" });
     expect(fetcher.mock.calls[1][0]).toBe("/api/battle-usage/singles/garchomp");
+  });
+  it("prefers exact Mega Z usage when the provider supplies that form", async () => {
+    const snapshot = parseBattleUsageIndex(battleUsageFixture().index, "singles");
+    const mega = {
+      ...snapshot.sets[0], pokemonId: "garchomp-mega-z", pokemonName: "Garchomp-Mega-Z", usageRank: 2,
+      nature: "timid", evs: { hp: 2, attack: 0, defense: 0, specialAttack: 32, specialDefense: 0, speed: 32 },
+    };
+    snapshot.sets.push(mega);
+    const fetcher = vi.fn().mockImplementation(async (url: string) =>
+      Response.json(url.endsWith("garchompmegaz") ? mega : snapshot));
+    vi.stubGlobal("fetch", fetcher);
+    const api = await import("./battleUsage");
+    expect(await api.loadPopularUsageSet("garchomp-mega-z", "singles")).toMatchObject({
+      pokemonId: "garchomp-mega-z", nature: "timid", evs: { specialAttack: 32, attack: 0 },
+    });
+    expect(fetcher.mock.calls[1][0]).toBe("/api/battle-usage/singles/garchompmegaz");
   });
 });

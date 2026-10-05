@@ -166,3 +166,36 @@ this repository.
   production smoke tests, and post-release error/usage monitoring still apply.
 - This is the account-level Workers plan, not the domain's Pro plan. Application
   secrets and the production D1 binding remain unchanged by the upgrade.
+
+## 2026-10-05 analysis-quality release
+
+- At the owner's request, deployed the verified current `develop` working tree
+  directly with `wrangler deploy --keep-vars`. This was not a GitHub Actions/main
+  release: HEAD was `046c47483eb334a2fd75776c61fbe0f5b1d0c94f` plus the local
+  analysis-quality, validation and recommendation-data changes. No commit, push
+  or merge was performed. Commit these changes before relying on main CI to
+  preserve this release; deploying the older main tree would replace them.
+- Production Worker version: `403a4730-22bf-4518-98c0-81e49f4c0f92`.
+  Previous production version for rollback:
+  `f849e626-607f-45ae-99d7-3a89d8573049`.
+- Included prompt v103/recommendation v15, compact input, selected recommendation
+  usage alternatives, candidate Mega states and the prior validation/sample fixes.
+  Known explanation limitations remain documented in
+  [the Mega-state review](AI_RECOMMENDATION_MEGA_REVIEW_2026_10_05.md); this release
+  does not claim that structural validation proves factual accuracy.
+- `npm run check:cloudflare` passed: lint, 1,283 tests in 158 files, Cloudflare
+  build and Worker dry run. Dependency audit reported zero vulnerabilities.
+  The existing Vite large-chunk warning remains.
+- Deployment preserved remote variables and secrets. No database migrations,
+  credential rotations, DNS changes or account-data edits were performed.
+- Production checks passed: current index references and SHA-256 matches for
+  `/assets/index-C60_SzlT.js` and `/assets/index-C17-Qs0b.css`; Korean/English help
+  and public example pages; privacy page; guest analysis rejection, no-store and
+  security headers, and no unexpected session cookie.
+- Both usage endpoints returned 262 sets, season M6, source date 2026-10-02,
+  without the stale-fallback flag. Garchomp Singles and Rillaboom Doubles detail
+  endpoints returned moves and item alternatives normally.
+- No signed-in browser workflow or paid production AI call was run during this
+  deployment smoke test. The 24 evaluation-key calls belong to the preceding
+  quality evaluation, not to these production checks.
+- Local release logs: `.tmp/release-2026-10-05-{check,audit,deploy,boundary,smoke}.log`.

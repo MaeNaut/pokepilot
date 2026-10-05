@@ -1147,6 +1147,18 @@ describe("Copilot analysis", () => {
     });
   });
 
+  it("passes full delayed mechanics to AI without replacing the short UI description", () => {
+    const effect = "The Pokemon at the user's position recovers HP at the end of the next turn.";
+    const request = createCopilotAnalysisRequest({
+      scope: "pokemon", teamName: "Delayed recovery", selectedSlot: 0,
+      team: [{ ...member, moves: [{ ...closeCombat, id: "wish", name: "Wish", type: "normal", category: "status", power: null,
+        description: "Next turn heals the user.", detailedDescription: effect }] }, null, null, null, null, null],
+      buildState: { ...buildState, moveIdsBySlot: { 0: ["wish"] } },
+      diagnostics, validity,
+    });
+    expect(request.mechanics.moves.find((move) => move.id === "wish")?.effect).toBe(effect);
+  });
+
   it("does not stale team analysis when only the displayed slot changes", () => {
     const request = createCopilotAnalysisRequest({
       scope: "team",
@@ -1205,7 +1217,7 @@ describe("Copilot analysis", () => {
     ).toMatchObject({ success: false });
   });
 
-  it("relocalizes cached recommendation names at the request boundary", () => {
+  it("curates usage and relocalizes cached recommendation names at the request boundary", () => {
     const candidate: CopilotRecommendationCandidateSnapshot = {
       pokemonId: "primarina", displayName: "누리레느",
       types: ["water", "fairy"], typeDisplayNames: ["물", "페어리"],
@@ -1222,6 +1234,12 @@ describe("Copilot analysis", () => {
         ability: "torrent", item: null, nature: "modest",
         moves: [{ id: "moonblast", displayName: "문포스", type: "fairy", category: "special", power: 95 }],
       },
+      usageOptions: {
+        sourcePokemonId: "primarina", sourceMonth: "2026-10", sourceDate: "2026-10-04", season: "M-C",
+        alternativeMoves: [{ id: "encore", displayName: "Encore", type: "normal", category: "status", power: null, usagePercent: 10 }],
+        items: [], natures: [{ id: "modest", displayName: "Modest", usagePercent: 90 }],
+        statPointSpreads: [{ evs: defaultEvs, usagePercent: 10 }],
+      },
       fit: { weakTo: [], resistsTeamThreats: [], amplifiesTeamThreats: [], addsUnansweredWeaknesses: [],
         coversTypes: [], roleContributions: [], roleRedundancies: [], conceptSynergies: [], conflicts: [] },
     };
@@ -1236,12 +1254,15 @@ describe("Copilot analysis", () => {
     expect(english).toMatchObject({ displayName: "Primarina", typeDisplayNames: ["Water", "Fairy"],
       abilities: [{ displayName: "Torrent" }], target: { currentDisplayName: member.name },
       commonSet: { moves: [{ displayName: "Moonblast" }] },
+      usageOptions: { alternativeMoves: [{ id: "encore", displayName: "Encore" }], natures: [], statPointSpreads: [] },
     });
     const korean = createCopilotAnalysisRequest({ ...input, locale: "ko", recommendationCandidates: [english] }).recommendationCandidates[0];
     expect(korean).toMatchObject({ displayName: "누리레느", abilities: [{ displayName: "급류" }],
       commonSet: { moves: [{ displayName: "문포스" }] },
+      usageOptions: { alternativeMoves: [{ id: "encore", displayName: "앙코르" }] },
     });
     expect(candidate.displayName).toBe("누리레느");
+    expect(candidate.usageOptions?.statPointSpreads).toHaveLength(1);
   });
 
   it("supplies canonical sand weather rules without inventing a selected move", () => {
@@ -1257,6 +1278,28 @@ describe("Copilot analysis", () => {
     expect(request.mechanics.abilities.find((ability) => ability.id === "sandstream")?.effect).toContain("Weather rules:");
     expect(request.mechanics.abilities.find((ability) => ability.id === "sandstream")?.effect).toContain("Ground, Rock, or Steel");
     expect(request.sets[0].moves.some((move) => move.id === "sandstorm")).toBe(false);
+  });
+
+  it("counts Psychic Surge protection and supplies its grounded-only terrain rules", () => {
+    const input: CreateCopilotRequestInput = {
+      scope: "team", locale: "en", teamName: "Terrain", team: [member], selectedSlot: 0,
+      buildState: { ...buildState, abilityBySlot: { 0: "Psychic Surge" } }, diagnostics, validity,
+      abilityIndex: [{ id: "psychicsurge", name: "Psychic Surge", effect: "On switch-in, summons Psychic Terrain." }],
+      showdownData: { speciesById: {}, movesById: {
+        psychicterrain: { ...closeCombat, id: "psychicterrain", name: "Psychic Terrain", category: "Status", power: null,
+          description: "Grounded: priority-safe.",
+          detailedDescription: "Grounded Pokemon cannot be hit by moves with priority greater than 0, unless the target is an ally." },
+      } },
+    };
+    const request = createCopilotAnalysisRequest(input);
+    expect(request.diagnostics.responsibilityCounts["priority-denial"]).toBe(1);
+    expect(request.mechanics.abilities.find((ability) => ability.id === "psychicsurge")?.effect)
+      .toContain("Terrain rules: Grounded Pokemon");
+    expect(request.mechanics.abilities.find((ability) => ability.id === "psychicsurge")?.effect)
+      .toContain("unless the target is an ally");
+    expect(request.sets[0].moves.some((move) => move.id === "psychicterrain")).toBe(false);
+    const unchanged = createCopilotAnalysisRequest({ ...input, buildState });
+    expect(unchanged.diagnostics.responsibilityCounts["priority-denial"]).toBe(0);
   });
 
   it("validates exact full-team replacement targets", () => {

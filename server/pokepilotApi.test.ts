@@ -370,7 +370,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-6-luna",
-        promptVersion: 93,
+        promptVersion: 103,
         execution: {
           durationMs: expect.any(Number),
           totalTokens: 150,
@@ -419,8 +419,10 @@ describe("PokePilot server API", () => {
 
   it("keeps Pokemon analysis when only its private fact audit is invalid", async () => {
     const onQualityWarning = vi.fn();
+    const onValidationReview = vi.fn();
     const result = await handlePokePilotAnalysis(pokemonRequest, {
       onQualityWarning,
+      onValidationReview,
       analyze: async () =>
         createModelResult({
           ...groundedPokemonOutput,
@@ -445,16 +447,43 @@ describe("PokePilot server API", () => {
       metadata: { cacheStatus: "miss" },
     });
     expect(onQualityWarning).toHaveBeenCalledWith(["grounding-incomplete"]);
+    expect(onValidationReview).toHaveBeenCalledWith({
+      requestKey: expect.any(String),
+      scope: "pokemon",
+      rawAuditErrorCount: expect.any(Number),
+      auditErrorCount: expect.any(Number),
+      auditNormalized: false,
+      suppliedRecommendations: groundedPokemonOutput.analysis.recommendations.length,
+      retainedRecommendations: groundedPokemonOutput.analysis.recommendations.length,
+      qualityWarnings: ["grounding-incomplete"],
+      proseVerified: false,
+    });
+    expect(onValidationReview.mock.calls[0][0].auditErrorCount).toBeGreaterThan(0);
+    expect(JSON.stringify(onValidationReview.mock.calls)).not.toContain("invalid-slot-fact");
     expect(JSON.stringify(result.body)).not.toContain("qualityWarnings");
+    expect(JSON.stringify(result.body)).not.toContain("diagnostics");
   });
 
   it("does not fail a completed analysis when warning logging fails", async () => {
     const result = await handlePokePilotAnalysis(validRequest, {
       analyze: async () => createModelResult(modelOutput),
       onQualityWarning: () => { throw new Error("log unavailable"); },
+      onValidationReview: () => { throw new Error("log unavailable"); },
     });
     expect(result.status).toBe(200);
     expect(result.body).toMatchObject({ ok: true, analysis: modelOutput });
+  });
+
+  it("classifies malformed paragraph elements without losing attempted usage", async () => {
+    const onOperationalEvent = vi.fn();
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze: async () => createModelResult({ ...groundedModelOutput, analysis: { ...modelOutput, paragraphs: [null] } }),
+      onOperationalEvent,
+    });
+    expect(result.body).toMatchObject({ ok: false, error: { code: "AI_INVALID_RESPONSE" } });
+    expect(onOperationalEvent).toHaveBeenCalledWith(expect.objectContaining({
+      type: "analysis-failure", usage: expect.objectContaining({ totalTokens: 150 }),
+    }));
   });
 
   it("omits recommendation candidates that were not supplied by the client", async () => {

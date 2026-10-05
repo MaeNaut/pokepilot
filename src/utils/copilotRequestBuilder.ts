@@ -4,12 +4,13 @@ import { calculateChampionsStats, defaultEvs, getNatureById, statKeys, } from ".
 import { translateGameName, translatePokemonName, type Locale, } from "../i18n/gameTranslations";
 import { type PokemonIndexEntry, type PokemonItem, type PokemonMove, type PokemonType, type TeamSlot } from "../types";
 import type { CopilotAnalysisRequest, CopilotMegaEvolutionSnapshot, CopilotMegaOptionSnapshot, CopilotMoveSnapshot, CopilotMoveSpreadTarget, CopilotSetOffensiveProfile, CopilotSetSnapshot, CopilotTeamDefensiveProfile, CopilotTeamOffensiveProfile, CreateCopilotRequestInput } from "./copilotContracts";
-import { createCopilotMechanicsSnapshot, type CopilotMechanicsSetInput } from "./copilotMechanics";
+import { compactCopilotMechanicEffect, createCopilotMechanicsSnapshot, type CopilotMechanicsSetInput } from "./copilotMechanics";
 import { createCopilotTypeLabels, localizeType } from "./copilotRequestLabels";
 import { createCopilotExactMatchupSnapshot, createCopilotMetaMatchupSnapshot, filterPersistentMatchupOptimization } from "./copilotRequestMatchupSnapshots";
 import { createCopilotOptimizationSnapshot, normalizeMoveCategory } from "./copilotRequestOptimizationSnapshot";
 import { createCopilotResponsibilityCounts, inferCopilotResponsibilities, type CopilotResponsibilityId, } from "./copilotResponsibilities";
 import { createCopilotTeamTactics } from "./copilotTeamTactics";
+import { selectRecommendationUsageOptions } from "./copilotRecommendationUsageSelection";
 import { getMegaEvolutionIndexEntry } from "./megaEvolution";
 import { hasPokemonCandidateFilters } from "./pokemonCandidateFilters";
 import { getPokemonNameFallback, } from "./pokemonDisplay";
@@ -47,6 +48,7 @@ function localizeRecommendationCandidates(
         abilityIndex.find((entry) => normalizeShowdownId(entry.id) === normalizeShowdownId(ability.id))?.name ??
           (/[\uac00-\ud7a3]/u.test(ability.displayName) ? formatIdLabel(ability.id) : ability.displayName)),
     })),
+    megaEvolution: createRecommendationMegaEvolution(candidate, pokemonIndex, abilityIndex, locale),
     target: {
       ...candidate.target,
       currentDisplayName: candidate.target.currentPokemonId
@@ -59,6 +61,9 @@ function localizeRecommendationCandidates(
           ...candidate.commonSet,
           moves: candidate.commonSet.moves.map((move) => ({
             ...move,
+            effect: compactCopilotMechanicEffect(
+              showdownData?.movesById[normalizeShowdownId(move.id)]?.detailedDescription ?? move.effect,
+            ),
             displayName: translateGameName(
               locale,
               "moves",
@@ -69,7 +74,51 @@ function localizeRecommendationCandidates(
           })),
         }
       : null,
+    ...(candidate.usageOptions ? { usageOptions: {
+      ...candidate.usageOptions,
+      alternativeMoves: candidate.usageOptions.alternativeMoves.map((move) => ({
+        ...move,
+        displayName: translateGameName(locale, "moves", move.id, move.displayName),
+      })),
+      items: candidate.usageOptions.items.map((item) => ({
+        ...item,
+        displayName: translateGameName(locale, "items", item.id, item.displayName),
+      })),
+      natures: candidate.usageOptions.natures.map((nature) => ({
+        ...nature,
+        displayName: translateGameName(locale, "natures", nature.id, nature.displayName),
+      })),
+    } } : {}),
   }));
+}
+
+function createRecommendationMegaEvolution(
+  candidate: CopilotRecommendationCandidateSnapshot,
+  pokemonIndex: PokemonIndexEntry[],
+  abilityIndex: NonNullable<CreateCopilotRequestInput["abilityIndex"]>,
+  locale: Locale,
+): CopilotRecommendationCandidateSnapshot["megaEvolution"] {
+  const item = candidate.commonSet?.item;
+  const entry = item ? getMegaEvolutionIndexEntry(candidate.pokemonId, { id: item, name: item }, pokemonIndex) : null;
+  if (!entry) return null;
+  const abilityId = entry.abilities[0];
+  const ability = abilityIndex.find((value) => normalizeShowdownId(value.id) === normalizeShowdownId(abilityId ?? ""));
+  const effect = compactCopilotMechanicEffect(ability?.effect);
+  return {
+    pokemonId: entry.name,
+    displayName: translatePokemonName(locale, {
+      id: entry.name, fallback: entry.displayName, speciesId: entry.speciesKey,
+      formKind: entry.formKind, formLabel: entry.formLabel,
+    }),
+    types: [...entry.types],
+    typeDisplayNames: entry.types.map((type) => localizeType(locale, type)),
+    ability: abilityId ? {
+      id: normalizeShowdownId(abilityId),
+      displayName: translateGameName(locale, "abilities", abilityId, ability?.name ?? abilityId),
+      ...(effect ? { effect } : {}),
+    } : null,
+    baseStats: entry.baseStats ? { ...entry.baseStats } : null,
+  };
 }
 
 function getSelectedMoves(
@@ -140,7 +189,7 @@ function getSelectedMoves(
     mechanics: selectedMoves.map(({ snapshot, source }) => ({
       id: snapshot.id,
       displayName: snapshot.displayName,
-      description: source?.description,
+      description: source?.detailedDescription ?? source?.description,
       tags: source?.tags,
       target: source?.target,
       priority: source?.priority,
@@ -418,10 +467,14 @@ export function createCopilotAnalysisRequest({
   const abilityEffect = (ability: string) => {
     const id = normalizeShowdownId(ability);
     const effect = abilityById.get(id)?.effect;
-    // The setter description only says that weather starts. Supply the canonical
-    // weather rules as well, without assigning the weather move to this Pokemon.
+    // Field setters need canonical rules too, without inventing a selected move.
     const weather = id === "sandstream" ? showdownData?.movesById.sandstorm?.description : undefined;
-    return weather ? [effect, `Weather rules: ${weather}`].filter(Boolean).join(" ") : effect;
+    const terrainMove = id === "psychicsurge" ? showdownData?.movesById.psychicterrain : undefined;
+    const terrain = terrainMove?.detailedDescription ?? terrainMove?.description;
+    return weather || terrain
+      ? [effect, weather && `Weather rules: ${weather}`, terrain && `Terrain rules: ${terrain}`]
+        .filter(Boolean).join(" ")
+      : effect;
   };
   const sets = team.flatMap((member, slotIndex) => {
     if (!member) {
@@ -649,6 +702,14 @@ export function createCopilotAnalysisRequest({
   const mechanics = createCopilotMechanicsSnapshot(mechanicsSets);
   const tactics = createCopilotTeamTactics(sets, mechanics, battleFormat);
 
+  const localizedCandidates = scope === "recommendation" || scope === "matchup"
+    ? localizeRecommendationCandidates(
+        locale,
+        scope === "matchup" ? threatReplacementCandidates.map(({ candidate }) => candidate) : recommendationCandidates,
+        pokemonIndex, showdownData, sets, abilityIndex,
+      )
+    : [];
+
   return {
     version: 35,
     locale,
@@ -660,19 +721,9 @@ export function createCopilotAnalysisRequest({
     sets,
     megaOptions: createMegaOptions(sets),
     candidateFilters,
-    recommendationCandidates:
-      scope === "recommendation" || scope === "matchup"
-        ? localizeRecommendationCandidates(
-            locale,
-            scope === "matchup"
-              ? threatReplacementCandidates.map(({ candidate }) => candidate)
-              : recommendationCandidates,
-            pokemonIndex,
-            showdownData,
-            sets,
-            abilityIndex,
-          )
-        : [],
+    recommendationCandidates: scope === "recommendation"
+      ? selectRecommendationUsageOptions(localizedCandidates, { sets, mechanics, battleFormat })
+      : localizedCandidates,
     optimization,
     matchup,
     mechanics,

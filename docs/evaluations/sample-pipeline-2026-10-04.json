@@ -1,0 +1,4683 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-04",
+  "scope": "optimization",
+  "promptVersion": 100,
+  "design": {
+    "cases": 6,
+    "repetitions": 3,
+    "completedResults": 54,
+    "paidCalls": 72,
+    "effort": "low",
+    "maxOutputTokens": 8000,
+    "selectionMaxOutputTokens": 4000,
+    "serialCalls": true,
+    "automaticRetries": 0,
+    "repairCalls": 0,
+    "evaluationKeyOnly": true,
+    "sameSingleCallInputs": true,
+    "selectionStageFullInput": true,
+    "explanationStage": "Selected candidates plus one rejected comparator; full team and current baseline retained; fixed candidate order and chosen form.",
+    "reviewMethod": "Same-agent manual review of all public paragraphs/cards against frozen records. Hash labels suppressed arm names during reading, but not independently blind; some earlier progress summaries revealed arm identity. Conservative counting excludes ambiguous references.",
+    "limitations": "Six cases, four new recombined rosters with familiar set components; same-agent manual review, not independent or population-representative.",
+    "pricingSources": [
+      "https://developers.openai.com/api/docs/models/gpt-6-luna",
+      "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+    ]
+  },
+  "hashes": {
+    "manifest": "2416add41c014fcfd6ec2a040470e0196880e0f34b5dbb85f5dee22abf9495ba",
+    "runner": "26101a94bda7cea2c0af82e10c33c37fc72c7fc715497174465dc4d8428ac7ba",
+    "reviewNotes": "9d7f70e49ce7cf661042ccb400986b262b0b76f2dce5916d91a2f3e902185e1c"
+  },
+  "cases": [
+    {
+      "id": "regression-charizard-ko",
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "format": "doubles",
+      "locale": "ko",
+      "player": "charizard",
+      "currentBuild": {
+        "natureId": "timid",
+        "natureDisplayName": "겁쟁이",
+        "evs": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "finalStats": {
+          "hp": 153,
+          "attack": 93,
+          "defense": 98,
+          "specialAttack": 129,
+          "specialDefense": 105,
+          "speed": 132
+        },
+        "itemId": "charizarditey",
+        "itemDisplayName": "리자몽나이트Y",
+        "moveIds": [
+          "heatwave",
+          "weatherball",
+          "hurricane",
+          "protect"
+        ]
+      },
+      "candidateCount": 9,
+      "newRoster": false,
+      "candidateIds": [
+        "usage-standard",
+        "usage-move-solarbeam-1",
+        "usage-move-solarbeam-0",
+        "usage-move-solarbeam-3",
+        "usage-spread-1",
+        "usage-spread-2",
+        "usage-spread-3",
+        "usage-spread-4",
+        "usage-spread-5"
+      ]
+    },
+    {
+      "id": "regression-salamence-en",
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "format": "singles",
+      "locale": "en",
+      "player": "salamence",
+      "currentBuild": {
+        "natureId": "naive",
+        "natureDisplayName": "Naive",
+        "evs": {
+          "hp": 1,
+          "attack": 19,
+          "defense": 0,
+          "specialAttack": 14,
+          "specialDefense": 0,
+          "speed": 32
+        },
+        "finalStats": {
+          "hp": 171,
+          "attack": 174,
+          "defense": 100,
+          "specialAttack": 144,
+          "specialDefense": 90,
+          "speed": 167
+        },
+        "itemId": "salamencite",
+        "itemDisplayName": "Salamencite",
+        "moveIds": [
+          "dragondance",
+          "earthquake",
+          "fireblast",
+          "doubleedge"
+        ]
+      },
+      "candidateCount": 12,
+      "newRoster": false,
+      "candidateIds": [
+        "set-current",
+        "usage-standard",
+        "usage-move-roost-0",
+        "usage-move-roost-2",
+        "usage-move-roost-1",
+        "usage-move-roost-3",
+        "usage-spread-1",
+        "usage-spread-2",
+        "usage-spread-3",
+        "usage-spread-4",
+        "usage-move-dracometeor-2",
+        "usage-spread-5"
+      ]
+    },
+    {
+      "id": "new-umbreon-en",
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "format": "singles",
+      "locale": "en",
+      "player": "umbreon",
+      "currentBuild": {
+        "natureId": "bold",
+        "natureDisplayName": "Bold",
+        "evs": {
+          "hp": 32,
+          "attack": 0,
+          "defense": 32,
+          "specialAttack": 0,
+          "specialDefense": 2,
+          "speed": 0
+        },
+        "finalStats": {
+          "hp": 202,
+          "attack": 76,
+          "defense": 178,
+          "specialAttack": 80,
+          "specialDefense": 152,
+          "speed": 85
+        },
+        "itemId": "leftovers",
+        "itemDisplayName": "Leftovers",
+        "moveIds": [
+          "foulplay",
+          "yawn",
+          "protect",
+          "wish"
+        ]
+      },
+      "candidateCount": 3,
+      "newRoster": true,
+      "candidateIds": [
+        "set-current",
+        "usage-item-2",
+        "usage-item-4"
+      ]
+    },
+    {
+      "id": "new-golisopod-ko",
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "format": "singles",
+      "locale": "ko",
+      "player": "golisopod",
+      "currentBuild": {
+        "natureId": "brave",
+        "natureDisplayName": "용감",
+        "evs": {
+          "hp": 31,
+          "attack": 32,
+          "defense": 1,
+          "specialAttack": 0,
+          "specialDefense": 2,
+          "speed": 0
+        },
+        "finalStats": {
+          "hp": 181,
+          "attack": 194,
+          "defense": 161,
+          "specialAttack": 80,
+          "specialDefense": 112,
+          "speed": 54
+        },
+        "itemId": "golisopite",
+        "itemDisplayName": "갑주무사나이트",
+        "moveIds": [
+          "ironhead",
+          "uturn",
+          "aquajet",
+          "drillrun"
+        ]
+      },
+      "candidateCount": 12,
+      "newRoster": true,
+      "candidateIds": [
+        "set-current",
+        "usage-standard",
+        "usage-move-suckerpunch-0",
+        "usage-move-suckerpunch-1",
+        "usage-move-suckerpunch-2",
+        "usage-move-suckerpunch-3",
+        "usage-spread-1",
+        "usage-move-firstimpression-1",
+        "usage-move-firstimpression-0",
+        "usage-move-firstimpression-2",
+        "usage-move-firstimpression-3",
+        "usage-move-leechlife-1"
+      ]
+    },
+    {
+      "id": "new-volcarona-en",
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "format": "doubles",
+      "locale": "en",
+      "player": "volcarona",
+      "currentBuild": {
+        "natureId": "timid",
+        "natureDisplayName": "Timid",
+        "evs": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "finalStats": {
+          "hp": 160,
+          "attack": 72,
+          "defense": 85,
+          "specialAttack": 155,
+          "specialDefense": 125,
+          "speed": 132
+        },
+        "itemId": "rockyhelmet",
+        "itemDisplayName": "Rocky Helmet",
+        "moveIds": [
+          "overheat",
+          "strugglebug",
+          "ragepowder",
+          "tailwind"
+        ]
+      },
+      "candidateCount": 12,
+      "newRoster": true,
+      "candidateIds": [
+        "usage-standard",
+        "usage-move-protect-2",
+        "usage-move-protect-3",
+        "usage-move-protect-0",
+        "usage-move-protect-1",
+        "usage-loadout-protect-2-sitrusberry",
+        "usage-loadout-protect-3-sitrusberry",
+        "usage-loadout-protect-0-sitrusberry",
+        "usage-loadout-protect-1-sitrusberry",
+        "usage-spread-1",
+        "usage-item-3",
+        "usage-item-4"
+      ]
+    },
+    {
+      "id": "new-garchomp-ko",
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "format": "doubles",
+      "locale": "ko",
+      "player": "garchomp",
+      "currentBuild": {
+        "natureId": "modest",
+        "natureDisplayName": "조심",
+        "evs": {
+          "hp": 0,
+          "attack": 0,
+          "defense": 0,
+          "specialAttack": 0,
+          "specialDefense": 0,
+          "speed": 0
+        },
+        "finalStats": {
+          "hp": 183,
+          "attack": 135,
+          "defense": 115,
+          "specialAttack": 110,
+          "specialDefense": 105,
+          "speed": 122
+        },
+        "itemId": "garchompitez",
+        "itemDisplayName": "한카리아스나이트Z",
+        "moveIds": [
+          "dragonpulse",
+          "earthpower",
+          "powergem",
+          "protect"
+        ]
+      },
+      "candidateCount": 9,
+      "newRoster": true,
+      "candidateIds": [
+        "usage-standard",
+        "usage-move-rockslide-2",
+        "usage-move-rockslide-0",
+        "usage-move-rockslide-1",
+        "usage-move-rockslide-3",
+        "usage-move-dragonclaw-0",
+        "usage-move-dragonclaw-1",
+        "usage-move-dragonclaw-2",
+        "usage-move-dragonclaw-3"
+      ]
+    }
+  ],
+  "rubric": {
+    "factualIssues": "Only explicit contradictions against frozen request facts; count each response once regardless of issue count.",
+    "strategicConcerns": "Separately recorded debatable advice or missing useful comparison, not treated as mechanically proven factual errors.",
+    "utilityScore": "0 unusable; 1 generic/action unclear; 2 concrete role and true gain/cost; 3 additionally meaningfully uses team roles/field/alternatives. Subjective same-agent review, not independent."
+  },
+  "summaries": [
+    {
+      "arm": "luna-single",
+      "results": 18,
+      "calls": 18,
+      "factualErrorResponses": 2,
+      "majorStrategicErrorResponses": 1,
+      "factualOrMajorStrategicErrorResponses": 3,
+      "invalidActionResponses": 1,
+      "presentationIssueResponses": 3,
+      "inputAmbiguityResponses": 1,
+      "publicModifiedByReview": 1,
+      "privateWarningResponses": 1,
+      "selectionChanged": 0,
+      "averageUtility": 1.9444444444444444,
+      "medianSeconds": 8.933,
+      "averageSeconds": 8.596944444444444,
+      "totalCostUsd": 0.029534105000000005,
+      "averageCostUsd": 0.0016407836111111114,
+      "averageNoCacheCostUsd": 0.0020202944444444437,
+      "averageInputTokens": 16540.166666666668,
+      "averageOutputTokens": 732.5555555555555,
+      "averageReasoningTokens": 278.05555555555554,
+      "averageTotalTokens": 17272.722222222223,
+      "byCase": [
+        {
+          "id": "regression-charizard-ko",
+          "factualErrorResponses": 1,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2.6666666666666665
+        },
+        {
+          "id": "regression-salamence-en",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 1,
+          "meanUtility": 1.3333333333333333
+        },
+        {
+          "id": "new-umbreon-en",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2
+        },
+        {
+          "id": "new-golisopod-ko",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2
+        },
+        {
+          "id": "new-volcarona-en",
+          "factualErrorResponses": 1,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 1.6666666666666667
+        },
+        {
+          "id": "new-garchomp-ko",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2
+        }
+      ]
+    },
+    {
+      "arm": "sol-single",
+      "results": 18,
+      "calls": 18,
+      "factualErrorResponses": 0,
+      "majorStrategicErrorResponses": 0,
+      "factualOrMajorStrategicErrorResponses": 0,
+      "invalidActionResponses": 0,
+      "presentationIssueResponses": 0,
+      "inputAmbiguityResponses": 0,
+      "publicModifiedByReview": 0,
+      "privateWarningResponses": 0,
+      "selectionChanged": 0,
+      "averageUtility": 3,
+      "medianSeconds": 13.0235,
+      "averageSeconds": 12.592944444444448,
+      "totalCostUsd": 0.5534658,
+      "averageCostUsd": 0.0307481,
+      "averageNoCacheCostUsd": 0.038766999999999996,
+      "averageInputTokens": 16540.166666666668,
+      "averageOutputTokens": 568.6666666666666,
+      "averageReasoningTokens": 53.388888888888886,
+      "averageTotalTokens": 17108.833333333332,
+      "byCase": [
+        {
+          "id": "regression-charizard-ko",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 3
+        },
+        {
+          "id": "regression-salamence-en",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 3
+        },
+        {
+          "id": "new-umbreon-en",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 3
+        },
+        {
+          "id": "new-golisopod-ko",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 3
+        },
+        {
+          "id": "new-volcarona-en",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 3
+        },
+        {
+          "id": "new-garchomp-ko",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 3
+        }
+      ]
+    },
+    {
+      "arm": "luna-split",
+      "results": 18,
+      "calls": 36,
+      "factualErrorResponses": 2,
+      "majorStrategicErrorResponses": 0,
+      "factualOrMajorStrategicErrorResponses": 2,
+      "invalidActionResponses": 0,
+      "presentationIssueResponses": 3,
+      "inputAmbiguityResponses": 1,
+      "publicModifiedByReview": 0,
+      "privateWarningResponses": 0,
+      "selectionChanged": 0,
+      "averageUtility": 2,
+      "medianSeconds": 12.3945,
+      "averageSeconds": 12.743277777777779,
+      "totalCostUsd": 0.053783204999999994,
+      "averageCostUsd": 0.002987955833333333,
+      "averageNoCacheCostUsd": 0.003561044444444445,
+      "averageInputTokens": 30590.722222222223,
+      "averageOutputTokens": 1003.9444444444445,
+      "averageReasoningTokens": 519.0555555555555,
+      "averageTotalTokens": 31594.666666666668,
+      "byCase": [
+        {
+          "id": "regression-charizard-ko",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2.6666666666666665
+        },
+        {
+          "id": "regression-salamence-en",
+          "factualErrorResponses": 1,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2
+        },
+        {
+          "id": "new-umbreon-en",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2
+        },
+        {
+          "id": "new-golisopod-ko",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 1.6666666666666667
+        },
+        {
+          "id": "new-volcarona-en",
+          "factualErrorResponses": 0,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 2
+        },
+        {
+          "id": "new-garchomp-ko",
+          "factualErrorResponses": 1,
+          "majorStrategicErrorResponses": 0,
+          "meanUtility": 1.6666666666666667
+        }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "key": "new-garchomp-ko-luna-single-r1",
+      "blindId": "838d8217",
+      "id": "new-garchomp-ko",
+      "arm": "luna-single",
+      "repetition": 1,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "08ab0e4b97ab1730f3f85aed375197a4aeb3e81953c2b46cdc27a7d95c9dbacf",
+      "publicOutputHash": "9d7ff7feebee99abe43ba22207a4d25c0dcd8d7b87ce0ce285f48a714c7d485a",
+      "reviewedPublicOutputHash": "9d7ff7feebee99abe43ba22207a4d25c0dcd8d7b87ce0ce285f48a714c7d485a",
+      "durationMs": 8483,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16102,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 741,
+        "reasoningTokens": 323,
+        "totalTokens": 16843,
+        "costUsd": 0.00157219,
+        "noCacheCostUsd": 0.0019807
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Says type-choice breadth is lost although Power Gem and Rock Slide are both Rock; treated as imprecise wording rather than a definite typing claim. No unchanged/special-invested candidate exists."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "f28f35fe049da57fce057c09faeea4ddbb6bb3590b1cc5aee3bf79f0031b4a0a",
+          "inputHash": "b84a1b5bbcfdcf4e72f57c1e8cf7f14ddf4c978844b50b5b69191cae7cdac10a",
+          "outputHash": "08ab0e4b97ab1730f3f85aed375197a4aeb3e81953c2b46cdc27a7d95c9dbacf",
+          "durationMs": 8483,
+          "usage": {
+            "inputTokens": 16102,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 741,
+            "reasoningTokens": 323,
+            "totalTokens": 16843,
+            "costUsd": 0.00157219,
+            "noCacheCostUsd": 0.0019807
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-luna-single-r2",
+      "blindId": "0728ea47",
+      "id": "new-garchomp-ko",
+      "arm": "luna-single",
+      "repetition": 2,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "49d0300f058f3c5d1db6961d2b3a22bd58c64cfb2469563d25e11e0e9e278880",
+      "publicOutputHash": "3e0a59a7f6b702d1d8d3de81152fb9fd343ba59588065fc66611a71cd239beb1",
+      "reviewedPublicOutputHash": "3e0a59a7f6b702d1d8d3de81152fb9fd343ba59588065fc66611a71cd239beb1",
+      "durationMs": 8970,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16102,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 781,
+        "reasoningTokens": 294,
+        "totalTokens": 16883,
+        "costUsd": 0.00159219,
+        "noCacheCostUsd": 0.0020007000000000002
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "presentationIssues": [
+          "English terms coverage and flinch leak into Korean prose."
+        ],
+        "strategicConcerns": [
+          "No special-invested unchanged-loadout candidate in input."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "f28f35fe049da57fce057c09faeea4ddbb6bb3590b1cc5aee3bf79f0031b4a0a",
+          "inputHash": "b84a1b5bbcfdcf4e72f57c1e8cf7f14ddf4c978844b50b5b69191cae7cdac10a",
+          "outputHash": "49d0300f058f3c5d1db6961d2b3a22bd58c64cfb2469563d25e11e0e9e278880",
+          "durationMs": 8970,
+          "usage": {
+            "inputTokens": 16102,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 781,
+            "reasoningTokens": 294,
+            "totalTokens": 16883,
+            "costUsd": 0.00159219,
+            "noCacheCostUsd": 0.0020007000000000002
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-luna-single-r3",
+      "blindId": "5f695455",
+      "id": "new-garchomp-ko",
+      "arm": "luna-single",
+      "repetition": 3,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "75ec468b82c422aca7090c49f224fa37200d59847c0b00041a4969cde0db9281",
+      "publicOutputHash": "8d99363a1f2552b7625e892cb02655de763443dfca8f8ac85c889f5bb1f41475",
+      "reviewedPublicOutputHash": "8d99363a1f2552b7625e892cb02655de763443dfca8f8ac85c889f5bb1f41475",
+      "durationMs": 9083,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16102,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 795,
+        "reasoningTokens": 222,
+        "totalTokens": 16897,
+        "costUsd": 0.0015991900000000001,
+        "noCacheCostUsd": 0.0020077
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "inputAmbiguities": [
+          "Calls selected proposal a one-move adjustment without acknowledging its stat investment changes; variant=move also applies a fallback full spread when current allocation is incomplete."
+        ],
+        "strategicConcerns": [
+          "Discusses Attack/Speed investment only for standard comparator even though selected move candidate has the same investment."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "f28f35fe049da57fce057c09faeea4ddbb6bb3590b1cc5aee3bf79f0031b4a0a",
+          "inputHash": "b84a1b5bbcfdcf4e72f57c1e8cf7f14ddf4c978844b50b5b69191cae7cdac10a",
+          "outputHash": "75ec468b82c422aca7090c49f224fa37200d59847c0b00041a4969cde0db9281",
+          "durationMs": 9083,
+          "usage": {
+            "inputTokens": 16102,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 795,
+            "reasoningTokens": 222,
+            "totalTokens": 16897,
+            "costUsd": 0.0015991900000000001,
+            "noCacheCostUsd": 0.0020077
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-luna-split-r1",
+      "blindId": "15a850b9",
+      "id": "new-garchomp-ko",
+      "arm": "luna-split",
+      "repetition": 1,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "8fc87c18886cafb96448bb80e8b49d54a6fb7774c2a9ace38fb95714a454e875",
+      "publicOutputHash": "f958ce7e268ba6504005f441694e89b0f83be1af8f541b9a94750fb1a0095000",
+      "reviewedPublicOutputHash": "f958ce7e268ba6504005f441694e89b0f83be1af8f541b9a94750fb1a0095000",
+      "durationMs": 15154,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 29648,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 3757,
+        "outputTokens": 1239,
+        "reasoningTokens": 679,
+        "totalTokens": 30887,
+        "costUsd": 0.003269715,
+        "noCacheCostUsd": 0.0035843000000000003
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-move-rockslide-2"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [
+          {
+            "quote": "현재 특수 기술 세 가지를 유지하는 변경안",
+            "evidence": "Selected usage-move-rockslide-2 removes special Power Gem for physical Rock Slide; only two special attacks remain. Its description of the standard comparator also reverses the two removed-move bindings.",
+            "category": "move-binding"
+          }
+        ],
+        "strategicConcerns": [
+          "Shortlist offers no unchanged/special-invested alternative; selected proposal cannot establish superiority to a properly invested special Mega Z build."
+        ],
+        "utilityScore": 1
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "d6cf738e61c73caebde18265513c46e9e4557730dd303ccb18970e74999c7d49",
+          "inputHash": "f8397322899606182f1bb8823ad6cbd9730ea7467e6de7cbe4032e9278a8222f",
+          "outputHash": "2a347f11186ceb8f36219c1f5ad2c448338a30be89f80e8dc5aac2dd806775dc",
+          "durationMs": 5892,
+          "usage": {
+            "inputTokens": 15424,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3757,
+            "outputTokens": 433,
+            "reasoningTokens": 399,
+            "totalTokens": 15857,
+            "costUsd": 0.001852825,
+            "noCacheCostUsd": 0.0017589
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "c3959df994d39dd43b381cb7cd4c2c77be68323911e59d446e754390ea081f56",
+          "inputHash": "6fd5bc52a4f07cc02ce8fd3a44aef8e27a9a80a365669878062bfca27abb2725",
+          "outputHash": "8fc87c18886cafb96448bb80e8b49d54a6fb7774c2a9ace38fb95714a454e875",
+          "durationMs": 9262,
+          "usage": {
+            "inputTokens": 14224,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 806,
+            "reasoningTokens": 280,
+            "totalTokens": 15030,
+            "costUsd": 0.0014168899999999999,
+            "noCacheCostUsd": 0.0018254
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-luna-split-r2",
+      "blindId": "45075211",
+      "id": "new-garchomp-ko",
+      "arm": "luna-split",
+      "repetition": 2,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "9ead3ac584256a4e3b6694f91bd9b4678944bb9081b27bf6f44d7636810d3124",
+      "publicOutputHash": "7de925b46bd826c17a1eaab50bde3963eb721d936926b89ed30b8ad78d456822",
+      "reviewedPublicOutputHash": "7de925b46bd826c17a1eaab50bde3963eb721d936926b89ed30b8ad78d456822",
+      "durationMs": 11513,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 29648,
+        "cachedInputTokens": 8296,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1012,
+        "reasoningTokens": 479,
+        "totalTokens": 30660,
+        "costUsd": 0.0027241599999999998,
+        "noCacheCostUsd": 0.0034708
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-move-rockslide-2"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "No special-invested unchanged-loadout candidate in input."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "d6cf738e61c73caebde18265513c46e9e4557730dd303ccb18970e74999c7d49",
+          "inputHash": "f8397322899606182f1bb8823ad6cbd9730ea7467e6de7cbe4032e9278a8222f",
+          "outputHash": "2a347f11186ceb8f36219c1f5ad2c448338a30be89f80e8dc5aac2dd806775dc",
+          "durationMs": 3458,
+          "usage": {
+            "inputTokens": 15424,
+            "cachedInputTokens": 3757,
+            "cacheWriteTokens": 0,
+            "outputTokens": 304,
+            "reasoningTokens": 270,
+            "totalTokens": 15728,
+            "costUsd": 0.00135627,
+            "noCacheCostUsd": 0.0016944
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "c3959df994d39dd43b381cb7cd4c2c77be68323911e59d446e754390ea081f56",
+          "inputHash": "6fd5bc52a4f07cc02ce8fd3a44aef8e27a9a80a365669878062bfca27abb2725",
+          "outputHash": "9ead3ac584256a4e3b6694f91bd9b4678944bb9081b27bf6f44d7636810d3124",
+          "durationMs": 8055,
+          "usage": {
+            "inputTokens": 14224,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 708,
+            "reasoningTokens": 209,
+            "totalTokens": 14932,
+            "costUsd": 0.0013678899999999999,
+            "noCacheCostUsd": 0.0017764
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-luna-split-r3",
+      "blindId": "5802b5c9",
+      "id": "new-garchomp-ko",
+      "arm": "luna-split",
+      "repetition": 3,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "43ba0a0c880753348854ea5f49d1c2b9a0093137f24ac67c8c57165ab863ad03",
+      "publicOutputHash": "4cda665e260025334d82ac309f857a4597500f4eae8f3cf7a6f687cb55fea76d",
+      "reviewedPublicOutputHash": "4cda665e260025334d82ac309f857a4597500f4eae8f3cf7a6f687cb55fea76d",
+      "durationMs": 12493,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 29648,
+        "cachedInputTokens": 8296,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1022,
+        "reasoningTokens": 547,
+        "totalTokens": 30670,
+        "costUsd": 0.0027291599999999996,
+        "noCacheCostUsd": 0.0034758000000000002
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-move-rockslide-2"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "presentationIssues": [
+          "Exposes usage-standard identifier and uses noncanonical 대지 타입 instead of 땅 타입."
+        ],
+        "strategicConcerns": [
+          "Does not mention that the selected move proposal also changes Stat Points."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "d6cf738e61c73caebde18265513c46e9e4557730dd303ccb18970e74999c7d49",
+          "inputHash": "f8397322899606182f1bb8823ad6cbd9730ea7467e6de7cbe4032e9278a8222f",
+          "outputHash": "2a347f11186ceb8f36219c1f5ad2c448338a30be89f80e8dc5aac2dd806775dc",
+          "durationMs": 5787,
+          "usage": {
+            "inputTokens": 15424,
+            "cachedInputTokens": 3757,
+            "cacheWriteTokens": 0,
+            "outputTokens": 471,
+            "reasoningTokens": 437,
+            "totalTokens": 15895,
+            "costUsd": 0.00143977,
+            "noCacheCostUsd": 0.0017779
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "c3959df994d39dd43b381cb7cd4c2c77be68323911e59d446e754390ea081f56",
+          "inputHash": "6fd5bc52a4f07cc02ce8fd3a44aef8e27a9a80a365669878062bfca27abb2725",
+          "outputHash": "43ba0a0c880753348854ea5f49d1c2b9a0093137f24ac67c8c57165ab863ad03",
+          "durationMs": 6706,
+          "usage": {
+            "inputTokens": 14224,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 551,
+            "reasoningTokens": 110,
+            "totalTokens": 14775,
+            "costUsd": 0.0012893899999999999,
+            "noCacheCostUsd": 0.0016979
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-sol-single-r1",
+      "blindId": "631aab3a",
+      "id": "new-garchomp-ko",
+      "arm": "sol-single",
+      "repetition": 1,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "899c308625b3b8519d131edbee5c723e24fea8b319ec535bfe7449930eb8b320",
+      "publicOutputHash": "e7be46779c7144b939b983ef26fab29619281a1b6142ffdd439ec4dc4ce6f338",
+      "reviewedPublicOutputHash": "e7be46779c7144b939b983ef26fab29619281a1b6142ffdd439ec4dc4ce6f338",
+      "durationMs": 10170,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16102,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 553,
+        "reasoningTokens": 42,
+        "totalTokens": 16655,
+        "costUsd": 0.0291099,
+        "noCacheCostUsd": 0.037734
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Candidate coverage limitation: all supplied alternatives invest physical Attack, not special Attack. The model gives a reasonable bounded choice but not a complete optimization."
+        ],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "40aeaa72b98d39ace5154289d3d878b8916bbe5339749845fd0ad9ab9d448109",
+          "inputHash": "b84a1b5bbcfdcf4e72f57c1e8cf7f14ddf4c978844b50b5b69191cae7cdac10a",
+          "outputHash": "899c308625b3b8519d131edbee5c723e24fea8b319ec535bfe7449930eb8b320",
+          "durationMs": 10170,
+          "usage": {
+            "inputTokens": 16102,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 553,
+            "reasoningTokens": 42,
+            "totalTokens": 16655,
+            "costUsd": 0.0291099,
+            "noCacheCostUsd": 0.037734
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-sol-single-r2",
+      "blindId": "ad49cad4",
+      "id": "new-garchomp-ko",
+      "arm": "sol-single",
+      "repetition": 2,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "f6450232272eed17120f82fd15920ff75616c0f7d96f460745b70717b0985f15",
+      "publicOutputHash": "831fd8c8936c6ecc95c1b90aa5dfa20526a6bd29270c606bde598997a1cd2d38",
+      "reviewedPublicOutputHash": "831fd8c8936c6ecc95c1b90aa5dfa20526a6bd29270c606bde598997a1cd2d38",
+      "durationMs": 12989,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16102,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 569,
+        "reasoningTokens": 38,
+        "totalTokens": 16671,
+        "costUsd": 0.0292699,
+        "noCacheCostUsd": 0.037894
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "No special-invested unchanged-loadout candidate in input."
+        ],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "40aeaa72b98d39ace5154289d3d878b8916bbe5339749845fd0ad9ab9d448109",
+          "inputHash": "b84a1b5bbcfdcf4e72f57c1e8cf7f14ddf4c978844b50b5b69191cae7cdac10a",
+          "outputHash": "f6450232272eed17120f82fd15920ff75616c0f7d96f460745b70717b0985f15",
+          "durationMs": 12989,
+          "usage": {
+            "inputTokens": 16102,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 569,
+            "reasoningTokens": 38,
+            "totalTokens": 16671,
+            "costUsd": 0.0292699,
+            "noCacheCostUsd": 0.037894
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-garchomp-ko-sol-single-r3",
+      "blindId": "07a86efd",
+      "id": "new-garchomp-ko",
+      "arm": "sol-single",
+      "repetition": 3,
+      "requestHash": "b8bb96f6d534cbdb48beae7cf29f75cdd1c24afc7cd819f3cab2f0e4326e49fd",
+      "rawOutputHash": "a1798ba293661a626cb7df7044ce15434403d561f583a40a12755ab0c77d7ba2",
+      "publicOutputHash": "0e4f3135bc4a03f1917e13ab10c62cb11ad59007449fbc023fe1360f510bb78c",
+      "reviewedPublicOutputHash": "0e4f3135bc4a03f1917e13ab10c62cb11ad59007449fbc023fe1360f510bb78c",
+      "durationMs": 11941,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16102,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 533,
+        "reasoningTokens": 42,
+        "totalTokens": 16635,
+        "costUsd": 0.028909900000000002,
+        "noCacheCostUsd": 0.037534
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-rockslide-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Constrained to physical-investment shortlist; clearly admits that no Special Attack investment is added."
+        ],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "40aeaa72b98d39ace5154289d3d878b8916bbe5339749845fd0ad9ab9d448109",
+          "inputHash": "b84a1b5bbcfdcf4e72f57c1e8cf7f14ddf4c978844b50b5b69191cae7cdac10a",
+          "outputHash": "a1798ba293661a626cb7df7044ce15434403d561f583a40a12755ab0c77d7ba2",
+          "durationMs": 11941,
+          "usage": {
+            "inputTokens": 16102,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 533,
+            "reasoningTokens": 42,
+            "totalTokens": 16635,
+            "costUsd": 0.028909900000000002,
+            "noCacheCostUsd": 0.037534
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-luna-single-r1",
+      "blindId": "82036577",
+      "id": "new-golisopod-ko",
+      "arm": "luna-single",
+      "repetition": 1,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "1f488c7057ca2debc6ef0209cba19a31eef5e5e73939268b83b9673ab3d09e0a",
+      "publicOutputHash": "5ebfc4f142635c2594a8836dbe33c68b2e7c3de92b0dbb631917f54c40bfb65c",
+      "reviewedPublicOutputHash": "5ebfc4f142635c2594a8836dbe33c68b2e7c3de92b0dbb631917f54c40bfb65c",
+      "durationMs": 10615,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17282,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 893,
+        "reasoningTokens": 382,
+        "totalTokens": 18175,
+        "costUsd": 0.0017661900000000004,
+        "noCacheCostUsd": 0.0021747
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-firstimpression-0",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Recommends removing post-Mega Steel STAB without comparing the Drill Run sibling.",
+          "아이언헤드도 다른 후보가 제공하지 않는 강철 기술 is ambiguous: false across all supplied candidates but true versus the only other recommended card. Not counted as a hard factual contradiction after contextual reread."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "46068706c10426703015da5543bab6c47d71115874b66a957ce30bd8f6c327d7",
+          "inputHash": "26a8d34182efa60256f070182e73c356258b6a783082b42c3f1daa75cfe9c2ea",
+          "outputHash": "1f488c7057ca2debc6ef0209cba19a31eef5e5e73939268b83b9673ab3d09e0a",
+          "durationMs": 10615,
+          "usage": {
+            "inputTokens": 17282,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 893,
+            "reasoningTokens": 382,
+            "totalTokens": 18175,
+            "costUsd": 0.0017661900000000004,
+            "noCacheCostUsd": 0.0021747
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-luna-single-r2",
+      "blindId": "c7ccaa3e",
+      "id": "new-golisopod-ko",
+      "arm": "luna-single",
+      "repetition": 2,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "6e41aa4864b5cb5e7d2ab2ca19e1f3d86c8ff9c45b22fd954a76f76e720ec624",
+      "publicOutputHash": "2bffea076b80cce3f3c630c0c45b6c5a187d0604d33c2ab596ca10a46588f86c",
+      "reviewedPublicOutputHash": "2bffea076b80cce3f3c630c0c45b6c5a187d0604d33c2ab596ca10a46588f86c",
+      "durationMs": 7978,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17282,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 717,
+        "reasoningTokens": 235,
+        "totalTokens": 17999,
+        "costUsd": 0.0016781900000000002,
+        "noCacheCostUsd": 0.0020867
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-firstimpression-0",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Omits a comparison with the Drill Run replacement that retains Steel STAB. 'Must give up Iron Head' is ambiguous; could refer specifically to its chosen candidate, so not counted as a factual error."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "46068706c10426703015da5543bab6c47d71115874b66a957ce30bd8f6c327d7",
+          "inputHash": "26a8d34182efa60256f070182e73c356258b6a783082b42c3f1daa75cfe9c2ea",
+          "outputHash": "6e41aa4864b5cb5e7d2ab2ca19e1f3d86c8ff9c45b22fd954a76f76e720ec624",
+          "durationMs": 7978,
+          "usage": {
+            "inputTokens": 17282,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 717,
+            "reasoningTokens": 235,
+            "totalTokens": 17999,
+            "costUsd": 0.0016781900000000002,
+            "noCacheCostUsd": 0.0020867
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-luna-single-r3",
+      "blindId": "ab53d155",
+      "id": "new-golisopod-ko",
+      "arm": "luna-single",
+      "repetition": 3,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "f814c0be52773a1cd5a1007393344901e5c05e4bfa62a6763156dea105669bfc",
+      "publicOutputHash": "4a9a8b11ad71aed6010f92b7acbfb25176782b21b2a5e1b2da6764060d86f4a8",
+      "reviewedPublicOutputHash": "4a9a8b11ad71aed6010f92b7acbfb25176782b21b2a5e1b2da6764060d86f4a8",
+      "durationMs": 8896,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17282,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 778,
+        "reasoningTokens": 304,
+        "totalTokens": 18060,
+        "costUsd": 0.0017086900000000003,
+        "noCacheCostUsd": 0.0021171999999999996
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-firstimpression-0",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "presentationIssues": [
+          "Misspells 아이언헤드 as 아이언헤이드 in one recommendation."
+        ],
+        "strategicConcerns": [
+          "No comparison with Drill Run replacement; gives up Steel STAB for conditional Bug priority."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "46068706c10426703015da5543bab6c47d71115874b66a957ce30bd8f6c327d7",
+          "inputHash": "26a8d34182efa60256f070182e73c356258b6a783082b42c3f1daa75cfe9c2ea",
+          "outputHash": "f814c0be52773a1cd5a1007393344901e5c05e4bfa62a6763156dea105669bfc",
+          "durationMs": 8896,
+          "usage": {
+            "inputTokens": 17282,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 778,
+            "reasoningTokens": 304,
+            "totalTokens": 18060,
+            "costUsd": 0.0017086900000000003,
+            "noCacheCostUsd": 0.0021171999999999996
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-luna-split-r1",
+      "blindId": "4d0b219f",
+      "id": "new-golisopod-ko",
+      "arm": "luna-split",
+      "repetition": 1,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "8f1db08d9a0f08930bde039f99b095760171058b16c7a163bed3a017b3229914",
+      "publicOutputHash": "3168599aed226632d036f1842cafbc39af6ca1d601f04810a2fd3d9e32bd11ff",
+      "reviewedPublicOutputHash": "3168599aed226632d036f1842cafbc39af6ca1d601f04810a2fd3d9e32bd11ff",
+      "durationMs": 11758,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31104,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 3801,
+        "outputTokens": 1077,
+        "reasoningTokens": 527,
+        "totalTokens": 32181,
+        "costUsd": 0.003335415,
+        "noCacheCostUsd": 0.0036489
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-move-firstimpression-2"
+        ],
+        "comparisonCandidateId": "set-current",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-firstimpression-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Trades repeatable rain-boosted Aqua Jet for First Impression; gain/cost is explicit, but no comparison with a sibling retaining Aqua Jet."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "c5485e8e94845b27e2d4dacc4efef56c54833b12e5fb2873906e096eeb385649",
+          "inputHash": "980c88180806d145e6d11ffd5a9f6fc440b27e53b5b0a841d5c9210114f0137c",
+          "outputHash": "9d67742cb3a6280110b627baf1ba383b5bbe21bf3de2cfd97bd4ffe3ec0c991b",
+          "durationMs": 4621,
+          "usage": {
+            "inputTokens": 16648,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3801,
+            "outputTokens": 397,
+            "reasoningTokens": 362,
+            "totalTokens": 17045,
+            "costUsd": 0.001958325,
+            "noCacheCostUsd": 0.0018633000000000002
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "1cb2a4e91164721e7ec978ea2d307261aa4d59c0220931a157940bf5d3cc40ea",
+          "inputHash": "f0d1f34eda69ff026ef51fd2f636a133675e2f373a689530c34df0dc14ec646a",
+          "outputHash": "8f1db08d9a0f08930bde039f99b095760171058b16c7a163bed3a017b3229914",
+          "durationMs": 7137,
+          "usage": {
+            "inputTokens": 14456,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 680,
+            "reasoningTokens": 165,
+            "totalTokens": 15136,
+            "costUsd": 0.00137709,
+            "noCacheCostUsd": 0.0017856
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-luna-split-r2",
+      "blindId": "a53b2d4d",
+      "id": "new-golisopod-ko",
+      "arm": "luna-split",
+      "repetition": 2,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "5bfce011b6f77092b9b205bc90a80385bcfa3f531a406612c0f039e13425c825",
+      "publicOutputHash": "5b3ee845b0ba3639c6fd0b053746259ab10251611817ec099ad1200e9d99e670",
+      "reviewedPublicOutputHash": "5b3ee845b0ba3639c6fd0b053746259ab10251611817ec099ad1200e9d99e670",
+      "durationMs": 17042,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31423,
+        "cachedInputTokens": 8340,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1076,
+        "reasoningTokens": 504,
+        "totalTokens": 32499,
+        "costUsd": 0.0029297,
+        "noCacheCostUsd": 0.0036803
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-move-firstimpression-3",
+          "usage-move-suckerpunch-3"
+        ],
+        "comparisonCandidateId": "set-current",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-firstimpression-3",
+        "usage-move-suckerpunch-3"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "c5485e8e94845b27e2d4dacc4efef56c54833b12e5fb2873906e096eeb385649",
+          "inputHash": "980c88180806d145e6d11ffd5a9f6fc440b27e53b5b0a841d5c9210114f0137c",
+          "outputHash": "973cd6faa16c9b85c0cb89060c415f6dad13dd2889c1e4f83b0a855990a4ba82",
+          "durationMs": 5842,
+          "usage": {
+            "inputTokens": 16648,
+            "cachedInputTokens": 3801,
+            "cacheWriteTokens": 0,
+            "outputTokens": 369,
+            "reasoningTokens": 324,
+            "totalTokens": 17017,
+            "costUsd": 0.00150721,
+            "noCacheCostUsd": 0.0018493000000000001
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "b6e23e68eaa70e19433e9308db8f30a94da552aaf3511e39071a3c35e7fd9b28",
+          "inputHash": "53cd525d859f99edd37cc076c0125c09f78ab8d8e408fa575da0ceccbc1f2dc2",
+          "outputHash": "5bfce011b6f77092b9b205bc90a80385bcfa3f531a406612c0f039e13425c825",
+          "durationMs": 11200,
+          "usage": {
+            "inputTokens": 14775,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 707,
+            "reasoningTokens": 180,
+            "totalTokens": 15482,
+            "costUsd": 0.00142249,
+            "noCacheCostUsd": 0.001831
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-luna-split-r3",
+      "blindId": "36459cf6",
+      "id": "new-golisopod-ko",
+      "arm": "luna-split",
+      "repetition": 3,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "b25a4f8a9737eb2e39704d42cafa907bab65c722848dc18bc8edb73237658eb2",
+      "publicOutputHash": "25c7a5d8f4f74489be2ba35e23653741fb394d18053acadc5b93e8652f111fdb",
+      "reviewedPublicOutputHash": "25c7a5d8f4f74489be2ba35e23653741fb394d18053acadc5b93e8652f111fdb",
+      "durationMs": 16064,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31373,
+        "cachedInputTokens": 8340,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1363,
+        "reasoningTokens": 722,
+        "totalTokens": 32736,
+        "costUsd": 0.0030682,
+        "noCacheCostUsd": 0.0038188
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-spread-1",
+          "usage-move-firstimpression-0"
+        ],
+        "comparisonCandidateId": "set-current",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-move-firstimpression-0"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "inputAmbiguities": [
+          "Interprets reducedRoleStats.speed as a literal Speed decrease, though 54->60 is printed correctly. The producer marks loss of a deliberately slow role; existing scope text describes reducedRoleStats as lower final stats. Not counted as an unambiguous model-only factual error."
+        ],
+        "presentationIssues": [
+          "Exposes implementation role metadata and asks user to reconcile it."
+        ],
+        "strategicConcerns": [
+          "No comparison against First Impression over Drill Run."
+        ],
+        "utilityScore": 1
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "c5485e8e94845b27e2d4dacc4efef56c54833b12e5fb2873906e096eeb385649",
+          "inputHash": "980c88180806d145e6d11ffd5a9f6fc440b27e53b5b0a841d5c9210114f0137c",
+          "outputHash": "2bceb499d3cb43c7e6554566ea1a2e5528d6a664daf517d5fdf720d31a189576",
+          "durationMs": 6685,
+          "usage": {
+            "inputTokens": 16648,
+            "cachedInputTokens": 3801,
+            "cacheWriteTokens": 0,
+            "outputTokens": 473,
+            "reasoningTokens": 432,
+            "totalTokens": 17121,
+            "costUsd": 0.0015592100000000001,
+            "noCacheCostUsd": 0.0019013
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "61a1f8345aa6921a6ae7ad512c468a3ef7cb12d2003fe9b08007b061eb8666bf",
+          "inputHash": "e769c4db006924dd9f8176b15e4d15305c0343a67a5b2a88cf90657042f40ff9",
+          "outputHash": "b25a4f8a9737eb2e39704d42cafa907bab65c722848dc18bc8edb73237658eb2",
+          "durationMs": 9379,
+          "usage": {
+            "inputTokens": 14725,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 890,
+            "reasoningTokens": 290,
+            "totalTokens": 15615,
+            "costUsd": 0.00150899,
+            "noCacheCostUsd": 0.0019175
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-sol-single-r1",
+      "blindId": "b6ad3b9a",
+      "id": "new-golisopod-ko",
+      "arm": "sol-single",
+      "repetition": 1,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "d6ffb4cf93be034eae06a3d2836075b13d4343b86aee3d430e636f22fb54f9cc",
+      "publicOutputHash": "db23a0284b3c19d656657c6e8699cb77ac55f4cc8f007ae4fce4dade0d3719f9",
+      "reviewedPublicOutputHash": "db23a0284b3c19d656657c6e8699cb77ac55f4cc8f007ae4fce4dade0d3719f9",
+      "durationMs": 14316,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17282,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 781,
+        "reasoningTokens": 60,
+        "totalTokens": 18063,
+        "costUsd": 0.0337499,
+        "noCacheCostUsd": 0.042374
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-move-leechlife-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "9dbe0c440f57c468c8d54a05ad22a90cf68df301c912c7d464f2075bb8f5bef3",
+          "inputHash": "26a8d34182efa60256f070182e73c356258b6a783082b42c3f1daa75cfe9c2ea",
+          "outputHash": "d6ffb4cf93be034eae06a3d2836075b13d4343b86aee3d430e636f22fb54f9cc",
+          "durationMs": 14316,
+          "usage": {
+            "inputTokens": 17282,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 781,
+            "reasoningTokens": 60,
+            "totalTokens": 18063,
+            "costUsd": 0.0337499,
+            "noCacheCostUsd": 0.042374
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-sol-single-r2",
+      "blindId": "f367b379",
+      "id": "new-golisopod-ko",
+      "arm": "sol-single",
+      "repetition": 2,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "93d84048963cf417555f9b43cf19c3f65bae23281ca1b950c938cf9bab73488b",
+      "publicOutputHash": "5ce7f8a4299d85bfcc10777ef08d918bfd03d33a45ee4623e783ef2e98c51ffd",
+      "reviewedPublicOutputHash": "5ce7f8a4299d85bfcc10777ef08d918bfd03d33a45ee4623e783ef2e98c51ffd",
+      "durationMs": 13058,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17282,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 662,
+        "reasoningTokens": 59,
+        "totalTokens": 17944,
+        "costUsd": 0.0325599,
+        "noCacheCostUsd": 0.041184
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-move-leechlife-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "9dbe0c440f57c468c8d54a05ad22a90cf68df301c912c7d464f2075bb8f5bef3",
+          "inputHash": "26a8d34182efa60256f070182e73c356258b6a783082b42c3f1daa75cfe9c2ea",
+          "outputHash": "93d84048963cf417555f9b43cf19c3f65bae23281ca1b950c938cf9bab73488b",
+          "durationMs": 13058,
+          "usage": {
+            "inputTokens": 17282,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 662,
+            "reasoningTokens": 59,
+            "totalTokens": 17944,
+            "costUsd": 0.0325599,
+            "noCacheCostUsd": 0.041184
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-golisopod-ko-sol-single-r3",
+      "blindId": "8e1d5056",
+      "id": "new-golisopod-ko",
+      "arm": "sol-single",
+      "repetition": 3,
+      "requestHash": "37a725ca9d2a7966ce4a48930567321c046ad6c2cc1454890215d9797314b4b4",
+      "rawOutputHash": "588b8a9fdadd31c249654879eea01317349a5af7c26338b0207a33543bd59b5b",
+      "publicOutputHash": "fcd4106dd25955d60114548b9f3657543a8addf40462e77163f8eb9e0af99a78",
+      "reviewedPublicOutputHash": "fcd4106dd25955d60114548b9f3657543a8addf40462e77163f8eb9e0af99a78",
+      "durationMs": 14999,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17282,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 718,
+        "reasoningTokens": 119,
+        "totalTokens": 18000,
+        "costUsd": 0.0331199,
+        "noCacheCostUsd": 0.041744
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-move-leechlife-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "9dbe0c440f57c468c8d54a05ad22a90cf68df301c912c7d464f2075bb8f5bef3",
+          "inputHash": "26a8d34182efa60256f070182e73c356258b6a783082b42c3f1daa75cfe9c2ea",
+          "outputHash": "588b8a9fdadd31c249654879eea01317349a5af7c26338b0207a33543bd59b5b",
+          "durationMs": 14999,
+          "usage": {
+            "inputTokens": 17282,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 718,
+            "reasoningTokens": 119,
+            "totalTokens": 18000,
+            "costUsd": 0.0331199,
+            "noCacheCostUsd": 0.041744
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-luna-single-r1",
+      "blindId": "ee87335c",
+      "id": "new-umbreon-en",
+      "arm": "luna-single",
+      "repetition": 1,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "dde7624f6714852011c4dad441054bc334a5fbc15397196a6362c5a45d4b28a4",
+      "publicOutputHash": "2336e98f063a270374dc59d270ce971d8d16ebd4546c75f12ec8aafecce008f4",
+      "reviewedPublicOutputHash": "2336e98f063a270374dc59d270ce971d8d16ebd4546c75f12ec8aafecce008f4",
+      "durationMs": 5770,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 14900,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 502,
+        "reasoningTokens": 90,
+        "totalTokens": 15402,
+        "costUsd": 0.0013324900000000002,
+        "noCacheCostUsd": 0.001741
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-item-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "ef744d3a829890df263494ce1514f30439f1ad4797cb72f97f3fe318a820faa0",
+          "inputHash": "4ce84446e26be1cb7a63f282ae2cdf6962fe66dd486b3890e9e613f694e8a823",
+          "outputHash": "dde7624f6714852011c4dad441054bc334a5fbc15397196a6362c5a45d4b28a4",
+          "durationMs": 5770,
+          "usage": {
+            "inputTokens": 14900,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 502,
+            "reasoningTokens": 90,
+            "totalTokens": 15402,
+            "costUsd": 0.0013324900000000002,
+            "noCacheCostUsd": 0.001741
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-luna-single-r2",
+      "blindId": "7b60cedc",
+      "id": "new-umbreon-en",
+      "arm": "luna-single",
+      "repetition": 2,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "ef7ed3bf9bd3ea02fa4b10961ce3a48959680bdc3dedbdfc541461fa54c29daf",
+      "publicOutputHash": "e42531e8ce980790d0e202b612d0c6fddfa9d8d6e5aa2adaf57da835617c781e",
+      "reviewedPublicOutputHash": "e42531e8ce980790d0e202b612d0c6fddfa9d8d6e5aa2adaf57da835617c781e",
+      "durationMs": 7681,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 14900,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 483,
+        "reasoningTokens": 148,
+        "totalTokens": 15383,
+        "costUsd": 0.0013229900000000002,
+        "noCacheCostUsd": 0.0017315
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-item-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Describes 32 HP/32 Def/2 SpD Bold as mixed-bulk rather than Defense-focused. Imprecise role labeling, not counted as a hard stat contradiction since HP and natural SpD can support both sides."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "ef744d3a829890df263494ce1514f30439f1ad4797cb72f97f3fe318a820faa0",
+          "inputHash": "4ce84446e26be1cb7a63f282ae2cdf6962fe66dd486b3890e9e613f694e8a823",
+          "outputHash": "ef7ed3bf9bd3ea02fa4b10961ce3a48959680bdc3dedbdfc541461fa54c29daf",
+          "durationMs": 7681,
+          "usage": {
+            "inputTokens": 14900,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 483,
+            "reasoningTokens": 148,
+            "totalTokens": 15383,
+            "costUsd": 0.0013229900000000002,
+            "noCacheCostUsd": 0.0017315
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-luna-single-r3",
+      "blindId": "b9786933",
+      "id": "new-umbreon-en",
+      "arm": "luna-single",
+      "repetition": 3,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "17647d9a488e460bb641bd00aa10f1e735f514fdd057ba15ed666be7a0444447",
+      "publicOutputHash": "3bd8f6b15ef04fc5de8eb5c438ca3208dd51326523bccd22c007e503714be83a",
+      "reviewedPublicOutputHash": "3bd8f6b15ef04fc5de8eb5c438ca3208dd51326523bccd22c007e503714be83a",
+      "durationMs": 6587,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 14900,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 518,
+        "reasoningTokens": 122,
+        "totalTokens": 15418,
+        "costUsd": 0.0013404900000000002,
+        "noCacheCostUsd": 0.001749
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-item-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "ef744d3a829890df263494ce1514f30439f1ad4797cb72f97f3fe318a820faa0",
+          "inputHash": "4ce84446e26be1cb7a63f282ae2cdf6962fe66dd486b3890e9e613f694e8a823",
+          "outputHash": "17647d9a488e460bb641bd00aa10f1e735f514fdd057ba15ed666be7a0444447",
+          "durationMs": 6587,
+          "usage": {
+            "inputTokens": 14900,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 518,
+            "reasoningTokens": 122,
+            "totalTokens": 15418,
+            "costUsd": 0.0013404900000000002,
+            "noCacheCostUsd": 0.001749
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-luna-split-r1",
+      "blindId": "064c9faa",
+      "id": "new-umbreon-en",
+      "arm": "luna-split",
+      "repetition": 1,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "3e43245629580eaebc7b9d0f249426d6c1374e188d32cf838d13108881d9b8d0",
+      "publicOutputHash": "a0416028f5d56eef6079f69db0ad2cb120651f7af4695b0896b64f2a7aeab3b3",
+      "reviewedPublicOutputHash": "a0416028f5d56eef6079f69db0ad2cb120651f7af4695b0896b64f2a7aeab3b3",
+      "durationMs": 7128,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 29247,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 3631,
+        "outputTokens": 544,
+        "reasoningTokens": 160,
+        "totalTokens": 29791,
+        "costUsd": 0.0028789650000000003,
+        "noCacheCostUsd": 0.0031967000000000002
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-item-2",
+          "set-current"
+        ],
+        "comparisonCandidateId": "usage-item-4",
+        "state": "current"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-item-2",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Prioritizes Helmet without a concrete team-specific need; still correctly explains recurring recovery tradeoff."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "dc7ef875fc3f02e5b20ec0da8cecccdb8b4c5ea394f521c35f697a862d5cfdbc",
+          "inputHash": "d784a7c1010b186cc8eb180d159500ea95a44127618e159ed132960d67506179",
+          "outputHash": "dc9491da4411917a53af576702dce06e79b0dec7d479ffe2452e9ba075d9e1de",
+          "durationMs": 1204,
+          "usage": {
+            "inputTokens": 14096,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3631,
+            "outputTokens": 34,
+            "reasoningTokens": 0,
+            "totalTokens": 14130,
+            "costUsd": 0.001517375,
+            "noCacheCostUsd": 0.0014266
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "6a025e1c27d4d2c2545ae943aa9c6c0922b29553f3b2cd0b582189e23b926144",
+          "inputHash": "f70cd596cdfaed60fc1762f042cace1a21103b9310c05ad6412b77358b2c5db0",
+          "outputHash": "3e43245629580eaebc7b9d0f249426d6c1374e188d32cf838d13108881d9b8d0",
+          "durationMs": 5924,
+          "usage": {
+            "inputTokens": 15151,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 510,
+            "reasoningTokens": 160,
+            "totalTokens": 15661,
+            "costUsd": 0.0013615900000000002,
+            "noCacheCostUsd": 0.0017701000000000001
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-luna-split-r2",
+      "blindId": "f30f56c1",
+      "id": "new-umbreon-en",
+      "arm": "luna-split",
+      "repetition": 2,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "695cac2417de2aca5ab533425572641ec57829cd1767ff15e78c163c7dff9ebd",
+      "publicOutputHash": "b82fb363103231ce1e1c7c4abfd9bd9037b9ae325fd9258dcef81f5ef8b6d5f0",
+      "reviewedPublicOutputHash": "b82fb363103231ce1e1c7c4abfd9bd9037b9ae325fd9258dcef81f5ef8b6d5f0",
+      "durationMs": 8754,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 29247,
+        "cachedInputTokens": 8170,
+        "cacheWriteTokens": 0,
+        "outputTokens": 646,
+        "reasoningTokens": 272,
+        "totalTokens": 29893,
+        "costUsd": 0.0025124,
+        "noCacheCostUsd": 0.0032477
+      },
+      "selection": {
+        "candidateIds": [
+          "set-current",
+          "usage-item-2"
+        ],
+        "comparisonCandidateId": "usage-item-4",
+        "state": "current"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-item-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "dc7ef875fc3f02e5b20ec0da8cecccdb8b4c5ea394f521c35f697a862d5cfdbc",
+          "inputHash": "d784a7c1010b186cc8eb180d159500ea95a44127618e159ed132960d67506179",
+          "outputHash": "3f9b9596ff9e5ff2f289cdeb8077bee32128e8f330195ad5b6442d30574d1472",
+          "durationMs": 3352,
+          "usage": {
+            "inputTokens": 14096,
+            "cachedInputTokens": 3631,
+            "cacheWriteTokens": 0,
+            "outputTokens": 202,
+            "reasoningTokens": 166,
+            "totalTokens": 14298,
+            "costUsd": 0.00118381,
+            "noCacheCostUsd": 0.0015106000000000002
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "a9a5ea817ed389936c3b351ceb758ba16f70d24b76effd6030f73c72d0c1ef2d",
+          "inputHash": "3dd25ec39c43cf26fab8fb3ff338d7b48d09621f8e78188a44566edaaf63bb46",
+          "outputHash": "695cac2417de2aca5ab533425572641ec57829cd1767ff15e78c163c7dff9ebd",
+          "durationMs": 5402,
+          "usage": {
+            "inputTokens": 15151,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 444,
+            "reasoningTokens": 106,
+            "totalTokens": 15595,
+            "costUsd": 0.0013285900000000002,
+            "noCacheCostUsd": 0.0017371
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-luna-split-r3",
+      "blindId": "c861942b",
+      "id": "new-umbreon-en",
+      "arm": "luna-split",
+      "repetition": 3,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "b6e01c348aee7784d6277dcf1fdc0724841dbd157b1f87d51e4deb70926c1a1f",
+      "publicOutputHash": "84af2a14b76ae6654bb3ad2506bccbf259c5a7445d26868dc12687924df25d85",
+      "reviewedPublicOutputHash": "84af2a14b76ae6654bb3ad2506bccbf259c5a7445d26868dc12687924df25d85",
+      "durationMs": 9242,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 29247,
+        "cachedInputTokens": 8170,
+        "cacheWriteTokens": 0,
+        "outputTokens": 759,
+        "reasoningTokens": 338,
+        "totalTokens": 30006,
+        "costUsd": 0.0025689000000000003,
+        "noCacheCostUsd": 0.0033042
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-item-2",
+          "set-current"
+        ],
+        "comparisonCandidateId": "usage-item-4",
+        "state": "current"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-item-2",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Helmet first without a concrete team-specific contact target; tradeoff still described correctly."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "dc7ef875fc3f02e5b20ec0da8cecccdb8b4c5ea394f521c35f697a862d5cfdbc",
+          "inputHash": "d784a7c1010b186cc8eb180d159500ea95a44127618e159ed132960d67506179",
+          "outputHash": "dc9491da4411917a53af576702dce06e79b0dec7d479ffe2452e9ba075d9e1de",
+          "durationMs": 3185,
+          "usage": {
+            "inputTokens": 14096,
+            "cachedInputTokens": 3631,
+            "cacheWriteTokens": 0,
+            "outputTokens": 242,
+            "reasoningTokens": 206,
+            "totalTokens": 14338,
+            "costUsd": 0.00120381,
+            "noCacheCostUsd": 0.0015306000000000002
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "6a025e1c27d4d2c2545ae943aa9c6c0922b29553f3b2cd0b582189e23b926144",
+          "inputHash": "f70cd596cdfaed60fc1762f042cace1a21103b9310c05ad6412b77358b2c5db0",
+          "outputHash": "b6e01c348aee7784d6277dcf1fdc0724841dbd157b1f87d51e4deb70926c1a1f",
+          "durationMs": 6057,
+          "usage": {
+            "inputTokens": 15151,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 517,
+            "reasoningTokens": 132,
+            "totalTokens": 15668,
+            "costUsd": 0.0013650900000000002,
+            "noCacheCostUsd": 0.0017736000000000002
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-sol-single-r1",
+      "blindId": "c89de7b9",
+      "id": "new-umbreon-en",
+      "arm": "sol-single",
+      "repetition": 1,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "43b237916dfbfb72b7afbcd7eb7df014e04af8c713a5b2983acbd333e7da4f54",
+      "publicOutputHash": "1d72e173f6dc68fa1af5eb6267d54c938b9089971088c43743b522b1d15f3a18",
+      "reviewedPublicOutputHash": "1d72e173f6dc68fa1af5eb6267d54c938b9089971088c43743b522b1d15f3a18",
+      "durationMs": 11230,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 14900,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 331,
+        "reasoningTokens": 0,
+        "totalTokens": 15231,
+        "costUsd": 0.0244859,
+        "noCacheCostUsd": 0.03311
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-item-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "f7c9dcc075dbc0359ab068dc801d56feb61f2e80dce3935fc04bf41452bb6328",
+          "inputHash": "4ce84446e26be1cb7a63f282ae2cdf6962fe66dd486b3890e9e613f694e8a823",
+          "outputHash": "43b237916dfbfb72b7afbcd7eb7df014e04af8c713a5b2983acbd333e7da4f54",
+          "durationMs": 11230,
+          "usage": {
+            "inputTokens": 14900,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 331,
+            "reasoningTokens": 0,
+            "totalTokens": 15231,
+            "costUsd": 0.0244859,
+            "noCacheCostUsd": 0.03311
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-sol-single-r2",
+      "blindId": "72303434",
+      "id": "new-umbreon-en",
+      "arm": "sol-single",
+      "repetition": 2,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "b0135d30fdfb6d31b0de6f0e8749dbe41b29b042aa415ea0a182eb726c471536",
+      "publicOutputHash": "6a8040fb510956a5a9d1e5dbf61d400c8474f92babb9f0c26f7b4e84eb6e7d4b",
+      "reviewedPublicOutputHash": "6a8040fb510956a5a9d1e5dbf61d400c8474f92babb9f0c26f7b4e84eb6e7d4b",
+      "durationMs": 8056,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 14900,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 338,
+        "reasoningTokens": 0,
+        "totalTokens": 15238,
+        "costUsd": 0.024555900000000002,
+        "noCacheCostUsd": 0.03318
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-item-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "f7c9dcc075dbc0359ab068dc801d56feb61f2e80dce3935fc04bf41452bb6328",
+          "inputHash": "4ce84446e26be1cb7a63f282ae2cdf6962fe66dd486b3890e9e613f694e8a823",
+          "outputHash": "b0135d30fdfb6d31b0de6f0e8749dbe41b29b042aa415ea0a182eb726c471536",
+          "durationMs": 8056,
+          "usage": {
+            "inputTokens": 14900,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 338,
+            "reasoningTokens": 0,
+            "totalTokens": 15238,
+            "costUsd": 0.024555900000000002,
+            "noCacheCostUsd": 0.03318
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-umbreon-en-sol-single-r3",
+      "blindId": "c1046ceb",
+      "id": "new-umbreon-en",
+      "arm": "sol-single",
+      "repetition": 3,
+      "requestHash": "9cbc55cc7911a4f9bad1a041baa63a10f6dacb11e472289a2f1c496dd21e4948",
+      "rawOutputHash": "6c9655b47092fac4afb477895d2eec5870f35e74ed2edb7e33247eebda7edcf2",
+      "publicOutputHash": "0d5ba118ce24a05c57901503f0a261e8d98acb32f5cd6043168aa1d9d1103e83",
+      "reviewedPublicOutputHash": "0d5ba118ce24a05c57901503f0a261e8d98acb32f5cd6043168aa1d9d1103e83",
+      "durationMs": 8753,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 14900,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 346,
+        "reasoningTokens": 0,
+        "totalTokens": 15246,
+        "costUsd": 0.024635900000000002,
+        "noCacheCostUsd": 0.03326
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-item-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "f7c9dcc075dbc0359ab068dc801d56feb61f2e80dce3935fc04bf41452bb6328",
+          "inputHash": "4ce84446e26be1cb7a63f282ae2cdf6962fe66dd486b3890e9e613f694e8a823",
+          "outputHash": "6c9655b47092fac4afb477895d2eec5870f35e74ed2edb7e33247eebda7edcf2",
+          "durationMs": 8753,
+          "usage": {
+            "inputTokens": 14900,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 346,
+            "reasoningTokens": 0,
+            "totalTokens": 15246,
+            "costUsd": 0.024635900000000002,
+            "noCacheCostUsd": 0.03326
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-luna-single-r1",
+      "blindId": "0873fe7d",
+      "id": "new-volcarona-en",
+      "arm": "luna-single",
+      "repetition": 1,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "348f5a8be1da09a48dc57075fffe4bde94cd3a4c343a3b65df36fd131ddc64da",
+      "publicOutputHash": "2cfe840abb5efd88eeab237eb46fb59a1eaea55aa6d35bf2029039a6be42ba20",
+      "reviewedPublicOutputHash": "2cfe840abb5efd88eeab237eb46fb59a1eaea55aa6d35bf2029039a6be42ba20",
+      "durationMs": 10137,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17328,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 949,
+        "reasoningTokens": 550,
+        "totalTokens": 18277,
+        "costUsd": 0.0017987900000000002,
+        "noCacheCostUsd": 0.0022073
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-item-3"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "2a1345cde20ac8fe461875a2d71146befaf6c1dedcfd7344e3ff568a4acacfca",
+          "inputHash": "e6dcdf35af44e1b1c7754c20be63273aed60aca7ca0cb658a2ceb46f8fcf8958",
+          "outputHash": "348f5a8be1da09a48dc57075fffe4bde94cd3a4c343a3b65df36fd131ddc64da",
+          "durationMs": 10137,
+          "usage": {
+            "inputTokens": 17328,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 949,
+            "reasoningTokens": 550,
+            "totalTokens": 18277,
+            "costUsd": 0.0017987900000000002,
+            "noCacheCostUsd": 0.0022073
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-luna-single-r2",
+      "blindId": "94b7352a",
+      "id": "new-volcarona-en",
+      "arm": "luna-single",
+      "repetition": 2,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "30d48686e1d845f46651193a9785a80dc668a7f67dd8fe94dc0cceb6d995cdf3",
+      "publicOutputHash": "c554afa906aaa8f5095dd0346aa56a590f1dd3d4db358fe20392c4e40ed79191",
+      "reviewedPublicOutputHash": "c554afa906aaa8f5095dd0346aa56a590f1dd3d4db358fe20392c4e40ed79191",
+      "durationMs": 8155,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17328,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 688,
+        "reasoningTokens": 343,
+        "totalTokens": 18016,
+        "costUsd": 0.0016682900000000002,
+        "noCacheCostUsd": 0.0020768
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "2a1345cde20ac8fe461875a2d71146befaf6c1dedcfd7344e3ff568a4acacfca",
+          "inputHash": "e6dcdf35af44e1b1c7754c20be63273aed60aca7ca0cb658a2ceb46f8fcf8958",
+          "outputHash": "30d48686e1d845f46651193a9785a80dc668a7f67dd8fe94dc0cceb6d995cdf3",
+          "durationMs": 8155,
+          "usage": {
+            "inputTokens": 17328,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 688,
+            "reasoningTokens": 343,
+            "totalTokens": 18016,
+            "costUsd": 0.0016682900000000002,
+            "noCacheCostUsd": 0.0020768
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-luna-single-r3",
+      "blindId": "df80d134",
+      "id": "new-volcarona-en",
+      "arm": "luna-single",
+      "repetition": 3,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "4bba335a12ed3b0a1bf21e32dc4b525c1782a38fbdac648f1f09a29d4f53c857",
+      "publicOutputHash": "62cfc931467c1d14d0b8f106eff6ca422955b5fc6497a0335a7e25699a5a7ade",
+      "reviewedPublicOutputHash": "368dafdb92d82010f958e50ea99e9c29bfe39b1362f013ffc6072cba2033a2ef",
+      "durationMs": 9239,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17328,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 783,
+        "reasoningTokens": 255,
+        "totalTokens": 18111,
+        "costUsd": 0.0017157900000000002,
+        "noCacheCostUsd": 0.0021243
+      },
+      "selectionPreserved": true,
+      "invalidIds": [
+        "set-current"
+      ],
+      "recommendationIds": [
+        "usage-item-3",
+        "set-current"
+      ],
+      "qualityWarnings": [
+        "recommendations-adjusted"
+      ],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [
+          {
+            "quote": "its final Speed and Special Attack are lower than the current build's",
+            "evidence": "Speed decreases 132->120, but Special Attack increases 155->170. It rejects the spread on this false comparison and recommends an item candidate that applies the same spread.",
+            "category": "stat-comparison"
+          }
+        ],
+        "actionIssues": [
+          "Recommends set-current, absent from the request; existing validator removes this card only."
+        ],
+        "strategicConcerns": [
+          "Rejects the spread but recommends Sitrus candidate with the identical spread, calling it focused item change."
+        ],
+        "utilityScore": 1
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "2a1345cde20ac8fe461875a2d71146befaf6c1dedcfd7344e3ff568a4acacfca",
+          "inputHash": "e6dcdf35af44e1b1c7754c20be63273aed60aca7ca0cb658a2ceb46f8fcf8958",
+          "outputHash": "4bba335a12ed3b0a1bf21e32dc4b525c1782a38fbdac648f1f09a29d4f53c857",
+          "durationMs": 9239,
+          "usage": {
+            "inputTokens": 17328,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 783,
+            "reasoningTokens": 255,
+            "totalTokens": 18111,
+            "costUsd": 0.0017157900000000002,
+            "noCacheCostUsd": 0.0021243
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-luna-split-r1",
+      "blindId": "52c53399",
+      "id": "new-volcarona-en",
+      "arm": "luna-split",
+      "repetition": 1,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "1eeef32e9f87cf161663ea239aafe94c2e8ddc2e4b8b35e4096a495490d551d5",
+      "publicOutputHash": "64727ece17de2d2d9e95898aec08f69ff4c4f8832594cfdeeac9683dc6685886",
+      "reviewedPublicOutputHash": "64727ece17de2d2d9e95898aec08f69ff4c4f8832594cfdeeac9683dc6685886",
+      "durationMs": 12341,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31231,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 3803,
+        "outputTokens": 1024,
+        "reasoningTokens": 651,
+        "totalTokens": 32255,
+        "costUsd": 0.0033216650000000006,
+        "noCacheCostUsd": 0.0036351
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-spread-1"
+        ],
+        "comparisonCandidateId": "usage-item-3",
+        "state": "current"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "6499861031bc394db007a640d5e12ac1eb0f707a16bc86df3f87229b5b1cdc03",
+          "inputHash": "b6f7e2ce3112182319483052a446a5eb44ec001dbf3f22cc12f9f23a1402c15a",
+          "outputHash": "eb027aace65cdc547b9b9fbbc920594018decc03468ee5330ef0b380dfadbde1",
+          "durationMs": 6839,
+          "usage": {
+            "inputTokens": 16696,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3803,
+            "outputTokens": 550,
+            "reasoningTokens": 516,
+            "totalTokens": 17246,
+            "costUsd": 0.0020396750000000003,
+            "noCacheCostUsd": 0.0019446
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "10b414eb321c274a8a69dda71c88f0cb4c5032c56887a8d9797cd9c6d2b2a3c4",
+          "inputHash": "35b239d6828c5cc2a165349f8a173cd83f04959288752c3672f740ca06530918",
+          "outputHash": "1eeef32e9f87cf161663ea239aafe94c2e8ddc2e4b8b35e4096a495490d551d5",
+          "durationMs": 5502,
+          "usage": {
+            "inputTokens": 14535,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 474,
+            "reasoningTokens": 135,
+            "totalTokens": 15009,
+            "costUsd": 0.00128199,
+            "noCacheCostUsd": 0.0016905
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-luna-split-r2",
+      "blindId": "ea8f5df7",
+      "id": "new-volcarona-en",
+      "arm": "luna-split",
+      "repetition": 2,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "731a729fc3e5770b395a5ff6039c03d9a4344fc3d18b90346dd787a38f0d0577",
+      "publicOutputHash": "8a52410706a7242312a9dd7f0d5c54fb9b854de93dde29923d7c9018cdf097a1",
+      "reviewedPublicOutputHash": "8a52410706a7242312a9dd7f0d5c54fb9b854de93dde29923d7c9018cdf097a1",
+      "durationMs": 13404,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31355,
+        "cachedInputTokens": 8342,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1108,
+        "reasoningTokens": 754,
+        "totalTokens": 32463,
+        "costUsd": 0.00293872,
+        "noCacheCostUsd": 0.0036895
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-spread-1"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "current"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "6499861031bc394db007a640d5e12ac1eb0f707a16bc86df3f87229b5b1cdc03",
+          "inputHash": "b6f7e2ce3112182319483052a446a5eb44ec001dbf3f22cc12f9f23a1402c15a",
+          "outputHash": "fa05a9566ac113f675dd7643729d2d85ba1241348a3e0198cd9a2164b4dc5d91",
+          "durationMs": 7263,
+          "usage": {
+            "inputTokens": 16696,
+            "cachedInputTokens": 3803,
+            "cacheWriteTokens": 0,
+            "outputTokens": 634,
+            "reasoningTokens": 602,
+            "totalTokens": 17330,
+            "costUsd": 0.00164433,
+            "noCacheCostUsd": 0.0019866000000000003
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "d713e7688c02dd5c30ff4c759a3fbb431656a312e9e5d1cb224b6eb5f6b21665",
+          "inputHash": "64f2319d0321ae4ebacd5a9519a8daeaa6dfa98c9095b182e5e4f0a22677aff0",
+          "outputHash": "731a729fc3e5770b395a5ff6039c03d9a4344fc3d18b90346dd787a38f0d0577",
+          "durationMs": 6141,
+          "usage": {
+            "inputTokens": 14659,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 474,
+            "reasoningTokens": 152,
+            "totalTokens": 15133,
+            "costUsd": 0.00129439,
+            "noCacheCostUsd": 0.0017029
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-luna-split-r3",
+      "blindId": "c5a5d012",
+      "id": "new-volcarona-en",
+      "arm": "luna-split",
+      "repetition": 3,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "2bc43a62985aaebcffd681fc06b0e3f05bad1271248e45aab838f781a4736726",
+      "publicOutputHash": "b6a60378376e4a8c005ad9fb1549a4e093e6705817b40ec6bc7d8eeb734d10ea",
+      "reviewedPublicOutputHash": "b6a60378376e4a8c005ad9fb1549a4e093e6705817b40ec6bc7d8eeb734d10ea",
+      "durationMs": 12448,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31620,
+        "cachedInputTokens": 8342,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1047,
+        "reasoningTokens": 561,
+        "totalTokens": 32667,
+        "costUsd": 0.00293472,
+        "noCacheCostUsd": 0.0036855000000000004
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-spread-1",
+          "usage-item-3"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "current"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-item-3"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "6499861031bc394db007a640d5e12ac1eb0f707a16bc86df3f87229b5b1cdc03",
+          "inputHash": "b6f7e2ce3112182319483052a446a5eb44ec001dbf3f22cc12f9f23a1402c15a",
+          "outputHash": "d31c99dcb19212bd95ec0dd516c1a453b6f253ec50ed631a93401191c151786f",
+          "durationMs": 4877,
+          "usage": {
+            "inputTokens": 16696,
+            "cachedInputTokens": 3803,
+            "cacheWriteTokens": 0,
+            "outputTokens": 403,
+            "reasoningTokens": 366,
+            "totalTokens": 17099,
+            "costUsd": 0.0015288300000000001,
+            "noCacheCostUsd": 0.0018711
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "9dd028a63d432115ad7c961b08a4fc89142189590bf62cbfdf4607bdfb4f0660",
+          "inputHash": "456979817712d7d380f262d8d0c395a8b24a5c0296ca38c1bc39d0779eae3c20",
+          "outputHash": "2bc43a62985aaebcffd681fc06b0e3f05bad1271248e45aab838f781a4736726",
+          "durationMs": 7571,
+          "usage": {
+            "inputTokens": 14924,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 644,
+            "reasoningTokens": 195,
+            "totalTokens": 15568,
+            "costUsd": 0.0014058900000000001,
+            "noCacheCostUsd": 0.0018144
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-sol-single-r1",
+      "blindId": "3417ace7",
+      "id": "new-volcarona-en",
+      "arm": "sol-single",
+      "repetition": 1,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "9ba5bf125aa73ced6e590fdb4606ad84d3c15cd066397831cd63829beeaa3bb4",
+      "publicOutputHash": "fe16f3633dd7eaba47ae96f9ae1ee8632a12176e364dc96133f6de22980930d4",
+      "reviewedPublicOutputHash": "fe16f3633dd7eaba47ae96f9ae1ee8632a12176e364dc96133f6de22980930d4",
+      "durationMs": 11488,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17328,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 583,
+        "reasoningTokens": 93,
+        "totalTokens": 17911,
+        "costUsd": 0.0318619,
+        "noCacheCostUsd": 0.040486
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-item-3"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "0c438d09f505474637a3bf6a2afb0488b8e45d73bff777144d0d48a027605c0e",
+          "inputHash": "e6dcdf35af44e1b1c7754c20be63273aed60aca7ca0cb658a2ceb46f8fcf8958",
+          "outputHash": "9ba5bf125aa73ced6e590fdb4606ad84d3c15cd066397831cd63829beeaa3bb4",
+          "durationMs": 11488,
+          "usage": {
+            "inputTokens": 17328,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 583,
+            "reasoningTokens": 93,
+            "totalTokens": 17911,
+            "costUsd": 0.0318619,
+            "noCacheCostUsd": 0.040486
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-sol-single-r2",
+      "blindId": "f7f48636",
+      "id": "new-volcarona-en",
+      "arm": "sol-single",
+      "repetition": 2,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "44f8d9b1fd1fb8ac5710d2644921d2262f83d7aa8f1137454e10f460acfcd4d8",
+      "publicOutputHash": "db25a026ea6bc34d19dcbbd8313c7eb6a97a4ba9c261c33888bf588b638da2af",
+      "reviewedPublicOutputHash": "db25a026ea6bc34d19dcbbd8313c7eb6a97a4ba9c261c33888bf588b638da2af",
+      "durationMs": 11318,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17328,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 524,
+        "reasoningTokens": 72,
+        "totalTokens": 17852,
+        "costUsd": 0.0312719,
+        "noCacheCostUsd": 0.039896
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-loadout-protect-0-sitrusberry"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "0c438d09f505474637a3bf6a2afb0488b8e45d73bff777144d0d48a027605c0e",
+          "inputHash": "e6dcdf35af44e1b1c7754c20be63273aed60aca7ca0cb658a2ceb46f8fcf8958",
+          "outputHash": "44f8d9b1fd1fb8ac5710d2644921d2262f83d7aa8f1137454e10f460acfcd4d8",
+          "durationMs": 11318,
+          "usage": {
+            "inputTokens": 17328,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 524,
+            "reasoningTokens": 72,
+            "totalTokens": 17852,
+            "costUsd": 0.0312719,
+            "noCacheCostUsd": 0.039896
+          }
+        }
+      ]
+    },
+    {
+      "key": "new-volcarona-en-sol-single-r3",
+      "blindId": "e68d20dd",
+      "id": "new-volcarona-en",
+      "arm": "sol-single",
+      "repetition": 3,
+      "requestHash": "797f8dd07fb406719f31aaedf237a026a35a86d7264d91c2ecf175fd9adee870",
+      "rawOutputHash": "c48c91ed79eef2d509f0e6bd48e7717c85347496d53f32744fbe99c1d54c1906",
+      "publicOutputHash": "d36776925aad39869da4bb858e8b5258311df60ea0f14802b670e7e22c22f957",
+      "reviewedPublicOutputHash": "d36776925aad39869da4bb858e8b5258311df60ea0f14802b670e7e22c22f957",
+      "durationMs": 14836,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17328,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 573,
+        "reasoningTokens": 76,
+        "totalTokens": 17901,
+        "costUsd": 0.0317619,
+        "noCacheCostUsd": 0.040386
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-loadout-protect-0-sitrusberry"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "0c438d09f505474637a3bf6a2afb0488b8e45d73bff777144d0d48a027605c0e",
+          "inputHash": "e6dcdf35af44e1b1c7754c20be63273aed60aca7ca0cb658a2ceb46f8fcf8958",
+          "outputHash": "c48c91ed79eef2d509f0e6bd48e7717c85347496d53f32744fbe99c1d54c1906",
+          "durationMs": 14836,
+          "usage": {
+            "inputTokens": 17328,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 573,
+            "reasoningTokens": 76,
+            "totalTokens": 17901,
+            "costUsd": 0.0317619,
+            "noCacheCostUsd": 0.040386
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-luna-single-r1",
+      "blindId": "c49f75b5",
+      "id": "regression-charizard-ko",
+      "arm": "luna-single",
+      "repetition": 1,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "67ef3401235201f8c507fcec629557541720d082f00e130451120535937d12f0",
+      "publicOutputHash": "39865e552a811c7b153f2ef4d4a3370787d57da0a3658d5005dbca4ffeebc483",
+      "reviewedPublicOutputHash": "39865e552a811c7b153f2ef4d4a3370787d57da0a3658d5005dbca4ffeebc483",
+      "durationMs": 9420,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16593,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 4539,
+        "outputTokens": 721,
+        "reasoningTokens": 242,
+        "totalTokens": 17314,
+        "costUsd": 0.002133275,
+        "noCacheCostUsd": 0.0020198
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-solarbeam-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [
+          {
+            "quote": "특수 공격과 스피드를 극대화한 겁쟁이 구성",
+            "evidence": "Current build is Timid with zero Stat Points in every stat; maximum investment belongs to proposed candidates, not current.",
+            "category": "current-candidate-binding"
+          }
+        ],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "e17ac7e5676a10a760e8d50173ab57526df65fec8d38a0a4799d5ddaf5253eaa",
+          "inputHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "67ef3401235201f8c507fcec629557541720d082f00e130451120535937d12f0",
+          "durationMs": 9420,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 4539,
+            "outputTokens": 721,
+            "reasoningTokens": 242,
+            "totalTokens": 17314,
+            "costUsd": 0.002133275,
+            "noCacheCostUsd": 0.0020198
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-luna-single-r2",
+      "blindId": "8f24a5a5",
+      "id": "regression-charizard-ko",
+      "arm": "luna-single",
+      "repetition": 2,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "4cc92d48d9db6690681a30566d73012c0d8a5475cd6c45d8b11316b1d5b5e651",
+      "publicOutputHash": "d9fbcc6955ca55f8ca83540cd37776940c3e51ee844f58f409afe6f0c59a6b02",
+      "reviewedPublicOutputHash": "d9fbcc6955ca55f8ca83540cd37776940c3e51ee844f58f409afe6f0c59a6b02",
+      "durationMs": 9925,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16593,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 957,
+        "reasoningTokens": 367,
+        "totalTokens": 17550,
+        "costUsd": 0.0017292900000000003,
+        "noCacheCostUsd": 0.0021378
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-solarbeam-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "e17ac7e5676a10a760e8d50173ab57526df65fec8d38a0a4799d5ddaf5253eaa",
+          "inputHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "4cc92d48d9db6690681a30566d73012c0d8a5475cd6c45d8b11316b1d5b5e651",
+          "durationMs": 9925,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 957,
+            "reasoningTokens": 367,
+            "totalTokens": 17550,
+            "costUsd": 0.0017292900000000003,
+            "noCacheCostUsd": 0.0021378
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-luna-single-r3",
+      "blindId": "41459c22",
+      "id": "regression-charizard-ko",
+      "arm": "luna-single",
+      "repetition": 3,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "f68ab3afa6c87e86a073dbe7387efb34ae5f3937277a9a9b1e6dd58a0bca0944",
+      "publicOutputHash": "d7c85869903fd5eee4e355867d382365c0033c2a74d6df9b626b8ece5733f688",
+      "reviewedPublicOutputHash": "d7c85869903fd5eee4e355867d382365c0033c2a74d6df9b626b8ece5733f688",
+      "durationMs": 9700,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16593,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 924,
+        "reasoningTokens": 322,
+        "totalTokens": 17517,
+        "costUsd": 0.0017127900000000003,
+        "noCacheCostUsd": 0.0021213
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-solarbeam-1",
+        "usage-spread-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "e17ac7e5676a10a760e8d50173ab57526df65fec8d38a0a4799d5ddaf5253eaa",
+          "inputHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "f68ab3afa6c87e86a073dbe7387efb34ae5f3937277a9a9b1e6dd58a0bca0944",
+          "durationMs": 9700,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 924,
+            "reasoningTokens": 322,
+            "totalTokens": 17517,
+            "costUsd": 0.0017127900000000003,
+            "noCacheCostUsd": 0.0021213
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-luna-split-r1",
+      "blindId": "2009452c",
+      "id": "regression-charizard-ko",
+      "arm": "luna-split",
+      "repetition": 1,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "4b9173e8494708ad447fe7f536553834f41fe556ae6542ab267290bf03084457",
+      "publicOutputHash": "a54ea6e8787c9e26dcaf3e22c341148baf0c3c4b203069f9b6652e8685932c78",
+      "reviewedPublicOutputHash": "a54ea6e8787c9e26dcaf3e22c341148baf0c3c4b203069f9b6652e8685932c78",
+      "durationMs": 15125,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 30811,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 8266,
+        "outputTokens": 1030,
+        "reasoningTokens": 512,
+        "totalTokens": 31841,
+        "costUsd": 0.0038027499999999997,
+        "noCacheCostUsd": 0.0035961
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-spread-1"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "34e5fbfead626f6a2461fe39d172e0aa5b54daabb9b9a04b9cd17c909fa63576",
+          "inputHash": "7b5d94fb2e69711d38f59aa28522954a302d6ca151b56b715f0cb433475b4bf9",
+          "outputHash": "39de7271fe948223079e15144696c516f98c7ab72ff5121b504663379760041a",
+          "durationMs": 7724,
+          "usage": {
+            "inputTokens": 15885,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3727,
+            "outputTokens": 333,
+            "reasoningTokens": 301,
+            "totalTokens": 16218,
+            "costUsd": 0.0018481749999999999,
+            "noCacheCostUsd": 0.001755
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "be8d304ace022a4ff4b64b4af07705afff0e38836a88fd3ee7280c82b316fef2",
+          "inputHash": "eb9d937411de0690ec2e8a367819b9fe6bac5ddae23064eed0531c5ea88bb82a",
+          "outputHash": "4b9173e8494708ad447fe7f536553834f41fe556ae6542ab267290bf03084457",
+          "durationMs": 7401,
+          "usage": {
+            "inputTokens": 14926,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 4539,
+            "outputTokens": 697,
+            "reasoningTokens": 211,
+            "totalTokens": 15623,
+            "costUsd": 0.001954575,
+            "noCacheCostUsd": 0.0018411
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-luna-split-r2",
+      "blindId": "703dc711",
+      "id": "regression-charizard-ko",
+      "arm": "luna-split",
+      "repetition": 2,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "84ff760083b936795cf10a81d3915301a540b05bf8f1e964db3fa3357f560365",
+      "publicOutputHash": "a180a936509f70b79d7d4950de3292b920ff5d643f699103cb10dc26ee7647ca",
+      "reviewedPublicOutputHash": "a180a936509f70b79d7d4950de3292b920ff5d643f699103cb10dc26ee7647ca",
+      "durationMs": 16690,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 30811,
+        "cachedInputTokens": 8266,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1345,
+        "reasoningTokens": 826,
+        "totalTokens": 32156,
+        "costUsd": 0.00300966,
+        "noCacheCostUsd": 0.0037536
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-spread-1"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "34e5fbfead626f6a2461fe39d172e0aa5b54daabb9b9a04b9cd17c909fa63576",
+          "inputHash": "7b5d94fb2e69711d38f59aa28522954a302d6ca151b56b715f0cb433475b4bf9",
+          "outputHash": "39de7271fe948223079e15144696c516f98c7ab72ff5121b504663379760041a",
+          "durationMs": 7369,
+          "usage": {
+            "inputTokens": 15885,
+            "cachedInputTokens": 3727,
+            "cacheWriteTokens": 0,
+            "outputTokens": 532,
+            "reasoningTokens": 500,
+            "totalTokens": 16417,
+            "costUsd": 0.00151907,
+            "noCacheCostUsd": 0.0018545
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "be8d304ace022a4ff4b64b4af07705afff0e38836a88fd3ee7280c82b316fef2",
+          "inputHash": "eb9d937411de0690ec2e8a367819b9fe6bac5ddae23064eed0531c5ea88bb82a",
+          "outputHash": "84ff760083b936795cf10a81d3915301a540b05bf8f1e964db3fa3357f560365",
+          "durationMs": 9321,
+          "usage": {
+            "inputTokens": 14926,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 813,
+            "reasoningTokens": 326,
+            "totalTokens": 15739,
+            "costUsd": 0.0014905900000000002,
+            "noCacheCostUsd": 0.0018991000000000001
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-luna-split-r3",
+      "blindId": "bc624e3c",
+      "id": "regression-charizard-ko",
+      "arm": "luna-split",
+      "repetition": 3,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "d8da0c61224b0311ae235d76f9ee650a50e6654c2364b910f9a7aed3f7f90642",
+      "publicOutputHash": "3f8fe0b7f7b8d4052d72d704c195795b35c157c481ea7b34c5b988a138953a96",
+      "reviewedPublicOutputHash": "3f8fe0b7f7b8d4052d72d704c195795b35c157c481ea7b34c5b988a138953a96",
+      "durationMs": 17318,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31132,
+        "cachedInputTokens": 8266,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1330,
+        "reasoningTokens": 577,
+        "totalTokens": 32462,
+        "costUsd": 0.00303426,
+        "noCacheCostUsd": 0.0037782
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-spread-1",
+          "usage-standard"
+        ],
+        "comparisonCandidateId": "usage-move-solarbeam-1",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-standard"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "presentationIssues": [
+          "Exposes internal spread/standard labels; mixes baseline Mega SpA 179 and candidate base-form SpA 177 without clearly labeling candidate form."
+        ],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "34e5fbfead626f6a2461fe39d172e0aa5b54daabb9b9a04b9cd17c909fa63576",
+          "inputHash": "7b5d94fb2e69711d38f59aa28522954a302d6ca151b56b715f0cb433475b4bf9",
+          "outputHash": "5aa8e78e58fc221b129fb4fdc5370930b17a7e59d3d484553d59096558d28bd3",
+          "durationMs": 6110,
+          "usage": {
+            "inputTokens": 15885,
+            "cachedInputTokens": 3727,
+            "cacheWriteTokens": 0,
+            "outputTokens": 429,
+            "reasoningTokens": 388,
+            "totalTokens": 16314,
+            "costUsd": 0.0014675699999999999,
+            "noCacheCostUsd": 0.001803
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "220234ba5f623b37138b3d3296ffd2c2b180943e55a78471ecfa7baae36e802a",
+          "inputHash": "cc769447fedc24d56b3e4f0f49a556c6b0f820618e789cc984b3652144e23f2a",
+          "outputHash": "d8da0c61224b0311ae235d76f9ee650a50e6654c2364b910f9a7aed3f7f90642",
+          "durationMs": 11208,
+          "usage": {
+            "inputTokens": 15247,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 901,
+            "reasoningTokens": 189,
+            "totalTokens": 16148,
+            "costUsd": 0.0015666900000000001,
+            "noCacheCostUsd": 0.0019752
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-sol-single-r1",
+      "blindId": "4fd3aeca",
+      "id": "regression-charizard-ko",
+      "arm": "sol-single",
+      "repetition": 1,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "a4d7cb7a11c39e712ae119300884e9d944feee5b64bfb90eb0b61c44be9808e6",
+      "publicOutputHash": "50f3ab7e2624ab086778dae75068ff0b4df742f0a5a810cfb8ea57af609737ff",
+      "reviewedPublicOutputHash": "50f3ab7e2624ab086778dae75068ff0b4df742f0a5a810cfb8ea57af609737ff",
+      "durationMs": 16345,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16593,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 4539,
+        "outputTokens": 686,
+        "reasoningTokens": 39,
+        "totalTokens": 17279,
+        "costUsd": 0.0423155,
+        "noCacheCostUsd": 0.040046
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-standard"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "eccddf369a617b0aab4c9de4ac1759337c48e965b6aba9f83ef4629186173222",
+          "inputHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "a4d7cb7a11c39e712ae119300884e9d944feee5b64bfb90eb0b61c44be9808e6",
+          "durationMs": 16345,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 4539,
+            "outputTokens": 686,
+            "reasoningTokens": 39,
+            "totalTokens": 17279,
+            "costUsd": 0.0423155,
+            "noCacheCostUsd": 0.040046
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-sol-single-r2",
+      "blindId": "644317ec",
+      "id": "regression-charizard-ko",
+      "arm": "sol-single",
+      "repetition": 2,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "374c4b82f3393c35e92486604ab3f4e05fa14f15b537df88895d1639b99c3bdd",
+      "publicOutputHash": "8d1945f83fb3519b0857e8e233766340759d1407ec992bd7aec8e4488b02774b",
+      "reviewedPublicOutputHash": "8d1945f83fb3519b0857e8e233766340759d1407ec992bd7aec8e4488b02774b",
+      "durationMs": 13264,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16593,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 726,
+        "reasoningTokens": 57,
+        "totalTokens": 17319,
+        "costUsd": 0.0318219,
+        "noCacheCostUsd": 0.040446
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-move-solarbeam-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "eccddf369a617b0aab4c9de4ac1759337c48e965b6aba9f83ef4629186173222",
+          "inputHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "374c4b82f3393c35e92486604ab3f4e05fa14f15b537df88895d1639b99c3bdd",
+          "durationMs": 13264,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 726,
+            "reasoningTokens": 57,
+            "totalTokens": 17319,
+            "costUsd": 0.0318219,
+            "noCacheCostUsd": 0.040446
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-charizard-ko-sol-single-r3",
+      "blindId": "57dcec3e",
+      "id": "regression-charizard-ko",
+      "arm": "sol-single",
+      "repetition": 3,
+      "requestHash": "2aa147b5620658cba27e9ceba83b8fec9b26a77342c124c279f39ad2f3d5d191",
+      "rawOutputHash": "780b545d4c1b886b3b18722ab94b62f8caf7e5a1bc7923826c0b0c6fa31d5304",
+      "publicOutputHash": "b8e8f375e8449485994f48432a1734b56223622ce364e3b2e3ca356193d53aa4",
+      "reviewedPublicOutputHash": "b8e8f375e8449485994f48432a1734b56223622ce364e3b2e3ca356193d53aa4",
+      "durationMs": 13900,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 16593,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 722,
+        "reasoningTokens": 41,
+        "totalTokens": 17315,
+        "costUsd": 0.0317819,
+        "noCacheCostUsd": 0.040406
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-spread-1",
+        "usage-move-solarbeam-1"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "eccddf369a617b0aab4c9de4ac1759337c48e965b6aba9f83ef4629186173222",
+          "inputHash": "567986ddb067e6bf2ef5149976cb1ed32bc2faff6cb4feee8137c7a1e5f23435",
+          "outputHash": "780b545d4c1b886b3b18722ab94b62f8caf7e5a1bc7923826c0b0c6fa31d5304",
+          "durationMs": 13900,
+          "usage": {
+            "inputTokens": 16593,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 722,
+            "reasoningTokens": 41,
+            "totalTokens": 17315,
+            "costUsd": 0.0317819,
+            "noCacheCostUsd": 0.040406
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-luna-single-r1",
+      "blindId": "22d3f548",
+      "id": "regression-salamence-en",
+      "arm": "luna-single",
+      "repetition": 1,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "38c23d4caddaaf23dc2c2f64fd1fdf2e15b0a8ee27b41e8c3ed370fb815ec96c",
+      "publicOutputHash": "95f28068aa527a69785fbb5de2aa7db90cfcf3415b3765f12ff1a885ab1d6b9f",
+      "reviewedPublicOutputHash": "95f28068aa527a69785fbb5de2aa7db90cfcf3415b3765f12ff1a885ab1d6b9f",
+      "durationMs": 6883,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17036,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 599,
+        "reasoningTokens": 197,
+        "totalTokens": 17635,
+        "costUsd": 0.0015945900000000001,
+        "noCacheCostUsd": 0.0020031000000000003
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-move-roost-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Does not meaningfully compare the Roost-over-Earthquake sibling that preserves invested Fire Blast and is backed by teammates' Ground attacks."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "319c94ac351d67eaf9f7675e3102cc1ed3bb7d6279154c193c32870b7e01fbef",
+          "inputHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "38c23d4caddaaf23dc2c2f64fd1fdf2e15b0a8ee27b41e8c3ed370fb815ec96c",
+          "durationMs": 6883,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 599,
+            "reasoningTokens": 197,
+            "totalTokens": 17635,
+            "costUsd": 0.0015945900000000001,
+            "noCacheCostUsd": 0.0020031000000000003
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-luna-single-r2",
+      "blindId": "795dc1f2",
+      "id": "regression-salamence-en",
+      "arm": "luna-single",
+      "repetition": 2,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "c1dbfeecea7f90fcf2b717db0cdc48b239e4caf5ce39d9c26e8ae62331d22b70",
+      "publicOutputHash": "b0d97f240c6321fadb2559e5c9c591e1a45000a1a62ed534a3eb9f5a057d32af",
+      "reviewedPublicOutputHash": "b0d97f240c6321fadb2559e5c9c591e1a45000a1a62ed534a3eb9f5a057d32af",
+      "durationMs": 9278,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17036,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 706,
+        "reasoningTokens": 331,
+        "totalTokens": 17742,
+        "costUsd": 0.00164809,
+        "noCacheCostUsd": 0.0020566000000000004
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-move-roost-3"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "majorStrategicError": true,
+        "strategicConcerns": [
+          "Recommends Roost over Double-Edge, eliminating the sole post-Mega Aerilate STAB attack. The same recovery is available over Earthquake/Fire Blast; no concrete larger benefit justifies discarding the central attack."
+        ],
+        "utilityScore": 1
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "319c94ac351d67eaf9f7675e3102cc1ed3bb7d6279154c193c32870b7e01fbef",
+          "inputHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "c1dbfeecea7f90fcf2b717db0cdc48b239e4caf5ce39d9c26e8ae62331d22b70",
+          "durationMs": 9278,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 706,
+            "reasoningTokens": 331,
+            "totalTokens": 17742,
+            "costUsd": 0.00164809,
+            "noCacheCostUsd": 0.0020566000000000004
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-luna-single-r3",
+      "blindId": "18bfe671",
+      "id": "regression-salamence-en",
+      "arm": "luna-single",
+      "repetition": 3,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "c53ddf48878d68bbf5d0314bbd0fa9062d8c6a33c55b774da41ae47717de2541",
+      "publicOutputHash": "d0165f9a8f896837312d170d65d3d55e06af24475ade6fed524c15f380490866",
+      "reviewedPublicOutputHash": "d0165f9a8f896837312d170d65d3d55e06af24475ade6fed524c15f380490866",
+      "durationMs": 7945,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17036,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 651,
+        "reasoningTokens": 278,
+        "totalTokens": 17687,
+        "costUsd": 0.00162059,
+        "noCacheCostUsd": 0.0020291000000000003
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-move-roost-0"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "presentationIssues": [
+          "Opening discusses Roost-over-Fire-Blast, but the actionable card instead removes Dragon Dance; card cost is correct, yet the explanation does not connect the change in strategic direction."
+        ],
+        "strategicConcerns": [
+          "No strong justification for losing setup rather than replacing an overlapping coverage move; not inherently an invalid three-attacks/Roost set."
+        ],
+        "utilityScore": 1
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "319c94ac351d67eaf9f7675e3102cc1ed3bb7d6279154c193c32870b7e01fbef",
+          "inputHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "c53ddf48878d68bbf5d0314bbd0fa9062d8c6a33c55b774da41ae47717de2541",
+          "durationMs": 7945,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 651,
+            "reasoningTokens": 278,
+            "totalTokens": 17687,
+            "costUsd": 0.00162059,
+            "noCacheCostUsd": 0.0020291000000000003
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-luna-split-r1",
+      "blindId": "e65240ba",
+      "id": "regression-salamence-en",
+      "arm": "luna-split",
+      "repetition": 1,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "d4b0edc5dc7589c70ab6c20aef68753863aca7b9a7bc1fccd6fc6eaab7504b0f",
+      "publicOutputHash": "b7034a10f34a260a4535e341f7ae5b426786deb9e957da84794fbf647b2eb52d",
+      "reviewedPublicOutputHash": "b7034a10f34a260a4535e341f7ae5b426786deb9e957da84794fbf647b2eb52d",
+      "durationMs": 10626,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31108,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 3761,
+        "outputTokens": 831,
+        "reasoningTokens": 404,
+        "totalTokens": 31939,
+        "costUsd": 0.0032118150000000002,
+        "noCacheCostUsd": 0.0035263000000000004
+      },
+      "selection": {
+        "candidateIds": [
+          "set-current",
+          "usage-move-roost-2"
+        ],
+        "comparisonCandidateId": "usage-spread-1",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current",
+        "usage-move-roost-2"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Keeps current/Roost-over-Fire-Blast; no explanation of the Earthquake-replacement sibling. This is an omission, not proof the recommendation is wrong."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "370279603481ae93270a24e06ad6b0fb976247b8729fd1109636ff47a5a19298",
+          "inputHash": "fd5d9b74492f9e43345e0ae0d2f626cfac8b442f3c6c7de73c65cbbe750539da",
+          "outputHash": "3ea53f26497ddbfb7285c4cdebf39214f7c5d6cc8ed1bd4e2a1afd3245fe3b11",
+          "durationMs": 4851,
+          "usage": {
+            "inputTokens": 16362,
+            "cachedInputTokens": 0,
+            "cacheWriteTokens": 3761,
+            "outputTokens": 337,
+            "reasoningTokens": 297,
+            "totalTokens": 16699,
+            "costUsd": 0.0018987250000000002,
+            "noCacheCostUsd": 0.0018047
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "c75f0241ecdf311ad8c34421c4e70b7f9551a67baae63c07529a0eee71bd5360",
+          "inputHash": "a780d1cd9ba8954d5d477981f87360a6a3bb31ae4f16022aea1700173d7e86ff",
+          "outputHash": "d4b0edc5dc7589c70ab6c20aef68753863aca7b9a7bc1fccd6fc6eaab7504b0f",
+          "durationMs": 5775,
+          "usage": {
+            "inputTokens": 14746,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 494,
+            "reasoningTokens": 107,
+            "totalTokens": 15240,
+            "costUsd": 0.00131309,
+            "noCacheCostUsd": 0.0017216000000000002
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-luna-split-r2",
+      "blindId": "66eacb03",
+      "id": "regression-salamence-en",
+      "arm": "luna-split",
+      "repetition": 2,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "4ac2fb032a68194e016a154b8dfc152606b2f16292d8e05ea2068bedc2db2c68",
+      "publicOutputHash": "454ef6841bf59999963fc38ec1c3d292c136b0671eae1692948123c78d288944",
+      "reviewedPublicOutputHash": "454ef6841bf59999963fc38ec1c3d292c136b0671eae1692948123c78d288944",
+      "durationMs": 11945,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 31145,
+        "cachedInputTokens": 8300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 825,
+        "reasoningTokens": 369,
+        "totalTokens": 31970,
+        "costUsd": 0.0027800000000000004,
+        "noCacheCostUsd": 0.003527
+      },
+      "selection": {
+        "candidateIds": [
+          "usage-move-roost-2",
+          "set-current"
+        ],
+        "comparisonCandidateId": "usage-standard",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-roost-2",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [
+          {
+            "quote": "Roost does not remove those type-level vulnerabilities",
+            "evidence": "The preceding list includes Rock. Supplied Roost temporarily removes Flying typing, so Dragon/Flying becomes Dragon and is no longer Rock-weak after Roost that turn. Ice weakness is also reduced. Unqualified denial is incorrect.",
+            "category": "move-mechanic"
+          }
+        ],
+        "strategicConcerns": [],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "370279603481ae93270a24e06ad6b0fb976247b8729fd1109636ff47a5a19298",
+          "inputHash": "fd5d9b74492f9e43345e0ae0d2f626cfac8b442f3c6c7de73c65cbbe750539da",
+          "outputHash": "c7128857c4188c5e30a596b977f77223351d56c3d2e3d290005b65bce38483d7",
+          "durationMs": 5866,
+          "usage": {
+            "inputTokens": 16362,
+            "cachedInputTokens": 3761,
+            "cacheWriteTokens": 0,
+            "outputTokens": 330,
+            "reasoningTokens": 293,
+            "totalTokens": 16692,
+            "costUsd": 0.00146271,
+            "noCacheCostUsd": 0.0018012
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "a1245b938b8fa28dfe710635832da834e2648f845b1096a22731b2860aea5432",
+          "inputHash": "e57e8ff805f4ba03c787892cf7c4a01865b12763afcdb5810d99470d75c42226",
+          "outputHash": "4ac2fb032a68194e016a154b8dfc152606b2f16292d8e05ea2068bedc2db2c68",
+          "durationMs": 6079,
+          "usage": {
+            "inputTokens": 14783,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 495,
+            "reasoningTokens": 76,
+            "totalTokens": 15278,
+            "costUsd": 0.0013172900000000003,
+            "noCacheCostUsd": 0.0017258000000000002
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-luna-split-r3",
+      "blindId": "43fa164c",
+      "id": "regression-salamence-en",
+      "arm": "luna-split",
+      "repetition": 3,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "5d192f5050d3521d2f1be580796a02ce1884bce67104ea74ead82d73cbb6065f",
+      "publicOutputHash": "c7d2261a2a9c43601397db7d16a08b3575ed1c83fb6711b81c8a471ee8c0fef1",
+      "reviewedPublicOutputHash": "c7d2261a2a9c43601397db7d16a08b3575ed1c83fb6711b81c8a471ee8c0fef1",
+      "durationMs": 10334,
+      "calls": 2,
+      "usage": {
+        "inputTokens": 30835,
+        "cachedInputTokens": 8300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 793,
+        "reasoningTokens": 461,
+        "totalTokens": 31628,
+        "costUsd": 0.002733,
+        "noCacheCostUsd": 0.0034800000000000005
+      },
+      "selection": {
+        "candidateIds": [
+          "set-current"
+        ],
+        "comparisonCandidateId": "usage-move-roost-2",
+        "state": "mega"
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 1,
+        "retainedRecommendations": 1,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [
+          "Rejects Roost based on the Fire Blast replacement while Earthquake replacement is a relevant omitted alternative."
+        ],
+        "utilityScore": 2
+      },
+      "stages": [
+        {
+          "stage": "selection",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "370279603481ae93270a24e06ad6b0fb976247b8729fd1109636ff47a5a19298",
+          "inputHash": "fd5d9b74492f9e43345e0ae0d2f626cfac8b442f3c6c7de73c65cbbe750539da",
+          "outputHash": "f28f67b8b2ad691055a3a843139a91f413b540e2e55c0c5adf4fe50681fb31fb",
+          "durationMs": 5598,
+          "usage": {
+            "inputTokens": 16362,
+            "cachedInputTokens": 3761,
+            "cacheWriteTokens": 0,
+            "outputTokens": 409,
+            "reasoningTokens": 375,
+            "totalTokens": 16771,
+            "costUsd": 0.0015022100000000001,
+            "noCacheCostUsd": 0.0018407
+          }
+        },
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6-luna",
+          "returnedModel": "gpt-6-luna",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "121774558d6b7e1664ec0a3d9323dd21ba334a29c75539a1cde5e6738f16e196",
+          "inputHash": "2ea1f007699bf03ea6cf8ac0f69de8314737ab663e839424bab3ab9de2548954",
+          "outputHash": "5d192f5050d3521d2f1be580796a02ce1884bce67104ea74ead82d73cbb6065f",
+          "durationMs": 4736,
+          "usage": {
+            "inputTokens": 14473,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 384,
+            "reasoningTokens": 86,
+            "totalTokens": 14857,
+            "costUsd": 0.0012307900000000003,
+            "noCacheCostUsd": 0.0016393000000000002
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-sol-single-r1",
+      "blindId": "6f6811fe",
+      "id": "regression-salamence-en",
+      "arm": "sol-single",
+      "repetition": 1,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "e1406d0f7ea896d602c1fed1c8ee685fbe563dd91f35a93dec6c7e77b55a1136",
+      "publicOutputHash": "809301221cd30136a7d82a3975f96590317538b17cb7a3fec2d28c4c572c619c",
+      "reviewedPublicOutputHash": "809301221cd30136a7d82a3975f96590317538b17cb7a3fec2d28c4c572c619c",
+      "durationMs": 13478,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17036,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 468,
+        "reasoningTokens": 61,
+        "totalTokens": 17504,
+        "costUsd": 0.030127900000000003,
+        "noCacheCostUsd": 0.038752
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-roost-1",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "e9ffc3d3cf6126e6abe86e09d11ff3a0f9285ce72290d83091caef9760fccb53",
+          "inputHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "e1406d0f7ea896d602c1fed1c8ee685fbe563dd91f35a93dec6c7e77b55a1136",
+          "durationMs": 13478,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 468,
+            "reasoningTokens": 61,
+            "totalTokens": 17504,
+            "costUsd": 0.030127900000000003,
+            "noCacheCostUsd": 0.038752
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-sol-single-r2",
+      "blindId": "62ebdbe0",
+      "id": "regression-salamence-en",
+      "arm": "sol-single",
+      "repetition": 2,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "f411ddc6c728add79836d8a5e7f9376bbeb0a628aacba06e49a732459bb037c7",
+      "publicOutputHash": "45d5664139f70ab6647598f191bd316d499c9ef7a134eaf1e3c44360067bf39a",
+      "reviewedPublicOutputHash": "45d5664139f70ab6647598f191bd316d499c9ef7a134eaf1e3c44360067bf39a",
+      "durationMs": 13847,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17036,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 566,
+        "reasoningTokens": 83,
+        "totalTokens": 17602,
+        "costUsd": 0.0311079,
+        "noCacheCostUsd": 0.039732
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-roost-1",
+        "usage-standard"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "e9ffc3d3cf6126e6abe86e09d11ff3a0f9285ce72290d83091caef9760fccb53",
+          "inputHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "f411ddc6c728add79836d8a5e7f9376bbeb0a628aacba06e49a732459bb037c7",
+          "durationMs": 13847,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 566,
+            "reasoningTokens": 83,
+            "totalTokens": 17602,
+            "costUsd": 0.0311079,
+            "noCacheCostUsd": 0.039732
+          }
+        }
+      ]
+    },
+    {
+      "key": "regression-salamence-en-sol-single-r3",
+      "blindId": "86cfc3c7",
+      "id": "regression-salamence-en",
+      "arm": "sol-single",
+      "repetition": 3,
+      "requestHash": "bf8a8afdd4c2d887a22f954eefae9aeb56cfa73a1c0041b5535067edc7d0a57f",
+      "rawOutputHash": "50e12056b0c045e94ebc7d0c3776bf2aa61f106d60515ac58c3ff22269abacd1",
+      "publicOutputHash": "6b47c198bb1fb37ec738fbbca4a83009b94df45f8ca3222c5f08963243902e92",
+      "reviewedPublicOutputHash": "6b47c198bb1fb37ec738fbbca4a83009b94df45f8ca3222c5f08963243902e92",
+      "durationMs": 12685,
+      "calls": 1,
+      "usage": {
+        "inputTokens": 17036,
+        "cachedInputTokens": 4539,
+        "cacheWriteTokens": 0,
+        "outputTokens": 557,
+        "reasoningTokens": 79,
+        "totalTokens": 17593,
+        "costUsd": 0.0310179,
+        "noCacheCostUsd": 0.039642
+      },
+      "selectionPreserved": true,
+      "invalidIds": [],
+      "recommendationIds": [
+        "usage-move-roost-1",
+        "set-current"
+      ],
+      "qualityWarnings": [],
+      "diagnostics": {
+        "rawAuditErrors": [],
+        "auditErrors": [],
+        "auditNormalized": false,
+        "suppliedRecommendations": 2,
+        "retainedRecommendations": 2,
+        "proseVerified": false
+      },
+      "review": {
+        "factualIssues": [],
+        "strategicConcerns": [],
+        "utilityScore": 3
+      },
+      "stages": [
+        {
+          "stage": "explanation",
+          "requestedModel": "gpt-6.1-sol",
+          "returnedModel": "gpt-6.1-sol",
+          "status": "completed",
+          "serviceTier": "default",
+          "paramsHash": "e9ffc3d3cf6126e6abe86e09d11ff3a0f9285ce72290d83091caef9760fccb53",
+          "inputHash": "65eef41576e3e3f29c6e568e90c04fa18bd774ebcbaa5b2d1d9e4bef0a6a70e0",
+          "outputHash": "50e12056b0c045e94ebc7d0c3776bf2aa61f106d60515ac58c3ff22269abacd1",
+          "durationMs": 12685,
+          "usage": {
+            "inputTokens": 17036,
+            "cachedInputTokens": 4539,
+            "cacheWriteTokens": 0,
+            "outputTokens": 557,
+            "reasoningTokens": 79,
+            "totalTokens": 17593,
+            "costUsd": 0.0310179,
+            "noCacheCostUsd": 0.039642
+          }
+        }
+      ]
+    }
+  ]
+}

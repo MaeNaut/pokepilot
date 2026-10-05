@@ -41,6 +41,8 @@ const abilityResponsibilities: Record<
   intimidate: ["opponent-offense-control"],
   lightningrod: ["attack-redirection"],
   powerspot: ["ally-damage-amplification"],
+  // This is an available role, not unconditional protection; terrain needs grounding.
+  psychicsurge: ["priority-denial"],
   queenlymajesty: ["priority-denial"],
   stormdrain: ["attack-redirection"],
 };
@@ -67,6 +69,7 @@ const moveResponsibilities: Record<
   lifedew: ["ally-recovery"],
   partingshot: ["opponent-offense-control", "pivoting"],
   pollenpuff: ["ally-recovery"],
+  psychicterrain: ["priority-denial"],
   quash: ["turn-order-control"],
   ragepowder: ["attack-redirection"],
   scaryface: ["speed-control"],

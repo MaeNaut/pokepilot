@@ -165,7 +165,7 @@ export function validateCopilotModelOutput(
     Array.isArray(value.paragraphs) &&
     (value.paragraphs.length < 1 ||
       value.paragraphs.length > 4 ||
-      value.paragraphs.some((paragraph) => !paragraph.trim()))
+      value.paragraphs.some((paragraph) => typeof paragraph !== "string" || !paragraph.trim()))
   ) {
     errors.push("paragraphs must contain one to four non-empty strings.");
   }

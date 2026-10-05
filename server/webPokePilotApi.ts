@@ -235,8 +235,10 @@ export async function handleWebPokePilotApi(
           summarizeUpstreamError(error),
         );
       },
-      onQualityWarning: (warnings) => {
-        console.warn("[PokePilot API] Analysis quality warnings.", warnings);
+      onValidationReview: (review) => {
+        if (review.qualityWarnings.length || review.auditNormalized || review.rawAuditErrorCount) {
+          console.warn("[PokePilot API] Analysis validation review.", review);
+        }
       },
       operations,
       requester: options.authenticatedAccountId

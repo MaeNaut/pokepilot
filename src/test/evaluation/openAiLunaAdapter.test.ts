@@ -96,6 +96,17 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
+  it("retains the original audit in debug output even when completion changes bookkeeping", async () => {
+    const raw = { ...groundedModelOutput, strategyAudit: { ...groundedModelOutput.strategyAudit, facts: [{
+      id: "ground", kind: "weak-to", subjectSlotIndex: 0, objectSlotIndex: 0, state: "current", valueId: "ground",
+    }] } };
+    const create = vi.fn(async () => ({ output_text: JSON.stringify(raw) }));
+    const adapter = createOpenAiLunaAdapter({ client: { responses: { create } } as never });
+    const result = await adapter.analyze(request);
+    expect(result.debugOutput).toEqual(raw);
+    expect(result.validationErrors?.length).toBeGreaterThan(0);
+  });
+
   it.each(["gpt-5.6-terra", "gpt-6-luna", "gpt-6-sol"] as const)("forwards %s and output cap without changing production defaults", async (modelId) => {
     const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
     const adapter = createOpenAiLunaAdapter({
@@ -168,6 +179,39 @@ describe("OpenAI Luna evaluation adapter", () => {
       expect(create).toHaveBeenCalledWith(expect.objectContaining({ max_output_tokens: maxOutputTokens }));
     },
   );
+  it("uses identical compact input and instructions for low and medium reasoning", async () => {
+    const repeated = { id: "intimidate", displayName: "Intimidate", effect: "On entry, lowers opposing Attack. ".repeat(30) };
+    const richRequest = { ...request, mechanics: { ...request.mechanics, abilities: Array.from({ length: 6 }, () => ({ ...repeated })) } };
+    const create = vi.fn<(body: unknown) => Promise<{ output_text: string }>>(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
+    for (const reasoningEffort of ["low", "medium"] as const) {
+      await analyzeWithOpenAiLuna(richRequest, { reasoningEffort, client: { responses: { create } } as never });
+    }
+    const inputs = create.mock.calls.map(([body]) =>
+      (body as { input: Array<{ role: string; content: Array<{ text: string }> }> }).input);
+    expect(inputs[0]).toEqual(inputs[1]);
+    const text = inputs[0].find(message => message.role === "user")!.content[0].text;
+    expect(JSON.parse(text)).toHaveProperty("sharedData");
+    expect(text).not.toContain('"abilityMechanic"');
+    expect(text).not.toContain('"itemMechanic"');
+  });
+  it.each([["singles", 1, 0, 3], ["doubles", 2, 1, 4]] as const)("preserves explicit %s battle rules at both efforts", async (battleFormat, active, allies, selection) => {
+    const create = vi.fn<(body: unknown) => Promise<{ output_text: string }>>(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
+    const formatRequest = { ...request, battleFormat };
+    const original = JSON.stringify(formatRequest);
+    for (const reasoningEffort of ["low", "medium"] as const) {
+      await analyzeWithOpenAiLuna(formatRequest, { reasoningEffort, client: { responses: { create } } as never });
+    }
+    for (const [body] of create.mock.calls) {
+      const { input } = body as { input: Array<{ role: string; content: Array<{ text: string }> }> };
+      const text = input.find(message => message.role === "user")!.content[0].text;
+      expect(JSON.parse(text)).toEqual({
+        ...formatRequest,
+        battleRules: { activePokemonPerSide: active, activeAlliesPerPokemon: allies,
+          selectedPokemonPerBattle: selection, maximumActivatedMegas: 1 },
+      });
+    }
+    expect(JSON.stringify(formatRequest)).toBe(original);
+  });
   it.each(["team", "pokemon", "recommendation", "optimization", "matchup"] as const)(
     "keeps the original output schema and shared cache key for %s", async (scope) => {
       const create = vi.fn(async () => ({ output_text: JSON.stringify(groundedModelOutput) }));
@@ -176,7 +220,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       });
       expect(result.output).toEqual(groundedModelOutput);
       expect(create).toHaveBeenCalledWith(expect.objectContaining({
-        prompt_cache_key: "pokepilot-production-core-v7-low",
+        prompt_cache_key: "pokepilot-production-core-v13-low",
         text: expect.objectContaining({ format: expect.objectContaining({
           schema: copilotGroundedModelOutputJsonSchema,
         }) }),
@@ -296,7 +340,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-core-v7-low",
+        prompt_cache_key: "pokepilot-evaluation-core-v13-low",
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -340,7 +384,10 @@ describe("OpenAI Luna evaluation adapter", () => {
             content: [
               {
                 type: "input_text",
-                text: JSON.stringify(request),
+                text: JSON.stringify({ ...request, battleRules: {
+                  activePokemonPerSide: 2, activeAlliesPerPokemon: 1,
+                  selectedPokemonPerBattle: 4, maximumActivatedMegas: 1,
+                } }),
               },
             ],
           },
@@ -359,7 +406,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 93,
+        promptVersion: 103,
       },
       usage: {
         totalTokens: 150,
@@ -455,7 +502,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(create).toHaveBeenCalledOnce();
     const modelRequest = create.mock.calls[0]![0];
     expect(modelRequest.prompt_cache_key).toBe(
-      "pokepilot-evaluation-core-v7-low",
+      "pokepilot-evaluation-core-v13-low",
     );
     expect(modelRequest.input[0].content[0].text).toBe(
       pokepilotCommonInstructions,
@@ -463,7 +510,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(modelRequest.input[1].content[0].text).toBe(
       getPokePilotScopeInstructions("pokemon"),
     );
-    expect(modelRequest.input[2].content[0].text).toBe(
+    expect(modelRequest.input[2].content[0].text).toContain(
       getPokePilotLocaleInstructions("ko"),
     );
     expect(getPokePilotScopeInstructions("pokemon")).toContain(
@@ -515,10 +562,10 @@ describe("OpenAI Luna evaluation adapter", () => {
       "Every replacement recommendation must name target.currentDisplayName",
     );
     expect(getPokePilotScopeInstructions("recommendation")).toContain(
-      "scan its exact supplied ability and common-move display names",
+      "scan its exact supplied ability, common-move, and usage-option display names",
     );
     expect(getPokePilotScopeInstructions("recommendation")).toContain(
-      "must name at least one exact supplied commonSet ability or move",
+      "must name at least one exact supplied commonSet ability, commonSet move, or usageOptions.alternativeMoves move",
     );
     expect(getPokePilotScopeInstructions("recommendation")).toContain(
       "reconstruct the current team's central game plan",
@@ -553,7 +600,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       "current sample as a neutral baseline, not a preferred answer",
     );
     expect(optimizationInstructions).toContain(
-      "move changes one move slot from its baseline",
+      "move changes only one move slot of currentBuild",
     );
     expect(optimizationInstructions).toContain(
       "look up both the current and proposed items",

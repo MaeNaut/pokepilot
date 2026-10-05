@@ -95,7 +95,16 @@ export async function analyzeWithOpenAiLuna(
     safetyIdentifier,
   }: AnalyzeWithOpenAiLunaOptions = {},
 ): Promise<LunaAnalysisResult> {
-  const modelInput = serializePokePilotModelRequest(request);
+  const modelRequest = {
+    ...request,
+    battleRules: {
+      activePokemonPerSide: request.battleFormat === "singles" ? 1 : 2,
+      activeAlliesPerPokemon: request.battleFormat === "singles" ? 0 : 1,
+      selectedPokemonPerBattle: request.battleFormat === "singles" ? 3 : 4,
+      maximumActivatedMegas: 1,
+    },
+  };
+  const modelInput = serializePokePilotModelRequest(modelRequest);
   const openAiClient =
     client ??
     new OpenAI({
@@ -131,7 +140,7 @@ export async function analyzeWithOpenAiLuna(
         content: [
           {
             type: "input_text",
-            text: getPokePilotScopeInstructions(request.scope),
+            text: getPokePilotScopeInstructions(request.scope, request.battleFormat),
             prompt_cache_breakpoint: { mode: "explicit" },
           },
         ],

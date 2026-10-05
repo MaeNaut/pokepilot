@@ -34,6 +34,19 @@ async function mount() {
 }
 
 describe("set optimization task lifecycle", () => {
+  it("queries the intended Mega form without projecting the current build stats", async () => {
+    const projected = { ...context, usagePokemonId: "garchomp-mega-z" };
+    const hook = await renderHook(() => useSetOptimizationPlan(projected, "singles", items, true), undefined);
+    cleanups.push(hook.unmount);
+    let result!: ReturnType<typeof hook.current.run>;
+    await act(async () => { result = hook.current.run(); });
+    expect(loadPopularUsageSet).toHaveBeenCalledWith("garchomp-mega-z", "singles");
+    expect(workers[0].postMessage).toHaveBeenCalledWith({
+      generalContext: { ...projected, usageSet: null, usageItems: [] },
+    });
+    await act(async () => { workers[0].onerror?.(); await result; });
+  });
+
   it("publishes the Worker result and releases it", async () => {
     const hook = await mount();
     let result!: ReturnType<typeof hook.current.run>;

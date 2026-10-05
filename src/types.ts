@@ -89,6 +89,7 @@ export type PokemonMove = {
   accuracy: number | null;
   pp: number;
   description: string;
+  detailedDescription?: string;
   tags?: string[];
   target?: PokemonMoveTarget;
   priority?: number;
