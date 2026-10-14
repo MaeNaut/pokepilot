@@ -13,6 +13,7 @@ import { useTeamDraft } from "./useTeamDraft";
 import { moveTeamPokemonToBench, moveBenchPokemonToTeam } from "../utils/benchPokemon";
 import { createSavedTeamId } from "../utils/teamStorage";
 import { swapArrayItems } from "../utils/reorder";
+import { clearTeamPresetSelection } from "../utils/teamPresetVisit";
 
 type Options = {
   battleFormat: BattleFormat;
@@ -36,6 +37,7 @@ export function useTeamWorkspace({ battleFormat, setBattleFormat, untitledName }
   const { replaceBuildState } = teamBuildState;
 
   const selectSavedTeamId = useCallback((id: string | null) => {
+    clearTeamPresetSelection();
     setActiveSavedTeamId(id);
     if (id) storeLastActiveTeamId(id);
     else clearLastActiveTeamId();
@@ -72,14 +74,14 @@ export function useTeamWorkspace({ battleFormat, setBattleFormat, untitledName }
     });
   }
 
-  function loadWorkspace(saved: SavedTeamSummary, members: TeamSlot[], hydratedBench: BenchPokemon[]) {
+  function loadWorkspace(saved: SavedTeamSummary, members: TeamSlot[], hydratedBench: BenchPokemon[], options?: { asCopy: boolean }) {
     setTeam(members);
     setBench(hydratedBench);
     setTeamName(saved.name);
     setTeamNameDraft(saved.name);
     setBattleFormat(saved.battleFormat);
     replaceBuildState(saved.buildState);
-    selectSavedTeamId(saved.id);
+    selectSavedTeamId(options?.asCopy ? null : saved.id);
     setCommittedSnapshot({
       name: saved.name, battleFormat: saved.battleFormat, slots: saved.slots,
       bench: saved.bench, buildState: saved.buildState ?? createEmptyBuildState(),

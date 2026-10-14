@@ -4,6 +4,7 @@ const POKEAPI_SPRITE_BASE_URL =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon";
 
 const KNOWN_FORM_SPRITE_IDS: Record<string, number> = {
+  "lucario-mega-z": 10310,
   "basculegion-male": 902,
   "basculegion-female": 10248,
   "indeedee-male": 876,

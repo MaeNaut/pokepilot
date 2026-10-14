@@ -8,6 +8,7 @@ import { createEmptyBuildState, normalizeSavedTeam } from "../utils/teamStorage"
 import { useTeamWorkspace } from "./useTeamWorkspace";
 import { MAX_BENCH_POKEMON } from "../data/teamLimits";
 import { getPokemonBuildSnapshot } from "../utils/benchPokemon";
+import { getInitialTeamPresetId, selectTeamPreset } from "../utils/teamPresetVisit";
 
 const cleanups: Array<() => Promise<void>> = [];
 const member: TeamMember = { id: "lucario", name: "Lucario", types: ["fighting", "steel"], roles: [], source: "local" };
@@ -51,6 +52,24 @@ it("loads saved format and build together without changing the selected slot", a
   expect(hook.current.hasUnsavedTeamChanges()).toBe(false);
   await act(async () => { hook.current.teamBuildState.patchSlot(1, { ability: "steadfast" }); });
   expect(hook.current.hasUnsavedTeamChanges()).toBe(true);
+});
+
+it("loads an editable example copy without a saved identity and saves under a new identity", async () => {
+  const hook = await mount();
+  const example = normalizeSavedTeam({ id: "example", name: "Example", battleFormat: "singles",
+    slots: imported.members.map(member => member ? { pokemonId: member.id, name: member.name } : null),
+    bench: [], buildState: imported.buildState })!;
+  await act(async () => { hook.current.loadWorkspace(example, imported.members, [], { asCopy: true }); });
+  expect(hook.current.activeSavedTeamId).toBeNull();
+  expect(hook.current.hasUnsavedTeamChanges()).toBe(false);
+  expect(localStorage.getItem("pokepilot.lastActiveTeam.v1")).toBeNull();
+  selectTeamPreset("kabamanda");
+  await act(async () => { hook.current.teamBuildState.patchSlot(1, { ability: "steadfast" }); });
+  expect(hook.current.hasUnsavedTeamChanges()).toBe(true);
+  expect(example.buildState?.abilityBySlot[1]).toBe("inner-focus");
+  await act(async () => { hook.current.markWorkspaceSaved("new-copy", "Example"); });
+  expect(hook.current.activeSavedTeamId).toBe("new-copy");
+  expect(getInitialTeamPresetId("kabamanda")).toBeNull();
 });
 
 it.each(["new-team", "account-change"] as const)("clears team, identity and builds on %s", async (reason) => {

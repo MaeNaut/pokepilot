@@ -668,6 +668,33 @@ button {
   margin-top: 10px;
 }
 
+.team-presets {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.team-presets h3 {
+  margin: 0 2px 8px;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: var(--font-semibold);
+}
+
+.team-presets .team-preset-row {
+  cursor: pointer;
+}
+
+.team-presets .team-preset-row:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.team-preset-row small {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+
 .saved-team-row {
   position: relative;
   display: grid;

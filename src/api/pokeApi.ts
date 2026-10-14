@@ -428,7 +428,8 @@ async function fetchPokemonFromSources(
     moves: [],
   };
   const speciesLookup = toPokemonLookupId(species.name);
-  const canonicalPokemonId = /^\d+$/.test(lookup)
+  const canonicalPokemonId = /^\d+$/.test(lookup) ||
+    normalizeShowdownId(lookup) === normalizeShowdownId(speciesLookup)
     ? (getPreferredPokeApiId(speciesLookup) ?? speciesLookup)
     : lookup;
   const pokemon = normalizePokemon(

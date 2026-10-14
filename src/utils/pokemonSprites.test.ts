@@ -44,6 +44,12 @@ describe("PokeAPI sprite URLs", () => {
       .toContain("/pokemon/10254.png");
   });
 
+  it("uses Mega Lucario Z assets rather than ordinary Mega Lucario", () => {
+    expect(getKnownPokemonIconUrl("lucario-mega-z")).toBe(getPokeApiChampionsSpriteUrl(10310));
+    expect(getKnownPokemonArtworkUrl("lucario-mega-z"))
+      .toContain("/official-artwork/10310.png");
+  });
+
   it("replaces a broken saved image once and then hides it if the fallback fails", () => {
     const image = { src: "https://example.test/broken.png", hidden: false } as HTMLImageElement;
 

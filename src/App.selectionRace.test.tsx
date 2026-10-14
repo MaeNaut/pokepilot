@@ -12,6 +12,8 @@ import { resolvePokemonChoice } from "./utils/pokemonSelection";
 import { createEmptyBuildState, type SavedTeamSummary } from "./utils/teamStorage";
 import { hydrateSavedTeamMembers, hydrateSavedBench } from "./utils/savedTeamLibrary";
 import { buildImportedShowdownSnapshot } from "./utils/showdownImport";
+import type { useTeamWorkspaceRestore } from "./hooks/useTeamWorkspaceRestore";
+import { TEAM_PRESETS } from "./data/teamPresets";
 
 const state = vi.hoisted(() => ({
   builder: null as unknown as ComponentProps<typeof TeamBuilder>,
@@ -23,6 +25,7 @@ const state = vi.hoisted(() => ({
   refresh: vi.fn(),
   accountId: "a" as string | null,
   accountStatus: null as "loading" | "error" | null,
+  restoreOptions: null as unknown as Parameters<typeof useTeamWorkspaceRestore>[0],
   t: (key: string) => key,
   data: {
     pokemonIndex: [], itemIndex: [], abilityIndex: [], showdownLegality: null,
@@ -46,7 +49,7 @@ vi.mock("./hooks/useAccount", () => ({ useAccount: () => ({
   user: state.accountStatus ? null : state.accountId ? { id: state.accountId } : null,
 }) }));
 vi.mock("./hooks/useAccountPreferencesSync", () => ({ useAccountPreferencesSync: () => {} }));
-vi.mock("./hooks/useTeamWorkspaceRestore", () => ({ useTeamWorkspaceRestore: () => {} }));
+vi.mock("./hooks/useTeamWorkspaceRestore", () => ({ useTeamWorkspaceRestore: (options: typeof state.restoreOptions) => { state.restoreOptions = options; } }));
 vi.mock("./hooks/useSavedTeams", async importOriginal => ({
   ...await importOriginal<typeof import("./hooks/useSavedTeams")>(),
   useSavedTeams: () => ({ teams: state.savedTeams, isHydrated: true, save: state.save, refresh: state.refresh }),
@@ -84,6 +87,7 @@ beforeEach(() => {
   localStorage.clear();
   state.accountId = "a";
   state.accountStatus = null;
+  state.data.pokemonIndexStatus = "ready";
   state.savedTeams = [];
   state.save.mockReset().mockImplementation(async (snapshot, id) => {
     const saved = { ...snapshot, id: id ?? "new-team", version: 1, createdAt: "2026-10-01", updatedAt: "2026-10-01" };
@@ -115,6 +119,95 @@ async function mount() {
   cleanups.push(async () => { await act(async () => root.unmount()); container.remove(); });
   return { render, container };
 }
+
+function presetSnapshot() {
+  return { members: TEAM_PRESETS[0].pokemon.map((pokemon) => ({
+    id: pokemon.pokemonId, name: pokemon.name, types: ["normal"] as const,
+    roles: [], source: "local" as const,
+  })).map((member) => ({ ...member, types: [...member.types] })), buildState: createEmptyBuildState() };
+}
+
+it.each(["idle", "loading", "error"])("waits for Pokemon catalog readiness before automatic preset restoration (%s)", async status => {
+  state.accountId = null;
+  state.data.pokemonIndexStatus = status;
+  const app = await mount();
+  expect(state.restoreOptions.ready).toBe(false);
+  state.data.pokemonIndexStatus = "ready";
+  await app.render();
+  expect(state.restoreOptions.ready).toBe(true);
+  await act(async () => { app.container.querySelector<HTMLButtonElement>('[aria-label="team.manage"]')!.click(); });
+  expect(app.container.querySelector<HTMLButtonElement>(".team-preset-row")?.disabled).toBe(false);
+});
+
+it("does not delay existing saved-team restoration while the catalog loads", async () => {
+  state.data.pokemonIndexStatus = "loading";
+  state.savedTeams = [{
+    version: 1, id: "saved", name: "Saved", battleFormat: "singles",
+    slots: Array(6).fill(null), bench: [], createdAt: "", updatedAt: "",
+  }];
+  const app = await mount();
+  expect(state.restoreOptions.ready).toBe(true);
+  await act(async () => { app.container.querySelector<HTMLButtonElement>('[aria-label="team.manage"]')!.click(); });
+  expect(app.container.querySelector<HTMLButtonElement>(".team-preset-row")?.disabled).toBe(true);
+});
+
+it("opens a first-visit example without storing or assigning a saved-team identity", async () => {
+  state.accountId = null;
+  vi.mocked(buildImportedShowdownSnapshot).mockResolvedValue(presetSnapshot());
+  await mount();
+  await act(async () => { await state.restoreOptions.restoreEmpty!(new AbortController().signal); });
+  expect(state.builder.team.filter(Boolean)).toHaveLength(6);
+  expect(state.copilot.savedTeamId).toBeNull();
+  expect(state.save).not.toHaveBeenCalled();
+  expect(state.savedTeams).toEqual([]);
+  expect(localStorage.getItem("pokepilot.lastActiveTeam.v1")).toBeNull();
+});
+
+it("loads a public example from the list and saves analysis under a new private identity", async () => {
+  vi.mocked(buildImportedShowdownSnapshot).mockResolvedValue(presetSnapshot());
+  const app = await mount();
+  await act(async () => { app.container.querySelector<HTMLButtonElement>('[aria-label="team.manage"]')!.click(); });
+  await act(async () => { app.container.querySelector<HTMLButtonElement>(".team-preset-row")!.click(); });
+  expect(state.copilot.savedTeamId).toBeNull();
+  expect(state.save).not.toHaveBeenCalled();
+  await act(async () => { await state.copilot.onSaveTeamForAnalysis(); });
+  expect(state.save).toHaveBeenCalledWith(expect.objectContaining({ name: "team.kabamandaExample", battleFormat: "singles" }), null);
+  expect(state.copilot.savedTeamId).toBe("new-team");
+  expect(localStorage.getItem("pokepilot.active-team-preset.v1")).toBeNull();
+});
+
+it.each(["new-team", "logout", "pokemon-edit"])("does not apply a late example after %s", async (change) => {
+  const pending = deferred<Awaited<ReturnType<typeof buildImportedShowdownSnapshot>>>();
+  vi.mocked(buildImportedShowdownSnapshot).mockReturnValueOnce(pending.promise);
+  vi.mocked(resolvePokemonChoice).mockResolvedValue(result());
+  const app = await mount();
+  await act(async () => { app.container.querySelector<HTMLButtonElement>('[aria-label="team.manage"]')!.click(); });
+  await act(async () => { app.container.querySelector<HTMLButtonElement>(".team-preset-row")!.click(); });
+  if (change === "new-team") await act(async () => { state.newTeam.onCreateTeam(); });
+  if (change === "logout") { state.accountId = null; await app.render(); }
+  if (change === "pokemon-edit") await act(async () => { await state.builder.onSelectPokemon(0, "lucario"); });
+  await act(async () => { pending.resolve(presetSnapshot()); });
+  expect(state.builder.team.filter(Boolean)).toHaveLength(change === "pokemon-edit" ? 1 : 0);
+  expect(state.copilot.savedTeamId).toBeNull();
+  expect(localStorage.getItem("pokepilot.active-team-preset.v1")).toBeNull();
+});
+
+it("requires confirmation before replacing an edited example with its original", async () => {
+  vi.mocked(buildImportedShowdownSnapshot).mockClear().mockResolvedValue(presetSnapshot());
+  vi.mocked(resolvePokemonChoice).mockResolvedValue(result());
+  const app = await mount();
+  const open = async () => { await act(async () => { app.container.querySelector<HTMLButtonElement>('[aria-label="team.manage"]')!.click(); }); };
+  await open();
+  await act(async () => { app.container.querySelector<HTMLButtonElement>(".team-preset-row")!.click(); });
+  await act(async () => { await state.builder.onSelectPokemon(0, "lucario"); });
+  await open();
+  await act(async () => { app.container.querySelector<HTMLButtonElement>(".team-preset-row")!.click(); });
+  expect(app.container.querySelector(".team-unsaved-warning")).not.toBeNull();
+  expect(buildImportedShowdownSnapshot).toHaveBeenCalledTimes(1);
+  await act(async () => { app.container.querySelectorAll<HTMLButtonElement>(".team-unsaved-warning-actions button")[1].click(); });
+  expect(buildImportedShowdownSnapshot).toHaveBeenCalledTimes(2);
+  expect(state.builder.team[0]?.id).toBe(TEAM_PRESETS[0].pokemon[0].pokemonId);
+});
 
 it("auto-saves a new team once and checks unchanged teams without rewriting them", async () => {
   vi.mocked(resolvePokemonChoice).mockResolvedValue(result());

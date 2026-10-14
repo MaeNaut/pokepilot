@@ -9,7 +9,7 @@ import type {
   TeamMember,
   TeamSlot,
 } from "../types";
-import { getPreferredPokeApiId } from "./pokemonAliases";
+import { getPreferredPokeApiId, toPokemonLookupId } from "./pokemonAliases";
 import { parseShowdownTeam } from "./showdownText";
 import {
   createEmptyBuildState,
@@ -81,7 +81,7 @@ export function resolveImportedPokemonId(
     return entryNames.includes(normalized);
   });
 
-  return matchedEntry?.name ?? normalized;
+  return matchedEntry?.name ?? toPokemonLookupId(name);
 }
 
 export async function buildImportedShowdownSnapshot(

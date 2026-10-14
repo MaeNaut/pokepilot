@@ -22,6 +22,31 @@ async function mount(props = defaults(), strict = false) {
 }
 
 describe("workspace restoration", () => {
+  it("waits for the account library before loading an empty-workspace example", async () => {
+    const restoreEmpty = vi.fn().mockResolvedValue(true);
+    const props = { ...defaults(), ready: false, teams: [], restoreEmpty };
+    const hook = await mount(props);
+    expect(restoreEmpty).not.toHaveBeenCalled();
+    await hook.rerender({ ...props, ready: true });
+    expect(restoreEmpty).toHaveBeenCalledTimes(1);
+    expect(props.restore).not.toHaveBeenCalled();
+  });
+  it("always prefers account teams to the public empty-workspace example", async () => {
+    const restoreEmpty = vi.fn().mockResolvedValue(true);
+    const props = { ...defaults(), restoreEmpty };
+    await mount(props);
+    expect(props.restore).toHaveBeenCalledTimes(1);
+    expect(restoreEmpty).not.toHaveBeenCalled();
+  });
+  it("cancels StrictMode example hydration and retries only the live attempt", async () => {
+    const props = { ...defaults(), teams: [], restoreEmpty: vi.fn(async(signal: AbortSignal) => {
+      await Promise.resolve(); return !signal.aborted;
+    }) };
+    await mount(props, true);
+    expect(props.restoreEmpty).toHaveBeenCalledTimes(2);
+    expect(props.restoreEmpty.mock.calls[0][0].aborted).toBe(true);
+    expect(props.restoreEmpty.mock.calls[1][0].aborted).toBe(false);
+  });
   it("retries StrictMode-cancelled hydration and completes only the live request", async () => {
     const props = defaults();
     const applied: string[] = [];

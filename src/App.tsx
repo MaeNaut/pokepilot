@@ -18,7 +18,10 @@ import {
   faList,
 } from "@fortawesome/free-solid-svg-icons";
 import { useSavedTeams, teamRefreshMode } from "./hooks/useSavedTeams";
-import { hydrateSavedTeamMembers, hydrateSavedBench } from "./utils/savedTeamLibrary";
+import { createSavedTeam, hydrateSavedTeamMembers, hydrateSavedBench } from "./utils/savedTeamLibrary";
+import { TEAM_PRESETS, type TeamPreset } from "./data/teamPresets";
+import { clearTeamPresetSelection, getInitialTeamPresetId, selectTeamPreset } from "./utils/teamPresetVisit";
+import { TeamPresetRow } from "./components/TeamPresetRow";
 import { isPokemonLegal } from "./api/showdownLegality";
 import { NewTeamControl } from "./components/NewTeamControl";
 import { PrivacyControl } from "./components/PrivacyControl";
@@ -69,6 +72,7 @@ import {
 } from "./utils/showdownImport";
 import {
   createSavedTeamId,
+  createSavedSlot,
   serializeTeamSnapshot,
   type SavedTeamSummary,
 } from "./utils/teamStorage";
@@ -98,6 +102,7 @@ const CopilotPanel = lazy(() =>
 );
 
 type PendingTeamAction =
+  | { kind: "preset"; preset: TeamPreset }
   | {
       kind: "load";
       team: SavedTeamSummary;
@@ -228,7 +233,8 @@ function App() {
   const previousAccountStorageIdRef = useRef(accountStorageId);
   const latestTeamSnapshotRef = useRef(getCurrentTeamSnapshot());
   latestTeamSnapshotRef.current = getCurrentTeamSnapshot();
-  const beginWorkspaceTransition = useCallback(() => {
+  const beginWorkspaceTransition = useCallback((keepPresetSelection = false) => {
+    if (!keepPresetSelection) clearTeamPresetSelection();
     pokemonSelectionRequestRef.current += 1;
     setSelectingPokemonSlot(null);
     setSearchError(null);
@@ -322,9 +328,20 @@ function App() {
 
   useTeamWorkspaceRestore({
     scope: accountStorageId ?? "local",
-    ready: !(account.enabled && account.status === "loading") && savedTeamLibrary.isHydrated,
+    ready: !isTeamSaveUnavailable && savedTeamLibrary.isHydrated &&
+      (savedTeams.length > 0 || indexStatus === "ready"),
     teams: savedTeams,
     restore: loadSavedTeam,
+    restoreEmpty: async (signal) => {
+      if (hasUnsavedTeamChanges() || selectingPokemonSlot !== null ||
+          (teamLoadRequestRef.current === 0 && pokemonSelectionRequestRef.current !== 0)) {
+        clearTeamPresetSelection();
+        return false;
+      }
+      const id = getInitialTeamPresetId(TEAM_PRESETS[0].id);
+      const preset = TEAM_PRESETS.find((entry) => entry.id === id);
+      return preset ? loadTeamPreset(preset, signal) : false;
+    },
   });
 
   useEffect(
@@ -972,6 +989,53 @@ function App() {
     void loadSavedTeam(savedTeam);
   }
 
+  function requestLoadTeamPreset(preset: TeamPreset) {
+    if (hasUnsavedTeamChanges()) {
+      openUnsavedWarning({ kind: "preset", preset });
+      return;
+    }
+    void loadTeamPreset(preset);
+  }
+
+  async function loadTeamPreset(preset: TeamPreset, signal?: AbortSignal) {
+    const requestId = beginWorkspaceTransition(true);
+    const selectionId = pokemonSelectionRequestRef.current;
+    const owner = accountStorageId;
+    const initialSnapshot = serializeTeamSnapshot(latestTeamSnapshotRef.current);
+    const isCurrent = () => !signal?.aborted && requestId === teamLoadRequestRef.current &&
+      selectionId === pokemonSelectionRequestRef.current && owner === previousAccountStorageIdRef.current &&
+      initialSnapshot === serializeTeamSnapshot(latestTeamSnapshotRef.current);
+    selectTeamPreset(preset.id);
+    setTeamStorageMessage(t("team.loadingExample"));
+    try {
+      const imported = await buildImportedShowdownSnapshot(preset.showdownText, { pokemonIndex });
+      if (!isCurrent()) {
+        if (!signal?.aborted && requestId === teamLoadRequestRef.current) clearTeamPresetSelection();
+        return false;
+      }
+      const members = imported.members.filter((member): member is TeamMember => Boolean(member));
+      setCustomPool((current) => mergePool(members, current));
+      const example = createSavedTeam({
+        name: t(preset.nameKey), battleFormat: preset.battleFormat,
+        slots: imported.members.map(createSavedSlot),
+        bench: [], buildState: imported.buildState,
+      });
+      loadWorkspace(example, imported.members, [], { asCopy: true });
+      selectTeamPreset(preset.id);
+      setSelectedTeamSlot(0);
+      setTeamStorageMessage(null);
+      closeTeamManager();
+      return true;
+    } catch {
+      if (isCurrent()) {
+        clearTeamPresetSelection();
+        setTeamStorageMessage(t("toolbar.importFailed"));
+        setIsTeamManagerOpen(true);
+      }
+      return false;
+    }
+  }
+
   async function loadSavedTeam(savedTeam: SavedTeamSummary, signal?: AbortSignal) {
     const requestId = beginWorkspaceTransition();
     setIsImportingNewTeam(false);
@@ -1027,6 +1091,11 @@ function App() {
       return;
     }
 
+    if (action.kind === "preset") {
+      void loadTeamPreset(action.preset);
+      return;
+    }
+
     if (action.kind === "import") {
       void importShowdownAsNewTeam(action.showdownText);
       return;
@@ -1036,6 +1105,7 @@ function App() {
   }
 
   function getPendingTeamActionMessage(action: PendingTeamAction) {
+    if (action.kind === "preset") return t("team.discardLoad", { name: t(action.preset.nameKey) });
     if (action.kind === "new") {
       return t("team.discardNew");
     }
@@ -1479,6 +1549,10 @@ function App() {
               ) : (
                 <p className="team-manager-empty">{t("team.noneSaved")}</p>
               )}
+              <section className="team-presets" aria-label={t("team.examples")}>
+                <h3>{t("team.examples")}</h3>
+                {TEAM_PRESETS.map((preset) => <TeamPresetRow key={preset.id} preset={preset} onSelect={requestLoadTeamPreset} disabled={indexStatus !== "ready"} />)}
+              </section>
             </div>
           ) : null}
             </nav>

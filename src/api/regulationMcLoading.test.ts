@@ -7,7 +7,8 @@ import { fetchPokemonIndex } from "./pokemonIndex";
 import { getLegalMoves, hydrateShowdownLegalitySnapshot, type ShowdownLegalityPayload } from "./showdownLegality";
 import { getBattleFormGroup } from "../data/battleForms";
 import { translatePokemonName } from "../i18n/gameTranslations";
-import { resolveImportedPokemonId } from "../utils/showdownImport";
+import { buildImportedShowdownSnapshot, resolveImportedPokemonId } from "../utils/showdownImport";
+import { TEAM_PRESETS } from "../data/teamPresets";
 import { formatShowdownTeam, parseShowdownTeam } from "../utils/showdownText";
 import { createEmptyBuildState } from "../utils/teamBuildState";
 import {
@@ -17,6 +18,25 @@ import {
 
 afterEach(() => vi.unstubAllGlobals());
 describe("M-C production loading", () => {
+  it("keeps preset form IDs and Mega Lucario Z images when the index is not loaded", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (String(input).includes("pokeapi.co")) throw new Error("PokeAPI unavailable");
+      const data = String(input).includes("showdown-battle") ? battle : legality;
+      return { ok: true, json: async () => data };
+    }));
+    const imported = await buildImportedShowdownSnapshot(TEAM_PRESETS[0].showdownText, {
+      pokemonIndex: [],
+      services: { fetchPokemon, fetchItem: async id => ({ id, name: id }) },
+    });
+    expect(imported.members.map(member => member?.id)).toEqual([
+      "hippowdon", "salamence-mega", "lucario-mega-z", "archaludon", "meowscarada", "primarina",
+    ]);
+    expect(imported.members[2]?.iconSpriteUrl).toContain("/champions/10310.png");
+    expect(imported.members[2]?.spriteUrl).toContain("/official-artwork/10310.png");
+    const legacyMember = await fetchPokemon("lucariomegaz");
+    expect(legacyMember.id).toBe("lucario-mega-z");
+    expect(legacyMember.spriteUrl).toContain("/official-artwork/10310.png");
+  });
   it("loads every new form without PokeAPI and has legal moves", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (String(input).includes("pokeapi.co")) throw new Error("PokeAPI unavailable");

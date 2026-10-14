@@ -14,6 +14,8 @@ responsive web app.
 ## Highlights
 
 - Build, reorder, save, duplicate, and manage six-Pokemon teams with a six-slot bench.
+- Start a fresh first visit with the public Kabamanda example, or reload it from the team menu's Example teams section. Examples are editable working copies, not personal saved teams; saving or confirming analysis creates a normal saved team. Existing saved teams take priority, and logout or starting an empty team does not reload the example automatically.
+- Public examples wait for the Pokemon catalog before loading so form names are ready on first render. Showdown imports preserve canonical form IDs even without a loaded catalog; Mega Lucario Z has explicit icon/artwork fallbacks when PokeAPI is unavailable.
 - Edit forms, items, abilities, natures, EVs, moves, Mega Evolution, and current HP.
 - Filter Pokemon, items, abilities, and moves against Regulation M-C legality.
 - Import and export Pokemon Showdown text for individual sets and complete teams.
