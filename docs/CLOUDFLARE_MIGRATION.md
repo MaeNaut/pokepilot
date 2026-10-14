@@ -12,9 +12,10 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 - **QA version URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
 - **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
-- **Operational state:** Upstash adapter remains configured; public BYOK calls
-  bypass its cache, distributed leases, and request-rate counters and use
-  process-local deduplication. Generic development modes can enable Redis operations.
+- **Operational state:** Public BYOK calls use the `personal` safeguard mode:
+  fresh results without shared caching, account/IP request protection, and Redis
+  account/global active-analysis permits. Identical requests still deduplicate
+  locally. Development-only `ai-test`/`ai-fresh` modes can bypass admission.
 - **Account storage:** D1 `accounts`, `account_sessions`, and
   `account_storage` tables, plus encrypted `personal_api_keys`
 - **Metrics:** bounded daily `operational_metrics` aggregates in D1
@@ -91,6 +92,16 @@ include unavailable Workers Logs, Wrangler tail, and Logpush. Do not enable
 production logging to work around a QA-only measurement request. Per-endpoint
 CPU diagnosis requires a separate deployed staging Worker; HTTP response time
 does not measure Worker CPU. `wrangler.qa.jsonc` keeps invocation logs disabled.
+
+On October 14, 2026, release preflight passed 1,381 tests, lint, the Cloudflare
+build/dry-run, and the dependency audit. Live Upstash checks in disposable QA
+keys verified cross-instance account/global capacity, release after success or
+failure, orphan expiry, longest-lease TTL, and atomic request admission. The QA
+preview passed 37 public routing checks and guest API rejection. A Luna low
+request completed, and its result/time/token/cost metadata survived history
+reload. Desktop, tablet, and 360px settings menus were checked in Chrome.
+The final live sign-out check was interrupted by a browser confirmation dialog;
+authentication draft cleanup remains covered by the regression suite.
 
 ## Rollback
 

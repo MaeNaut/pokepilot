@@ -14,6 +14,7 @@ import {
   type PokePilotSafeguardMode,
 } from "./pokepilotOperations.js";
 import { getDefaultPokePilotOperationsRuntime } from "./pokepilotOperationsRuntime.js";
+import { readBoundedRequestJson } from "./requestBody.js";
 
 type WebPokePilotApiOptions = {
   authenticatedAccountId?: string;
@@ -104,47 +105,6 @@ function logOperationalEvent(event: PokePilotOperationalEvent) {
   console.info("[PokePilot API] Analysis completed.", event);
 }
 
-async function readRequestBody(request: Request) {
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (
-    Number.isFinite(contentLength) &&
-    contentLength > POKEPILOT_API_MAX_BODY_BYTES
-  ) {
-    throw new RangeError("PAYLOAD_TOO_LARGE");
-  }
-
-  const reader = request.body?.getReader();
-  if (!reader) {
-    return JSON.parse("") as unknown;
-  }
-
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
-
-    totalBytes += value.byteLength;
-    if (totalBytes > POKEPILOT_API_MAX_BODY_BYTES) {
-      await reader.cancel();
-      throw new RangeError("PAYLOAD_TOO_LARGE");
-    }
-    chunks.push(value);
-  }
-
-  const bytes = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
-}
-
 export async function handleWebPokePilotApi(
   request: Request,
   options: WebPokePilotApiOptions = {},
@@ -188,7 +148,7 @@ export async function handleWebPokePilotApi(
 
   let body: unknown;
   try {
-    body = await readRequestBody(request);
+    body = await readBoundedRequestJson(request, POKEPILOT_API_MAX_BODY_BYTES);
   } catch (error) {
     const isTooLarge =
       error instanceof RangeError && error.message === "PAYLOAD_TOO_LARGE";

@@ -156,6 +156,18 @@ describe("account storage boundary", () => {
     ]);
   });
 
+  it("preserves escaped Unicode history without changing the stored payload limit", async () => {
+    const { environment, getPayload } = createEnvironment();
+    const history = [{ id: "history-a", prose: "\uac00".repeat(2_000) }];
+    const raw = JSON.stringify({ "analysis-history": history }).replaceAll("\uac00", "\\uac00");
+    const response = await handleAccountStorage(request("/api/pokepilot/analysis-history", {
+      method: "PUT", body: raw,
+      headers: { origin: "https://pokepilot.app", "If-Match": '"empty"' },
+    }), environment, "analysis-history");
+    expect(response.status).toBe(204);
+    expect(JSON.parse(getPayload()!)).toEqual(history);
+  });
+
   it("reads and writes validated account preferences", async () => {
     const preferences = {
       analysis: { scope: "pokemon", modelId: "gpt-6-luna", reasoningEffort: "low" },

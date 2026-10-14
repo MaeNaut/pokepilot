@@ -1,5 +1,5 @@
 import { AccountAuthError, readAccountSession } from "./accountAuth.js";
-import { emptyResponse, isSameOrigin, jsonResponse, withSessionRefresh } from "./http.js";
+import { emptyResponse, isSameOrigin, jsonResponse, readJsonBody, withSessionRefresh } from "./http.js";
 import type { WorkerEnvironment } from "./env.js";
 import { isAnalysisPreference } from "../src/utils/accountPreferences.js";
 
@@ -116,8 +116,11 @@ export async function handleAccountStorage(
       throw new AccountAuthError(403, "AUTH_FORBIDDEN");
     }
 
-    const body = await request.json().catch(() => null);
-    const payload = getPayload(body, key);
+    const payloadLimit = key === "preferences" ? preferencesStorageLimit : collectionStorageLimits[key].bytes;
+    // Allow escaped JSON/Unicode plus the envelope without changing stored limits.
+    const body = await readJsonBody(request, payloadLimit * 6 + 2_048, "INVALID_ACCOUNT_STORAGE");
+    if (!body.ok) return withSessionRefresh(body.response, session.refreshCookie);
+    const payload = getPayload(body.value, key);
     if (!payload) {
       return jsonResponse(400, { ok: false, error: { code: "INVALID_ACCOUNT_STORAGE" } });
     }

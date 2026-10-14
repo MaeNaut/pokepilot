@@ -66,3 +66,23 @@ return {
   redis.call("ZREM", KEYS[2], ARGV[1])
 }
 `;
+
+export const acquireCapacityScript = `
+local now = tonumber(ARGV[1])
+local expiresAt = tonumber(ARGV[2])
+local token = ARGV[3]
+local requesterLimit = tonumber(ARGV[4])
+local totalLimit = tonumber(ARGV[5])
+redis.call("ZREMRANGEBYSCORE", KEYS[1], "-inf", now)
+redis.call("ZREMRANGEBYSCORE", KEYS[2], "-inf", now)
+if redis.call("ZCARD", KEYS[1]) >= requesterLimit or
+   redis.call("ZCARD", KEYS[2]) >= totalLimit then
+  return 0
+end
+for _, key in ipairs(KEYS) do
+  redis.call("ZADD", key, expiresAt, token)
+  local latest = redis.call("ZREVRANGE", key, 0, 0, "WITHSCORES")
+  redis.call("PEXPIRE", key, math.max(1, tonumber(latest[2]) - now))
+end
+return 1
+`;

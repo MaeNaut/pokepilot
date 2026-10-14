@@ -73,14 +73,14 @@ describe("Worker analysis key routing", () => {
     expect(handleWebPokePilotApi).not.toHaveBeenCalled();
   });
 
-  it("uses the registered key for both efforts without site-key safeguards", async () => {
+  it("uses fresh personal-key analysis with server resource protection for both efforts", async () => {
     vi.mocked(readPersonalApiKey).mockResolvedValue("personal-key-test");
     await worker.fetch(analyzeRequest("medium"), env);
     await worker.fetch(analyzeRequest("low"), env);
     for (const call of vi.mocked(handleWebPokePilotApi).mock.calls) {
       expect(call[1]).toMatchObject({
         apiKey: "personal-key-test", billingSource: "personal",
-        billingIdentity: "account-a", safeguardMode: "ai-fresh",
+        billingIdentity: "account-a", safeguardMode: "personal",
       });
     }
     expect(vi.mocked(handleWebPokePilotApi).mock.calls.map((call) => call[1]?.reasoningEffort)).toEqual(["medium", "low"]);
@@ -89,6 +89,18 @@ describe("Worker analysis key routing", () => {
   it("rejects unrecognized reasoning levels", async () => {
     expect((await worker.fetch(analyzeRequest("high"), env)).status).toBe(400);
     expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+  });
+
+  it("keeps IP protection stable instead of deriving it from each user's key", async () => {
+    const withoutClientSecret = { ...env, POKEPILOT_CLIENT_SECRET: " " };
+    vi.mocked(readPersonalApiKey).mockResolvedValueOnce("first-personal-key").mockResolvedValueOnce("second-personal-key");
+    await worker.fetch(analyzeRequest("low"), withoutClientSecret);
+    vi.mocked(readAccountSession).mockResolvedValue({ account: { id: "account-b" } });
+    const secondAccountRequest = analyzeRequest("medium");
+    secondAccountRequest.headers.set("X-PokePilot-Account-Id", "account-b");
+    await worker.fetch(secondAccountRequest, withoutClientSecret);
+    expect(vi.mocked(handleWebPokePilotApi).mock.calls.map((call) => call[1]?.clientSecret))
+      .toEqual([env.POKEPILOT_SESSION_SECRET, env.POKEPILOT_SESSION_SECRET]);
   });
 
   it("blocks the next request immediately after the registered key is removed", async () => {

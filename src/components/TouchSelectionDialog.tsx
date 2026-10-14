@@ -14,6 +14,7 @@ type TouchSelectionDialogProps = {
     | "move"
     | "rank"
     | "status"
+    | "settings"
     | "privacy";
   title: string;
   canSelect?: boolean;

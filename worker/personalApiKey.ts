@@ -1,6 +1,7 @@
 import { AccountAuthError, readAccountSession } from "./accountAuth.js";
 import { emptyResponse, isSameOrigin, jsonResponse, withSessionRefresh } from "./http.js";
 import type { WorkerEnvironment } from "./env.js";
+import { readBoundedRequestText, RequestBodyTooLargeError } from "../server/requestBody.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -81,7 +82,12 @@ export async function handlePersonalApiKey(request: Request, env: WorkerEnvironm
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
     return jsonResponse(415, { ok: false, error: { code: "INVALID_KEY" } });
   }
-  const raw = await request.text();
+  let raw: string;
+  try {
+    raw = await readBoundedRequestText(request, 1_024 * 3);
+  } catch (error) {
+    return jsonResponse(error instanceof RequestBodyTooLargeError ? 413 : 400, { ok: false, error: { code: "INVALID_KEY" } });
+  }
   if (raw.length > 1_024) return jsonResponse(413, { ok: false, error: { code: "INVALID_KEY" } });
   let value: unknown;
   try { value = JSON.parse(raw); } catch { value = null; }

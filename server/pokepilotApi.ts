@@ -20,6 +20,9 @@ import {
 import {
   createPokePilotAnalysisCacheKey,
   getPokePilotSafeguardConfig,
+  POKEPILOT_ANALYSIS_LEASE_MS,
+  POKEPILOT_MAX_ACCOUNT_ANALYSES,
+  POKEPILOT_MAX_ACTIVE_ANALYSES,
   POKEPILOT_MAX_SHARED_WAITERS,
   POKEPILOT_MAX_TOTAL_SHARED_WAITERS,
   POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
@@ -34,6 +37,12 @@ import {
 } from "./pokepilotAnalysisValidation.js";
 
 export const POKEPILOT_API_MAX_BODY_BYTES = 512_000;
+
+class AnalysisExecutionFailure extends Error {
+  constructor(readonly original: unknown) {
+    super("Analysis execution failed.");
+  }
+}
 export type PokePilotHostedModel = Extract<PokePilotEvaluationModel, "gpt-6-luna" | "gpt-6-sol">;
 
 export type PokePilotApiErrorCode =
@@ -300,6 +309,7 @@ export async function handlePokePilotAnalysis(
   const safeguardConfig = getPokePilotSafeguardConfig(safeguardMode);
   const startedAt = clock();
   let attemptedUsage: LunaUsage | undefined;
+  let providerAttempted = false;
 
   try {
     if (
@@ -345,13 +355,23 @@ export async function handlePokePilotAnalysis(
       return successResult(cachedAnalysis.analysis, "hit", modelId);
     }
 
-    const runAnalysis = async (): Promise<HostedAnalysisExecution> => {
-      const result = analyze
-        ? await analyze(requestValidation.data)
-        : await analyzeWithOpenAiLuna(requestValidation.data, {
-            apiKey, modelId, cacheNamespace: "production", reasoningEffort,
-            safetyIdentifier: requester?.clientId,
-          });
+    const performAnalysis = async (): Promise<HostedAnalysisExecution> => {
+      const controller = new AbortController();
+      // SDK per-attempt timeouts end at headers; keep body reads bounded too.
+      const timeout = safeguardConfig.requestRateLimitEnabled ? setTimeout(
+        () => controller.abort(), reasoningEffort === "medium" ? 390_000 : 140_000,
+      ) : undefined;
+      let result: LunaAnalysisResult;
+      try {
+        result = analyze
+          ? await analyze(requestValidation.data)
+          : await analyzeWithOpenAiLuna(requestValidation.data, {
+              apiKey, modelId, cacheNamespace: "production", reasoningEffort,
+              safetyIdentifier: requester?.clientId, signal: controller.signal,
+            });
+      } finally {
+        clearTimeout(timeout);
+      }
       attemptedUsage = result.usage;
       let reviewed = reviewHostedCopilotAnalysis(result.output, requestValidation.data);
       if (safeguardConfig.cacheEnabled) {
@@ -379,8 +399,19 @@ export async function handlePokePilotAnalysis(
       });
       return { kind: "completed", analysis: reviewed.analysis, qualityWarnings: reviewed.qualityWarnings, result };
     };
+    const runAnalysis = () => {
+      providerAttempted = true;
+      // Followers receive this marker too; shared provider errors are not pre-call failures.
+      return performAnalysis().catch((error) => { throw new AnalysisExecutionFailure(error); });
+    };
     const execution = operations
       ? await operations.runOnce(operationsKey, runAnalysis, {
+          capacity: safeguardConfig.requestRateLimitEnabled && requester ? {
+            requesterId: requester.clientId,
+            maxPerRequester: POKEPILOT_MAX_ACCOUNT_ANALYSES,
+            maxTotal: POKEPILOT_MAX_ACTIVE_ANALYSES,
+            leaseMs: POKEPILOT_ANALYSIS_LEASE_MS,
+          } : undefined,
           distributed: safeguardConfig.cacheEnabled,
           maxTotalWaiters: POKEPILOT_MAX_TOTAL_SHARED_WAITERS,
           maxWaiters: POKEPILOT_MAX_SHARED_WAITERS,
@@ -435,11 +466,13 @@ export async function handlePokePilotAnalysis(
           }
         : undefined,
     );
-  } catch (error) {
+  } catch (caughtError) {
+    const executionFailure = caughtError instanceof AnalysisExecutionFailure;
+    const error = caughtError instanceof AnalysisExecutionFailure ? caughtError.original : caughtError;
     const usage = error instanceof LunaStructuredOutputError
       ? error.usage
       : attemptedUsage;
-    if (usage) {
+    if (usage && providerAttempted) {
       reportDiagnostic(onOperationalEvent, {
         type: "analysis-failure",
         billingSource,
@@ -451,16 +484,21 @@ export async function handlePokePilotAnalysis(
         usage,
       });
     }
-    if (error instanceof PokePilotCapacityError) {
+    if (error instanceof PokePilotCapacityError && !executionFailure) {
       return errorResult(
         429,
         "AI_RATE_LIMITED",
-        "Too many identical analyses are already in progress.",
+        "Too many analyses are already in progress.",
         5,
+        false,
       );
     }
 
     if (billingSource === "site") reportDiagnostic(onUpstreamError, error);
+
+    if (!providerAttempted && !executionFailure) {
+      return errorResult(502, "AI_UPSTREAM_ERROR", "Analysis safeguards are temporarily unavailable.", undefined, false);
+    }
 
     if (isInvalidResponseError(error)) {
       return errorResult(

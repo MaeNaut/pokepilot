@@ -7,6 +7,7 @@ import { createCopilotResponsibilityCounts } from "../src/utils/copilotResponsib
 import { LunaStructuredOutputError, type LunaAnalysisResult } from "./openAiLuna";
 import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
+import { UpstashPokePilotOperations, type PokePilotRedisClient } from "./upstashPokePilotOperations";
 
 const validRequest = {
   version: 34,
@@ -862,6 +863,92 @@ describe("PokePilot server API", () => {
       metadata: { cacheStatus: "miss" },
     });
     expect(analyze).toHaveBeenCalledTimes(2);
+  });
+
+  it("protects fresh BYOK requests without a daily quota or result cache", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    const getCached = vi.spyOn(operations, "getCached");
+    const setCached = vi.spyOn(operations, "setCached");
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const options = { analyze, operations, billingSource: "personal" as const,
+      billingIdentity: "account-a", requester: { clientId: "account-a", ipHash: "ip-a" },
+      safeguardMode: "personal" as const, clock: () => 10_000 };
+    for (let i = 0; i < 20; i++) {
+      expect((await handlePokePilotAnalysis({ ...validRequest, teamName: `Request ${i}` }, options)).status).toBe(200);
+    }
+    const blocked = await handlePokePilotAnalysis(validRequest, options);
+    expect(blocked.status).toBe(429);
+    expect(blocked.body).toMatchObject({ error: { code: "AI_RATE_LIMITED", providerAttempted: false } });
+    expect(analyze).toHaveBeenCalledTimes(20);
+    expect(getCached).not.toHaveBeenCalled(); expect(setCached).not.toHaveBeenCalled();
+    expect((await handlePokePilotAnalysis(validRequest, { ...options, clock: () => 70_001 })).status).toBe(200);
+    expect(analyze).toHaveBeenCalledTimes(21);
+  });
+
+  it("rejects new BYOK leaders beyond account capacity before making a paid call", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    const finish: Array<(value: LunaAnalysisResult) => void> = [];
+    const analyze = vi.fn(() => new Promise<LunaAnalysisResult>((resolve) => finish.push(resolve)));
+    const options = { analyze, operations, billingSource: "personal" as const,
+      billingIdentity: "account-a", requester: { clientId: "account-a", ipHash: "ip-a" },
+      safeguardMode: "personal" as const };
+    const first = handlePokePilotAnalysis({ ...validRequest, teamName: "first" }, options);
+    const second = handlePokePilotAnalysis({ ...validRequest, teamName: "second" }, options);
+    await vi.waitFor(() => expect(analyze).toHaveBeenCalledTimes(2));
+    const third = await handlePokePilotAnalysis({ ...validRequest, teamName: "third" }, options);
+    expect(third.status).toBe(429);
+    expect(third.body).toMatchObject({ error: { providerAttempted: false } });
+    expect(analyze).toHaveBeenCalledTimes(2);
+    finish.forEach((resolve) => resolve(createModelResult(groundedModelOutput)));
+    await Promise.all([first, second]);
+  });
+
+  it("does not call the provider or imply charges after pre-call safeguard failures", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    vi.spyOn(operations, "runOnce").mockRejectedValue(new Error("Redis unavailable"));
+    const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
+    const result = await handlePokePilotAnalysis(validRequest, {
+      analyze, operations, billingSource: "personal", billingIdentity: "a",
+      requester: { clientId: "a", ipHash: "ip" }, safeguardMode: "personal",
+    });
+    expect(result.body).toMatchObject({ error: { code: "AI_UPSTREAM_ERROR", providerAttempted: false } });
+    expect(analyze).not.toHaveBeenCalled();
+  });
+
+  it.each(["memory", "upstash"])("preserves shared failure classification and billing uncertainty in %s", async (backend) => {
+    const model = createModelResult(groundedModelOutput);
+    const errors = [
+      [Object.assign(new Error("invalid key"), { status: 401 }), "PERSONAL_KEY_INVALID"],
+      [Object.assign(new Error("quota"), { status: 429, code: "insufficient_quota" }), "AI_QUOTA_EXCEEDED"],
+      [new LunaStructuredOutputError("invalid output", model.usage, model.responseMetadata), "AI_INVALID_RESPONSE"],
+    ] as const;
+    for (const [error, code] of errors) {
+      const operations = backend === "memory" ? new InMemoryPokePilotOperations() : new UpstashPokePilotOperations({
+        redis: {
+          eval: vi.fn(async (script: string) => script.includes("local clientLimit") ? [1, 0, 0] : 1),
+        } as unknown as PokePilotRedisClient,
+      });
+      const runOnce = vi.spyOn(operations, "runOnce");
+      let fail: (error: unknown) => void = () => {};
+      const analyze = vi.fn(() => new Promise<LunaAnalysisResult>((_resolve, reject) => { fail = reject; }));
+      const onOperationalEvent = vi.fn();
+      const options = { analyze, operations, onOperationalEvent, billingSource: "personal" as const,
+        billingIdentity: "a", requester: { clientId: "a", ipHash: "ip" }, safeguardMode: "personal" as const };
+      const leader = handlePokePilotAnalysis(validRequest, options);
+      await vi.waitFor(() => expect(analyze).toHaveBeenCalledOnce());
+      const follower = handlePokePilotAnalysis(validRequest, options);
+      await vi.waitFor(() => expect(runOnce).toHaveBeenCalledTimes(2));
+      fail(error);
+      const results = await Promise.all([leader, follower]);
+      results.forEach((result) => {
+        expect(result.body).toMatchObject({ error: { code } });
+        if (!result.body.ok) expect(result.body.error.providerAttempted).not.toBe(false);
+      });
+      expect(analyze).toHaveBeenCalledOnce();
+      if (error instanceof LunaStructuredOutputError) {
+        expect(onOperationalEvent.mock.calls.filter(([event]) => event.type === "analysis-failure")).toHaveLength(1);
+      }
+    }
   });
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faRotateRight, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
@@ -22,6 +22,7 @@ type Props = {
   isAnalyzeConfirmationOpen: boolean;
   isAnalyzeDisabled: boolean;
   isBusy: boolean;
+  startedAt?: number;
   hasResponse: boolean;
   hasPersonalApiKey: boolean;
   analyzeLabel: string;
@@ -32,9 +33,18 @@ type Props = {
 
 export function CopilotAnalyzeControl({
   scope, reasoningEffort, battleContext, isAnalyzeConfirmationOpen, isAnalyzeDisabled,
-  isBusy, hasResponse, hasPersonalApiKey, analyzeLabel, onRequest, onClose, onConfirm,
+  isBusy, startedAt, hasResponse, hasPersonalApiKey, analyzeLabel, onRequest, onClose, onConfirm,
 }: Props) {
   const { t } = useLocalization();
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (!isBusy || startedAt === undefined) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [isBusy, startedAt]);
+  const elapsed = Math.max(0, Math.floor((now - (startedAt ?? now)) / 1000));
+  const timerLabel = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
   const analyzeControlRef = useRef<HTMLDivElement>(null);
   const analyzeButtonRef = useRef<HTMLButtonElement>(null);
   const analyzeConfirmationHeadingRef = useRef<HTMLElement>(null);
@@ -64,6 +74,8 @@ export function CopilotAnalyzeControl({
         className="copilot-analyze-button"
         type="button"
         disabled={isAnalyzeDisabled}
+        aria-label={isBusy ? t("copilot.analyzing") : undefined}
+        aria-busy={isBusy}
         onClick={onRequest}
         aria-haspopup="dialog"
         aria-expanded={isAnalyzeConfirmationOpen}
@@ -80,7 +92,9 @@ export function CopilotAnalyzeControl({
           spin={isBusy}
           aria-hidden="true"
         />
-        {analyzeLabel}
+        {isBusy && startedAt !== undefined
+          ? <span className="copilot-analyze-timer" aria-hidden="true">{timerLabel}</span>
+          : analyzeLabel}
       </button>
       {isAnalyzeConfirmationOpen ? (
         <div

@@ -22,6 +22,9 @@ class FakeRedisClient {
     value: unknown;
   }> = [];
   rateResult: [number, number, number] = [1, 0, 0];
+  readonly capacityExpirations = new Map<string, number>();
+  failCapacityAcquire = false;
+  failCapacityRelease = false;
   requestResult: [number, number, number] = [1, 0, 0];
   completeResult: [number, number, number, number] = [1, 1, 0, 0];
 
@@ -41,6 +44,27 @@ class FakeRedisClient {
     args: TArgs,
   ): Promise<TData> {
     this.evalCalls.push({ args, keys, script });
+    if (script.includes("local requesterLimit")) {
+      if (this.failCapacityAcquire) throw new Error("Capacity store unavailable");
+      const now = Number(args[0]);
+      const sets = keys.map((key) => {
+        const entries = new Map((this.values.get(key) as Map<string, number> | undefined) ?? []);
+        for (const [token, expires] of entries) if (expires <= now) entries.delete(token);
+        this.values.set(key, entries);
+        return entries;
+      });
+      if (sets[0].size >= Number(args[3]) || sets[1].size >= Number(args[4])) return 0 as TData;
+      sets.forEach((entries, index) => {
+        entries.set(String(args[2]), Number(args[1]));
+        this.capacityExpirations.set(keys[index], Math.max(...entries.values()));
+      });
+      return 1 as TData;
+    }
+    if (keys[0]?.includes(":active:") && script.includes('redis.call("ZREM"')) {
+      if (this.failCapacityRelease) throw new Error("Capacity cleanup unavailable");
+      for (const key of keys) (this.values.get(key) as Map<string, number> | undefined)?.delete(String(args[0]));
+      return [1, 1] as TData;
+    }
     if (script.includes("local clientLimit")) {
       return this.requestResult as TData;
     }
@@ -130,6 +154,77 @@ function createOperations(
 }
 
 describe("Upstash PokePilot operations", () => {
+  const capacityOptions = (requesterId: string, leaseMs = 450_000) => ({
+    distributed: false,
+    capacity: { requesterId, maxPerRequester: 1, maxTotal: 2, leaseMs },
+  });
+
+  it("atomically bounds independent leaders across instances even without result sharing", async () => {
+    const redis = new FakeRedisClient();
+    const first = createOperations(redis), second = createOperations(redis), third = createOperations(redis);
+    const finish: Array<(value: string) => void> = [];
+    const task = () => new Promise<string>((resolve) => finish.push(resolve));
+    const a = first.runOnce("low:a", task, capacityOptions("a"));
+    await vi.waitFor(() => expect(finish).toHaveLength(1));
+    const blocked = vi.fn(async () => "blocked");
+    await expect(second.runOnce("medium:changed", blocked, capacityOptions("a"))).rejects.toBeInstanceOf(PokePilotCapacityError);
+    const b = second.runOnce("b", task, capacityOptions("b"));
+    await vi.waitFor(() => expect(finish).toHaveLength(2));
+    await expect(third.runOnce("c", blocked, capacityOptions("c"))).rejects.toBeInstanceOf(PokePilotCapacityError);
+    expect(blocked).not.toHaveBeenCalled();
+    const follower = first.runOnce("low:a", blocked, capacityOptions("a"));
+    finish.forEach((resolve) => resolve("done"));
+    await Promise.all([a, b, follower]);
+    await expect(third.runOnce("c", async () => "next", capacityOptions("c"))).resolves.toMatchObject({ value: "next" });
+    expect(redis.values.get("test:pokepilot:active:total")).toEqual(new Map());
+  });
+
+  it("uses capacity when a distributed request becomes leader and frees failed work", async () => {
+    const redis = new FakeRedisClient();
+    const first = createOperations(redis);
+    const options = { ...capacityOptions("a"), distributed: true };
+    await expect(first.runOnce("sync", () => { throw new Error("sync"); }, options)).rejects.toThrow("sync");
+    await expect(first.runOnce("async", async () => { throw new Error("async"); }, options)).rejects.toThrow("async");
+    expect(redis.values.get("test:pokepilot:active:total")).toEqual(new Map());
+    await expect(first.runOnce("valid", async () => "ok", options)).resolves.toMatchObject({ value: "ok" });
+  });
+
+  it("fails closed on acquisition failure without starting a task", async () => {
+    const redis = new FakeRedisClient(); redis.failCapacityAcquire = true;
+    const task = vi.fn(async () => "unused");
+    await expect(createOperations(redis).runOnce("a", task, capacityOptions("a"))).rejects.toThrow("Capacity store unavailable");
+    expect(task).not.toHaveBeenCalled();
+  });
+
+  it("keeps paid results on cleanup failure and expires orphan permits", async () => {
+    const redis = new FakeRedisClient(); redis.failCapacityRelease = true;
+    let now = 0;
+    const operations = createOperations(redis, { clock: () => now });
+    const options = capacityOptions("a", 450_000);
+    await expect(operations.runOnce("a", async () => "paid result", options)).resolves.toMatchObject({ value: "paid result" });
+    now = 449_999;
+    await expect(operations.runOnce("b", async () => "blocked", options)).rejects.toBeInstanceOf(PokePilotCapacityError);
+    now = 450_000;
+    redis.failCapacityRelease = false;
+    await expect(operations.runOnce("c", async () => "recovered", options)).resolves.toMatchObject({ value: "recovered" });
+  });
+
+  it("does not shorten a shared key's TTL when a shorter permit joins", async () => {
+    const redis = new FakeRedisClient();
+    const operations = createOperations(redis, { clock: () => 0 });
+    const finish: Array<(value: string) => void> = [];
+    const task = () => new Promise<string>((resolve) => finish.push(resolve));
+    const long = operations.runOnce("long", task, capacityOptions("a", 450_000));
+    await vi.waitFor(() => expect(finish).toHaveLength(1));
+    const short = operations.runOnce("short", task, capacityOptions("b", 180_000));
+    await vi.waitFor(() => expect(finish).toHaveLength(2));
+    expect(redis.capacityExpirations.get("test:pokepilot:active:total")).toBe(450_000);
+    const script = redis.evalCalls.find((call) => call.script.includes("local requesterLimit"))!.script;
+    expect(script).toContain('"ZREVRANGE"');
+    expect(script).toContain('tonumber(latest[2]) - now');
+    finish.forEach((resolve) => resolve("done")); await Promise.all([long, short]);
+  });
+
   it("stores canonical analyses with the shared 24-hour TTL", async () => {
     const redis = new FakeRedisClient();
     const operations = createOperations(redis);

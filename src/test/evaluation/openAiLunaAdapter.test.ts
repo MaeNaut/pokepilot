@@ -1,4 +1,5 @@
 ﻿import { describe, expect, it, vi } from "vitest";
+import OpenAI from "openai";
 import type { ResponseUsage } from "openai/resources/responses/responses";
 import { copilotGroundedModelOutputJsonSchema } from "../../utils/copilotModelSchema";
 import {
@@ -96,6 +97,26 @@ const groundedModelOutput = {
 };
 
 describe("OpenAI Luna evaluation adapter", () => {
+  it("propagates cancellation through the SDK when headers arrive but its body stalls", async () => {
+    const controller = new AbortController();
+    const started = vi.fn();
+    const fetch = vi.fn(async (_url: unknown, options?: RequestInit) => {
+      started();
+      return new Response(new ReadableStream<Uint8Array>({
+        start(stream) {
+          options!.signal!.addEventListener("abort", () => stream.error(new DOMException("Aborted", "AbortError")), { once: true });
+        },
+      }), { headers: { "Content-Type": "application/json" } });
+    });
+    const client = new OpenAI({ apiKey: "sk-test-only-not-a-real-key", fetch, maxRetries: 0 });
+    const pending = analyzeWithOpenAiLuna(request, { client, signal: controller.signal });
+    const rejected = expect(pending).rejects.toThrow();
+    await vi.waitFor(() => expect(started).toHaveBeenCalledOnce());
+    controller.abort();
+    await rejected;
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
   it("retains the original audit in debug output even when completion changes bookkeeping", async () => {
     const raw = { ...groundedModelOutput, strategyAudit: { ...groundedModelOutput.strategyAudit, facts: [{
       id: "ground", kind: "weak-to", subjectSlotIndex: 0, objectSlotIndex: 0, state: "current", valueId: "ground",

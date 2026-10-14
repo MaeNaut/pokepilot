@@ -5,6 +5,37 @@ import { describe, expect, it } from "vitest";
 const publicRoot = new URL("../public/", import.meta.url);
 const sitemap = readFileSync(new URL("sitemap.xml", publicRoot), "utf8");
 
+it.each([false, true])("help setting choices open as a menu or mobile dialog (mobile=%s)", (mobile) => {
+  const dom = new JSDOM(readFileSync(new URL("help/ko.html", publicRoot), "utf8"), {
+    url: "https://pokepilot.app/help/ko.html", runScripts: "outside-only", pretendToBeVisual: true,
+  });
+  try {
+    dom.window.matchMedia = () => ({ matches: mobile, addEventListener() {} }) as unknown as MediaQueryList;
+    dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+    dom.window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+    dom.window.eval(readFileSync(new URL("help/help.js", publicRoot), "utf8"));
+    const doc = dom.window.document;
+    const account = doc.querySelector<HTMLDetailsElement>(".help-account-menu")!;
+    account.open = true;
+    const trigger = doc.querySelector<HTMLButtonElement>('[data-setting="theme"]')!;
+    expect(trigger.querySelector<HTMLElement>(".help-setting-direction")!.hidden).toBe(mobile);
+    const choices = doc.querySelector<HTMLElement>(".help-account-choice-group")!;
+    expect(choices.hidden).toBe(true);
+    trigger.click();
+    expect(choices.hidden).toBe(false);
+    expect(Boolean(choices.closest("dialog"))).toBe(mobile);
+    doc.querySelector<HTMLButtonElement>('[data-theme-value="dark"]')!.click();
+    expect(choices.hidden).toBe(true);
+    expect(doc.documentElement.dataset.theme).toBe("dark");
+    expect(account.open).toBe(true);
+    expect(doc.activeElement).toBe(trigger);
+    trigger.click();
+    doc.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(choices.hidden).toBe(true);
+    expect(doc.querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
+  } finally { dom.window.close(); }
+});
+
 describe.each(["ko", "en"])("API key guide %s", (locale) => {
   it("provides setup steps, safe external links, and no credential inputs", () => {
     const html = readFileSync(new URL(`help/api-key-${locale}.html`, publicRoot), "utf8");

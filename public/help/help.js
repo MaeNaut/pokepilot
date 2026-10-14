@@ -10,6 +10,7 @@ const helpCopy = helpLocale === "ko"
       language: "언어",
       korean: "한국어",
       returnToApp: "앱으로 돌아가기",
+      close: "닫기",
     }
   : {
       settings: "Settings",
@@ -20,6 +21,7 @@ const helpCopy = helpLocale === "ko"
       language: "Language",
       korean: "한국어",
       returnToApp: "Return to app",
+      close: "Close",
     };
 
 const accountIcon = `<svg aria-hidden="true" viewBox="0 0 448 512" fill="currentColor"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304h-91.4z"></path></svg>`;
@@ -45,18 +47,18 @@ function renderHeader() {
       </summary>
       <div class="preference-menu help-account-popover" aria-label="${helpCopy.settings}">
         <section class="help-account-section" aria-label="${helpCopy.theme}">
-          <strong>${helpCopy.theme}</strong>
-          <div class="help-account-choice-group" role="group" aria-label="${helpCopy.theme}">
-            <button type="button" data-theme-value="system" aria-label="${helpCopy.system}" aria-pressed="false"><span>${helpCopy.system}</span></button>
-            <button type="button" data-theme-value="light" aria-label="${helpCopy.light}" aria-pressed="false"><span>${helpCopy.light}</span></button>
-            <button type="button" data-theme-value="dark" aria-label="${helpCopy.dark}" aria-pressed="false"><span>${helpCopy.dark}</span></button>
+          <button class="help-setting-trigger" type="button" data-setting="theme" aria-label="${helpCopy.theme}" aria-haspopup="menu" aria-expanded="false"><span class="help-setting-direction" aria-hidden="true">&#8249;</span><strong>${helpCopy.theme}</strong><small data-theme-label></small></button>
+          <div class="help-account-choice-group" role="menu" aria-label="${helpCopy.theme}" hidden>
+            <button type="button" role="menuitemradio" data-theme-value="system" aria-label="${helpCopy.system}" aria-checked="false" aria-pressed="false"><span>${helpCopy.system}</span></button>
+            <button type="button" role="menuitemradio" data-theme-value="light" aria-label="${helpCopy.light}" aria-checked="false" aria-pressed="false"><span>${helpCopy.light}</span></button>
+            <button type="button" role="menuitemradio" data-theme-value="dark" aria-label="${helpCopy.dark}" aria-checked="false" aria-pressed="false"><span>${helpCopy.dark}</span></button>
           </div>
         </section>
         <section class="help-account-section" aria-label="${helpCopy.language}">
-          <strong>${helpCopy.language}</strong>
-          <div class="help-account-choice-group" role="group" aria-label="${helpCopy.language}">
-            <a href="/help/ko.html" lang="ko" data-locale="ko"${isKorean ? " aria-current=\"page\"" : ""}><span>${helpCopy.korean}</span></a>
-            <a href="/help/en.html" lang="en" data-locale="en"${isKorean ? "" : " aria-current=\"page\""}><span>English</span></a>
+          <button class="help-setting-trigger" type="button" data-setting="language" aria-label="${helpCopy.language}" aria-haspopup="menu" aria-expanded="false"><span class="help-setting-direction" aria-hidden="true">&#8249;</span><strong>${helpCopy.language}</strong><small>${isKorean ? helpCopy.korean : "English"}</small></button>
+          <div class="help-account-choice-group" role="menu" aria-label="${helpCopy.language}" hidden>
+            <a role="menuitem" href="/help/ko.html" lang="ko" data-locale="ko"${isKorean ? " aria-current=\"page\"" : ""}><span>${helpCopy.korean}</span></a>
+            <a role="menuitem" href="/help/en.html" lang="en" data-locale="en"${isKorean ? "" : " aria-current=\"page\""}><span>English</span></a>
           </div>
         </section>
       </div>
@@ -64,6 +66,74 @@ function renderHeader() {
 }
 
 renderHeader();
+const settingsCompact = matchMedia("(max-width: 1420px)");
+const settingsDialog = document.createElement("dialog");
+settingsDialog.className = "help-settings-dialog";
+settingsDialog.innerHTML = `<header><h2 id="help-settings-title"></h2><button type="button" aria-label="${helpCopy.close}">&times;</button></header><div class="help-settings-options"></div>`;
+settingsDialog.setAttribute("aria-labelledby", "help-settings-title");
+document.body.append(settingsDialog);
+let openSetting = null;
+function closeSetting() {
+  if (!openSetting) return;
+  const { trigger, group, section, modal, previousOverflow } = openSetting;
+  group.hidden = true;
+  section.append(group);
+  trigger.setAttribute("aria-expanded", "false");
+  openSetting = null;
+  if (modal) document.body.style.overflow = previousOverflow;
+  if (settingsDialog.open) settingsDialog.close();
+  trigger.focus({ preventScroll: true });
+}
+document.querySelectorAll(".help-setting-trigger").forEach((trigger) => {
+  trigger.setAttribute("aria-haspopup", settingsCompact.matches ? "dialog" : "menu");
+  trigger.querySelector(".help-setting-direction").hidden = settingsCompact.matches;
+  trigger.addEventListener("click", () => {
+    if (openSetting?.trigger === trigger) { closeSetting(); return; }
+    closeSetting();
+    const section = trigger.closest("section");
+    const group = section.querySelector(".help-account-choice-group");
+    openSetting = { trigger, group, section, modal: settingsCompact.matches, previousOverflow: document.body.style.overflow };
+    trigger.setAttribute("aria-expanded", "true");
+    group.hidden = false;
+    if (settingsCompact.matches) {
+      document.body.style.overflow = "hidden";
+      settingsDialog.querySelector("h2").textContent = trigger.getAttribute("aria-label");
+      settingsDialog.querySelector(".help-settings-options").append(group);
+      settingsDialog.showModal();
+    } else {
+      const row = trigger.getBoundingClientRect();
+      const panel = document.querySelector(".help-account-popover").getBoundingClientRect();
+      const parent = section.getBoundingClientRect();
+      group.style.left = `${Math.max(8, panel.left - 176) - parent.left}px`;
+      group.style.top = `${Math.max(8, Math.min(row.top, innerHeight - 160)) - parent.top}px`;
+      group.querySelector('[aria-pressed="true"], [aria-current]')?.focus();
+    }
+  });
+  trigger.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" && !openSetting) { event.preventDefault(); trigger.click(); }
+  });
+});
+document.querySelectorAll(".help-account-choice-group").forEach((group) => {
+  group.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowRight" && !settingsDialog.open) { event.preventDefault(); closeSetting(); }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const choices = [...group.querySelectorAll("button, a")];
+      const index = choices.indexOf(document.activeElement);
+      choices[(index + (event.key === "ArrowDown" ? 1 : -1) + choices.length) % choices.length]?.focus();
+    }
+  });
+});
+settingsDialog.querySelector("button").addEventListener("click", closeSetting);
+settingsDialog.addEventListener("cancel", (event) => { event.preventDefault(); closeSetting(); });
+settingsDialog.addEventListener("click", (event) => { if (event.target === settingsDialog) closeSetting(); });
+window.addEventListener("resize", closeSetting);
+settingsCompact.addEventListener("change", () => {
+  document.querySelectorAll(".help-setting-trigger").forEach((trigger) => {
+    trigger.setAttribute("aria-haspopup", settingsCompact.matches ? "dialog" : "menu");
+    trigger.querySelector(".help-setting-direction").hidden = settingsCompact.matches;
+  });
+});
 const helpSubpage = { "api-key": "api-key", kabamanda: "kabamanda", hippowdon: "hippowdon" }[document.body.dataset.helpPage];
 if (helpSubpage) {
   let menuTopic = null;
@@ -89,8 +159,11 @@ function syncTheme() {
       delete document.documentElement.dataset.theme;
     }
     const selected = theme === "light" || theme === "dark" ? theme : "system";
+    const label = document.querySelector("[data-theme-label]");
+    if (label) label.textContent = helpCopy[selected];
     document.querySelectorAll("[data-theme-value]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.themeValue === selected));
+      button.setAttribute("aria-checked", String(button.dataset.themeValue === selected));
     });
   } catch { /* Help remains readable when storage is unavailable. */ }
 }
@@ -109,10 +182,10 @@ document.querySelectorAll("[data-theme-value]").forEach((button) => {
     else document.documentElement.dataset.theme = value;
     document.querySelectorAll("[data-theme-value]").forEach((option) => {
       option.setAttribute("aria-pressed", String(option === button));
+      option.setAttribute("aria-checked", String(option === button));
     });
-    const details = button.closest("details");
-    details.open = false;
-    details.querySelector("summary").focus();
+    document.querySelector("[data-theme-label]").textContent = helpCopy[value];
+    closeSetting();
   });
 });
 document.querySelectorAll("[data-locale]").forEach((link) => {
@@ -123,13 +196,16 @@ document.querySelectorAll("[data-locale]").forEach((link) => {
 const preferences = [...document.querySelectorAll(".preference-control")];
 preferences.forEach((details) => {
   details.addEventListener("toggle", () => {
+    if (!details.open && details.classList.contains("help-account-menu")) closeSetting();
     if (details.open) preferences.forEach((other) => { if (other !== details) other.open = false; });
   });
 });
 document.addEventListener("click", (event) => {
+  if (settingsDialog.contains(event.target)) return;
   preferences.forEach((details) => { if (!details.contains(event.target)) details.open = false; });
 });
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && openSetting) { event.preventDefault(); closeSetting(); return; }
   if (event.key === "Escape") preferences.forEach((details) => {
     if (details.open) { details.open = false; details.querySelector("summary").focus(); }
   });

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
+  faChevronLeft,
   faCircleQuestion,
   faDesktop,
   faLanguage,
@@ -30,6 +31,9 @@ import {
 } from "../utils/accountPendingStorage";
 import { getAllPendingAccountPreferences } from "../utils/accountPreferences";
 import "./headerAccountMenu.css";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { ACCOUNT_REFRESH_EVENT, readAccountEvent } from "../utils/accountCrossTab";
+import { TouchSelectionDialog } from "./TouchSelectionDialog";
 
 type HeaderAccountMenuProps = {
   account: ReturnType<typeof useAccount>;
@@ -85,9 +89,25 @@ export function HeaderAccountMenu({
   onThemePreferenceChange,
 }: HeaderAccountMenuProps) {
   const { t } = useLocalization();
+  const isTouchLayout = useMediaQuery("(max-width: 1420px)");
   const [isOpen, setIsOpen] = useState(false);
-  const [apiKeyDraft, setApiKeyDraft] = useState("");
+  const [submenu, setSubmenu] = useState<{
+    kind: "theme" | "language"; left: number; top: number;
+  } | null>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
+  const settingTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [apiKeyDraft, setApiKeyDraft] = useState<{ accountId: string; value: string } | null>(null);
   const [keyMessage, setKeyMessage] = useState<"saved" | "removed" | "error" | null>(null);
+  const keyGeneration = useRef(0);
+  const keyContext = `${account.status}:${account.user?.id ?? ""}:${isOpen}`;
+  const keyContextRef = useRef(keyContext);
+  if (keyContextRef.current !== keyContext) {
+    keyContextRef.current = keyContext;
+    keyGeneration.current += 1;
+  }
+  const apiKeyValue = account.status === "ready" && apiKeyDraft && apiKeyDraft.accountId === account.user?.id
+    ? apiKeyDraft.value : "";
+  const keyGenerationAtRender = keyGeneration.current;
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const syncSnapshot = useSyncExternalStore(
@@ -96,35 +116,107 @@ export function HeaderAccountMenu({
   );
   const hasSyncIssue = Number(syncSnapshot.split(":")[0]) > 0;
 
-  useDismissOnOutsidePointer(menuRef, isOpen, () => setIsOpen(false));
+  useDismissOnOutsidePointer(menuRef, isOpen && !(isTouchLayout && submenu), () => { setIsOpen(false); setSubmenu(null); });
+
+  useEffect(() => {
+    setApiKeyDraft(null);
+    setKeyMessage(null);
+  }, [keyContext]);
+
+  const clearPersonalKeyDraft = useCallback(() => {
+    keyGeneration.current += 1;
+    setApiKeyDraft(null);
+    setKeyMessage(null);
+  }, []);
+
+  useEffect(() => {
+    const onAuthenticationChange = (event: StorageEvent) => {
+      if (readAccountEvent(event)?.kind === "auth") clearPersonalKeyDraft();
+    };
+    window.addEventListener("storage", onAuthenticationChange);
+    window.addEventListener(ACCOUNT_REFRESH_EVENT, clearPersonalKeyDraft);
+    return () => {
+      window.removeEventListener("storage", onAuthenticationChange);
+      window.removeEventListener(ACCOUNT_REFRESH_EVENT, clearPersonalKeyDraft);
+    };
+  }, [clearPersonalKeyDraft]);
+
+  function toggleSubmenu(kind: "theme" | "language", trigger: HTMLButtonElement) {
+    if (submenu?.kind === kind) { setSubmenu(null); return; }
+    const root = menuRef.current!.getBoundingClientRect();
+    const panel = menuRef.current!.querySelector(".header-account-popover")!.getBoundingClientRect();
+    const row = trigger.getBoundingClientRect();
+    settingTriggerRef.current = trigger;
+    setSubmenu({ kind,
+      left: Math.max(8, panel.left - 176) - root.left,
+      top: Math.max(8, Math.min(row.top, window.innerHeight - (kind === "theme" ? 160 : 116))) - root.top,
+    });
+  }
+
+  function closeSubmenu() {
+    setSubmenu(null);
+    settingTriggerRef.current?.focus({ preventScroll: true });
+  }
+
+  useEffect(() => {
+    if (submenu && !isTouchLayout) submenuRef.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
+  }, [submenu, isTouchLayout]);
+  useEffect(() => {
+    const close = () => setSubmenu(null);
+    window.addEventListener("resize", close);
+    return () => window.removeEventListener("resize", close);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
+      if (submenu) { if (!isTouchLayout) closeSubmenu(); return; }
       setIsOpen(false);
       triggerRef.current?.focus({ preventScroll: true });
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, submenu, isTouchLayout]);
 
   const accountName = account.user?.name ?? account.user?.email ?? t("account.guest");
 
   async function handleSavePersonalKey(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const saved = await account.updatePersonalApiKey(apiKeyDraft);
-    setApiKeyDraft("");
+    if (account.status !== "ready" || account.busy || !apiKeyValue.trim() ||
+        keyGeneration.current !== keyGenerationAtRender) return;
+    const generation = keyGeneration.current;
+    const saved = await account.updatePersonalApiKey(apiKeyValue);
+    if (keyGeneration.current !== generation) return;
+    setApiKeyDraft(null);
     setKeyMessage(saved ? "saved" : "error");
   }
 
   async function handleRemovePersonalKey() {
+    if (account.status !== "ready" || account.busy || keyGeneration.current !== keyGenerationAtRender) return;
+    const generation = keyGeneration.current;
     const removed = await account.updatePersonalApiKey(null);
-    setApiKeyDraft("");
+    if (keyGeneration.current !== generation) return;
+    setApiKeyDraft(null);
     setKeyMessage(removed ? "removed" : "error");
   }
+
+  const settingOptions = submenu?.kind === "theme" ? ([
+    ["system", "account.themeSystem", faDesktop], ["light", "theme.light", faSun], ["dark", "theme.dark", faMoon],
+  ] as const).map(([value, label, icon]) => (
+    <button type="button" key={value} role="menuitemradio" aria-checked={themePreference === value}
+      onClick={() => { onThemePreferenceChange(value); closeSubmenu(); }}>
+      <FontAwesomeIcon icon={icon} aria-hidden="true" /><span>{t(label)}</span>
+      {themePreference === value ? <FontAwesomeIcon icon={faCheck} aria-hidden="true" /> : null}
+    </button>
+  )) : ([ ["en", "language.english"], ["ko", "language.korean"] ] as const).map(([value, label]) => (
+    <button type="button" key={value} lang={value} role="menuitemradio" aria-checked={locale === value}
+      onClick={() => { onLocaleChange(value); closeSubmenu(); }}>
+      <span>{t(label)}</span>{locale === value ? <FontAwesomeIcon icon={faCheck} aria-hidden="true" /> : null}
+    </button>
+  ));
 
   return (
     <div className="header-account-menu" ref={menuRef}>
@@ -140,13 +232,14 @@ export function HeaderAccountMenu({
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         ref={triggerRef}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => { setIsOpen((open) => !open); setSubmenu(null); }}
       >
         <AccountAvatar account={account} />
       </button>
 
       {isOpen ? (
-        <div className="header-account-popover" role="dialog" aria-label={t("account.menu")}>
+        <div className="header-account-popover" role="dialog" aria-label={t("account.menu")}
+          onScroll={() => setSubmenu(null)}>
           {account.enabled ? (
             <section className="header-account-section" aria-label={t("account.label")}>
               {account.status === "ready" ? (
@@ -188,6 +281,7 @@ export function HeaderAccountMenu({
                         );
                         if ((hasPendingAccountCollectionSync() || pendingInAnotherTab) &&
                             !window.confirm(t("account.unsyncedSignOutConfirm"))) return;
+                        clearPersonalKeyDraft();
                         void account.act("logout");
                       }}
                     >
@@ -200,6 +294,7 @@ export function HeaderAccountMenu({
                       disabled={account.busy}
                       onClick={() => {
                         if (window.confirm(t("account.deleteConfirm"))) {
+                          clearPersonalKeyDraft();
                           void account.act("delete");
                         }
                       }}
@@ -256,12 +351,18 @@ export function HeaderAccountMenu({
                   type="password"
                   autoComplete="off"
                   spellCheck={false}
+                  disabled={account.busy}
                   aria-label={t("account.apiKeyLabel")}
                   placeholder="sk-..."
-                  value={apiKeyDraft}
-                  onChange={(event) => { setApiKeyDraft(event.target.value); setKeyMessage(null); }}
+                  value={apiKeyValue}
+                  onChange={(event) => {
+                    if (account.status !== "ready" || !account.user) return;
+                    keyGeneration.current += 1;
+                    setApiKeyDraft({ accountId: account.user.id, value: event.target.value });
+                    setKeyMessage(null);
+                  }}
                 />
-                <button type="submit" disabled={account.busy || !apiKeyDraft.trim()}>{t("account.apiKeySave")}</button>
+                <button type="submit" disabled={account.busy || !apiKeyValue.trim()}>{t("account.apiKeySave")}</button>
               </form> : null}
               {account.hasPersonalApiKey ? (
                 <button className="header-account-key-remove" type="button" disabled={account.busy} onClick={() => void handleRemovePersonalKey()}>
@@ -274,7 +375,11 @@ export function HeaderAccountMenu({
           ) : null}
 
           <section className="header-account-section" aria-label={t("theme.label")}>
-            <div className="header-account-setting-label">
+            <button className="header-account-setting-trigger" type="button"
+              aria-label={t("theme.label")} aria-haspopup={isTouchLayout ? "dialog" : "menu"} aria-expanded={submenu?.kind === "theme"}
+              onClick={(event) => toggleSubmenu("theme", event.currentTarget)}
+              onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); toggleSubmenu("theme", event.currentTarget); } }}>
+              {!isTouchLayout ? <FontAwesomeIcon icon={faChevronLeft} aria-hidden="true" /> : null}
               <FontAwesomeIcon icon={
                 themePreference === "system"
                   ? faDesktop
@@ -283,52 +388,45 @@ export function HeaderAccountMenu({
                     : faSun
               } aria-hidden="true" />
               <span>{t("theme.label")}</span>
-            </div>
-            <div className="header-account-choice-group" role="group" aria-label={t("theme.label")}>
-              {([
-                ["system", "account.themeSystem", faDesktop],
-                ["light", "theme.light", faSun],
-                ["dark", "theme.dark", faMoon],
-              ] as const).map(([value, labelKey, icon]) => (
-                <button
-                  className={themePreference === value ? "is-active" : ""}
-                  type="button"
-                  aria-pressed={themePreference === value}
-                  key={value}
-                  onClick={() => onThemePreferenceChange(value)}
-                >
-                  <FontAwesomeIcon icon={icon} aria-hidden="true" />
-                  <span>{t(labelKey)}</span>
-                  {themePreference === value ? <FontAwesomeIcon icon={faCheck} aria-hidden="true" /> : null}
-                </button>
-              ))}
-            </div>
+              <small>{t(themePreference === "system" ? "account.themeSystem" : themePreference === "dark" ? "theme.dark" : "theme.light")}</small>
+            </button>
           </section>
 
           <section className="header-account-section" aria-label={t("language.label")}>
-            <div className="header-account-setting-label">
+            <button className="header-account-setting-trigger" type="button"
+              aria-label={t("language.label")} aria-haspopup={isTouchLayout ? "dialog" : "menu"} aria-expanded={submenu?.kind === "language"}
+              onClick={(event) => toggleSubmenu("language", event.currentTarget)}
+              onKeyDown={(event) => { if (event.key === "ArrowLeft") { event.preventDefault(); toggleSubmenu("language", event.currentTarget); } }}>
+              {!isTouchLayout ? <FontAwesomeIcon icon={faChevronLeft} aria-hidden="true" /> : null}
               <FontAwesomeIcon icon={faLanguage} aria-hidden="true" />
               <span>{t("language.label")}</span>
-            </div>
-            <div className="header-account-choice-group" role="group" aria-label={t("language.label")}>
-              {([
-                ["en", "language.english"],
-                ["ko", "language.korean"],
-              ] as const).map(([value, labelKey]) => (
-                <button
-                  className={locale === value ? "is-active" : ""}
-                  type="button"
-                  aria-pressed={locale === value}
-                  key={value}
-                  lang={value}
-                  onClick={() => onLocaleChange(value)}
-                >
-                  <span>{t(labelKey)}</span>
-                  {locale === value ? <FontAwesomeIcon icon={faCheck} aria-hidden="true" /> : null}
-                </button>
-              ))}
-            </div>
+              <small>{t(locale === "ko" ? "language.korean" : "language.english")}</small>
+            </button>
           </section>
+        </div>
+      ) : null}
+      {isOpen && submenu && isTouchLayout ? (
+        <TouchSelectionDialog kind="settings" title={t(submenu.kind === "theme" ? "theme.label" : "language.label")}
+          showActions={false} onClose={closeSubmenu}>
+          <div className="header-account-settings-options" role="menu"
+            aria-label={t(submenu.kind === "theme" ? "theme.label" : "language.label")}>
+            {settingOptions}
+          </div>
+        </TouchSelectionDialog>
+      ) : isOpen && submenu ? (
+        <div className="header-account-submenu" ref={submenuRef} role="menu"
+          aria-label={t(submenu.kind === "theme" ? "theme.label" : "language.label")}
+          style={{ left: submenu.left, top: submenu.top }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowRight") { event.preventDefault(); closeSubmenu(); }
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+              event.preventDefault();
+              const items = [...event.currentTarget.querySelectorAll<HTMLButtonElement>("button")];
+              const index = items.indexOf(document.activeElement as HTMLButtonElement);
+              items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+            }
+          }}>
+          {settingOptions}
         </div>
       ) : null}
     </div>

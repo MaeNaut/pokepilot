@@ -52,6 +52,24 @@ it("asks for confirmation before analysis and displays the matching estimates", 
   expect(onConfirm).toHaveBeenCalledTimes(1);
 });
 
+it("shows elapsed time only during analysis and resets it for the next request", async () => {
+  vi.useFakeTimers();
+  try {
+    const start = new Date("2026-10-14T12:00:00Z").getTime();
+    vi.setSystemTime(start);
+    const { container, render } = await mount(<AnalyzeHarness isBusy isAnalyzeDisabled startedAt={start} />);
+    expect(container.querySelector(".copilot-analyze-timer")?.textContent).toBe("0:00");
+    await act(async () => { vi.advanceTimersByTime(65000); });
+    expect(container.querySelector(".copilot-analyze-timer")?.textContent).toBe("1:05");
+    expect(container.querySelector("button")?.getAttribute("aria-label")).toBe("copilot.analyzing");
+    await render(<AnalyzeHarness />);
+    expect(container.querySelector(".copilot-analyze-timer")).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+    await render(<AnalyzeHarness isBusy isAnalyzeDisabled startedAt={Date.now()} />);
+    expect(container.querySelector(".copilot-analyze-timer")?.textContent).toBe("0:00");
+  } finally { vi.useRealTimers(); }
+});
+
 it.each(["cancel", "Escape"])("returns focus to the analysis button on %s", async (action) => {
   const { container } = await mount(<AnalyzeHarness />);
   const trigger = container.querySelector(".copilot-analyze-button")!;

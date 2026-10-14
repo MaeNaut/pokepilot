@@ -295,63 +295,81 @@
   opacity: 0.6;
 }
 
-.header-account-choice-group {
+.header-account-setting-trigger,
+.header-account-settings-options button,
+.header-account-submenu button {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
-}
-
-.header-account-section:last-child .header-account-choice-group {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.header-account-choice-group button {
-  display: grid;
-  min-height: 32px;
+  min-height: 36px;
   min-width: 0;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 5px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 4px 6px;
+  padding: 6px 8px;
   background: var(--color-surface-subtle);
   color: var(--color-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 0.68rem;
+  font-size: 0.76rem;
   font-weight: var(--font-medium);
   text-align: left;
 }
 
-.header-account-choice-group button:hover,
-.header-account-choice-group button:focus-visible {
+.header-account-setting-trigger:hover,
+.header-account-setting-trigger:focus-visible,
+.header-account-settings-options button:hover,
+.header-account-settings-options button:focus-visible,
+.header-account-submenu button:hover,
+.header-account-submenu button:focus-visible {
   border-color: var(--color-border-strong);
   background: var(--color-surface-hover);
   color: var(--color-text);
   outline: none;
 }
 
-.header-account-choice-group button.is-active {
+.header-account-submenu button[aria-checked="true"],
+.header-account-settings-options button[aria-checked="true"] {
   border-color: var(--color-text);
   background: var(--color-text);
   color: var(--color-surface);
 }
 
-.header-account-choice-group button span {
+.header-account-setting-trigger span,
+.header-account-settings-options button span,
+.header-account-submenu button span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.header-account-choice-group button svg {
+.header-account-setting-trigger svg,
+.header-account-settings-options button svg,
+.header-account-submenu button svg {
   width: 11px;
   height: 11px;
 }
 
-.header-account-choice-group button svg:last-child {
+.header-account-submenu button svg:last-child {
   justify-self: end;
 }
+
+.header-account-setting-trigger { grid-template-columns: 11px 13px minmax(0, 1fr) auto; gap: 8px; color: var(--color-text); }
+.header-account-setting-trigger small { color: var(--color-muted); font-size: 0.7rem; }
+@media (max-width: 1420px) {
+  .header-account-setting-trigger { grid-template-columns: 13px minmax(0, 1fr) auto; }
+}
+.header-account-submenu {
+  position: absolute; z-index: 55; display: grid; gap: 3px; width: 168px;
+  max-height: calc(100dvh - 16px); overflow-y: auto;
+  padding: 5px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface); box-shadow: 0 10px 28px rgb(0 0 0 / 16%);
+}
+.header-account-submenu button { min-height: 44px; grid-template-columns: auto minmax(0, 1fr) auto; }
+.header-account-submenu[aria-label] button[lang] { grid-template-columns: minmax(0, 1fr) auto; }
+.header-account-settings-options { display: grid; gap: 6px; padding: 12px; }
+.header-account-settings-options button { min-height: 48px; font-size: 0.9rem; }
+.header-account-settings-options button[lang] { grid-template-columns: minmax(0, 1fr) auto; }
 
 @media (max-width: 1420px) {
   .header-account-menu {
@@ -378,6 +396,7 @@
 
 @media (pointer: coarse) {
   .header-account-key-form input { font-size: 16px; min-height: 44px; }
-  .header-account-choice-group button,
+  .header-account-setting-trigger,
+  .header-account-submenu button,
   .header-account-popover button { min-height: 44px; }
 }

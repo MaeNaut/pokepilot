@@ -14,6 +14,8 @@ const failureMessages: Record<string, { ko: string; en: string }> = {
   INVALID_JSON: { ko: "분석 요청을 읽을 수 없습니다.", en: "The analysis request could not be read." },
   PAYLOAD_TOO_LARGE: { ko: "분석 요청이 너무 큽니다.", en: "The analysis request is too large." },
   NETWORK_ERROR: { ko: "AI 서버에 연결하지 못했습니다. 연결을 확인한 뒤 다시 시도하시기 바랍니다.", en: "Could not reach the AI server. Check your connection and try again." },
+  REQUEST_TIMEOUT: { ko: "분석 응답 대기 시간이 초과되었습니다. 브라우저는 자동 재요청하지 않았습니다. 서버나 OpenAI에서 분석이 계속 진행되어 비용이 발생했을 수 있습니다. 분석 기록과 OpenAI 사용량을 확인한 뒤 다시 시도하시기 바랍니다.", en: "The analysis response timed out. The browser did not automatically resubmit. Processing may have continued on the server or OpenAI, and charges may have occurred. Check your analysis history and OpenAI usage before retrying." },
+  REQUEST_CANCELLED: { ko: "분석 응답 대기를 중단했습니다. 이미 전송된 요청의 처리나 청구가 취소된다는 뜻은 아닙니다.", en: "Waiting for the analysis response was cancelled. This does not cancel processing or billing for a request that was already sent." },
   AI_INVALID_RESPONSE: { ko: "AI 응답을 분석 결과로 표시할 수 없습니다. 다시 시도하시기 바랍니다.", en: "The AI response could not be displayed as an analysis. Try again." },
   INVALID_RESPONSE: { ko: "AI 응답을 읽거나 표시할 수 없습니다. 다시 시도하시기 바랍니다.", en: "The AI response could not be read or displayed. Try again." },
   AI_UPSTREAM_ERROR: { ko: "AI 서비스에서 분석을 완료하지 못했습니다. 다시 시도하시기 바랍니다.", en: "The AI service could not complete the analysis. Try again." },

@@ -1119,11 +1119,12 @@ select {
 .mega-button {
   display: inline-grid;
   place-items: center;
-  min-width: 38px;
+  min-width: 34px;
+  width: 34px;
   height: 34px;
   border: 1px solid #b9b9b9;
   border-radius: var(--radius-md);
-  padding: 0 10px;
+  padding: 0;
   background: #ffffff;
   color: #151515;
   font-size: 0.78rem;

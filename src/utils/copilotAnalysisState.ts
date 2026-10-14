@@ -6,6 +6,7 @@ import type { BattleUsageSource } from "../api/battleUsageData";
 
 export type AnalysisState = {
   status: "idle" | "loading" | "ready" | "error";
+  startedAt?: number;
   fingerprint?: string;
   response?: CopilotAnalysisResponse;
   execution?: CopilotExecutionInfo;

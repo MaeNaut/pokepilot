@@ -15,6 +15,7 @@ import {
   waitForPokePilotFollower,
 } from "./pokepilotOperations.js";
 import {
+  acquireCapacityScript,
   acquireWaiterScript,
   admitRequestScript,
   releaseLockScript,
@@ -171,7 +172,7 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
 
     const promise =
       options.distributed === false
-        ? task().then((value) => ({ value, shared: false }))
+        ? this.runWithCapacity(task, options).then((value) => ({ value, shared: false }))
         : this.runDistributed(key, task, options);
     this.inFlight.set(
       key,
@@ -192,6 +193,25 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
     await this.redis.set(this.cacheKey(key), value, {
       px: POKEPILOT_ANALYSIS_CACHE_TTL_MS,
     });
+  }
+
+  private async runWithCapacity<T>(task: () => Promise<T>, options: PokePilotRunOnceOptions<T>) {
+    const capacity = options.capacity;
+    if (!capacity) return task();
+    const keys = [this.key(`active:client:${capacity.requesterId}`), this.key("active:total")];
+    const token = randomUUID();
+    const now = this.clock();
+    const acquired = await this.redis.eval(
+      acquireCapacityScript, keys,
+      [String(now), String(now + capacity.leaseMs), token, String(capacity.maxPerRequester), String(capacity.maxTotal)],
+    );
+    if (Number(acquired) !== 1) throw new PokePilotCapacityError();
+    try {
+      return await task();
+    } finally {
+      // Expiring permits recover after crashes; cleanup failure must not discard a paid result.
+      await this.redis.eval(releaseWaiterScript, keys, [token]).catch(() => undefined);
+    }
   }
 
   private cacheKey(key: string) {
@@ -297,7 +317,7 @@ export class UpstashPokePilotOperations implements PokePilotOperations {
             waiterToken = null;
           }
           try {
-            const value = await task();
+            const value = await this.runWithCapacity(task, options);
             if (options.shouldShare?.(value) !== false) {
               await this.redis.set<SharedResult<T>>(
                 resultKey,

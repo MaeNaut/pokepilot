@@ -512,6 +512,16 @@
   height: 12px;
 }
 
+.copilot-analyze-button[aria-busy="true"] { cursor: default; }
+.copilot-analyze-timer { font-variant-numeric: tabular-nums; }
+.copilot-loading { padding: 28px 0; color: var(--copilot-text); }
+.copilot-loading strong { font-size: 0.9rem; }
+.copilot-loading ol { display: grid; gap: 16px; margin: 24px 0 0; padding: 0; list-style: none; }
+.copilot-loading li { display: flex; align-items: center; gap: 10px; font-size: 0.78rem; line-height: 1.5; }
+.copilot-loading li svg { flex: 0 0 14px; width: 14px; }
+.copilot-loading .is-complete { color: var(--copilot-muted); }
+.copilot-loading .is-current { color: var(--copilot-text); }
+
 .copilot-analyze-confirmation {
   position: absolute;
   z-index: 10;

@@ -125,6 +125,48 @@ screens, blocked analysis, and navigation controls must not become ad-only views
   changed to `Getting ready` / `Review requested`. Approval remains pending.
   Search Console rendering/indexing remains unverified.
 
+## Production verification - 2026-10-14
+
+- Main `2e0310d` passed CI and deployed Worker version
+  `4316835e-2158-401c-81a5-f0153accb3d3` (Actions run `38524737907`).
+- Published both Hippowdon practical guides and contextual example/key-gate UI.
+  Full pre-release check passed 1,306 tests; dependency audit found no remaining
+  vulnerabilities after compatible lockfile updates. Public routing passed all
+  37 responses, including the expanded 10-URL sitemap.
+- The www hostname now redirects to canonical HTTPS rather than the removed
+  Netlify project. Search Console ownership and sitemap submission are confirmed.
+  Google's live homepage rendering displayed the app; manual actions and security
+  issues reported none. Indexing the two example translations remains unconfirmed;
+  this is separate from AdSense approval.
+- AdSense resubmission completed at 02:54 EDT on October 14. The visible state was
+  `Review requested` / `Getting ready`, not `Ready`. Do not submit another request
+  just to apply editorial improvements or imply approval is assured.
+- Subsequent reader-flow QA clarified the guide's import/calculator steps and
+  strengthened downloadable-sample tests. Those follow-up edits are local,
+  with 1,309 tests and Cloudflare checks passing; they are not deployed yet.
+  See [the detailed public-access audit](./ADSENSE_PUBLIC_ACCESS_AUDIT_2026_10_14.md).
+
+## Pending UI resilience follow-up - 2026-10-14
+
+- Analysis now shows elapsed time and observed auth/save/input/response-wait
+  phases. Desktop settings open leftward; compact layouts use centered dialogs,
+  without left arrows. Mega Stone controls keep square dimensions.
+- Browser AI-response deadlines are 150 seconds for low and 390 seconds for
+  medium, allowing the server's existing single retry and transport overhead.
+  Headers and body reads share one deadline. Timeout aborts browser waiting;
+  it does not promise cancellation of server/provider processing or charges.
+- No browser automatic resubmission. Late responses cannot replace the terminal
+  timeout or trigger a stale account refresh. Pre-call failures and post-submission
+  exceptions have separate billing language; empty prepared inputs show an error.
+- Real Chrome local-fixture checks covered the 150-second timeout, provider error,
+  null JSON, save failure, and expired-session login gate. Unit tests additionally
+  cover medium deadlines, stalled bodies, cancellation, preparation failure,
+  cleanup, and explicit retry. No paid OpenAI request or production mutation.
+- Full release checks passed 1,338 tests across 159 files, lint, Cloudflare build,
+  and Worker dry run. The final timeout wording also passed its focused tests.
+- These edits, along with the earlier guide refinements, remain uncommitted and
+  undeployed. Real authenticated Cloudflare preview QA is a separate release step.
+
 ## References
 
 - [AdSense content and user experience](https://support.google.com/adsense/answer/10015918)

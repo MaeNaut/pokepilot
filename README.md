@@ -32,7 +32,7 @@ responsive web app.
 - Pokemon Showdown data and `@smogon/calc`
 - PokeAPI sprites and localized source data
 - OpenAI Responses API for requested PokePilot analysis
-- Upstash Redis adapter for shared operational modes; public personal-key calls bypass shared caching and use process-local request deduplication
+- Upstash Redis for account/IP abuse protection and account/global analysis concurrency; personal-key calls bypass result caching and retain process-local request deduplication
 - Cloudflare Workers for the static app and server API
 - Cloudflare D1 for account, session, and account-scoped synchronized data
 - Google OAuth with Secure, HttpOnly, SameSite session cookies

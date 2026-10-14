@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
 import { serializePokePilotModelRequest } from "./pokepilotModelInput.js";
 import type { CopilotAnalysisRequest } from "../src/utils/copilotContracts.js";
 import { copilotGroundedModelOutputJsonSchema } from "../src/utils/copilotModelSchema.js";
@@ -67,6 +68,7 @@ type AnalyzeWithOpenAiLunaOptions = {
   cacheNamespace?: "evaluation" | "production";
   reasoningEffort?: LunaReasoningEffort;
   safetyIdentifier?: string;
+  signal?: AbortSignal;
 };
 
 function parseStructuredOutput(outputText: string) {
@@ -93,6 +95,7 @@ export async function analyzeWithOpenAiLuna(
     cacheNamespace = "production",
     reasoningEffort = POKEPILOT_AI_DEFAULT_REASONING_EFFORT,
     safetyIdentifier,
+    signal,
   }: AnalyzeWithOpenAiLunaOptions = {},
 ): Promise<LunaAnalysisResult> {
   const modelRequest = {
@@ -112,7 +115,7 @@ export async function analyzeWithOpenAiLuna(
       maxRetries,
       timeout: timeoutMs ?? (reasoningEffort === "medium" ? 180_000 : 60_000),
     });
-  const response = await openAiClient.responses.create({
+  const responseParams: ResponseCreateParamsNonStreaming = {
     model: modelId,
     service_tier: "default",
     store: false,
@@ -185,7 +188,10 @@ export async function analyzeWithOpenAiLuna(
         schema: copilotGroundedModelOutputJsonSchema,
       },
     },
-  });
+  };
+  const response = await (signal
+    ? openAiClient.responses.create(responseParams, { signal })
+    : openAiClient.responses.create(responseParams));
 
   const usage = createLunaStandardUsage(response.usage, modelId);
   const responseMetadata = {

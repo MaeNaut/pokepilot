@@ -71,10 +71,10 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
     billingIdentity: accountId,
     onOperationalEvent,
     authenticatedAccountId,
-    clientSecret: env.POKEPILOT_CLIENT_SECRET,
+    clientSecret: env.POKEPILOT_CLIENT_SECRET?.trim() || env.POKEPILOT_SESSION_SECRET,
     operations: getOperationsRuntime(env).operations,
     requesterIp: request.headers.get("CF-Connecting-IP") ?? undefined,
-    safeguardMode: "ai-fresh",
+    safeguardMode: "personal",
   });
   return withSessionRefresh(response, refreshCookie);
 }

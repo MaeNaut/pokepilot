@@ -47,6 +47,20 @@ beforeEach(() => {
 });
 
 describe("personal API key storage", () => {
+  it("preserves valid Unicode envelopes within the original character limit", async () => {
+    const body = { apiKey: testKey, note: "\uac00".repeat(900) };
+    expect(JSON.stringify(body).length).toBeLessThan(1_024);
+    expect(new TextEncoder().encode(JSON.stringify(body)).length).toBeGreaterThan(1_024);
+    expect((await handlePersonalApiKey(request("PUT", body), env)).status).toBe(204);
+    expect(await readPersonalApiKey("account-a", env)).toBe(testKey);
+  });
+
+  it("keeps the original key-envelope character cap after bounded byte reading", async () => {
+    const response = await handlePersonalApiKey(request("PUT", { apiKey: testKey, note: "a".repeat(1_100) }), env);
+    expect(response.status).toBe(413);
+    expect(rows.size).toBe(0);
+  });
+
   it("rejects a stale tab before altering the newly signed-in account's key", async () => {
     const stale = new Request(endpoint, {
       method: "PUT",

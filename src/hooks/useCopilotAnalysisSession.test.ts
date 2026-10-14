@@ -35,6 +35,22 @@ async function mount() {
 }
 
 describe("analysis account lifecycle", () => {
+  it.each(["REQUEST_TIMEOUT", "INVALID_RESPONSE", "NETWORK_ERROR"])("keeps failed %s requests out of history and recovers on explicit retry", async (code) => {
+    const pending = deferred<typeof result>();
+    vi.mocked(executeCopilotAnalysis).mockReturnValueOnce(pending.promise);
+    const hook = await mount();
+    let running!: Promise<void>;
+    await act(async () => { running = hook.current.analyze(); });
+    expect(hook.current.analysisState.status).toBe("loading");
+    await act(async () => { pending.reject(new CopilotApiError("Failure", code, 0)); await running; });
+    expect(hook.current.analysisState).toMatchObject({ status: "error", errorCode: code, providerAttempted: undefined });
+    expect(hook.current.teamHistory).toHaveLength(0);
+    expect(executeCopilotAnalysis).toHaveBeenCalledOnce();
+    await act(async () => { await hook.current.analyze(); });
+    expect(hook.current.analysisState.status).toBe("ready");
+    expect(hook.current.teamHistory).toHaveLength(1);
+  });
+
   async function mountDraft() {
     const hook = await renderHook((options: { savedTeamId: string | null; accountId: string; request: CopilotAnalysisRequest }) =>
       useCopilotAnalysisSession({ ...options, locale: "en", battleFormat: "singles", failedMessage: "Failed" }),

@@ -7,17 +7,24 @@ export const POKEPILOT_IP_REQUEST_LIMIT = 80;
 export const POKEPILOT_MAX_SHARED_WAITERS = 4;
 export const POKEPILOT_MAX_TOTAL_SHARED_WAITERS = 64;
 export const POKEPILOT_SHARED_WAITER_TIMEOUT_MS = 50_000;
+export const POKEPILOT_MAX_ACCOUNT_ANALYSES = 2;
+export const POKEPILOT_MAX_ACTIVE_ANALYSES = 64;
+// Longer than both medium attempts (180s each) plus processing/transport overhead.
+export const POKEPILOT_ANALYSIS_LEASE_MS = 450_000;
 
 const maxCacheEntries = 500;
 const maxTrackedIdentities = 20_000;
 
-export type PokePilotSafeguardMode = "enforced" | "ai-test" | "ai-fresh";
+export type PokePilotSafeguardMode = "enforced" | "personal" | "ai-test" | "ai-fresh";
 export type PokePilotSafeguardConfig = {
   cacheEnabled: boolean;
   requestRateLimitEnabled: boolean;
 };
 export function getPokePilotSafeguardConfig(mode: PokePilotSafeguardMode): PokePilotSafeguardConfig {
-  return { cacheEnabled: mode !== "ai-fresh", requestRateLimitEnabled: mode === "enforced" };
+  return {
+    cacheEnabled: mode === "enforced" || mode === "ai-test",
+    requestRateLimitEnabled: mode === "enforced" || mode === "personal",
+  };
 }
 export function resolvePokePilotSafeguardMode(viteMode: string): PokePilotSafeguardMode {
   return viteMode === "ai-test" || viteMode === "ai-fresh" ? viteMode : "enforced";
@@ -42,6 +49,7 @@ export type PokePilotRunOnceResult<T> = {
 };
 
 export type PokePilotRunOnceOptions<T> = {
+  capacity?: { requesterId: string; maxPerRequester: number; maxTotal: number; leaseMs: number };
   distributed?: boolean;
   maxTotalWaiters?: number;
   maxWaiters?: number;
@@ -143,6 +151,8 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
   private readonly requestUsage = new Map<string, number[]>();
   private totalWaiters = 0;
   private readonly waiters = new Map<string, number>();
+  private readonly activeByRequester = new Map<string, number>();
+  private activeAnalyses = 0;
 
   getCached<T>(key: string, now: number): T | null {
     const entry = this.cache.get(key);
@@ -218,7 +228,27 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
       }
     }
 
-    const promise = task().then((value) => ({ value, shared: false }));
+    const promise = (async () => {
+      const capacity = options.capacity;
+      const active = capacity ? this.activeByRequester.get(capacity.requesterId) ?? 0 : 0;
+      if (capacity && (active >= capacity.maxPerRequester || this.activeAnalyses >= capacity.maxTotal)) {
+        throw new PokePilotCapacityError();
+      }
+      if (capacity) {
+        this.activeByRequester.set(capacity.requesterId, active + 1);
+        this.activeAnalyses += 1;
+      }
+      try {
+        return { value: await task(), shared: false };
+      } finally {
+        if (capacity) {
+          const remaining = (this.activeByRequester.get(capacity.requesterId) ?? 1) - 1;
+          if (remaining) this.activeByRequester.set(capacity.requesterId, remaining);
+          else this.activeByRequester.delete(capacity.requesterId);
+          this.activeAnalyses -= 1;
+        }
+      }
+    })();
     this.inFlight.set(
       key,
       promise as Promise<PokePilotRunOnceResult<unknown>>,

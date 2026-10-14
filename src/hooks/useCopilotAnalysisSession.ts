@@ -149,6 +149,7 @@ export function useCopilotAnalysisSession({
       [submittedContextKey]: {
         ...current[submittedContextKey],
         status: "loading",
+        startedAt: Date.now(),
         error: undefined,
       },
     }));

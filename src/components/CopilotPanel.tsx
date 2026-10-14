@@ -4,6 +4,8 @@ import type { AnalysisPreference } from "../utils/accountPreferences";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFileLines,
+  faCheck,
+  faSpinner,
   faKey,
   faMagnifyingGlass,
   faRotateRight,
@@ -110,6 +112,9 @@ const emptyStateCopy: Record<
   },
 };
 
+const progressStages = ["auth", "saving", "preparing", "waiting"] as const;
+type AnalysisProgress = { context: string; startedAt: number; stage: typeof progressStages[number] };
+
 
 export function CopilotPanel({
   analysisPreference,
@@ -144,7 +149,8 @@ export function CopilotPanel({
     setAnalysisPreference((current) => ({ ...current, reasoningEffort: next }));
   const [isAnalyzeConfirmationOpen, setIsAnalyzeConfirmationOpen] = useState(false);
   const [isAnalysisStarting, setIsAnalysisStarting] = useState(false);
-  const [analysisStartError, setAnalysisStartError] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
+  const [analysisStartError, setAnalysisStartError] = useState<"before-call" | "after-call" | null>(null);
   const startingAnalysisRef = useRef(false);
   const closeAnalyzeConfirmation = useCallback(() => setIsAnalyzeConfirmationOpen(false), []);
   const [usageSourceState, setUsageSourceState] = useState<{
@@ -214,7 +220,7 @@ export function CopilotPanel({
   const submissionContext = JSON.stringify([requestFingerprint, scope, reasoningEffort, locale, account.user?.id]);
   const latestSubmissionContext = useRef(submissionContext);
   latestSubmissionContext.current = submissionContext;
-  useEffect(() => { setAnalysisStartError(false); }, [submissionContext, savedTeamId]);
+  useEffect(() => { setAnalysisStartError(null); }, [submissionContext, savedTeamId]);
   const {
     selectingCandidateId, savingCandidateId, candidateApplyFailure, candidateSaveStatus,
     optimizationActionStatus, setOptimizationActionStatus,
@@ -268,8 +274,12 @@ export function CopilotPanel({
     isVisibleCopilotScope(entry.scope),
   );
   const fallbackMessage = t(fallbackTranslationKeys[analysisState.fallbackReason ?? "unavailable"]);
+  const activeProgress = analysisProgress?.context === submissionContext ? analysisProgress : null;
+  const isAnalysisBusy = Boolean(activeProgress) || analysisState.status === "loading";
+  const loadingStartedAt = activeProgress?.startedAt ?? analysisState.startedAt;
+  const currentStage = activeProgress?.stage ?? "waiting";
   const analyzeLabel =
-    analysisState.status === "loading" || isAnalysisPreparing || isAnalysisStarting
+    isAnalysisBusy
       ? t("copilot.analyzing")
       : response
           ? t("copilot.refresh")
@@ -308,7 +318,7 @@ export function CopilotPanel({
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, [analysisState.fingerprint, analysisState.historyEntryId, response, scope]);
+  }, [analysisState.fingerprint, analysisState.historyEntryId, response, scope, loadingStartedAt]);
 
   function requestAnalyze() {
     if (!isAnalyzeDisabled) setIsAnalyzeConfirmationOpen(true);
@@ -318,39 +328,55 @@ export function CopilotPanel({
     if (isAnalyzeDisabled || startingAnalysisRef.current) return;
     startingAnalysisRef.current = true;
     setIsAnalysisStarting(true);
-    setAnalysisStartError(false);
+    setAnalysisProgress({ context: submissionContext, startedAt: Date.now(), stage: "auth" });
+    setAnalysisStartError(null);
     setIsAnalyzeConfirmationOpen(false);
     const isCurrent = () => submissionContext === latestSubmissionContext.current;
+    const reportStage = (stage: AnalysisProgress["stage"]) => {
+      if (isCurrent()) setAnalysisProgress((progress) => progress ? { ...progress, stage } : null);
+    };
+    let aiRequestSent = false;
     try {
-      if (!(await account.ensureAuthenticated()) || !isCurrent()) return;
+      if (!(await account.ensureAuthenticated())) {
+        if (isCurrent()) setAnalysisStartError("before-call");
+        return;
+      }
+      if (!isCurrent()) return;
+      reportStage("saving");
       const saved = await onSaveTeamForAnalysis();
-      if (!saved) { if (isCurrent()) setAnalysisStartError(true); return; }
+      if (!saved) { if (isCurrent()) setAnalysisStartError("before-call"); return; }
       if (!saved.isCurrent() || !isCurrent()) return;
       setOptimizationActionStatus(null);
+      reportStage("preparing");
       const source = usesUsageData(scope) ? await loadBattleUsageSource(battleFormat) : null;
       const preparedRequest = await prepareRequest();
-      if (!preparedRequest || !saved.isCurrent() || !isCurrent()) return;
+      if (!preparedRequest) { if (isCurrent()) setAnalysisStartError("before-call"); return; }
+      if (!saved.isCurrent() || !isCurrent()) return;
       if (usesUsageData(scope)) {
         const latestSource = await loadBattleUsageSource(battleFormat);
         setUsageSourceState({ battleFormat, source: latestSource });
         if (source?.season !== latestSource?.season || source?.sourceDate !== latestSource?.sourceDate ||
           source?.generatedAt !== latestSource?.generatedAt) {
-          setAnalysisStartError(true);
+          setAnalysisStartError("before-call");
           return;
         }
       }
       if (!saved.isCurrent() || !isCurrent()) return;
+      reportStage("waiting");
+      aiRequestSent = true;
       await analyze(preparedRequest, { teamId: saved.teamId, ...(source ? { usageSource: source } : {}) });
     } catch {
-      if (isCurrent()) setAnalysisStartError(true);
+      if (isCurrent()) setAnalysisStartError(aiRequestSent ? "after-call" : "before-call");
     } finally {
       startingAnalysisRef.current = false;
       setIsAnalysisStarting(false);
+      setAnalysisProgress(null);
     }
   }
 
 
   function handleSelectHistory(entry: CopilotHistoryEntry) {
+    setAnalysisProgress(null);
     setScope(entry.scope);
     const displayEffort = entry.reasoningEffort ?? "low";
     setReasoningEffort(displayEffort);
@@ -398,7 +424,8 @@ export function CopilotPanel({
             battleContext={battleContext}
             isAnalyzeConfirmationOpen={isAnalyzeConfirmationOpen}
             isAnalyzeDisabled={isAnalyzeDisabled}
-            isBusy={analysisState.status === "loading" || isAnalysisPreparing || isAnalysisStarting}
+            isBusy={isAnalysisBusy}
+            startedAt={loadingStartedAt}
             hasResponse={Boolean(response)}
             hasPersonalApiKey={account.hasPersonalApiKey}
             analyzeLabel={analyzeLabel}
@@ -457,12 +484,25 @@ export function CopilotPanel({
       </div>
 
       <div ref={contentRef} className="copilot-content" aria-live="polite">
-        {analysisStartError ? <p role="alert">{t("copilot.autoSaveFailed")}</p> : null}
+        {analysisStartError ? <p role="alert">{t(analysisStartError === "before-call" ? "copilot.autoSaveFailed" : "copilot.interrupted")}</p> : null}
         {isUsageDataScope && hasNewerUsage ? <p role="status">{t("copilot.usageChanged")}</p> : null}
         {recommendationNotice ? <p role="status">{recommendationNotice}</p> : null}
         {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
         {matchupNotice ? <p role="status">{matchupNotice}</p> : null}
-        {scopeRequirement ? (
+        {isAnalysisBusy ? (
+          <div className="copilot-loading" role="status">
+            <strong>{t("copilot.analyzing")}</strong>
+            <ol>
+              {progressStages.slice(0, progressStages.indexOf(currentStage) + 1).map((stage) => (
+                <li key={stage} className={stage === currentStage ? "is-current" : "is-complete"}>
+                  <FontAwesomeIcon icon={stage === currentStage ? faSpinner : faCheck}
+                    spin={stage === currentStage} aria-hidden="true" />
+                  <span>{t(`copilot.progress.${stage}`)}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : scopeRequirement ? (
           <div className="copilot-empty-state is-requirement">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
             <strong>

@@ -68,6 +68,94 @@ it("waits for team save before preparation/AI and prevents duplicate submissions
   expect(state.analyze).toHaveBeenCalledWith({ scope: "pokemon", sets: [] }, { teamId: "new-team" });
 });
 
+it("prints real preparation stages, replaces an old result while loading, and clears progress on completion", async () => {
+  const auth = deferred<boolean>();
+  const saved = deferred<{ teamId: string; isCurrent: () => boolean }>();
+  const prepared = deferred<unknown>();
+  const analyzed = deferred<void>();
+  state.authenticate.mockReturnValue(auth.promise);
+  state.save.mockReturnValue(saved.promise);
+  state.prepare.mockReturnValue(prepared.promise);
+  state.analyze.mockReturnValue(analyzed.promise);
+  state.response = { title: "Old result" };
+  const app = await mount();
+  await app.confirm();
+  expect(app.container.querySelector(".copilot-loading")?.textContent).toContain("copilot.progress.auth");
+  expect(app.container.textContent).not.toContain("Analysis result");
+  expect(app.container.querySelector(".copilot-analyze-timer")?.textContent).toBe("0:00");
+  await act(async () => { auth.resolve(true); });
+  expect(app.container.querySelector(".copilot-loading .is-current")?.textContent).toBe("copilot.progress.saving");
+  await act(async () => { saved.resolve({ teamId: "saved", isCurrent: () => true }); });
+  expect(app.container.querySelector(".copilot-loading .is-current")?.textContent).toBe("copilot.progress.preparing");
+  await act(async () => { prepared.resolve({ scope: "pokemon", sets: [] }); });
+  expect(app.container.querySelector(".copilot-loading .is-current")?.textContent).toBe("copilot.progress.waiting");
+  expect(app.container.querySelectorAll(".copilot-loading .is-complete")).toHaveLength(3);
+  await act(async () => { analyzed.resolve(); });
+  expect(app.container.querySelector(".copilot-loading")).toBeNull();
+  expect(app.container.querySelector(".copilot-analyze-timer")).toBeNull();
+  expect(app.container.textContent).toContain("Analysis result");
+});
+
+it.each(["auth", "save", "prepare", "empty-input"])("clears loading and permits an explicit retry after a pre-call failure: %s", async (kind) => {
+  if (kind === "auth") state.authenticate.mockResolvedValueOnce(false);
+  if (kind === "save") state.save.mockRejectedValueOnce(new Error("Save failed"));
+  if (kind === "prepare") state.prepare.mockRejectedValueOnce(new Error("Preparation failed"));
+  if (kind === "empty-input") state.prepare.mockResolvedValue({ scope: "optimization", sets: [] }).mockResolvedValueOnce(null);
+  const app = await mount(kind === "empty-input" ? "optimization" : "pokemon"); await app.confirm();
+  expect(app.container.querySelector(".copilot-loading")).toBeNull();
+  expect(app.container.querySelector(".copilot-analyze-timer")).toBeNull();
+  expect(app.container.querySelector('[role="alert"]')?.textContent).toContain("copilot.autoSaveFailed");
+  expect(state.analyze).not.toHaveBeenCalled();
+  expect(app.container.querySelector<HTMLButtonElement>(".copilot-analyze-button")!.disabled).toBe(false);
+  await app.confirm();
+  expect(state.analyze).toHaveBeenCalledOnce();
+  expect(app.container.querySelector('[role="alert"]')).toBeNull();
+});
+
+it("does not claim zero cost if the analysis session unexpectedly rejects after submission", async () => {
+  state.analyze.mockRejectedValueOnce(new Error("Session failed"));
+  const app = await mount(); await app.confirm();
+  expect(app.container.querySelector('[role="alert"]')?.textContent).toBe("copilot.interrupted");
+  expect(app.container.textContent).not.toContain("copilot.autoSaveFailed");
+  expect(app.container.querySelector(".copilot-loading")).toBeNull();
+  expect(app.container.querySelector(".copilot-analyze-timer")).toBeNull();
+  await app.confirm();
+  expect(state.analyze).toHaveBeenCalledTimes(2);
+  expect(app.container.querySelector('[role="alert"]')).toBeNull();
+});
+
+it.each(["REQUEST_TIMEOUT", "NETWORK_ERROR", "INVALID_RESPONSE"])("shows a terminal AI error without an automatic retry or no-cost claim: %s", async (code) => {
+  const pending = deferred<void>(); state.analyze.mockReturnValueOnce(pending.promise);
+  const app = await mount(); await app.confirm();
+  expect(app.container.querySelector(".copilot-loading")).not.toBeNull();
+  state.analysis = { status: "error", errorCode: code, error: "Failure" };
+  await act(async () => { pending.resolve(); }); await app.render();
+  expect(app.container.querySelector(".copilot-loading")).toBeNull();
+  expect(app.container.querySelector(".copilot-analyze-timer")).toBeNull();
+  expect(app.container.querySelector(".copilot-empty-state.is-error")).not.toBeNull();
+  expect(app.container.textContent).not.toContain("no analysis cost was incurred");
+  expect(app.container.textContent).not.toContain("copilot.autoSaveFailed");
+  expect(state.analyze).toHaveBeenCalledOnce();
+  state.analyze.mockImplementationOnce(async () => {
+    state.analysis = { status: "ready" }; state.response = { title: "Recovered" };
+  });
+  await app.confirm(); await app.render();
+  expect(app.container.textContent).toContain("Analysis result");
+  expect(app.container.querySelector(".copilot-empty-state.is-error")).toBeNull();
+});
+
+it("does not leak the active loading view into another analysis tab", async () => {
+  const saved = deferred<{ teamId: string; isCurrent: () => boolean }>();
+  state.save.mockReturnValue(saved.promise);
+  const app = await mount();
+  await app.confirm();
+  app.props.analysisPreference = { ...app.props.analysisPreference, scope: "optimization" };
+  await app.render();
+  expect(app.container.querySelector(".copilot-loading")).toBeNull();
+  await act(async () => { saved.resolve({ teamId: "saved", isCurrent: () => true }); });
+  expect(state.analyze).not.toHaveBeenCalled();
+});
+
 it.each(["guest", "no-key"])("offers a public example without starting analysis: %s", async (kind) => {
   const app = await mount();
   app.props.account = { ...app.props.account, ...(kind === "guest" ? { status: "guest", user: null } : { hasPersonalApiKey: false }) } as Props["account"];

@@ -82,6 +82,45 @@ describe("PokePilot operational safeguards", () => {
 
   });
 
+  it("keeps request protection enabled for fresh personal-key analyses", () => {
+    expect(getPokePilotSafeguardConfig("personal")).toEqual({
+      cacheEnabled: false, requestRateLimitEnabled: true,
+    });
+  });
+
+  it("bounds different leaders per account and globally, but not duplicate followers", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    const finishes: Array<(value: string) => void> = [];
+    const options = (requesterId: string) => ({
+      capacity: { requesterId, maxPerRequester: 1, maxTotal: 2, leaseMs: 450_000 },
+      maxWaiters: 4,
+    });
+    const task = () => new Promise<string>((resolve) => finishes.push(resolve));
+    const a = operations.runOnce("a", task, options("account-a"));
+    const followerTask = vi.fn(async () => "unused");
+    const follower = operations.runOnce("a", followerTask, options("account-a"));
+    const blockedTask = vi.fn(async () => "blocked");
+    await expect(operations.runOnce("a2", blockedTask, options("account-a")))
+      .rejects.toBeInstanceOf(PokePilotCapacityError);
+    const b = operations.runOnce("b", task, options("account-b"));
+    await expect(operations.runOnce("c", blockedTask, options("account-c")))
+      .rejects.toBeInstanceOf(PokePilotCapacityError);
+    expect(blockedTask).not.toHaveBeenCalled();
+    finishes[0]("first"); finishes[1]("second");
+    await Promise.all([a, b, follower]);
+    expect(followerTask).not.toHaveBeenCalled();
+    await expect(operations.runOnce("a3", async () => "next", options("account-a")))
+      .resolves.toEqual({ shared: false, value: "next" });
+  });
+
+  it("releases leader capacity after synchronous and asynchronous failures", async () => {
+    const operations = new InMemoryPokePilotOperations();
+    const options = { capacity: { requesterId: "a", maxPerRequester: 1, maxTotal: 1, leaseMs: 450_000 } };
+    await expect(operations.runOnce("sync", () => { throw new Error("sync"); }, options)).rejects.toThrow("sync");
+    await expect(operations.runOnce("async", async () => { throw new Error("async"); }, options)).rejects.toThrow("async");
+    await expect(operations.runOnce("valid", async () => "ok", options)).resolves.toMatchObject({ value: "ok" });
+  });
+
 
   it("bounds followers waiting on one in-flight analysis", async () => {
     const operations = new InMemoryPokePilotOperations();

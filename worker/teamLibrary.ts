@@ -1,5 +1,5 @@
 import { readAccountSession } from "./accountAuth.js";
-import { isSameOrigin, jsonResponse, withSessionRefresh } from "./http.js";
+import { isSameOrigin, jsonResponse, readJsonBody, withSessionRefresh } from "./http.js";
 import type { WorkerEnvironment } from "./env.js";
 
 type Row = { storage_key: string; payload: string; updated_at: number };
@@ -38,9 +38,9 @@ export async function handleTeamLibrary(request: Request, env: WorkerEnvironment
   }
   if (request.method !== "GET" && request.method !== "PUT") return jsonResponse(405, {});
   if (request.method === "PUT" && !isSameOrigin(request)) return jsonResponse(403, {});
-  await migrate(env.DB, id);
   const reply = (status: number, body: unknown) => withSessionRefresh(jsonResponse(status, body), session.refreshCookie);
   if (request.method === "GET") {
+    await migrate(env.DB, id);
     const rows = await env.DB.prepare(`SELECT storage_key, payload, updated_at FROM account_storage
       WHERE account_id = ? AND (storage_key LIKE 'team:%' OR storage_key = 'team-order')`)
       .bind(id).run<Row>();
@@ -53,8 +53,11 @@ export async function handleTeamLibrary(request: Request, env: WorkerEnvironment
     teams.sort((a, b) => rank(a.id) - rank(b.id) || (b.createdAt ?? "").localeCompare(a.createdAt ?? "") || a.id.localeCompare(b.id));
     return reply(200, { teams });
   }
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
-  if (!body) return reply(400, {});
+  const parsed = await readJsonBody(request, 50_000 * 6 + 2_048, "INVALID_TEAM");
+  if (!parsed.ok) return withSessionRefresh(parsed.response, session.refreshCookie);
+  if (!parsed.value || typeof parsed.value !== "object" || Array.isArray(parsed.value)) return reply(400, {});
+  const body = parsed.value as Record<string, unknown>;
+  await migrate(env.DB, id);
   if (body.operation === "order") {
     if (!Array.isArray(body.ids) || body.ids.length > 30 || body.ids.some(v => typeof v !== "string")) return reply(400, {});
     await env.DB.prepare(`INSERT INTO account_storage (account_id, storage_key, payload, updated_at) VALUES (?, ?, ?, ?)

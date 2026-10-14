@@ -1,3 +1,5 @@
+import { readBoundedRequestJson, RequestBodyTooLargeError } from "../server/requestBody.js";
+
 function privateHeaders(headers: HeadersInit = {}) {
   const result = new Headers(headers);
   result.set("Cache-Control", "no-store");
@@ -32,4 +34,15 @@ export function isSameOrigin(request: Request) {
 
 export function isEnabled(value: string | undefined) {
   return ["1", "true", "yes", "on"].includes(value?.trim().toLowerCase() ?? "");
+}
+
+export async function readJsonBody(request: Request, maxBytes: number, invalidCode: string) {
+  try {
+    return { ok: true as const, value: await readBoundedRequestJson(request, maxBytes) };
+  } catch (error) {
+    const tooLarge = error instanceof RequestBodyTooLargeError;
+    return { ok: false as const, response: jsonResponse(tooLarge ? 413 : 400, {
+      ok: false, error: { code: tooLarge ? "PAYLOAD_TOO_LARGE" : invalidCode },
+    }) };
+  }
 }

@@ -5,6 +5,9 @@ import { describe, expect, it } from "vitest";
 import { calculateChampionsDamage, type CalculatorPokemon, type CalculatorField } from "./calculator/damageCalculator";
 import { calculateChampionsStats, getNatureById } from "./data/natures";
 import type { StatBlock, TeamMember, PokemonMove, PokemonType } from "./types";
+import { parseShowdownTeam } from "./utils/showdownText";
+import { normalizeImportedEvs } from "./utils/showdownImport";
+import { getLegalAbilities, getLegalMoves, hydrateShowdownLegalitySnapshot, isItemLegal, isPokemonLegal } from "./api/showdownLegality";
 
 const generation = Generations.get(0);
 const zero: StatBlock = { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 };
@@ -77,4 +80,28 @@ it("uses legal Champions spreads and the published final defensive stats", () =>
     expect(stats).toEqual({ hp: 215, attack: 132, defense: id === "special" ? 154 : 187, specialAttack: 79, specialDefense: id === "special" ? 124 : 94, speed: 67 });
   }
   for (const entry of cases) expect(Object.values(entry.attacker.evs).reduce((sum, value) => sum + value, 0)).toBe(66);
+});
+
+it.each(["special", "physical"] as const)("imports the downloadable %s build without changing its published settings", build => {
+  const text = readFileSync(new URL(`../public/help/hippowdon-${build}.txt`, import.meta.url), "utf8");
+  const sets = parseShowdownTeam(text);
+  expect(sets).toHaveLength(1);
+  const set = sets[0];
+  const defender = defenders[build];
+  expect(set).toMatchObject({ pokemonName: "Hippowdon", itemName: "Leftovers", ability: "Sand Stream", nature: "impish" });
+  expect(normalizeImportedEvs(set.evs ?? {})).toEqual(defender.evs);
+  expect(set.moves).toEqual(["Yawn", "Earthquake", "Stealth Rock", "Whirlwind"]);
+  const rules = hydrateShowdownLegalitySnapshot(JSON.parse(readFileSync(new URL("../public/data/showdown-regulation-mc.json", import.meta.url), "utf8")));
+  expect(isPokemonLegal(rules, set.pokemonName)).toBe(true);
+  expect(isItemLegal(rules, set.itemName ?? "")).toBe(true);
+  expect(getLegalAbilities(rules, set.pokemonName)?.has(toID(set.ability ?? ""))).toBe(true);
+  for (const move of set.moves) expect(getLegalMoves(rules, set.pokemonName)?.has(toID(move))).toBe(true);
+});
+
+it("keeps published comparison values aligned between languages", () => {
+  const tables = ["ko", "en"].map(locale => {
+    const doc = new JSDOM(readFileSync(new URL(`../public/help/hippowdon-${locale}.html`, import.meta.url), "utf8")).window.document;
+    return Array.from(doc.querySelectorAll("[data-case]"), cell => ["data-case", "data-build", "data-min", "data-max", "data-ohko"].map(attr => cell.getAttribute(attr)));
+  });
+  expect(tables[0]).toEqual(tables[1]);
 });

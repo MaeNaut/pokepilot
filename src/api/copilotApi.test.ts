@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CopilotAnalysisRequest } from "../utils/copilotAnalysis";
+import { requestAccountRefresh } from "./accountSessionBoundary";
 import {
   CopilotApiError,
   requestHostedCopilotAnalysis,
@@ -17,11 +18,92 @@ const modelOutput = {
   recommendations: [],
 };
 
+vi.mock("./accountSessionBoundary", () => ({ requestAccountRefresh: vi.fn() }));
+
 afterEach(() => {
+  vi.useRealTimers();
+  vi.clearAllMocks();
   vi.unstubAllGlobals();
 });
 
 describe("hosted PokePilot client", () => {
+  it.each([ ["low", 150_000], ["medium", 390_000] ] as const)(
+    "bounds a stalled %s request without retrying or asserting no charge", async (effort, timeoutMs) => {
+      vi.useFakeTimers();
+      const fetchMock = vi.fn<typeof fetch>(() => new Promise(() => {}));
+      vi.stubGlobal("fetch", fetchMock);
+      const pending = requestHostedCopilotAnalysis(request, undefined, effort);
+      const failed = expect(pending).rejects.toMatchObject({ code: "REQUEST_TIMEOUT", providerAttempted: undefined });
+      await vi.advanceTimersByTimeAsync(timeoutMs - 1);
+      expect((fetchMock.mock.calls[0][1]?.signal as AbortSignal).aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await failed;
+      expect((fetchMock.mock.calls[0][1]?.signal as AbortSignal).aborted).toBe(true);
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it("also bounds a response whose headers arrived but whose body never finishes", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn(async () => ({ status: 200, ok: true, json: () => new Promise(() => {}) }) as Response));
+    const failed = expect(requestHostedCopilotAnalysis(request)).rejects.toMatchObject({ code: "REQUEST_TIMEOUT" });
+    await vi.advanceTimersByTimeAsync(150_000);
+    await failed;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("ignores late responses and account-refresh signals after timing out", async () => {
+    vi.useFakeTimers();
+    let finish!: (response: Response) => void;
+    const fetchMock = vi.fn<typeof fetch>(() => new Promise<Response>((resolve) => { finish = resolve; }));
+    vi.stubGlobal("fetch", fetchMock);
+    const pending = requestHostedCopilotAnalysis(request);
+    const failed = expect(pending).rejects.toMatchObject({ code: "REQUEST_TIMEOUT" });
+    await vi.advanceTimersByTimeAsync(150_000); await failed;
+    finish(new Response(JSON.stringify({ ok: false, error: { code: "ACCOUNT_SESSION_CHANGED" } }), { status: 409 }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(requestAccountRefresh).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledOnce();
+    await expect(pending).rejects.toMatchObject({ code: "REQUEST_TIMEOUT" });
+  });
+
+  it("cleans up the deadline and abort listener when the response succeeds", async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const removeListener = vi.spyOn(controller.signal, "removeEventListener");
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ ok: true, analysis: modelOutput })));
+    vi.stubGlobal("fetch", fetchMock);
+    await requestHostedCopilotAnalysis(request, controller.signal);
+    expect(vi.getTimerCount()).toBe(0);
+    expect(removeListener).toHaveBeenCalledWith("abort", expect.any(Function));
+    await vi.advanceTimersByTimeAsync(150_000);
+    expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(false);
+  });
+
+  it("respects cancellation before sending and while waiting", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<typeof fetch>(() => new Promise(() => {}));
+    vi.stubGlobal("fetch", fetchMock);
+    const cancelled = new AbortController(); cancelled.abort();
+    await expect(requestHostedCopilotAnalysis(request, cancelled.signal)).rejects.toMatchObject({
+      code: "REQUEST_CANCELLED", providerAttempted: false,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    const active = new AbortController();
+    const failed = expect(requestHostedCopilotAnalysis(request, active.signal)).rejects.toMatchObject({
+      code: "REQUEST_CANCELLED", providerAttempted: undefined,
+    });
+    active.abort(); await failed;
+    expect((fetchMock.mock.calls[0][1]?.signal as AbortSignal).aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each(["null", "[]", "broken JSON"])("classifies an unreadable envelope as a product error: %s", async (body) => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(body, { status: 200 })));
+    await expect(requestHostedCopilotAnalysis(request)).rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+  });
+
   it("posts the request and marks validated analysis as hosted", async () => {
     const fetchMock = vi.fn<typeof fetch>(async () =>
       new Response(

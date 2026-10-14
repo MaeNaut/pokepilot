@@ -53,7 +53,9 @@ export class CopilotApiError extends Error {
 
 async function readEnvelope(response: Response) {
   try {
-    return (await response.json()) as HostedAnalysisEnvelope;
+    const value: unknown = await response.json();
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid analysis envelope.");
+    return value as HostedAnalysisEnvelope;
   } catch {
     throw new CopilotApiError(
       "Hosted analysis returned an unreadable response.",
@@ -63,7 +65,7 @@ async function readEnvelope(response: Response) {
   }
 }
 
-export async function requestHostedCopilotAnalysis(
+async function fetchHostedCopilotAnalysis(
   request: CopilotAnalysisRequest,
   signal?: AbortSignal,
   reasoningEffort: "low" | "medium" = "low",
@@ -92,6 +94,7 @@ export async function requestHostedCopilotAnalysis(
     );
   }
   const envelope = await readEnvelope(response);
+  if (signal?.aborted) throw new CopilotApiError("Analysis request was cancelled.", "REQUEST_CANCELLED", 0);
   if (envelope.error?.code === "ACCOUNT_SESSION_CHANGED") requestAccountRefresh();
 
   if (!response.ok || envelope.ok !== true) {
@@ -135,4 +138,41 @@ export async function requestHostedCopilotAnalysis(
     ...(qualityWarnings.length === 0 ? {} : { qualityWarnings }),
     ...(execution ? { execution } : {}),
   };
+}
+
+export async function requestHostedCopilotAnalysis(
+  request: CopilotAnalysisRequest,
+  signal?: AbortSignal,
+  reasoningEffort: "low" | "medium" = "low",
+  modelId: "gpt-6-luna" | "gpt-6-sol" = "gpt-6-luna",
+  accountId?: string,
+): Promise<HostedCopilotAnalysisResult> {
+  if (signal?.aborted) {
+    throw new CopilotApiError("Analysis request was cancelled before sending.", "REQUEST_CANCELLED", 0, undefined, false);
+  }
+  const controller = new AbortController();
+  // Allow the server's one retry plus transport overhead. This covers body reads too.
+  const timeoutMs = reasoningEffort === "medium" ? 390_000 : 150_000;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let cancel: (() => void) | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      reject(new CopilotApiError("Timed out waiting for the analysis response.", "REQUEST_TIMEOUT", 0));
+      controller.abort();
+    }, timeoutMs);
+    cancel = () => {
+      reject(new CopilotApiError("Analysis request was cancelled.", "REQUEST_CANCELLED", 0));
+      controller.abort();
+    };
+    signal?.addEventListener("abort", cancel, { once: true });
+  });
+  try {
+    return await Promise.race([
+      fetchHostedCopilotAnalysis(request, controller.signal, reasoningEffort, modelId, accountId),
+      deadline,
+    ]);
+  } finally {
+    clearTimeout(timeout);
+    if (cancel) signal?.removeEventListener("abort", cancel);
+  }
 }

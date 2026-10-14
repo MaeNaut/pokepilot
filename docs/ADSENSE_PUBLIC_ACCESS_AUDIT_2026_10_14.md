@@ -158,3 +158,39 @@ Local reproducibility: `.tmp/audit-public.mjs` and
 - Publication and review submission must be verified separately after main CI
   deploys. Google approval is not implied by these checks; edits made later may
   not be available when Google starts reviewing.
+
+### Release and submission completed
+
+- Main commit `2e0310d` deployed through successful Actions run `38524737907`.
+  Worker version: `4316835e-2158-401c-81a5-f0153accb3d3`. Production authentication
+  checks and all 37 public routing responses passed; the sitemap has 10 URLs.
+- Live Korean guide body and sprites loaded without horizontal overflow.
+- AdSense review submitted October 14, 2026 at 02:54 EDT. The site detail visibly
+  showed `Review requested` / `Getting ready`. This is submission, not approval.
+
+### Reader-flow QA follow-up
+
+- Reviewed Korean/English conclusions and all five damage conditions. No mismatch
+  in published ranges, probabilities, defensive stats, or core conclusions found.
+- Actual local Chrome workflow imported the special-bulk build and retained its
+  item, ability, nature, points, and moves when switching to the calculator.
+- At 360px, imported the physical-bulk build through the team-name menu; the
+  discard prompt replaced only this QA's unsaved draft, not a production team.
+  Stats were 215 HP / 187 Def / 94 SpD. Sand and reverse damage direction worked.
+- Calculator UI reproduced Primarina's Moonblast and Sparkling Aria against both
+  spreads, unboosted Mega Salamence against physical bulk, and +1 Mega Salamence
+  against both spreads. Remaining fixed cases were verified by regression tests.
+  This still is not independent in-game mechanics validation.
+- Korean/English mobile article checks covered readable comparison blocks,
+  contents navigation, image loading, language links, and no horizontal overflow.
+  The Korean desktop page at 1440px also kept two equal-width sample cards and
+  scrolled the selected heading below the header.
+- Download links were clicked; both sample HTTP bodies matched the checked-in
+  files exactly. Browser download-event automation stalled, so a saved-file
+  completion was not verified. Do not report that limitation as an app defect.
+- Clarified copy/paste import, mobile Damage tab/direction arrow, Mega Evolution,
+  full HP and boost settings; anchored the usage statement to the fixed date.
+- Added parser/settings/legality checks for both actual downloadable files and
+  cross-language comparison-value parity. Full check passed: 159 files, 1,309
+  tests, lint, Cloudflare build, and dry run. No paid AI call or production account
+  changes. Follow-up edits remain local until a separate commit and deployment.

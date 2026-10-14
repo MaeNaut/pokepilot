@@ -14,6 +14,10 @@ selection; loading key status does not overwrite it. Tabs begin with Pokemon, th
 PokePilot analysis requires both a signed-in account and a registered personal OpenAI API key for both Luna low and Luna medium. There is no site-key fallback, free trial, advertising credit, or daily/monthly allowance at launch. Personal requests bypass the shared analysis cache. OpenAI billing and provider limits still apply; in-flight deduplication remains. The UI shows the registration form only when no key is registered, otherwise a saved status and delete action.
 
 The browser sends a key only once to `PUT /api/pokepilot/personal-api-key`.
+Unsaved key drafts are bound to the signed-in account and cleared on menu close,
+authentication changes, or confirmed logout/deletion. Old async completions cannot
+restore a draft or modify a later account/menu session. Authentication notifications
+clear drafts immediately even if the same account signs back in before its UI changes.
 The Worker encrypts it with AES-GCM using a domain-separated key derived from
 `POKEPILOT_SESSION_SECRET`, a random nonce, and the account ID as authenticated
 data. D1 stores ciphertext and nonce in `personal_api_keys`. The status endpoint
@@ -22,6 +26,24 @@ account cascades to its key. Rotating the session secret makes existing keys
 unreadable; plan a migration or ask users to register their keys again before
 rotation. Never include key values in logs, metrics, teams, history, or browser
 storage.
+
+Personal analysis has no daily/monthly allowance or product cooldown. Shared-server
+abuse protection remains: 20 requests/account/minute, 80 requests/IP/minute, at most
+two active analyses/account and 64 globally within the configured Redis namespace.
+These controls apply across Worker instances, model effort, and request fingerprints;
+duplicate followers do not take additional active-analysis permits. Rejections before
+provider execution explicitly report that no provider call occurred. Permits release
+after completion/failure and expire after 450 seconds for crash recovery. The server
+also aborts provider requests, including stalled response-body reads, after 140 seconds
+(low) or 390 seconds (medium), keeping work inside the permit lifetime. Cleanup-store
+failure does not discard a completed paid result.
+Duplicate followers preserve the provider error classification and billing uncertainty;
+operational usage metrics count the provider execution only once.
+
+Key/team/history/preferences writes use a shared streaming byte limit before JSON
+parsing. Existing storage limits remain separate; transport limits allow JSON escaping,
+Unicode, and envelope overhead. Oversized streams are canceled even without a truthful
+Content-Length header. Team migration starts only after a PUT body passes this boundary.
 
 Apply `migrations/0004_personal_api_keys.sql` before deploying this Worker.
 The existing `POKEPILOT_SESSION_SECRET` binding is required; no new secret is

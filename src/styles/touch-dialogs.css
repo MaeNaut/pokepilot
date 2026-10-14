@@ -1,4 +1,11 @@
 /* Compact-layout selection dialogs */
+.touch-picker-dialog.is-settings {
+  width: min(360px, calc(100vw - 40px));
+  height: auto;
+  min-height: 0;
+  max-height: calc(100dvh - 48px);
+}
+.touch-picker-dialog.is-settings .touch-picker-results { min-height: 0; flex: 0 1 auto; overflow-y: auto; }
 .touch-picker-layer {
   position: fixed;
   inset: 0;
