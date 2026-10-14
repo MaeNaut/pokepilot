@@ -122,3 +122,39 @@ Local reproducibility: `.tmp/audit-public.mjs` and
   the panel. An unresolved key status does not falsely assert that a key is absent.
 - Verified with a local simulated no-key account at http://127.0.0.1:5205/;
   360px mobile shows a 3px blur, an inert footer, and no horizontal overflow.
+
+## Hippowdon practical guide draft
+
+- Added Korean/English static guides at `/help/hippowdon-ko.html` and
+  `/help/hippowdon-en.html`, linked from help and the existing Kabamanda examples.
+  Source sitemap now includes both guides; these additions are not yet deployed.
+- Compare the existing Impish 32 HP / 2 Def / 32 SpD Leftovers build with
+  32 HP / 32 Def / 2 SpD, keeping the four moves and item unchanged.
+- Observed usage snapshot: Champions Battle Data M7 Singles, 2026-10-13.
+  Hippowdon data includes both spreads. Representative comparison inputs use
+  Adamant Mega Salamence (32 Atk) and Modest Primarina (14 or 32 SpA).
+- Five attack conditions, each against both spreads: unboosted and +1 Salamence
+  Double-Edge, Primarina Sparkling Aria and Moonblast at 14 SpA, and Sparkling Aria
+  at 32 SpA. Range/percentage/OHKO fields are reproduced by `hippowdonGuide.test.ts`.
+- The switching example explicitly includes one Leftovers recovery of 13 HP:
+  physical build survives two maximum unboosted Double-Edges with 4 HP; the special
+  build faints to two minimum rolls. Prior chip and boosted attacks invalidate that
+  guarantee. No claim of an independent in-game experiment or tournament result.
+- Two downloadable single-Pokemon Showdown-style builds provided. The article
+  notes Champions stat points, exact inputs, and no-login calculator access.
+- Browser checked at 1440px and 360px; sprites loaded and no horizontal overflow.
+  Existing article language-navigation logic reused. Relevant tests: 56 passed;
+  lint and build passed. No paid model calls, commit, push, or deployment in this task.
+
+## Release verification for review resubmission
+
+- Owner requested deployment and AdSense review submission before deferring
+  optional editorial improvements until the next morning.
+- Full Cloudflare check passed: 159 test files, 1,306 tests, lint, asset build,
+  and Worker dry run. Existing Vite bundle-size warning remains.
+- The dependency audit initially blocked release on sharp/source-map-js warnings.
+  Compatible lockfile updates include Wrangler 4.151.0, sharp 0.35.5, and
+  source-map-js 1.2.2. Repeated full verification passed; audit reports no findings.
+- Publication and review submission must be verified separately after main CI
+  deploys. Google approval is not implied by these checks; edits made later may
+  not be available when Google starts reviewing.

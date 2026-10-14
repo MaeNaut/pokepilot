@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hippowdon on Kabamanda: Defense or Special Defense? | PokePilot</title>
+  <meta name="description" content="Compare two Hippowdon spreads against Mega Salamence and Primarina. Damage rolls and Leftovers recovery show when investing in Defense buys a turn for Yawn, and what it costs against special attacks.">
+  <link rel="canonical" href="https://pokepilot.app/help/hippowdon-en.html">
+  <link rel="alternate" hreflang="ko" href="https://pokepilot.app/help/hippowdon-ko.html">
+  <link rel="alternate" hreflang="en" href="https://pokepilot.app/help/hippowdon-en.html">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/help/help.css">
+  <link rel="stylesheet" href="/help/practical-guide.css">
+  <script src="/help/help.js" defer></script>
+</head>
+<body data-help-page="hippowdon">
+  <a class="skip" href="#content">Skip to content</a>
+  <header><a href="/">PokePilot</a></header>
+  <div class="layout">
+    <aside><details open><summary>Contents</summary><nav aria-label="Hippowdon guide contents"><ol>
+      <li><a href="#overview">What Hippowdon needs to do</a></li>
+      <li><a href="#spreads">The two spreads</a></li>
+      <li><a href="#damage">Salamence and Primarina</a></li>
+      <li><a href="#turns">Buying a turn for Yawn</a></li>
+      <li><a href="#choice">Which spread fits your team?</a></li>
+      <li><a href="#use">Builds and calculation settings</a></li>
+    </ol></nav></details></aside>
+    <main id="content">
+      <p><a href="/help/en.html">Help</a> · <a href="/help/kabamanda-en.html">Kabamanda analysis examples</a></p>
+      <div class="guide-heading">
+        <img src="https://play.pokemonshowdown.com/sprites/gen5/hippowdon.png" width="88" height="88" alt="Hippowdon">
+        <h1>Hippowdon on Kabamanda:<br>Defense or Special Defense?</h1>
+      </div>
+      <p class="intro">An Impish nature does not tell you where Hippowdon's defensive investment went. Special Defense can buy a turn against Primarina's Water move; Defense can make switching into Mega Salamence less costly. Here is what changes when the item and moves stay the same.</p>
+      <p class="guide-meta">PokePilot · <time datetime="2026-10-14">October 14, 2026</time> · M-C Singles · Battle data: October 13, 2026 / M7</p>
+
+      <section id="overview">
+        <h2>1. What Hippowdon needs to do</h2>
+        <p>On Kabamanda, Hippowdon uses Stealth Rock and Yawn to pressure switches and create an opening for Salamence to use Dragon Dance. Whirlwind can also remove an opponent's boosts. Its job is often to survive long enough to take one useful action, rather than score a knockout itself.</p>
+        <p>The starting point is Hippowdon from our <a href="/help/kabamanda-en.html#overview">Kabamanda example</a>, whose team source is <a href="https://game8.jp/pokemon-champions/779319" target="_blank" rel="noopener noreferrer">Game8's team guide</a>. This article compares only Hippowdon's defensive investment.</p>
+      </section>
+
+      <section id="spreads">
+        <h2>2. The two spreads</h2>
+        <p>Both builds use Impish, Sand Stream, Leftovers, and the same moves: Yawn, Earthquake, Stealth Rock, and Whirlwind. There is no recovery move, so damage taken while switching in affects what Hippowdon can do later.</p>
+        <div class="guide-samples">
+          <article class="guide-sample">
+            <h3>A. Special bulk</h3>
+            <p>The spread used in our existing Kabamanda example.</p>
+            <dl><dt>Stat points</dt><dd>32 HP / 2 Def / 32 SpD</dd><dt>Defensive stats</dt><dd>215 HP / 154 Def / 124 SpD</dd></dl>
+          </article>
+          <article class="guide-sample">
+            <h3>B. Physical bulk</h3>
+            <p>Move 30 points from Special Defense to Defense.</p>
+            <dl><dt>Stat points</dt><dd>32 HP / 32 Def / 2 SpD</dd><dt>Defensive stats</dt><dd>215 HP / 187 Def / 94 SpD</dd></dl>
+          </article>
+        </div>
+        <p>Both spreads also appear in the current battle data. Leftovers is held constant for this comparison. Both builds have 132 Attack, 79 Special Attack, and 67 Speed, so their damage output and turn order stay the same.</p>
+      </section>
+
+      <section id="damage">
+        <h2>3. Salamence and Primarina</h2>
+        <p>All calculations use level 50 and Hippowdon at 215 HP. Sand is active, with no terrain, screens, or critical hits. Primarina's Torrent is inactive. The ranges below are damage from one hit, before Leftovers recovery.</p>
+        <div class="guide-matchup">
+          <h3>Unboosted Mega Salamence: Double-Edge</h3>
+          <div class="guide-attacker"><img src="https://play.pokemonshowdown.com/sprites/gen5/salamence-mega.png" width="56" height="56" alt="Mega Salamence" loading="lazy"><p>Adamant · 1 HP / 32 Atk / 1 Def / 32 Spe · 216 Attack<br>Aerilate · Salamencite</p></div>
+          <div class="guide-ranges">
+            <div data-case="salamence" data-build="special" data-min="114" data-max="135" data-ohko="0"><span>A. Special bulk</span><strong>114–135</strong><span>53.0–62.8%</span></div>
+            <div data-case="salamence" data-build="physical" data-min="94" data-max="112" data-ohko="0"><span>B. Physical bulk</span><strong>94–112</strong><span>43.7–52.1%</span></div>
+          </div>
+          <p>Both survive one hit from full HP. The difference is whether Hippowdon can switch into one hit and then take another. With Leftovers recovery between them, B survives both; A goes down to the second.</p>
+        </div>
+        <div class="guide-matchup">
+          <h3>After Dragon Dance: Double-Edge</h3>
+          <p>A +1 Attack boost brings the same Salamence's effective Attack to 324.</p>
+          <div class="guide-ranges">
+            <div data-case="salamence-boosted" data-build="special" data-min="171" data-max="202" data-ohko="0"><span>A. Special bulk</span><strong>171–202</strong><span>79.5–94.0%</span></div>
+            <div data-case="salamence-boosted" data-build="physical" data-min="141" data-max="166" data-ohko="0"><span>B. Physical bulk</span><strong>141–166</strong><span>65.6–77.2%</span></div>
+          </div>
+          <p>A still survives from full HP, but the maximum roll leaves only 13 HP. Losing at least 13 HP to entry damage or an earlier attack lets the maximum roll knock it out. B has more room, keeping 49 HP after the same worst-case roll.</p>
+          <p>Whirlwind has negative priority, so Hippowdon must live through the attack to remove the boost. Even B cannot switch into an already boosted Salamence and survive two consecutive Double-Edges under these conditions.</p>
+        </div>
+        <div class="guide-matchup">
+          <h3>Primarina: Sparkling Aria</h3>
+          <div class="guide-attacker"><img src="https://play.pokemonshowdown.com/sprites/gen5/primarina.png" width="56" height="56" alt="Primarina" loading="lazy"><p>Modest · 32 HP / 20 Def / 14 SpA · 176 SpA<br>Torrent inactive · Sitrus Berry</p></div>
+          <div class="guide-ranges">
+            <div data-case="primarina-aria" data-build="special" data-min="146" data-max="174" data-ohko="0"><span>A. Special bulk</span><strong>146–174</strong><span>67.9–80.9%</span></div>
+            <div data-case="primarina-aria" data-build="physical" data-min="192" data-max="228" data-ohko="37.5"><span>B. Physical bulk</span><strong>192–228</strong><span>89.3–106.0% · 37.5% chance to OHKO</span></div>
+          </div>
+          <p>A always survives one hit from full HP and gets to act. B can be knocked out in the same situation. Shifting the investment toward Defense means another team member may need to handle special Water attacks.</p>
+        </div>
+        <div class="guide-matchup">
+          <h3>The same Primarina: Moonblast</h3>
+          <div class="guide-ranges">
+            <div data-case="primarina-moonblast" data-build="special" data-min="76" data-max="91" data-ohko="0"><span>A. Special bulk</span><strong>76–91</strong><span>35.3–42.3%</span></div>
+            <div data-case="primarina-moonblast" data-build="physical" data-min="102" data-max="120" data-ohko="0"><span>B. Physical bulk</span><strong>102–120</strong><span>47.4–55.8%</span></div>
+          </div>
+          <p>Neutral Moonblast hurts less than super-effective Sparkling Aria, but the gap remains substantial. Switching into Moonblast does not mean the next hit is safe: Primarina can choose Sparkling Aria on the following turn.</p>
+        </div>
+        <h3>What if Primarina invests 32 points in Special Attack?</h3>
+        <p>Changing Primarina's spread to 32 HP / 2 Def / 32 SpA gives it 195 Special Attack with Modest. Ability, item, and weather stay the same.</p>
+        <div class="guide-ranges">
+          <div data-case="primarina-max" data-build="special" data-min="162" data-max="192" data-ohko="0"><span>A. Special bulk</span><strong>162–192</strong><span>75.3–89.3%</span></div>
+          <div data-case="primarina-max" data-build="physical" data-min="212" data-max="252" data-ohko="93.75"><span>B. Physical bulk</span><strong>212–252</strong><span>98.6–117.2% · 93.75% chance to OHKO</span></div>
+        </div>
+        <p>Surviving one representative build is not a guarantee against every Primarina. A's result does not cover Calm Mind boosts, an active Torrent, or rain. Sand does not boost Hippowdon's Special Defense.</p>
+      </section>
+
+      <section id="turns">
+        <h2>4. Buying a turn for Yawn</h2>
+        <p>Physical investment matters when switching into unboosted Salamence. Hippowdon takes the first hit on the switch, then Salamence moves first and uses Double-Edge again on the following turn. There is one 13-HP Leftovers recovery between the attacks.</p>
+        <div class="guide-turn"><p><strong>B, two maximum rolls:</strong><br>215 − 112 + 13 − 112 = <strong>4 HP remaining</strong></p><p><strong>A, two minimum rolls:</strong><br>215 − 114 + 13 − 114 = <strong>0 HP remaining</strong></p></div>
+        <p>B survives the second attack and can use Yawn. A faints before acting even with two minimum rolls. B's margin is only 4 HP, so Stealth Rock damage or earlier chip removes this guarantee.</p>
+        <p>Yawn does not put the target to sleep immediately. Your next play depends on whether the opponent stays in or switches. The spread buys an opportunity to use Yawn; it does not make Hippowdon a permanent answer to Salamence.</p>
+      </section>
+
+      <section id="choice">
+        <h2>5. Which spread fits your team?</h2>
+        <p><strong>Start with A if Hippowdon needs a turn against Primarina.</strong> From full HP, it can take Sparkling Aria and use Yawn or Stealth Rock. This does not solve Taunt, Encore, or boosting variants, so the opponent's other moves still matter.</p>
+        <p><strong>B fits when another selected Pokemon handles special Water attacks and Hippowdon needs to switch into Salamence.</strong> You are narrowing its defensive job toward physical attackers. Salamence may also choose Earthquake or a different move, so the Double-Edge calculation is only one part of that matchup.</p>
+        <p>You bring only three Pokemon into a Singles battle. A Primarina answer on the six-member roster does not help if it is absent from your selected three. Choose the spread around the combinations you actually bring, as well as the team's overall type chart.</p>
+      </section>
+
+      <section id="use">
+        <h2>6. Builds and calculation settings</h2>
+        <div class="guide-downloads"><a href="/help/hippowdon-special.txt" download>Download special-bulk build</a><a href="/help/hippowdon-physical.txt" download>Download physical-bulk build</a><a href="/">Open PokePilot</a></div>
+        <p>Import a build, switch to the calculator, and place Hippowdon on the defending side. Match the attacker's nature, stat points, ability, and item to the settings above, then change the boosts to compare the results. The team builder and calculator work without sign-in or an API key.</p>
+        <p class="guide-meta">Calculation: PokePilot's Champions damage engine (@smogon/calc 0.12.0, Champions rules). Stat points are capped at 32 per stat and 66 total. Damage, final stats, and knockout chances were recalculated with the engine. Knockout probabilities refer to damage rolls conditional on the move hitting.</p>
+        <p class="guide-meta">Battle data: <a href="https://championsbattledata.com/api_guide" target="_blank" rel="noopener noreferrer">Champions Battle Data</a>, Singles snapshot dated October 13, 2026. Sprites: <a href="https://play.pokemonshowdown.com/" target="_blank" rel="noopener noreferrer">Pokémon Showdown</a>. PokePilot is an unofficial fan tool.</p>
+      </section>
+    </main>
+  </div>
+  <footer>PokePilot · <a href="/help/en.html">Help</a> · <a href="/help/hippowdon-ko.html" lang="ko">한국어</a> · <a href="/privacy.html">Privacy</a></footer>
+</body>
+</html>

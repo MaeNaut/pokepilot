@@ -1,0 +1,9 @@
+Hippowdon @ Leftovers
+Ability: Sand Stream
+Level: 50
+EVs: 32 HP / 32 Def / 2 SpD
+Impish Nature
+- Yawn
+- Earthquake
+- Stealth Rock
+- Whirlwind

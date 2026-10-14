@@ -64,7 +64,7 @@ function renderHeader() {
 }
 
 renderHeader();
-const helpSubpage = { "api-key": "api-key", kabamanda: "kabamanda" }[document.body.dataset.helpPage];
+const helpSubpage = { "api-key": "api-key", kabamanda: "kabamanda", hippowdon: "hippowdon" }[document.body.dataset.helpPage];
 if (helpSubpage) {
   let menuTopic = null;
   const currentTopicHash = () => document.querySelector('aside a[aria-current="location"]')?.getAttribute("href") || location.hash;

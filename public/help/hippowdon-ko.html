@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>카바만다의 하마돈, 방어와 특수방어를 어떻게 나눌까? | PokePilot</title>
+  <meta name="description" content="하마돈의 두 노력치 배분을 메가보만다와 누리레느 상대로 비교합니다. 실제 대미지와 먹다남은음식 회복을 계산해 하품을 쓸 기회가 어떻게 달라지는지 살펴봅니다.">
+  <link rel="canonical" href="https://pokepilot.app/help/hippowdon-ko.html">
+  <link rel="alternate" hreflang="ko" href="https://pokepilot.app/help/hippowdon-ko.html">
+  <link rel="alternate" hreflang="en" href="https://pokepilot.app/help/hippowdon-en.html">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/help/help.css">
+  <link rel="stylesheet" href="/help/practical-guide.css">
+  <script src="/help/help.js" defer></script>
+</head>
+<body data-help-page="hippowdon">
+  <a class="skip" href="#content">본문으로 이동</a>
+  <header><a href="/">PokePilot</a></header>
+  <div class="layout">
+    <aside><details open><summary>목차</summary><nav aria-label="하마돈 실전 가이드 목차"><ol>
+      <li><a href="#overview">하마돈에게 맡길 일</a></li>
+      <li><a href="#spreads">두 배분 비교</a></li>
+      <li><a href="#damage">보만다와 누리레느 상대</a></li>
+      <li><a href="#turns">하품을 쓸 한 턴</a></li>
+      <li><a href="#choice">어느 쪽을 고를까</a></li>
+      <li><a href="#use">샘플과 계산 조건</a></li>
+    </ol></nav></details></aside>
+    <main id="content">
+      <p><a href="/help/ko.html">도움말</a> · <a href="/help/kabamanda-ko.html">카바만다 분석 예시</a></p>
+      <div class="guide-heading">
+        <img src="https://play.pokemonshowdown.com/sprites/gen5/hippowdon.png" width="88" height="88" alt="하마돈">
+        <h1>카바만다의 하마돈,<br>방어와 특수방어를 어떻게 나눌까?</h1>
+      </div>
+      <p class="intro">장난꾸러기 하마돈이라고 모두 물리 내구에 투자한 것은 아닙니다. 특수방어를 높이면 누리레느의 물 기술을 한 번 버틸 수 있고, 방어를 높이면 메가보만다에게 교체로 들어갈 여유가 늘어납니다. 같은 도구와 기술을 두고 노력치만 바꿔봤습니다.</p>
+      <p class="guide-meta">PokePilot · <time datetime="2026-10-14">2026년 10월 14일</time> · M-C 싱글 · 배틀 데이터 기준: 2026년 10월 13일 / M7</p>
+
+      <section id="overview">
+        <h2>1. 하마돈에게 맡길 일</h2>
+        <p>카바만다에서 하마돈은 스텔스록과 하품으로 상대의 교체를 유도하고, 보만다가 용의춤을 쓸 틈을 만드는 역할입니다. 날려버리기로 상대의 랭크 상승을 지울 수도 있습니다. 직접 상대를 쓰러뜨리는 것보다 필요한 순간에 한 번 행동하는 것이 중요합니다.</p>
+        <p>출발점은 <a href="/help/kabamanda-ko.html#overview">기존 카바만다 예시</a>의 하마돈입니다. 팀 원출처는 <a href="https://game8.jp/pokemon-champions/779319" target="_blank" rel="noopener noreferrer">Game8의 구축 소개</a>이며, 이 글에서는 하마돈의 내구 배분만 비교합니다.</p>
+      </section>
+
+      <section id="spreads">
+        <h2>2. 두 배분 비교</h2>
+        <p>두 샘플 모두 장난꾸러기·모래날림·먹다남은음식입니다. 하품, 지진, 스텔스록, 날려버리기도 그대로 둡니다. 회복 기술이 없는 구성이라 매번 교체할 때 잃는 체력이 다음 행동 기회에 영향을 줍니다.</p>
+        <div class="guide-samples">
+          <article class="guide-sample">
+            <h3>A. 특수 내구 중심</h3>
+            <p>기존 카바만다 예시에 사용한 배분입니다.</p>
+            <dl><dt>노력치</dt><dd>HP 32 / 방어 2 / 특수방어 32</dd><dt>내구 실수치</dt><dd>HP 215 / 방어 154 / 특수방어 124</dd></dl>
+          </article>
+          <article class="guide-sample">
+            <h3>B. 물리 내구 중심</h3>
+            <p>특수방어에서 방어로 30을 옮겼습니다.</p>
+            <dl><dt>노력치</dt><dd>HP 32 / 방어 32 / 특수방어 2</dd><dt>내구 실수치</dt><dd>HP 215 / 방어 187 / 특수방어 94</dd></dl>
+          </article>
+        </div>
+        <p>두 배분은 현재 배틀 데이터에도 등장합니다. 비교를 위해 도구는 먹다남은음식으로 통일했습니다. 양쪽 모두 공격 132, 특수공격 79, 스피드 67로, 공격 성능과 행동 순서는 바뀌지 않습니다.</p>
+      </section>
+
+      <section id="damage">
+        <h2>3. 보만다와 누리레느 상대</h2>
+        <p>모두 레벨 50, 하마돈 HP 215에서 계산했습니다. 날씨는 모래바람이며 필드·벽·급소는 없습니다. 누리레느는 격류가 발동하지 않은 상태입니다. 아래 범위는 공격 한 번의 피해이며 먹다남은음식 회복은 포함하지 않습니다.</p>
+        <div class="guide-matchup">
+          <h3>무강화 메가보만다의 이판사판태클</h3>
+          <div class="guide-attacker"><img src="https://play.pokemonshowdown.com/sprites/gen5/salamence-mega.png" width="56" height="56" alt="메가보만다" loading="lazy"><p>고집 · HP 1 / 공격 32 / 방어 1 / 스피드 32 · 공격 216<br>스카이스킨 · 보만다나이트</p></div>
+          <div class="guide-ranges">
+            <div data-case="salamence" data-build="special" data-min="114" data-max="135" data-ohko="0"><span>A. 특수 내구 중심</span><strong>114–135</strong><span>53.0–62.8%</span></div>
+            <div data-case="salamence" data-build="physical" data-min="94" data-max="112" data-ohko="0"><span>B. 물리 내구 중심</span><strong>94–112</strong><span>43.7–52.1%</span></div>
+          </div>
+          <p>HP가 가득 차면 둘 다 한 번 버팁니다. 차이는 교체로 들어가 첫 공격을 받은 뒤에도 한 번 더 맞을 수 있느냐입니다. 먹다남은음식 회복을 사이에 두면 B는 두 번을 버티지만 A는 두 번째 공격에 쓰러집니다.</p>
+        </div>
+        <div class="guide-matchup">
+          <h3>용의춤 후 메가보만다의 이판사판태클</h3>
+          <p>같은 메가보만다의 공격을 1랭크 올리면 계산에 사용되는 공격은 324입니다.</p>
+          <div class="guide-ranges">
+            <div data-case="salamence-boosted" data-build="special" data-min="171" data-max="202" data-ohko="0"><span>A. 특수 내구 중심</span><strong>171–202</strong><span>79.5–94.0%</span></div>
+            <div data-case="salamence-boosted" data-build="physical" data-min="141" data-max="166" data-ohko="0"><span>B. 물리 내구 중심</span><strong>141–166</strong><span>65.6–77.2%</span></div>
+          </div>
+          <p>A도 HP가 가득 차면 한 번 버티지만, 최대 피해에서 남는 HP는 13뿐입니다. 교체 피해나 앞선 공격으로 HP가 13 이상 깎였다면 최대 피해에 쓰러질 수 있습니다. B는 같은 최대 피해에서 49가 남아 여유가 더 큽니다.</p>
+          <p>날려버리기는 후공 기술이므로 공격을 버텨야 랭크 상승을 지울 수 있습니다. B라도 이미 용의춤을 쓴 보만다에게 교체로 들어가 두 번 연속 맞는 상황까지 버티지는 못합니다.</p>
+        </div>
+        <div class="guide-matchup">
+          <h3>누리레느의 물거품아리아</h3>
+          <div class="guide-attacker"><img src="https://play.pokemonshowdown.com/sprites/gen5/primarina.png" width="56" height="56" alt="누리레느" loading="lazy"><p>조심 · HP 32 / 방어 20 / 특수공격 14 · 특수공격 176<br>격류 미발동 · 자뭉열매</p></div>
+          <div class="guide-ranges">
+            <div data-case="primarina-aria" data-build="special" data-min="146" data-max="174" data-ohko="0"><span>A. 특수 내구 중심</span><strong>146–174</strong><span>67.9–80.9%</span></div>
+            <div data-case="primarina-aria" data-build="physical" data-min="192" data-max="228" data-ohko="37.5"><span>B. 물리 내구 중심</span><strong>192–228</strong><span>89.3–106.0% · 37.5% 확률로 한 번에 기절</span></div>
+          </div>
+          <p>A는 HP가 가득 차면 확정으로 한 번 버티고 행동할 수 있습니다. B는 같은 상황에서도 쓰러질 수 있습니다. 방어를 올린 만큼 물 특수기를 버티는 역할을 다른 팀원에게 맡길 필요가 생깁니다.</p>
+        </div>
+        <div class="guide-matchup">
+          <h3>같은 누리레느의 문포스</h3>
+          <div class="guide-ranges">
+            <div data-case="primarina-moonblast" data-build="special" data-min="76" data-max="91" data-ohko="0"><span>A. 특수 내구 중심</span><strong>76–91</strong><span>35.3–42.3%</span></div>
+            <div data-case="primarina-moonblast" data-build="physical" data-min="102" data-max="120" data-ohko="0"><span>B. 물리 내구 중심</span><strong>102–120</strong><span>47.4–55.8%</span></div>
+          </div>
+          <p>문포스는 등배라 물거품아리아보다 덜 아프지만, 차이는 여전히 큽니다. 그렇다고 문포스에 교체로 들어간 뒤 다음 공격도 버틴다고 볼 수는 없습니다. 누리레느는 다음 턴에 물거품아리아를 선택할 수 있습니다.</p>
+        </div>
+        <h3>특수공격에 32를 투자했다면</h3>
+        <p>누리레느의 배분을 HP 32 / 방어 2 / 특수공격 32로 바꾸면 조심 기준 특수공격이 195가 됩니다. 특성·도구·날씨는 동일합니다.</p>
+        <div class="guide-ranges">
+          <div data-case="primarina-max" data-build="special" data-min="162" data-max="192" data-ohko="0"><span>A. 특수 내구 중심</span><strong>162–192</strong><span>75.3–89.3%</span></div>
+          <div data-case="primarina-max" data-build="physical" data-min="212" data-max="252" data-ohko="93.75"><span>B. 물리 내구 중심</span><strong>212–252</strong><span>98.6–117.2% · 93.75% 확률로 한 번에 기절</span></div>
+        </div>
+        <p>대표 샘플 하나를 버틴다는 결과를 모든 누리레느에게 적용하면 안 됩니다. A도 명상, 격류 발동, 비 같은 화력 변화까지 버틴다는 뜻은 아닙니다. 모래바람이 하마돈의 특수방어를 올려주지는 않습니다.</p>
+      </section>
+
+      <section id="turns">
+        <h2>4. 하품을 쓸 한 턴</h2>
+        <p>물리 내구 투자의 이점은 무강화 보만다에게 교체로 들어갈 때 선명합니다. 첫 공격은 교체로 받고, 다음 턴에도 보만다가 먼저 같은 기술을 사용한다고 가정합니다. 두 공격 사이에는 먹다남은음식으로 HP 13을 한 번 회복합니다.</p>
+        <div class="guide-turn"><p><strong>B, 두 번 모두 최대 피해:</strong><br>215 − 112 + 13 − 112 = <strong>HP 4</strong></p><p><strong>A, 두 번 모두 최소 피해:</strong><br>215 − 114 + 13 − 114 = <strong>HP 0</strong></p></div>
+        <p>B는 이 조건에서 두 번째 공격까지 버티고 하품을 쓸 수 있습니다. A는 가장 낮은 피해가 두 번 나와도 그 전에 쓰러집니다. 단, B의 여유도 HP 4뿐이라 스텔스록 피해나 기존 체력 손실이 있으면 보장되지 않습니다.</p>
+        <p>하품을 썼다고 바로 잠드는 것은 아닙니다. 상대가 다음 턴에도 남아 있을지, 교체할지에 따라 이후 운영이 달라집니다. 이 배분은 하품을 누를 기회를 만드는 것이지, 보만다를 계속 받아내는 해답은 아닙니다.</p>
+      </section>
+
+      <section id="choice">
+        <h2>5. 어느 쪽을 고를까</h2>
+        <p><strong>누리레느 앞에서도 한 번 행동해야 한다면 A부터 고려합니다.</strong> HP를 유지한 상태에서 물거품아리아를 버티고 하품이나 스텔스록을 선택할 수 있습니다. 다만 도발·앙코르나 랭크 상승까지 해결해 주지는 않으므로 상대의 나머지 기술도 확인해야 합니다.</p>
+        <p><strong>물 특수기를 다른 포켓몬으로 처리하고 보만다 교체를 맡기려면 B가 어울립니다.</strong> 팀과 선출에 물 공격을 받을 포켓몬을 확보한 뒤, 하마돈의 역할을 물리 공격을 버티는 쪽으로 좁히는 선택입니다. 보만다는 지진이나 다른 기술을 쓸 수도 있으므로 이판사판태클 계산만으로 모든 대면을 설명하지는 않습니다.</p>
+        <p>한 경기에는 세 마리만 내보냅니다. 팀 목록에 누리레느 대응이 있더라도 실제 선출에서 빠지면 하마돈에게 그 역할이 돌아올 수 있습니다. 노력치를 고를 때는 여섯 마리의 상성표뿐 아니라 자주 쓰는 세 마리 조합도 함께 보는 편이 좋습니다.</p>
+      </section>
+
+      <section id="use">
+        <h2>6. 샘플과 계산 조건</h2>
+        <div class="guide-downloads"><a href="/help/hippowdon-special.txt" download>특수 내구 샘플 내려받기</a><a href="/help/hippowdon-physical.txt" download>물리 내구 샘플 내려받기</a><a href="/">PokePilot 열기</a></div>
+        <p>샘플을 가져온 뒤 계산기로 전환해 하마돈을 방어 쪽에 놓습니다. 상대의 성격·노력치·특성·도구를 위 조건에 맞추고, 랭크 상승을 바꾸면 같은 비교를 확인할 수 있습니다. 팀 빌더와 계산기는 로그인이나 API 키 없이 사용할 수 있습니다.</p>
+        <p class="guide-meta">계산: PokePilot의 Champions 대미지 엔진(@smogon/calc 0.12.0, Champions 규칙). 노력치는 능력치별 최대 32·합계 66입니다. 본문의 대미지·실수치·기절 확률은 계산기로 재검산했습니다. 기절 확률은 기술이 명중했을 때의 피해 난수 기준입니다.</p>
+        <p class="guide-meta">배틀 데이터: <a href="https://championsbattledata.com/api_guide" target="_blank" rel="noopener noreferrer">Champions Battle Data</a>, 2026년 10월 13일 싱글 자료. 스프라이트: <a href="https://play.pokemonshowdown.com/" target="_blank" rel="noopener noreferrer">Pokémon Showdown</a>. PokePilot은 비공식 팬 도구입니다.</p>
+      </section>
+    </main>
+  </div>
+  <footer>PokePilot · <a href="/help/ko.html">도움말</a> · <a href="/help/hippowdon-en.html" lang="en">English</a> · <a href="/privacy.html">개인정보 안내</a></footer>
+</body>
+</html>

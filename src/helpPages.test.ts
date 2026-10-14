@@ -82,7 +82,7 @@ it("offers public navigation to JavaScript-disabled visitors without replacing t
   expect(fallback).toContain("/help/kabamanda-en.html");
 });
 
-describe.each(["api-key", "kabamanda"])("%s article preferences", (page) => {
+describe.each(["api-key", "kabamanda", "hippowdon"])("%s article preferences", (page) => {
   it("preserves the initial hash and the currently read section when changing language", () => {
     const dom = new JSDOM(readFileSync(new URL(`help/${page}-ko.html`, publicRoot), "utf8"), {
       url: `https://pokepilot.app/help/${page}-ko.html#overview`, runScripts: "outside-only", pretendToBeVisual: true,
