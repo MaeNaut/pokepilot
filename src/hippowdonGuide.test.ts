@@ -51,6 +51,10 @@ describe.each(["ko", "en"])("Hippowdon practical guide %s", locale => {
     }
   });
   it("has working section anchors, canonical and downloads", () => {
+    const redirects = readFileSync(new URL("../public/_redirects", import.meta.url), "utf8");
+    for (const suffix of ["", "/"]) {
+      expect(redirects).toContain(`/help/hippowdon-${locale}${suffix} /help/hippowdon-${locale}.html 301`);
+    }
     expect(document.querySelector('[rel="canonical"]')?.getAttribute("href")).toBe(`https://pokepilot.app/help/hippowdon-${locale}.html`);
     for (const link of document.querySelectorAll('a[href^="#"]')) expect(document.getElementById(link.getAttribute("href")!.slice(1))).not.toBeNull();
     for (const build of ["special", "physical"]) expect(document.querySelector(`a[href="/help/hippowdon-${build}.txt"]`)).not.toBeNull();
