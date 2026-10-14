@@ -3,7 +3,8 @@ import type { Dispatch, SetStateAction } from "react";
 import type { AnalysisPreference } from "../utils/accountPreferences";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faLock,
+  faFileLines,
+  faKey,
   faMagnifyingGlass,
   faRotateRight,
   faSliders,
@@ -249,7 +250,14 @@ export function CopilotPanel({
       : t(usageSourceLoaded ? "copilot.usageUnavailable" : "copilot.usageChecking");
   const hasNewerUsage = Boolean(response && displayedUsageSource && usageSource &&
     (displayedUsageSource.season !== usageSource.season || displayedUsageSource.sourceDate !== usageSource.sourceDate));
-  const isAccountGateLocked = account.enabled && account.status === "guest";
+  const isKeyGateLocked = account.enabled && account.status === "ready" &&
+    account.personalApiKeyStatus === "ready" && !account.hasPersonalApiKey;
+  const isAccountGateLocked = (account.enabled && account.status === "guest") || isKeyGateLocked;
+  const gateTitle = isKeyGateLocked ? keyRequiredMessage : t("account.loginRequired");
+  const exampleSection = scope === "matchup" ? "team" : scope;
+  const exampleHref = `/help/kabamanda-${locale}.html#${exampleSection}`;
+  const exampleLabel = locale === "ko" ? "분석 예시" : "Analysis examples";
+  const battleContext = `${t("toolbar.regulation")} · ${t(battleFormat === "singles" ? "battleFormat.singles" : "battleFormat.doubles")}`;
   const scopeRequirement = getCopilotScopeRequirement({
     scope,
     battleFormat,
@@ -387,6 +395,7 @@ export function CopilotPanel({
           <CopilotAnalyzeControl
             scope={scope}
             reasoningEffort={reasoningEffort}
+            battleContext={battleContext}
             isAnalyzeConfirmationOpen={isAnalyzeConfirmationOpen}
             isAnalyzeDisabled={isAnalyzeDisabled}
             isBusy={analysisState.status === "loading" || isAnalysisPreparing || isAnalysisStarting}
@@ -453,16 +462,7 @@ export function CopilotPanel({
         {recommendationNotice ? <p role="status">{recommendationNotice}</p> : null}
         {optimizationNotice ? <p role="status">{optimizationNotice}</p> : null}
         {matchupNotice ? <p role="status">{matchupNotice}</p> : null}
-        {account.status === "ready" && !account.hasPersonalApiKey ? (
-          <div className="copilot-empty-state" role="status">
-            <FontAwesomeIcon icon={faLock} aria-hidden="true" />
-            <strong>{keyRequiredMessage}</strong>
-            <span>{locale === "ko" ? "우측 상단 계정 설정에서 키를 등록하면 분석을 사용할 수 있습니다." : "Add your key in account settings at the top right to use analysis."}</span>
-            <a className="copilot-example-link" href={`/help/kabamanda-${locale}.html`} target="_blank" rel="noopener noreferrer">
-              {locale === "ko" ? "PokePilot 분석 예시 보기 (키 없이)" : "See PokePilot analysis examples (no key needed)"}
-            </a>
-          </div>
-        ) : scopeRequirement ? (
+        {scopeRequirement ? (
           <div className="copilot-empty-state is-requirement">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden="true" />
             <strong>
@@ -510,6 +510,7 @@ export function CopilotPanel({
             </button>
           </div>
         ) : response ? (
+          <>
           <CopilotAnalysisResult
             key={
               analysisState.historyEntryId ??
@@ -547,6 +548,8 @@ export function CopilotPanel({
             onApplyOptimizationCandidate={handleApplyOptimizationCandidate}
             onSaveOptimizationCandidate={handleSaveOptimizationCandidate}
           />
+          {isUsageDataScope ? <p className="copilot-usage-note">{usageLabel}</p> : null}
+          </>
         ) : (
           <div
             className={`copilot-empty-state${
@@ -565,14 +568,10 @@ export function CopilotPanel({
       </div>
 
       <footer className="copilot-footer">
-        <span>
-          {isUsageDataScope ? usageLabel : t("toolbar.regulation")} ·{" "}
-          {t(
-            battleFormat === "singles"
-              ? "battleFormat.singles"
-              : "battleFormat.doubles",
-          )}
-        </span>
+        <a className="copilot-footer-example" href={exampleHref} target="_blank" rel="noopener noreferrer">
+          <FontAwesomeIcon icon={faFileLines} aria-hidden="true" />
+          {exampleLabel}
+        </a>
         <CopilotModelControl
           reasoningEffort={reasoningEffort}
           isPersonalModelAvailable={isPersonalModelAvailable}
@@ -587,7 +586,7 @@ export function CopilotPanel({
         <div
           className="copilot-login-gate"
           role="group"
-          aria-label={t("account.loginRequired")}
+          aria-label={gateTitle}
           onFocus={() => setIsLoginGateRevealed(true)}
           onPointerDown={(event) => {
             if (event.pointerType !== "mouse") {
@@ -596,9 +595,18 @@ export function CopilotPanel({
           }}
         >
           <div className="copilot-login-gate-card">
-            <FontAwesomeIcon icon={faUser} aria-hidden="true" />
-            <strong>{t("account.loginRequired")}</strong>
-            <span>{t("account.signInDescription")}</span>
+            <FontAwesomeIcon icon={isKeyGateLocked ? faKey : faUser} aria-hidden="true" />
+            <strong>{gateTitle}</strong>
+            <span>{isKeyGateLocked
+              ? locale === "ko"
+                ? "개인 OpenAI API 키를 발급한 뒤 우측 상단 계정 설정에서 등록합니다."
+                : "Create your OpenAI API key, then add it in account settings at the top right."
+              : t("account.signInDescription")}</span>
+            {isKeyGateLocked ? (
+              <a className="copilot-gate-primary" href={`/help/api-key-${locale}.html`} target="_blank" rel="noopener noreferrer">
+                {locale === "ko" ? "API 키 발급·등록 가이드" : "API key setup guide"}
+              </a>
+            ) : (
             <button
               type="button"
               onClick={handleSignIn}
@@ -606,8 +614,9 @@ export function CopilotPanel({
             >
               {t("account.signIn")}
             </button>
-            <a className="copilot-example-link" href={`/help/kabamanda-${locale}.html`} target="_blank" rel="noopener noreferrer">
-              {locale === "ko" ? "PokePilot 분석 예시 보기 (로그인 없이)" : "See PokePilot analysis examples (no sign-in)"}
+            )}
+            <a className="copilot-example-link" href={exampleHref} target="_blank" rel="noopener noreferrer">
+              {locale === "ko" ? "PokePilot 분석 예시 보기" : "See PokePilot analysis examples"}
             </a>
           </div>
         </div>

@@ -173,7 +173,8 @@
   line-height: 1.5;
 }
 
-.copilot-login-gate-card button {
+.copilot-login-gate-card button,
+.copilot-gate-primary {
   min-height: 34px;
   margin-top: 3px;
   border: 1px solid var(--copilot-primary-border);
@@ -187,8 +188,17 @@
   cursor: pointer;
 }
 
+.copilot-gate-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .copilot-login-gate-card button:hover:not(:disabled),
-.copilot-login-gate-card button:focus-visible {
+.copilot-login-gate-card button:focus-visible,
+.copilot-gate-primary:hover,
+.copilot-gate-primary:focus-visible {
   border-color: var(--copilot-accent);
   background: var(--copilot-primary-hover);
   outline: none;
@@ -1478,6 +1488,31 @@
   gap: 12px;
   border-top: 1px solid var(--copilot-border);
   padding-top: 10px;
+  color: var(--copilot-subtle);
+  font-size: 0.62rem;
+}
+
+.copilot-footer-example {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--copilot-copy-muted);
+  font-size: 0.7rem;
+  text-decoration: none;
+}
+
+.copilot-footer-example:hover {
+  color: var(--copilot-heading);
+}
+
+.copilot-footer-example:focus-visible {
+  outline: 2px solid var(--copilot-accent);
+  outline-offset: 3px;
+}
+
+.copilot-usage-note {
+  margin: 12px 0;
   color: var(--copilot-subtle);
   font-size: 0.62rem;
 }

@@ -34,7 +34,7 @@ beforeEach(() => {
 });
 afterEach(async () => { for (const cleanup of cleanups.splice(0)) await cleanup(); });
 type Props = ComponentProps<typeof CopilotPanel>;
-async function mount(scope: "pokemon" | "optimization" = "pokemon") {
+async function mount(scope: "pokemon" | "team" | "recommendation" | "optimization" = "pokemon") {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   const props = {
     analysisPreference: { scope, reasoningEffort: "low" }, setAnalysisPreference: () => {},
@@ -72,12 +72,49 @@ it.each(["guest", "no-key"])("offers a public example without starting analysis:
   const app = await mount();
   app.props.account = { ...app.props.account, ...(kind === "guest" ? { status: "guest", user: null } : { hasPersonalApiKey: false }) } as Props["account"];
   await app.render();
-  const link = app.container.querySelector<HTMLAnchorElement>('a[href="/help/kabamanda-en.html"]');
+  const link = app.container.querySelector<HTMLAnchorElement>('.copilot-login-gate .copilot-example-link');
   expect(link).not.toBeNull();
+  expect(link?.getAttribute("href")).toBe("/help/kabamanda-en.html#pokemon");
   expect(link?.target).toBe("_blank");
   expect(link?.closest("[inert]")).toBeNull();
+  expect(link?.textContent).toBe("See PokePilot analysis examples");
+  expect(app.container.querySelector(".copilot-footer")?.closest("[inert]")).not.toBeNull();
+  if (kind === "no-key") {
+    const guide = app.container.querySelector<HTMLAnchorElement>(".copilot-gate-primary");
+    expect(guide?.getAttribute("href")).toBe("/help/api-key-en.html");
+    expect(guide?.closest("[inert]")).toBeNull();
+    expect(app.container.querySelector(".copilot-login-gate button")).toBeNull();
+  }
   expect(state.save).not.toHaveBeenCalled();
   expect(state.prepare).not.toHaveBeenCalled();
+  expect(state.analyze).not.toHaveBeenCalled();
+});
+
+it("unlocks the panel when the registered personal key becomes available", async () => {
+  const app = await mount();
+  app.props.account = { ...app.props.account, hasPersonalApiKey: false };
+  await app.render();
+  expect(app.container.querySelector(".copilot-login-gate")).not.toBeNull();
+  app.props.account = { ...app.props.account, hasPersonalApiKey: true };
+  await app.render();
+  expect(app.container.querySelector(".copilot-login-gate")).toBeNull();
+  expect(app.container.querySelector(".copilot-footer")?.closest("[inert]")).toBeNull();
+});
+
+it.each([
+  ["pokemon", "pokemon"], ["team", "team"],
+  ["recommendation", "recommendation"], ["optimization", "optimization"],
+] as const)("opens the matching public example for %s", async (scope, section) => {
+  const app = await mount(scope);
+  expect(app.container.querySelector(".copilot-footer-example")?.getAttribute("href"))
+    .toBe(`/help/kabamanda-en.html#${section}`);
+});
+
+it("shows regulation and battle format before starting a paid analysis", async () => {
+  const app = await mount();
+  await act(async () => { app.container.querySelector<HTMLButtonElement>(".copilot-analyze-button")!.click(); });
+  expect(app.container.querySelector('[role="dialog"]')?.textContent)
+    .toContain("toolbar.regulation · battleFormat.singles");
   expect(state.analyze).not.toHaveBeenCalled();
 });
 
@@ -116,8 +153,8 @@ it.each([false, true])("never labels old history with the current statistics dat
   state.response = { title: "Old result" };
   state.analysis = { status: "ready", ...(legacy ? {} : { usageSource: { ...source, season: "M6", sourceDate: "2026-10-01" } }) };
   const app = await mount("optimization");
-  const footer = app.container.querySelector(".copilot-footer")!.textContent;
-  expect(footer).not.toContain("2026-10-02");
-  expect(footer).toContain(legacy ? "copilot.analysisUsageUnknown" : "2026-10-01");
+  const usage = app.container.querySelector(".copilot-usage-note")!.textContent;
+  expect(usage).not.toContain("2026-10-02");
+  expect(usage).toContain(legacy ? "copilot.analysisUsageUnknown" : "2026-10-01");
   expect(app.container.textContent?.includes("copilot.usageChanged")).toBe(!legacy);
 });

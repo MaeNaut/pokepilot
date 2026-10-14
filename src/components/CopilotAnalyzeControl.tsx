@@ -18,6 +18,7 @@ const analysisEstimates: Partial<Record<
 type Props = {
   scope: CopilotAnalysisScope;
   reasoningEffort: "low" | "medium";
+  battleContext?: string;
   isAnalyzeConfirmationOpen: boolean;
   isAnalyzeDisabled: boolean;
   isBusy: boolean;
@@ -30,7 +31,7 @@ type Props = {
 };
 
 export function CopilotAnalyzeControl({
-  scope, reasoningEffort, isAnalyzeConfirmationOpen, isAnalyzeDisabled,
+  scope, reasoningEffort, battleContext, isAnalyzeConfirmationOpen, isAnalyzeDisabled,
   isBusy, hasResponse, hasPersonalApiKey, analyzeLabel, onRequest, onClose, onConfirm,
 }: Props) {
   const { t } = useLocalization();
@@ -92,6 +93,7 @@ export function CopilotAnalyzeControl({
             {t("copilot.confirmAnalysis")}
           </strong>
           <span className="copilot-analyze-confirmation-model">{modelLabel}</span>
+          {battleContext ? <small>{battleContext}</small> : null}
           <p>
             {analysisEstimates[scope]
               ? t(hasPersonalApiKey ? "copilot.estimate" : "copilot.estimateSite", {
