@@ -89,6 +89,16 @@ this repository.
 
 ## 5. Production smoke test
 
+- Verify production host normalization with
+  `node scripts/verify-public-site.mjs https://pokepilot.app --check-canonical-hosts`.
+  HTTP apex and HTTP/HTTPS www must permanently redirect to HTTPS apex while
+  preserving paths and query strings. This opt-in check requires the zone's
+  HTTPS/www settings and must not be run against local or QA hosts. Enable
+  Cloudflare SSL/TLS > Edge Certificates > Always Use HTTPS for apex HTTP;
+  retain the existing www redirect. Do not change encryption mode, DNS or HSTS
+  merely to clear a Search Console notification. On October 15 the owner enabled
+  Always Use HTTPS after an initial HTTP 200 finding; all 49 production routing
+  and hostname checks then passed.
 - Load Team Builder and Calculator without console errors on desktop and mobile.
 - Select a Pokemon, apply a sample where usage data exists, edit moves/EVs, and
   validate Showdown import and export.

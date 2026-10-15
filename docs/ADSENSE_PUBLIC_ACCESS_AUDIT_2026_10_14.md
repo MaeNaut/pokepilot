@@ -194,3 +194,58 @@ Local reproducibility: `.tmp/audit-public.mjs` and
   cross-language comparison-value parity. Full check passed: 159 files, 1,309
   tests, lint, Cloudflare build, and dry run. No paid AI call or production account
   changes. Follow-up edits remain local until a separate commit and deployment.
+
+## Search Console follow-up - October 15, 2026
+
+- The visible aggregate report (last update October 11) lists 7 indexed URLs
+  and 15 excluded URLs: 10 alternate/canonical, 4 redirects and 1 not found.
+  These are URL variants, not 15 demonstrated application defects. The indexed
+  list includes an HTTP key-guide variant; the count is not seven unique HTTPS
+  content pages. Do not infer current indexing from the aggregate alone.
+- The reported 404 is `https://www.pokepilot.app/`, last crawled October 4.
+  A current strict HTTPS request returns 301 to `https://pokepilot.app/`.
+  Previously served extensionless help/privacy URLs now also return 301 to
+  their `.html` canonicals. Do not remove these useful redirects or request
+  separate indexing for duplicate variants.
+- Confirmed outstanding normalization gap: HTTP apex root and a help document
+  return 200 rather than redirecting to HTTPS. Their HTTPS canonicals remain
+  correct. The desired fix is the Cloudflare zone's Always Use HTTPS setting,
+  not running every static asset through the Worker. Dashboard access was
+  denied; no alternative API or browser workaround was attempted, and no
+  Cloudflare configuration changed. Existing www routing remains untouched.
+- Direct URL inspection: `kabamanda-ko.html` is unknown to Google;
+  `kabamanda-en.html` is Discovered - currently not indexed and references the
+  submitted sitemap. All 10 sitemap URLs remain publicly reachable in the
+  37-response routing check. The two Hippowdon URLs were not individually
+  inspected in this pass; their absence from an aggregate list is not proof
+  that they cannot be indexed.
+- Requested indexing for the Korean example, but Search Console explicitly
+  failed submission because it could not connect to reCAPTCHA. No success
+  confirmation was received. Subsequent Search Console access was denied, so
+  no further submissions or www Validate Fix were performed. Resume with owner
+  browser access; do not bypass CAPTCHA or claim an indexing request succeeded.
+- Added opt-in production hostname checks to `scripts/verify-public-site.mjs`.
+  They check permanent HTTP/www redirects, HTTPS, path/query preservation,
+  bounded redirect chains and final 200 responses. Syntax and the ordinary
+  37-response check passed. The strict check correctly failed on HTTP apex 200;
+  rerun it after enabling Always Use HTTPS. No product runtime code, deployment
+  or paid AI request changed in this follow-up.
+
+- Owner follow-up: the owner enabled Always Use HTTPS directly in Cloudflare.
+  The strict production suite then passed all 49 HTTP checks, including HTTP
+  apex, HTTP/HTTPS www, query/path preservation, bounded redirect chains and
+  successful final HTTPS responses. The HTTPS normalization gap is resolved;
+  this did not require a Worker deployment.
+- The owner subsequently confirmed completing the www 404 Validate Fix request
+  and the requested article indexing submissions directly in Search Console.
+  Submission completion is owner-reported; the agent did not observe success
+  screens because saved browser permissions still blocked access. These are
+  requests, not confirmed validation passes or completed indexing.
+
+Remaining: wait for Google's validation and indexing results and review the
+resulting notices. Do not repeatedly submit the same URLs or remove intentional
+canonical/redirect exclusions. Google decides indexing, and indexing is not an
+AdSense approval guarantee.
+
+References: [Google's page indexing report](https://support.google.com/webmasters/answer/7440203),
+[Cloudflare Always Use HTTPS](https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/).

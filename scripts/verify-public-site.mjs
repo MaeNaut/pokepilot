@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
 
 const origin = new URL(process.argv[2] ?? "http://127.0.0.1:5201").origin;
+const checkCanonicalHosts = process.argv.includes("--check-canonical-hosts");
+if (checkCanonicalHosts) {
+  assert.equal(origin, "https://pokepilot.app", "Host checks are production-only");
+}
 let checks = 0;
 async function get(path, status = 200) {
   const response = await fetch(new URL(path, origin), {
@@ -47,4 +51,29 @@ assert.match(api.headers.get("content-type"), /application\/json/);
 await get("/robots.txt");
 await get("/ads.txt");
 await get("/help/kabamanda-team.txt");
+if (checkCanonicalHosts) {
+  // These redirects are zone settings, not Worker asset-routing rules.
+  for (const host of ["http://pokepilot.app", "http://www.pokepilot.app", "https://www.pokepilot.app"]) {
+    for (const path of ["/?source=seo-check", "/help/ko.html?source=seo-check&lang=ko"]) {
+      let current = new URL(path, host);
+      const expected = new URL(path, origin).href;
+      for (let hop = 0; current.href !== expected; hop++) {
+        assert.ok(hop < 3, `${host}${path}: redirect loop or excessive hops`);
+        const response = await fetch(current, {
+          redirect: "manual", signal: AbortSignal.timeout(15000),
+        });
+        checks++;
+        assert.ok([301, 308].includes(response.status), `${current.href}: expected permanent HTTPS/canonical redirect, got ${response.status}`);
+        assert.ok(response.headers.get("location"), `${current.href}: missing Location`);
+        const next = new URL(response.headers.get("location"), current);
+        assert.equal(next.protocol, "https:", `${current.href}: redirect must use HTTPS`);
+        assert.ok(["pokepilot.app", "www.pokepilot.app"].includes(next.hostname), "Unexpected redirect host");
+        assert.equal(next.pathname, current.pathname, "Redirect changed the path");
+        assert.equal(next.search, current.search, "Redirect changed the query string");
+        current = next;
+      }
+      await get(expected);
+    }
+  }
+}
 console.log(`Public routing checks passed (${checks} HTTP responses): ${origin}`);
