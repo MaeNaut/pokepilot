@@ -1,0 +1,2843 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-14",
+  "sourceCommit": "70b2d2c0934801dbe43dbd900a2f1c06e51397f4",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "credentials": "evaluation-only",
+  "productionCalls": 0,
+  "protocol": {
+    "repeats": 3,
+    "providerRetries": 0,
+    "store": false,
+    "serviceTier": "default",
+    "gate": "No increase in confirmed public factual-error responses on the affected matched suite; no repeatable loss of a critical strategy. Audit flags and qualitative concerns are tracked separately. No fixed word target.",
+    "review": "All public paragraphs and recommendation titles/reasons checked against frozen requests; no automated audit pass treated as prose accuracy."
+  },
+  "decisions": {
+    "A": "rollback output/locale duplication reduction: fewer confirmed factual issues in the primary suite, but setup-ace win-condition omissions rise from 2/3 to 3/3 in the targeted regression",
+    "B": "rollback scope-unused set-audit deletion: 2/18 before versus 3/18 after confirmed prose issues",
+    "C": "retain Singles-only removal of simultaneous shared-move sequencing; isolated final replay has 0/3 confirmed public factual issues versus 0/3 before, with one new internal audit flag. Input falls 2.79%, but cost and latency do not improve in this replay",
+    "further": "Retain ownership/state/mechanics safety checks and special-strategy procedures; no untested shortening promoted."
+  },
+  "summaries": {
+    "baseline": {
+      "calls": 30,
+      "confirmedIssueResponses": 4,
+      "concernResponses": 11,
+      "rawAuditFlagged": 4,
+      "finalAuditFlagged": 1,
+      "failures": 0,
+      "inputTokens": 703977,
+      "outputTokens": 38287,
+      "costUsd": 0.07680299999999998,
+      "noCacheEquivalentUsd": 0.08954120000000002,
+      "medianMs": 13826.5
+    },
+    "stage-a": {
+      "calls": 30,
+      "confirmedIssueResponses": 3,
+      "concernResponses": 8,
+      "rawAuditFlagged": 3,
+      "finalAuditFlagged": 2,
+      "failures": 0,
+      "inputTokens": 697812,
+      "outputTokens": 34840,
+      "costUsd": 0.074967255,
+      "noCacheEquivalentUsd": 0.08720120000000002,
+      "medianMs": 12976
+    },
+    "stage-b": {
+      "calls": 18,
+      "confirmedIssueResponses": 3,
+      "concernResponses": 8,
+      "rawAuditFlagged": 6,
+      "finalAuditFlagged": 1,
+      "failures": 0,
+      "inputTokens": 533805,
+      "outputTokens": 16394,
+      "costUsd": 0.05418417999999999,
+      "noCacheEquivalentUsd": 0.0615775,
+      "medianMs": 10947
+    },
+    "stage-c": {
+      "calls": 3,
+      "confirmedIssueResponses": 0,
+      "concernResponses": 0,
+      "rawAuditFlagged": 0,
+      "finalAuditFlagged": 0,
+      "failures": 0,
+      "inputTokens": 38508,
+      "outputTokens": 2800,
+      "costUsd": 0.004211225,
+      "noCacheEquivalentUsd": 0.005250800000000001,
+      "medianMs": 10142
+    },
+    "a-confirm-before": {
+      "calls": 3,
+      "confirmedIssueResponses": 0,
+      "concernResponses": 0,
+      "rawAuditFlagged": 1,
+      "finalAuditFlagged": 1,
+      "failures": 0,
+      "inputTokens": 45324,
+      "outputTokens": 5650,
+      "costUsd": 0.006361835000000001,
+      "noCacheEquivalentUsd": 0.007357400000000001,
+      "medianMs": 19183
+    },
+    "a-confirm-after": {
+      "calls": 3,
+      "confirmedIssueResponses": 0,
+      "concernResponses": 1,
+      "rawAuditFlagged": 0,
+      "finalAuditFlagged": 0,
+      "failures": 0,
+      "inputTokens": 44799,
+      "outputTokens": 5395,
+      "costUsd": 0.0054764,
+      "noCacheEquivalentUsd": 0.0071774000000000004,
+      "medianMs": 22911
+    },
+    "critical-before": {
+      "calls": 15,
+      "confirmedIssueResponses": 4,
+      "concernResponses": 6,
+      "rawAuditFlagged": 2,
+      "finalAuditFlagged": 2,
+      "failures": 0,
+      "inputTokens": 217809,
+      "outputTokens": 27250,
+      "costUsd": 0.027338305000000004,
+      "noCacheEquivalentUsd": 0.035405900000000004,
+      "medianMs": 21978
+    },
+    "critical-after": {
+      "calls": 15,
+      "confirmedIssueResponses": 2,
+      "concernResponses": 6,
+      "rawAuditFlagged": 4,
+      "finalAuditFlagged": 4,
+      "failures": 0,
+      "inputTokens": 215184,
+      "outputTokens": 25905,
+      "costUsd": 0.026569355000000003,
+      "noCacheEquivalentUsd": 0.034470900000000006,
+      "medianMs": 17017
+    },
+    "final-c": {
+      "calls": 3,
+      "confirmedIssueResponses": 0,
+      "concernResponses": 1,
+      "rawAuditFlagged": 1,
+      "finalAuditFlagged": 1,
+      "failures": 0,
+      "inputTokens": 39033,
+      "outputTokens": 3206,
+      "costUsd": 0.004433515000000001,
+      "noCacheEquivalentUsd": 0.0055063,
+      "medianMs": 13453
+    },
+    "newCalls": {
+      "calls": 90,
+      "confirmedIssueResponses": 12,
+      "concernResponses": 30,
+      "rawAuditFlagged": 17,
+      "finalAuditFlagged": 11,
+      "failures": 0,
+      "inputTokens": 1832274,
+      "outputTokens": 121440,
+      "costUsd": 0.20354207000000007,
+      "noCacheEquivalentUsd": 0.24394740000000006,
+      "medianMs": 14358.5
+    }
+  },
+  "baselineReference": "quality-regression-2026-10-14.json",
+  "runs": [
+    {
+      "group": "stage-a",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "551557661fde9f6c790e8c47c315b6e08b68c0545805ae42fbf6b4f0c92431f6",
+      "outputHash": "846ae7768c8e506cb058f9e7fc9f5870db83d5fd7dbf1a5fac799eea7e14968e",
+      "promptVersion": 105,
+      "durationMs": 13396,
+      "usage": {
+        "inputTokens": 33618,
+        "cachedInputTokens": 3046,
+        "cacheWriteTokens": 2433,
+        "outputTokens": 1353,
+        "reasoningTokens": 182,
+        "totalTokens": 34971,
+        "costUsd": 0.003824985
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Blurs offensive coverage and defensive weakness pressure."
+        ]
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "551557661fde9f6c790e8c47c315b6e08b68c0545805ae42fbf6b4f0c92431f6",
+      "outputHash": "30f6a3c94d0d252edcf1952f53ebe4d2fdf03fe1c5d55285d295168f3c696867",
+      "promptVersion": 105,
+      "durationMs": 14243,
+      "usage": {
+        "inputTokens": 33618,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1510,
+        "reasoningTokens": 340,
+        "totalTokens": 35128,
+        "costUsd": 0.00362369
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "551557661fde9f6c790e8c47c315b6e08b68c0545805ae42fbf6b4f0c92431f6",
+      "outputHash": "e0eb77e66225629c8c6ad134ab16a239a83aed434c067129213b612c67aa30b6",
+      "promptVersion": 105,
+      "durationMs": 13387,
+      "usage": {
+        "inputTokens": 33618,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1351,
+        "reasoningTokens": 230,
+        "totalTokens": 34969,
+        "costUsd": 0.00354419
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "Recommendation tinkaton names 스텔스록 without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Replacement wording in an addition response; bound target remains correct."
+        ]
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-ddee-pokemon-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-ddee-pokemon-ko-r1.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "fe6f5c29649b873673aeb57b11b2eeddf5e07b8f8838acbd949d35444102d600",
+      "outputHash": "f31d5b72d5d9ad3f8db2aa213fc220c96bf2a1c40cfe8f69f60403a00eed6acd",
+      "promptVersion": 105,
+      "durationMs": 14888,
+      "usage": {
+        "inputTokens": 13376,
+        "cachedInputTokens": 4821,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1314,
+        "reasoningTokens": 242,
+        "totalTokens": 14690,
+        "costUsd": 0.00156071
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Awkward Korean rendering of nonvolatile status."
+        ]
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-ddee-pokemon-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-ddee-pokemon-ko-r2.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "fe6f5c29649b873673aeb57b11b2eeddf5e07b8f8838acbd949d35444102d600",
+      "outputHash": "ea2c97c90b67662a4aa3bd56c6724364b83ef545fb78d61f2b537dd869362fdd",
+      "promptVersion": 105,
+      "durationMs": 14085,
+      "usage": {
+        "inputTokens": 13376,
+        "cachedInputTokens": 4821,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1428,
+        "reasoningTokens": 202,
+        "totalTokens": 14804,
+        "costUsd": 0.00161771
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-ddee-pokemon-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-ddee-pokemon-ko-r3.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "fe6f5c29649b873673aeb57b11b2eeddf5e07b8f8838acbd949d35444102d600",
+      "outputHash": "6c76ab29ca8fd48e0170922895a52b31878ee401dfa85c80ce7688966ad0af0c",
+      "promptVersion": 105,
+      "durationMs": 14498,
+      "usage": {
+        "inputTokens": 13376,
+        "cachedInputTokens": 4821,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1502,
+        "reasoningTokens": 248,
+        "totalTokens": 14878,
+        "costUsd": 0.00165471
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-kiran-optimization-ko-r1.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "43a0e9a2820a8d24f6e5ec611805a85fc5c246f4da934cbd37db5bb6e777c93a",
+      "outputHash": "b37c344e6b4de1f0183f5b7035a5850ed2bb296fa3c31f5e4cc7cfc395f92645",
+      "promptVersion": 105,
+      "durationMs": 12354,
+      "usage": {
+        "inputTokens": 22158,
+        "cachedInputTokens": 4666,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1042,
+        "reasoningTokens": 310,
+        "totalTokens": 23200,
+        "costUsd": 0.00231686
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-kiran-optimization-ko-r2.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "43a0e9a2820a8d24f6e5ec611805a85fc5c246f4da934cbd37db5bb6e777c93a",
+      "outputHash": "e9542ba210413cf7f211e9d79db259b996b9be773188c57d484c3f990b3d3d17",
+      "promptVersion": 105,
+      "durationMs": 11568,
+      "usage": {
+        "inputTokens": 22158,
+        "cachedInputTokens": 4666,
+        "cacheWriteTokens": 0,
+        "outputTokens": 999,
+        "reasoningTokens": 361,
+        "totalTokens": 23157,
+        "costUsd": 0.00229536
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-kiran-optimization-ko-r3.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "43a0e9a2820a8d24f6e5ec611805a85fc5c246f4da934cbd37db5bb6e777c93a",
+      "outputHash": "4996de6ef67a5ccc0a2b3b95c9ab25152d8dfa6490723226a2d7a6f9b402da07",
+      "promptVersion": 105,
+      "durationMs": 8109,
+      "usage": {
+        "inputTokens": 22158,
+        "cachedInputTokens": 4666,
+        "cacheWriteTokens": 0,
+        "outputTokens": 699,
+        "reasoningTokens": 169,
+        "totalTokens": 22857,
+        "costUsd": 0.0021453600000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-kiran-team-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-kiran-team-en-r1.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "20e1f9834aeb1e6799cb99b4a9019fc82aae212a5cec58a2bb06675a1d29f545",
+      "outputHash": "5b5bf238dce0d093bd0ab35f740d4141a3d2ef172e053aad61b72236ee2b6b5f",
+      "promptVersion": 105,
+      "durationMs": 18970,
+      "usage": {
+        "inputTokens": 14933,
+        "cachedInputTokens": 3046,
+        "cacheWriteTokens": 3254,
+        "outputTokens": 1478,
+        "reasoningTokens": 309,
+        "totalTokens": 16411,
+        "costUsd": 0.00203951
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-kiran-team-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-kiran-team-en-r2.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "20e1f9834aeb1e6799cb99b4a9019fc82aae212a5cec58a2bb06675a1d29f545",
+      "outputHash": "204c0d48516dcefed1a2a3ca940b8f80808499b2e8ea8d7528e574a7d9e602a7",
+      "promptVersion": 105,
+      "durationMs": 16515,
+      "usage": {
+        "inputTokens": 14933,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1732,
+        "reasoningTokens": 612,
+        "totalTokens": 16665,
+        "costUsd": 0.0017923000000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Rain branch activates Mega Garchomp Z but offers current Blaze Charizard as an alternative, attributing Drought on entry without resolving the alternative Mega activation."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-kiran-team-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-kiran-team-en-r3.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "20e1f9834aeb1e6799cb99b4a9019fc82aae212a5cec58a2bb06675a1d29f545",
+      "outputHash": "4e6f7c2c057ba63ef889afb98c151dde1e1e19706a1dafd79238ffc2fb91150e",
+      "promptVersion": 105,
+      "durationMs": 16523,
+      "usage": {
+        "inputTokens": 14933,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1670,
+        "reasoningTokens": 491,
+        "totalTokens": 16603,
+        "costUsd": 0.0017613000000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "ca209287ec8498329aa8d1bf1d28a71a6d10fc44e6f3a3aa581db910e6b844a7",
+      "outputHash": "69f5d15f28dcafbfe17ea1b8b5745422dc6b7634b88bad4ef8659bb140e48f9c",
+      "promptVersion": 105,
+      "durationMs": 12565,
+      "usage": {
+        "inputTokens": 32105,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1242,
+        "reasoningTokens": 277,
+        "totalTokens": 33347,
+        "costUsd": 0.0033383900000000005
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "ca209287ec8498329aa8d1bf1d28a71a6d10fc44e6f3a3aa581db910e6b844a7",
+      "outputHash": "29530f19de2c838aceb842fe73d41d9f85a226541f59c7e80f8655ba56aa6505",
+      "promptVersion": 105,
+      "durationMs": 14004,
+      "usage": {
+        "inputTokens": 32105,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1269,
+        "reasoningTokens": 420,
+        "totalTokens": 33374,
+        "costUsd": 0.00335189
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.candidateFacts[0] contradicts the supplied recommendation candidate.",
+        "Recommendation volcarona names Tailwind without matching candidate evidence.",
+        "Recommendation volcarona names Protect without matching candidate evidence."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.candidateFacts[0] contradicts the supplied recommendation candidate."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "ca209287ec8498329aa8d1bf1d28a71a6d10fc44e6f3a3aa581db910e6b844a7",
+      "outputHash": "4f82d830ee946bfe5e913c856f8bcbaf03911bf4f56d72d98ca2e3cc6eb02db9",
+      "promptVersion": 105,
+      "durationMs": 14416,
+      "usage": {
+        "inputTokens": 32105,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1391,
+        "reasoningTokens": 450,
+        "totalTokens": 33496,
+        "costUsd": 0.0034128900000000005
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Calls Armor Tail priority denial a role not currently counted, despite Psychic Surge / priority-denial already present."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-mugepome-pokemon-en-r1.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "5e6cee22042e6b948c9a5d88ad8389ba261abf49cd92950b4970002c6ab070b6",
+      "outputHash": "4fa54f2b68701f4ea307715456ef849acfb970212daf9d5f73d5eb767646493f",
+      "promptVersion": 105,
+      "durationMs": 14947,
+      "usage": {
+        "inputTokens": 13210,
+        "cachedInputTokens": 3046,
+        "cacheWriteTokens": 1775,
+        "outputTokens": 1486,
+        "reasoningTokens": 371,
+        "totalTokens": 14696,
+        "costUsd": 0.001834235
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-mugepome-pokemon-en-r2.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "5e6cee22042e6b948c9a5d88ad8389ba261abf49cd92950b4970002c6ab070b6",
+      "outputHash": "befbb27bce42a55dbfd54dac8822b96bfe532ebf148485caf623e7221c777d03",
+      "promptVersion": 105,
+      "durationMs": 10857,
+      "usage": {
+        "inputTokens": 13210,
+        "cachedInputTokens": 4821,
+        "cacheWriteTokens": 0,
+        "outputTokens": 967,
+        "reasoningTokens": 187,
+        "totalTokens": 14177,
+        "costUsd": 0.0013706100000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Irrelevant Singles friendly-fire explanation."
+        ]
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-mugepome-pokemon-en-r3.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "5e6cee22042e6b948c9a5d88ad8389ba261abf49cd92950b4970002c6ab070b6",
+      "outputHash": "ce271fc402ef3c6495e1ec09679b5287f3ab96fa83b5ccce48e21c5f2c9ad08f",
+      "promptVersion": 105,
+      "durationMs": 10788,
+      "usage": {
+        "inputTokens": 13210,
+        "cachedInputTokens": 4821,
+        "cacheWriteTokens": 0,
+        "outputTokens": 855,
+        "reasoningTokens": 147,
+        "totalTokens": 14065,
+        "costUsd": 0.0013146100000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-mugepome-team-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-mugepome-team-ko-r1.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "369a14b100fe13fbef2548072dc7bf317cdfbf797afc7b2ad713ebd4369528e8",
+      "outputHash": "9aef41413f3603c24c0c6edea8da814bbf1fa253544973317bd99dbe361f404d",
+      "promptVersion": 105,
+      "durationMs": 20470,
+      "usage": {
+        "inputTokens": 12244,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 3465,
+        "outputTokens": 2214,
+        "reasoningTokens": 248,
+        "totalTokens": 14458,
+        "costUsd": 0.0024180250000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-mugepome-team-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-mugepome-team-ko-r2.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "369a14b100fe13fbef2548072dc7bf317cdfbf797afc7b2ad713ebd4369528e8",
+      "outputHash": "ad7cad6ff77bef774861b3a061f2d2d252af6bf85a5fb000f854ea95ca9f3757",
+      "promptVersion": 105,
+      "durationMs": 23281,
+      "usage": {
+        "inputTokens": 12244,
+        "cachedInputTokens": 3465,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2306,
+        "reasoningTokens": 96,
+        "totalTokens": 14550,
+        "costUsd": 0.00206555
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-mugepome-team-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-mugepome-team-ko-r3.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "369a14b100fe13fbef2548072dc7bf317cdfbf797afc7b2ad713ebd4369528e8",
+      "outputHash": "91563769c1b2b88cb94ad9a4d7e0684b6aa27f2825e79bf564cb5317400d5006",
+      "promptVersion": 105,
+      "durationMs": 18996,
+      "usage": {
+        "inputTokens": 12244,
+        "cachedInputTokens": 3465,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2241,
+        "reasoningTokens": 396,
+        "totalTokens": 14485,
+        "costUsd": 0.0020330500000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-tagerau-optimization-en-r1.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "ea44bd7aa541ba8ee610007f7a5b67ca6bf1cedc09b67a05b87a989d60411ce1",
+      "outputHash": "54734c44870cb2c9d88f7d724712de2de934208c6e4363c81f1305c7826a9ff9",
+      "promptVersion": 105,
+      "durationMs": 5021,
+      "usage": {
+        "inputTokens": 21711,
+        "cachedInputTokens": 3046,
+        "cacheWriteTokens": 1620,
+        "outputTokens": 428,
+        "reasoningTokens": 0,
+        "totalTokens": 22139,
+        "costUsd": 0.00215146
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Claims the Naive max-Attack spread retains current Special Attack; supplied values are 144 current and 130 candidate."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-tagerau-optimization-en-r2.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "ea44bd7aa541ba8ee610007f7a5b67ca6bf1cedc09b67a05b87a989d60411ce1",
+      "outputHash": "5e1e67502dc9b7414cad5140cf8291e0194b2ccaffa739c1fab3e3d6ccdd4ccd",
+      "promptVersion": 105,
+      "durationMs": 8137,
+      "usage": {
+        "inputTokens": 21711,
+        "cachedInputTokens": 4666,
+        "cacheWriteTokens": 0,
+        "outputTokens": 626,
+        "reasoningTokens": 311,
+        "totalTokens": 22337,
+        "costUsd": 0.0020641599999999998
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/mc-tagerau-optimization-en-r3.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "ea44bd7aa541ba8ee610007f7a5b67ca6bf1cedc09b67a05b87a989d60411ce1",
+      "outputHash": "a3bfad28cfaf997148aa3526d4e2631a24d59c9b111d968051fcc96acdf67bbf",
+      "promptVersion": 105,
+      "durationMs": 6916,
+      "usage": {
+        "inputTokens": 21711,
+        "cachedInputTokens": 4666,
+        "cacheWriteTokens": 0,
+        "outputTokens": 537,
+        "reasoningTokens": 0,
+        "totalTokens": 22248,
+        "costUsd": 0.00201966
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Roost over Double-Edge underexplains loss of the sole Aerilate-enhanced attack; alternative Flamethrower benefit is shallow."
+        ]
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/replacement-mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "9e670a80dd2dde275e03ac74ab3a809c3a866b83fe54cb2eed493c221769b5c1",
+      "outputHash": "739734280e2e4afbd22ae147a15b48988b46b7cae480556acaa895509321530f",
+      "promptVersion": 105,
+      "durationMs": 5759,
+      "usage": {
+        "inputTokens": 34912,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 452,
+        "reasoningTokens": 179,
+        "totalTokens": 35364,
+        "costUsd": 0.00322409
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/replacement-mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "9e670a80dd2dde275e03ac74ab3a809c3a866b83fe54cb2eed493c221769b5c1",
+      "outputHash": "31a6af6e4f2a5d9deacdecf912e7785dcd780c690874c7f6d3179b960c3aba8b",
+      "promptVersion": 105,
+      "durationMs": 7461,
+      "usage": {
+        "inputTokens": 34912,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 488,
+        "reasoningTokens": 178,
+        "totalTokens": 35400,
+        "costUsd": 0.00324209
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Narrow public focus on one of six replacement targets."
+        ]
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/replacement-mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "9e670a80dd2dde275e03ac74ab3a809c3a866b83fe54cb2eed493c221769b5c1",
+      "outputHash": "a6d214ae7af7fe2a6d5007694cd6e2aad0362b2b0ccea10edb7d8928a73fc597",
+      "promptVersion": 105,
+      "durationMs": 7343,
+      "usage": {
+        "inputTokens": 34912,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 623,
+        "reasoningTokens": 272,
+        "totalTokens": 35535,
+        "costUsd": 0.0033095900000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/replacement-mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "443b47bd82fa5f83af509c47f0eccd655420b8c1712ea0320dab9c1e84ad36a0",
+      "outputHash": "e59427cb06131b27b199a8ff32b4ad6d101067ddf0d0041e582c03240a1b22b9",
+      "promptVersion": 105,
+      "durationMs": 5678,
+      "usage": {
+        "inputTokens": 34337,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 397,
+        "reasoningTokens": 194,
+        "totalTokens": 34734,
+        "costUsd": 0.00313909
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/replacement-mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "443b47bd82fa5f83af509c47f0eccd655420b8c1712ea0320dab9c1e84ad36a0",
+      "outputHash": "43ca2e256ee3765797baba73c1dfb5f162a848d3dbddc951a7c4af249b185229",
+      "promptVersion": 105,
+      "durationMs": 5699,
+      "usage": {
+        "inputTokens": 34337,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 377,
+        "reasoningTokens": 146,
+        "totalTokens": 34714,
+        "costUsd": 0.00312909
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Narrow public focus on one replacement target."
+        ]
+      }
+    },
+    {
+      "group": "stage-a",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-a/replacement-mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "443b47bd82fa5f83af509c47f0eccd655420b8c1712ea0320dab9c1e84ad36a0",
+      "outputHash": "e6763108640f03846433b48fb3787ba5ee9b3222c9fc48bfa63b2727134d2949",
+      "promptVersion": 105,
+      "durationMs": 9958,
+      "usage": {
+        "inputTokens": 34337,
+        "cachedInputTokens": 5479,
+        "cacheWriteTokens": 0,
+        "outputTokens": 863,
+        "reasoningTokens": 422,
+        "totalTokens": 35200,
+        "costUsd": 0.0033720900000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Uses resistance umbrella wording for Levitate immunity."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "11e62b0f351d5d63bf936d8d719059449a00adb3cea3e623ababcb75eb28e768",
+      "outputHash": "c570c8986ca241cdb39eb70eb7499537a027d8e26f512723c7dcba0834a7d9f2",
+      "promptVersion": 106,
+      "durationMs": 12199,
+      "usage": {
+        "inputTokens": 33467,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 5328,
+        "outputTokens": 1222,
+        "reasoningTokens": 194,
+        "totalTokens": 34689,
+        "costUsd": 0.0040909
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "Recommendation gholdengo names 황금몸 without matching candidate evidence.",
+        "Recommendation gholdengo names 골드러시 without matching candidate evidence.",
+        "Recommendation klefki names 짓궂은마음 without matching candidate evidence.",
+        "Recommendation klefki names 리플렉터 without matching candidate evidence.",
+        "Recommendation tinkaton names 거대해머 without matching candidate evidence.",
+        "Recommendation tinkaton names 스텔스록 without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Groups Tinkaton Fire/Ground weaknesses as overlapping Ceruledge weaknesses; Ceruledge resists Fire."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "11e62b0f351d5d63bf936d8d719059449a00adb3cea3e623ababcb75eb28e768",
+      "outputHash": "ae631ddea2eb6f2ab34539c3cc7a5ea019957c23018d05aa6d5f87dd7dd6c370",
+      "promptVersion": 106,
+      "durationMs": 12539,
+      "usage": {
+        "inputTokens": 33467,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1266,
+        "reasoningTokens": 163,
+        "totalTokens": 34733,
+        "costUsd": 0.0035001800000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Stealth Rock overlap presented as connection rather than clearly redundant coverage."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "11e62b0f351d5d63bf936d8d719059449a00adb3cea3e623ababcb75eb28e768",
+      "outputHash": "5751f5e6b95dc892b1ed004352b8d2048048463724068d5251e3b683d27a1f14",
+      "promptVersion": 106,
+      "durationMs": 15401,
+      "usage": {
+        "inputTokens": 33467,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1480,
+        "reasoningTokens": 536,
+        "totalTokens": 34947,
+        "costUsd": 0.00360718
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "Recommendation gholdengo names 섀도볼 without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Overview mentions speed reduction without a corresponding proposed move change."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-kiran-optimization-ko-r1.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "c60db574257ac31fd6f95eaf27b3e4e2c8ba23b15421ed1fa77300f730658c3a",
+      "outputHash": "e42a4c76e387476fe970b045d150bcef8c1560cf8da3e17e5501f4d9372a75e0",
+      "promptVersion": 106,
+      "durationMs": 11055,
+      "usage": {
+        "inputTokens": 22007,
+        "cachedInputTokens": 4515,
+        "cacheWriteTokens": 0,
+        "outputTokens": 915,
+        "reasoningTokens": 313,
+        "totalTokens": 22922,
+        "costUsd": 0.0022518500000000006
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-kiran-optimization-ko-r2.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "c60db574257ac31fd6f95eaf27b3e4e2c8ba23b15421ed1fa77300f730658c3a",
+      "outputHash": "ab34186df57cbab66a1c564ce0e7807cba961a56765f59f06b800e4934518ab1",
+      "promptVersion": 106,
+      "durationMs": 13712,
+      "usage": {
+        "inputTokens": 22007,
+        "cachedInputTokens": 4515,
+        "cacheWriteTokens": 0,
+        "outputTokens": 937,
+        "reasoningTokens": 329,
+        "totalTokens": 22944,
+        "costUsd": 0.0022628500000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-kiran-optimization-ko-r3.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "c60db574257ac31fd6f95eaf27b3e4e2c8ba23b15421ed1fa77300f730658c3a",
+      "outputHash": "031ef6326acd40824b2bedb388deb42e30931d098720ae94dad3cf5894b37882",
+      "promptVersion": 106,
+      "durationMs": 9508,
+      "usage": {
+        "inputTokens": 22007,
+        "cachedInputTokens": 4515,
+        "cacheWriteTokens": 0,
+        "outputTokens": 743,
+        "reasoningTokens": 119,
+        "totalTokens": 22750,
+        "costUsd": 0.0021658500000000004
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "950021f6f84fc15c38542898926cc7e220ce758454674093384a1293ed8a9654",
+      "outputHash": "35c2fa2eaaa08d5801290651657c29a436333bbd2b94dbe94ad90188e99bbd19",
+      "promptVersion": 106,
+      "durationMs": 12847,
+      "usage": {
+        "inputTokens": 31954,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1323,
+        "reasoningTokens": 356,
+        "totalTokens": 33277,
+        "costUsd": 0.0033773800000000006
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.candidateFacts[0] contradicts the supplied recommendation candidate."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.candidateFacts[0] contradicts the supplied recommendation candidate."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "950021f6f84fc15c38542898926cc7e220ce758454674093384a1293ed8a9654",
+      "outputHash": "3dd5425894a6da14672520cf9c5ef74d24e10272543eec2510c4617427a976c2",
+      "promptVersion": 106,
+      "durationMs": 15558,
+      "usage": {
+        "inputTokens": 31954,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1429,
+        "reasoningTokens": 509,
+        "totalTokens": 33383,
+        "costUsd": 0.0034303800000000007
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "Recommendation farigiraf names Trick Room without matching candidate evidence.",
+        "Recommendation arboliva names Earth Power without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "950021f6f84fc15c38542898926cc7e220ce758454674093384a1293ed8a9654",
+      "outputHash": "f39d5d773932c8a6736b074a342257e6b8e690f20e0e051461565886cbf06889",
+      "promptVersion": 106,
+      "durationMs": 11801,
+      "usage": {
+        "inputTokens": 31954,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1166,
+        "reasoningTokens": 289,
+        "totalTokens": 33120,
+        "costUsd": 0.0032988800000000006
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "Recommendation volcarona names Tailwind without matching candidate evidence.",
+        "Recommendation farigiraf names Armor Tail without matching candidate evidence.",
+        "Recommendation farigiraf names Trick Room without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Calls the empty sixth slot the fifth slot."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-tagerau-optimization-en-r1.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "e40807b6847cc98c7e7d845eeffb471567043b971119bc6325c8854bea577c72",
+      "outputHash": "577d60a56ff36e47f14a22a261b008cb686dec68ba4f97318cdbd9a2203fc0d3",
+      "promptVersion": 106,
+      "durationMs": 5422,
+      "usage": {
+        "inputTokens": 21560,
+        "cachedInputTokens": 2895,
+        "cacheWriteTokens": 1620,
+        "outputTokens": 485,
+        "reasoningTokens": 0,
+        "totalTokens": 22045,
+        "costUsd": 0.0021784499999999997
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Roost tradeoff still underexplains loss of Aerilate STAB."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-tagerau-optimization-en-r2.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "e40807b6847cc98c7e7d845eeffb471567043b971119bc6325c8854bea577c72",
+      "outputHash": "b8a759ec6f1290b0962d7b188bdc57988c120111017ed5abfa2e39fbbfa89abb",
+      "promptVersion": 106,
+      "durationMs": 7740,
+      "usage": {
+        "inputTokens": 21560,
+        "cachedInputTokens": 4515,
+        "cacheWriteTokens": 0,
+        "outputTokens": 583,
+        "reasoningTokens": 259,
+        "totalTokens": 22143,
+        "costUsd": 0.0020411500000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/mc-tagerau-optimization-en-r3.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "e40807b6847cc98c7e7d845eeffb471567043b971119bc6325c8854bea577c72",
+      "outputHash": "2d7ddc9ef7cec264aac5fe4ded8c2164f7f0c4c3b7d8967d79c3543e44ec4a00",
+      "promptVersion": 106,
+      "durationMs": 5892,
+      "usage": {
+        "inputTokens": 21560,
+        "cachedInputTokens": 4515,
+        "cacheWriteTokens": 0,
+        "outputTokens": 449,
+        "reasoningTokens": 0,
+        "totalTokens": 22009,
+        "costUsd": 0.00197415
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Says no supplied mechanic confirms Aerilate conversion, despite the supplied Aerilate effect explicitly converting and boosting Normal moves."
+        ],
+        "concerns": [
+          "Roost tradeoff underexplains loss of Aerilate STAB in addition to the confirmed data-denial error."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/replacement-mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "082a119efb79a3c87ad3bca8e67aa9244be6ce454349d216b96a6f65e364db04",
+      "outputHash": "4f4c4bdf4a6d5637025ed2ae541dd7999dd7f2cde6f4bb1ed94594aab29e482e",
+      "promptVersion": 106,
+      "durationMs": 7902,
+      "usage": {
+        "inputTokens": 34761,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 570,
+        "reasoningTokens": 299,
+        "totalTokens": 35331,
+        "costUsd": 0.0032815800000000005
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Attributes selected Roost to current Salamence, whose selected moves include Substitute instead."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/replacement-mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "082a119efb79a3c87ad3bca8e67aa9244be6ce454349d216b96a6f65e364db04",
+      "outputHash": "48e7bbad4d7b7e6ec65220715849178d17d47d9eb46526b2a53a6dd8acacac41",
+      "promptVersion": 106,
+      "durationMs": 8118,
+      "usage": {
+        "inputTokens": 34761,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 512,
+        "reasoningTokens": 195,
+        "totalTokens": 35273,
+        "costUsd": 0.0032525800000000006
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/replacement-mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "082a119efb79a3c87ad3bca8e67aa9244be6ce454349d216b96a6f65e364db04",
+      "outputHash": "98e9c3bd5ea56784681bebbb1b29913790525c4487fd6a48355147b3db9cdad1",
+      "promptVersion": 106,
+      "durationMs": 10839,
+      "usage": {
+        "inputTokens": 34761,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 969,
+        "reasoningTokens": 352,
+        "totalTokens": 35730,
+        "costUsd": 0.0034810800000000005
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Resistance wording for Earthquake immunity; combined Dragon Dance/Waterfall wording blurs setup and attack."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/replacement-mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "762251f440fee26aae083f0109e665e719dfa17d907631ecba41536ebdc70302",
+      "outputHash": "3283d628ea595b55a2555520888de82bae68530c47dfd4f95402603a05dd1e1b",
+      "promptVersion": 106,
+      "durationMs": 10736,
+      "usage": {
+        "inputTokens": 34186,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 866,
+        "reasoningTokens": 390,
+        "totalTokens": 35052,
+        "costUsd": 0.0033720800000000004
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "Recommendation rotom-wash names Thunderbolt without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Narrow public focus on Milotic replacement."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/replacement-mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "762251f440fee26aae083f0109e665e719dfa17d907631ecba41536ebdc70302",
+      "outputHash": "5593c1e58e26973df0df8677da5035eb8f27125ffa422903ca6fe08557db9d5a",
+      "promptVersion": 106,
+      "durationMs": 7951,
+      "usage": {
+        "inputTokens": 34186,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 626,
+        "reasoningTokens": 383,
+        "totalTokens": 34812,
+        "costUsd": 0.0032520800000000005
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Ambiguous Water coverage-gap description despite existing Water offense."
+        ]
+      }
+    },
+    {
+      "group": "stage-b",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-b/replacement-mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "762251f440fee26aae083f0109e665e719dfa17d907631ecba41536ebdc70302",
+      "outputHash": "8914b18519f5ec89eb88da09ad8d25819aa6f1b4331dae56b5b76ca61ce6675b",
+      "promptVersion": 106,
+      "durationMs": 11350,
+      "usage": {
+        "inputTokens": 34186,
+        "cachedInputTokens": 5328,
+        "cacheWriteTokens": 0,
+        "outputTokens": 853,
+        "reasoningTokens": 439,
+        "totalTokens": 35039,
+        "costUsd": 0.0033655800000000004
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-c",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-c/mc-mugepome-pokemon-en-r1.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "95e91e939469097e265b80af6f0137e6cda74cb6d99fcbd78abc50e83350f486",
+      "outputHash": "0c07b07045223027d5f9a35bb8e22e966b1201774a3c794dd2bfe6a3251cbd76",
+      "promptVersion": 108,
+      "durationMs": 10616,
+      "usage": {
+        "inputTokens": 12836,
+        "cachedInputTokens": 3046,
+        "cacheWriteTokens": 1401,
+        "outputTokens": 949,
+        "reasoningTokens": 174,
+        "totalTokens": 13785,
+        "costUsd": 0.001518985
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-c",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-c/mc-mugepome-pokemon-en-r2.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "95e91e939469097e265b80af6f0137e6cda74cb6d99fcbd78abc50e83350f486",
+      "outputHash": "112c8789b7c3aba8fd4b98a4f3825fbe1af57e5799e37c151303169caf9ae529",
+      "promptVersion": 108,
+      "durationMs": 10061,
+      "usage": {
+        "inputTokens": 12836,
+        "cachedInputTokens": 4447,
+        "cacheWriteTokens": 0,
+        "outputTokens": 893,
+        "reasoningTokens": 203,
+        "totalTokens": 13729,
+        "costUsd": 0.0013298700000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "stage-c",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/stage-c/mc-mugepome-pokemon-en-r3.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "95e91e939469097e265b80af6f0137e6cda74cb6d99fcbd78abc50e83350f486",
+      "outputHash": "2d731ed2d7e556001d28434de53c48a0b5c0ffd6f6c3a1f035da62b8acd461f1",
+      "promptVersion": 108,
+      "durationMs": 10142,
+      "usage": {
+        "inputTokens": 12836,
+        "cachedInputTokens": 4447,
+        "cacheWriteTokens": 0,
+        "outputTokens": 958,
+        "reasoningTokens": 194,
+        "totalTokens": 13794,
+        "costUsd": 0.0013623700000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "a-confirm-before",
+      "id": "mc-kiran-team-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/a-confirm-before/mc-kiran-team-en-r1.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "c201dbb251ac8710080bc500024344e79579eee9018e15d8c20366e88aad7854",
+      "outputHash": "544ef28a9b1aeaf19840efd5fbcf72cd0016159f1fc861b0934c5d33b4d39a7e",
+      "promptVersion": 103,
+      "durationMs": 17107,
+      "usage": {
+        "inputTokens": 15108,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 6423,
+        "outputTokens": 1726,
+        "reasoningTokens": 276,
+        "totalTokens": 16834,
+        "costUsd": 0.002534375
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "a-confirm-before",
+      "id": "mc-kiran-team-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/a-confirm-before/mc-kiran-team-en-r2.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "c201dbb251ac8710080bc500024344e79579eee9018e15d8c20366e88aad7854",
+      "outputHash": "aa0b0494aaef6fd14e34855564b441b399483ce188cf73fa2a53875690b80e16",
+      "promptVersion": 103,
+      "durationMs": 19183,
+      "usage": {
+        "inputTokens": 15108,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1788,
+        "reasoningTokens": 529,
+        "totalTokens": 16896,
+        "costUsd": 0.00182673
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.interactions[0].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.interactions[0].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "a-confirm-before",
+      "id": "mc-kiran-team-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/a-confirm-before/mc-kiran-team-en-r3.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "c201dbb251ac8710080bc500024344e79579eee9018e15d8c20366e88aad7854",
+      "outputHash": "308646cf1448fe533af3795093ec39c3188556748ea139eef179c30a1e9ccbec",
+      "promptVersion": 103,
+      "durationMs": 22053,
+      "usage": {
+        "inputTokens": 15108,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2136,
+        "reasoningTokens": 471,
+        "totalTokens": 17244,
+        "costUsd": 0.00200073
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "a-confirm-after",
+      "id": "mc-kiran-team-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/a-confirm-after/mc-kiran-team-en-r1.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "20e1f9834aeb1e6799cb99b4a9019fc82aae212a5cec58a2bb06675a1d29f545",
+      "outputHash": "d30dc07947c1cb8f9f9df9135f0d3480ff9ccf9c84bb7c75063d580365010146",
+      "promptVersion": 105,
+      "durationMs": 24868,
+      "usage": {
+        "inputTokens": 14933,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2240,
+        "reasoningTokens": 501,
+        "totalTokens": 17173,
+        "costUsd": 0.0020463
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "a-confirm-after",
+      "id": "mc-kiran-team-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/a-confirm-after/mc-kiran-team-en-r2.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "20e1f9834aeb1e6799cb99b4a9019fc82aae212a5cec58a2bb06675a1d29f545",
+      "outputHash": "2b0fd6ad7903dc31742a6f511e8f1405f19be153caf0f403775db0720806cacc",
+      "promptVersion": 105,
+      "durationMs": 22911,
+      "usage": {
+        "inputTokens": 14933,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1551,
+        "reasoningTokens": 642,
+        "totalTokens": 16484,
+        "costUsd": 0.0017018000000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Entry wording omits activation timing, but explicitly names Mega Y; not a confirmed base-form Drought claim."
+        ]
+      }
+    },
+    {
+      "group": "a-confirm-after",
+      "id": "mc-kiran-team-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/a-confirm-after/mc-kiran-team-en-r3.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "20e1f9834aeb1e6799cb99b4a9019fc82aae212a5cec58a2bb06675a1d29f545",
+      "outputHash": "afefde01f1417d340ad254347fa9f196cb43ac2bbb4d123f7aa829c372628e78",
+      "promptVersion": 105,
+      "durationMs": 17702,
+      "usage": {
+        "inputTokens": 14933,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1604,
+        "reasoningTokens": 322,
+        "totalTokens": 16537,
+        "costUsd": 0.0017283
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-floette-delphox-protect-ace-team-r1.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "b07accc071741f7ca05fb9f5744f553908c5f1651c830c02e0a62cc0cab3015b",
+      "outputHash": "c6cc220158aeeb3df740f8624a95cc7379c8bc59bdd7d6a65e0e85607fd0932b",
+      "promptVersion": 103,
+      "durationMs": 20164,
+      "usage": {
+        "inputTokens": 14995,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1726,
+        "reasoningTokens": 424,
+        "totalTokens": 16721,
+        "costUsd": 0.00178443
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Recognizes protected Mega branches but underexplains the Calm Mind / Nasty Plot setup win condition."
+        ]
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-floette-delphox-protect-ace-team-r2.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "b07accc071741f7ca05fb9f5744f553908c5f1651c830c02e0a62cc0cab3015b",
+      "outputHash": "f105536266b9855458737814c9b0cbdacf4a34e11fa7e4762dda059b05c9202b",
+      "promptVersion": 103,
+      "durationMs": 18358,
+      "usage": {
+        "inputTokens": 14995,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1771,
+        "reasoningTokens": 374,
+        "totalTokens": 16766,
+        "costUsd": 0.00180693
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-floette-delphox-protect-ace-team-r3.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "b07accc071741f7ca05fb9f5744f553908c5f1651c830c02e0a62cc0cab3015b",
+      "outputHash": "8e6cae80e4542bcb338f77b73fc80406280e5ab9d100d1334e7386adac55daa1",
+      "promptVersion": 103,
+      "durationMs": 21223,
+      "usage": {
+        "inputTokens": 14995,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1604,
+        "reasoningTokens": 529,
+        "totalTokens": 16599,
+        "costUsd": 0.00172343
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Recognizes protected Mega branches but underexplains the Calm Mind / Nasty Plot setup win condition."
+        ]
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-froslass-rain-counter-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-froslass-rain-counter-team-r1.json",
+      "requestHash": "92727ac5bc4cc15f18ed370d6cb367311df566d7eb143256867d6d43a158899a",
+      "providerRequestHash": "eb47c46f0f5182bc2578c01676f9e16890547eddaf69e5e15897778adfe8b8a8",
+      "outputHash": "6567dc66f2fb16bf573fb7dfd2e42646e04385ac0cf4c436528088648ced3ed4",
+      "promptVersion": 103,
+      "durationMs": 19480,
+      "usage": {
+        "inputTokens": 15315,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1699,
+        "reasoningTokens": 0,
+        "totalTokens": 17014,
+        "costUsd": 0.0018029300000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-froslass-rain-counter-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-froslass-rain-counter-team-r2.json",
+      "requestHash": "92727ac5bc4cc15f18ed370d6cb367311df566d7eb143256867d6d43a158899a",
+      "providerRequestHash": "eb47c46f0f5182bc2578c01676f9e16890547eddaf69e5e15897778adfe8b8a8",
+      "outputHash": "fb064ae9547e84da638aaf00f881b8aa70508450d7307a92b7b8d673a42f7b47",
+      "promptVersion": 103,
+      "durationMs": 28512,
+      "usage": {
+        "inputTokens": 15315,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2187,
+        "reasoningTokens": 234,
+        "totalTokens": 17502,
+        "costUsd": 0.00204693
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-froslass-rain-counter-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-froslass-rain-counter-team-r3.json",
+      "requestHash": "92727ac5bc4cc15f18ed370d6cb367311df566d7eb143256867d6d43a158899a",
+      "providerRequestHash": "eb47c46f0f5182bc2578c01676f9e16890547eddaf69e5e15897778adfe8b8a8",
+      "outputHash": "e7f6da633e4c6f4579dbd68844c6bed99e3d9840a256c708e8f323f7d3b678a9",
+      "promptVersion": 103,
+      "durationMs": 23537,
+      "usage": {
+        "inputTokens": 15315,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1765,
+        "reasoningTokens": 387,
+        "totalTokens": 17080,
+        "costUsd": 0.0018359300000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Froslass Mega Snow Warning branch also claims Snow supports its Snow Cloak evasion effect; Snow Cloak is the replaced base ability, not simultaneous Mega ability."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-staraptor-charm-funnel-team-r1.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "c3e49e8d92947670fb8e8e00accdc8eeeb6f8fc6e27d80665a03a22de84b033f",
+      "outputHash": "289851add55b391237c296b3d7a59e3ebf83b34a8f003d992b131f9d1fe555d8",
+      "promptVersion": 103,
+      "durationMs": 19757,
+      "usage": {
+        "inputTokens": 14966,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1550,
+        "reasoningTokens": 334,
+        "totalTokens": 16516,
+        "costUsd": 0.0016935300000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-staraptor-charm-funnel-team-r2.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "c3e49e8d92947670fb8e8e00accdc8eeeb6f8fc6e27d80665a03a22de84b033f",
+      "outputHash": "18243abdc0d64e93d2b9914ab2ddc25c0bfd062acdd49649a393dbd5c8c6bdcf",
+      "promptVersion": 103,
+      "durationMs": 20465,
+      "usage": {
+        "inputTokens": 14966,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1697,
+        "reasoningTokens": 409,
+        "totalTokens": 16663,
+        "costUsd": 0.0017670300000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-staraptor-charm-funnel-team-r3.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "c3e49e8d92947670fb8e8e00accdc8eeeb6f8fc6e27d80665a03a22de84b033f",
+      "outputHash": "0ecc62b936df9cdff848d7fc96a1f2b9c9b8a48fce746fcda8ad651908d0f3bd",
+      "promptVersion": 103,
+      "durationMs": 21826,
+      "usage": {
+        "inputTokens": 14966,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1687,
+        "reasoningTokens": 227,
+        "totalTokens": 16653,
+        "costUsd": 0.0017620300000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Opening sentence places allied Charm before activating Mega Contrary, although the later recommendation implies activation first. The trigger/state order is inconsistent."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-zoroark-round-chain-pokemon-r1.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "a45c76516e9f7a5e2f49c909fe8f23713e8457186601504c24d5a98d69094d37",
+      "outputHash": "861f9ea962b58a10fc61b7b1bf7f0d14388c0a9c4ea164e91c5c9f4609a69986",
+      "promptVersion": 103,
+      "durationMs": 23154,
+      "usage": {
+        "inputTokens": 12924,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 1775,
+        "outputTokens": 1932,
+        "reasoningTokens": 646,
+        "totalTokens": 14856,
+        "costUsd": 0.0020175650000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-zoroark-round-chain-pokemon-r2.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "a45c76516e9f7a5e2f49c909fe8f23713e8457186601504c24d5a98d69094d37",
+      "outputHash": "fd5380d32e5e66bb5d6c7b209b476f98ec2a5925599dcb03b98c02baf1bc55f8",
+      "promptVersion": 103,
+      "durationMs": 22430,
+      "usage": {
+        "inputTokens": 12924,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1394,
+        "reasoningTokens": 657,
+        "totalTokens": 14318,
+        "costUsd": 0.00154444
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Describes Thunder Wave as part of the selected set's attack/control options without naming its teammate owner; Zoroark has no selected Thunder Wave."
+        ],
+        "concerns": [
+          "Omitted the selected Pokemon's Round trigger role entirely. Choice Scarf described as a turn-long rather than switching-dependent commitment."
+        ]
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-zoroark-round-chain-pokemon-r3.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "a45c76516e9f7a5e2f49c909fe8f23713e8457186601504c24d5a98d69094d37",
+      "outputHash": "33bc2a737e8bde40b5ffc66456527732fadf6fca81ce079bf8a714712689971d",
+      "promptVersion": 103,
+      "durationMs": 21978,
+      "usage": {
+        "inputTokens": 12924,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1654,
+        "reasoningTokens": 495,
+        "totalTokens": 14578,
+        "costUsd": 0.0016744400000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.facts[4] contradicts the supplied final Speed values and unconditional held-item modifiers.",
+        "strategyAudit.facts[5] contradicts the supplied final Speed values and unconditional held-item modifiers.",
+        "Recommendation round-branch names Gengar without fact evidence for slot 5."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.facts[4] contradicts the supplied final Speed values and unconditional held-item modifiers.",
+        "strategyAudit.facts[5] contradicts the supplied final Speed values and unconditional held-item modifiers.",
+        "Recommendation round-branch names Gengar without fact evidence for slot 5."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-zoroark-round-chain-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-zoroark-round-chain-team-r1.json",
+      "requestHash": "0a377cb63e47822d82cc10276b459e35797e866158f664a2276406f40a26a917",
+      "providerRequestHash": "a9a7c0b6769271d21322ff60bad15e122ca4941eced0708f347db325e6a4a985",
+      "outputHash": "11f9a4dd1db1d4700ca2cd7ef4eb71c9fb7f26ed9824ded6baab993abfefdd9a",
+      "promptVersion": 103,
+      "durationMs": 22019,
+      "usage": {
+        "inputTokens": 14403,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1838,
+        "reasoningTokens": 548,
+        "totalTokens": 16241,
+        "costUsd": 0.00178123
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Round explanation omits Pixilate's transformed Fairy damage; Illusion explanation does not choose an exact presented teammate. Proactive Trick Room alternative has no named slow beneficiaries."
+        ]
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-zoroark-round-chain-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-zoroark-round-chain-team-r2.json",
+      "requestHash": "0a377cb63e47822d82cc10276b459e35797e866158f664a2276406f40a26a917",
+      "providerRequestHash": "a9a7c0b6769271d21322ff60bad15e122ca4941eced0708f347db325e6a4a985",
+      "outputHash": "2857d87a75d9ddbd3c7c94299f3de9a66e97c7a18501f5e82b74a8ef80752a8f",
+      "promptVersion": 103,
+      "durationMs": 28969,
+      "usage": {
+        "inputTokens": 14403,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2488,
+        "reasoningTokens": 594,
+        "totalTokens": 16891,
+        "costUsd": 0.00210623
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Round branch is recognized, but the Illusion-assisted opening is omitted."
+        ]
+      }
+    },
+    {
+      "group": "critical-before",
+      "id": "doubles-strategy-zoroark-round-chain-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-before/doubles-strategy-zoroark-round-chain-team-r3.json",
+      "requestHash": "0a377cb63e47822d82cc10276b459e35797e866158f664a2276406f40a26a917",
+      "providerRequestHash": "a9a7c0b6769271d21322ff60bad15e122ca4941eced0708f347db325e6a4a985",
+      "outputHash": "be363e00aeb4afa1fc182802be7b01e63c4dd1e67df7f89e29c8580d72fee981",
+      "promptVersion": 103,
+      "durationMs": 44685,
+      "usage": {
+        "inputTokens": 14403,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2258,
+        "reasoningTokens": 673,
+        "totalTokens": 16661,
+        "costUsd": 0.00199123
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Says each user's Round has 120 power, conflating the initial trigger with the subsequent boosted user."
+        ],
+        "concerns": [
+          "Illusion-assisted opening is omitted."
+        ]
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-floette-delphox-protect-ace-team-r1.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "50fe9756e3f16a430091c5fdaa281bb19a4ccec05163201fd9cf88a4583883f7",
+      "outputHash": "1dcac501b8dec3b7441b1861c36aaeb77f3b7038183ef020e003e0120e34714d",
+      "promptVersion": 108,
+      "durationMs": 17017,
+      "usage": {
+        "inputTokens": 14820,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1665,
+        "reasoningTokens": 321,
+        "totalTokens": 16485,
+        "costUsd": 0.0017475
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Protected ace branches are identified, but both Calm Mind and Nasty Plot setup win conditions are omitted. Fairy Aura card names only allied beneficiaries despite all-active effect in the body."
+        ]
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-floette-delphox-protect-ace-team-r2.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "50fe9756e3f16a430091c5fdaa281bb19a4ccec05163201fd9cf88a4583883f7",
+      "outputHash": "13e619a3b168975a6db4200b7766ca3ea805a46ac5fdfe15ec3719e676a97985",
+      "promptVersion": 108,
+      "durationMs": 12935,
+      "usage": {
+        "inputTokens": 14820,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1259,
+        "reasoningTokens": 240,
+        "totalTokens": 16079,
+        "costUsd": 0.0015445
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Both Calm Mind and Nasty Plot setup win conditions are omitted; roster instead described as flexible Tailwind offense."
+        ]
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-floette-delphox-protect-ace-team-r3.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "50fe9756e3f16a430091c5fdaa281bb19a4ccec05163201fd9cf88a4583883f7",
+      "outputHash": "a74238d92fa96047071b0ae047035ddfd368260831423e511d76c1782782c073",
+      "promptVersion": 108,
+      "durationMs": 21088,
+      "usage": {
+        "inputTokens": 14820,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2299,
+        "reasoningTokens": 290,
+        "totalTokens": 17119,
+        "costUsd": 0.0020645
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Both Calm Mind and Nasty Plot setup win conditions are omitted; emphasis shifted to Tailwind/Fake Out opening."
+        ]
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-froslass-rain-counter-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-froslass-rain-counter-team-r1.json",
+      "requestHash": "92727ac5bc4cc15f18ed370d6cb367311df566d7eb143256867d6d43a158899a",
+      "providerRequestHash": "b39beffd455cbd3b94f0c2f037f7e27f51a979c07f78d4326363d4e6837c39e5",
+      "outputHash": "6a6f0de1881060012bab8909f6fcb682d55b4a93bfc2533a65f67f2701cbcb21",
+      "promptVersion": 108,
+      "durationMs": 16596,
+      "usage": {
+        "inputTokens": 15140,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1484,
+        "reasoningTokens": 221,
+        "totalTokens": 16624,
+        "costUsd": 0.001689
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-froslass-rain-counter-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-froslass-rain-counter-team-r2.json",
+      "requestHash": "92727ac5bc4cc15f18ed370d6cb367311df566d7eb143256867d6d43a158899a",
+      "providerRequestHash": "b39beffd455cbd3b94f0c2f037f7e27f51a979c07f78d4326363d4e6837c39e5",
+      "outputHash": "e64a6783ab45c68d2d53d08fa3c5caa408026ffbf50eb727a8b4598cc11921d5",
+      "promptVersion": 108,
+      "durationMs": 13484,
+      "usage": {
+        "inputTokens": 15140,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1293,
+        "reasoningTokens": 302,
+        "totalTokens": 16433,
+        "costUsd": 0.0015935
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.recommendationEvidence[2] must reference at least one audit entry."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.recommendationEvidence[2] must reference at least one audit entry."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-froslass-rain-counter-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-froslass-rain-counter-team-r3.json",
+      "requestHash": "92727ac5bc4cc15f18ed370d6cb367311df566d7eb143256867d6d43a158899a",
+      "providerRequestHash": "b39beffd455cbd3b94f0c2f037f7e27f51a979c07f78d4326363d4e6837c39e5",
+      "outputHash": "da80e2aa2a75076c00ca54d37bddb8c9d76375dfe58d3e2c75768839c37ba874",
+      "promptVersion": 108,
+      "durationMs": 23113,
+      "usage": {
+        "inputTokens": 15140,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1975,
+        "reasoningTokens": 325,
+        "totalTokens": 17115,
+        "costUsd": 0.0019345
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.plans[1].actions[3].moveId is not selected by slot 3."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.plans[1].actions[3].moveId is not selected by slot 3."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-staraptor-charm-funnel-team-r1.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "18c1f6e05554f6d6669162e4f800d1720d84568302bcf9b87708ced425de3b05",
+      "outputHash": "3b11630310703f102ee6c17b497ad5603039a83abd7807895cdd3be2a84a87fb",
+      "promptVersion": 108,
+      "durationMs": 17286,
+      "usage": {
+        "inputTokens": 14791,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1697,
+        "reasoningTokens": 235,
+        "totalTokens": 16488,
+        "costUsd": 0.0017606
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-staraptor-charm-funnel-team-r2.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "18c1f6e05554f6d6669162e4f800d1720d84568302bcf9b87708ced425de3b05",
+      "outputHash": "8245e5e877d283810f13f3a24637235f388ea1da42f171eaeafa0efdfa24c7ae",
+      "promptVersion": 108,
+      "durationMs": 16041,
+      "usage": {
+        "inputTokens": 14791,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1577,
+        "reasoningTokens": 165,
+        "totalTokens": 16368,
+        "costUsd": 0.0017005999999999998
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Claims four current roster members are weak to Electric; supplied current profiles show three: Staraptor, Skarmory, Basculegion."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-staraptor-charm-funnel-team-r3.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "18c1f6e05554f6d6669162e4f800d1720d84568302bcf9b87708ced425de3b05",
+      "outputHash": "5dc79fbdedad70338e0205b40b5b05e522d7a731c6d4db136c2ffcc303f5c7eb",
+      "promptVersion": 108,
+      "durationMs": 19252,
+      "usage": {
+        "inputTokens": 14791,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1858,
+        "reasoningTokens": 351,
+        "totalTokens": 16649,
+        "costUsd": 0.0018410999999999998
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-zoroark-round-chain-pokemon-r1.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "3f0eadd6ff6dc90c59d9e6e414a7c51d1ec83cda7d29199bfbb5ad50fd946cea",
+      "outputHash": "fcdea5c7375157ac8a82866d66c5f5c2ba16d0e5d009323fd4054d5fc2658110",
+      "promptVersion": 108,
+      "durationMs": 14547,
+      "usage": {
+        "inputTokens": 12749,
+        "cachedInputTokens": 3046,
+        "cacheWriteTokens": 1775,
+        "outputTokens": 1361,
+        "reasoningTokens": 426,
+        "totalTokens": 14110,
+        "costUsd": 0.0017256350000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Describes Dragapult responding before Gardevoir after Zoroark's Round as if all three allied users were active in Doubles, without separating the legal active-pair alternatives.",
+          "Thunder Wave is described among the selected set's disruption options without naming a teammate owner; Zoroark does not select it."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-zoroark-round-chain-pokemon-r2.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "3f0eadd6ff6dc90c59d9e6e414a7c51d1ec83cda7d29199bfbb5ad50fd946cea",
+      "outputHash": "304347ca85272efe0dcf04d02b96e2462bc9a12be12318d6b62b9a22b06c3314",
+      "promptVersion": 108,
+      "durationMs": 16619,
+      "usage": {
+        "inputTokens": 12749,
+        "cachedInputTokens": 4821,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1621,
+        "reasoningTokens": 457,
+        "totalTokens": 14370,
+        "costUsd": 0.0016515100000000001
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-zoroark-round-chain-pokemon-r3.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "3f0eadd6ff6dc90c59d9e6e414a7c51d1ec83cda7d29199bfbb5ad50fd946cea",
+      "outputHash": "a467d51a356865fb8628092d6f47ca07470c881cfe46845b9ffa9b3a9cb9501c",
+      "promptVersion": 108,
+      "durationMs": 14301,
+      "usage": {
+        "inputTokens": 12749,
+        "cachedInputTokens": 4821,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1298,
+        "reasoningTokens": 376,
+        "totalTokens": 14047,
+        "costUsd": 0.0014900100000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "Recommendation round-trigger names Gengar without fact evidence for slot 5.",
+        "Recommendation illusion-gard names Gardevoir without fact evidence for slot 0."
+      ],
+      "finalAuditErrors": [
+        "Recommendation round-trigger names Gengar without fact evidence for slot 5.",
+        "Recommendation illusion-gard names Gardevoir without fact evidence for slot 0."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-zoroark-round-chain-team",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-zoroark-round-chain-team-r1.json",
+      "requestHash": "0a377cb63e47822d82cc10276b459e35797e866158f664a2276406f40a26a917",
+      "providerRequestHash": "b1d7b075b7a0da35df9958c6e64da2c098eb7acfa4658367ca4369ff80df674c",
+      "outputHash": "9fc7d0611dcd67e024d734e0d9860d57f6b64a855939b0d80bc8d8d8f72cf888",
+      "promptVersion": 108,
+      "durationMs": 21462,
+      "usage": {
+        "inputTokens": 14228,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2303,
+        "reasoningTokens": 498,
+        "totalTokens": 16531,
+        "costUsd": 0.0020073
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Correct Round branch but no exact Illusion presentation; proactive Trick Room alternative has no named slow beneficiaries."
+        ]
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-zoroark-round-chain-team",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-zoroark-round-chain-team-r2.json",
+      "requestHash": "0a377cb63e47822d82cc10276b459e35797e866158f664a2276406f40a26a917",
+      "providerRequestHash": "b1d7b075b7a0da35df9958c6e64da2c098eb7acfa4658367ca4369ff80df674c",
+      "outputHash": "37e449a918cf26e5bcf6690f89543a8affadc69b5cb84cdd638c3dcc520381c4",
+      "promptVersion": 108,
+      "durationMs": 21172,
+      "usage": {
+        "inputTokens": 14228,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2091,
+        "reasoningTokens": 998,
+        "totalTokens": 16319,
+        "costUsd": 0.0019013
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Illusion-assisted opening is omitted."
+        ]
+      }
+    },
+    {
+      "group": "critical-after",
+      "id": "doubles-strategy-zoroark-round-chain-team",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/critical-after/doubles-strategy-zoroark-round-chain-team-r3.json",
+      "requestHash": "0a377cb63e47822d82cc10276b459e35797e866158f664a2276406f40a26a917",
+      "providerRequestHash": "b1d7b075b7a0da35df9958c6e64da2c098eb7acfa4658367ca4369ff80df674c",
+      "outputHash": "c39c7816445e305e941590b7ba20edd00df15b1508fc383681f8a48cc9d0622f",
+      "promptVersion": 108,
+      "durationMs": 18668,
+      "usage": {
+        "inputTokens": 14228,
+        "cachedInputTokens": 6300,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2124,
+        "reasoningTokens": 717,
+        "totalTokens": 16352,
+        "costUsd": 0.0019178
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.interactions[0].participants[0].itemIds contains an element not owned in the recorded state.",
+        "strategyAudit.interactions[1] must bind at least one move and one ability.",
+        "strategyAudit.facts[4].valueId contains an element not owned in the recorded state."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.interactions[0].participants[0].itemIds contains an element not owned in the recorded state.",
+        "strategyAudit.interactions[1] must bind at least one move and one ability.",
+        "strategyAudit.facts[4].valueId contains an element not owned in the recorded state."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Illusion-assisted opening is omitted."
+        ]
+      }
+    },
+    {
+      "group": "final-c",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 1,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/final-c/mc-mugepome-pokemon-en-r1.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "5572867c6ffde793eda64d13f9e26236226e89cccfcfb36024eb2d292eb1976a",
+      "outputHash": "25d18edda9ff68db821756e5d98515854529bd993698b15c7869e69d7bea35d8",
+      "promptVersion": 109,
+      "durationMs": 12975,
+      "usage": {
+        "inputTokens": 13011,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 1401,
+        "outputTokens": 1080,
+        "reasoningTokens": 229,
+        "totalTokens": 14091,
+        "costUsd": 0.001590915
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "final-c",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 2,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/final-c/mc-mugepome-pokemon-en-r2.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "5572867c6ffde793eda64d13f9e26236226e89cccfcfb36024eb2d292eb1976a",
+      "outputHash": "2da0c090603b3ec2a055cffb08c2eda543799b9d373706cc9c6daf0d6b212cce",
+      "promptVersion": 109,
+      "durationMs": 13453,
+      "usage": {
+        "inputTokens": 13011,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1048,
+        "reasoningTokens": 186,
+        "totalTokens": 14059,
+        "costUsd": 0.0014138000000000002
+      },
+      "renderable": true,
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "final-c",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 3,
+      "rawPath": ".tmp/prompt-ablation-2026-10-14/final-c/mc-mugepome-pokemon-en-r3.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "5572867c6ffde793eda64d13f9e26236226e89cccfcfb36024eb2d292eb1976a",
+      "outputHash": "e2c2cbfe11d1066749fe8195ee563e1fc4dfd68ddbebb402feab0e31f3124359",
+      "promptVersion": 109,
+      "durationMs": 13468,
+      "usage": {
+        "inputTokens": 13011,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1078,
+        "reasoningTokens": 252,
+        "totalTokens": 14089,
+        "costUsd": 0.0014288000000000003
+      },
+      "renderable": true,
+      "rawAuditErrors": [
+        "strategyAudit.facts[7] contradicts the supplied final Speed values and unconditional held-item modifiers."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.facts[7] contradicts the supplied final Speed values and unconditional held-item modifiers."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Public Speed comparisons are correct, but the private audit reverses Archaludon/Golisopod; the final validator flags the contradictory fact."
+        ]
+      }
+    }
+  ]
+}

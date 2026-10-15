@@ -6,30 +6,13 @@ import type {
 import type { CopilotMechanicsSnapshot } from "./copilotMechanics";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { normalizeShowdownId } from "../api/showdownIds";
+import { getCopilotComparableSpeed } from "./copilotSpeed";
 
 const allyTargetableMoves = new Set([
   "adjacent-ally",
   "adjacent-ally-or-self",
   "any-adjacent",
 ]);
-
-function getItemSpeedMultiplier(
-  set: CopilotSetSnapshot,
-  mechanics: CopilotMechanicsSnapshot,
-) {
-  const itemId = normalizeShowdownId(set.item ?? "");
-  const effect = mechanics.items.find(
-    (item) => normalizeShowdownId(item.id) === itemId,
-  )?.effect;
-  const numericMatch = effect?.normalize("NFKC").replace(/\u00d7/g, "x").toLowerCase().match(
-    /holder(?:'s|’s) speed is (\d+(?:\.\d+)?)x\b/,
-  );
-  if (numericMatch) {
-    const multiplier = Number(numericMatch[1]);
-    return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
-  }
-  return /holder(?:'s|’s) speed is halved\b/i.test(effect ?? "") ? 0.5 : 1;
-}
 
 function supportsSharedMoveSequence(effect: string | undefined) {
   if (!effect) return false;
@@ -177,11 +160,9 @@ export function createCopilotTeamTactics(
 
   const unconditionalSpeedOrder = sets.flatMap((leftSet, leftIndex) =>
     sets.slice(leftIndex + 1).flatMap((rightSet) => {
-      const leftSpeed = (leftSet.stats?.speed ?? 0) *
-        getItemSpeedMultiplier(leftSet, mechanics);
-      const rightSpeed = (rightSet.stats?.speed ?? 0) *
-        getItemSpeedMultiplier(rightSet, mechanics);
-      if (leftSpeed === rightSpeed) return [];
+      const leftSpeed = getCopilotComparableSpeed(leftSet, mechanics);
+      const rightSpeed = getCopilotComparableSpeed(rightSet, mechanics);
+      if (leftSpeed === null || rightSpeed === null || leftSpeed === rightSpeed) return [];
       return [{
         fasterSlotIndex: leftSpeed > rightSpeed ? leftSet.slotIndex : rightSet.slotIndex,
         slowerSlotIndex: leftSpeed > rightSpeed ? rightSet.slotIndex : leftSet.slotIndex,

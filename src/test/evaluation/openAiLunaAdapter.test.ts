@@ -7,7 +7,9 @@ import {
   getPokePilotLocaleInstructions,
   getPokePilotScopeInstructions,
   pokepilotCommonInstructions,
+  POKEPILOT_AI_PROMPT_VERSION,
 } from "../../../server/openAiLuna";
+import { POKEPILOT_AI_CORE_PROMPT_VERSION } from "../../../server/pokepilotPrompts";
 import {
   createCopilotTypeLabels,
   type CopilotAnalysisRequest,
@@ -241,7 +243,7 @@ describe("OpenAI Luna evaluation adapter", () => {
       });
       expect(result.output).toEqual(groundedModelOutput);
       expect(create).toHaveBeenCalledWith(expect.objectContaining({
-        prompt_cache_key: "pokepilot-production-core-v13-low",
+        prompt_cache_key: `pokepilot-production-core-v${POKEPILOT_AI_CORE_PROMPT_VERSION}-low`,
         text: expect.objectContaining({ format: expect.objectContaining({
           schema: copilotGroundedModelOutputJsonSchema,
         }) }),
@@ -361,7 +363,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         model: "gpt-6-luna",
         service_tier: "default",
         store: false,
-        prompt_cache_key: "pokepilot-evaluation-core-v13-low",
+        prompt_cache_key: `pokepilot-evaluation-core-v${POKEPILOT_AI_CORE_PROMPT_VERSION}-low`,
         prompt_cache_options: {
           mode: "explicit",
           ttl: "30m",
@@ -427,7 +429,7 @@ describe("OpenAI Luna evaluation adapter", () => {
         responseId: "resp_test",
         serviceTier: "default",
         reasoningEffort: "low",
-        promptVersion: 103,
+        promptVersion: POKEPILOT_AI_PROMPT_VERSION,
       },
       usage: {
         totalTokens: 150,
@@ -523,7 +525,7 @@ describe("OpenAI Luna evaluation adapter", () => {
     expect(create).toHaveBeenCalledOnce();
     const modelRequest = create.mock.calls[0]![0];
     expect(modelRequest.prompt_cache_key).toBe(
-      "pokepilot-evaluation-core-v13-low",
+      `pokepilot-evaluation-core-v${POKEPILOT_AI_CORE_PROMPT_VERSION}-low`,
     );
     expect(modelRequest.input[0].content[0].text).toBe(
       pokepilotCommonInstructions,
@@ -651,6 +653,18 @@ describe("OpenAI Luna evaluation adapter", () => {
       "optional exact-matchup candidates",
     );
     expect(optimizationInstructions).not.toContain("speedBenchmark");
+  });
+
+  it("omits simultaneous ally sequencing only from Singles Pokemon analysis", () => {
+    const singles = getPokePilotScopeInstructions("pokemon", "singles");
+    const doubles = getPokePilotScopeInstructions("pokemon", "doubles");
+    expect(singles).not.toContain("privately build an ordered partner table");
+    expect(singles).not.toContain("only the later responder receives it");
+    expect(singles).toContain("A projected Mega effect applies only after activation");
+    expect(singles).toContain("scan the current defensiveProfile of every other supplied set");
+    expect(doubles).toContain("privately build an ordered partner table");
+    expect(doubles).toContain("only the later responder receives it");
+    expect(getPokePilotScopeInstructions("pokemon")).toBe(doubles);
   });
 
   it("uses one explicit output language without adding Hangul to English prompts", () => {

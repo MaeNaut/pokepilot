@@ -1,0 +1,1577 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-14",
+  "sourceCommit": "70b2d2c0934801dbe43dbd900a2f1c06e51397f4",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "credentials": "evaluation-only",
+  "productionCalls": 0,
+  "protocol": {
+    "repeatCount": 3,
+    "providerRetries": 0,
+    "serviceTier": "default",
+    "store": false,
+    "humanReview": "all public paragraphs and card reasons against frozen requests; concerns excluded from confirmed counts"
+  },
+  "summaries": {
+    "all": {
+      "calls": 48,
+      "confirmedIssueResponses": 11,
+      "concernResponses": 13,
+      "rawAuditFlagged": 9,
+      "finalAuditFlagged": 2,
+      "costUsd": 0.130764085,
+      "inputTokens": 1244646,
+      "outputTokens": 54543,
+      "totalTokens": 1299189,
+      "medianMs": 11648.5
+    },
+    "current": {
+      "calls": 30,
+      "confirmedIssueResponses": 4,
+      "concernResponses": 11,
+      "rawAuditFlagged": 4,
+      "finalAuditFlagged": 1,
+      "costUsd": 0.07680299999999998,
+      "inputTokens": 703977,
+      "outputTokens": 38287,
+      "totalTokens": 742264,
+      "medianMs": 13826.5
+    },
+    "primary": {
+      "calls": 24,
+      "confirmedIssueResponses": 4,
+      "concernResponses": 9,
+      "rawAuditFlagged": 4,
+      "finalAuditFlagged": 1,
+      "costUsd": 0.056608080000000005,
+      "inputTokens": 494997,
+      "outputTokens": 33643,
+      "totalTokens": 528640,
+      "medianMs": 14675.5
+    },
+    "replacements": {
+      "calls": 6,
+      "confirmedIssueResponses": 0,
+      "concernResponses": 2,
+      "rawAuditFlagged": 0,
+      "finalAuditFlagged": 0,
+      "costUsd": 0.02019492,
+      "inputTokens": 208980,
+      "outputTokens": 4644,
+      "totalTokens": 213624,
+      "medianMs": 10370.5
+    },
+    "legacySampleInput": {
+      "calls": 6,
+      "confirmedIssueResponses": 2,
+      "concernResponses": 0,
+      "rawAuditFlagged": 0,
+      "finalAuditFlagged": 0,
+      "costUsd": 0.01319624,
+      "inputTokens": 132495,
+      "outputTokens": 4693,
+      "totalTokens": 137188,
+      "medianMs": 9388
+    },
+    "recommendationBefore": {
+      "calls": 12,
+      "confirmedIssueResponses": 1,
+      "concernResponses": 5,
+      "rawAuditFlagged": 3,
+      "finalAuditFlagged": 0,
+      "costUsd": 0.042064834999999995,
+      "inputTokens": 407382,
+      "outputTokens": 14194,
+      "totalTokens": 421576,
+      "medianMs": 13945
+    },
+    "recommendationAfter": {
+      "calls": 12,
+      "confirmedIssueResponses": 5,
+      "concernResponses": 2,
+      "rawAuditFlagged": 5,
+      "finalAuditFlagged": 1,
+      "costUsd": 0.040764845,
+      "inputTokens": 408174,
+      "outputTokens": 11563,
+      "totalTokens": 419737,
+      "medianMs": 12933.5
+    }
+  },
+  "decision": "Retain prompt v103; reject the v104 coverage clarification after this small-sample regression. Keep deterministic stat comparison and evaluation input alignment.",
+  "runs": [
+    {
+      "group": "quality-regression",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "3b9ddfc398e48a86ec49aad7f719c5b829646dffaae6c01856e00b8ff9c7295e",
+      "outputHash": "d1c7e67873c776baabd0d962ed6fddc2279879bc254da6bc0ad4e2f327af0438",
+      "providerResponseHash": "f2c58726fdc08fc9fd5868fb311083f99295ba8600ce30624b7d6060111ded8b",
+      "promptVersion": 103,
+      "durationMs": 15629,
+      "usage": {
+        "inputTokens": 33854,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 2433,
+        "outputTokens": 1717,
+        "reasoningTokens": 323,
+        "totalTokens": 35571,
+        "costUsd": 0.004019515
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Addition-mode reason discusses losing Archaludon through a replacement; the bound action remains an addition."
+        ]
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "3b9ddfc398e48a86ec49aad7f719c5b829646dffaae6c01856e00b8ff9c7295e",
+      "outputHash": "35bd1a3ef27af30d6c7e3c2cf84ba8906431473ba2c69b883e637fcfabcfbfac",
+      "providerResponseHash": "929f32956ca5d5ba41d8c8365ac75c8a068a648129cdac195f34877dc9944927",
+      "promptVersion": 103,
+      "durationMs": 13697,
+      "usage": {
+        "inputTokens": 33854,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1465,
+        "reasoningTokens": 186,
+        "totalTokens": 35319,
+        "costUsd": 0.0036137200000000004
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "3b9ddfc398e48a86ec49aad7f719c5b829646dffaae6c01856e00b8ff9c7295e",
+      "outputHash": "f801fea000be4698684a07b7bf6f0acc801ffa1a447ec118d492867fb30a635d",
+      "providerResponseHash": "98673e1c29c4dc1020a90d9d4ea8745fb6437d2998704fcbdbae14d4179ac909",
+      "promptVersion": 103,
+      "durationMs": 18158,
+      "usage": {
+        "inputTokens": 33854,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1984,
+        "reasoningTokens": 656,
+        "totalTokens": 35838,
+        "costUsd": 0.00387322
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-ddee-pokemon-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-ddee-pokemon-ko-r1.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "634165a628d06d3835586be0aec4f4552495b9229c4675561620b15b5e468e7c",
+      "outputHash": "c38dc8c4a4e9ff5533888a9bf321096ef2a13b580130678a0618543656aebd14",
+      "providerResponseHash": "e5df7fca07872c821ffaec178e8d7e4a36414073ef3a8e06dd408af58cb2895d",
+      "promptVersion": 103,
+      "durationMs": 11777,
+      "usage": {
+        "inputTokens": 13612,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1319,
+        "reasoningTokens": 252,
+        "totalTokens": 14931,
+        "costUsd": 0.00157574
+      },
+      "rawAuditErrors": [
+        "Recommendation mega-floette names 고릴타 without fact evidence for slot 3."
+      ],
+      "finalAuditErrors": [
+        "Recommendation mega-floette names 고릴타 without fact evidence for slot 3."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-ddee-pokemon-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-ddee-pokemon-ko-r2.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "634165a628d06d3835586be0aec4f4552495b9229c4675561620b15b5e468e7c",
+      "outputHash": "124d1ed18234bf79363ead194e100b4aa1f4ef3606e9e108d0f8b2264a7ce381",
+      "providerResponseHash": "ed8cb27401868f987b199812d0fc2cfd3419299cd902f2db2fec4e821dae5764",
+      "promptVersion": 103,
+      "durationMs": 19468,
+      "usage": {
+        "inputTokens": 13612,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1620,
+        "reasoningTokens": 250,
+        "totalTokens": 15232,
+        "costUsd": 0.00172624
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Fairy Aura explanation mentions allies without explaining that opposing Fairy attacks also benefit."
+        ]
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-ddee-pokemon-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-ddee-pokemon-ko-r3.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "634165a628d06d3835586be0aec4f4552495b9229c4675561620b15b5e468e7c",
+      "outputHash": "b8fd7c8c1193cc62e32a575bd8ddb71788823ff3f04b313d8479c47cfad8ab10",
+      "providerResponseHash": "4c34f4b099ccddf9feac32dc9d2927c3b0962eea692f9b5016df3df401c6d2c1",
+      "promptVersion": 103,
+      "durationMs": 16208,
+      "usage": {
+        "inputTokens": 13612,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1884,
+        "reasoningTokens": 366,
+        "totalTokens": 15496,
+        "costUsd": 0.00185824
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "wrong-move-owner",
+            "location": "paragraphs[2]",
+            "claim": "Floette and Incineroar both carry Protect",
+            "evidence": "Incineroar moves are Flare Blitz, Throat Chop, Fake Out, Parting Shot"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "legacy-sample-input",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-kiran-optimization-ko-r1.json",
+      "requestHash": "d6c0c60ff03537750fd585edcb8398f42f7c49a8431d43b96c259dd592fde7c1",
+      "providerRequestHash": "3cea29ae08ee234e8e0462bcba124844a5ba10cb8bebb47c3612bfb3e61bdf0d",
+      "outputHash": "d4a48ca06e282e20424e91d0ccffd7393b6f49f1385daac2cea2519a924544aa",
+      "providerResponseHash": "2d6d4a55a5fad906cc9dbbfdfd61000dec21db2e88a49f87b372482eaea915d7",
+      "promptVersion": 103,
+      "durationMs": 11046,
+      "usage": {
+        "inputTokens": 22325,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 873,
+        "reasoningTokens": 0,
+        "totalTokens": 23198,
+        "costUsd": 0.00223799
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "move-change-mismatch",
+            "location": "recommendations[usage-move-solarbeam-2].title",
+            "claim": "Retain Hurricane when choosing usage-move-solarbeam-2",
+            "evidence": "Candidate replaces Hurricane with Solar Beam"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "legacy-sample-input",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-kiran-optimization-ko-r2.json",
+      "requestHash": "d6c0c60ff03537750fd585edcb8398f42f7c49a8431d43b96c259dd592fde7c1",
+      "providerRequestHash": "3cea29ae08ee234e8e0462bcba124844a5ba10cb8bebb47c3612bfb3e61bdf0d",
+      "outputHash": "84664f6127d16f5ae5967a4612fe40baede45da64b6282603e12954fc6f2feb8",
+      "providerResponseHash": "1c943e1002e0a786bdf863442dfd200cf87ca7814fb1f19722ad64da1fa02c04",
+      "promptVersion": 103,
+      "durationMs": 11294,
+      "usage": {
+        "inputTokens": 22325,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 933,
+        "reasoningTokens": 287,
+        "totalTokens": 23258,
+        "costUsd": 0.00226799
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "legacy-sample-input",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-kiran-optimization-ko-r3.json",
+      "requestHash": "d6c0c60ff03537750fd585edcb8398f42f7c49a8431d43b96c259dd592fde7c1",
+      "providerRequestHash": "3cea29ae08ee234e8e0462bcba124844a5ba10cb8bebb47c3612bfb3e61bdf0d",
+      "outputHash": "4439fa9823d6d5b317439738fe31a53f4755ea38e23787c3b8a9ea304d011640",
+      "providerResponseHash": "cb5b1be600bdeb3d75ac0eb51e40ff0afdafb4efcadec8c53efa9286c710e3c7",
+      "promptVersion": 103,
+      "durationMs": 9770,
+      "usage": {
+        "inputTokens": 22325,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 867,
+        "reasoningTokens": 0,
+        "totalTokens": 23192,
+        "costUsd": 0.00223499
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-kiran-team-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-kiran-team-en-r1.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "c201dbb251ac8710080bc500024344e79579eee9018e15d8c20366e88aad7854",
+      "outputHash": "1b0643b2cbdd169ec57a7f9f3ce59be51355752c8dcfd54dabb1a8548a962679",
+      "providerResponseHash": "c222c6ab1ae6bcbd12a8f4986b11f0875e872a3cffba2eb11602a3ac89fbd9f0",
+      "promptVersion": 103,
+      "durationMs": 15291,
+      "usage": {
+        "inputTokens": 15108,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 3254,
+        "outputTokens": 1690,
+        "reasoningTokens": 306,
+        "totalTokens": 16798,
+        "costUsd": 0.00215194
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-kiran-team-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-kiran-team-en-r2.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "c201dbb251ac8710080bc500024344e79579eee9018e15d8c20366e88aad7854",
+      "outputHash": "74a2b5209f88854bf47f540f70caa5759ae364663e8d38280ad98a0eedb81d40",
+      "providerResponseHash": "dd44bbec75be0b35c022442b87eee765eb15238cb797298ca481a51e333a5729",
+      "promptVersion": 103,
+      "durationMs": 16629,
+      "usage": {
+        "inputTokens": 15108,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1439,
+        "reasoningTokens": 318,
+        "totalTokens": 16547,
+        "costUsd": 0.00165223
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-kiran-team-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-kiran-team-en-r3.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "c201dbb251ac8710080bc500024344e79579eee9018e15d8c20366e88aad7854",
+      "outputHash": "85e17a34e1549597b6f86925724a172935a566c6b13e40e4159525753c73c927",
+      "providerResponseHash": "dacd0839259d9965f8774a1f6bafbb710d6fc2cf0563fa3a72e6febad52f57dd",
+      "promptVersion": 103,
+      "durationMs": 24090,
+      "usage": {
+        "inputTokens": 15108,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2275,
+        "reasoningTokens": 448,
+        "totalTokens": 17383,
+        "costUsd": 0.00207023
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "0cd6c9072b2f28b4e0adb9d2ec2c91a3ddcb53505f38bc8472d64171e0edbc27",
+      "outputHash": "8ddf5e904cde10db04dacefb929e557838d602eae68f75bba131a1c7f44145ca",
+      "providerResponseHash": "105f62c721664bcba23f0d15642cecc49ed63be7979b5eb688d95f78a32cdd45",
+      "promptVersion": 103,
+      "durationMs": 14193,
+      "usage": {
+        "inputTokens": 32280,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1409,
+        "reasoningTokens": 497,
+        "totalTokens": 33689,
+        "costUsd": 0.0034283200000000003
+      },
+      "rawAuditErrors": [
+        "Recommendation farigiraf names Trick Room without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Existing Psychic Terrain protection is not weighed against Armor Tail; comparisons remain shallow."
+        ]
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "0cd6c9072b2f28b4e0adb9d2ec2c91a3ddcb53505f38bc8472d64171e0edbc27",
+      "outputHash": "4faaa7a6ba73de5359e8e5f9825331042ab2657eb49af07bb9164a80429187b8",
+      "providerResponseHash": "f3d4f5aea4a4e86b34ffbcc9a504d9d3a444fa17a804abe8477634d0264dd136",
+      "promptVersion": 103,
+      "durationMs": 17106,
+      "usage": {
+        "inputTokens": 32280,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1621,
+        "reasoningTokens": 477,
+        "totalTokens": 33901,
+        "costUsd": 0.00353432
+      },
+      "rawAuditErrors": [
+        "Recommendation farigiraf names Armor Tail without matching candidate evidence.",
+        "Recommendation armarouge names Protect without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Existing Psychic Terrain protection is not weighed against Armor Tail; comparisons remain shallow."
+        ]
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "0cd6c9072b2f28b4e0adb9d2ec2c91a3ddcb53505f38bc8472d64171e0edbc27",
+      "outputHash": "3e5103dc69c1c1e7a71b989bc855ed94d65ea25186b550e32e6b8df704521c4f",
+      "providerResponseHash": "87381980688b686d62bd9a4faed4f666e970fb42d0107e88f98c5750edc1af8a",
+      "promptVersion": 103,
+      "durationMs": 15158,
+      "usage": {
+        "inputTokens": 32280,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1354,
+        "reasoningTokens": 350,
+        "totalTokens": 33634,
+        "costUsd": 0.00340082
+      },
+      "rawAuditErrors": [
+        "Recommendation farigiraf names Trick Room without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "coverage-signal-misread",
+            "location": "paragraphs[1], recommendations[golisopod].reason",
+            "claim": "Ground coverage requires selecting a Ground-type attack",
+            "evidence": "fit.coversTypes lists opposing defending types; Ground-type moves do not hit Ground super effectively"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-mugepome-pokemon-en-r1.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b7fe74e35219148ff76077c00ca936d6e572ac9210322059c473b0c823021640",
+      "outputHash": "e7ab8101aaafa6b1ca9b52c443574e775749046369abc4673d34950657504817",
+      "providerResponseHash": "f437a3c4df4a78e4ef0c936c53b5c5ec35ee2f37f875c56b76592d5ad23683c8",
+      "promptVersion": 103,
+      "durationMs": 13956,
+      "usage": {
+        "inputTokens": 13385,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 1775,
+        "outputTokens": 1086,
+        "reasoningTokens": 205,
+        "totalTokens": 14471,
+        "costUsd": 0.001640665
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-mugepome-pokemon-en-r2.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b7fe74e35219148ff76077c00ca936d6e572ac9210322059c473b0c823021640",
+      "outputHash": "9694ff70dae693bb06cccb114ed4b7601b3b5a2eb2c2136343c5b189151a55e9",
+      "providerResponseHash": "b0ff2729075f0d7e4b47cf740e18f680f3e03ef5ecfb48e17af586f7bd15693b",
+      "promptVersion": 103,
+      "durationMs": 8627,
+      "usage": {
+        "inputTokens": 13385,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 940,
+        "reasoningTokens": 214,
+        "totalTokens": 14325,
+        "costUsd": 0.0013635399999999999
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-mugepome-pokemon-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-mugepome-pokemon-en-r3.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b7fe74e35219148ff76077c00ca936d6e572ac9210322059c473b0c823021640",
+      "outputHash": "787b8614b5bf2597c591348383a00d5bcac7bff370d070ce0399f46890b8993a",
+      "providerResponseHash": "f2d38e227bc3e2de35ec2b7d2792202de1ff0094f28739f96301b03cd2e2274c",
+      "promptVersion": 103,
+      "durationMs": 9116,
+      "usage": {
+        "inputTokens": 13385,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 791,
+        "reasoningTokens": 324,
+        "totalTokens": 14176,
+        "costUsd": 0.00128904
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-mugepome-team-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-mugepome-team-ko-r1.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "715106a05bef8520d59801c1a19d17f10395a0284a2e906c8dffe221a03bcfe2",
+      "outputHash": "8d5301ca8b261b1bd993ae3dafa476a5ef692817851f9c49584ef8881d0f66b1",
+      "providerResponseHash": "767cf2e3763044192071bc0d98ede479695b99e193819150e1c5f22e18328cd2",
+      "promptVersion": 103,
+      "durationMs": 20826,
+      "usage": {
+        "inputTokens": 12480,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 3588,
+        "outputTokens": 2152,
+        "reasoningTokens": 293,
+        "totalTokens": 14632,
+        "costUsd": 0.0024137
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-mugepome-team-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-mugepome-team-ko-r2.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "715106a05bef8520d59801c1a19d17f10395a0284a2e906c8dffe221a03bcfe2",
+      "outputHash": "794803cc74284d3c352211b2063b28d57bfedb425612193326bd28ec605dd363",
+      "providerResponseHash": "b6283c0cf839be23948a18dac757686d1bb3c27864faf955d3b66aa7e2d47d72",
+      "promptVersion": 103,
+      "durationMs": 24051,
+      "usage": {
+        "inputTokens": 12480,
+        "cachedInputTokens": 3588,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2120,
+        "reasoningTokens": 185,
+        "totalTokens": 14600,
+        "costUsd": 0.0019850799999999997
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "cross-slot-stat-points",
+            "location": "paragraphs[0]",
+            "claim": "Archaludon has 32 Special Attack points",
+            "evidence": "Archaludon specialAttack=0; Pelipper specialAttack=32"
+          }
+        ],
+        "concerns": [
+          "The ending calls the Electro Shot plan rain-independent after explaining its rain dependency."
+        ]
+      }
+    },
+    {
+      "group": "quality-regression",
+      "id": "mc-mugepome-team-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-mugepome-team-ko-r3.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "715106a05bef8520d59801c1a19d17f10395a0284a2e906c8dffe221a03bcfe2",
+      "outputHash": "35f485af3ad389b3f2313c06ebd14c76e53e1f85eb745946327a36623758630d",
+      "providerResponseHash": "70bb816a3c9ff407d616054613e8481b7dd7049c69959f45ee074cbd18ca4e9e",
+      "promptVersion": 103,
+      "durationMs": 19574,
+      "usage": {
+        "inputTokens": 12480,
+        "cachedInputTokens": 3588,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2422,
+        "reasoningTokens": 177,
+        "totalTokens": 14902,
+        "costUsd": 0.00213608
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "legacy-sample-input",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-tagerau-optimization-en-r1.json",
+      "requestHash": "caa5522335656995e92c831e685699342824e17e1bf4cf07d3cea18d2073bae6",
+      "providerRequestHash": "c9d9829256b36c50c64f892daabc52c07ac63fe84a3860fd1eadf851482697bb",
+      "outputHash": "847aeb27bc2469b770f387941379a0864a6abe1726764d26707b4527937fe966",
+      "providerResponseHash": "825db6431bf56ff61a027b81a5f33e43e3591bc9b6759286eec9e1536b9f3712",
+      "promptVersion": 103,
+      "durationMs": 9006,
+      "usage": {
+        "inputTokens": 21840,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 1620,
+        "outputTokens": 732,
+        "reasoningTokens": 320,
+        "totalTokens": 22572,
+        "costUsd": 0.0023052899999999998
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "legacy-sample-input",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-tagerau-optimization-en-r2.json",
+      "requestHash": "caa5522335656995e92c831e685699342824e17e1bf4cf07d3cea18d2073bae6",
+      "providerRequestHash": "c9d9829256b36c50c64f892daabc52c07ac63fe84a3860fd1eadf851482697bb",
+      "outputHash": "c08c46b52fd546248745c6a777317601372e12032043e9cb802d24127d221867",
+      "providerResponseHash": "030c785c3f37cd9085534b9e781367cdbfb6035a131c4e373e0a99215d3ca4dd",
+      "promptVersion": 103,
+      "durationMs": 8206,
+      "usage": {
+        "inputTokens": 21840,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 624,
+        "reasoningTokens": 210,
+        "totalTokens": 22464,
+        "costUsd": 0.00206499
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "legacy-sample-input",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-regression-2026-10-14/mc-tagerau-optimization-en-r3.json",
+      "requestHash": "caa5522335656995e92c831e685699342824e17e1bf4cf07d3cea18d2073bae6",
+      "providerRequestHash": "c9d9829256b36c50c64f892daabc52c07ac63fe84a3860fd1eadf851482697bb",
+      "outputHash": "0225c3f969ca4f71a86c34be26bda590e2bdaca8a7a067ffd618ed86488ab04e",
+      "providerResponseHash": "abbfdb1f3da00b63c4289d4fd914d5f5a814da56c04d07d199177d48c8f2f655",
+      "promptVersion": 103,
+      "durationMs": 8809,
+      "usage": {
+        "inputTokens": 21840,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 664,
+        "reasoningTokens": 304,
+        "totalTokens": 22504,
+        "costUsd": 0.00208499
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "candidate-nature-mismatch",
+            "location": "paragraphs[0]",
+            "claim": "Adamant spread has Attack 187, Special Attack 130 and unchanged Speed",
+            "evidence": "These values belong to usage-spread-1-naive, not Adamant"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-samples-current",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-samples-current-2026-10-14/mc-kiran-optimization-ko-r1.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "9e5232542418cd5ad4ca250e35fa9245d2db39e78a9027b6df34f86b7df0bd00",
+      "outputHash": "075845e6c809dba665b529dc5c43bc236aa0e281ae8e54855335b1431770006d",
+      "providerResponseHash": "782d16292ae3f9a7c41df0b89960522fda679d806a2a2a4d2528c4962ab4b48d",
+      "promptVersion": 103,
+      "durationMs": 10155,
+      "usage": {
+        "inputTokens": 22394,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 783,
+        "reasoningTokens": 284,
+        "totalTokens": 23177,
+        "costUsd": 0.0021998900000000004
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Weather Ball and Solar Beam are grouped in a way that may imply both charge or weaken in Rain."
+        ]
+      }
+    },
+    {
+      "group": "quality-samples-current",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-samples-current-2026-10-14/mc-kiran-optimization-ko-r2.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "9e5232542418cd5ad4ca250e35fa9245d2db39e78a9027b6df34f86b7df0bd00",
+      "outputHash": "ced590c23f7992a76188ccb6153c76f7b4cccb17653c7524a1e6747b06953a3a",
+      "providerResponseHash": "1022516ba4500da23acd94ce35896cd52579952e48b878de4da3634e8e7ad1e1",
+      "promptVersion": 103,
+      "durationMs": 9936,
+      "usage": {
+        "inputTokens": 22394,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 833,
+        "reasoningTokens": 206,
+        "totalTokens": 23227,
+        "costUsd": 0.00222489
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-samples-current",
+      "id": "mc-kiran-optimization-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-samples-current-2026-10-14/mc-kiran-optimization-ko-r3.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "9e5232542418cd5ad4ca250e35fa9245d2db39e78a9027b6df34f86b7df0bd00",
+      "outputHash": "4fb806dcbe05a9766cc8df0554c25dd4f0f99b2568d924e89d53a76fb36136e0",
+      "providerResponseHash": "68a420077cf41d8f67ce213149e019c819170dc933796552cb803f8532625a73",
+      "promptVersion": 103,
+      "durationMs": 10376,
+      "usage": {
+        "inputTokens": 22394,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 845,
+        "reasoningTokens": 235,
+        "totalTokens": 23239,
+        "costUsd": 0.00223089
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "nature-comparison",
+            "location": "paragraphs[0]",
+            "claim": "Timid lowers Attack compared with Modest",
+            "evidence": "Both natures lower Attack; matching candidates both have attack=93"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-samples-current",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-samples-current-2026-10-14/mc-tagerau-optimization-en-r1.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "a0caed9fd467db83e79ba2887f1492864d49ec94ba99a4b90af8162f0f9b8a35",
+      "outputHash": "1960fdee08ee7b9d5b374de0bacf15214176c1ff9a6d3ec7738df033d1c9416e",
+      "providerResponseHash": "55c7febab81b4513da212ac1c53f891979eb7da6227a54d9bd73c9a2f77cad4f",
+      "promptVersion": 103,
+      "durationMs": 10048,
+      "usage": {
+        "inputTokens": 21886,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 744,
+        "reasoningTokens": 438,
+        "totalTokens": 22630,
+        "costUsd": 0.00212959
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Says the spread is filled more fully although both current and candidate totals are 66; ambiguous qualitative wording."
+        ]
+      }
+    },
+    {
+      "group": "quality-samples-current",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-samples-current-2026-10-14/mc-tagerau-optimization-en-r2.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "a0caed9fd467db83e79ba2887f1492864d49ec94ba99a4b90af8162f0f9b8a35",
+      "outputHash": "8752a2f0cef0303358ef975f03db27b310c53d424dd241e5b1f67226de439899",
+      "providerResponseHash": "2f5341dc3197e188d7e81c7c072145f0fba5cb79904ff65e3f6c38637a8fc858",
+      "promptVersion": 103,
+      "durationMs": 8588,
+      "usage": {
+        "inputTokens": 21886,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 669,
+        "reasoningTokens": 279,
+        "totalTokens": 22555,
+        "costUsd": 0.00209209
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Recommends Roost over the sole Aerilate-enhanced STAB attack without evaluating the projected Mega cost."
+        ]
+      }
+    },
+    {
+      "group": "quality-samples-current",
+      "id": "mc-tagerau-optimization-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-samples-current-2026-10-14/mc-tagerau-optimization-en-r3.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "a0caed9fd467db83e79ba2887f1492864d49ec94ba99a4b90af8162f0f9b8a35",
+      "outputHash": "6eafa3348d519f3783d41f2259e5875ab5a1f10a8011dd64417815ccc959ee42",
+      "providerResponseHash": "5097a5e9a50a399616b7404c99e42cbd35c812bf7b54d9a787916ec3c294d7d0",
+      "promptVersion": 103,
+      "durationMs": 6542,
+      "usage": {
+        "inputTokens": 21886,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 481,
+        "reasoningTokens": 0,
+        "totalTokens": 22367,
+        "costUsd": 0.00199809
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Recommends Roost over the sole Aerilate-enhanced STAB attack without evaluating the projected Mega cost."
+        ]
+      }
+    },
+    {
+      "group": "quality-replacement",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-replacement-2026-10-14/mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "30cadb2e4a099a5c063d0b93dd3571b1142ad2f95575611fa970f9d362336b73",
+      "outputHash": "1e8d34eabe6a31436044e31143452846c87a97b3b123532003c99a2d847aea93",
+      "providerResponseHash": "d3c5f055001762263cb3e02ff5847993b9adf32100cc03156ec1979c8bb30f40",
+      "promptVersion": 103,
+      "durationMs": 11443,
+      "usage": {
+        "inputTokens": 35148,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 776,
+        "reasoningTokens": 448,
+        "totalTokens": 35924,
+        "costUsd": 0.00339862
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-replacement",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-replacement-2026-10-14/mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "30cadb2e4a099a5c063d0b93dd3571b1142ad2f95575611fa970f9d362336b73",
+      "outputHash": "0fe593619da8cff9711c96a78bf2eb1a2343eb71ac16d3cbffd59b747711bd73",
+      "providerResponseHash": "df07d5135d9421864f347501d3d87a79ca5577f337bbb6bf8b95f2fe27d8c4c3",
+      "promptVersion": 103,
+      "durationMs": 8441,
+      "usage": {
+        "inputTokens": 35148,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 628,
+        "reasoningTokens": 256,
+        "totalTokens": 35776,
+        "costUsd": 0.0033246200000000004
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-replacement",
+      "id": "mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-replacement-2026-10-14/mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "30cadb2e4a099a5c063d0b93dd3571b1142ad2f95575611fa970f9d362336b73",
+      "outputHash": "b74acd188e8e56d231c0fae3172a2ef0f7b08ae82226477dcee4517b05591b7f",
+      "providerResponseHash": "25d0a3dff398bdb6a40ceccdab449275626c231c92303af65b3532421254daca",
+      "promptVersion": 103,
+      "durationMs": 9298,
+      "usage": {
+        "inputTokens": 35148,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 589,
+        "reasoningTokens": 154,
+        "totalTokens": 35737,
+        "costUsd": 0.0033051200000000004
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Opening focuses on Meowscarada although the input provides replacements for six different targets."
+        ]
+      }
+    },
+    {
+      "group": "quality-replacement",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-replacement-2026-10-14/mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "88aa4591ca8bffd9c421d9438eadb1fd6b87e2f00e5c261db5b7ff0364517189",
+      "outputHash": "63ae8dc46e282b14d6e0bd188aceb596e1d27a0c93d6cc0facf85aaa7a73d4bc",
+      "providerResponseHash": "b8692e068b1640d96615e09438d996469413f1aa7138f7ca3186567bbe24319c",
+      "promptVersion": 103,
+      "durationMs": 14745,
+      "usage": {
+        "inputTokens": 34512,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1088,
+        "reasoningTokens": 557,
+        "totalTokens": 35600,
+        "costUsd": 0.00349102
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-replacement",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-replacement-2026-10-14/mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "88aa4591ca8bffd9c421d9438eadb1fd6b87e2f00e5c261db5b7ff0364517189",
+      "outputHash": "47331b3110ce32d83977fe188ec493b9f7b26965544f73cb87d81fb6a51793b9",
+      "providerResponseHash": "308182cbd4b14fd81b953eea557b2ef12606bcf27d1982f9070d3ee30ce97c24",
+      "promptVersion": 103,
+      "durationMs": 13641,
+      "usage": {
+        "inputTokens": 34512,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1087,
+        "reasoningTokens": 542,
+        "totalTokens": 35599,
+        "costUsd": 0.00349052
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Tyranitar and Excadrill are grouped as using Sand Rush; ownership is ambiguous rather than counted as an explicit false ability attribution."
+        ]
+      }
+    },
+    {
+      "group": "quality-replacement",
+      "id": "mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-replacement-2026-10-14/mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "88aa4591ca8bffd9c421d9438eadb1fd6b87e2f00e5c261db5b7ff0364517189",
+      "outputHash": "1ad5e1c98f5e558a9a4679baa92994ce2e97021dd4b85f3a1db6d51a22a75b0d",
+      "providerResponseHash": "0ad59d4e7cad2d98c93c69f91d59822c6867c2561ada6bfd04bb710e399dcb0c",
+      "promptVersion": 103,
+      "durationMs": 6957,
+      "usage": {
+        "inputTokens": 34512,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 476,
+        "reasoningTokens": 230,
+        "totalTokens": 34988,
+        "costUsd": 0.0031850199999999998
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "addition-mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/addition-mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "c28242b3687a0fb5b4c2e80c553d2af16ac9889b02cc037e92c22abee9c7d9db",
+      "outputHash": "f7a60a641d5e2059124209cd0ac6a7e794a98eec2d2aae38b8d9d3ed54239a94",
+      "providerResponseHash": "3b53553356bcd66494f7bf39563f2c284c8b64d27894cf614c180ddba27eb12a",
+      "promptVersion": 104,
+      "durationMs": 14347,
+      "usage": {
+        "inputTokens": 33920,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 2499,
+        "outputTokens": 1235,
+        "reasoningTokens": 211,
+        "totalTokens": 35155,
+        "costUsd": 0.0037867650000000005
+      },
+      "rawAuditErrors": [
+        "Recommendation gholdengo names 나쁜음모 without matching candidate evidence.",
+        "Recommendation tinkaton names 스텔스록 without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "missing-existing-role",
+            "location": "paragraphs[0]",
+            "claim": "Current team lacks special offense",
+            "evidence": "Primarina and Archaludon already carry damaging special moves"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "addition-mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/addition-mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "c28242b3687a0fb5b4c2e80c553d2af16ac9889b02cc037e92c22abee9c7d9db",
+      "outputHash": "c97191cdbc20becf325c99329482e52889be878532cae198e1d264ea01f366b7",
+      "providerResponseHash": "a8b59f3a49e69cb9899547a70493c577a97993e3faa1fd2e04fa21a17cf4058b",
+      "promptVersion": 104,
+      "durationMs": 14833,
+      "usage": {
+        "inputTokens": 33920,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1344,
+        "reasoningTokens": 299,
+        "totalTokens": 35264,
+        "costUsd": 0.00355388
+      },
+      "rawAuditErrors": [
+        "Recommendation gholdengo names 골드러시 without matching candidate evidence.",
+        "Recommendation tinkaton names 스텔스록 without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "unsupported-candidate-move",
+            "location": "recommendations[gholdengo].reason",
+            "claim": "Gholdengo provides Dark Pulse",
+            "evidence": "commonSet: Shadow Ball, Make It Rain, Nasty Plot, Recover; usage alternatives: Power Gem, Psyshock"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "addition-mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/addition-mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "b0c9366eedafdad613b6ecdbb1c17dfd579a58a3fb83d6f744b960e797cdf081",
+      "providerRequestHash": "c28242b3687a0fb5b4c2e80c553d2af16ac9889b02cc037e92c22abee9c7d9db",
+      "outputHash": "abb7b30e0229c98659213be5ae13c677ecd61044d3c15c699cabfa19bde65055",
+      "providerResponseHash": "7cc16adb79ec9b01321c2e36ece77d1a913378d9a36c0e89e94373d8e281aeac",
+      "promptVersion": 104,
+      "durationMs": 15755,
+      "usage": {
+        "inputTokens": 33920,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1550,
+        "reasoningTokens": 318,
+        "totalTokens": 35470,
+        "costUsd": 0.00365688
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "move-name-substitution",
+            "location": "recommendations[tinkaton].reason",
+            "claim": "Discusses Spikes as the overlapping entry hazard",
+            "evidence": "Tinkaton commonSet carries Stealth Rock, not Spikes; usage alternatives do not supply Spikes"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "addition-mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/addition-mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "c198c7c3614763990e0369603b45afd0688a3639008eb54a110d130b59e1f1ea",
+      "outputHash": "da7c252889226e2f303df1c0c5e22655e1f3691b153f947ebeb6266cf3b8d69e",
+      "providerResponseHash": "5ca0b60a5b56fe56de88bfa2593922cfc604e38e7af45c185a76fabbc5675361",
+      "promptVersion": 104,
+      "durationMs": 14995,
+      "usage": {
+        "inputTokens": 32346,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1229,
+        "reasoningTokens": 363,
+        "totalTokens": 33575,
+        "costUsd": 0.00333898
+      },
+      "rawAuditErrors": [
+        "strategyAudit.candidateFacts[6] contradicts the supplied recommendation candidate."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.candidateFacts[6] contradicts the supplied recommendation candidate."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "missing-existing-responsibility",
+            "location": "recommendations[farigiraf].reason",
+            "claim": "Current team does not list priority denial as covered",
+            "evidence": "diagnostics.responsibilityCounts.priority-denial=1; Indeedee Male has Psychic Surge"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "addition-mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/addition-mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "c198c7c3614763990e0369603b45afd0688a3639008eb54a110d130b59e1f1ea",
+      "outputHash": "0650a4fa6b6801cd21eb6f99bfe34a16085c5696c632c683f81acde1293579c1",
+      "providerResponseHash": "ecde78ae5ec010339b1312fa261afd5b8fdfb103a9661371df055c05981d315f",
+      "promptVersion": 104,
+      "durationMs": 16791,
+      "usage": {
+        "inputTokens": 32346,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1401,
+        "reasoningTokens": 417,
+        "totalTokens": 33747,
+        "costUsd": 0.00342498
+      },
+      "rawAuditErrors": [
+        "Recommendation volcarona names Protect without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "addition-mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/addition-mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "c198c7c3614763990e0369603b45afd0688a3639008eb54a110d130b59e1f1ea",
+      "outputHash": "4e1a42abd81cbc8d06006f70fd24fe1fb39f55f16e236f39016d956472ced8b7",
+      "providerResponseHash": "74eaff3b3a52fa09165f7ec0a1866bf0131367efba27bc2fc3b9fbc93d25272b",
+      "promptVersion": 104,
+      "durationMs": 19057,
+      "usage": {
+        "inputTokens": 32346,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1544,
+        "reasoningTokens": 493,
+        "totalTokens": 33890,
+        "costUsd": 0.00349648
+      },
+      "rawAuditErrors": [
+        "Recommendation volcarona names Protect without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Rage Powder is described as opening a Sneasler setup window despite its selected set having no setup move."
+        ]
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/replacement-mc-danjinesu-recommendation-ko-r1.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "024d69684d708cff267f80249e0f6d52d09294bf48176acc8bc8b2908bee5477",
+      "outputHash": "54f653a8b93fd0ff974d6c5f84e172482eae35b94e6bff7af2d8e540af18380f",
+      "providerResponseHash": "ed4db0b8deb0a22a2b739d0af41c2487f32e9c8f7378a8a1b5fbc702dacb3589",
+      "promptVersion": 104,
+      "durationMs": 9210,
+      "usage": {
+        "inputTokens": 35214,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 579,
+        "reasoningTokens": 190,
+        "totalTokens": 35793,
+        "costUsd": 0.00330078
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          {
+            "code": "false-replacement-loss",
+            "location": "paragraphs[1]",
+            "claim": "Replacing Primarina with Whimsicott surrenders Dragon immunity",
+            "evidence": "Both Primarina and Whimsicott are Fairy-type and retain Dragon immunity"
+          }
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/replacement-mc-danjinesu-recommendation-ko-r2.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "024d69684d708cff267f80249e0f6d52d09294bf48176acc8bc8b2908bee5477",
+      "outputHash": "a5e5f1a3d879eb82d602b0a6f75c19bdf847130aa1bfccca08e757f33292b982",
+      "providerResponseHash": "5fe0dd2eaf3ee025df6cd6b21f261113843a7bbc474731dcedc81a486f382985",
+      "promptVersion": 104,
+      "durationMs": 8121,
+      "usage": {
+        "inputTokens": 35214,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 480,
+        "reasoningTokens": 191,
+        "totalTokens": 35694,
+        "costUsd": 0.00325128
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "replacement-mc-danjinesu-recommendation-ko",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/replacement-mc-danjinesu-recommendation-ko-r3.json",
+      "requestHash": "9b4b47256ac04b21c95739a573b05173767f13d943b5b8fb604526c099e96c65",
+      "providerRequestHash": "024d69684d708cff267f80249e0f6d52d09294bf48176acc8bc8b2908bee5477",
+      "outputHash": "7605dd95ac07e6db004dea3bda1609b58813bb04cce3ceab0ac9e329259cd8a6",
+      "providerResponseHash": "715c56f759f9865f75d3300d8aeff0ce5acaa49a0e8500b21f9436444a51e9a2",
+      "promptVersion": 104,
+      "durationMs": 9762,
+      "usage": {
+        "inputTokens": 35214,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 608,
+        "reasoningTokens": 235,
+        "totalTokens": 35822,
+        "costUsd": 0.0033152800000000003
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 1,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/replacement-mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "094a67a0112da4e5334b6e910bd5769b1b50b89ecadca2132e3be35515034f0c",
+      "outputHash": "ddce1307ef3e1d0a32997a92e58e3e2e8b0272df90c364c6342269846a6209f9",
+      "providerResponseHash": "1a4480459a9338405bb7de46695a90aa48cf8290f5f7dfbc515065ae80c7c011",
+      "promptVersion": 104,
+      "durationMs": 7553,
+      "usage": {
+        "inputTokens": 34578,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 486,
+        "reasoningTokens": 243,
+        "totalTokens": 35064,
+        "costUsd": 0.00319068
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 2,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/replacement-mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "094a67a0112da4e5334b6e910bd5769b1b50b89ecadca2132e3be35515034f0c",
+      "outputHash": "852638bf3df61f21d8b791e70e3a8b6ef899fb48e01bb27e51ea328169668897",
+      "providerResponseHash": "81767d587c444de6d2854369e1d615ea45cb3bff4b242416cf4d5f9ae1fda7af",
+      "promptVersion": 104,
+      "durationMs": 11520,
+      "usage": {
+        "inputTokens": 34578,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 627,
+        "reasoningTokens": 371,
+        "totalTokens": 35205,
+        "costUsd": 0.00326118
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Calls Milotic Water-type profile a surrendered benefit even though Rotom Wash retains Water typing."
+        ]
+      }
+    },
+    {
+      "group": "quality-coverage-after",
+      "id": "replacement-mc-lloyd-recommendation-en",
+      "repeat": 3,
+      "rawPath": ".tmp/quality-coverage-after-2026-10-14/replacement-mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "dae4f0b319167f5d7239e63ef285e950881f271f6727db1c0aca504487c90428",
+      "providerRequestHash": "094a67a0112da4e5334b6e910bd5769b1b50b89ecadca2132e3be35515034f0c",
+      "outputHash": "483bd2d5d6d69ddea239cad9d86a378f4a24f9683509d62a3315bdb0a0bee00d",
+      "providerResponseHash": "bfa2a98c1a253c2056d3ac0462b3057a98c58a1e27dec357f979223fe7beccae",
+      "promptVersion": 104,
+      "durationMs": 7174,
+      "usage": {
+        "inputTokens": 34578,
+        "cachedInputTokens": 5668,
+        "cacheWriteTokens": 0,
+        "outputTokens": 480,
+        "reasoningTokens": 253,
+        "totalTokens": 35058,
+        "costUsd": 0.00318768
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    }
+  ]
+}

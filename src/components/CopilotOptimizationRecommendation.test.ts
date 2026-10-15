@@ -105,14 +105,34 @@ describe("optimization evidence selection", () => {
   });
 });
 
-function render(input: Candidate, currentItemDisplayName: string | null = null) {
+function render(input: Candidate, currentItemDisplayName: string | null = null, currentCandidate?: Candidate) {
   return renderToStaticMarkup(createElement(CopilotOptimizationRecommendation, {
-    candidate: input, currentItemDisplayName, title: "Sample", reason: "Rationale", isStale: false,
+    candidate: input, currentCandidate, currentItemDisplayName, title: "Sample", reason: "Rationale", isStale: false,
     onApply: () => {}, onSave: () => {},
   }));
 }
 
 describe("optimization evidence card", () => {
+  it("shows actual stat changes, including losses despite unchanged point allocation", () => {
+    const current = candidate({ id: "set-current", finalStats: { hp: 171, attack: 174, defense: 100, specialAttack: 144, specialDefense: 90, speed: 167 } });
+    const next = candidate({ finalStats: { ...current.finalStats, attack: 205, specialAttack: 117, speed: 152 } });
+    const original = structuredClone(current);
+    const html = render(next, null, current);
+    expect(html).toContain("copilot.optimization.stat-comparison-label");
+    expect(html).toContain('class="is-up">+31');
+    expect(html).toContain('class="is-down">-27');
+    expect(html).toContain('class="is-down">-15');
+    expect(html.match(/<dt>/g)).toHaveLength(6);
+    expect(current).toEqual(original);
+  });
+
+  it("does not invent a comparison for old history, other slots, or unchanged stats", () => {
+    const current = candidate({ id: "set-current" });
+    const next = candidate({ finalStats: { ...current.finalStats, attack: 120 } });
+    for (const html of [render(next), render(next, null, { ...current, slotIndex: 1 }), render(candidate(), null, current), render(current, null, current)]) {
+      expect(html).not.toContain("copilot-optimization-stat-comparison");
+    }
+  });
   it("renders zero investment explicitly instead of leaving the spread empty", () => {
     expect(render(candidate({ id: "set-current" })))
       .toContain('<small>copilot.optimization.ev-spread-label</small><strong>0</strong>');

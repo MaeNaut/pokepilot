@@ -3,6 +3,7 @@ import {
   getKnownPokemonIconUrl,
   getPokeApiChampionsSpriteUrlFromKnownSprites,
   isFullShowdownSpriteUrl,
+  normalizePokeApiGenerationNineSpriteUrl,
 } from "../utils/pokemonSprites";
 
 type PokemonIconProps = {
@@ -30,9 +31,10 @@ export function PokemonIcon({ pokemon }: PokemonIconProps) {
           ...savedIconUrls,
           pokemon.spriteUrl,
         ]);
-  const iconUrls = [knownIconUrl, championsIconUrl, ...savedIconUrls].filter(
+  const modernFallbackUrl = championsIconUrl?.replace("/champions/", "/scarlet-violet/");
+  const iconUrls = [knownIconUrl, championsIconUrl, modernFallbackUrl, ...savedIconUrls].filter(
     (url): url is string => Boolean(url) && !isFullShowdownSpriteUrl(url),
-  );
+  ).map(normalizePokeApiGenerationNineSpriteUrl);
   const spriteUrls = Array.from(
     new Set(
       [...iconUrls, pokemon.spriteUrl].filter(

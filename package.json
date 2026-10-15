@@ -38,6 +38,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "html-to-image": "^1.11.13",
     "jose": "^6.2.12",
+    "js-tiktoken": "1.0.21",
     "openai": "^7.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

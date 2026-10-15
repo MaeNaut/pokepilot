@@ -69,6 +69,13 @@ function createSet(
 }
 
 describe("PokePilot deterministic team tactics", () => {
+  it("does not invent an ordering for rounded ties or missing stats", () => {
+    const sets = [createSet(0, "Scarf", [], 155, { item: "Choice Scarf" }),
+      createSet(1, "Tie", [], 232), createSet(2, "Unknown", [], 1, { stats: null })];
+    const mechanics = { moves: [], abilities: [], items: [{ id: "choicescarf", displayName: "Choice Scarf", effect: "Holder's Speed is 1.5x." }] };
+    expect(createCopilotTeamTactics(sets, mechanics, "doubles").unconditionalSpeedOrder).toEqual([]);
+  });
+
   it("provides bounded opportunities without deciding their strategic value", () => {
     const sets = [
       createSet(0, "Charm User", ["charm", "raindance"], 100),

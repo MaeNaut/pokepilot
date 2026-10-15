@@ -72,7 +72,7 @@ function createSampleRequest() {
   return request;
 }
 
-function expandModelInput(text: string): unknown {
+function expandModelInput(text: string, stripOwnerMechanics = true): unknown {
   const { sharedData = {}, ...request } = JSON.parse(text);
   function expand(value: unknown): unknown {
     if (Array.isArray(value)) return value.map(expand);
@@ -88,10 +88,89 @@ function expandModelInput(text: string): unknown {
     }
     return value;
   }
-  return expand(request);
+  const expanded = expand(request) as { sets: Array<Record<string, unknown>> };
+  if (stripOwnerMechanics) {
+    for (const set of expanded.sets) {
+      delete set.mechanics;
+      if (set.megaEvolution && typeof set.megaEvolution === "object") {
+        delete (set.megaEvolution as Record<string, unknown>).mechanics;
+      }
+    }
+  }
+  return expanded;
 }
 
 describe("model input sharing", () => {
+  it.each(["team", "pokemon", "recommendation", "optimization", "matchup"] as const)("uses the same owner links for the %s scope", scope => {
+    const request = createRequest(scope);
+    const result = serializePokePilotModelRequest(request);
+    const expanded = expandModelInput(result.text, false) as { sets: Array<Record<string, unknown>> };
+    expect(result.instructions).toContain("set.mechanics");
+    expect(expanded.sets.every(set => "mechanics" in set)).toBe(true);
+    expect(expandModelInput(result.text)).toEqual(request);
+  });
+
+  it("binds only selected mechanics to their current and projected owners using shared records", () => {
+    const request = createRequest();
+    const set = request.sets[0];
+    set.ability = "Intimidate";
+    set.item = "Choice Scarf";
+    set.megaEvolution = {
+      pokemonId: "test-mega", pokemonName: "Test Mega", displayName: "Test Mega",
+      types: ["flying"], typeDisplayNames: ["Flying"], ability: "Aerilate",
+      abilityDisplayName: "Aerilate", baseStats: { ...defaultEvs },
+      stats: { ...defaultEvs }, defensiveProfile: set.defensiveProfile,
+    };
+    request.mechanics.abilities = [
+      { id: "intimidate", displayName: "Intimidate", effect: "Lowers opposing Attack." },
+      { id: "aerilate", displayName: "Aerilate", effect: "Normal moves become Flying and gain 1.2x power." },
+    ];
+    request.mechanics.items = [{ id: "choicescarf", displayName: "Choice Scarf", effect: "Speed is 1.5x." }];
+    request.mechanics.moves.push({ id: "round", displayName: "Round", effect: "Boosts later users." });
+    const original = JSON.stringify(request);
+    const result = serializePokePilotModelRequest(request);
+    const expanded = expandModelInput(result.text, false) as {
+      sets: Array<{ mechanics: { moves: Array<{ id: string }>; ability: { id: string }; item: { id: string } };
+        megaEvolution: { mechanics: { ability: { id: string } } } }>;
+    };
+    expect(expanded.sets[0].mechanics.moves.map(move => move.id)).toEqual(["protect"]);
+    expect(expanded.sets[0].mechanics.ability.id).toBe("intimidate");
+    expect(expanded.sets[0].mechanics.item.id).toBe("choicescarf");
+    expect(expanded.sets[0].megaEvolution.mechanics.ability.id).toBe("aerilate");
+    expect(result.instructions).toContain("only after Mega activation");
+    expect(JSON.parse(result.text).sets[0].megaEvolution.mechanics.ability).toHaveProperty("dataRef");
+    expect(expandModelInput(result.text)).toEqual(request);
+    expect(JSON.stringify(request)).toBe(original);
+  });
+
+  it("does not invent missing mechanics or resolve conflicting canonical IDs", () => {
+    const request = createRequest();
+    request.sets[0].ability = "Aerilate";
+    request.sets[1].ability = "Unknown Ability";
+    request.mechanics.abilities = [
+      { id: "aerilate", displayName: "Aerilate", effect: "First effect." },
+      { id: "AERILATE", displayName: "Aerilate", effect: "Conflicting effect." },
+    ];
+    const result = serializePokePilotModelRequest(request);
+    const expanded = expandModelInput(result.text, false) as { sets: Array<{ mechanics: object }> };
+    expect(expanded.sets[0].mechanics).not.toHaveProperty("ability");
+    expect(expanded.sets[1].mechanics).not.toHaveProperty("ability");
+    expect(result.instructions).toContain("unknown, not absent");
+    expect(expandModelInput(result.text)).toEqual(request);
+  });
+
+  it("treats an already-Mega set's ability as current rather than a second activation", () => {
+    const request = createRequest();
+    request.sets[0].isMegaForm = true;
+    request.sets[0].ability = "Aerilate";
+    request.mechanics.abilities = [{ id: "aerilate", displayName: "Aerilate", effect: "Normal moves become Flying." }];
+    const expanded = expandModelInput(serializePokePilotModelRequest(request).text, false) as {
+      sets: Array<{ mechanics: { ability: { id: string } }; megaEvolution: null }>;
+    };
+    expect(expanded.sets[0].mechanics.ability.id).toBe("aerilate");
+    expect(expanded.sets[0].megaEvolution).toBeNull();
+  });
+
   it("retains canonical mechanics and current/Mega owners without duplicating their records", () => {
     const request = createRequest();
     request.sets[0].ability = "Intimidate";
@@ -119,7 +198,9 @@ describe("model input sharing", () => {
     const original = JSON.stringify(request);
     const result = serializePokePilotModelRequest(request);
     expect(result.instructions).toContain("offense/defense/current/optimized");
-    expect(result.text.length + result.instructions.length).toBeLessThan(original.length * 0.75);
+    expect(result.text.length + result.instructions.length).toBeLessThan(
+      JSON.stringify(expandModelInput(result.text, false)).length * 0.75,
+    );
     expect(expandModelInput(result.text)).toEqual(JSON.parse(original));
     expect(JSON.stringify(request)).toBe(original);
     expect(serializePokePilotModelRequest(request)).toEqual(result);
@@ -141,8 +222,9 @@ describe("model input sharing", () => {
     const request = createRequest(scope);
     const result = serializePokePilotModelRequest(request);
     expect(expandModelInput(result.text)).toEqual(request);
-    // Small requests may deliberately stay inline after accounting for the legend.
-    expect(result.text.length + result.instructions.length).toBeLessThanOrEqual(JSON.stringify(request).length);
+    expect(result.text.length + result.instructions.length).toBeLessThan(
+      JSON.stringify(expandModelInput(result.text, false)).length,
+    );
   });
 
   it("shares recommendation moves and abilities without merging variants with the same ID", () => {
@@ -194,6 +276,7 @@ describe("model input sharing", () => {
   it("leaves a small or unshared request byte-for-byte unchanged", () => {
     const request = createRequest();
     request.sets = request.sets.slice(0, 1);
+    request.mechanics = { moves: [], abilities: [], items: [] };
     expect(serializePokePilotModelRequest(request)).toEqual({
       text: JSON.stringify(request), instructions: "",
     });

@@ -6,6 +6,7 @@ import {
 import { createCopilotResponsibilityCounts } from "../src/utils/copilotResponsibilities";
 import { LunaStructuredOutputError, type LunaAnalysisResult } from "./openAiLuna";
 import { handlePokePilotAnalysis } from "./pokepilotApi";
+import { POKEPILOT_AI_PROMPT_VERSION } from "./pokepilotPrompts";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
 import { UpstashPokePilotOperations, type PokePilotRedisClient } from "./upstashPokePilotOperations";
 
@@ -371,7 +372,7 @@ describe("PokePilot server API", () => {
       metadata: {
         cacheStatus: "miss",
         model: "gpt-6-luna",
-        promptVersion: 103,
+        promptVersion: POKEPILOT_AI_PROMPT_VERSION,
         execution: {
           durationMs: expect.any(Number),
           totalTokens: 150,

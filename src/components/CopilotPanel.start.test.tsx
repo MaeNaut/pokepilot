@@ -22,6 +22,9 @@ vi.mock("../hooks/useCopilotAnalysisSession", () => ({ useCopilotAnalysisSession
   analysisState: state.analysis, response: state.response, requestFingerprint: "context", teamHistory: [], analyze: state.analyze,
 }) }));
 vi.mock("./CopilotAnalysisResult", () => ({ CopilotAnalysisResult: () => <p>Analysis result</p> }));
+vi.mock("../utils/copilotEstimate", () => ({ estimateCopilotAnalysis: vi.fn(async () => ({
+  inputTokens: 1000, totalTokens: [2000, 3000], seconds: [5, 15], costUsd: [0.001, 0.002],
+})) }));
 
 const cleanups: Array<() => Promise<void>> = [];
 beforeEach(() => {
@@ -51,31 +54,44 @@ async function mount(scope: "pokemon" | "team" | "recommendation" | "optimizatio
   const confirm = async () => {
     await act(async () => { container.querySelector<HTMLButtonElement>(".copilot-analyze-button")!.click(); });
     const button = container.querySelector<HTMLButtonElement>(".copilot-analyze-confirmation-actions button:last-child")!;
-    await act(async () => { button.click(); button.click(); });
+    if (button) await act(async () => { button.click(); button.click(); });
   };
   return { container, props, render, confirm };
 }
 
-it("waits for team save before preparation/AI and prevents duplicate submissions", async () => {
+it("prepares the estimate first, then waits for team save before AI and prevents duplicate submissions", async () => {
   const saved = deferred<{ teamId: string; isCurrent: () => boolean }>();
   state.save.mockReturnValue(saved.promise);
   const app = await mount();
   await app.confirm();
   expect(state.save).toHaveBeenCalledTimes(1);
-  expect(state.prepare).not.toHaveBeenCalled();
+  expect(state.prepare).toHaveBeenCalledTimes(1);
   expect(state.analyze).not.toHaveBeenCalled();
   await act(async () => { saved.resolve({ teamId: "new-team", isCurrent: () => true }); });
   expect(state.analyze).toHaveBeenCalledWith({ scope: "pokemon", sets: [] }, { teamId: "new-team" });
 });
 
+it("does not save, authenticate or call AI just to open an estimate, and submits the same snapshot", async () => {
+  const prepared = { scope: "pokemon", sets: [], teamName: "Exact estimate input" };
+  state.prepare.mockResolvedValueOnce(prepared);
+  const app = await mount();
+  await act(async () => { app.container.querySelector<HTMLButtonElement>(".copilot-analyze-button")!.click(); });
+  expect(state.save).not.toHaveBeenCalled();
+  expect(state.authenticate).not.toHaveBeenCalled();
+  expect(state.analyze).not.toHaveBeenCalled();
+  expect(state.prepare).toHaveBeenCalledOnce();
+  const button = app.container.querySelector<HTMLButtonElement>(".copilot-analyze-confirmation-actions button:last-child")!;
+  await act(async () => { button.click(); });
+  expect(state.prepare).toHaveBeenCalledOnce();
+  expect(state.analyze.mock.calls[0][0]).toBe(prepared);
+});
+
 it("prints real preparation stages, replaces an old result while loading, and clears progress on completion", async () => {
   const auth = deferred<boolean>();
   const saved = deferred<{ teamId: string; isCurrent: () => boolean }>();
-  const prepared = deferred<unknown>();
   const analyzed = deferred<void>();
   state.authenticate.mockReturnValue(auth.promise);
   state.save.mockReturnValue(saved.promise);
-  state.prepare.mockReturnValue(prepared.promise);
   state.analyze.mockReturnValue(analyzed.promise);
   state.response = { title: "Old result" };
   const app = await mount();
@@ -86,8 +102,6 @@ it("prints real preparation stages, replaces an old result while loading, and cl
   await act(async () => { auth.resolve(true); });
   expect(app.container.querySelector(".copilot-loading .is-current")?.textContent).toBe("copilot.progress.saving");
   await act(async () => { saved.resolve({ teamId: "saved", isCurrent: () => true }); });
-  expect(app.container.querySelector(".copilot-loading .is-current")?.textContent).toBe("copilot.progress.preparing");
-  await act(async () => { prepared.resolve({ scope: "pokemon", sets: [] }); });
   expect(app.container.querySelector(".copilot-loading .is-current")?.textContent).toBe("copilot.progress.waiting");
   expect(app.container.querySelectorAll(".copilot-loading .is-complete")).toHaveLength(3);
   await act(async () => { analyzed.resolve(); });
@@ -206,20 +220,22 @@ it("shows regulation and battle format before starting a paid analysis", async (
   expect(state.analyze).not.toHaveBeenCalled();
 });
 
-it.each(["failed", "conflict", "auth"])("does not call AI or preparation when saving/auth is blocked: %s", async (kind) => {
+it.each(["failed", "conflict", "auth"])("does not call AI when saving/auth is blocked after the estimate: %s", async (kind) => {
   if (kind === "auth") state.authenticate.mockResolvedValue(false);
   else state.save.mockResolvedValue(null);
   const app = await mount(); await app.confirm();
-  expect(state.prepare).not.toHaveBeenCalled(); expect(state.analyze).not.toHaveBeenCalled();
+  expect(state.prepare).toHaveBeenCalledTimes(1); expect(state.analyze).not.toHaveBeenCalled();
   if (kind !== "auth") expect(app.container.querySelector('[role="alert"]')?.textContent).toContain("copilot.autoSaveFailed");
 });
 
-it("does not call AI after the team changes during request preparation", async () => {
+it("does not call AI after the team changes during estimate preparation", async () => {
   let current = true;
   state.save.mockResolvedValue({ teamId: "saved", isCurrent: () => current });
   const prepared = deferred<unknown>(); state.prepare.mockReturnValue(prepared.promise);
   const app = await mount(); await app.confirm(); current = false;
   await act(async () => { prepared.resolve({ scope: "pokemon", sets: [] }); });
+  const button = app.container.querySelector<HTMLButtonElement>(".copilot-analyze-confirmation-actions button:last-child");
+  await act(async () => { button?.click(); });
   expect(state.analyze).not.toHaveBeenCalled();
 });
 

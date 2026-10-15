@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
 import { act, useCallback, useState, type ComponentProps, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CopilotAnalyzeControl } from "./CopilotAnalyzeControl";
 import { CopilotModelControl } from "./CopilotModelControl";
+import { estimateCopilotAnalysis } from "../utils/copilotEstimate";
+import type { CopilotAnalysisRequest } from "../utils/copilotContracts";
+import { deferred } from "../test/renderHook";
+
+vi.mock("../utils/copilotEstimate", () => ({ estimateCopilotAnalysis: vi.fn() }));
+const request = { scope: "team" } as CopilotAnalysisRequest;
+beforeEach(() => {
+  vi.mocked(estimateCopilotAnalysis).mockReset().mockResolvedValue({
+    inputTokens: 12000, totalTokens: [14000, 16000], seconds: [12, 24], costUsd: [0.002, 0.0032],
+  });
+});
 
 vi.mock("../i18n/useLocalization", () => ({
   useLocalization: () => ({
@@ -31,7 +42,7 @@ type AnalyzeProps = ComponentProps<typeof CopilotAnalyzeControl>;
 function AnalyzeHarness(props: Partial<AnalyzeProps>) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
-  return <CopilotAnalyzeControl scope="team" reasoningEffort="low"
+  return <CopilotAnalyzeControl scope="team" request={request} reasoningEffort="low"
     isAnalyzeDisabled={false} isBusy={false} hasResponse={false}
     hasPersonalApiKey={true} analyzeLabel="Analyze" onConfirm={() => {}}
     {...props} isAnalyzeConfirmationOpen={open}
@@ -44,12 +55,41 @@ it("asks for confirmation before analysis and displays the matching estimates", 
   await click(container.querySelector(".copilot-analyze-button"));
   expect(onConfirm).not.toHaveBeenCalled();
   const dialog = container.querySelector('[role="dialog"]')!;
-  expect(dialog.textContent).toContain('"seconds":16');
-  expect(dialog.textContent).toContain('"cost":"0.0018"');
+  expect(dialog.textContent).toContain('12–24');
+  expect(dialog.textContent).toContain('14,000–16,000');
+  expect(dialog.textContent).toContain('$0.0020–$0.0032');
   expect(dialog.textContent).toContain("copilot.autoSaveNotice");
   expect(document.activeElement).toBe(dialog.querySelector("strong"));
   await click(dialog.querySelectorAll("button")[1]);
   expect(onConfirm).toHaveBeenCalledTimes(1);
+});
+
+it("does not submit while estimating, aborts on dismiss, and ignores a late estimate", async () => {
+  const pending = deferred<null>();
+  vi.mocked(estimateCopilotAnalysis).mockReturnValueOnce(pending.promise);
+  const onConfirm = vi.fn();
+  const { container } = await mount(<AnalyzeHarness onConfirm={onConfirm} />);
+  await click(container.querySelector(".copilot-analyze-button"));
+  expect(container.textContent).toContain("copilot.estimateLoading");
+  const confirm = container.querySelector<HTMLButtonElement>(".copilot-analyze-confirmation-actions button:last-child")!;
+  expect(confirm.disabled).toBe(true);
+  await click(confirm);
+  expect(onConfirm).not.toHaveBeenCalled();
+  const signal = vi.mocked(estimateCopilotAnalysis).mock.calls[0][2];
+  await click(container.querySelector(".copilot-analyze-confirmation-actions button"));
+  expect(signal.aborted).toBe(true);
+  await act(async () => pending.resolve(null));
+  expect(container.querySelector('[role="dialog"]')).toBeNull();
+});
+
+it("allows explicit confirmation without a fabricated price if the estimate fails", async () => {
+  vi.mocked(estimateCopilotAnalysis).mockRejectedValueOnce(new Error("Worker unavailable"));
+  const onConfirm = vi.fn();
+  const { container } = await mount(<AnalyzeHarness onConfirm={onConfirm} />);
+  await click(container.querySelector(".copilot-analyze-button"));
+  expect(container.textContent).toContain("copilot.estimateUnavailable");
+  await click(container.querySelector(".copilot-analyze-confirmation-actions button:last-child"));
+  expect(onConfirm).toHaveBeenCalledOnce();
 });
 
 it("shows elapsed time only during analysis and resets it for the next request", async () => {

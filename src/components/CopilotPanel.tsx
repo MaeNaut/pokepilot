@@ -28,6 +28,7 @@ import {
   type BattleUsageSource,
 } from "../api/battleUsage";
 import type {
+  CopilotAnalysisRequest,
   CopilotAnalysisScope,
 } from "../utils/copilotContracts";
 import type { TeamDiagnosticsResult } from "../utils/teamDiagnostics";
@@ -149,6 +150,13 @@ export function CopilotPanel({
     setAnalysisPreference((current) => ({ ...current, reasoningEffort: next }));
   const [isAnalyzeConfirmationOpen, setIsAnalyzeConfirmationOpen] = useState(false);
   const [isAnalysisStarting, setIsAnalysisStarting] = useState(false);
+  const [isEstimatePreparing, setIsEstimatePreparing] = useState(false);
+  const preparingEstimateRef = useRef(false);
+  const [confirmationRequest, setConfirmationRequest] = useState<{
+    context: string;
+    request: CopilotAnalysisRequest;
+    source: BattleUsageSource | null;
+  } | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
   const [analysisStartError, setAnalysisStartError] = useState<"before-call" | "after-call" | null>(null);
   const startingAnalysisRef = useRef(false);
@@ -221,6 +229,10 @@ export function CopilotPanel({
   const latestSubmissionContext = useRef(submissionContext);
   latestSubmissionContext.current = submissionContext;
   useEffect(() => { setAnalysisStartError(null); }, [submissionContext, savedTeamId]);
+  useEffect(() => {
+    setIsAnalyzeConfirmationOpen(false);
+    setConfirmationRequest(null);
+  }, [submissionContext]);
   const {
     selectingCandidateId, savingCandidateId, candidateApplyFailure, candidateSaveStatus,
     optimizationActionStatus, setOptimizationActionStatus,
@@ -295,6 +307,7 @@ export function CopilotPanel({
   const isAnalyzeDisabled =
     analysisState.status === "loading" ||
     isAnalysisStarting ||
+    isEstimatePreparing ||
     isAnalysisPreparing ||
     abilityIndexStatus === "loading" ||
     (account.enabled && account.status === "ready" && account.personalApiKeyStatus !== "ready") ||
@@ -320,12 +333,29 @@ export function CopilotPanel({
     }
   }, [analysisState.fingerprint, analysisState.historyEntryId, response, scope, loadingStartedAt]);
 
-  function requestAnalyze() {
-    if (!isAnalyzeDisabled) setIsAnalyzeConfirmationOpen(true);
+  async function requestAnalyze() {
+    if (isAnalyzeDisabled || preparingEstimateRef.current) return;
+    preparingEstimateRef.current = true;
+    setIsEstimatePreparing(true);
+    setAnalysisStartError(null);
+    const context = submissionContext;
+    try {
+      const source = usesUsageData(scope) ? await loadBattleUsageSource(battleFormat) : null;
+      const preparedRequest = await prepareRequest();
+      if (latestSubmissionContext.current !== context) return;
+      if (!preparedRequest) { setAnalysisStartError("before-call"); return; }
+      setConfirmationRequest({ context, request: preparedRequest, source });
+      setIsAnalyzeConfirmationOpen(true);
+    } catch {
+      if (latestSubmissionContext.current === context) setAnalysisStartError("before-call");
+    } finally {
+      preparingEstimateRef.current = false;
+      setIsEstimatePreparing(false);
+    }
   }
 
   async function handleAnalyze() {
-    if (isAnalyzeDisabled || startingAnalysisRef.current) return;
+    if (isAnalyzeDisabled || startingAnalysisRef.current || confirmationRequest?.context !== submissionContext) return;
     startingAnalysisRef.current = true;
     setIsAnalysisStarting(true);
     setAnalysisProgress({ context: submissionContext, startedAt: Date.now(), stage: "auth" });
@@ -348,9 +378,7 @@ export function CopilotPanel({
       if (!saved.isCurrent() || !isCurrent()) return;
       setOptimizationActionStatus(null);
       reportStage("preparing");
-      const source = usesUsageData(scope) ? await loadBattleUsageSource(battleFormat) : null;
-      const preparedRequest = await prepareRequest();
-      if (!preparedRequest) { if (isCurrent()) setAnalysisStartError("before-call"); return; }
+      const { source, request: preparedRequest } = confirmationRequest;
       if (!saved.isCurrent() || !isCurrent()) return;
       if (usesUsageData(scope)) {
         const latestSource = await loadBattleUsageSource(battleFormat);
@@ -420,11 +448,13 @@ export function CopilotPanel({
 
           <CopilotAnalyzeControl
             scope={scope}
+            request={confirmationRequest?.context === submissionContext ? confirmationRequest.request : request}
             reasoningEffort={reasoningEffort}
             battleContext={battleContext}
             isAnalyzeConfirmationOpen={isAnalyzeConfirmationOpen}
             isAnalyzeDisabled={isAnalyzeDisabled}
             isBusy={isAnalysisBusy}
+            isEstimatePreparing={isEstimatePreparing}
             startedAt={loadingStartedAt}
             hasResponse={Boolean(response)}
             hasPersonalApiKey={account.hasPersonalApiKey}

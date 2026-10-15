@@ -18,6 +18,60 @@ retain their original models and settings.
 
 ## Purpose
 
+### Preflight Estimates (October 15, 2026)
+
+The confirmation menu no longer uses fixed time/cost numbers. It prepares the
+complete request (including recommendation/optimization candidates) before
+confirmation, then counts the same common/scope/locale/compressed-data text as
+the provider path, plus the grounded output schema, in a lazy browser Worker.
+`server/pokepilotPromptParts.ts` is shared with the actual provider request;
+confirmation submits that prepared snapshot, with the existing save/auth and
+statistics-rollover checks. Opening an estimate neither saves the team nor
+calls OpenAI. Cancelling/invalidating the context discards the pending estimate.
+
+Input uses local `js-tiktoken` / `o200k_base` and estimated message framing,
+**not** OpenAI's authoritative input-token count endpoint. Model-specific
+encoding/framing/schema differences may cause error. Exact future output,
+reasoning tokens, cache hits, retries and queue delays cannot be known in advance.
+The UI shows approximate total tokens, duration and cost ranges, not a bill or
+spending cap. Cache discounts are not assumed; the upper cost includes a possible
+write of the common/scope cache prefix using the shared usage price calculator.
+
+Output/duration profiles come from 80 existing published-team v99 runs:
+`.tmp/mc-final/v99-fresh-*` (low) and `.tmp/mc-medium/after-medium-*` (medium),
+five independent teams for each scope/format/effort cell. Sanitized p20/p80,
+median input and reference roster size live in `copilotEstimateProfiles.ts`.
+Team output scales by `0.5 + 0.5 * rosterRatio`; other scopes by
+`0.8 + 0.2 * rosterRatio`. Duration scales with 15% relative input and 85%
+relative output; both receive a 0.75-1.5 safety margin. These weights are
+explicit heuristics, not a fitted latency model or confidence interval. Medium
+output forecasts are capped at 16k (low 8k). Refresh profiles with new measured
+calls as prompts/provider behavior change. Uncalibrated matchup or failed local
+calculation displays unavailable, not an invented fallback price.
+
+No new paid evaluation calls were made for this feature. Existing mocked-provider
+tests preserve request content; regression coverage includes roster/format/effort,
+input growth, cancellation, worker failure, exact prepared-input reuse and the
+save-before-AI invariant. The tokenizer is a separate on-demand ~2.4 MB raw worker
+asset, not part of the initial application JavaScript.
+
+Verification: 1,444 tests, lint and production build passed. Browser checks covered
+Korean low at 360px with no dialog overflow, plus English medium in Chrome.
+One intermediate full run intermittently observed two history writes instead of
+one in the pre-existing account-lifecycle test; its isolated 19-test file and the
+subsequent full run passed. No history/sync code was changed to suppress it.
+No commit, push or deployment was performed for this change.
+
+Latest Speed grounding review: [October 15 Speed evidence](AI_SPEED_EVIDENCE_REVIEW_2026_10_15.md). Reused 30 baseline outputs and made 30 new evaluation-key Luna low calls, estimated $0.047909475. Retain shared item-Speed arithmetic with game rounding, correct ties and missing-stat handling (v114/core v13). Do not retain the extra model-bound current/Mega/conditional Speed table: Speed-error responses remained 2/30, all factual-error responses 5/30 -> 4/30, core explanations 22/30 -> 21/30, concerns 15/30 -> 19/30, and observed median latency 13.277 -> 17.880 seconds. This is mixed exploratory evidence, not a causal regression or an accuracy win. Final serializer restores the baseline layout; no deployment was performed.
+
+Latest layout follow-up: [October 14 unified-owner review](AI_UNIFIED_OWNER_REVIEW_2026_10_14.md). Eight selected-Pokemon cases repeated five times per arm produced 80 new evaluation-key Luna low calls, estimated $0.122276075. Adopt one owner-reference layout for all scopes (v112/core v13) for consistency, not as a demonstrated quality upgrade: confirmed-error responses were 7/40 -> 6/40, core explanations 33/40 -> 30/40, and concern responses 20/40 -> 23/40. The predefined hold thresholds were not crossed, but protected setup explanations and remaining factual errors need further work. Input grew 5.18% and estimated billed cost 4.26%. All 1,419 tests, lint and build passed; no deployment was performed. Internal matchup has structural, not paid prose-quality, coverage.
+
+Initial owner/state layout pilot (scope decision superseded by the follow-up): [October 14 owner-binding review](AI_OWNER_BINDING_REVIEW_2026_10_14.md). Sixty new evaluation-key Luna low calls cost an estimated $0.122953005. Keep shared mechanic references beside owners only for team, Pokemon recommendation and sample recommendation (final v111/core v13). Those scopes had 6/21 -> 3/21 confirmed-error responses, but qualitative concerns increased; this is not a general accuracy estimate. Restore selected-Pokemon encoding after lost strategy detail and leave untested matchup unchanged. Input grew 3.51% and estimated billed cost 0.92% in retained scopes. All 1,416 tests, lint and build passed; no deployment was performed.
+
+Latest prompt reduction: [October 14 controlled ablation review](AI_PROMPT_ABLATION_REVIEW_2026_10_14.md). Ninety new evaluation-key Luna low calls cost an estimated $0.20354207. Output/locale deduplication and scope-unused audit deletion were rolled back after factual/strategic regressions. Keep only the Singles Pokemon scope correction (v109/core v13/Pokemon v16): full input fell 2.79% on the isolated replay, without a demonstrated cost, latency or general accuracy improvement. All 1,411 tests, lint and build passed; no deployment was performed.
+
+Latest quality regression: [October 14 current Luna low review](AI_QUALITY_REGRESSION_REVIEW_2026_10_14.md). Thirty current-input calls cover the four main scopes and full-roster replacements; four responses contain confirmed prose errors despite renderable output. A narrow coverage-instruction draft was rejected after a 12-call replay; v103 remains unchanged. Sample cards now show deterministic stat comparisons preserved through history, and the older published-team runner is aligned with product form lookup. Forty-eight total evaluation calls cost an estimated $0.130764085. All 1,410 tests and eight browser layout/history combinations passed. No deployment was performed.
+
 Latest state-data fix: [October 5 recommendation Mega-state review](AI_RECOMMENDATION_MEGA_REVIEW_2026_10_05.md). Prompt v103/recommendation v15 keeps a candidate's current form separate from its held-stone Mega projection, with distinct ability/type evidence. A 24-call fixed-v103 Luna low data comparison cost an estimated $0.053761. Mega-choice explanations became more frequent, but the weather/Solar Beam connection appeared only once and incorrect prose remains. Input grew 1.45% and no-cache equivalent cost 0.92% in this limited mix; this excludes the instruction/schema change. All 1,283 tests, lint and Cloudflare build passed. No deployment was performed.
 
 Previous input adjustment: [October 5 selective Pokemon recommendation input](AI_RECOMMENDATION_SELECTIVE_REVIEW_2026_10_05.md). Keep 30 representative candidates and the expanded sample pool; send at most three relevant alternative moves and two conditional item alternatives per Pokemon. A 24-call fixed-prompt Luna low comparison reduced input by 48.2% and no-cache equivalent cost by 42.7%, without a latency improvement or proven quality gain. A six-call follow-up separates stale fixture roles from current behavior. Thirty calls cost an estimated $0.148146; all 1,269 tests passed. No deployment was performed.

@@ -18,6 +18,8 @@ import { createCopilotAnalysisRequest } from '../src/utils/copilotRequestBuilder
 import { loadPopularUsageSet } from '../src/api/battleUsage';
 import { resolveUsageCalculatorItems } from '../src/calculator/calculatorUsageBuild';
 import { createGeneralSetOptimizationPlan } from '../src/calculator/setOptimizer/generalPlan';
+import { getMegaEvolutionIndexEntry } from '../src/utils/megaEvolution';
+import { BATTLE_USAGE_OPTION_LIMITS } from '../src/api/battleUsageData';
 
 const argument=(name:string,fallback:string)=>process.argv.find(arg=>arg.startsWith(`--${name}=`))?.slice(name.length+3)??fallback;
 const root=process.cwd(), restore=installAiEvaluationRuntime(root), dir=argument('output','.tmp/mc-evaluation');
@@ -37,9 +39,11 @@ try {
       }
       console.log('Imported',fixture.id,context.team.map(p=>p?.name),JSON.stringify(context.validity));
       const slot=fixture.id==='mc-lloyd'?5:fixture.id==='mc-tagerau'?1:0;
-      const member=context.team[slot]!,b=context.buildState,usageSet=await loadPopularUsageSet(member.id,fixture.battleFormat);
-      if (!usageSet) throw new Error(`No usage sample for ${fixture.id}`);
-      const plan=createGeneralSetOptimizationPlan({selectedSlot:slot,member,build:{item:b.itemBySlot[slot]??null,ability:b.abilityBySlot[slot]!,natureId:b.natureBySlot[slot]!,evs:b.evsBySlot[slot]!,moveIds:b.moveIdsBySlot[slot]!},reservedItemIds:context.team.flatMap((m,i)=>i!==slot&&m&&b.itemBySlot[i]?[b.itemBySlot[i]!.showdownId??b.itemBySlot[i]!.id]:[]),usageSet,usageItems:resolveUsageCalculatorItems(usageSet,itemIndex,4)});
+      const member=context.team[slot]!,b=context.buildState;
+      const usagePokemonId=getMegaEvolutionIndexEntry(member.id,b.itemBySlot[slot],pokemonIndex)?.name??member.id;
+      const usageSet=await loadPopularUsageSet(usagePokemonId,fixture.battleFormat);
+      if (!usageSet) console.warn(`No usage sample for ${fixture.id}; preparing from the current build.`);
+      const plan=createGeneralSetOptimizationPlan({selectedSlot:slot,member,usagePokemonId,build:{item:b.itemBySlot[slot]??null,ability:b.abilityBySlot[slot]!,natureId:b.natureBySlot[slot]!,evs:b.evsBySlot[slot]!,moveIds:b.moveIdsBySlot[slot]!},reservedItemIds:context.team.flatMap((m,i)=>i!==slot&&m&&b.itemBySlot[i]?[b.itemBySlot[i]!.showdownId??b.itemBySlot[i]!.id]:[]),usageSet,usageItems:usageSet?resolveUsageCalculatorItems(usageSet,itemIndex,BATTLE_USAGE_OPTION_LIMITS.items):[]});
       const rec=await createAiPokemonRecommendationEvaluationCase(fixture,5,options,{recommendationMode:'addition'});
       const five=await createAiFixtureAnalysisContext(fixture,options,5);
       for(const scope of ['team','pokemon','recommendation','optimization'] as const) {

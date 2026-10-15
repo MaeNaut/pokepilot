@@ -1,14 +1,11 @@
 import OpenAI from "openai";
 import type { ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
-import { serializePokePilotModelRequest } from "./pokepilotModelInput.js";
+import { createPokePilotPromptParts } from "./pokepilotPromptParts.js";
 import type { CopilotAnalysisRequest } from "../src/utils/copilotContracts.js";
 import { copilotGroundedModelOutputJsonSchema } from "../src/utils/copilotModelSchema.js";
 import {
-  getPokePilotLocaleInstructions,
-  getPokePilotScopeInstructions,
   POKEPILOT_AI_CORE_PROMPT_VERSION,
   POKEPILOT_AI_PROMPT_VERSION,
-  pokepilotCommonInstructions,
 } from "./pokepilotPrompts.js";
 import {
   createLunaStandardUsage,
@@ -98,16 +95,7 @@ export async function analyzeWithOpenAiLuna(
     signal,
   }: AnalyzeWithOpenAiLunaOptions = {},
 ): Promise<LunaAnalysisResult> {
-  const modelRequest = {
-    ...request,
-    battleRules: {
-      activePokemonPerSide: request.battleFormat === "singles" ? 1 : 2,
-      activeAlliesPerPokemon: request.battleFormat === "singles" ? 0 : 1,
-      selectedPokemonPerBattle: request.battleFormat === "singles" ? 3 : 4,
-      maximumActivatedMegas: 1,
-    },
-  };
-  const modelInput = serializePokePilotModelRequest(modelRequest);
+  const prompt = createPokePilotPromptParts(request);
   const openAiClient =
     client ??
     new OpenAI({
@@ -132,7 +120,7 @@ export async function analyzeWithOpenAiLuna(
         content: [
           {
             type: "input_text",
-            text: pokepilotCommonInstructions,
+            text: prompt.common,
             prompt_cache_breakpoint: { mode: "explicit" },
           },
         ],
@@ -143,7 +131,7 @@ export async function analyzeWithOpenAiLuna(
         content: [
           {
             type: "input_text",
-            text: getPokePilotScopeInstructions(request.scope, request.battleFormat),
+            text: prompt.scope,
             prompt_cache_breakpoint: { mode: "explicit" },
           },
         ],
@@ -154,8 +142,7 @@ export async function analyzeWithOpenAiLuna(
         content: [
           {
             type: "input_text",
-            text: [modelInput.instructions, getPokePilotLocaleInstructions(request.locale)]
-              .filter(Boolean).join("\n\n"),
+            text: prompt.locale,
           },
         ],
       },
@@ -165,7 +152,7 @@ export async function analyzeWithOpenAiLuna(
         content: [
           {
             type: "input_text",
-            text: modelInput.text,
+            text: prompt.data,
           },
         ],
       },

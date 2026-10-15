@@ -1,0 +1,2409 @@
+{
+  "date": "2026-10-14",
+  "protocol": {
+    "createdAt": "2026-10-15T03:03:23.794Z",
+    "repeats": 5,
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "cases": [
+      [
+        "archaludon-singles",
+        "mc-mugepome-pokemon-en",
+        0,
+        [
+          "Rain enables Electro Shot in Singles without simultaneous allied actors",
+          "Water/Electric resistance belongs to Dragon typing"
+        ]
+      ],
+      [
+        "floette-doubles",
+        "mc-ddee-pokemon-ko",
+        0,
+        [
+          "Current versus Mega stats/ability remain separate",
+          "Dazzling Gleam targets foes only"
+        ]
+      ],
+      [
+        "zoroark-round",
+        "doubles-strategy-zoroark-round-chain-pokemon",
+        3,
+        [
+          "Concrete Illusion disguise partner and misleading expectation",
+          "Mega Gardevoir Pixilate payoff",
+          "Only two allied actors active"
+        ]
+      ],
+      [
+        "pelipper-singles",
+        "mc-mugepome-pokemon-en",
+        1,
+        [
+          "Drizzle activates on entry, not move-speed ordering",
+          "Rain support to Archaludon is sequential switching in Singles"
+        ]
+      ],
+      [
+        "charizard-doubles",
+        "mc-kiran-team-en",
+        0,
+        [
+          "Blaze is current, Drought only Mega Y",
+          "Heat Wave is Special",
+          "Sun/rain choice is not simultaneous weather"
+        ]
+      ],
+      [
+        "staraptor-charm",
+        "doubles-strategy-staraptor-charm-funnel-team",
+        0,
+        [
+          "Charm plus Contrary interaction reverses the drop",
+          "Current and Mega ability state separated"
+        ]
+      ],
+      [
+        "delphox-setup",
+        "doubles-strategy-floette-delphox-protect-ace-team",
+        3,
+        [
+          "Names selected Nasty Plot setup and allied protection",
+          "No invented same-type duplication"
+        ]
+      ],
+      [
+        "vivillon-support",
+        "doubles-strategy-floette-delphox-protect-ace-team",
+        0,
+        [
+          "Support enabling ally setup rather than invented personal offense",
+          "Move ownership and target restrictions"
+        ]
+      ]
+    ],
+    "gate": {
+      "hardErrors": "Reject if candidate has at least 4 more confirmed erroneous responses out of 40, or a new repeated severe mechanics mistake in >=3/5 outputs of a case.",
+      "coreOmissions": "Reject if >=2 cases each lose >=2/5 successful core-tactic descriptions, counting omissions separately from false statements.",
+      "limitations": "Exploratory product tolerance, not statistical proof. Ambiguous wording counted separately. Frozen public-team data, not current meta ranking."
+    }
+  },
+  "finalPromptVersion": 112,
+  "sourceHashes": {
+    "server/pokepilotModelInput.ts": "777016cc18e0e8706c5afeceee81ed2579106887a878606a79e1e66e557219b1",
+    "server/pokepilotPrompts.ts": "da5a035abca8b6c6f706a3b2ed25c3d10466a75d5bc2024d126b2eb3c3f385d2"
+  },
+  "verification": {
+    "allRequestsRecoveredExactly": true,
+    "allMatchedSettingsEqual": true,
+    "allProviderRequestHashesMatch": true,
+    "finalEncoderMatchesObservedCandidate": true
+  },
+  "decision": "adopt-unified-layout-for-consistency-with-mixed-quality-evidence",
+  "gateResult": {
+    "extraConfirmedErrorResponses": -1,
+    "casesLosingAtLeastTwoCoreSuccesses": [
+      "delphox-setup"
+    ],
+    "newSevereMistakeRepeatedAtLeastThreeTimesInOneCase": false,
+    "severeMistakeAssessment": "Manual review found no single new severe mistake repeated in >=3/5 outputs of a case. This is not a general safety guarantee."
+  },
+  "summary": {
+    "before": {
+      "responses": 40,
+      "confirmedErrorResponses": 7,
+      "concernResponses": 20,
+      "coreSuccesses": 33,
+      "rawAuditResponses": 6,
+      "finalAuditResponses": 6,
+      "inputTokens": 532250,
+      "outputTokens": 46742,
+      "cachedInputTokens": 187675,
+      "estimatedCostUsd": 0.05986387500000002,
+      "medianDurationMs": 12898.5
+    },
+    "after": {
+      "responses": 40,
+      "confirmedErrorResponses": 6,
+      "concernResponses": 23,
+      "coreSuccesses": 30,
+      "rawAuditResponses": 7,
+      "finalAuditResponses": 7,
+      "inputTokens": 559795,
+      "outputTokens": 47789,
+      "cachedInputTokens": 194020,
+      "estimatedCostUsd": 0.0624122,
+      "medianDurationMs": 13149
+    }
+  },
+  "byCase": [
+    {
+      "id": "archaludon-singles",
+      "before": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 1,
+        "core": 5,
+        "rawAudit": 1,
+        "finalAudit": 1
+      },
+      "after": {
+        "responses": 5,
+        "errors": 2,
+        "concerns": 3,
+        "core": 5,
+        "rawAudit": 0,
+        "finalAudit": 0
+      }
+    },
+    {
+      "id": "floette-doubles",
+      "before": {
+        "responses": 5,
+        "errors": 2,
+        "concerns": 3,
+        "core": 5,
+        "rawAudit": 1,
+        "finalAudit": 1
+      },
+      "after": {
+        "responses": 5,
+        "errors": 1,
+        "concerns": 5,
+        "core": 5,
+        "rawAudit": 0,
+        "finalAudit": 0
+      }
+    },
+    {
+      "id": "zoroark-round",
+      "before": {
+        "responses": 5,
+        "errors": 3,
+        "concerns": 4,
+        "core": 2,
+        "rawAudit": 0,
+        "finalAudit": 0
+      },
+      "after": {
+        "responses": 5,
+        "errors": 1,
+        "concerns": 2,
+        "core": 3,
+        "rawAudit": 2,
+        "finalAudit": 2
+      }
+    },
+    {
+      "id": "pelipper-singles",
+      "before": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 0,
+        "core": 5,
+        "rawAudit": 1,
+        "finalAudit": 1
+      },
+      "after": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 1,
+        "core": 4,
+        "rawAudit": 0,
+        "finalAudit": 0
+      }
+    },
+    {
+      "id": "charizard-doubles",
+      "before": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 5,
+        "core": 5,
+        "rawAudit": 0,
+        "finalAudit": 0
+      },
+      "after": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 3,
+        "core": 5,
+        "rawAudit": 1,
+        "finalAudit": 1
+      }
+    },
+    {
+      "id": "staraptor-charm",
+      "before": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 1,
+        "core": 5,
+        "rawAudit": 0,
+        "finalAudit": 0
+      },
+      "after": {
+        "responses": 5,
+        "errors": 1,
+        "concerns": 1,
+        "core": 5,
+        "rawAudit": 0,
+        "finalAudit": 0
+      }
+    },
+    {
+      "id": "delphox-setup",
+      "before": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 1,
+        "core": 5,
+        "rawAudit": 1,
+        "finalAudit": 1
+      },
+      "after": {
+        "responses": 5,
+        "errors": 0,
+        "concerns": 3,
+        "core": 3,
+        "rawAudit": 4,
+        "finalAudit": 4
+      }
+    },
+    {
+      "id": "vivillon-support",
+      "before": {
+        "responses": 5,
+        "errors": 2,
+        "concerns": 5,
+        "core": 1,
+        "rawAudit": 2,
+        "finalAudit": 2
+      },
+      "after": {
+        "responses": 5,
+        "errors": 1,
+        "concerns": 5,
+        "core": 0,
+        "rawAudit": 0,
+        "finalAudit": 0
+      }
+    }
+  ],
+  "runs": [
+    {
+      "id": "archaludon-singles",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "b2b5585c45e58c8075bde914e0ac0c981a5e708524239e50452118edd0be11ec",
+      "durationMs": 18876,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 0,
+        "cacheWriteTokens": 4570,
+        "outputTokens": 1103,
+        "reasoningTokens": 209,
+        "totalTokens": 14082,
+        "costUsd": 0.00196365
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "49e95b44cb546e3c84146daceb2d5facb879c17e5575fda10e578cf9c0e989dd",
+      "durationMs": 10430,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 907,
+        "reasoningTokens": 192,
+        "totalTokens": 13886,
+        "costUsd": 0.0013401
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "447e7fc5c59b68554e398d0fbbc3234b14a155898015e615826156ba7465e053",
+      "durationMs": 11857,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 954,
+        "reasoningTokens": 256,
+        "totalTokens": 13933,
+        "costUsd": 0.0013636000000000002
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "1ac8051d5d2ec80dcc0731de5256ff6be3ba98bedf3a39ad1b0395057272d84b",
+      "durationMs": 11963,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1014,
+        "reasoningTokens": 214,
+        "totalTokens": 13993,
+        "costUsd": 0.0013936
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [
+        "Recommendation ground-pivot discusses covering Ground without the selected Pokemon's matching weakness fact."
+      ],
+      "auditErrors": [
+        "Recommendation ground-pivot discusses covering Ground without the selected Pokemon's matching weakness fact."
+      ]
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "1f7727a7823daed250946279ad0941210629326d93bbce8a4867e454968dcdce",
+      "durationMs": 11931,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1071,
+        "reasoningTokens": 188,
+        "totalTokens": 14050,
+        "costUsd": 0.0014221000000000001
+      },
+      "errors": [],
+      "concerns": [
+        "Wording implies HP investment contributes to the displayed Special Defense stat."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "684305d08d243d5e13bbfa1ea9c2696775ba98e4771c27685216969093db786a",
+      "durationMs": 14793,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 856,
+        "reasoningTokens": 222,
+        "totalTokens": 14528,
+        "costUsd": 0.0013839000000000002
+      },
+      "errors": [],
+      "concerns": [
+        "Uses 'not a requirement to keep Archaludon active beside Pelipper' rather than clearly stating simultaneous allies are impossible in Singles."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "100a0f37b6bab24f4ae91358a79dcde700067ef964a5ff67b94de202d868e1af",
+      "durationMs": 12106,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1085,
+        "reasoningTokens": 275,
+        "totalTokens": 14757,
+        "costUsd": 0.0014984
+      },
+      "errors": [
+        "Explains acting before Pelipper 'when both are active' in Singles."
+      ],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "9755d29090a700bd7d36872fa358d21bb917da15aa6c136dfb8898c8de3b7a76",
+      "durationMs": 11764,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1155,
+        "reasoningTokens": 236,
+        "totalTokens": 14827,
+        "costUsd": 0.0015334
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "2b96580efeccfb9e81ea482da42be104bbf28941e834955d04cd2a7993df265d",
+      "durationMs": 9647,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 838,
+        "reasoningTokens": 370,
+        "totalTokens": 14510,
+        "costUsd": 0.0013749
+      },
+      "errors": [],
+      "concerns": [
+        "Introduces unselected Power Herb as an unnecessary explanation rather than using only the supplied held-item context."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "archaludon-singles",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "290defefe1e159049e348499486e7161f3eaf0be469c08a9ea3930852cf7fdd1",
+      "durationMs": 13674,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 969,
+        "reasoningTokens": 269,
+        "totalTokens": 14641,
+        "costUsd": 0.0014404
+      },
+      "errors": [
+        "Claims Fighting resistance, then self-corrects to Fighting weakness in the same paragraph; contradictory sentence remains public."
+      ],
+      "concerns": [
+        "Leaves a question and self-editing wording in the final public paragraph."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "79283f89b6096c79d7fd469ed7d079bbfc894dddde389a426d200a79a678b54a",
+      "durationMs": 21102,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 1775,
+        "outputTokens": 1800,
+        "reasoningTokens": 308,
+        "totalTokens": 15380,
+        "costUsd": 0.002017165
+      },
+      "errors": [],
+      "concerns": [
+        "Literal nonvolatile-status translation is technical Korean rather than natural prose."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "ee12b9639ef533b77b68ed88b7fea58c84a298c65b44ff2a9b87843490785dbe",
+      "durationMs": 16493,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1365,
+        "reasoningTokens": 376,
+        "totalTokens": 14945,
+        "costUsd": 0.00159554
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "1aafcd739bdc46e77df898b1e77bead1bc2814aa6ace952e390bbc3736db675e",
+      "durationMs": 11847,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1173,
+        "reasoningTokens": 218,
+        "totalTokens": 14753,
+        "costUsd": 0.00149954
+      },
+      "errors": [
+        "Advises protecting or switching the ally because of foes-only Dazzling Gleam."
+      ],
+      "concerns": [
+        "Nonsensical non-status-status translation for nonvolatile status."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "b0c3235a73a6a576d5b11272a5f94828c0ba834f196272123b8b1d8146e85391",
+      "durationMs": 11114,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 974,
+        "reasoningTokens": 292,
+        "totalTokens": 14554,
+        "costUsd": 0.00140004
+      },
+      "errors": [],
+      "concerns": [
+        "Awkward nonpersistent-status translation; unnecessary ally-position qualifier for foes-only Dazzling Gleam."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "d13fe935dfc496d03642a28166181c3db5413fce8fbc60b8122aa82584063080",
+      "durationMs": 16863,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1791,
+        "reasoningTokens": 406,
+        "totalTokens": 15371,
+        "costUsd": 0.00180854
+      },
+      "errors": [
+        "Says ally positioning is needed to avoid Dazzling Gleam hitting the ally, although it targets foes only."
+      ],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [
+        "Recommendation mega-floette names 라이츄 without fact evidence for slot 5."
+      ],
+      "auditErrors": [
+        "Recommendation mega-floette names 라이츄 without fact evidence for slot 5."
+      ]
+    },
+    {
+      "id": "floette-doubles",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "23d7d47e3c99f790020a49c0a295d678b917ef04d1e40a37cad79310c3420873",
+      "durationMs": 11111,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1040,
+        "reasoningTokens": 203,
+        "totalTokens": 15315,
+        "costUsd": 0.00150254
+      },
+      "errors": [],
+      "concerns": [
+        "Uses nonsensical non-rank status terminology for nonvolatile status."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "469ce2bf167dfdd971d510658c68416b157fe1e0eed04f7942325d7d91b7ccfa",
+      "durationMs": 15376,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1486,
+        "reasoningTokens": 373,
+        "totalTokens": 15761,
+        "costUsd": 0.00172554
+      },
+      "errors": [
+        "Calls Mega Raichu Y's Special Attack higher in comparison with Mega Floette; supplied stats are 180 versus 192."
+      ],
+      "concerns": [
+        "Uses nonsensical non-status-status terminology."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "dedae0b7e9939f81833017caa8dd524ff7148c6c54850ef5e0e8d24e703548b6",
+      "durationMs": 20214,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1779,
+        "reasoningTokens": 197,
+        "totalTokens": 16054,
+        "costUsd": 0.00187204
+      },
+      "errors": [],
+      "concerns": [
+        "Uses nonsensical non-move-status terminology for nonvolatile status."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "1eacb48735fc4041793ebe0c389db792a76de32f91f29609f94d5b864feb08d1",
+      "durationMs": 18698,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1726,
+        "reasoningTokens": 249,
+        "totalTokens": 16001,
+        "costUsd": 0.00184554
+      },
+      "errors": [],
+      "concerns": [
+        "Blurs foes-only Dazzling Gleam and global Fairy Aura warnings; leaves 'roster' untranslated in Korean prose."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "floette-doubles",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "8a0cf33d0ac2d7a588b2e1aaea38ce1a16474a8188b1cb6be2f23e073acbcd71",
+      "durationMs": 16379,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1199,
+        "reasoningTokens": 199,
+        "totalTokens": 15474,
+        "costUsd": 0.00158204
+      },
+      "errors": [],
+      "concerns": [
+        "Literal nonvolatile-status translation remains technical rather than natural Korean."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "998e89c0570c55ecedcf9f4b337b076b3e90bffbbaa5abb388f017e6aa185fc5",
+      "durationMs": 15945,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1588,
+        "reasoningTokens": 546,
+        "totalTokens": 14480,
+        "costUsd": 0.00163824
+      },
+      "errors": [
+        "Attributes unselected Thunder Wave to Zoroark's selected moves.",
+        "Calls unmodified Speed 155 faster than Dragapult's 213 before Choice Scarf."
+      ],
+      "concerns": [],
+      "core": true,
+      "illusion": true,
+      "pixilate": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "c625dde6eb3250820aee4d79868a14f5f75f91e01cf222a695d101283e20c41c",
+      "durationMs": 13865,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1134,
+        "reasoningTokens": 392,
+        "totalTokens": 14026,
+        "costUsd": 0.00141124
+      },
+      "errors": [],
+      "concerns": [
+        "Explicitly declines to identify a stronger Round responder and omits the supplied Mega Gardevoir Pixilate payoff."
+      ],
+      "core": false,
+      "illusion": true,
+      "pixilate": false,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "5d471015aa779f725007337d2dfa07ce3524b2079886a307102c3ce6cb07ce05",
+      "durationMs": 12841,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1053,
+        "reasoningTokens": 586,
+        "totalTokens": 13945,
+        "costUsd": 0.00137074
+      },
+      "errors": [
+        "Attributes unselected Thunder Wave to Zoroark's toolkit."
+      ],
+      "concerns": [
+        "Does not explain the shared Round plan or Mega Gardevoir Pixilate payoff."
+      ],
+      "core": false,
+      "illusion": true,
+      "pixilate": false,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "eaa8841b820c2ec64693d92edadf6c4ccfab728c00c2463433cb3a0b2491deae",
+      "durationMs": 15063,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1165,
+        "reasoningTokens": 509,
+        "totalTokens": 14057,
+        "costUsd": 0.00142674
+      },
+      "errors": [
+        "Uses Dragapult before Choice Scarf Zoroark as the default Round order, ignoring Scarf's 1.5x modifier."
+      ],
+      "concerns": [
+        "Omits Mega Gardevoir Pixilate payoff."
+      ],
+      "core": false,
+      "illusion": true,
+      "pixilate": false,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "9ae38993a8ba69ac938e052f25d00e3cf8df1c5f736a2e4f270a512601478129",
+      "durationMs": 22043,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1565,
+        "reasoningTokens": 445,
+        "totalTokens": 14457,
+        "costUsd": 0.00162674
+      },
+      "errors": [],
+      "concerns": [
+        "Gives Scarf Speed as unrounded 232.5 rather than integer battle Speed; no false ordering derived."
+      ],
+      "core": true,
+      "illusion": true,
+      "pixilate": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "83bb981fddff9006a46cf1c9aa688637c22e08889cb52edff6eb88e9e67d5e1c",
+      "durationMs": 15024,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1420,
+        "reasoningTokens": 394,
+        "totalTokens": 14986,
+        "costUsd": 0.0016216400000000001
+      },
+      "errors": [],
+      "concerns": [
+        "Omits Mega Gardevoir's Pixilate payoff and declines to identify a stronger responder; plural follow-up wording is not clearly limited to one active ally."
+      ],
+      "core": false,
+      "illusion": true,
+      "pixilate": false,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "22331bd9332c668e7bc48ec585829d660e78e3bd6423361f435c0dbdaa0fd124",
+      "durationMs": 17478,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1559,
+        "reasoningTokens": 515,
+        "totalTokens": 15125,
+        "costUsd": 0.00169114
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "illusion": true,
+      "pixilate": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "c5aa9e72e5670d7ddcc9bf8aa72c3e324e7007c960057e9f599640f932d6e355",
+      "durationMs": 18564,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1686,
+        "reasoningTokens": 685,
+        "totalTokens": 15252,
+        "costUsd": 0.00175464
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "illusion": true,
+      "pixilate": true,
+      "rawAuditErrors": [
+        "Recommendation round-branch names Gengar without fact evidence for slot 5."
+      ],
+      "auditErrors": [
+        "Recommendation round-branch names Gengar without fact evidence for slot 5."
+      ]
+    },
+    {
+      "id": "zoroark-round",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "308a8f66311d3aca281435012c59311fc35654d76d434dc25df25e509acde605",
+      "durationMs": 15584,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1381,
+        "reasoningTokens": 705,
+        "totalTokens": 14947,
+        "costUsd": 0.0016021400000000002
+      },
+      "errors": [
+        "Explicitly describes Zoroark triggering Round followed by Dragapult and then Gardevoir, requiring three allied active actors in Doubles."
+      ],
+      "concerns": [
+        "Omits Mega Gardevoir's Pixilate payoff."
+      ],
+      "core": false,
+      "illusion": true,
+      "pixilate": false,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "zoroark-round",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "571ad6c4121548dc178713a5abd337721862480c19e82aee4e9b8c073c51b236",
+      "durationMs": 20867,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1970,
+        "reasoningTokens": 710,
+        "totalTokens": 15536,
+        "costUsd": 0.00189664
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "illusion": true,
+      "pixilate": true,
+      "rawAuditErrors": [
+        "Recommendation round-response names Gengar without fact evidence for slot 5."
+      ],
+      "auditErrors": [
+        "Recommendation round-response names Gengar without fact evidence for slot 5."
+      ]
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "f2e7fff85e36ced367a646f16cea2bac9bc0c83da9faae824308ebb36f5b48a0",
+      "outputHash": "58c87d292e828def76bf5d4d43dedd46fc85751c6d78e41f589b56c1500a7538",
+      "durationMs": 11826,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1023,
+        "reasoningTokens": 237,
+        "totalTokens": 14002,
+        "costUsd": 0.0013981000000000002
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "f2e7fff85e36ced367a646f16cea2bac9bc0c83da9faae824308ebb36f5b48a0",
+      "outputHash": "294cb58edd45211eb11a8e1c28ac00e8ff410d621f44a8a662f002a50d3e9999",
+      "durationMs": 9172,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 888,
+        "reasoningTokens": 210,
+        "totalTokens": 13867,
+        "costUsd": 0.0013306000000000001
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "f2e7fff85e36ced367a646f16cea2bac9bc0c83da9faae824308ebb36f5b48a0",
+      "outputHash": "090c940c5b86735f862dbe281cae6c9bd7edd7c370a5f5ccd9b600261a99aec8",
+      "durationMs": 11522,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1133,
+        "reasoningTokens": 304,
+        "totalTokens": 14112,
+        "costUsd": 0.0014531000000000001
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "f2e7fff85e36ced367a646f16cea2bac9bc0c83da9faae824308ebb36f5b48a0",
+      "outputHash": "768dd25960838dc9a16c8e721deb598c6d3527fcf7aa748a4644797a6f8f1e53",
+      "durationMs": 9715,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1001,
+        "reasoningTokens": 204,
+        "totalTokens": 13980,
+        "costUsd": 0.0013871
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "f2e7fff85e36ced367a646f16cea2bac9bc0c83da9faae824308ebb36f5b48a0",
+      "outputHash": "f8cd00f233e6f579d84c99782536be4f4f43afcb66281751c7437bfcdaa687b6",
+      "durationMs": 8802,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 866,
+        "reasoningTokens": 189,
+        "totalTokens": 13845,
+        "costUsd": 0.0013196000000000002
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [
+        "Recommendation rain-opening names Archaludon without fact evidence for slot 0."
+      ],
+      "auditErrors": [
+        "Recommendation rain-opening names Archaludon without fact evidence for slot 0."
+      ]
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "9e8ff28c4ff46d1818b83fe5049751cd87742cc226a3662e6cb268b3733fae88",
+      "outputHash": "2a48b9cbbceb3db9d87f612826d8c35ea39cffa2ed2a1b60044fd5f7e92cfdc8",
+      "durationMs": 11610,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1016,
+        "reasoningTokens": 332,
+        "totalTokens": 14688,
+        "costUsd": 0.0014639000000000002
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "9e8ff28c4ff46d1818b83fe5049751cd87742cc226a3662e6cb268b3733fae88",
+      "outputHash": "25ee6bc44b6f1ab5654b82f7fdad4f42423bcb2271adcc4099f22885b8a1a416",
+      "durationMs": 9486,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 772,
+        "reasoningTokens": 258,
+        "totalTokens": 14444,
+        "costUsd": 0.0013419
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "9e8ff28c4ff46d1818b83fe5049751cd87742cc226a3662e6cb268b3733fae88",
+      "outputHash": "4be4566a16c834a5105e788c6bd2eaffe259754b0f059b39bff86e8b53202f50",
+      "durationMs": 14570,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1181,
+        "reasoningTokens": 503,
+        "totalTokens": 14853,
+        "costUsd": 0.0015464
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "9e8ff28c4ff46d1818b83fe5049751cd87742cc226a3662e6cb268b3733fae88",
+      "outputHash": "1738bd81a72135648ef191ba357cc801ee5d266b695414e58662fea7876497c0",
+      "durationMs": 11273,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 952,
+        "reasoningTokens": 351,
+        "totalTokens": 14624,
+        "costUsd": 0.0014319
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "pelipper-singles",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "23339d08dd2640dd202e6e1d915f9ee8f175f7d0d8d8b1f7f00d343bbd58baa5",
+      "providerRequestHash": "9e8ff28c4ff46d1818b83fe5049751cd87742cc226a3662e6cb268b3733fae88",
+      "outputHash": "30072e67cb2be6a65d3e9a86385655e894b7cf80837934381cf240fcda5c2714",
+      "durationMs": 10056,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 847,
+        "reasoningTokens": 226,
+        "totalTokens": 14519,
+        "costUsd": 0.0013794
+      },
+      "errors": [],
+      "concerns": [
+        "Omits the supplied Archaludon Electro Shot rain payoff."
+      ],
+      "core": false,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "f20c0222acee06238749408b2273b7c1e49fd1a3be921fd8642c1cfa927151a9",
+      "outputHash": "b70cf696eb54782515013ebc3547681e27d98cdb86f8cc23dcd9d394d1567781",
+      "durationMs": 18133,
+      "usage": {
+        "inputTokens": 13597,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1333,
+        "reasoningTokens": 393,
+        "totalTokens": 14930,
+        "costUsd": 0.00158124
+      },
+      "errors": [],
+      "concerns": [
+        "Compresses Mega activation and entry-trigger weather into 'that change brings Sun on entry'."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "f20c0222acee06238749408b2273b7c1e49fd1a3be921fd8642c1cfa927151a9",
+      "outputHash": "62dc139b0bd9e7b00039f59a472dff10f0be7e1e22a9d2696ea28b4b5b1aebaf",
+      "durationMs": 14008,
+      "usage": {
+        "inputTokens": 13597,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1214,
+        "reasoningTokens": 343,
+        "totalTokens": 14811,
+        "costUsd": 0.00152174
+      },
+      "errors": [],
+      "concerns": [
+        "Spends substantial explanation rejecting a nonexistent later-Weather-Ball bonus."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "f20c0222acee06238749408b2273b7c1e49fd1a3be921fd8642c1cfa927151a9",
+      "outputHash": "04ae2a46a1514e59b396152db23ecd2a8d9973596067e2913169ff52b0e6261b",
+      "durationMs": 13353,
+      "usage": {
+        "inputTokens": 13597,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1074,
+        "reasoningTokens": 272,
+        "totalTokens": 14671,
+        "costUsd": 0.00145174
+      },
+      "errors": [],
+      "concerns": [
+        "Compresses Mega activation timing into 'Drought summons Sun on entry'."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "f20c0222acee06238749408b2273b7c1e49fd1a3be921fd8642c1cfa927151a9",
+      "outputHash": "8c48d41ebacce965e6f25009b310f71dd24bd73279bda39264e73cbb6adcd014",
+      "durationMs": 14085,
+      "usage": {
+        "inputTokens": 13597,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1294,
+        "reasoningTokens": 371,
+        "totalTokens": 14891,
+        "costUsd": 0.00156174
+      },
+      "errors": [],
+      "concerns": [
+        "Unclear pronoun in recommendation mixes base Charizard's Blaze with unavailable Mega Garchomp stats/Levitate; dismisses duplicate Weather Ball mainly for lacking a combo bonus."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "f20c0222acee06238749408b2273b7c1e49fd1a3be921fd8642c1cfa927151a9",
+      "outputHash": "d0ad161390688eace225275c03bbe08c84dbd17117219788fa8771e30f65b1c4",
+      "durationMs": 15002,
+      "usage": {
+        "inputTokens": 13597,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1292,
+        "reasoningTokens": 279,
+        "totalTokens": 14889,
+        "costUsd": 0.00156074
+      },
+      "errors": [],
+      "concerns": [
+        "Uses unclear phrase 'Drought activates on Mega Evolution's switch-in'."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "bf13ee9ed72d358a7d8030fc1ad7276b65079c489c524ea9438517d24f089a38",
+      "outputHash": "f98f797b50c70c0a17d61f337dc9050f03d4f3deba1168e2385aaebe959cf4ac",
+      "durationMs": 12143,
+      "usage": {
+        "inputTokens": 14278,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1144,
+        "reasoningTokens": 348,
+        "totalTokens": 15422,
+        "costUsd": 0.00155484
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "bf13ee9ed72d358a7d8030fc1ad7276b65079c489c524ea9438517d24f089a38",
+      "outputHash": "f330a953292d946458b53fd0bb68c953c6c71000c9edecd533622badad047dd6",
+      "durationMs": 16548,
+      "usage": {
+        "inputTokens": 14278,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1618,
+        "reasoningTokens": 401,
+        "totalTokens": 15896,
+        "costUsd": 0.00179184
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "bf13ee9ed72d358a7d8030fc1ad7276b65079c489c524ea9438517d24f089a38",
+      "outputHash": "e2a820b43822b8ab9feb970d9e579de156ed5620e1297c88060ba54caa1ee152",
+      "durationMs": 11882,
+      "usage": {
+        "inputTokens": 14278,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1151,
+        "reasoningTokens": 380,
+        "totalTokens": 15429,
+        "costUsd": 0.00155834
+      },
+      "errors": [],
+      "concerns": [
+        "Simplifies Rain versus Mega Y into leaving Charizard un-Mega rather than explaining later weather resetting."
+      ],
+      "core": true,
+      "rawAuditErrors": [
+        "Recommendation mega-branch names Pelipper without fact evidence for slot 2."
+      ],
+      "auditErrors": [
+        "Recommendation mega-branch names Pelipper without fact evidence for slot 2."
+      ]
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "bf13ee9ed72d358a7d8030fc1ad7276b65079c489c524ea9438517d24f089a38",
+      "outputHash": "dd220ef61cb54c7587db21a51f83e22b016be3acbc218675770d682ec9a9d47d",
+      "durationMs": 12043,
+      "usage": {
+        "inputTokens": 14278,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1124,
+        "reasoningTokens": 345,
+        "totalTokens": 15402,
+        "costUsd": 0.0015448400000000002
+      },
+      "errors": [],
+      "concerns": [
+        "Explains Drought on post-Mega switch-in but does not clearly name the immediate activation trigger."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "charizard-doubles",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "bf312ecb0aadb03eb0489faeba538f41396c4f1f51d947cbf09ece3e940a5bfd",
+      "providerRequestHash": "bf13ee9ed72d358a7d8030fc1ad7276b65079c489c524ea9438517d24f089a38",
+      "outputHash": "a9217113adef46addcc80947f51057739991c61ca5021dd4cc9ca8a2bce489ed",
+      "durationMs": 12700,
+      "usage": {
+        "inputTokens": 14278,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1365,
+        "reasoningTokens": 145,
+        "totalTokens": 15643,
+        "costUsd": 0.0016653400000000002
+      },
+      "errors": [],
+      "concerns": [
+        "Frames sequential Weather Ball as a trigger/responder interaction without a supplied combo benefit."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "8c3751a3c3089ee4b5f4e68ba5ffb1418a7ba1d590f9ddfa7c69d33ae87013e1",
+      "outputHash": "8e4e0916ea6ad34913853a10ad99c0b302eb718e0d7102fb4bf2a813d69f93e0",
+      "durationMs": 12024,
+      "usage": {
+        "inputTokens": 13455,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1076,
+        "reasoningTokens": 294,
+        "totalTokens": 14531,
+        "costUsd": 0.0014385399999999999
+      },
+      "errors": [],
+      "concerns": [
+        "Unnecessary discussion rejects a nonexistent shared-Protect combo."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "8c3751a3c3089ee4b5f4e68ba5ffb1418a7ba1d590f9ddfa7c69d33ae87013e1",
+      "outputHash": "441011ca08a909d8f88ec23322d001d9a2e505a6255a67fda40428f4bc68371f",
+      "durationMs": 12522,
+      "usage": {
+        "inputTokens": 13455,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1130,
+        "reasoningTokens": 248,
+        "totalTokens": 14585,
+        "costUsd": 0.00146554
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "8c3751a3c3089ee4b5f4e68ba5ffb1418a7ba1d590f9ddfa7c69d33ae87013e1",
+      "outputHash": "dcf0dd768607599d260cd25af3ad4f752fba55b39ed302bfa708927664cd48f7",
+      "durationMs": 13086,
+      "usage": {
+        "inputTokens": 13455,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 936,
+        "reasoningTokens": 317,
+        "totalTokens": 14391,
+        "costUsd": 0.00136854
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "8c3751a3c3089ee4b5f4e68ba5ffb1418a7ba1d590f9ddfa7c69d33ae87013e1",
+      "outputHash": "8d5a47b1bf45c7fe2bb47681bf6631d72fde729d443c675e4a85c00d01910e55",
+      "durationMs": 12892,
+      "usage": {
+        "inputTokens": 13455,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1224,
+        "reasoningTokens": 336,
+        "totalTokens": 14679,
+        "costUsd": 0.00151254
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "8c3751a3c3089ee4b5f4e68ba5ffb1418a7ba1d590f9ddfa7c69d33ae87013e1",
+      "outputHash": "09a52efaf327a5ad53fc632be8111d1d14668afec9838cb3eb84efd5a76ac9c6",
+      "durationMs": 12936,
+      "usage": {
+        "inputTokens": 13455,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1310,
+        "reasoningTokens": 323,
+        "totalTokens": 14765,
+        "costUsd": 0.00155554
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "0ff969c489d517ce5d8efbf55919556c16bc467dd6fb04f527c15eaf5d2277f0",
+      "outputHash": "fc21f54b458253b1c61fd0edd7702ba042bfd76a168317f88bc3fbdf3b8b571d",
+      "durationMs": 11696,
+      "usage": {
+        "inputTokens": 14148,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1045,
+        "reasoningTokens": 376,
+        "totalTokens": 15193,
+        "costUsd": 0.0014923400000000002
+      },
+      "errors": [],
+      "concerns": [
+        "Recommendation's loose subject can sound like Whimsicott also uses Close Combat; the body correctly assigns the move to Staraptor."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "0ff969c489d517ce5d8efbf55919556c16bc467dd6fb04f527c15eaf5d2277f0",
+      "outputHash": "023ee369f66ad4b0337bb90fa25291f01b092427c20399fc352de008c08e5dcf",
+      "durationMs": 13477,
+      "usage": {
+        "inputTokens": 14148,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1179,
+        "reasoningTokens": 355,
+        "totalTokens": 15327,
+        "costUsd": 0.0015593400000000002
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "0ff969c489d517ce5d8efbf55919556c16bc467dd6fb04f527c15eaf5d2277f0",
+      "outputHash": "ee2eed123298a26e73e195dfe3edcdcea814d39fc65127030f104caf72f01508",
+      "durationMs": 13473,
+      "usage": {
+        "inputTokens": 14148,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1296,
+        "reasoningTokens": 399,
+        "totalTokens": 15444,
+        "costUsd": 0.0016178400000000002
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "0ff969c489d517ce5d8efbf55919556c16bc467dd6fb04f527c15eaf5d2277f0",
+      "outputHash": "13d16afea04f81491636a88ea01de1b238ecc5639291b19354b0e6d0a77d2020",
+      "durationMs": 13405,
+      "usage": {
+        "inputTokens": 14148,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1091,
+        "reasoningTokens": 227,
+        "totalTokens": 15239,
+        "costUsd": 0.0015153400000000002
+      },
+      "errors": [
+        "Calls Staraptor faster than Garchomp by supplied current Speed values; they are 167 and 169 respectively."
+      ],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "staraptor-charm",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "900fe5106a0b7771dfeeb4d5f4cd3be151d01b24aa44aac4fce0841fc06642fa",
+      "providerRequestHash": "0ff969c489d517ce5d8efbf55919556c16bc467dd6fb04f527c15eaf5d2277f0",
+      "outputHash": "adf57e369115611dd5e38c94063d21347bf362bcfc52c04c093bb911faeaf913",
+      "durationMs": 16213,
+      "usage": {
+        "inputTokens": 14148,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1121,
+        "reasoningTokens": 325,
+        "totalTokens": 15269,
+        "costUsd": 0.00153034
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "delphox-setup",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "c8d07ff0f075cdaca023b531ff8b114dd74c199327192a46635f997fdc75ff75",
+      "outputHash": "fcbc78fcfb361a7299562fcee44fdc5034665cc1166b6d1810d938bf99dd3c3b",
+      "durationMs": 11101,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1006,
+        "reasoningTokens": 245,
+        "totalTokens": 14490,
+        "costUsd": 0.0014064400000000001
+      },
+      "errors": [],
+      "concerns": [
+        "Wording cautions against attacking while receiving allied support, obscuring valid Doubles action economy."
+      ],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "delphox-setup",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "c8d07ff0f075cdaca023b531ff8b114dd74c199327192a46635f997fdc75ff75",
+      "outputHash": "cfd4687fd01aa5bdf15acc6e3e92276c4a16aae4a52b2fb495e20ed9a7117218",
+      "durationMs": 12905,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1331,
+        "reasoningTokens": 335,
+        "totalTokens": 14815,
+        "costUsd": 0.00156894
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [
+        "Recommendation delphox-mega-branch names Floette Eternal without fact evidence for slot 4."
+      ],
+      "auditErrors": [
+        "Recommendation delphox-mega-branch names Floette Eternal without fact evidence for slot 4."
+      ]
+    },
+    {
+      "id": "delphox-setup",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "c8d07ff0f075cdaca023b531ff8b114dd74c199327192a46635f997fdc75ff75",
+      "outputHash": "58208c088411b10d84588d330c7140b9ef8479f24c7d2d6019dab45dff7fde96",
+      "durationMs": 11628,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1050,
+        "reasoningTokens": 229,
+        "totalTokens": 14534,
+        "costUsd": 0.00142844
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "delphox-setup",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "c8d07ff0f075cdaca023b531ff8b114dd74c199327192a46635f997fdc75ff75",
+      "outputHash": "c9820470c1c31cc631654476beb7e10762ff2bfc0bbad541fe019f6b2c638108",
+      "durationMs": 14083,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1230,
+        "reasoningTokens": 384,
+        "totalTokens": 14714,
+        "costUsd": 0.00151844
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "delphox-setup",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "c8d07ff0f075cdaca023b531ff8b114dd74c199327192a46635f997fdc75ff75",
+      "outputHash": "6d1fd3b610a03ea33336aa8a66417da8dbbd934576341dba688cb2b2687bc770",
+      "durationMs": 11637,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1029,
+        "reasoningTokens": 258,
+        "totalTokens": 14513,
+        "costUsd": 0.0014179400000000001
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "delphox-setup",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "4f5b0b9c393efb627bfc76bc9a61183ac932c1c2a56dd3036ada01bec941e180",
+      "outputHash": "b14c0fdad9aa2c15b1be736c5e14b298cc3782c42959a38a56d406d5474881df",
+      "durationMs": 13149,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1340,
+        "reasoningTokens": 309,
+        "totalTokens": 15514,
+        "costUsd": 0.00164244
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [
+        "strategyAudit.facts[9] contradicts the supplied final Speed values and unconditional held-item modifiers."
+      ],
+      "auditErrors": [
+        "strategyAudit.facts[9] contradicts the supplied final Speed values and unconditional held-item modifiers."
+      ]
+    },
+    {
+      "id": "delphox-setup",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "4f5b0b9c393efb627bfc76bc9a61183ac932c1c2a56dd3036ada01bec941e180",
+      "outputHash": "59bdbdd83b001a2ae15a228783837584b6e3bc8d4d0adee9271b7556b01765fa",
+      "durationMs": 12322,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1154,
+        "reasoningTokens": 345,
+        "totalTokens": 15328,
+        "costUsd": 0.00154944
+      },
+      "errors": [],
+      "concerns": [],
+      "core": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "delphox-setup",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "4f5b0b9c393efb627bfc76bc9a61183ac932c1c2a56dd3036ada01bec941e180",
+      "outputHash": "6929afa7280a81bd3af5a5b8680f417463631266aa16696ee7e14df8bb240123",
+      "durationMs": 9463,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 830,
+        "reasoningTokens": 279,
+        "totalTokens": 15004,
+        "costUsd": 0.00138744
+      },
+      "errors": [],
+      "concerns": [
+        "Loose wording says Tailwind supports damage as well as Speed; it is not a direct damage modifier."
+      ],
+      "core": true,
+      "rawAuditErrors": [
+        "Recommendation delphox-mega-branch names Floette Eternal without fact evidence for slot 4."
+      ],
+      "auditErrors": [
+        "Recommendation delphox-mega-branch names Floette Eternal without fact evidence for slot 4."
+      ]
+    },
+    {
+      "id": "delphox-setup",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "4f5b0b9c393efb627bfc76bc9a61183ac932c1c2a56dd3036ada01bec941e180",
+      "outputHash": "d2575da06e772a3b808aecc0e9e7dc1220548f763f36c36468cbf65657e14e32",
+      "durationMs": 12290,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1054,
+        "reasoningTokens": 233,
+        "totalTokens": 15228,
+        "costUsd": 0.00149944
+      },
+      "errors": [],
+      "concerns": [
+        "Names Nasty Plot but does not connect allied redirection/protection to its setup turn."
+      ],
+      "core": false,
+      "rawAuditErrors": [
+        "Recommendation mega-ground-branch names Floette Eternal without fact evidence for slot 4."
+      ],
+      "auditErrors": [
+        "Recommendation mega-ground-branch names Floette Eternal without fact evidence for slot 4."
+      ]
+    },
+    {
+      "id": "delphox-setup",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "a8595300f82cc7944bcf8ce48dd46dfae69656154f498f2e030e0354f76fb655",
+      "providerRequestHash": "4f5b0b9c393efb627bfc76bc9a61183ac932c1c2a56dd3036ada01bec941e180",
+      "outputHash": "97732e328694f07df5e16540641cfeb8a777016b1735eb9ab0849e0348e53c14",
+      "durationMs": 10675,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1059,
+        "reasoningTokens": 260,
+        "totalTokens": 15233,
+        "costUsd": 0.00150194
+      },
+      "errors": [],
+      "concerns": [
+        "Omits allied redirection/protection for Nasty Plot; compares displayed Vivillon Speed without its Choice Scarf."
+      ],
+      "core": false,
+      "rawAuditErrors": [
+        "Recommendation mega-branch names Floette Eternal without fact evidence for slot 4."
+      ],
+      "auditErrors": [
+        "Recommendation mega-branch names Floette Eternal without fact evidence for slot 4."
+      ]
+    },
+    {
+      "id": "vivillon-support",
+      "side": "before",
+      "repeat": 1,
+      "promptVersion": 109,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "0f783e14669aeb51d3977ecbc8d3456c79d020429d32f8ee5b24dff9ff3a2e71",
+      "outputHash": "fab2c181a6adc792e82e9cae469708002062bba3cad48a367e8aa61659faf279",
+      "durationMs": 13390,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1273,
+        "reasoningTokens": 476,
+        "totalTokens": 14757,
+        "costUsd": 0.00153994
+      },
+      "errors": [
+        "Says Maushold selected Rage Powder; its selected redirection is Follow Me."
+      ],
+      "concerns": [
+        "Explains support but does not connect it to an ally's setup turn."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [
+        "strategyAudit.facts[6].valueId contains an element not owned in the recorded state."
+      ],
+      "auditErrors": [
+        "strategyAudit.facts[6].valueId contains an element not owned in the recorded state."
+      ]
+    },
+    {
+      "id": "vivillon-support",
+      "side": "before",
+      "repeat": 2,
+      "promptVersion": 109,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "0f783e14669aeb51d3977ecbc8d3456c79d020429d32f8ee5b24dff9ff3a2e71",
+      "outputHash": "aa951d5549db9934bad6e0a0eef5118d6161de6e32d3808fc48c2dc4c6a9ce06",
+      "durationMs": 12423,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1120,
+        "reasoningTokens": 480,
+        "totalTokens": 14604,
+        "costUsd": 0.00146344
+      },
+      "errors": [],
+      "concerns": [
+        "Explains partner protection but does not connect it to an ally's setup turn."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "vivillon-support",
+      "side": "before",
+      "repeat": 3,
+      "promptVersion": 109,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "0f783e14669aeb51d3977ecbc8d3456c79d020429d32f8ee5b24dff9ff3a2e71",
+      "outputHash": "ca3a734ac2d34fa094c59a023c638da1dab7b55863a3d8230bccee9a1aa9941e",
+      "durationMs": 15769,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1062,
+        "reasoningTokens": 301,
+        "totalTokens": 14546,
+        "costUsd": 0.0014344400000000002
+      },
+      "errors": [
+        "Twice claims Sinistcha resists Fire; its Grass/Ghost profile is weak to Fire."
+      ],
+      "concerns": [
+        "Discusses switching among support actions without acknowledging Choice Scarf move lock; does not explain an allied setup turn."
+      ],
+      "core": false,
+      "scarfLock": false,
+      "rawAuditErrors": [
+        "strategyAudit.facts[1] contradicts the supplied defensive profile."
+      ],
+      "auditErrors": [
+        "strategyAudit.facts[1] contradicts the supplied defensive profile."
+      ]
+    },
+    {
+      "id": "vivillon-support",
+      "side": "before",
+      "repeat": 4,
+      "promptVersion": 109,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "0f783e14669aeb51d3977ecbc8d3456c79d020429d32f8ee5b24dff9ff3a2e71",
+      "outputHash": "22b1c641209e54d950069c4079b2b8d5d195394f8e3095bfe162cab298277f80",
+      "durationMs": 16589,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1016,
+        "reasoningTokens": 360,
+        "totalTokens": 14500,
+        "costUsd": 0.0014114400000000001
+      },
+      "errors": [],
+      "concerns": [
+        "Omits Choice Scarf move lock; uses allied Delphox's Heat Wave as example of opposing spread damage, making ownership unclear."
+      ],
+      "core": true,
+      "scarfLock": false,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "vivillon-support",
+      "side": "before",
+      "repeat": 5,
+      "promptVersion": 109,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "0f783e14669aeb51d3977ecbc8d3456c79d020429d32f8ee5b24dff9ff3a2e71",
+      "outputHash": "642d3a4ff2770a1d7dbe9de72605c2e832f9bc7b539231894e256ece08df79b2",
+      "durationMs": 10729,
+      "usage": {
+        "inputTokens": 13484,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1174,
+        "reasoningTokens": 0,
+        "totalTokens": 14658,
+        "costUsd": 0.00149044
+      },
+      "errors": [],
+      "concerns": [
+        "Quotes Hurricane's 50% Sun accuracy without explicitly combining the previously named Compound Eyes modifier; does not explain an allied setup turn."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "vivillon-support",
+      "side": "after",
+      "repeat": 1,
+      "promptVersion": 110,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "fc0bce4ca1811c3fe709a3388e6d278236817fd7fe117d89c51ced56e1603c71",
+      "outputHash": "dd1e29d6de181134218f8ed6965bfc947df5c699629c7cd7b383d775ab82cd4b",
+      "durationMs": 11525,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1105,
+        "reasoningTokens": 422,
+        "totalTokens": 15279,
+        "costUsd": 0.00152494
+      },
+      "errors": [
+        "Attributes displayed pre-item Speed 155 partly to Choice Scarf, although the item multiplier is not included in that stat."
+      ],
+      "concerns": [
+        "Does not connect support to a named allied setup turn."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "vivillon-support",
+      "side": "after",
+      "repeat": 2,
+      "promptVersion": 110,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "fc0bce4ca1811c3fe709a3388e6d278236817fd7fe117d89c51ced56e1603c71",
+      "outputHash": "f1dd6a2d0aad752159ae7f9d870d9658e854c5a3de9faec48248a2ee80d40dda",
+      "durationMs": 13742,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1289,
+        "reasoningTokens": 289,
+        "totalTokens": 15463,
+        "costUsd": 0.00161694
+      },
+      "errors": [],
+      "concerns": [
+        "Does not connect support to a named allied setup turn; uses allied Delphox's Heat Wave as the opposing spread example."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "vivillon-support",
+      "side": "after",
+      "repeat": 3,
+      "promptVersion": 110,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "fc0bce4ca1811c3fe709a3388e6d278236817fd7fe117d89c51ced56e1603c71",
+      "outputHash": "6b099bc1bd5d45379a1a2575641f22c9206cdf863bcfd2de1231e47d46708085",
+      "durationMs": 13149,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 909,
+        "reasoningTokens": 224,
+        "totalTokens": 15083,
+        "costUsd": 0.00142694
+      },
+      "errors": [],
+      "concerns": [
+        "Does not explain an allied setup turn; quotes Hurricane's 50% Sun accuracy without explicitly combining Compound Eyes."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "vivillon-support",
+      "side": "after",
+      "repeat": 4,
+      "promptVersion": 110,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "fc0bce4ca1811c3fe709a3388e6d278236817fd7fe117d89c51ced56e1603c71",
+      "outputHash": "a482860772a8e51563fa4640bf89c104d18b0fdd6fa1eddd33185e7a8b0b9b61",
+      "durationMs": 11817,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 998,
+        "reasoningTokens": 238,
+        "totalTokens": 15172,
+        "costUsd": 0.00147144
+      },
+      "errors": [],
+      "concerns": [
+        "Does not explain an allied setup turn; quotes Hurricane's 50% Sun accuracy without explicitly combining Compound Eyes."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    },
+    {
+      "id": "vivillon-support",
+      "side": "after",
+      "repeat": 5,
+      "promptVersion": 110,
+      "requestHash": "c6924e4bd5c289d197d9ddd4d20b8c057ccf4c66699ac9e084a40913c7c0299a",
+      "providerRequestHash": "fc0bce4ca1811c3fe709a3388e6d278236817fd7fe117d89c51ced56e1603c71",
+      "outputHash": "04f2ad99182022f7453a344d1b20cf94d1bc54f01b5f0f2ff0be7719fb512125",
+      "durationMs": 16978,
+      "usage": {
+        "inputTokens": 14174,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1000,
+        "reasoningTokens": 263,
+        "totalTokens": 15174,
+        "costUsd": 0.00147244
+      },
+      "errors": [],
+      "concerns": [
+        "Explains support generally but does not connect it to a named allied setup turn."
+      ],
+      "core": false,
+      "scarfLock": true,
+      "rawAuditErrors": [],
+      "auditErrors": []
+    }
+  ]
+}

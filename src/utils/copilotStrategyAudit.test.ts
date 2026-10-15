@@ -228,6 +228,22 @@ describe("defensive audit regressions", () => {
 });
 
 describe("Copilot strategy audit", () => {
+  it("accepts rounded item-Speed ties but rejects comparisons with missing stats", () => {
+    const request = createRequest([
+      createSet(0, "Zoroark", [], { item: "Choice Scarf", stats: { ...zeroStats, speed: 155 } }),
+      createSet(1, "Tie", [], { stats: { ...zeroStats, speed: 232 } }),
+    ], { scope: "pokemon", mechanics: { moves: [], abilities: [], items: [
+      { id: "choicescarf", displayName: "Choice Scarf", effect: "Holder's Speed is 1.5x." },
+    ] } });
+    const output = createOutput({ plans: [], facts: [{
+      id: "tie", kind: "speed-tie", subjectSlotIndex: 0, objectSlotIndex: 1, state: "current", valueId: "",
+    }] });
+    output.analysis.scope = "pokemon";
+    expect(validateCopilotStrategyAuditForRequest(output, request).filter(error => error.includes("final Speed"))).toEqual([]);
+    request.sets[1].stats = null;
+    expect(validateCopilotStrategyAuditForRequest(output, request)).toContain("strategyAudit.facts[0] requires final stats for both sets.");
+  });
+
   it("accepts a legal Doubles opening with owned moves", () => {
     const output = createOutput({
       plans: [

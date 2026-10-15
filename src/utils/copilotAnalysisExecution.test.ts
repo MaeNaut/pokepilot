@@ -92,4 +92,15 @@ describe("analysis execution", () => {
     ]);
     expect(response).not.toHaveProperty("optimizationCandidates");
   });
+
+  it("also retains the analyzed baseline even when it is not recommended", async () => {
+    const candidates = [{ id: "set-current" }, { id: "selected" }, { id: "unused" }];
+    const optimizationRequest = { scope: "optimization", optimization: { candidates } } as CopilotAnalysisRequest;
+    vi.mocked(requestHostedCopilotAnalysis).mockResolvedValue({ analysis: {
+      ...hosted, scope: "optimization", recommendations: [{ id: "selected", title: "Selected", reason: "Reason", priority: "medium" }],
+    } });
+    const result = await executeCopilotAnalysis(optimizationRequest);
+    expect(result.response.optimizationCandidates).toEqual(candidates.slice(0, 2));
+    expect(result.response.recommendations.map((entry) => entry.id)).toEqual(["selected"]);
+  });
 });

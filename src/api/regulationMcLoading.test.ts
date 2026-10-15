@@ -31,7 +31,7 @@ describe("M-C production loading", () => {
     expect(imported.members.map(member => member?.id)).toEqual([
       "hippowdon", "salamence-mega", "lucario-mega-z", "archaludon", "meowscarada", "primarina",
     ]);
-    expect(imported.members[2]?.iconSpriteUrl).toContain("/champions/10310.png");
+    expect(imported.members[2]?.iconSpriteUrl).toContain("/champions/icons/10310.png");
     expect(imported.members[2]?.spriteUrl).toContain("/official-artwork/10310.png");
     const legacyMember = await fetchPokemon("lucariomegaz");
     expect(legacyMember.id).toBe("lucario-mega-z");
@@ -272,6 +272,6 @@ describe("M-C production loading", () => {
     const female = await fetchPokemon("meowstic-female");
     expect(female.showdownId).toBe("meowsticf");
     expect(female.spriteUrl).toContain("/official-artwork/10025.png");
-    expect(female.iconSpriteUrl).toContain("/champions/10025.png");
+    expect(female.iconSpriteUrl).toContain("/champions/icons/10025.png");
   });
 });

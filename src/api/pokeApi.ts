@@ -31,6 +31,7 @@ import {
   getKnownPokemonArtworkUrl,
   getKnownPokemonIconUrl,
   getPokeApiChampionsSpriteUrl,
+  normalizePokeApiGenerationNineSpriteUrl,
 } from "../utils/pokemonSprites";
 
 const POKEAPI_BASE_URL = "https://pokeapi.co/api/v2";
@@ -285,7 +286,7 @@ function getPokemonIconSpriteUrls(
     getPokeApiCurrentIconSpriteUrl(data, spriteGender),
     getPokeApiDefaultSpriteUrl(data, spriteGender),
     getPokeApiLegacyIconSpriteUrl(data, spriteGender),
-  ].filter((url): url is string => Boolean(url));
+  ].filter((url): url is string => Boolean(url)).map(normalizePokeApiGenerationNineSpriteUrl);
   const uniqueUrls = Array.from(new Set(urls));
 
   return {

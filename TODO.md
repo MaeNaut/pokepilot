@@ -133,6 +133,25 @@ This file is for active implementation notes and small follow-up tasks. Keep lar
 
 ## AI / Copilot
 
+- [x] Fix shared item-Speed rounding, ties and missing-stat ordering; trial and
+      defer extra Speed tables after no demonstrated quality benefit.
+      See `docs/AI_SPEED_EVIDENCE_REVIEW_2026_10_15.md` (v114/core v13).
+- [x] Evaluate owner-linked canonical mechanic references, then expand selected-
+      Pokemon coverage before adopting one layout for all scopes (v112).
+      Quality evidence is mixed; see `docs/AI_UNIFIED_OWNER_REVIEW_2026_10_14.md`.
+- [x] Trial prompt reductions without a fixed word target; rollback output/locale
+      deduplication and scope-unused audit deletion. Retain only Singles Pokemon
+      sequencing scoping; see `docs/AI_PROMPT_ABLATION_REVIEW_2026_10_14.md`.
+- [x] Run current M-C Luna low quality regressions across the four main scopes
+      and six-member replacements, separating factual errors from structural
+      passes; see `docs/AI_QUALITY_REGRESSION_REVIEW_2026_10_14.md`.
+- [x] Show snapshot-based before/after sample stats and retain the analyzed
+      baseline in history without generating an extra recommendation.
+- [ ] Pilot explicit owner/state/candidate binding for public factual claims.
+      Cross-slot stats, move ownership/category, nature labels, defensive types
+      and switch-in timing remain unresolved. Input owner references do not
+      verify public prose; do not mark these fixed by prompt wording.
+
 - [x] Decide the first AI feature shape.
   - [x] Start with structured analysis of the active team and selected Pokemon.
   - [x] Keep deterministic diagnostics and legality as the factual source of truth.

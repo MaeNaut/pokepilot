@@ -140,7 +140,7 @@ describe("Showdown-primary Pokemon battle data", () => {
     });
     expect(pokemon.spriteUrl).toBe("rotom-artwork.png");
     expect(pokemon.iconSpriteUrl).toBe(
-      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/champions/10009.png",
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/champions/icons/10009.png",
     );
     expect(pokemon.iconFallbackSpriteUrls).toEqual([
       "rotom-icon.png",
@@ -167,7 +167,7 @@ describe("Showdown-primary Pokemon battle data", () => {
 
     expect(pokemon.spriteUrl).toBe("mega-scrafty-artwork.png");
     expect(pokemon.iconSpriteUrl).toBe(
-      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/champions/10289.png",
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/champions/icons/10289.png",
     );
     expect(pokemon.iconFallbackSpriteUrls).toEqual([
       "mega-scrafty-default.png",

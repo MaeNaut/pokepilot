@@ -29,7 +29,7 @@ export async function executeCopilotAnalysis(
     nextResponse = {
       ...nextResponse,
       optimizationCandidates: request.optimization.candidates.filter(
-        (candidate) => selectedCandidateIds.has(candidate.id),
+        (candidate) => candidate.id === "set-current" || selectedCandidateIds.has(candidate.id),
       ),
     };
   }

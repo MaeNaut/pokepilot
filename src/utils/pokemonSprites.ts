@@ -34,14 +34,14 @@ export function getKnownPokemonArtworkUrl(pokemonId: string) {
 
 export function getKnownPokemonIconUrl(pokemonId: string) {
   if (pokemonId === "pyroar-female") {
-    return `${POKEAPI_SPRITE_BASE_URL}/versions/generation-ix/scarlet-violet/female/668.png`;
+    return `${POKEAPI_SPRITE_BASE_URL}/versions/generation-ix/scarlet-violet/icons/668-female.png`;
   }
 
   const spriteId = KNOWN_FORM_SPRITE_IDS[pokemonId];
   if (!spriteId) return undefined;
 
   return pokemonId.startsWith("oinkologne-")
-    ? `${POKEAPI_SPRITE_BASE_URL}/${spriteId}.png`
+    ? `${POKEAPI_SPRITE_BASE_URL}/versions/generation-ix/scarlet-violet/icons/916${pokemonId.endsWith("female") ? "-female" : ""}.png`
     : getPokeApiChampionsSpriteUrl(spriteId);
 }
 
@@ -61,7 +61,15 @@ export function isFullShowdownSpriteUrl(url: string | undefined) {
 }
 
 export function getPokeApiChampionsSpriteUrl(pokemonId: number | string) {
-  return `${POKEAPI_CHAMPIONS_SPRITE_BASE_URL}/${pokemonId}.png`;
+  return `${POKEAPI_CHAMPIONS_SPRITE_BASE_URL}/icons/${pokemonId}.png`;
+}
+
+export function normalizePokeApiGenerationNineSpriteUrl(url: string) {
+  if (!url.startsWith(`${POKEAPI_SPRITE_BASE_URL}/versions/generation-ix/`)) return url;
+  return url
+    .replace(/(\/generation-ix\/[^/]+\/)(?!icons\/)/, "$1icons/")
+    .replace(/\/icons\/female\/(\d+)\.(?:png|webp)/, "/icons/$1-female.png")
+    .replace(/\.webp(?=[?#]|$)/, ".png");
 }
 
 export function getPokeApiChampionsSpriteUrlFromKnownSprites(
@@ -72,7 +80,7 @@ export function getPokeApiChampionsSpriteUrlFromKnownSprites(
       continue;
     }
 
-    const pokemonId = url.match(/\/(\d+)\.png(?:\?.*)?$/)?.[1];
+    const pokemonId = url.match(/\/(\d+)\.(?:png|webp)(?:[?#].*)?$/)?.[1];
 
     if (pokemonId) {
       return getPokeApiChampionsSpriteUrl(pokemonId);

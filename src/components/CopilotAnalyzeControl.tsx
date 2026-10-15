@@ -3,25 +3,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faRotateRight, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import { useDismissOnOutsidePointer } from "../hooks/useDismissOnOutsidePointer";
 import { useLocalization } from "../i18n/useLocalization";
-import type { CopilotAnalysisScope } from "../utils/copilotContracts";
-
-const analysisEstimates: Partial<Record<
-  CopilotAnalysisScope,
-  Record<"luna-low" | "luna-medium", { seconds: number; cost: string }>
->> = {
-  team: { "luna-low": { seconds: 16, cost: "0.0018" }, "luna-medium": { seconds: 75, cost: "0.0048" } },
-  pokemon: { "luna-low": { seconds: 10, cost: "0.0015" }, "luna-medium": { seconds: 31, cost: "0.0024" } },
-  recommendation: { "luna-low": { seconds: 12, cost: "0.0027" }, "luna-medium": { seconds: 52, cost: "0.0041" } },
-};
-
+import type { CopilotAnalysisRequest, CopilotAnalysisScope } from "../utils/copilotContracts";
+import { estimateCopilotAnalysis, type CopilotEstimate } from "../utils/copilotEstimate";
 
 type Props = {
   scope: CopilotAnalysisScope;
+  request: CopilotAnalysisRequest;
   reasoningEffort: "low" | "medium";
   battleContext?: string;
   isAnalyzeConfirmationOpen: boolean;
   isAnalyzeDisabled: boolean;
   isBusy: boolean;
+  isEstimatePreparing?: boolean;
   startedAt?: number;
   hasResponse: boolean;
   hasPersonalApiKey: boolean;
@@ -32,10 +25,28 @@ type Props = {
 };
 
 export function CopilotAnalyzeControl({
-  scope, reasoningEffort, battleContext, isAnalyzeConfirmationOpen, isAnalyzeDisabled,
-  isBusy, startedAt, hasResponse, hasPersonalApiKey, analyzeLabel, onRequest, onClose, onConfirm,
+  scope, request, reasoningEffort, battleContext, isAnalyzeConfirmationOpen, isAnalyzeDisabled,
+  isBusy, isEstimatePreparing = false, startedAt, hasResponse, hasPersonalApiKey, analyzeLabel, onRequest, onClose, onConfirm,
 }: Props) {
-  const { t } = useLocalization();
+  const { t, locale } = useLocalization();
+  const [estimateState, setEstimateState] = useState<{
+    request: CopilotAnalysisRequest;
+    effort: "low" | "medium";
+    value: CopilotEstimate | null;
+  } | null>(null);
+  useEffect(() => {
+    if (!isAnalyzeConfirmationOpen) return;
+    const controller = new AbortController();
+    void estimateCopilotAnalysis(request, reasoningEffort, controller.signal)
+      .catch(() => null)
+      .then((value) => {
+        if (!controller.signal.aborted) setEstimateState({ request, effort: reasoningEffort, value });
+      });
+    return () => controller.abort();
+  }, [isAnalyzeConfirmationOpen, request, reasoningEffort]);
+  const activeEstimate = estimateState?.request === request && estimateState.effort === reasoningEffort
+    ? estimateState : null;
+  const estimate = activeEstimate?.value;
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     if (!isBusy || startedAt === undefined) return;
@@ -53,7 +64,10 @@ export function CopilotAnalyzeControl({
   useDismissOnOutsidePointer(analyzeControlRef, isAnalyzeConfirmationOpen, onClose);
   useEffect(() => {
     onClose();
-  }, [scope, modelChoice, isAnalyzeDisabled, onClose]);
+  }, [scope, modelChoice, onClose]);
+  useEffect(() => {
+    if (isAnalyzeDisabled) onClose();
+  }, [isAnalyzeDisabled, onClose]);
   useEffect(() => {
     if (isAnalyzeConfirmationOpen) analyzeConfirmationHeadingRef.current?.focus();
   }, [isAnalyzeConfirmationOpen]);
@@ -74,8 +88,8 @@ export function CopilotAnalyzeControl({
         className="copilot-analyze-button"
         type="button"
         disabled={isAnalyzeDisabled}
-        aria-label={isBusy ? t("copilot.analyzing") : undefined}
-        aria-busy={isBusy}
+        aria-label={isBusy ? t("copilot.analyzing") : isEstimatePreparing ? t("copilot.estimateLoading") : undefined}
+        aria-busy={isBusy || isEstimatePreparing}
         onClick={onRequest}
         aria-haspopup="dialog"
         aria-expanded={isAnalyzeConfirmationOpen}
@@ -83,13 +97,13 @@ export function CopilotAnalyzeControl({
       >
         <FontAwesomeIcon
           icon={
-            isBusy
+            isBusy || isEstimatePreparing
               ? faSpinner
               : hasResponse
                 ? faRotateRight
                 : faWandMagicSparkles
           }
-          spin={isBusy}
+          spin={isBusy || isEstimatePreparing}
           aria-hidden="true"
         />
         {isBusy && startedAt !== undefined
@@ -108,14 +122,20 @@ export function CopilotAnalyzeControl({
           </strong>
           <span className="copilot-analyze-confirmation-model">{modelLabel}</span>
           {battleContext ? <small>{battleContext}</small> : null}
-          <p>
-            {analysisEstimates[scope]
-              ? t(hasPersonalApiKey ? "copilot.estimate" : "copilot.estimateSite", {
-                  seconds: analysisEstimates[scope][modelChoice].seconds,
-                  cost: analysisEstimates[scope][modelChoice].cost,
-                })
-              : t("copilot.estimateUnavailable")}
-          </p>
+          <div aria-live="polite" aria-busy={!activeEstimate}>
+            {estimate
+              ? <dl className="copilot-estimate">
+                  <dt>{t("copilot.estimateTime")}</dt>
+                  <dd>{estimate.seconds.join("–")}{t("copilot.execution.seconds")}</dd>
+                  <dt>{t("copilot.estimateTokens")}</dt>
+                  <dd>{estimate.totalTokens.map(value =>
+                    (Math.ceil(value / 100) * 100).toLocaleString(locale)).join("–")}</dd>
+                  <dt>{t("copilot.execution.cost")}</dt>
+                  <dd>${estimate.costUsd.map((value, index) =>
+                    ((index ? Math.ceil : Math.floor)(value * 10000) / 10000).toFixed(4)).join("–$")}</dd>
+                </dl>
+              : <p>{t(activeEstimate ? "copilot.estimateUnavailable" : "copilot.estimateLoading")}</p>}
+          </div>
           <small>{t(hasPersonalApiKey ? "copilot.estimateNote" : "copilot.estimateNoteSite")}</small>
           <small>{t("copilot.autoSaveNotice")}</small>
           <div className="copilot-analyze-confirmation-actions">
@@ -125,7 +145,7 @@ export function CopilotAnalyzeControl({
             }}>
               {t("common.cancel")}
             </button>
-            <button type="button" onClick={() => void onConfirm()}>
+            <button type="button" disabled={!activeEstimate} onClick={() => void onConfirm()}>
               {t("copilot.startAnalysis")}
             </button>
           </div>

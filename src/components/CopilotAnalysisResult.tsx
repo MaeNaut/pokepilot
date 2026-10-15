@@ -361,6 +361,7 @@ export function CopilotAnalysisResult({
                 {optimizationCandidate ? (
                   <CopilotOptimizationRecommendation
                     candidate={optimizationCandidate}
+                    currentCandidate={optimizationCandidatesById.get("set-current")}
                     currentItemDisplayName={optimizationCurrentItemDisplayName}
                     title={recommendation.title}
                     reason={recommendation.reason}

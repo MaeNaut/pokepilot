@@ -6,6 +6,7 @@ import type {
   CopilotStrategyPokemonState,
 } from "./copilotModelTypes.js";
 import { normalizeShowdownId as normalizeId } from "../api/showdownIds.js";
+import { getCopilotComparableSpeed } from "./copilotSpeed.js";
 
 export function hasDuplicates(values: number[]) {
   return new Set(values).size !== values.length;
@@ -163,42 +164,6 @@ export function getFactProfileValues(
   return null;
 }
 
-function getUnconditionalItemSpeedMultiplier(
-  set: CopilotAnalysisRequest["sets"][number],
-  request: CopilotAnalysisRequest,
-) {
-  const itemId = normalizeId(set.item ?? "");
-  if (!itemId) {
-    return 1;
-  }
-
-  const effect = request.mechanics.items
-    .find((item) => normalizeId(item.id) === itemId)
-    ?.effect?.toLowerCase();
-  if (!effect) {
-    return 1;
-  }
-
-  const numericMatch = effect.normalize("NFKC").replace(/\u00d7/g, "x").match(
-    /holder(?:'s|’s) speed is (\d+(?:\.\d+)?)x\b/,
-  );
-  if (numericMatch) {
-    const multiplier = Number(numericMatch[1]);
-    return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
-  }
-
-  return /holder(?:'s|’s) speed is halved\b/.test(effect) ? 0.5 : 1;
-}
-
-function getComparableSpeed(
-  set: CopilotAnalysisRequest["sets"][number],
-  request: CopilotAnalysisRequest,
-) {
-  return (
-    (set.stats?.speed ?? 0) * getUnconditionalItemSpeedMultiplier(set, request)
-  );
-}
-
 export const unaryStrategyFactKinds = new Set<CopilotStrategyFact["kind"]>([
   "move-owner",
   "ability-owner",
@@ -310,12 +275,14 @@ export function validateFactsForRequest(
         return;
       }
 
-      const subjectSpeed = getComparableSpeed(subject, request);
-      const objectSpeed = getComparableSpeed(object, request);
+      const subjectSpeed = getCopilotComparableSpeed(subject, request.mechanics);
+      const objectSpeed = getCopilotComparableSpeed(object, request.mechanics);
       const isCorrect =
-        (fact.kind === "faster-than" && subjectSpeed > objectSpeed) ||
-        (fact.kind === "slower-than" && subjectSpeed < objectSpeed) ||
-        (fact.kind === "speed-tie" && subjectSpeed === objectSpeed);
+        subjectSpeed !== null && objectSpeed !== null && (
+          (fact.kind === "faster-than" && subjectSpeed > objectSpeed) ||
+          (fact.kind === "slower-than" && subjectSpeed < objectSpeed) ||
+          (fact.kind === "speed-tie" && subjectSpeed === objectSpeed)
+        );
       if (!isCorrect) {
         errors.push(
           `${factPath} contradicts the supplied final Speed values and unconditional held-item modifiers.`,

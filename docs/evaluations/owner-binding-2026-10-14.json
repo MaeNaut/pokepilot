@@ -1,0 +1,1996 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-14",
+  "sourceCommit": "70b2d2c0934801dbe43dbd900a2f1c06e51397f4",
+  "model": "gpt-6-luna",
+  "reasoningEffort": "low",
+  "credentials": "evaluation-only",
+  "productionCalls": 0,
+  "finalCodePromptVersion": 111,
+  "protocol": {
+    "repeats": 3,
+    "store": false,
+    "serviceTier": "default",
+    "providerRetries": 0,
+    "blinded": false,
+    "corpus": "10 frozen public-team current-M-C inputs, failure-focused rather than a random user sample",
+    "review": "All paragraphs and recommendation titles/reasons manually checked; concerns and private audit errors tracked separately",
+    "gate": "No increase in confirmed public-error responses on affected inputs and no meaningful loss of critical strategy explanations; scope rollback allowed",
+    "facts": "Only existing canonical mechanics linked to selected owners; no new battle facts, schema or reasoning changes",
+    "controls": "Common/scope/locale prose and SDK settings identical; only wire encoding/data layout differs"
+  },
+  "decision": {
+    "retainedScopes": [
+      "team",
+      "recommendation",
+      "optimization"
+    ],
+    "restoredScopes": [
+      "pokemon",
+      "matchup"
+    ],
+    "reason": "Retained scopes improve 6/21 to 3/21 confirmed prose-error responses; Pokemon has 4/9 to 3/9 but loses exact disguise / Pixilate payoff in separate outputs and has worse status terminology. Matchup was not live-tested.",
+    "finalVerification": "For all 10 inputs, final encoder exactly equals before for Pokemon and after for retained scopes. No separate new 30-call final replay; observed response versions remain 109/110, not relabeled 111."
+  },
+  "criticalObservations": {
+    "allyCharmContrary": {
+      "before": 3,
+      "after": 3,
+      "totalPerGroup": 3
+    },
+    "protectedAceExplicitSetupMoves": {
+      "before": 0,
+      "after": 2,
+      "totalPerGroup": 3,
+      "remaining": "Calm Mind omitted in all three modified outputs; only Nasty Plot improved"
+    },
+    "selectedRoundMegaGardevoirPayoff": {
+      "before": 3,
+      "after": 2,
+      "totalPerGroup": 3
+    },
+    "selectedIllusionExactDisguise": {
+      "before": 3,
+      "after": 2,
+      "totalPerGroup": 3
+    }
+  },
+  "summaries": {
+    "before": {
+      "all": {
+        "calls": 30,
+        "confirmedIssueResponses": 10,
+        "concernResponses": 10,
+        "rawAuditFlagged": 7,
+        "finalAuditFlagged": 5,
+        "inputTokens": 520008,
+        "outputTokens": 44915,
+        "estimatedBilledUsd": 0.061003055000000014,
+        "noCacheEquivalentUsd": 0.0744583,
+        "medianMs": 21727
+      },
+      "retainedScopes": {
+        "calls": 21,
+        "confirmedIssueResponses": 6,
+        "concernResponses": 7,
+        "rawAuditFlagged": 5,
+        "finalAuditFlagged": 3,
+        "inputTokens": 401655,
+        "outputTokens": 32830,
+        "estimatedBilledUsd": 0.046824790000000005,
+        "noCacheEquivalentUsd": 0.05658050000000001,
+        "medianMs": 22243
+      },
+      "rejectedPokemonScope": {
+        "calls": 9,
+        "confirmedIssueResponses": 4,
+        "concernResponses": 3,
+        "rawAuditFlagged": 2,
+        "finalAuditFlagged": 2,
+        "inputTokens": 118353,
+        "outputTokens": 12085,
+        "estimatedBilledUsd": 0.014178265,
+        "noCacheEquivalentUsd": 0.0178778,
+        "medianMs": 19654
+      }
+    },
+    "after": {
+      "all": {
+        "calls": 30,
+        "confirmedIssueResponses": 6,
+        "concernResponses": 17,
+        "rawAuditFlagged": 6,
+        "finalAuditFlagged": 3,
+        "inputTokens": 540276,
+        "outputTokens": 44192,
+        "estimatedBilledUsd": 0.06194995,
+        "noCacheEquivalentUsd": 0.07612360000000001,
+        "medianMs": 19518.5
+      },
+      "retainedScopes": {
+        "calls": 21,
+        "confirmedIssueResponses": 3,
+        "concernResponses": 12,
+        "rawAuditFlagged": 5,
+        "finalAuditFlagged": 2,
+        "inputTokens": 415737,
+        "outputTokens": 31903,
+        "estimatedBilledUsd": 0.04725521,
+        "noCacheEquivalentUsd": 0.0575252,
+        "medianMs": 20055
+      },
+      "rejectedPokemonScope": {
+        "calls": 9,
+        "confirmedIssueResponses": 3,
+        "concernResponses": 5,
+        "rawAuditFlagged": 1,
+        "finalAuditFlagged": 1,
+        "inputTokens": 124539,
+        "outputTokens": 12289,
+        "estimatedBilledUsd": 0.01469474,
+        "noCacheEquivalentUsd": 0.018598400000000005,
+        "medianMs": 18982
+      }
+    },
+    "total": {
+      "calls": 60,
+      "confirmedIssueResponses": 16,
+      "concernResponses": 27,
+      "rawAuditFlagged": 13,
+      "finalAuditFlagged": 8,
+      "inputTokens": 1060284,
+      "outputTokens": 89107,
+      "estimatedBilledUsd": 0.12295300500000003,
+      "noCacheEquivalentUsd": 0.15058189999999996,
+      "medianMs": 20730
+    }
+  },
+  "artifacts": {
+    "model-input-before.ts": "f8ea97e7de45599e657570a255c21ff8209ee7bf5f88df55bfe6eceb0454f5e0",
+    "model-input-after.ts": "ef9074682d5321fb1d1e1e8eb3295e51b186fb7e10a357268fadd7006bf204cd",
+    "pokepilotModelInput-final.ts": "8bf2c5c77cd2790a2f8c011c21fd3b625279005590244885efd1942c32443b62",
+    "prompts-before.ts": "aaf779e3a06eaefab1c05b8bd552b85b5860999ccaccc39398820b581582c858",
+    "prompts-after.ts": "7dca2903764730486f943da9ed2a3d3bd52d49af3c9c74475d342087f1d61cc1",
+    "pokepilotPrompts-final.ts": "69a0f5ff209a5ec9eea1d7f230370646aed2a5727ffdf27d57b836217cefd384"
+  },
+  "runs": [
+    {
+      "group": "before",
+      "id": "mc-mugepome-team-ko",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-mugepome-team-ko-r1.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "43a03262418f7d2e6c20df743d112dd42b39c8abaf45e6f134f1a6c0cdf7aa4d",
+      "outputHash": "f48cb383e89425fe409ed4b5347b978262dd31f56c922ef5ede4e6561e9cc481",
+      "observedPromptVersion": 109,
+      "durationMs": 36967,
+      "usage": {
+        "inputTokens": 12448,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 419,
+        "outputTokens": 2970,
+        "reasoningTokens": 265,
+        "totalTokens": 15418,
+        "costUsd": 0.002455065
+      },
+      "rawAuditErrors": [
+        "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.interactions[0].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Opening describes Pelipper pressuring with Hurricane and Electro Shot, but Electro Shot belongs to Archaludon."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-mugepome-team-ko",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-mugepome-team-ko-r2.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "43a03262418f7d2e6c20df743d112dd42b39c8abaf45e6f134f1a6c0cdf7aa4d",
+      "outputHash": "0416f3bcd967239f14581f335aa885f1e4ea398b18ce4ec149396ccd858f3fa7",
+      "observedPromptVersion": 109,
+      "durationMs": 29605,
+      "usage": {
+        "inputTokens": 12448,
+        "cachedInputTokens": 3588,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2558,
+        "reasoningTokens": 242,
+        "totalTokens": 15006,
+        "costUsd": 0.00220088
+      },
+      "rawAuditErrors": [
+        "strategyAudit.interactions[0].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.interactions[0].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[1].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[0].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Unqualified safe U-turn connection; the non-Mega Floette role in the alternate Golisopod selection is underexplained."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-mugepome-team-ko",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-mugepome-team-ko-r3.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "43a03262418f7d2e6c20df743d112dd42b39c8abaf45e6f134f1a6c0cdf7aa4d",
+      "outputHash": "4949828f424bb13d5723929106125ca952491b7fb63840d4f05a48f95ed07b77",
+      "observedPromptVersion": 109,
+      "durationMs": 33941,
+      "usage": {
+        "inputTokens": 12448,
+        "cachedInputTokens": 3588,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2217,
+        "reasoningTokens": 137,
+        "totalTokens": 14665,
+        "costUsd": 0.00203038
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Alternative is Archaludon/Pelipper/Rillaboom, but its card says it gives up Pelipper's Rain support even though Pelipper remains selected."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-kiran-team-en",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-kiran-team-en-r1.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "0e999ac3559d30ec7bdb1650c733ebb36462f42e66f21aa90610fc6259818a12",
+      "outputHash": "242ac80b815ea7815d0b198f3fb682ad647a5f1ad59705e9a584b5d91d370e76",
+      "observedPromptVersion": 109,
+      "durationMs": 26256,
+      "usage": {
+        "inputTokens": 15076,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1812,
+        "reasoningTokens": 483,
+        "totalTokens": 16888,
+        "costUsd": 0.0018355300000000001
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Says the roster lacks base-form data and calls both options already-Mega forms; Charizard and Garchomp are supplied base forms with projections."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-kiran-team-en",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-kiran-team-en-r2.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "0e999ac3559d30ec7bdb1650c733ebb36462f42e66f21aa90610fc6259818a12",
+      "outputHash": "6add792c442374f265d7c91830ebb6536ed59f3d5d0b6af8e52f3826af06160b",
+      "observedPromptVersion": 109,
+      "durationMs": 24151,
+      "usage": {
+        "inputTokens": 15076,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1608,
+        "reasoningTokens": 332,
+        "totalTokens": 16684,
+        "costUsd": 0.0017335300000000003
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-kiran-team-en",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-kiran-team-en-r3.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "0e999ac3559d30ec7bdb1650c733ebb36462f42e66f21aa90610fc6259818a12",
+      "outputHash": "97e76dfc1519421dda7bbb8620d29467de68d78b5324ab94c0da4f86fdae8f55",
+      "observedPromptVersion": 109,
+      "durationMs": 24847,
+      "usage": {
+        "inputTokens": 15076,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1343,
+        "reasoningTokens": 262,
+        "totalTokens": 16419,
+        "costUsd": 0.0016010300000000002
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Does not explain base Garchomp's contribution in the Charizard-Mega Sun lineup."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-mugepome-pokemon-en",
+      "scope": "pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-mugepome-pokemon-en-r1.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "8664f3789ec06f45faa2cb2d5ac11c9103d734294b9fe9e75a12deb9264118a2",
+      "observedPromptVersion": 109,
+      "durationMs": 19654,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1060,
+        "reasoningTokens": 287,
+        "totalTokens": 14039,
+        "costUsd": 0.0014166
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-mugepome-pokemon-en",
+      "scope": "pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-mugepome-pokemon-en-r2.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "490b072a9add624f083386fbfdaaff49d7da1685ae4d4c155c455d8800f031ea",
+      "observedPromptVersion": 109,
+      "durationMs": 15970,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 899,
+        "reasoningTokens": 73,
+        "totalTokens": 13878,
+        "costUsd": 0.0013361000000000002
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Attributes Water and Electric resistances to Steel typing; those are contributed by Dragon, not Steel."
+        ],
+        "concerns": [
+          "Special investment terminology mixes final Special Attack with Special Defense investment."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-mugepome-pokemon-en",
+      "scope": "pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-mugepome-pokemon-en-r3.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "2df28c0dedf730b6bacb60f7e4a7fa9ac88c9beae6e5382162dd51c8995232bf",
+      "outputHash": "42816b22f6a1adb55aa4ee7a99b30eabafdbe7c9d74444b1ab23f33278055e1f",
+      "observedPromptVersion": 109,
+      "durationMs": 16701,
+      "usage": {
+        "inputTokens": 12979,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1003,
+        "reasoningTokens": 387,
+        "totalTokens": 13982,
+        "costUsd": 0.0013881000000000002
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-ddee-pokemon-ko",
+      "scope": "pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-ddee-pokemon-ko-r1.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "452f4e2586bcf2e7f1adc37940047199562b7d84927c1ea6121f1795f14f2455",
+      "observedPromptVersion": 109,
+      "durationMs": 16298,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 1775,
+        "outputTokens": 1243,
+        "reasoningTokens": 204,
+        "totalTokens": 14823,
+        "costUsd": 0.001738665
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-ddee-pokemon-ko",
+      "scope": "pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-ddee-pokemon-ko-r2.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "3175bf3f25853332be58278208bfecfd362cc2e9576d34853bc857c78bf2931f",
+      "observedPromptVersion": 109,
+      "durationMs": 16749,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 983,
+        "reasoningTokens": 290,
+        "totalTokens": 14563,
+        "costUsd": 0.00140454
+      },
+      "rawAuditErrors": [
+        "Recommendation mega-branch names 고릴타 without fact evidence for slot 3."
+      ],
+      "finalAuditErrors": [
+        "Recommendation mega-branch names 고릴타 without fact evidence for slot 3."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-ddee-pokemon-ko",
+      "scope": "pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-ddee-pokemon-ko-r3.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "1ba5878c41fb5fe45fb0b5e7510ce82f1992a3ca9b2d0bd9d87fcecd7f5bceb5",
+      "outputHash": "ac62cbe5a82eb5dacd9d10566fb55ba61e17d151f129f2fcf3151f3a0795f1c4",
+      "observedPromptVersion": 109,
+      "durationMs": 25833,
+      "usage": {
+        "inputTokens": 13580,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1628,
+        "reasoningTokens": 248,
+        "totalTokens": 15208,
+        "costUsd": 0.00172704
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Explicitly says foes-only Dazzling Gleam does not mean allies avoid damage and advises allied protection; supplied spread target is foes."
+        ],
+        "concerns": [
+          "Awkward Korean rendering of nonvolatile status."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-lloyd-recommendation-en",
+      "scope": "recommendation",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "dd1be03b721e746e4736f9fc908f9a2a0c43389adb3323c2bb0ef6d910d9cc42",
+      "outputHash": "a3c7d225c1decfd7fd6e89177138c14590904e10807a7326bff5a8af1d06b051",
+      "observedPromptVersion": 109,
+      "durationMs": 25040,
+      "usage": {
+        "inputTokens": 32248,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 2433,
+        "outputTokens": 1597,
+        "reasoningTokens": 620,
+        "totalTokens": 33845,
+        "costUsd": 0.0037989150000000004
+      },
+      "rawAuditErrors": [
+        "Recommendation volcarona names Tailwind without matching candidate evidence.",
+        "Recommendation volcarona names Protect without matching candidate evidence.",
+        "Recommendation rotom-wash names Levitate without matching candidate evidence.",
+        "Recommendation farigiraf must cite one concrete tradeoff fact."
+      ],
+      "finalAuditErrors": [
+        "Recommendation farigiraf must cite one concrete tradeoff fact."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-lloyd-recommendation-en",
+      "scope": "recommendation",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "dd1be03b721e746e4736f9fc908f9a2a0c43389adb3323c2bb0ef6d910d9cc42",
+      "outputHash": "f4f84099aeba01f7f6cafb700ebc378ecd5ee87ca17055f023245eb46aeaf37e",
+      "observedPromptVersion": 109,
+      "durationMs": 21715,
+      "usage": {
+        "inputTokens": 32248,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1440,
+        "reasoningTokens": 475,
+        "totalTokens": 33688,
+        "costUsd": 0.00344062
+      },
+      "rawAuditErrors": [
+        "Recommendation volcarona names Tailwind without matching candidate evidence.",
+        "Recommendation volcarona names Protect without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-lloyd-recommendation-en",
+      "scope": "recommendation",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "dd1be03b721e746e4736f9fc908f9a2a0c43389adb3323c2bb0ef6d910d9cc42",
+      "outputHash": "6e6a899ca9747e1d96225a9d47170472020b65c7a4741e7200a89412519536d8",
+      "observedPromptVersion": 109,
+      "durationMs": 20979,
+      "usage": {
+        "inputTokens": 32248,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1362,
+        "reasoningTokens": 401,
+        "totalTokens": 33610,
+        "costUsd": 0.00340162
+      },
+      "rawAuditErrors": [
+        "Recommendation farigiraf names Armor Tail without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Interprets fit.coversTypes Ground as Ground-type offense from the legal movepool; the supplied label describes covered defending types, and the supplied alternative is Water-type Liquidation, not a Ground move."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-tagerau-optimization-en",
+      "scope": "optimization",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-tagerau-optimization-en-r1.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "804639afe479fa80f90795ee8b99012e13c8aa05aff2f28005eedaec1c936c57",
+      "outputHash": "e2a137104a676c05dfb663c9f483d42fa9fff21076a7147315ca50142baa69bf",
+      "observedPromptVersion": 109,
+      "durationMs": 17544,
+      "usage": {
+        "inputTokens": 21854,
+        "cachedInputTokens": 3169,
+        "cacheWriteTokens": 1620,
+        "outputTokens": 791,
+        "reasoningTokens": 338,
+        "totalTokens": 22645,
+        "costUsd": 0.00233619
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Flamethrower recommendation gives no positive tradeoff over Fire Blast: both supplied effects are 10% burn, while Flamethrower has lower power; accuracy is not supplied."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-tagerau-optimization-en",
+      "scope": "optimization",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-tagerau-optimization-en-r2.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "804639afe479fa80f90795ee8b99012e13c8aa05aff2f28005eedaec1c936c57",
+      "outputHash": "997d57ae7c3f447103a389716bdc6f9ffb5ee1e7d9149cb0c64ad75a0a6f4d64",
+      "observedPromptVersion": 109,
+      "durationMs": 15285,
+      "usage": {
+        "inputTokens": 21854,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 795,
+        "reasoningTokens": 457,
+        "totalTokens": 22649,
+        "costUsd": 0.0021518900000000005
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-tagerau-optimization-en",
+      "scope": "optimization",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-tagerau-optimization-en-r3.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "804639afe479fa80f90795ee8b99012e13c8aa05aff2f28005eedaec1c936c57",
+      "outputHash": "10f7b7444bf8fbfdfde6b893d421c79419b329e611d8e582319cdbc4c2687392",
+      "observedPromptVersion": 109,
+      "durationMs": 15595,
+      "usage": {
+        "inputTokens": 21854,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 661,
+        "reasoningTokens": 269,
+        "totalTokens": 22515,
+        "costUsd": 0.0020848900000000003
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Describes the recommended Naive spread as less drastic than removing Special Attack investment entirely, although it removes all 14 current Special Attack points."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-kiran-optimization-ko",
+      "scope": "optimization",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-kiran-optimization-ko-r1.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "c15f0028d3b92d8cf74492417e8e9dfa89f369b7e8cf9b7fafae423531ad6d23",
+      "outputHash": "cff9c30756e40bb1478ee7c79b16c8a8d32681259b6ee4a57c62dede82b61d4c",
+      "observedPromptVersion": 109,
+      "durationMs": 13746,
+      "usage": {
+        "inputTokens": 22362,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 750,
+        "reasoningTokens": 0,
+        "totalTokens": 23112,
+        "costUsd": 0.0021801900000000007
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-kiran-optimization-ko",
+      "scope": "optimization",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-kiran-optimization-ko-r2.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "c15f0028d3b92d8cf74492417e8e9dfa89f369b7e8cf9b7fafae423531ad6d23",
+      "outputHash": "332f50fa8f00d250662b3ee016d1a7016119582c41910ecfdb85dd3c7db03df4",
+      "observedPromptVersion": 109,
+      "durationMs": 13742,
+      "usage": {
+        "inputTokens": 22362,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 776,
+        "reasoningTokens": 0,
+        "totalTokens": 23138,
+        "costUsd": 0.0021931900000000007
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Current Mega 179 Special Attack and candidate current-form 177 are discussed in sequence without clearly labeling the candidate state."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "mc-kiran-optimization-ko",
+      "scope": "optimization",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/mc-kiran-optimization-ko-r3.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "c15f0028d3b92d8cf74492417e8e9dfa89f369b7e8cf9b7fafae423531ad6d23",
+      "outputHash": "32668e1af40848dc4686835ead63a02f607dfbc83b6e01dc845611217f27d6bf",
+      "observedPromptVersion": 109,
+      "durationMs": 17985,
+      "usage": {
+        "inputTokens": 22362,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1136,
+        "reasoningTokens": 277,
+        "totalTokens": 23498,
+        "costUsd": 0.0023731900000000007
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-staraptor-charm-funnel-team-r1.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "6212e403183167ca55925c43024cedf7cc5d260431d24aae35ccd60ce205cac5",
+      "outputHash": "6a9943dd59a60a4f150211a6486dfe47a00e5632af1ea1959fa4422520cc96e1",
+      "observedPromptVersion": 109,
+      "durationMs": 28480,
+      "usage": {
+        "inputTokens": 14934,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2131,
+        "reasoningTokens": 615,
+        "totalTokens": 17065,
+        "costUsd": 0.00198083
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-staraptor-charm-funnel-team-r2.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "6212e403183167ca55925c43024cedf7cc5d260431d24aae35ccd60ce205cac5",
+      "outputHash": "19ea0362649166a362fcb289ba7ff70e15370462297fb9bbd82e57b038267af4",
+      "observedPromptVersion": 109,
+      "durationMs": 20689,
+      "usage": {
+        "inputTokens": 14934,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1667,
+        "reasoningTokens": 387,
+        "totalTokens": 16601,
+        "costUsd": 0.0017488299999999998
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-staraptor-charm-funnel-team-r3.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "6212e403183167ca55925c43024cedf7cc5d260431d24aae35ccd60ce205cac5",
+      "outputHash": "691b17ce5e84fdb58c33ca975f0a929364dd3d8140d97a95f7152763eea1e3f7",
+      "observedPromptVersion": 109,
+      "durationMs": 28525,
+      "usage": {
+        "inputTokens": 14934,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1900,
+        "reasoningTokens": 404,
+        "totalTokens": 16834,
+        "costUsd": 0.00186533
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-floette-delphox-protect-ace-team-r1.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "20e2ee2f4c19d0d56f1da1a81c960c30a50b79865442ce5c1e39e64aea90ec45",
+      "outputHash": "f6c25d9756538c94b7a7aac2663f74f2ddec456abe15345b4bdc91d45b36a0ba",
+      "observedPromptVersion": 109,
+      "durationMs": 22243,
+      "usage": {
+        "inputTokens": 14963,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1906,
+        "reasoningTokens": 365,
+        "totalTokens": 16869,
+        "costUsd": 0.00187123
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Claims two Grass types and two Fire/Psychic attackers; supplied roster has one Grass type (Sinistcha) and one Fire/Psychic member (Delphox)."
+        ],
+        "concerns": [
+          "No Calm Mind/Nasty Plot setup explanation."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-floette-delphox-protect-ace-team-r2.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "20e2ee2f4c19d0d56f1da1a81c960c30a50b79865442ce5c1e39e64aea90ec45",
+      "outputHash": "067bc14f3929ebcc94bc1c852ab1235ca33ee0db963ade77b02e30fda2b264f9",
+      "observedPromptVersion": 109,
+      "durationMs": 21739,
+      "usage": {
+        "inputTokens": 14963,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1670,
+        "reasoningTokens": 388,
+        "totalTokens": 16633,
+        "costUsd": 0.00175323
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "No Calm Mind/Nasty Plot setup explanation; Tailwind-first support-only lead can underexplain the protected setup ace."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-floette-delphox-protect-ace-team-r3.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "20e2ee2f4c19d0d56f1da1a81c960c30a50b79865442ce5c1e39e64aea90ec45",
+      "outputHash": "ad56a1990acd0debf7ab1370cca5efcc17a49d34214637d04d4323952c3b8dc3",
+      "observedPromptVersion": 109,
+      "durationMs": 23108,
+      "usage": {
+        "inputTokens": 14963,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1740,
+        "reasoningTokens": 571,
+        "totalTokens": 16703,
+        "costUsd": 0.00178823
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Mentions generic setup but does not name Calm Mind or Nasty Plot as the win condition."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "scope": "pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-zoroark-round-chain-pokemon-r1.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "6805a5e13446ae6908630915c66726b205966df5931b3120d8ae26060ef9660f",
+      "observedPromptVersion": 109,
+      "durationMs": 21352,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1658,
+        "reasoningTokens": 565,
+        "totalTokens": 14550,
+        "costUsd": 0.00167324
+      },
+      "rawAuditErrors": [
+        "Recommendation round-sequence names Gengar without fact evidence for slot 5."
+      ],
+      "finalAuditErrors": [
+        "Recommendation round-sequence names Gengar without fact evidence for slot 5."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Plural Round responder wording does not clearly separate Gardevoir and Dragapult active-pair alternatives; card selects Gardevoir, not an explicit three-ally turn."
+        ]
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "scope": "pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-zoroark-round-chain-pokemon-r2.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "ef81b998ccbfd47c2a2cd5e291fcfc4a522294a4d5ddf9277e30def58685cfb7",
+      "observedPromptVersion": 109,
+      "durationMs": 26635,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1753,
+        "reasoningTokens": 646,
+        "totalTokens": 14645,
+        "costUsd": 0.0017207400000000001
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Lists Thunder Wave among Zoroark's options without naming its teammate owner; it is not selected by Zoroark."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "before",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "scope": "pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/before/doubles-strategy-zoroark-round-chain-pokemon-r3.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "1353c40eef0c3f8208a342c3c13e0d7d033a432ac830487ec3b671ec300a9472",
+      "outputHash": "ce10c2a3456c83861789a79c75ba798c8c9d87fad373de6d6e027cba277000b2",
+      "observedPromptVersion": 109,
+      "durationMs": 30097,
+      "usage": {
+        "inputTokens": 12892,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1858,
+        "reasoningTokens": 768,
+        "totalTokens": 14750,
+        "costUsd": 0.00177324
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "After describing Zoroark and Dragapult as the two Round users, says Dragapult and Gardevoir then both respond: an impossible three-ally Doubles sequence."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-mugepome-team-ko",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-mugepome-team-ko-r1.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "cbb6592b8c155410f8472e720ac25fccca5ae13b0b2c17a15deb13d8de2b76af",
+      "outputHash": "ae1eea2ed5109b3f33b2a5c1d4927bd06f2b94b8d58c7b6466f0729e699bb829",
+      "observedPromptVersion": 110,
+      "durationMs": 28011,
+      "usage": {
+        "inputTokens": 13141,
+        "cachedInputTokens": 3588,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2350,
+        "reasoningTokens": 152,
+        "totalTokens": 15491,
+        "costUsd": 0.00216618
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Awkward allocation wording around final stats, but the actual 32 HP / 31 Special Defense points are stated correctly."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-mugepome-team-ko",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-mugepome-team-ko-r2.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "cbb6592b8c155410f8472e720ac25fccca5ae13b0b2c17a15deb13d8de2b76af",
+      "outputHash": "a54811039b8a7463aab5767966c092458c898cc2e1a359377bc9a5c189920fdb",
+      "observedPromptVersion": 110,
+      "durationMs": 28658,
+      "usage": {
+        "inputTokens": 13141,
+        "cachedInputTokens": 3588,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2494,
+        "reasoningTokens": 232,
+        "totalTokens": 15635,
+        "costUsd": 0.00223818
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Calls Archaludon's 145 Special Attack an invested stat, although its Special Attack allocation is zero."
+        ],
+        "concerns": [
+          "Unqualified safe Flip Turn connection."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-mugepome-team-ko",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-mugepome-team-ko-r3.json",
+      "requestHash": "3118ec7d6aed71ce1e51d46abb2ef188150382a6ae52088b466cbc2117f5c770",
+      "providerRequestHash": "cbb6592b8c155410f8472e720ac25fccca5ae13b0b2c17a15deb13d8de2b76af",
+      "outputHash": "33f5ba3c4dde5ad48947a796deff91dbc1dba00ac9c1fd92670e1f64ae56eff6",
+      "observedPromptVersion": 110,
+      "durationMs": 23114,
+      "usage": {
+        "inputTokens": 13141,
+        "cachedInputTokens": 3588,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2035,
+        "reasoningTokens": 272,
+        "totalTokens": 15176,
+        "costUsd": 0.00200868
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Mega-Floette exclusion versus base Floette inclusion is confusingly described as a separate selection. Weather/terrain choice wording underexplains that Rain and Grassy Terrain can coexist."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-kiran-team-en",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-kiran-team-en-r1.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "bd26856213f340ed71c5b34a6e5833426bb6f5b8546b6c4fd0497e3980468593",
+      "outputHash": "0210436a3ba598844cb6c4c48f769176d6b9fb41d0b23513562e0540fb66bc82",
+      "observedPromptVersion": 110,
+      "durationMs": 22268,
+      "usage": {
+        "inputTokens": 15757,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1904,
+        "reasoningTokens": 274,
+        "totalTokens": 17661,
+        "costUsd": 0.0019496300000000002
+      },
+      "rawAuditErrors": [
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "finalAuditErrors": [
+        "strategyAudit.interactions[1].participants[1].moveIds must reference an action by the same owner in the referenced plan.",
+        "strategyAudit.interactions[2].participants[1].moveIds must reference an action by the same owner in the referenced plan."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Drought entry/activation wording is compressed; Tailwind versus Electro Shot comparison treats independent allies' actions as competing priorities."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-kiran-team-en",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-kiran-team-en-r2.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "bd26856213f340ed71c5b34a6e5833426bb6f5b8546b6c4fd0497e3980468593",
+      "outputHash": "38f49d09539452bfb7b686754f23f31e84e9ed34c837bae5a9db1dfd644448ef",
+      "observedPromptVersion": 110,
+      "durationMs": 16632,
+      "usage": {
+        "inputTokens": 15757,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1218,
+        "reasoningTokens": 270,
+        "totalTokens": 16975,
+        "costUsd": 0.0016066300000000002
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Does not provide a complete Garchomp-Mega branch, despite recognizing the option."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-kiran-team-en",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-kiran-team-en-r3.json",
+      "requestHash": "3c89553a6653b0cdf3488ceeb94db54e848e0244ce6aa97bc218ffe7e6d21f4c",
+      "providerRequestHash": "bd26856213f340ed71c5b34a6e5833426bb6f5b8546b6c4fd0497e3980468593",
+      "outputHash": "9ea1769f43b82259acb5e8db2e624479e7b43738a6a4e0956553b634ea991db1",
+      "observedPromptVersion": 110,
+      "durationMs": 18063,
+      "usage": {
+        "inputTokens": 15757,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1754,
+        "reasoningTokens": 381,
+        "totalTokens": 17511,
+        "costUsd": 0.0018746300000000002
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Calls Charizard's Heat Wave the only physical attack source; Heat Wave is Special and Spirit Break is the sole selected physical move."
+        ],
+        "concerns": [
+          "Base Garchomp's role in the Sun branch is underexplained."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-mugepome-pokemon-en",
+      "scope": "pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-mugepome-pokemon-en-r1.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "82e27220cf97ef1c8679f4bd2111c13c367a39b1b830901a51de5ba4b312ffe2",
+      "observedPromptVersion": 110,
+      "durationMs": 14785,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1025,
+        "reasoningTokens": 349,
+        "totalTokens": 14697,
+        "costUsd": 0.0014684000000000001
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-mugepome-pokemon-en",
+      "scope": "pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-mugepome-pokemon-en-r2.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "5ebc4d588e1d921dba9b0f2cd5987659dcd4e3bf41a2ba3d25c20fd68215c692",
+      "observedPromptVersion": 110,
+      "durationMs": 14791,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1094,
+        "reasoningTokens": 162,
+        "totalTokens": 14766,
+        "costUsd": 0.0015029000000000002
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Discusses Pelipper and Archaludon being active together in Singles, and incorrectly makes Drizzle-before-attack depend on their action Speed order rather than switch-in timing."
+        ],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-mugepome-pokemon-en",
+      "scope": "pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-mugepome-pokemon-en-r3.json",
+      "requestHash": "079db3b8643db43979667f97a0ae934988a450f16e5ae8d0192f81e208309138",
+      "providerRequestHash": "b2987f04dfe5de850630541f0fefe1b8fe2b670f4cdb290b67aa264db62d167b",
+      "outputHash": "ab6eb24da1eca8e8b0fecd04d2f23ba8f3e056ffb30b8fa80d6aa6fafdcf75c3",
+      "observedPromptVersion": 110,
+      "durationMs": 13309,
+      "usage": {
+        "inputTokens": 13672,
+        "cachedInputTokens": 4570,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1011,
+        "reasoningTokens": 166,
+        "totalTokens": 14683,
+        "costUsd": 0.0014614
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-ddee-pokemon-ko",
+      "scope": "pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-ddee-pokemon-ko-r1.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "30554e3a369c2b86a351e7d54505450107cfffa65f365d51a341875d1576a412",
+      "observedPromptVersion": 110,
+      "durationMs": 18359,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1225,
+        "reasoningTokens": 178,
+        "totalTokens": 15500,
+        "costUsd": 0.00159504
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Nonsensical Korean rendering of nonvolatile status ('non-waist status'); names allied Sneasler's Poison attack as a threat without clarifying opponent context."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-ddee-pokemon-ko",
+      "scope": "pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-ddee-pokemon-ko-r2.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "9174a8008e4965137af57a55f81d27396b623455ad3c8e7995529fca964e4061",
+      "observedPromptVersion": 110,
+      "durationMs": 21891,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1642,
+        "reasoningTokens": 248,
+        "totalTokens": 15917,
+        "costUsd": 0.00180354
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Says Mega Evolution lowers the stats in exchange for Fairy Aura, despite listing increases from 159/148/112 to 192/168/122."
+        ],
+        "concerns": [
+          "Unclear Korean rendering of nonvolatile status and ambiguous reference to the alternative Raichu Mega branch."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-ddee-pokemon-ko",
+      "scope": "pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-ddee-pokemon-ko-r3.json",
+      "requestHash": "2c9a6c650cd161c5865409b651c5d57f404e21c633649583f2fa2020ac06d158",
+      "providerRequestHash": "bcaf79aff64d36ac91f6f1d3407d7a56ef675d9c29915c72a25c2263af639fb2",
+      "outputHash": "0703d00c93e1767c875a9e58bd997c6600b69acb27fad8905184fe5f93810255",
+      "observedPromptVersion": 110,
+      "durationMs": 21595,
+      "usage": {
+        "inputTokens": 14275,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1479,
+        "reasoningTokens": 267,
+        "totalTokens": 15754,
+        "costUsd": 0.00172204
+      },
+      "rawAuditErrors": [
+        "Recommendation activate-mega names 고릴타 without fact evidence for slot 3."
+      ],
+      "finalAuditErrors": [
+        "Recommendation activate-mega names 고릴타 without fact evidence for slot 3."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Repeatedly renders nonvolatile status as 'non-status status', obscuring Flower Veil's protection."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-lloyd-recommendation-en",
+      "scope": "recommendation",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-lloyd-recommendation-en-r1.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "59b7a74bf1f022d3bbd73291a53d6af2756d3f86336ca59143ddad3209578eb7",
+      "outputHash": "535ab0b7bcbbb2f3cd00fca7858f83675553b4ac8f6de5bc7e0d5360b863310f",
+      "observedPromptVersion": 110,
+      "durationMs": 20055,
+      "usage": {
+        "inputTokens": 32810,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1554,
+        "reasoningTokens": 692,
+        "totalTokens": 34364,
+        "costUsd": 0.00355382
+      },
+      "rawAuditErrors": [
+        "Recommendation volcarona names Tailwind without matching candidate evidence.",
+        "Recommendation farigiraf names Trick Room without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Volcarona's Ground-coverage alternative Giga Drain is omitted; the proposed support moves themselves do not cover Ground. Farigiraf's slow profile is overstated as very slow."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-lloyd-recommendation-en",
+      "scope": "recommendation",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-lloyd-recommendation-en-r2.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "59b7a74bf1f022d3bbd73291a53d6af2756d3f86336ca59143ddad3209578eb7",
+      "outputHash": "924e6ac45b553abbe8595f0559c99e41d1935dcbb619a69c08cbb1945133ed82",
+      "observedPromptVersion": 110,
+      "durationMs": 18681,
+      "usage": {
+        "inputTokens": 32810,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1704,
+        "reasoningTokens": 467,
+        "totalTokens": 34514,
+        "costUsd": 0.00362882
+      },
+      "rawAuditErrors": [
+        "Recommendation farigiraf names Trick Room without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Farigiraf's supplied slow profile is described as very slow without concrete turn-order evidence."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-lloyd-recommendation-en",
+      "scope": "recommendation",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-lloyd-recommendation-en-r3.json",
+      "requestHash": "68f2989f41c70ce57549b5722fe665854bfd7bbc9268ebb4401e79ccb94c7660",
+      "providerRequestHash": "59b7a74bf1f022d3bbd73291a53d6af2756d3f86336ca59143ddad3209578eb7",
+      "outputHash": "7cf49206043036f6759f32935cabf649839dcfca66050100fd6ecf0df2b91dea",
+      "observedPromptVersion": 110,
+      "durationMs": 23757,
+      "usage": {
+        "inputTokens": 32810,
+        "cachedInputTokens": 5602,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1740,
+        "reasoningTokens": 867,
+        "totalTokens": 34550,
+        "costUsd": 0.0036468200000000003
+      },
+      "rawAuditErrors": [
+        "Recommendation volcarona names Tailwind without matching candidate evidence.",
+        "Recommendation pelipper names Drizzle without matching candidate evidence.",
+        "Recommendation farigiraf names Trick Room without matching candidate evidence.",
+        "Recommendation farigiraf names Psychic without matching candidate evidence."
+      ],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-tagerau-optimization-en",
+      "scope": "optimization",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-tagerau-optimization-en-r1.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "dbaeab2b86a5bb2aaafff79e29d3e4d65d8b000fc72b25daca8d612534a80598",
+      "outputHash": "468cde40392e0ceb9c326c26d1c08e92b5b5cdbd7d9c9d469d465494aaa5bc16",
+      "observedPromptVersion": 110,
+      "durationMs": 13078,
+      "usage": {
+        "inputTokens": 22557,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 676,
+        "reasoningTokens": 366,
+        "totalTokens": 23233,
+        "costUsd": 0.0021626900000000005
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Recommended Attack-focused spread retains Fire Blast but omits the cost of reducing Special Attack from 144 to 130 and allocating zero Special Attack points."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-tagerau-optimization-en",
+      "scope": "optimization",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-tagerau-optimization-en-r2.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "dbaeab2b86a5bb2aaafff79e29d3e4d65d8b000fc72b25daca8d612534a80598",
+      "outputHash": "56df186c8211b4a113e4e5f08f49bd04ec316e021292fbd94325a6af9b7a26d9",
+      "observedPromptVersion": 110,
+      "durationMs": 10462,
+      "usage": {
+        "inputTokens": 22557,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 645,
+        "reasoningTokens": 182,
+        "totalTokens": 23202,
+        "costUsd": 0.0021471900000000006
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-tagerau-optimization-en",
+      "scope": "optimization",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-tagerau-optimization-en-r3.json",
+      "requestHash": "0e10b1c837b62b3012c16e9a976709bd7fb31a8a5d6d4dddbc937d968ff30166",
+      "providerRequestHash": "dbaeab2b86a5bb2aaafff79e29d3e4d65d8b000fc72b25daca8d612534a80598",
+      "outputHash": "d49a2800a75beb57cb72f0f492be4183a6d5ac88999deb7347ed652c1ff06db2",
+      "observedPromptVersion": 110,
+      "durationMs": 16098,
+      "usage": {
+        "inputTokens": 22557,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 800,
+        "reasoningTokens": 389,
+        "totalTokens": 23357,
+        "costUsd": 0.0022246900000000005
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-kiran-optimization-ko",
+      "scope": "optimization",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-kiran-optimization-ko-r1.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "925cb9f7d722c7280cce084f1834443e05e19198397820e1c0de320b3985e427",
+      "outputHash": "ff5b5b5e336238db4e2afb3896f4034179928e5d14d34c656803c69ff11d65f0",
+      "observedPromptVersion": 110,
+      "durationMs": 14616,
+      "usage": {
+        "inputTokens": 23034,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 827,
+        "reasoningTokens": 196,
+        "totalTokens": 23861,
+        "costUsd": 0.0022858900000000005
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-kiran-optimization-ko",
+      "scope": "optimization",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-kiran-optimization-ko-r2.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "925cb9f7d722c7280cce084f1834443e05e19198397820e1c0de320b3985e427",
+      "outputHash": "e42e108506c0e5e48ac48e37ead89a01dd55b0d99d42eceaf80689f93fcd8946",
+      "observedPromptVersion": 110,
+      "durationMs": 14113,
+      "usage": {
+        "inputTokens": 23034,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 963,
+        "reasoningTokens": 283,
+        "totalTokens": 23997,
+        "costUsd": 0.0023538900000000004
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "mc-kiran-optimization-ko",
+      "scope": "optimization",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/mc-kiran-optimization-ko-r3.json",
+      "requestHash": "80c3d74e65c8f04a826199546f9c6ed58af2eb7989635b1939077f95fcdf8486",
+      "providerRequestHash": "925cb9f7d722c7280cce084f1834443e05e19198397820e1c0de320b3985e427",
+      "outputHash": "bb121780bcc2626b9d5f477f82fddc50e710016dda19b59ee9bfdc3fc0a2179b",
+      "observedPromptVersion": 110,
+      "durationMs": 11486,
+      "usage": {
+        "inputTokens": 23034,
+        "cachedInputTokens": 4789,
+        "cacheWriteTokens": 0,
+        "outputTokens": 759,
+        "reasoningTokens": 217,
+        "totalTokens": 23793,
+        "costUsd": 0.0022518900000000003
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-staraptor-charm-funnel-team-r1.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "06300e24483f0b676f60c089701ad39d053fb99b26e1660642ca05d331a59ba7",
+      "outputHash": "f9ea3f1006dad875795e3eba0afa63f47f7bc5c176e4d4c87a974cccd3bec74f",
+      "observedPromptVersion": 110,
+      "durationMs": 24665,
+      "usage": {
+        "inputTokens": 15627,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1899,
+        "reasoningTokens": 474,
+        "totalTokens": 17526,
+        "costUsd": 0.00193413
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-staraptor-charm-funnel-team-r2.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "06300e24483f0b676f60c089701ad39d053fb99b26e1660642ca05d331a59ba7",
+      "outputHash": "d3a1881207b9e32408df9c7ffffa4b08929a42e6ea15bf8c38ac5e92f360841b",
+      "observedPromptVersion": 110,
+      "durationMs": 18571,
+      "usage": {
+        "inputTokens": 15627,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1677,
+        "reasoningTokens": 329,
+        "totalTokens": 17304,
+        "costUsd": 0.00182313
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-staraptor-charm-funnel-team",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-staraptor-charm-funnel-team-r3.json",
+      "requestHash": "77d244fd2efdcb6e01a8a0f6dc289f64d936093a7b0e52b8173a1107bdbd4f66",
+      "providerRequestHash": "06300e24483f0b676f60c089701ad39d053fb99b26e1660642ca05d331a59ba7",
+      "outputHash": "d7b39d76313bd198452d9f8939a27101857f512d867848e994058c590cd3d0c9",
+      "observedPromptVersion": 110,
+      "durationMs": 20317,
+      "usage": {
+        "inputTokens": 15627,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1521,
+        "reasoningTokens": 246,
+        "totalTokens": 17148,
+        "costUsd": 0.0017451300000000001
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "scope": "team",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-floette-delphox-protect-ace-team-r1.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "789adf5e72fcde94b645b8ac3a0157c14198a80afa1a0fed6fb4581f1f9e7bd0",
+      "outputHash": "8ba27e7297a97270dd008a56267b2605ec473551e676b0bcaabcfde90bef514a",
+      "observedPromptVersion": 110,
+      "durationMs": 25867,
+      "usage": {
+        "inputTokens": 15653,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 2099,
+        "reasoningTokens": 286,
+        "totalTokens": 17752,
+        "costUsd": 0.00203673
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Nasty Plot is explained for Delphox, but Floette's Calm Mind setup is not."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "scope": "team",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-floette-delphox-protect-ace-team-r2.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "789adf5e72fcde94b645b8ac3a0157c14198a80afa1a0fed6fb4581f1f9e7bd0",
+      "outputHash": "8e7fabaaba87e215f10f0d4a0b609f89d73e95a5f654e7baf0e6d4659279745d",
+      "observedPromptVersion": 110,
+      "durationMs": 22352,
+      "usage": {
+        "inputTokens": 15653,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1751,
+        "reasoningTokens": 322,
+        "totalTokens": 17404,
+        "costUsd": 0.00186273
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Nasty Plot is identified, but Floette's Calm Mind setup remains omitted and a support-only opening is still favored for Floette."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-floette-delphox-protect-ace-team",
+      "scope": "team",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-floette-delphox-protect-ace-team-r3.json",
+      "requestHash": "703f5a92a7fa45e343d048cd52a6aa0bd88fd8fc3bb726344164143bb6304d58",
+      "providerRequestHash": "789adf5e72fcde94b645b8ac3a0157c14198a80afa1a0fed6fb4581f1f9e7bd0",
+      "outputHash": "24d2e17378816d75264374e51fdb1e8e7b105dcc32fc1bd01d32622401666b22",
+      "observedPromptVersion": 110,
+      "durationMs": 21847,
+      "usage": {
+        "inputTokens": 15653,
+        "cachedInputTokens": 6423,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1533,
+        "reasoningTokens": 273,
+        "totalTokens": 17186,
+        "costUsd": 0.00175373
+      },
+      "rawAuditErrors": [
+        "Team analysis claims no teammate defends against Ground, but current slot 0 does."
+      ],
+      "finalAuditErrors": [
+        "Team analysis claims no teammate defends against Ground, but current slot 0 does."
+      ],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Says Incineroar's Fire/Dark typing resists Rock, then later lists it as Rock-weak; supplied profile is weak to Rock."
+        ],
+        "concerns": [
+          "No Calm Mind/Nasty Plot setup explanation."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "scope": "pokemon",
+      "repeat": 1,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-zoroark-round-chain-pokemon-r1.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "9177b1d7dbcd89e7975ffebeda913d49db49cb6ee0f243d9bb7a3ff6e0949b34",
+      "observedPromptVersion": 110,
+      "durationMs": 20771,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1547,
+        "reasoningTokens": 708,
+        "totalTokens": 15113,
+        "costUsd": 0.0016851400000000001
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": [
+          "Illusion is described generically but no exact disguise teammate or concrete false expectation is recommended."
+        ]
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "scope": "pokemon",
+      "repeat": 2,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-zoroark-round-chain-pokemon-r2.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "48bbf8231afd04ef5213f00fde0852dbacdc0d2a0bc2f54508694fcf4ef3df14",
+      "observedPromptVersion": 110,
+      "durationMs": 20602,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1760,
+        "reasoningTokens": 634,
+        "totalTokens": 15326,
+        "costUsd": 0.0017916400000000002
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [],
+        "concerns": []
+      }
+    },
+    {
+      "group": "after",
+      "id": "doubles-strategy-zoroark-round-chain-pokemon",
+      "scope": "pokemon",
+      "repeat": 3,
+      "rawPath": ".tmp/owner-binding-2026-10-14/after/doubles-strategy-zoroark-round-chain-pokemon-r3.json",
+      "requestHash": "3143babb4b265f5e5e2fe89f0c64407eff7984df62a6c161a3025dfdf06564dc",
+      "providerRequestHash": "ec91dacb927872eb4cffc5a49a8d907d3e2ecd0242fb1a9b98e586912eae9046",
+      "outputHash": "9f8004e0220fbe2b37cd1d64f68f179d9e8f25c60b95d9a35dbcc2ac7f677972",
+      "observedPromptVersion": 110,
+      "durationMs": 18982,
+      "usage": {
+        "inputTokens": 13566,
+        "cachedInputTokens": 4944,
+        "cacheWriteTokens": 0,
+        "outputTokens": 1506,
+        "reasoningTokens": 643,
+        "totalTokens": 15072,
+        "costUsd": 0.00166464
+      },
+      "rawAuditErrors": [],
+      "finalAuditErrors": [],
+      "assessment": {
+        "reviewed": true,
+        "confirmedIssues": [
+          "Explicitly has all three allied Round users act in a Doubles turn, with Dragapult responding before Gardevoir."
+        ],
+        "concerns": [
+          "Omits Mega Gardevoir's Pixilate transformation and boosted-response payoff. Thunder Wave ownership is correctly qualified this time."
+        ]
+      }
+    }
+  ]
+}

@@ -160,6 +160,7 @@ export function CopilotOptimizationStatus({
 
 type CopilotOptimizationRecommendationProps = {
   candidate: CopilotSetOptimizationCandidateSnapshot;
+  currentCandidate?: CopilotSetOptimizationCandidateSnapshot;
   currentItemDisplayName: string | null;
   title: string;
   reason: string;
@@ -170,6 +171,7 @@ type CopilotOptimizationRecommendationProps = {
 
 export function CopilotOptimizationRecommendation({
   candidate,
+  currentCandidate,
   currentItemDisplayName,
   title,
   reason,
@@ -180,6 +182,9 @@ export function CopilotOptimizationRecommendation({
   const { t } = useLocalization();
   const nature = getNatureById(candidate.natureId);
   const isCurrent = candidate.id === "set-current";
+  const showStatComparison = !isCurrent && currentCandidate?.id === "set-current" &&
+    currentCandidate.slotIndex === candidate.slotIndex &&
+    statKeys.some((stat) => currentCandidate.finalStats[stat] !== candidate.finalStats[stat]);
   const evidence = selectOptimizationEvidence(candidate);
   const hasEvidence = !isCurrent && (evidence.offense.length > 0 || evidence.defense.length > 0 || evidence.showSpeed);
   const speedBenchmark = candidate.speedBenchmark;
@@ -247,6 +252,33 @@ export function CopilotOptimizationRecommendation({
         <small>{t("copilot.optimization.ev-spread-label")}</small>
         <strong>{formatSpread(candidate) || "0"}</strong>
       </div>
+      {showStatComparison && currentCandidate ? (
+        <div className="copilot-optimization-stat-comparison">
+          <small>{t("copilot.optimization.stat-comparison-label")}</small>
+          <dl>
+            {statKeys.map((stat) => {
+              const before = currentCandidate.finalStats[stat];
+              const after = candidate.finalStats[stat];
+              const delta = after - before;
+              return (
+                <div key={stat}>
+                  <dt>{t(statTranslationKeys[stat])}</dt>
+                  <dd>
+                    <span>{before}</span>
+                    <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
+                    <strong>{after}</strong>
+                    {delta !== 0 ? (
+                      <small className={delta > 0 ? "is-up" : "is-down"}>
+                        {delta > 0 ? "+" : ""}{delta}
+                      </small>
+                    ) : null}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+      ) : null}
       <p>{reason}</p>
       {hasEvidence ? <details className="copilot-optimization-evidence">
         <summary>
