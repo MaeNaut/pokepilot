@@ -2,13 +2,29 @@
 
 This file is for active implementation notes and small follow-up tasks. Keep larger product direction in `ROADMAP.md`.
 
-> Current status, 2026-09-26: the public beta runs on Cloudflare Workers with
+> Current status, 2026-10-15: the public beta runs on Cloudflare Workers with
 > Regulation M-C data, Google sign-in, and bounded D1 account sync. Earlier
 > M-B/Vercel tasks below are retained as implementation history; new work should
 > use the current deployment and regulation documents.
 > AI now requires login and a personal key for all models; old fallback and
 > site-funded access tasks below are historical, not current behavior. See
 > `docs/personal-api-key.md` and `docs/DEPLOYMENT_CHECKLIST.md` for current policy.
+
+## Current Release Verification
+
+- [x] Verify alternate-account Google sign-in, the no-key gate, owner-entered
+      key registration and a live low Pokemon analysis in isolated Chrome QA.
+- [x] Verify automatic team save and restoration of result/time/token/cost from
+      reload, history selection and a second tab in the same browser.
+- [ ] Keep live coverage gaps explicit: this pass did not test independent
+      devices, simultaneous-edit conflicts, key/account deletion, provider-error
+      paths, paid medium calls or the other three paid analysis scopes.
+- [ ] Publish the reviewed documentation changes with the next release.
+
+See `docs/PRELAUNCH_QA_2026_10_15.md` for evidence and the earlier transient
+button-unresponsiveness report; its root cause has not been established.
+The older completed tasks below describe implementation history, not a fresh
+verification of every feature in the current release.
 
 ## Now
 

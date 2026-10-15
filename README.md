@@ -27,6 +27,7 @@ responsive web app.
 - Sign in with Google to synchronize saved teams, bounded analysis history, language, theme, default battle format, tutorial completion, and the last selected analysis tab/model/reasoning level across devices.
 - Register a personal OpenAI API key to use AI analysis. OpenAI bills your account; PokePilot currently provides no site-funded trials or advertising credits.
 - Confirming analysis saves the current team before the AI call. Save/sync failures block the call; unchanged saved teams are checked without rewriting them. Usage-based history retains the statistics season/date used for that analysis.
+- Before confirmation, review locally calculated time, total-token, and cost ranges based on the prepared input and historical output/time profiles. Opening the estimate neither calls OpenAI nor saves the team. Estimates are not spending caps and assume no cache discount. Completed results and history retain actual duration and token usage with estimated cost.
 
 ## Stack
 
@@ -126,6 +127,7 @@ Usage updates do not change the app's supported regulation or battle rules.
 - [Operational metrics](./docs/OPERATIONAL_METRICS.md)
 - [Cloudflare deployment and migration record](./docs/CLOUDFLARE_MIGRATION.md)
 - [Deployment checklist](./docs/DEPLOYMENT_CHECKLIST.md)
+- [October 15 onboarding QA and remaining coverage](./docs/PRELAUNCH_QA_2026_10_15.md)
 - [AI model evaluation](./docs/AI_MODEL_EVALUATION.md)
 - [Third-party notices](./THIRD_PARTY_NOTICES.md)
 - [Privacy notice](https://pokepilot.app/privacy.html)

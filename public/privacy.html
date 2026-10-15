@@ -128,7 +128,7 @@
 
       <article lang="en">
         <h1>Privacy</h1>
-        <p class="meta">Public beta notice · Last updated October 3, 2026</p>
+        <p class="meta">Public beta notice · Last updated October 15, 2026</p>
 
         <section>
           <h2>Data kept in your browser</h2>
@@ -169,6 +169,13 @@
             quality-sharing setting or related reward at this time.
           </p>
           <p>
+            The pre-analysis estimate runs in your browser and does not send an
+            analysis request to OpenAI or save your team. Confirming analysis
+            saves the team before the paid request. Saved analysis history can
+            include the response, duration, token usage, estimated cost, and
+            battle-data source metadata.
+          </p>
+          <p>
             AI analysis requires sign-in and a personal OpenAI API key; team
             building and damage calculation do not require a key.
             PokePilot encrypts the key before storing it in the account-scoped
@@ -204,11 +211,14 @@
             </li>
             <li>
               Public personal-key analysis bypasses the shared Redis analysis
-              cache and request-rate counters. Duplicate in-flight requests may
+              cache, but temporary account/IP request counters and account/global
+              active-analysis permits remain in Redis for abuse and capacity
+              protection. These are not daily analysis credits. Duplicate in-flight requests may
               share a result within a server process. The development adapter
               can use Upstash for temporary request controls and analysis caching;
               its analysis cache expires within 24 hours. Account analysis history
-              in D1 is separate from this cache and remains until removed.
+              in D1 is separate from this cache. It is bounded to 60 entries and
+              a 1 MB payload; older entries can be removed as new history is kept.
             </li>
           </ul>
         </section>
@@ -231,7 +241,8 @@
           <p>
             Cloudflare hosts the app, Worker API, and account-session database;
             Google provides optional sign-in; OpenAI processes requested AI
-            analyses; and Upstash provides the temporary operational cache.
+            analyses; and Upstash provides temporary request and capacity controls
+            and the optional development analysis cache.
             These providers may process standard request metadata under their
             own terms and privacy policies. Game data is loaded from or derived
             from PokeAPI, Pokemon Showdown, and Pokemon Champions Battle Data sources.
@@ -280,7 +291,7 @@
 
       <article class="ko" lang="ko">
         <h1>개인정보 안내</h1>
-        <p class="meta">공개 베타 안내 · 최종 수정 2026년 10월 3일</p>
+        <p class="meta">공개 베타 안내 · 최종 수정 2026년 10월 15일</p>
 
         <section>
           <h2>브라우저에 저장되는 데이터</h2>
@@ -318,6 +329,12 @@
             품질 개선 공유 설정이나 관련 보상도 제공하지 않습니다.
           </p>
           <p>
+            분석 전 예상치 계산은 브라우저에서 진행되며 OpenAI에 분석을
+            요청하거나 팀을 저장하지 않습니다. 분석을 최종 확인하면 유료
+            요청 전에 팀을 저장합니다. 저장되는 분석 기록에는 결과와 소요 시간,
+            토큰 사용량, 추정 비용, 배틀 데이터 출처 정보가 포함될 수 있습니다.
+          </p>
+          <p>
             AI 분석에는 로그인과 개인 OpenAI API 키 등록이 필요합니다.
             팀 빌더와 대미지 계산기는 키 없이 이용할 수 있습니다.
             PokePilot은 키를 암호화하여 계정별 Cloudflare D1 데이터베이스에
@@ -350,11 +367,14 @@
               PokePilot 애플리케이션 캐시에는 원본 IP를 저장하지 않습니다.
             </li>
             <li>
-              공개 서비스의 개인 키 분석은 Redis 공유 분석 캐시와 요청 횟수 제한을
-              사용하지 않습니다. 동시에 진행 중인 중복 요청은 같은 서버 프로세스에서
+              공개 서비스의 개인 키 분석은 Redis 공유 분석 캐시를 사용하지 않지만,
+              오남용과 서버 과부하를 막기 위한 계정·IP별 임시 요청 횟수와 계정·전체
+              동시 분석 제어 정보는 Redis에 유지합니다. 이는 일일 분석 크레딧이
+              아닙니다. 동시에 진행 중인 중복 요청은 같은 서버 프로세스에서
               결과를 공유할 수 있습니다. 개발용 어댑터는 Upstash에 임시 요청 제어
               데이터와 최대 24시간의 분석 캐시를 저장할 수 있습니다. D1의 계정 분석
-              기록은 이 캐시와 별개이며 삭제하기 전까지 유지됩니다.
+              기록은 이 캐시와 별개이며 최대 60개·1MB로 제한됩니다.
+              새 기록을 유지하는 과정에서 오래된 항목은 제거될 수 있습니다.
             </li>
           </ul>
         </section>
@@ -376,7 +396,8 @@
           <p>
             Cloudflare는 앱, Worker API, 계정 세션 데이터베이스를 호스팅하고,
             Google은 선택형 로그인을 제공하며, OpenAI는 요청된 AI 분석을
-            처리하고, Upstash는 임시 운영 캐시를 제공합니다. 각 서비스는 자체
+            처리하고, Upstash는 임시 요청·동시 분석 제어와 선택형 개발 분석 캐시를
+            제공합니다. 각 서비스는 자체
             약관과 개인정보 처리방침에 따라 일반적인 요청 메타데이터를 처리할
             수 있습니다. 게임 데이터는 PokeAPI, Pokemon Showdown, Pokemon Champions Battle Data
             출처에서 불러오거나 파생됩니다.

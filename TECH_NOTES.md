@@ -1,6 +1,6 @@
 # PokePilot Technical Notes
 
-> Current architecture, 2026-09-26: the public app runs on Cloudflare Workers
+> Current architecture, 2026-10-15: the public app runs on Cloudflare Workers
 > with D1, Upstash Redis, Google OAuth, and Regulation M-C data. Detailed M-B
 > data experiments and early persistence alternatives below are retained as
 > implementation history unless a later section explicitly supersedes them.
@@ -185,8 +185,11 @@ Current direction:
   generation icon, `front_default`, and older generation icon paths. Retain the
   ordered fallback list on hydrated and saved Pokemon. At render time, derive a
   Champions candidate from known PokeAPI sprite URLs so legacy saved-team previews
-  adopt the new priority without requiring a load-and-resave migration. Keep the
-  large card artwork on PokeAPI artwork/front sprite URLs.
+  adopt the new priority without requiring a load-and-resave migration. Generation
+  IX icons use `/icons/*.png`; normalize legacy non-icon paths and `.webp` URLs
+  to that icon path rather than substituting the full-size 3D render. Preserve
+  gender-specific icon paths. Keep large card artwork separate on PokeAPI
+  artwork/front sprite URLs.
 - Use Pokemon Showdown as the current battle-data and Regulation M-B legality
   source for:
   - Pokemon types, base stats, and abilities
@@ -699,18 +702,21 @@ the Copilot constrained to the current team data and deterministic builder analy
 The current implementation keeps a provider-independent hosted analysis
 contract. Failed requests no longer generate a rules-based replacement:
 
-- `src/utils/copilotAnalysis.ts` creates request-contract v21 containing active
+- `src/utils/copilotAnalysis.ts` re-exports the current request contract,
+  builder, labels, and fingerprint helpers. `copilotRequestBuilder.ts` prepares active
   sets, the selected slot, deterministic diagnostics, field/weather concept
   summaries, validity summaries, and all 18 localized type labels.
-- The same module returns structured paragraphs and recommendation cards from
-  local rules when the hosted route is unavailable.
-- `POST /api/pokepilot/analyze` sends the validated request through a server-only
-  lossless input serializer to Luna at Standard low reasoning. Prompt v73 places
-  stable common instructions at the first explicit cache breakpoint, stable
+- Failed hosted requests show an explicit error, never a local rules-based
+  replacement. Deterministic diagnostics remain inputs, not substitute AI output.
+- `POST /api/pokepilot/analyze` sends the validated request through the shared
+  compact input serializer to Luna with low reasoning by default or medium when
+  selected. Both require login and a registered personal key. Stable common
+  instructions are placed at the first explicit cache breakpoint, stable
   Team/Pokemon/Recommend/Sample instructions
   at a second breakpoint, and variable request JSON after both. The cache key is
-  versioned by the shared core so different scopes and users can reuse the
-  common prefix while scope revisions invalidate only their later segment.
+  versioned by the shared core and reasoning effort; scope revisions invalidate
+  their later segment. A matching cache key does not guarantee a cache hit or
+  cross-account cache sharing. The local estimate assumes no cache discount.
 - `server/pokepilotModelInput.ts` shares exact repeated damage outcomes, Speed
   states, move/ability details, and current/Mega defensive profiles in a flat
   `sharedData` table. Occurrences use `dataRef`; full records remain in the table.
@@ -718,12 +724,18 @@ contract. Failed requests no longer generate a rules-based replacement:
   candidate, selected-move owner, direction, HP condition, KO probability, and
   strategic fact survives expansion. Small requests stay inline when references
   plus their explanation do not save enough text. The explanation follows both
-  cache breakpoints, leaving core v3 and all scope prefixes unchanged. The browser
+  cache breakpoints. The browser
   contract, fingerprints, response validation, candidate application, and request admission
-  accounting still use the complete original request. Prompt v73 separates Redis
-  result entries from v72 without changing the OpenAI prefix caches. Every scope
+  accounting still use the complete original request. Every scope
   uses the original output schema; the audit field-name compression trial was
   reverted before release.
+- `server/pokepilotPromptParts.ts` is shared by the provider and the browser's
+  lazy estimate Worker, so prompt instructions, serialization and output-schema
+  metadata are public bundle contents, not secrets. Only keys, authentication,
+  paid dispatch and authoritative validation stay server-side. The browser
+  tokenizes prepared inputs locally; historical output/time profiles supply
+  heuristic ranges. Confirmation submits that same snapshot after authentication
+  and a successful team save. See `docs/personal-api-key.md` for limitations.
 - Hosted Team and Pokemon output includes a private strategy audit. The server
   validates selected-element ownership, legal active states, Mega states,
   defensive facts, supported Speed comparisons, and recommendation evidence,
@@ -951,7 +963,8 @@ embedding a detailed all-versus-all matchup matrix in the browser.
 - Keep development/evaluation keys in ignored environment files. Public personal
   keys are encrypted in D1, never stored in browser storage or `VITE_` variables.
 - Do not call paid AI APIs directly from browser code.
-- Keep prompts and model calls server-side.
+- Keep keys and paid model calls server-side. The local estimate bundles shared
+  prompt construction; never put secrets into prompt instructions or schemas.
 - Sign the anonymous analysis cookie on the server and hash IP addresses before
   they enter limiter state. Never log raw IP addresses, cookie IDs, or team
   request contents.
@@ -966,10 +979,12 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   distributed lease and short-lived shared result. Per-key and global expiring
   waiter tokens bound duplicate serverless requests, and their 50-second shared
   deadline remains within the Worker request budget.
-- The above Redis cache/admission/distributed-coordination behavior applies to
+- The above shared result cache and distributed result coordination apply to
   the generic adapter when enabled, not current public BYOK calls. The Worker
-  uses `ai-fresh`: no shared cache, request-rate counters, or distributed result
-  storage; deduplication is process-local and account/model/effort scoped.
+  uses `personal`: no shared analysis cache or distributed result storage, but
+  account/IP request admission and Redis account/global active-analysis permits
+  remain enabled. Deduplication is process-local and account/model/effort scoped.
+  Development `ai-fresh` bypasses admission; it is not the public Worker mode.
 - Set `POKEPILOT_SHARED_STORE_REQUIRED=true` for public deployment so missing or
   partial Redis configuration fails closed during adapter initialization. Use distinct
   `POKEPILOT_REDIS_PREFIX` values for preview and production. When shared operations
@@ -988,10 +1003,11 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   verified one provider call for identical simultaneous requests, with followers
   receiving the shared result and no team contents or requester identifiers in
   runtime logs.
-- Use `npm run verify:deployment` for the no-cost method, origin, nested-contract,
-  response-header, and signed-cookie checks. Add `-- --allow-paid-call` only for
-  an intentional live concurrency check; the script limits the group to five
-  identical requests and expects exactly one cache miss.
+- Use `npm run verify:deployment -- --url <target>` for the no-cost deployment
+  checks. On the login-required Worker it checks the guest boundary, not
+  authenticated analysis or paid concurrency. Those require browser QA. The
+  optional `--allow-paid-call` concurrency mode is for development endpoints
+  without account authentication, not a substitute for signed-in Worker QA.
 - Select local safeguard test behavior only through server-start Vite modes:
   production-like `dev`, cached/unlimited `dev:ai`, uncached/unlimited
   `dev:ai:fresh`. Unknown and production

@@ -103,6 +103,13 @@ reload. Desktop, tablet, and 360px settings menus were checked in Chrome.
 The final live sign-out check was interrupted by a browser confirmation dialog;
 authentication draft cleanup remains covered by the regression suite.
 
+October 15 follow-up: alternate-account Google sign-in, owner-entered key
+registration, one live low Pokemon analysis, automatic team save and
+result/usage-metadata restoration after reload/history selection/new tab passed
+in ordinary Chrome on isolated QA. This does not establish independent-device
+sync, concurrent-edit or destructive-account-flow coverage. See
+[the onboarding QA record](./PRELAUNCH_QA_2026_10_15.md) for remaining gaps.
+
 ## Rollback
 
 Use the Cloudflare Workers dashboard to roll the `pokepilot` Worker back to a

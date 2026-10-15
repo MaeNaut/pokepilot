@@ -66,7 +66,7 @@ endpoints:
 | --- | --- | --- |
 | `team:<id>` | 30 teams / 50 KB per team | Saved teams, including bench and editable build state; each has its own revision |
 | `team-order`, `teams-v2` | One row each | Display order and migration marker; legacy `teams` retained as backup |
-| `analysis-history` | 60 entries / 1 MB | Renderable PokePilot analysis history; not a guarantee of factual accuracy |
+| `analysis-history` | 60 entries / 1 MB | Renderable PokePilot analysis history, including duration, token usage, estimated cost and source metadata when available; not a guarantee of factual accuracy |
 | `preferences` | 4 KB | Language, theme, default battle format, tutorial completion, last selected analysis tab/model/reasoning level |
 
 The browser keeps a local copy for continuity. Saved account teams use the

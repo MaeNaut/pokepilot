@@ -51,25 +51,52 @@ needed. Personal calls are labeled `personal-low-miss` or
 `personal-medium-miss` in `operational_metrics.cache_status` so they can be
 separated from site-funded API costs.
 
-The UI shows estimated time and cost in a confirmation popover after pressing
-Analyze, on both desktop and touch devices. Model choices are ordered
+The UI shows approximate time, total-token and cost ranges in a confirmation
+popover after pressing Analyze, on both desktop and touch devices. Model choices are ordered
 Luna medium, then Luna low. The default is Luna low.
 Each menu option has a persistent secondary label: Luna low is the default;
 Luna medium describes deeper reasoning at increased time and cost, without
-numeric multipliers or a guarantee of accuracy. The confirmation popover still
-shows scope-specific absolute estimates where measurements are available.
+numeric multipliers or a guarantee of accuracy.
 
-Luna's typical times and costs are approximate per-attempt medians and means
-from 24 GPT-6 runs per effort on September 24. Team had 18 cases per effort;
-Pokemon and recommendation had three each. Sample analysis has no reliable
-fixture-specific estimate, so the UI says its time and cost vary. Actual
-requests depend on prompt length, cache status, output length, provider load,
-and failed attempts. There is no publicly accessible site-funded analysis path.
+Before showing the estimate, prepare the complete input, including Pokemon/set
+recommendation candidates. A lazy browser Worker counts the same prompt parts
+and compressed battle data used by the provider path, plus the output schema,
+with local `o200k_base` tokenization and approximate message framing. This is
+not the provider's authoritative billable token count. Opening the estimate does
+not call OpenAI, save the team, or register/validate a key with OpenAI.
+
+Forecast output tokens (including reasoning) and duration use 80 historical
+published-team runs, grouped by the four public scopes, Singles/Doubles and
+low/medium, with roster-size scaling and broad heuristic margins. Sample
+recommendation now has estimates too. See the preflight-estimate section in
+`AI_MODEL_EVALUATION.md` for sources, formulas and limitations; these are not
+confidence intervals or a spending cap. There is no automatic learning from
+private user analyses. Missing calibration or a worker failure shows an
+unavailable message without inventing a price, and permits explicit confirmation.
+
+Costs combine the locally counted input and forecast output at the shared
+application pricing. No cache-read discount is assumed; the upper estimate also
+allows a common/scope-prefix cache write. Cache hits, retries, model-specific
+tokenization, actual output length and provider load can put the actual bill or
+duration outside the displayed range. Cached input is a subset of input, not
+extra total tokens. There is no publicly accessible site-funded analysis path.
+
+Confirmation reuses the prepared input snapshot rather than recomputing it.
+Authenticate and save the team before sending the paid AI request. Failed saving,
+workspace/account changes or usage-source rollover stop submission; changing the
+analysis context closes the old confirmation. Dismissing the confirmation aborts
+pending local tokenization. Completed analysis/history retain the actual provider
+token usage, application-calculated cost, request duration and original statistics
+provenance, not the preflight forecast.
 
 The localized static setup guides live at `/help/api-key-ko.html` and
 `/help/api-key-en.html`. They are linked from the account key section, relevant
 analysis errors, and the main Help articles. Their language controls switch
 between guide URLs; they do not collect credentials.
 
-Before release, run `npm run check:cloudflare`, apply the D1 migration in a
-preview environment, and verify key registration, account isolation, both reasoning choices, key removal, sign-out, and account deletion there.
+Before release, run `npm run check:cloudflare`, apply any pending D1 migrations
+in an isolated QA environment, and verify onboarding, key registration, account
+isolation, both reasoning choices, key removal, sign-out, and history reload.
+Only delete a real account or its registered key after explicit owner confirmation;
+automated deletion tests use disposable test data. Plain Vite does not implement
+the account API and cannot verify this flow; use the aliased Cloudflare QA URL.

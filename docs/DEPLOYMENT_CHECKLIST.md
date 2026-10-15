@@ -99,9 +99,18 @@ this repository.
   personal-key analysis for each supported model, and an appropriate error when the
   provider is unavailable. Check the account history and aggregate metrics.
 - Confirm the analysis confirmation explains automatic team saving. New/edited
-  teams must finish saving before preparation or the paid AI request begins.
+  inputs and recommendation candidates are prepared before showing the estimate.
+  The browser then locally estimates time, total tokens and cost ranges without
+  calling OpenAI or saving the team. Only final confirmation authenticates and
+  saves the team; saving must finish before the paid AI request begins. Submit
+  the same prepared snapshot used for the estimate, not a different recomputation.
   Save failures, pending remote updates, and workspace/account changes must block
   the request. An unchanged saved team must not cause a duplicate write.
+- Check all four public scopes, low/medium, Singles/Doubles, and minimum/full
+  rosters. Tokenization failure must show an unavailable estimate rather than
+  stale/fixed values, while allowing explicit confirmation. Cancelling before
+  confirmation must not save a team or send a paid request. Check the popover
+  on mobile as well as desktop; estimated ranges are not a billing ceiling.
 - Reload analysis history in a second tab: the submitted saved-team ID, result,
   timing/tokens/cost, and original battle-data season/date must remain intact.
   Do not infer a saved-team destination from a matching draft roster.
@@ -110,6 +119,11 @@ this repository.
   no provenance show "not recorded" rather than today's source.
 - QA and production use separate D1 databases. Keys registered in QA do not
   transfer to production; register a key on the production site to test it there.
+- Test first sign-in with an owner-provided Google account not previously used
+  on the QA site. Do not simulate an OAuth success by inserting production users,
+  minting sessions or weakening authentication. Record missing real-account/device
+  coverage separately from automated mock-provider tests. Never expose a key in
+  screenshots or logs, or reuse the production-funded site key for evaluation.
 - Verify the privacy notice, help pages, `ads.txt`, `robots.txt`, and sitemap at
   the production domain.
 - Verify both public M-C example pages, their team-text download, and guest/no-key
