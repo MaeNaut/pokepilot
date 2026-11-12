@@ -84,6 +84,12 @@ not prove nobody used the app. No quality-improvement dataset is collected.
 
 ## Reports and Deployment
 
+The GitHub deployment token needs `Account > D1 > Edit` on the account containing
+the production database, in addition to its existing Worker deployment scopes.
+Worker deployment permission alone does not authorize remote SQL migrations or
+the post-deployment aggregate query. A D1 API `7403` authorization failure must
+be resolved before retrying deployment; do not bypass the migration gate.
+
 ```sh
 npx wrangler d1 migrations apply pokepilot --remote
 npm run deploy:cloudflare
