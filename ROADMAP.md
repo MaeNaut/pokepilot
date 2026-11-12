@@ -9,6 +9,24 @@
 > advertising credits, or data-sharing rewards are active. Historical rules-based
 > fallback plans below have been superseded by explicit analysis error handling.
 
+## Deferred Follow-up Conversations
+
+- Decision, 2026-10-17: defer follow-up chat until after the broader public
+  release. Revisit only when actual user feedback shows demand for expanded
+  PokePilot interaction; this is not a release requirement or a scheduled task.
+- The initial direction to reconsider is conversation attached to an existing
+  analysis, owned by the account and organized by team. This is not yet a final
+  UI, storage, or API design.
+- Resolve changing team context before implementation: preserve a team snapshot
+  only when the submitted configuration changes, link each question and answer
+  to its snapshot, and distinguish actual edits from hypothetical alternatives.
+  Do not silently reinterpret earlier answers using the latest team.
+- Keep personal-key billing and the existing analysis prompt-caching behavior.
+  Do not introduce paid cache prewarming. Choose manual history or response-ID
+  chaining during implementation review, not as a prerequisite for launch.
+- Before collecting conversations, define bounded retention, deletion, account
+  isolation, and regression coverage for team changes and pending responses.
+
 ## Future Quality Contributions
 
 - Not implemented: account-synced teams and analysis history currently exist to
@@ -34,7 +52,7 @@ The MVP should prove the core loop:
 2. Edit one displayed Pokemon at a time through a polished builder card.
 3. Validate Pokemon, item, ability, move, and stat choices against the target format.
 4. Surface team-level diagnostics.
-5. Ask PokePilot to analyze the team and eventually answer follow-up questions.
+5. Ask PokePilot to analyze the team; follow-up chat is deferred as described above.
 6. Deploy the app publicly.
 
 ## Phase 1 - Static Prototype
@@ -244,8 +262,8 @@ The MVP should prove the core loop:
         confirm its opponent and field assumptions, and then optimize precisely.
   - [ ] Compare every tuned candidate with a simple extreme-investment baseline
         and expose assumptions, tradeoffs, confidence, and an abstain result.
-- [ ] Add constrained follow-up chat tied to the current team state only after the
-  first analysis flow is stable.
+- Deferred: follow-up chat is demand-gated after the broader public release;
+  see [Deferred Follow-up Conversations](#deferred-follow-up-conversations).
 - [x] Finish request controls for multi-instance public deployment.
   - [x] Key process-local cached analyses by canonical team state, format,
         regulation, locale,

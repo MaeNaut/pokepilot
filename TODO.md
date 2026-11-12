@@ -171,7 +171,9 @@ verification of every feature in the current release.
 - [x] Decide the first AI feature shape.
   - [x] Start with structured analysis of the active team and selected Pokemon.
   - [x] Keep deterministic diagnostics and legality as the factual source of truth.
-- [ ] Add limited follow-up chat after hosted analysis is stable.
+- Deferred, 2026-10-17: revisit follow-up chat only after broader public release
+  and demonstrated user demand. Not an active implementation or release task;
+  see [the roadmap decision](ROADMAP.md#deferred-follow-up-conversations).
 - [x] Add recommendation generation for saved empty-slot requirements.
   - [x] Build a diversified 28-Pokemon pool from Regulation M-B legality,
         Species Clause, type/ability/move filters, format usage, defensive
