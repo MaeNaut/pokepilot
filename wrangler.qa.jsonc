@@ -27,6 +27,7 @@
   "vars": {
     "GOOGLE_OAUTH_REDIRECT_URI": "https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback",
     "POKEPILOT_METRICS_ENABLED": "true",
+    "POKEPILOT_USAGE_METRICS_ENABLED": "false",
     "POKEPILOT_AUTH_REQUIRED": "true",
     "POKEPILOT_SHARED_STORE_REQUIRED": "true",
     "POKEPILOT_REDIS_PREFIX": "pokepilot:qa:operations:v1"

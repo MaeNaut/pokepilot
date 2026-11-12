@@ -7,6 +7,7 @@ const routes = new Set([
   "/api/pokepilot/account", "/api/pokepilot/teams",
   "/api/pokepilot/analysis-history", "/api/pokepilot/preferences", "/api/pokepilot/analyze",
   "/api/pokepilot/personal-api-key",
+  "/api/pokepilot/team-library",
 ]);
 
 export function metricRoute(path: string) {
@@ -39,7 +40,9 @@ export function metricValues(route: string, status: number, elapsed: number, eve
       : analysis?.billingSource === "personal"
       ? `personal-${analysis.reasoningEffort ?? "low"}-${analysis.cacheStatus}`
       : analysis?.cacheStatus ?? "none",
-    route === "/api/pokepilot/analyze" ? analysis?.modelId ?? failed?.modelId ?? OPENAI_LUNA_MODEL_ID : "none",
+    route === "/api/pokepilot/analyze"
+      ? analysis || failed ? analysis?.modelId ?? failed?.modelId ?? OPENAI_LUNA_MODEL_ID : "unknown"
+      : "none",
     route === "/api/pokepilot/analyze" ? POKEPILOT_AI_PROMPT_VERSION : 0,
     latencyBucket(duration), duration,
     positive(failed?.usage.inputTokens ?? paid?.inputTokens), positive(failed?.usage.outputTokens ?? paid?.outputTokens),

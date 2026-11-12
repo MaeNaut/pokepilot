@@ -105,6 +105,20 @@
   overscroll-behavior: contain;
 }
 
+.usage-metrics-preference {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.usage-metrics-preference input {
+  flex: 0 0 auto;
+  margin-top: 4px;
+}
+
 .privacy-notice {
   padding: 20px 24px 28px;
   font-size: 0.95rem;

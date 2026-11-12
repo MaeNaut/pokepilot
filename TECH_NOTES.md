@@ -24,6 +24,11 @@
 Operational API metrics use bounded daily D1 aggregates and a versioned JSON
 report CLI. See [operational metrics](docs/OPERATIONAL_METRICS.md) for activation,
 retention, privacy boundaries, report commands, and interpretation limits.
+Server-side [service usage metrics](docs/PRODUCT_USAGE_METRICS.md) separately count
+actual functional API operations, HTTP outcomes and duration buckets, without
+identifiers, raw logs, geography or team/analysis contents. There is no custom
+browser event collector or unique-user/return-visit measurement. A preference
+header on functional calls allows users to refuse these additional counters.
 
 Account collection hydration and write lifetimes are shared through
 `useAccountCollection` and `accountSyncSession`. Optimization hooks use

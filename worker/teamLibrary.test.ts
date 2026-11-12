@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import { readFileSync } from "node:fs";
+import worker from "./index";
 import { handleTeamLibrary } from "./teamLibrary";
 import { handleAccountStorage } from "./accountStorage";
 import { readAccountSession } from "./accountAuth";
@@ -49,6 +51,43 @@ function request(body?: unknown, accountId = "a") {
 const save = (id: string, revision: string | null, name = id) => ({ operation: "save", id, revision, team: team(id, name) });
 
 describe("per-team D1 library", () => {
+  it("counts successful and conflicting mutations through the real Worker/SQLite path", async () => {
+    const { env, sqlite } = environment();
+    sqlite.exec(readFileSync(new URL("../migrations/0005_usage_metrics.sql", import.meta.url), "utf8"));
+    env.POKEPILOT_USAGE_METRICS_ENABLED = "true";
+    const pending: Promise<unknown>[] = [];
+    const ctx = { waitUntil: (promise: Promise<unknown>) => { pending.push(promise); } };
+    const created = await (await worker.fetch(request(save("private-team", null, "private-name")), env, ctx)).json() as { team: { revision: string } };
+    const updated = await (await worker.fetch(request(save("private-team", created.team.revision)), env, ctx)).json() as { team: { revision: string } };
+    expect((await worker.fetch(request(save("private-team", created.team.revision)), env, ctx)).status).toBe(409);
+    expect((await worker.fetch(request({ operation: "delete", id: "private-team", revision: updated.team.revision }), env, ctx)).status).toBe(200);
+    for (const promise of pending) await promise;
+    const rows = sqlite.prepare(`SELECT operation,status,SUM(requests) AS requests FROM service_usage_metrics
+      GROUP BY operation,status ORDER BY operation,status`).all();
+    expect(rows).toEqual([
+      { operation: "team_create", status: 200, requests: 1 },
+      { operation: "team_delete", status: 200, requests: 1 },
+      { operation: "team_update", status: 200, requests: 1 },
+      { operation: "team_update", status: 409, requests: 1 },
+    ]);
+    expect(JSON.stringify(rows)).not.toContain("private");
+  });
+  it("labels validated mutations without exposing team IDs or contents", async () => {
+    const { env } = environment();
+    const operation = vi.fn();
+    const created = await (await handleTeamLibrary(request(save("private-id", null, "private-name")), env, operation)).json() as { team: { revision: string } };
+    expect(operation).toHaveBeenLastCalledWith("team_create");
+    const updated = await (await handleTeamLibrary(request(save("private-id", created.team.revision)), env, operation)).json() as { team: { revision: string } };
+    expect(operation).toHaveBeenLastCalledWith("team_update");
+    await handleTeamLibrary(request({ operation: "order", ids: ["private-id"] }), env, operation);
+    expect(operation).toHaveBeenLastCalledWith("team_reorder");
+    await handleTeamLibrary(request({ operation: "delete", id: "private-id", revision: updated.team.revision }), env, operation);
+    expect(operation).toHaveBeenLastCalledWith("team_delete");
+    expect(JSON.stringify(operation.mock.calls)).not.toMatch(/private/);
+    operation.mockClear();
+    expect((await handleTeamLibrary(request({ operation: "save", id: "bad", revision: null, team: {} }), env, operation)).status).toBe(400);
+    expect(operation).not.toHaveBeenCalled();
+  });
   it("migrates once, keeps the backup, and blocks legacy writers after migration", async () => {
     const { env, sqlite } = environment();
     sqlite.prepare("INSERT INTO account_storage VALUES ('a', 'teams', ?, 7)").run(JSON.stringify([team("b"), team("a")]));

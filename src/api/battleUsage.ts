@@ -1,4 +1,5 @@
 import type { PokemonMove, TeamMember } from "../types";
+import { withUsageMetricsPreference } from "../utils/usageMetrics";
 import type { BattleFormat } from "../battleFormat/battleFormat";
 import { getPokemonLookupAliases } from "../utils/pokemonAliases";
 import { normalizeShowdownId } from "./showdownIds";
@@ -41,7 +42,7 @@ async function loadSnapshot(format: BattleFormat): Promise<Cached | null> {
   if (!pending.has(format)) {
     pending.set(format, (async () => {
       try {
-        const response = await fetch(`${BATTLE_USAGE_PATH}/${format}`, { signal: AbortSignal.timeout(20_000) });
+        const response = await fetch(`${BATTLE_USAGE_PATH}/${format}`, withUsageMetricsPreference({ signal: AbortSignal.timeout(20_000) }));
         if (!response.ok) throw new Error("Usage unavailable");
         const snapshot: Cached = { ...await response.json(), cachedAt: Date.now() };
         if (!valid(snapshot, format)) throw new Error("Invalid usage snapshot");
@@ -85,7 +86,7 @@ export async function loadPopularUsageSet(pokemonId: string, format: BattleForma
     if (details.size >= 600) details.clear();
     details.set(key, (async () => {
       try {
-        const response = await fetch(`${BATTLE_USAGE_PATH}/${format}/${normalizeShowdownId(base.pokemonId)}`, { signal: AbortSignal.timeout(20_000) });
+        const response = await fetch(`${BATTLE_USAGE_PATH}/${format}/${normalizeShowdownId(base.pokemonId)}`, withUsageMetricsPreference({ signal: AbortSignal.timeout(20_000) }));
         if (!response.ok) throw new Error("Detail unavailable");
         const set = await response.json() as BattleUsageSet;
         if (set.pokemonId !== base.pokemonId || !valid({ ...snapshot, sets: [set] }, format)) throw new Error("Detail mismatch");

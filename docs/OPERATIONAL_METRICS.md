@@ -40,6 +40,11 @@ sources. These are additive report fields, not a D1 schema change. Legacy plain
 cache statuses identify site-funded results, but do not identify historical
 reasoning effort; do not assume they all used the current default effort.
 
+The report's `analysisByConfiguration` groups existing rows by model, scope,
+reasoning effort and funding source, including latency histograms, tokens and
+estimated costs. Unknown/preflight settings remain unknown; older rows are not
+rewritten. This enriches reports without collecting analysis text.
+
 For future Codex reviews: run the 7-day and 30-day reports, separate account API
 traffic from analysis traffic, group rows by prompt_version/model/scope, compare
 5xx and 429 counts, cache hit/shared proportions, mean duration and latency
@@ -50,7 +55,9 @@ date window and sample counts. Do not infer unique users or response quality.
 
 - One best-effort D1 atomic upsert per recognized API response, scheduled through
   waitUntil so failures do not change the user's response. Concurrent increments
-  accumulate rather than overwrite. No page-view or frontend click tracking.
+  accumulate rather than overwrite. This operational table does not track
+  page views or frontend clicks. Separate server-side service-operation totals are documented
+  in [product usage metrics](PRODUCT_USAGE_METRICS.md).
 - Only fixed route names are stored: no query strings, identifiers, fingerprints,
   cookies, IPs, user agents, Pokemon teams, prompts, or generated text.
 - Auth failures, invalid requests, and upstream failures are counted by HTTP

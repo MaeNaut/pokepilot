@@ -1,11 +1,30 @@
 import { useEffect, useState } from "react";
 import { useLocalization } from "../i18n/useLocalization";
 import { TouchSelectionDialog } from "./TouchSelectionDialog";
+import {
+  hasUsagePrivacySignal, readUsageMetricsEnabled, setUsageMetricsEnabled, usageMetricsAvailable, USAGE_METRICS_CHANGED, USAGE_OPT_OUT_KEY,
+} from "../utils/usageMetrics";
+
+function useUsageMetricsEnabled() {
+  const [enabled, setEnabled] = useState(readUsageMetricsEnabled);
+  useEffect(() => {
+    const update = () => setEnabled(readUsageMetricsEnabled());
+    const onStorage = (event: StorageEvent) => { if (event.key === USAGE_OPT_OUT_KEY || event.key === null) update(); };
+    window.addEventListener(USAGE_METRICS_CHANGED, update);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(USAGE_METRICS_CHANGED, update);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+  return enabled;
+}
 
 function PrivacyDialog({ onClose }: { onClose: () => void }) {
   const { locale, t } = useLocalization();
   const [content, setContent] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const metricsEnabled = useUsageMetricsEnabled();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -42,6 +61,15 @@ function PrivacyDialog({ onClose }: { onClose: () => void }) {
       showActions={false}
       onClose={onClose}
     >
+      {usageMetricsAvailable() ? (
+        <label className="usage-metrics-preference">
+          <input type="checkbox" checked={metricsEnabled}
+            disabled={hasUsagePrivacySignal()}
+            onChange={(event) => setUsageMetricsEnabled(event.target.checked)} />
+          {locale === "ko" ? "추가 익명 API 사용 통계"
+            : "Additional anonymous API-use statistics"}
+        </label>
+      ) : null}
       {content ? (
         // The HTML is the app's own static notice, never user or AI content.
         <article

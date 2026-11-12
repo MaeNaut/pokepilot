@@ -1,14 +1,15 @@
 import { rejectChangedAccount } from "./accountSessionBoundary";
+import { withUsageMetricsPreference } from "../utils/usageMetrics";
 import { normalizeSavedTeams, type SavedTeamSummary } from "../utils/teamStorage";
 
 export class TeamLibraryChanged extends Error {}
 
 async function request(accountId: string, signal: AbortSignal, body?: unknown) {
-  const response = await fetch("/api/pokepilot/team-library", {
+  const response = await fetch("/api/pokepilot/team-library", withUsageMetricsPreference({
     method: body ? "PUT" : "GET", cache: "no-store", signal,
     headers: { "X-PokePilot-Account-Id": accountId, ...(body ? { "Content-Type": "application/json" } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
-  });
+  }));
   await rejectChangedAccount(response);
   if (response.status === 409) throw new TeamLibraryChanged();
   if (!response.ok) throw new Error("TEAM_STORAGE_UNAVAILABLE");

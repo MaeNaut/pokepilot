@@ -18,6 +18,6 @@ console.log(JSON.stringify({
   schemaVersion: 1, generatedAt: new Date().toISOString(), timezone: "UTC",
   source: args.includes("--remote") ? "remote" : "local", days,
   summary: summarizeMetrics(rows),
-  caveats: ["Best-effort server aggregates, not unique users or page views.", "Cost uses the application estimate, not billing invoices; failed upstream call usage is not included.", "Latency buckets are histograms, not exact percentiles. Current UTC day may be incomplete."],
+  caveats: ["Best-effort server aggregates, not unique users or page views.", "Costs are application estimates, not invoices; failures with known usage are included, while failures without usage may still be billed.", "Latency buckets are histograms, not exact percentiles. Current UTC day may be incomplete."],
   rows,
 }, null, 2));

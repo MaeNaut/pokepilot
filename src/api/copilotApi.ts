@@ -7,6 +7,7 @@ import type {
 import { isCopilotQualityWarningCode, normalizeCopilotExecutionInfo } from "../utils/copilotContracts";
 import { validateCopilotModelOutput } from "../utils/copilotModelValidation";
 import { requestAccountRefresh } from "./accountSessionBoundary";
+import { withUsageMetricsPreference } from "../utils/usageMetrics";
 
 type HostedAnalysisEnvelope = {
   ok?: unknown;
@@ -75,7 +76,7 @@ async function fetchHostedCopilotAnalysis(
   let response: Response;
 
   try {
-    response = await fetch("/api/pokepilot/analyze", {
+    response = await fetch("/api/pokepilot/analyze", withUsageMetricsPreference({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -85,7 +86,7 @@ async function fetchHostedCopilotAnalysis(
       },
       body: JSON.stringify(request),
       signal,
-    });
+    }));
   } catch {
     throw new CopilotApiError(
       "Unable to reach the hosted analysis server.",

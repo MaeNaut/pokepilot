@@ -32,6 +32,8 @@ describe("private operational aggregates", () => {
   });
   it("only records known API routes", () => {
     expect(metricRoute("/api/pokepilot/analyze")).toBeTruthy();
+    expect(metricRoute("/api/pokepilot/team-library")).toBeTruthy();
+    expect(metricRoute("/api/pokepilot/usage-events")).toBeNull();
     expect(metricRoute("/api/private-user-input")).toBeNull();
     expect(metricRoute("/")).toBeNull();
   });
@@ -47,6 +49,9 @@ describe("private operational aggregates", () => {
   it("attributes Sol usage to Sol rather than the Luna default", () => {
     const values = metricValues("/api/pokepilot/analyze", 200, 50, { ...event, modelId: "gpt-6-sol" });
     expect(values[5]).toBe("gpt-6-sol");
+  });
+  it("does not attribute a preflight rejection to a model that was never called", () => {
+    expect(metricValues("/api/pokepilot/analyze", 403, 1)[5]).toBe("unknown");
   });
   it("counts tokens and cost when a paid model response cannot be displayed", () => {
     const failed: PokePilotOperationalEvent = {

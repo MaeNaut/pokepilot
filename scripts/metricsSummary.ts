@@ -17,6 +17,35 @@ export function summarizeMetrics(rows: MetricRow[]) {
   const dimensions = (row: MetricRow) => readAnalysisDimensions(String(row.cache_status));
   const billed = analysis.filter((row) => ["miss", "failed"].includes(dimensions(row)?.cacheStatus ?? ""));
   const costs = (billingSource: string) => sum("estimated_cost_usd", billed.filter((row) => dimensions(row)?.billingSource === billingSource));
+  const configurations = new Map<string, {
+    scope: string; model: string; reasoningEffort: string; billingSource: string; rows: MetricRow[];
+  }>();
+  for (const row of analysis) {
+    const configuration = {
+      scope: String(row.scope ?? "unknown"), model: String(row.model ?? "unknown"),
+      reasoningEffort: dimensions(row)?.reasoningEffort ?? "unknown",
+      billingSource: dimensions(row)?.billingSource ?? "unknown",
+    };
+    const key = JSON.stringify(configuration);
+    const group = configurations.get(key) ?? { ...configuration, rows: [] };
+    group.rows.push(row);
+    configurations.set(key, group);
+  }
+  const completedSet = new Set(completed);
+  const analysisByConfiguration = [...configurations.values()].map(({ rows: selected, ...configuration }) => {
+    const attempts = sum("requests", selected);
+    return {
+      ...configuration, attempts,
+      completedAnalyses: sum("requests", selected.filter(row => completedSet.has(row))),
+      serverErrors: sum("requests", selected.filter(row => Number(row.status) >= 500)),
+      meanDurationMs: attempts ? sum("duration_ms", selected) / attempts : null,
+      inputTokens: sum("input_tokens", selected), outputTokens: sum("output_tokens", selected),
+      cachedInputTokens: sum("cached_input_tokens", selected),
+      estimatedCostUsd: sum("estimated_cost_usd", selected),
+      latencyBuckets: Object.fromEntries([...new Set(selected.map(row => String(row.latency_bucket ?? "unknown")))].sort()
+        .map(bucket => [bucket, sum("requests", selected.filter(row => String(row.latency_bucket ?? "unknown") === bucket))])),
+    };
+  });
   return {
     requests,
     serverErrors: sum("requests", rows.filter((row) => Number(row.status) >= 500)),
@@ -32,5 +61,6 @@ export function summarizeMetrics(rows: MetricRow[]) {
     estimatedTotalCallCostUsd: sum("estimated_cost_usd", billed),
     estimatedSiteCallCostUsd: costs("site"),
     estimatedPersonalCallCostUsd: costs("personal"),
+    analysisByConfiguration,
   };
 }

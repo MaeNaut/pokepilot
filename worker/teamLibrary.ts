@@ -1,6 +1,7 @@
 import { readAccountSession } from "./accountAuth.js";
 import { isSameOrigin, jsonResponse, readJsonBody, withSessionRefresh } from "./http.js";
 import type { WorkerEnvironment } from "./env.js";
+import type { TeamUsageOperation } from "./usageMetrics.js";
 
 type Row = { storage_key: string; payload: string; updated_at: number };
 const marker = "teams-v2";
@@ -29,7 +30,7 @@ async function migrate(db: D1Database, accountId: string) {
   ]);
 }
 
-export async function handleTeamLibrary(request: Request, env: WorkerEnvironment) {
+export async function handleTeamLibrary(request: Request, env: WorkerEnvironment, onOperation?: (operation: TeamUsageOperation) => void) {
   const session = await readAccountSession(request, env);
   if (!session) return jsonResponse(401, { error: { code: "AUTH_REQUIRED" } });
   const id = session.account.id;
@@ -60,6 +61,7 @@ export async function handleTeamLibrary(request: Request, env: WorkerEnvironment
   await migrate(env.DB, id);
   if (body.operation === "order") {
     if (!Array.isArray(body.ids) || body.ids.length > 30 || body.ids.some(v => typeof v !== "string")) return reply(400, {});
+    onOperation?.("team_reorder");
     await env.DB.prepare(`INSERT INTO account_storage (account_id, storage_key, payload, updated_at) VALUES (?, ?, ?, ?)
       ON CONFLICT(account_id, storage_key) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at`)
       .bind(id, orderKey, JSON.stringify(body.ids), Date.now()).run();
@@ -71,6 +73,7 @@ export async function handleTeamLibrary(request: Request, env: WorkerEnvironment
   const revision = body.revision as string | null;
   if (body.operation === "delete") {
     if (revision === null) return reply(400, {});
+    onOperation?.("team_delete");
     const result = await env.DB.prepare("DELETE FROM account_storage WHERE account_id = ? AND storage_key = ? AND updated_at = ?")
       .bind(id, key, Number(revision)).run();
     const changed = (result as { meta?: { changes?: number } }).meta?.changes === 1;
@@ -83,6 +86,7 @@ export async function handleTeamLibrary(request: Request, env: WorkerEnvironment
   void _revision;
   const payload = JSON.stringify(payloadTeam);
   if (new TextEncoder().encode(payload).length > 50_000) return reply(413, {});
+  onOperation?.(revision === null ? "team_create" : "team_update");
   const updatedAt = Math.max(Date.now(), Number(revision ?? 0) + 1);
   const statement = revision === null
     ? env.DB.prepare(`INSERT OR IGNORE INTO account_storage (account_id, storage_key, payload, updated_at)

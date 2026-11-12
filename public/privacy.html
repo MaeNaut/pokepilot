@@ -128,7 +128,7 @@
 
       <article lang="en">
         <h1>Privacy</h1>
-        <p class="meta">Public beta notice · Last updated October 15, 2026</p>
+        <p class="meta">Public beta notice · Last updated November 12, 2026</p>
 
         <section>
           <h2>Data kept in your browser</h2>
@@ -237,6 +237,23 @@
             add account identifiers, team contents, analysis text, or API keys to this
             beacon. See <a href="https://developers.cloudflare.com/web-analytics/about/">Cloudflare Web Analytics</a>
             for details about its measurements.</p>
+          <h2>Additional service-operation statistics</h2>
+          <p>For service reliability and improvement, the Worker counts existing functional
+            API requests: account checks, team creation/updates/deletion/order changes, key
+            status checks/saves/removals, history/preferences storage, AI analysis requests,
+            and battle-data requests. Daily totals contain only the UTC date, fixed operation,
+            HTTP status, duration bucket, count and summed processing time, kept for about
+            90 days. No account/IP identifiers, country/source/device segments, team contents,
+            API keys, prompts, results, raw URLs or individual request records are stored.</p>
+          <p>No custom browser event collector or additional tracking requests are used.
+            Browser-only editing, damage calculations, guide clicks, unique users and return
+            visits are not measured by these counters. You can disable these additional
+            statistics in the app's Privacy dialog; only your refusal preference is saved
+            in localStorage, and sent as a refusal header on existing API requests. DNT and
+            GPC are also respected. No activity is saved in sessionStorage. Existing totals
+            cannot be linked back to you. Basic operational metrics above and Cloudflare Web
+            Analytics are separate and are not disabled by this switch. These statistics do
+            not contribute teams or analyses to an AI quality-improvement dataset.</p>
           <h2>Service providers</h2>
           <p>
             Cloudflare hosts the app, Worker API, and account-session database;
@@ -291,7 +308,7 @@
 
       <article class="ko" lang="ko">
         <h1>개인정보 안내</h1>
-        <p class="meta">공개 베타 안내 · 최종 수정 2026년 10월 15일</p>
+        <p class="meta">공개 베타 안내 · 최종 수정 2026년 11월 12일</p>
 
         <section>
           <h2>브라우저에 저장되는 데이터</h2>
@@ -392,6 +409,21 @@
             API 키를 추가하지 않습니다. 측정 방식은
             <a href="https://developers.cloudflare.com/web-analytics/about/">Cloudflare Web Analytics 안내</a>에서
             확인할 수 있습니다.</p>
+          <h2>추가 API 이용 통계</h2>
+          <p>서비스 안정성과 개선을 위해 Worker에서 실제 기능 API 요청을 집계합니다.
+            계정 확인, 팀 생성·수정·삭제·정렬, 키 상태 확인·저장·삭제, 기록·설정 동기화,
+            AI 분석 요청과 배틀 데이터 요청을 구분합니다. UTC 날짜, 정해진 작업 이름,
+            HTTP 상태, 처리 시간 구간, 횟수와 처리 시간 합계만 약 90일 보관합니다.
+            계정·IP 식별자, 국가·유입 경로·기기 분류, 팀 내용, API 키, 프롬프트,
+            분석 원문, URL 원문이나 개인별 요청 기록은 저장하지 않습니다.</p>
+          <p>별도 브라우저 이벤트 수집기나 추적 요청을 사용하지 않습니다. 브라우저 안에서만
+            진행되는 팀 편집·대미지 계산, 가이드 클릭, 고유 사용자나 재방문은 이 지표로
+            측정하지 않습니다. 앱의 개인정보 안내 창에서 추가 집계를 끌 수 있습니다.
+            이 거부 설정만 localStorage에 저장하고 기존 API 요청의 거부 헤더로 전달합니다.
+            DNT·GPC 신호도 존중하며 sessionStorage에는 활동 정보를 저장하지 않습니다.
+            기존 합계는 개인과 연결할 수 없습니다. 위 기본 운영 지표와 Cloudflare Web
+            Analytics는 별개이며 이 설정으로 꺼지지 않습니다. 팀·분석 정보를 AI 품질
+            개선용 데이터로 기여하는 기능과도 별개입니다.</p>
           <h2>외부 서비스</h2>
           <p>
             Cloudflare는 앱, Worker API, 계정 세션 데이터베이스를 호스팅하고,

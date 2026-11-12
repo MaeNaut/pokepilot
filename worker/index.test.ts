@@ -24,6 +24,52 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("Worker routing error boundary", () => {
+  it("exposes no client telemetry ingestion endpoint", async () => {
+    const response = await worker.fetch(new Request("https://pokepilot.app/api/pokepilot/usage-events", {
+      method: "POST", headers: { Origin: "https://pokepilot.app", "Content-Type": "application/json" },
+      body: JSON.stringify({ events: ["page_opened"] }),
+    }), env);
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.has("Set-Cookie")).toBe(false);
+    expect(readAccountSession).not.toHaveBeenCalled();
+  });
+  it("keeps both aggregate retention jobs running when collection is disabled", async () => {
+    const run = vi.fn().mockResolvedValue({ success: true });
+    const prepare = vi.fn().mockReturnValue({ run });
+    await worker.scheduled({ cron: "17 4 * * *", scheduledTime: Date.now() }, {
+      ...env, DB: { prepare } as unknown as D1Database,
+      POKEPILOT_METRICS_ENABLED: "false", POKEPILOT_USAGE_METRICS_ENABLED: "false",
+    });
+    expect(prepare).toHaveBeenCalledWith("DELETE FROM operational_metrics WHERE day < date('now', '-90 days')");
+    expect(prepare).toHaveBeenCalledWith("DELETE FROM service_usage_metrics WHERE day < date('now', '-90 days')");
+  });
+  it("counts actual API requests after handling without persisting accounts or URL queries", async () => {
+    const run = vi.fn().mockResolvedValue({ success: true });
+    const bind = vi.fn().mockReturnValue({ run });
+    const prepare = vi.fn().mockReturnValue({ bind });
+    const waitUntil = vi.fn();
+    const settings = { ...env, DB: { prepare } as unknown as D1Database, POKEPILOT_USAGE_METRICS_ENABLED: "true" };
+    for (let i = 0; i < 2; i += 1) {
+      const response = await worker.fetch(new Request("https://pokepilot.app/api/pokepilot/account?private=secret", {
+        headers: { "X-PokePilot-Account-Id": "private-account", Cookie: "private-cookie" },
+      }), settings, { waitUntil });
+      expect(response.status).toBe(401);
+    }
+    for (const [pending] of waitUntil.mock.calls) await pending;
+    expect(bind).toHaveBeenCalledTimes(2);
+    expect(bind.mock.calls[0]).toContain("account_read");
+    expect(bind.mock.calls[0]).toContain(401);
+    expect(JSON.stringify(bind.mock.calls)).not.toMatch(/private|secret|cookie/);
+  });
+  it("honors the opt-out header without preventing the functional API response", async () => {
+    const waitUntil = vi.fn();
+    const response = await worker.fetch(new Request("https://pokepilot.app/api/pokepilot/account", {
+      headers: { "X-PokePilot-Usage-Opt-Out": "1" },
+    }), { ...env, POKEPILOT_USAGE_METRICS_ENABLED: "true" }, { waitUntil });
+    expect(response.status).toBe(401);
+    expect(waitUntil).not.toHaveBeenCalled();
+  });
   it("schedules guest metrics without changing the authentication response", async () => {
     const run = vi.fn().mockResolvedValue({ success: true });
     const bind = vi.fn().mockReturnValue({ run });

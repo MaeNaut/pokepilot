@@ -20,6 +20,7 @@ import type { WorkerEnvironment } from "./env.js";
 import type { PokePilotOperationalEvent } from "../server/pokepilotApi.js";
 import { metricRoute, recordMetric, pruneMetrics } from "./metrics.js";
 import { handleCachedBattleUsage } from "./battleUsage.js";
+import { allowsUsageMetrics, serviceOperation, recordUsageMetric, pruneUsageMetrics, type TeamUsageOperation } from "./usageMetrics.js";
 
 let operationsRuntime: PokePilotOperationsRuntime | undefined;
 
@@ -80,7 +81,8 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
 }
 
 const router = {
-  async fetch(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void): Promise<Response> {
+  async fetch(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void,
+    onTeamOperation?: (operation: TeamUsageOperation) => void): Promise<Response> {
     const url = new URL(request.url);
     try {
       if (url.pathname === "/api/auth/google" && request.method === "GET") {
@@ -101,7 +103,7 @@ const router = {
       }
       if (url.pathname === "/api/pokepilot/account") return await handleAccount(request, env);
       if (url.pathname === "/api/pokepilot/team-library") {
-        return await handleTeamLibrary(request, env);
+        return await handleTeamLibrary(request, env, onTeamOperation);
       }
       if (url.pathname === "/api/pokepilot/teams") {
         return await handleAccountStorage(request, env, "teams");
@@ -129,14 +131,21 @@ export default {
   async fetch(request: Request, env: WorkerEnvironment, ctx?: ExecutionContext): Promise<Response> {
     const started = Date.now();
     let event: PokePilotOperationalEvent | undefined;
-    const response = await router.fetch(request, env, (value) => { event = value; });
+    let teamOperation: TeamUsageOperation | undefined;
+    const response = await router.fetch(request, env, (value) => { event = value; }, (value) => { teamOperation = value; });
+    const elapsed = Date.now() - started;
     const route = metricRoute(new URL(request.url).pathname);
     if (route && ctx && env.POKEPILOT_METRICS_ENABLED === "true") {
-      ctx.waitUntil(recordMetric(env, route, response.status, Date.now() - started, event));
+      ctx.waitUntil(recordMetric(env, route, response.status, elapsed, event));
+    }
+    if (ctx && env.POKEPILOT_USAGE_METRICS_ENABLED === "true" && allowsUsageMetrics(request)) {
+      const operation = teamOperation ?? serviceOperation(request);
+      if (operation) ctx.waitUntil(recordUsageMetric(env, operation, response.status, elapsed));
     }
     return response;
   },
   async scheduled(_controller: ScheduledController, env: WorkerEnvironment) {
     await pruneMetrics(env);
+    await pruneUsageMetrics(env);
   },
 } satisfies ExportedHandler<WorkerEnvironment>;

@@ -7,6 +7,7 @@ import {
   type AccountPreferences,
 } from "../utils/accountPreferences";
 import { rejectChangedAccount } from "./accountSessionBoundary";
+import { withUsageMetricsPreference } from "../utils/usageMetrics";
 
 type AccountStorageKey = "analysis-history" | "preferences";
 
@@ -26,10 +27,10 @@ function endpoint(key: AccountStorageKey) {
 async function readStorage(
   key: AccountStorageKey, signal?: AbortSignal, accountId?: string,
 ): Promise<VersionedAccountStorage<unknown>> {
-  const response = await fetch(endpoint(key), {
+  const response = await fetch(endpoint(key), withUsageMetricsPreference({
     cache: "no-store", signal,
     ...(accountId ? { headers: { "X-PokePilot-Account-Id": accountId } } : {}),
-  });
+  }));
   await rejectChangedAccount(response);
   if (response.status === 401) throw new Error("AUTH_REQUIRED");
   if (!response.ok) throw new Error("ACCOUNT_STORAGE_UNAVAILABLE");
@@ -46,7 +47,7 @@ async function readStorage(
 async function writeStorage(
   key: AccountStorageKey, value: unknown, version: string, signal?: AbortSignal, accountId?: string,
 ) {
-  const response = await fetch(endpoint(key), {
+  const response = await fetch(endpoint(key), withUsageMetricsPreference({
     method: "PUT",
     signal,
     headers: {
@@ -54,7 +55,7 @@ async function writeStorage(
       ...(accountId ? { "X-PokePilot-Account-Id": accountId } : {}),
     },
     body: JSON.stringify({ [key]: value }),
-  });
+  }));
   await rejectChangedAccount(response);
   if (response.status === 409) throw new AccountStorageConflictError();
   if (response.status === 401) throw new Error("AUTH_REQUIRED");

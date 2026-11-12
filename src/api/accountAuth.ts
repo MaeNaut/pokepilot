@@ -1,4 +1,5 @@
 import { rejectChangedAccount } from "./accountSessionBoundary";
+import { withUsageMetricsPreference } from "../utils/usageMetrics";
 
 export const accountAuthEnabled = import.meta.env.VITE_ACCOUNT_AUTH_ENABLED === "true";
 
@@ -20,7 +21,7 @@ function getSecurePictureUrl(value: string | undefined) {
 }
 
 export async function readAccount() {
-  const response = await fetch("/api/pokepilot/account", { cache: "no-store" });
+  const response = await fetch("/api/pokepilot/account", withUsageMetricsPreference({ cache: "no-store" }));
   if (response.status === 401) return null;
   if (!response.ok) throw new Error("AUTH_UNAVAILABLE");
   const body = await response.json();
@@ -39,17 +40,17 @@ export async function loginAccount() {
 }
 
 export async function logoutAccount(accountId: string) {
-  const response = await fetch("/api/auth/logout", {
+  const response = await fetch("/api/auth/logout", withUsageMetricsPreference({
     method: "POST", headers: { "X-PokePilot-Account-Id": accountId },
-  });
+  }));
   await rejectChangedAccount(response);
   if (!response.ok) throw new Error("AUTH_UNAVAILABLE");
 }
 
 export async function deleteAccount(accountId: string) {
-  const response = await fetch("/api/pokepilot/account", {
+  const response = await fetch("/api/pokepilot/account", withUsageMetricsPreference({
     method: "DELETE", headers: { "X-PokePilot-Account-Id": accountId },
-  });
+  }));
   await rejectChangedAccount(response);
   if (!response.ok) throw new Error("DELETE_FAILED");
 }
