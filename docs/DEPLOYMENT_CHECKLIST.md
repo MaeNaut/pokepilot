@@ -17,7 +17,8 @@ can leave analysis paused; see `docs/ANALYSIS_OPERATIONS.md` for recovery.
 
 Pushing `develop` does not deploy production. Open a pull request to run CI,
 then merge into `main` to trigger production deployment. A Worker preview is
-a separate QA deployment, not an automatic consequence of a develop push.
+refreshed from the verified main build after production checks; it is not an
+automatic consequence of a develop push.
 
 Before enabling this workflow, add repository Actions secrets in
 GitHub Settings > Secrets and variables > Actions:

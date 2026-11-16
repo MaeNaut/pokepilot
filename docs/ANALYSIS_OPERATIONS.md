@@ -2,10 +2,19 @@
 
 ## Status and scope
 
-2026-11-16: implementation and local verification in this revision. Production
-cutover, authenticated deployed QA, and deletion of the old service are separate
-release steps, not established by local tests. Do not delete the Upstash database
-or its Worker secrets until the new release is verified and rollback is resolved.
+2026-11-16: production cutover deployed from `6b2fc00` after a verified maintenance
+window and 465-second drain. Resumed Worker version:
+`3736fd91-0961-49f8-a12f-bef06dc41df5`. Public site and guest authentication
+boundaries passed direct checks after propagation. The first CI smoke ran too
+early and saw the old maintenance response; the follow-up release waits for
+admission to resume before running the full verification.
+
+The release workflow refreshes the isolated QA alias after production checks.
+Authenticated model/history QA and deletion of the old service are separate
+acceptance steps, not established by guest checks or local tests. No paid OpenAI
+call or user-key decryption is performed by deployment verification. The old
+Upstash database and Worker secrets are retained until acceptance and rollback
+are resolved.
 
 Account data, teams, preferences, encrypted personal keys, analysis history, and
 daily usage aggregates remain in D1. They are not migrated or rewritten here.
@@ -57,7 +66,7 @@ are also removed; local sharing still follows the existing in-flight lifecycle.
 
 ## Verification
 
-Local verification on 2026-11-16 passed 1,521 tests across 173 files, lint,
+Local and initial CI verification on 2026-11-16 passed 1,529 tests across 174 files, lint,
 TypeScript, the Cloudflare asset build, and production/QA Wrangler dry runs.
 The dependency audit passed the existing high-severity gate; nine pre-existing
 moderate development-tool advisories remain. No paid provider calls were made.
@@ -115,7 +124,7 @@ production deployment permissions, live RPC latency, or authenticated model QA.
    reject rollbacks that cross a class-lifecycle change: prepare a forward fix
    retaining the class export/binding, not an assumed one-click rollback.
 
-No service, credential or deployed Worker is deleted by this implementation.
+No old service or credential was deleted during this release.
 
 ## References
 

@@ -7,6 +7,8 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 ## Current production topology
 
 The configuration in this revision replaces Upstash with Durable Objects.
+The production cutover completed on 2026-11-16; signed-in paid-model QA and
+retiring the old service remain separate acceptance steps.
 See [analysis operations](ANALYSIS_OPERATIONS.md) for the rollout status and
 first-deployment procedure; do not remove the old service before cutover verification.
 
@@ -82,6 +84,9 @@ npx wrangler d1 migrations apply pokepilot-qa --remote --config wrangler.qa.json
 npm run check:cloudflare
 npx wrangler versions upload --config wrangler.qa.jsonc --preview-alias qa
 ```
+
+Verified main deployments now also refresh this isolated QA alias after the
+production smoke checks, so it does not retain the old Redis implementation.
 
 The QA version reuses the Worker's existing encrypted secrets. Google sign-in
 requires `https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback`
