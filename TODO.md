@@ -421,12 +421,15 @@ verification of every feature in the current release.
   - [x] Add server-start-only local modes for production-like safeguards,
         cached and fresh AI QA modes.
   - [x] Replace the historical Upstash dependency with Cloudflare Durable Object
-        admission/permits and real workerd regression tests. Production cutover
-        and old-service retirement remain gated by `docs/ANALYSIS_OPERATIONS.md`.
+        admission/permits and real workerd regression tests. Production and QA
+        analysis acceptance passed; obsolete Cloudflare/local Redis credentials
+        were removed. See `docs/ANALYSIS_OPERATIONS.md`.
+  - [ ] Delete the confirmed-empty `pokepilot-dev` Upstash instance in its console;
+        browser access was unavailable during credential retirement.
   - [x] Historical: add an optional Upstash Redis adapter for shared canonical responses,
         atomic client/IP rate decisions, and distributed identical-request
         deduplication while retaining the in-memory local adapter.
-  - [x] Add an opt-in `dev:shared` mode with ignored mode-specific credentials,
+  - [x] Historical: add an opt-in `dev:shared` mode with ignored mode-specific credentials,
         enforced safeguards, and a development-only Redis namespace while
         keeping routine local development in memory.
   - [x] Verify the real Upstash development database with a temporary

@@ -11,8 +11,9 @@ admission to resume before running the full verification.
 
 The owner confirmed one successful production Luna low analysis after cutover.
 Deployment automation itself did not make a paid OpenAI call, extract a session,
-or decrypt a user key. The old Upstash database and Worker secrets remain intact;
-service deletion is a separate irreversible cleanup decision.
+or decrypt a user key. Redis credentials were retained during cutover and removed
+after production/QA acceptance; the empty Upstash instance itself still awaits
+console deletion. See the retirement verification below.
 
 The old aliased QA URL returned 404 after the Worker began exporting a Durable
 Object. Cloudflare does not generate Version URLs for Workers implementing a
@@ -25,8 +26,11 @@ The owner registered its Google credentials and authorized a new, independent
 QA session secret on 2026-11-16. The value was generated from 48 random bytes and
 piped directly into Cloudflare, without plaintext output or backup. The one-time
 job did not replace any existing secret or change production. Login initiation
-and guest safeguards passed; authenticated browser QA still remains. Legacy QA
-sessions and personal keys need re-registration, while teams/history remain intact.
+and guest safeguards passed. The owner subsequently confirmed QA login,
+personal-key deletion/re-registration, and a successful real analysis on
+2026-11-16. This authenticated check was owner-performed, not an automated paid
+call. Other legacy QA sessions and personal keys still need re-registration;
+teams/history remain intact.
 The ordinary QA workflow checks secret names
 only and labels a missing-secret deployment as bootstrap only, not login-ready.
 The first QA bootstrap deployed successfully, but its immediate smoke saw a
@@ -76,7 +80,9 @@ in `personal` mode. Public personal-key requests do not cache analysis results.
 Local Vite/evaluation retains its in-memory cache and test modes.
 
 The Upstash adapter, Lua scripts, Redis SDK and `dev:shared` credentials template
-are removed. Ignored local secrets are deliberately not modified. Historical
+are removed. The initial migration preserved ignored local secrets; the later
+retirement removed `.env.shared.local`, which contained only obsolete Redis
+settings. Other local environment files were not changed. Historical
 QA/evaluation records mentioning Redis describe those earlier runs, not the
 current dependency. The retired `distributed` and `shouldShare` run-once options
 are also removed; local sharing still follows the existing in-flight lifecycle.
@@ -140,7 +146,31 @@ production deployment permissions, live RPC latency, or authenticated model QA.
    reject rollbacks that cross a class-lifecycle change: prepare a forward fix
    retaining the class export/binding, not an assumed one-click rollback.
 
-No old service or credential was deleted during this release.
+## Retirement verification (2026-11-16)
+
+- The owner confirmed production analysis and, on the independent QA Worker,
+  Google login, personal-key deletion/re-registration and a successful analysis.
+- Read-only Redis metadata checks returned `DBSIZE = 0` and a complete empty
+  key scan. No Redis values were read, copied or exported; no data backup is
+  needed for an empty store.
+- A one-time job inspected every active production/QA deployment's Durable
+  Object binding and scope before any credential deletion. It removed only
+  `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from `pokepilot`.
+  QA had no retired Redis secrets; both Workers have no obsolete Redis/shared
+  variables. Every unrelated secret name was checked and retained.
+- After cleanup, both sites passed Google login initiation and guest
+  authentication/header safeguards. No paid model call was made by automation.
+- The ignored `.env.shared.local` file and obsolete tracked ignore exception
+  for `.env.shared.example` were removed. Session, Google and OpenAI secrets
+  were not rotated, deleted or printed.
+- Upstash database `pokepilot-dev` has NOT been deleted. The browser host was
+  unavailable and no Upstash management connector was connected. The owner can
+  finish deletion in Upstash Console; do not mark this done from the Redis
+  credential cleanup alone. Do not add a keepalive job.
+
+Redis-dependent releases are no longer safe rollback targets. Future fixes must
+retain the Cloudflare gate class/bindings; do not restore the old Redis adapter
+or credentials as an automatic fallback.
 
 ## References
 

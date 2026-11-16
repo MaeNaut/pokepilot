@@ -9,8 +9,11 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 The configuration in this revision replaces Upstash with Durable Objects.
 The production cutover completed on 2026-11-16, and the owner confirmed a
 successful production Luna low analysis. The separate QA Worker is deployed and
-Google login initiation passes. Authenticated browser QA and retiring the old
-service remain follow-up steps.
+Google login initiation passes. On 2026-11-16 the owner also confirmed QA Google
+login, personal-key deletion/re-registration, and a successful authenticated
+analysis. Retired Redis credentials have been removed from Cloudflare and the
+obsolete local shared-mode file was deleted. The empty Upstash database itself
+still awaits deletion through Upstash Console (browser access was unavailable).
 See [analysis operations](ANALYSIS_OPERATIONS.md) for the rollout status and
 first-deployment procedure; do not remove the old service before cutover verification.
 
@@ -99,8 +102,9 @@ and authorized an independent QA session secret. A one-time job generated 48
 cryptographically random bytes, encoded them as base64url, and piped the value
 directly to Wrangler. No plaintext output or backup was created, by owner choice.
 It refused production targets and did not overwrite an existing secret. Google
-login initiation and guest safeguards passed without paid API calls; completing
-Google login and an authenticated analysis remains a browser QA step.
+login initiation and guest safeguards passed without paid API calls. The owner
+subsequently confirmed Google login, personal-key deletion/re-registration, and
+a successful real analysis on QA. The automation did not make that paid call.
 
 Keep QA and production session secrets independent. The legacy QA sessions no
 longer work, and any existing QA personal API key must be deleted/re-registered
