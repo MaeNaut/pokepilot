@@ -106,7 +106,6 @@ source libraries:
 | --- | --- |
 | React and React DOM | MIT |
 | OpenAI JavaScript/TypeScript SDK | Apache-2.0 |
-| Upstash Redis JavaScript client | MIT |
 | Vite and the Vite React plugin | MIT |
 | TypeScript | Apache-2.0 |
 

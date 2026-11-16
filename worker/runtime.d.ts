@@ -31,3 +31,7 @@ interface ExportedHandler<Env = unknown> {
   fetch?(request: Request, env: Env, ctx?: ExecutionContext): Response | Promise<Response>;
   scheduled?(controller: ScheduledController, env: Env, ctx?: ExecutionContext): void | Promise<void>;
 }
+
+declare module "cloudflare:workers" {
+  export const DurableObject: typeof import("@cloudflare/workers-types/index").CloudflareWorkersModule.DurableObject;
+}

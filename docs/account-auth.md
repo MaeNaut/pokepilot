@@ -20,7 +20,7 @@ D1, and returns the token in a Secure, HttpOnly, SameSite=Lax cookie.
   storage. Browser interface preferences remain device settings.
 
 JavaScript never reads the session cookie. Missing, forged, expired, or deleted
-sessions fail closed before a paid provider request or shared-cache operation.
+sessions fail closed before a paid provider request or analysis-gate operation.
 
 ## Required Worker configuration
 
@@ -34,16 +34,16 @@ npx wrangler d1 migrations apply pokepilot --remote
 Set the following Worker secrets in Cloudflare. Do not commit them or add them
 to a `VITE_` variable:
 
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
 - `POKEPILOT_CLIENT_SECRET`
 - `POKEPILOT_SESSION_SECRET`
 - `GOOGLE_OAUTH_CLIENT_ID`
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `GOOGLE_OAUTH_REDIRECT_URI`
 
-Production variables must keep `POKEPILOT_AUTH_REQUIRED=true` and
-`POKEPILOT_SHARED_STORE_REQUIRED=true`. The Google OAuth client must permit the
+Production must bind `POKEPILOT_ANALYSIS_GATE` and set
+`POKEPILOT_ANALYSIS_GATE_SCOPE=production` (`qa` for the aliased QA version).
+There is no memory fallback on the public Worker. See [analysis operations](ANALYSIS_OPERATIONS.md).
+Keep `POKEPILOT_AUTH_REQUIRED=true`. The Google OAuth client must permit the
 exact callback URL:
 
 ```text
@@ -183,7 +183,7 @@ for the encryption, rotation, and deployment requirements.
   previous account's preferences.
 - Cross-origin storage writes and account deletion requests are rejected.
 - Missing/forged/expired/deleted sessions never reach OpenAI or bypass shared
-  Redis controls.
+  Cloudflare request/capacity controls.
 - A personal key is unavailable to other accounts, is never returned by the
   status endpoint, and is deleted on request or account deletion.
 

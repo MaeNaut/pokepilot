@@ -35,7 +35,7 @@ responsive web app.
 - Pokemon Showdown data and `@smogon/calc`
 - PokeAPI sprites and localized source data
 - OpenAI Responses API for requested PokePilot analysis
-- Upstash Redis for account/IP abuse protection and account/global analysis concurrency; personal-key calls bypass result caching and retain process-local request deduplication
+- Cloudflare Durable Objects for account/IP abuse protection and account/global analysis concurrency; personal-key calls bypass result caching and retain process-local request deduplication
 - Cloudflare Workers for the static app and server API
 - Cloudflare D1 for account, session, and account-scoped synchronized data
 - Google OAuth with Secure, HttpOnly, SameSite session cookies
@@ -78,7 +78,6 @@ Useful development commands:
 | `npm run test:run` | Run tests once |
 | `npm run dev:ai` | Test AI with cache enabled |
 | `npm run dev:ai:fresh` | Test uncached AI responses |
-| `npm run dev:shared` | Use the shared Upstash development adapter |
 | `npm run eval:ai` | Run the optional paid AI fixture evaluation |
 | `npm run verify:deployment` | Check the deployed API boundary without an OpenAI call |
 | `npm run build:cloudflare` | Build the Worker asset bundle |
@@ -86,8 +85,10 @@ Useful development commands:
 | `npm run data:showdown` | Refresh checked-in Showdown catalogs |
 | `npm run data:locales` | Refresh checked-in localization data |
 
-For shared-storage QA, copy `.env.shared.example` to `.env.shared.local`, add
-development Upstash credentials, and run `npm run dev:shared`.
+Vite development/evaluation stays in memory. Shared request/capacity protection
+uses a SQLite-backed Durable Object in the Worker, with separate production/QA
+object identities. See [analysis operations](./docs/ANALYSIS_OPERATIONS.md) for
+local workerd tests, rollout status, and retiring the old Upstash connection.
 `verify:deployment` checks guest rejection on the login-required production
 Worker. Authenticated contract and paid concurrency checks require browser QA.
 The optional `--allow-paid-call` CLI mode is for development endpoints without
@@ -125,6 +126,7 @@ Usage updates do not change the app's supported regulation or battle rules.
 - [PokePilot analysis examples](https://pokepilot.app/help/kabamanda-en.html) / [한국어](https://pokepilot.app/help/kabamanda-ko.html): real recorded results, screenshots, and a single-input Luna low/medium comparison.
 - [AdSense readiness and review checklist](./docs/ADSENSE_READINESS.md)
 - [Operational metrics](./docs/OPERATIONAL_METRICS.md)
+- [Analysis request and capacity controls](./docs/ANALYSIS_OPERATIONS.md)
 - [Cloudflare deployment and migration record](./docs/CLOUDFLARE_MIGRATION.md)
 - [Deployment checklist](./docs/DEPLOYMENT_CHECKLIST.md)
 - [October 15 onboarding QA and remaining coverage](./docs/PRELAUNCH_QA_2026_10_15.md)

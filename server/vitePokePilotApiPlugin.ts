@@ -9,7 +9,7 @@ export function vitePokePilotApiPlugin(
   apiKey?: string,
   safeguardMode: PokePilotSafeguardMode = "enforced",
   operations?: PokePilotOperations,
-  operationsKind: "memory" | "upstash" = "memory",
+  operationsKind: "memory" | "durable-object" = "memory",
 ): Plugin {
   return {
     name: "pokepilot-local-analysis-api",

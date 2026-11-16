@@ -265,6 +265,9 @@ The MVP should prove the core loop:
 - Deferred: follow-up chat is demand-gated after the broader public release;
   see [Deferred Follow-up Conversations](#deferred-follow-up-conversations).
 - [x] Finish request controls for multi-instance public deployment.
+  - [x] Replace the historical Redis adapter with a Cloudflare Durable Object
+        gate; preserve admission and capacity limits, local deduplication, and
+        fail-closed behavior. Rollout checklist: `docs/ANALYSIS_OPERATIONS.md`.
   - [x] Key process-local cached analyses by canonical team state, format,
         regulation, locale,
         prompt version, and request-contract version.

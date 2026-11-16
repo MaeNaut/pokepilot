@@ -29,7 +29,8 @@ storage.
 
 Personal analysis has no daily/monthly allowance or product cooldown. Shared-server
 abuse protection remains: 20 requests/account/minute, 80 requests/IP/minute, at most
-two active analyses/account and 64 globally within the configured Redis namespace.
+two active analyses/account and 64 globally within the environment's Cloudflare
+Durable Object. The production and QA scopes never share these budgets.
 These controls apply across Worker instances, model effort, and request fingerprints;
 duplicate followers do not take additional active-analysis permits. Rejections before
 provider execution explicitly report that no provider call occurred. Permits release

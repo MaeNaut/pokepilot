@@ -48,12 +48,10 @@ export type PokePilotRunOnceResult<T> = {
   value: T;
 };
 
-export type PokePilotRunOnceOptions<T> = {
+export type PokePilotRunOnceOptions = {
   capacity?: { requesterId: string; maxPerRequester: number; maxTotal: number; leaseMs: number };
-  distributed?: boolean;
   maxTotalWaiters?: number;
   maxWaiters?: number;
-  shouldShare?: (value: T) => boolean;
   waitTimeoutMs?: number;
 };
 
@@ -93,7 +91,7 @@ export interface PokePilotOperations {
   runOnce<T>(
     key: string,
     task: () => Promise<T>,
-    options?: PokePilotRunOnceOptions<T>,
+    options?: PokePilotRunOnceOptions,
   ): Promise<PokePilotRunOnceResult<T>>;
   setCached<T>(key: string, value: T, now: number): MaybePromise<void>;
 }
@@ -191,7 +189,7 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
   async runOnce<T>(
     key: string,
     task: () => Promise<T>,
-    options: PokePilotRunOnceOptions<T> = {},
+    options: PokePilotRunOnceOptions = {},
   ) {
     const existing = this.inFlight.get(key) as
       | Promise<PokePilotRunOnceResult<T>>
@@ -266,7 +264,7 @@ export class InMemoryPokePilotOperations implements PokePilotOperations {
   admitRequest(
     requester: PokePilotRequester,
     now: number,
-  ): PokePilotRequestAdmissionDecision {
+  ): MaybePromise<PokePilotRequestAdmissionDecision> {
     this.pruneRequestUsage(now);
     const clientKey = `request:client:${requester.clientId}`;
     const ipKey = `request:ip:${requester.ipHash}`;

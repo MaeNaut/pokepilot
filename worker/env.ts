@@ -1,6 +1,9 @@
-import type { PokePilotOperationsEnvironment } from "../server/pokepilotOperationsRuntime.js";
+import type { PokePilotAnalysisGateNamespace } from "../server/durablePokePilotOperations.js";
 
-export type WorkerEnvironment = PokePilotOperationsEnvironment & {
+export type WorkerEnvironment = {
+  POKEPILOT_ANALYSIS_GATE?: PokePilotAnalysisGateNamespace;
+  POKEPILOT_ANALYSIS_GATE_SCOPE?: string;
+  POKEPILOT_ANALYSIS_PAUSED?: string;
   ASSETS: Fetcher;
   DB: D1Database;
   GOOGLE_OAUTH_CLIENT_ID?: string;

@@ -23,8 +23,11 @@ const env = {
   POKEPILOT_AUTH_REQUIRED: "true",
   POKEPILOT_SESSION_SECRET: "test-session-secret",
   POKEPILOT_CLIENT_SECRET: "test-client-secret",
-  POKEPILOT_SHARED_STORE_REQUIRED: "false",
-} as WorkerEnvironment;
+  POKEPILOT_ANALYSIS_GATE_SCOPE: "production",
+  POKEPILOT_ANALYSIS_GATE: {
+    getByName: () => ({ admit: async () => ({ allowed: true }), acquire: async () => true, release: async () => {} }),
+  },
+} as unknown as WorkerEnvironment;
 
 function analyzeRequest(effort: string, modelId = "gpt-6-luna") {
   return new Request("https://pokepilot.app/api/pokepilot/analyze", {
@@ -42,6 +45,50 @@ beforeEach(() => {
 });
 
 describe("Worker analysis key routing", () => {
+  it("pauses analysis without reading account data, keys or invoking the model", async () => {
+    const response = await worker.fetch(analyzeRequest("low"), { ...env, POKEPILOT_ANALYSIS_PAUSED: "true" });
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Retry-After")).toBe("30");
+    expect(await response.json()).toMatchObject({ error: { providerAttempted: false } });
+    expect(readAccountSession).not.toHaveBeenCalled();
+    expect(readPersonalApiKey).not.toHaveBeenCalled();
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+    const accountResponse = await worker.fetch(new Request("https://pokepilot.app/api/pokepilot/account"), {
+      ...env, POKEPILOT_ANALYSIS_PAUSED: "true",
+    });
+    expect(accountResponse.status).not.toBe(503);
+  });
+  it("fails closed before invoking analysis when the Cloudflare gate binding is missing", async () => {
+    vi.mocked(readPersonalApiKey).mockResolvedValue("personal-key-test");
+    const response = await worker.fetch(analyzeRequest("low"), { ...env, POKEPILOT_ANALYSIS_GATE: undefined });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: { code: "AI_UPSTREAM_ERROR", providerAttempted: false } });
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+  });
+
+  it("keeps separate gate bindings isolated across environments", async () => {
+    vi.mocked(readPersonalApiKey).mockResolvedValue("personal-key-test");
+    await worker.fetch(analyzeRequest("low"), env);
+    const otherGate = { getByName: env.POKEPILOT_ANALYSIS_GATE!.getByName };
+    await worker.fetch(analyzeRequest("low"), { ...env, POKEPILOT_ANALYSIS_GATE: otherGate });
+    const options = vi.mocked(handleWebPokePilotApi).mock.calls.map((call) => call[1]);
+    expect(options[0]?.operations).not.toBe(options[1]?.operations);
+  });
+
+  it("isolates QA even when an aliased version shares the production namespace", async () => {
+    vi.mocked(readPersonalApiKey).mockResolvedValue("personal-key-test");
+    await worker.fetch(analyzeRequest("low"), env);
+    await worker.fetch(analyzeRequest("low"), { ...env, POKEPILOT_ANALYSIS_GATE_SCOPE: "qa" });
+    const options = vi.mocked(handleWebPokePilotApi).mock.calls.map((call) => call[1]);
+    expect(options[0]?.operations).not.toBe(options[1]?.operations);
+  });
+
+  it.each([undefined, "", "unrecognized"])("fails closed with an invalid gate scope: %s", async (scope) => {
+    vi.mocked(readPersonalApiKey).mockResolvedValue("personal-key-test");
+    const response = await worker.fetch(analyzeRequest("low"), { ...env, POKEPILOT_ANALYSIS_GATE_SCOPE: scope });
+    expect(response.status).toBe(503);
+    expect(handleWebPokePilotApi).not.toHaveBeenCalled();
+  });
   it.each(["low", "medium"])("blocks %s without a personal key even with a site key configured", async (effort) => {
     const response = await worker.fetch(analyzeRequest(effort), env);
     expect(response.status).toBe(403);

@@ -24,6 +24,14 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("Worker routing error boundary", () => {
+  it.each(["admit", "acquire", "release"])("does not expose gate %s as a public API", async (method) => {
+    const getByName = vi.fn();
+    const response = await worker.fetch(new Request(`https://pokepilot.app/api/pokepilot/analysis-gate/${method}`, {
+      method: "POST", body: JSON.stringify({ requesterId: "a", token: "test" }),
+    }), { ...env, POKEPILOT_ANALYSIS_GATE: { getByName } });
+    expect(response.status).toBe(404);
+    expect(getByName).not.toHaveBeenCalled();
+  });
   it("exposes no client telemetry ingestion endpoint", async () => {
     const response = await worker.fetch(new Request("https://pokepilot.app/api/pokepilot/usage-events", {
       method: "POST", headers: { Origin: "https://pokepilot.app", "Content-Type": "application/json" },

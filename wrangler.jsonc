@@ -1,10 +1,14 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "pokepilot",
-  "main": "./worker/index.ts",
+  "main": "./worker/entry.ts",
   "compatibility_date": "2026-09-18",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "POKEPILOT_ANALYSIS_GATE", "class_name": "PokePilotAnalysisGate" }]
+  },
+  "migrations": [{ "tag": "v1-analysis-gate", "new_sqlite_classes": ["PokePilotAnalysisGate"] }],
   "triggers": { "crons": ["17 4 * * *"] },
   "routes": [
     {
@@ -32,7 +36,7 @@
     "POKEPILOT_METRICS_ENABLED": "true",
     "POKEPILOT_USAGE_METRICS_ENABLED": "true",
     "POKEPILOT_AUTH_REQUIRED": "true",
-    "POKEPILOT_SHARED_STORE_REQUIRED": "true",
-    "POKEPILOT_REDIS_PREFIX": "pokepilot:operations:v1"
+    "POKEPILOT_ANALYSIS_GATE_SCOPE": "production",
+    "POKEPILOT_ANALYSIS_PAUSED": "false"
   }
 }

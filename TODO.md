@@ -420,7 +420,10 @@ verification of every feature in the current release.
         team contents or requester identifiers.
   - [x] Add server-start-only local modes for production-like safeguards,
         cached and fresh AI QA modes.
-  - [x] Add an optional Upstash Redis adapter for shared canonical responses,
+  - [x] Replace the historical Upstash dependency with Cloudflare Durable Object
+        admission/permits and real workerd regression tests. Production cutover
+        and old-service retirement remain gated by `docs/ANALYSIS_OPERATIONS.md`.
+  - [x] Historical: add an optional Upstash Redis adapter for shared canonical responses,
         atomic client/IP rate decisions, and distributed identical-request
         deduplication while retaining the in-memory local adapter.
   - [x] Add an opt-in `dev:shared` mode with ignored mode-specific credentials,

@@ -1,7 +1,7 @@
 # Deployment Checklist
 
 This is the current Cloudflare Workers release checklist for PokePilot. It does
-not replace Cloudflare, Google, OpenAI, Upstash, tax, advertising, or legal
+not replace Cloudflare, Google, OpenAI, tax, advertising, or legal
 provider requirements.
 
 ## 1. Automated gate
@@ -10,7 +10,10 @@ provider requirements.
 `main` deploy the verified build with the lockfile-installed Wrangler only after
 lint, tests, build, dry run, and audit pass. Deployment then runs the unpaid
 production authentication smoke test. A smoke-test failure is reported but does
-not automatically roll back a completed deployment.
+not automatically roll back a completed deployment. The first analysis-gate
+cutover temporarily pauses only new analyses for 465 seconds after confirming
+maintenance. Ordinary deployments skip this pause. A failed interrupted cutover
+can leave analysis paused; see `docs/ANALYSIS_OPERATIONS.md` for recovery.
 
 Pushing `develop` does not deploy production. Open a pull request to run CI,
 then merge into `main` to trigger production deployment. A Worker preview is
@@ -23,9 +26,9 @@ GitHub Settings > Secrets and variables > Actions:
   the relevant Worker/zone resources. Never reuse a local OAuth session token.
 - `CLOUDFLARE_ACCOUNT_ID`: the Cloudflare account containing `pokepilot`.
 
-Production application secrets (OpenAI, Google, session signing, and Upstash)
-remain on the Worker and must not be copied into GitHub. No D1 migrations are
-automatically applied. Runs are serialized by ref without interrupting an active
+Production application secrets (Google and session signing, plus any legacy
+site key) remain on the Worker and must not be copied into GitHub. Checked-in
+D1 migrations are applied before Worker deployment. Runs are serialized by ref without interrupting an active
 deployment; superseded commits skip deployment. Keep Workers Builds disconnected
 to avoid a second independent deployment pipeline. Re-run a failed Actions run
 after correcting missing secrets; only the current main commit will deploy.
@@ -44,16 +47,19 @@ build, and a Worker dry run. Do not deploy when any command or CI job fails.
 ## 2. Cloudflare configuration
 
 - Confirm `wrangler.jsonc` names the `pokepilot` Worker, the `ASSETS` binding,
-  the D1 `DB` binding, and the `pokepilot.app` route.
-- Confirm all four D1 migrations have been applied in order: account/session
-  tables, `account_storage`, `operational_metrics`, and `personal_api_keys`.
+  the D1 `DB` binding, the `POKEPILOT_ANALYSIS_GATE` Durable Object binding,
+  and the `pokepilot.app` route.
+- Confirm all checked-in D1 migrations have been applied in order, including
+  `service_usage_metrics`.
   Apply pending migrations before deploying Worker code that reads the new tables.
 - Keep `POKEPILOT_AUTH_REQUIRED=true` and
-  `POKEPILOT_SHARED_STORE_REQUIRED=true` for production.
+  `POKEPILOT_ANALYSIS_GATE_SCOPE=production` for production (`qa` in the QA config).
+  The Worker rejects analysis if the gate binding or scope is missing.
 - Confirm `GOOGLE_OAUTH_REDIRECT_URI` in `wrangler.jsonc` is the production
   callback, not the QA version URL callback.
-- Use a production-specific `POKEPILOT_REDIS_PREFIX`. Change it intentionally
-  when invalidating all operational cache and rate-limit state.
+- Preserve the Durable Object class migration tag and named gate identities.
+  For the first Redis-to-Cloudflare cutover, drain old analyses and follow
+  [analysis operations](ANALYSIS_OPERATIONS.md) before retiring Upstash.
 
 ## 3. Server-only secrets
 
@@ -62,8 +68,6 @@ Set these in Cloudflare Worker secrets, never with a `VITE_` prefix or in Git:
 | Secret | Purpose |
 | --- | --- |
 | `OPENAI_API_KEY` | Optional legacy binding; public Worker analysis does not read it. Configure paid evaluation credentials separately in the evaluation environment |
-| `UPSTASH_REDIS_REST_URL` | Shared cache, leases, and request admission |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash authorization |
 | `POKEPILOT_CLIENT_SECRET` | Anonymous client and abuse-control signing |
 | `POKEPILOT_SESSION_SECRET` | Session HMACs, account usage identifiers, and personal-key encryption; rotation requires a key migration/re-registration plan |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google sign-in client |
@@ -140,7 +144,7 @@ this repository.
   links. Recheck published calculations after mechanics changes. Follow the
   [AdSense readiness checklist](./ADSENSE_READINESS.md) before requesting review;
   a successful deployment is not advertising approval.
-- Review Cloudflare Worker errors and Upstash/OpenAI dashboards without exposing
+- Review Cloudflare Worker/Durable Object errors and OpenAI dashboards without exposing
   team contents, identifiers, or secrets in logs.
 
 ## 6. Rollback and follow-up
@@ -149,7 +153,7 @@ this repository.
 - Roll back the Worker version in Cloudflare if an application regression is
   confirmed; preserve the D1 schema unless a migration-specific recovery plan exists.
 - Keep the published privacy notice aligned with account storage, browser storage,
-  Google sign-in, OpenAI processing, Redis controls, and any advertising change.
+  Google sign-in, OpenAI processing, Cloudflare request/capacity controls, and any advertising change.
 - Repeat representative real-device Safari and Android Chrome checks after major
   layout, authentication, or browser-storage changes.
 

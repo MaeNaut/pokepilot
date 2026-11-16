@@ -412,10 +412,8 @@ export async function handlePokePilotAnalysis(
             maxTotal: POKEPILOT_MAX_ACTIVE_ANALYSES,
             leaseMs: POKEPILOT_ANALYSIS_LEASE_MS,
           } : undefined,
-          distributed: safeguardConfig.cacheEnabled,
           maxTotalWaiters: POKEPILOT_MAX_TOTAL_SHARED_WAITERS,
           maxWaiters: POKEPILOT_MAX_SHARED_WAITERS,
-          shouldShare: (value) => value.kind === "completed",
           waitTimeoutMs: POKEPILOT_SHARED_WAITER_TIMEOUT_MS,
         })
       : { shared: false, value: await runAnalysis() };

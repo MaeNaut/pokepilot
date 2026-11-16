@@ -1,7 +1,8 @@
 # PokePilot Technical Notes
 
-> Current architecture, 2026-10-15: the public app runs on Cloudflare Workers
-> with D1, Upstash Redis, Google OAuth, and Regulation M-C data. Detailed M-B
+> Architecture in this revision, 2026-11-16: Cloudflare Workers
+> with D1, Durable Objects, Google OAuth, and Regulation M-C data. See
+> `docs/ANALYSIS_OPERATIONS.md` for migration rollout status. Detailed M-B
 > data experiments and early persistence alternatives below are retained as
 > implementation history unless a later section explicitly supersedes them.
 > Public AI access requires a personal key after login. Old deterministic-response
@@ -14,7 +15,7 @@
 - Server: Cloudflare Worker serving static assets and same-origin API routes
 - AI: OpenAI API through the Worker, never directly from browser code
 - Data: Cloudflare D1 for accounts, sessions, and bounded account sync; browser
-  localStorage for device state; Upstash Redis for shared operational state
+  localStorage for device state; Durable Objects for shared request/capacity state
 - Damage engine: a typed Pokemon Champions adapter around `@smogon/calc`
 - Image export: `html-to-image` for rendering dedicated share-card DOM into PNG blobs
 - Deployment: Cloudflare Workers at `https://pokepilot.app`
@@ -75,7 +76,7 @@ Avoid forcing these skills into the project too early:
 
 - Python: Not necessary for the MVP unless a later backend or data-processing need clearly appears.
 - AWS: Useful in some job postings, but too heavy for the current application
-  compared with Cloudflare Workers/D1 and Upstash.
+  compared with Cloudflare Workers/D1 and Durable Objects.
 - Custom ML training: Out of scope; the goal is AI-assisted product development, not model training.
 
 ## Pokemon Selection Boundary
@@ -504,7 +505,7 @@ Desktop UX decisions after the wide-builder layout change:
 - Showdown text, calculated stats, validity, diagnostics, and PokePilot request
   data are derived from the current saved build so regulation updates do not
   leave persisted derived values stale. Analysis history is an explicit bounded
-  product feature, separate from Redis's short-lived operational cache.
+  product feature, separate from temporary request/capacity controls.
 - Analysis confirmation discloses automatic team saving. The browser waits for
   server save success before preparing and submitting a paid AI request, passing
   the returned team ID directly to the history session. It never infers a draft's
@@ -977,37 +978,27 @@ embedding a detailed all-versus-all matchup matrix in the browser.
   fallback, usage quota, or post-analysis waiting period is applied. Provider
   rate-limit errors and bounded in-flight deduplication remain. The generic
   local/evaluation adapter retains short request-admission protection.
-- Keep the in-memory implementation for local development. When both Upstash
-  REST credentials exist, select the shared adapter automatically. It stores
-  canonical responses with a 24-hour TTL, evaluates short client/IP request windows in
-  atomic Redis Lua scripts, and coordinates identical requests with a token-owned
-  distributed lease and short-lived shared result. Per-key and global expiring
-  waiter tokens bound duplicate serverless requests, and their 50-second shared
-  deadline remains within the Worker request budget.
-- The above shared result cache and distributed result coordination apply to
-  the generic adapter when enabled, not current public BYOK calls. The Worker
-  uses `personal`: no shared analysis cache or distributed result storage, but
-  account/IP request admission and Redis account/global active-analysis permits
-  remain enabled. Deduplication is process-local and account/model/effort scoped.
-  Development `ai-fresh` bypasses admission; it is not the public Worker mode.
-- Set `POKEPILOT_SHARED_STORE_REQUIRED=true` for public deployment so missing or
-  partial Redis configuration fails closed during adapter initialization. Use distinct
-  `POKEPILOT_REDIS_PREFIX` values for preview and production. When shared operations
-  are enabled, Redis failures must not silently bypass coordination.
-- Keep routine `npm run dev` isolated on process-local memory. Load real Redis
-  credentials only from ignored `.env.shared.local` through
-  `npm run dev:shared`; this mode retains production-like safeguards, forces the
-  shared-store requirement, and uses a development-only key prefix. Vite modes
-  other than `shared` deliberately discard Redis environment values before
-  selecting the operations adapter; the deployed server runtime still selects
-  Upstash automatically from its server-side secrets.
-- Keep the OpenAI project budget and alerts as a separate operational safeguard.
-  Production currently uses `pokepilot:operations:v1` and requires shared
-  storage. Give any preview environment its own prefix before testing so it
-  cannot consume production cache or limiter state. The live concurrency check
-  verified one provider call for identical simultaneous requests, with followers
-  receiving the shared result and no team contents or requester identifiers in
-  runtime logs.
+- Use the SQLite-backed `PokePilotAnalysisGate` Durable Object for atomic
+  account/IP sliding-window admission and account/global expiring permits.
+  The gate receives opaque identities and random tokens, not keys, teams,
+  prompts or analysis text. RPC retries with the same token are idempotent.
+  Scheduled alarms remove expired rows even when no user returns.
+- The Worker uses `personal`: no shared analysis cache or distributed result
+  storage. Deduplication is process-local and account/model/effort scoped.
+  Only the local leader acquires a global permit. Provider execution stays in
+  the regular Worker; the gate does not wait through a paid model request.
+- Missing bindings, invalid environment scope, or gate failures reject before
+  the provider call; never fall back to local-only protection in production.
+  Permit cleanup failure preserves the paid result and logs only a generic
+  warning. Abandoned permits expire after 450 seconds.
+- Keep routine Vite development/evaluation on process-local memory. Local
+  result caching remains available to evaluation modes; no Upstash adapter,
+  external Redis credentials or `dev:shared` mode remain in the active code.
+- The production and aliased QA configs share a Worker class namespace but use
+  distinct named objects (`analysis-v1:production` / `analysis-v1:qa`). Keep
+  those stable across releases to preserve limits. See
+  [analysis operations](docs/ANALYSIS_OPERATIONS.md) for tests and cutover checks.
+- Keep OpenAI project budgets and alerts as a separate operational safeguard.
 - Use `npm run verify:deployment -- --url <target>` for the no-cost deployment
   checks. On the login-required Worker it checks the guest boundary, not
   authenticated analysis or paid concurrency. Those require browser QA. The

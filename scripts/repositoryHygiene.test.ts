@@ -27,7 +27,7 @@ describe("repository hygiene", () => {
   });
 
   it("keeps templates and public build configuration versionable", () => {
-    expect(ignored([".env.production", ".env.example", ".env.shared.example", ".env.cloudflare"])).toEqual([".env.production"]);
+    expect(ignored([".env.production", ".env.example", ".env.cloudflare"])).toEqual([".env.production"]);
     const assignments = readFileSync(".env.cloudflare", "utf8")
       .split(/\r?\n/).map((line) => line.trim())
       .filter((line) => line && !line.startsWith("#"));

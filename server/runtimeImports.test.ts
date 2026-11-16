@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const hostedRuntimeFiles = [
   "worker/index.ts",
+  "worker/entry.ts",
+  "worker/analysisGate.ts",
   "worker/accountAuth.ts",
   "worker/accountStorage.ts",
   "server/nodePokepilotApi.ts",
@@ -14,7 +16,7 @@ const hostedRuntimeFiles = [
   "server/pokepilotIdentity.ts",
   "server/pokepilotOperations.ts",
   "server/pokepilotOperationsRuntime.ts",
-  "server/upstashPokePilotOperations.ts",
+  "server/durablePokePilotOperations.ts",
   "src/utils/copilotModelContract.ts",
   "src/utils/copilotRequestContract.ts",
   "src/utils/copilotRequestFingerprint.ts",

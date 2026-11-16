@@ -1,91 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
-import {
-  createPokePilotOperationsRuntime,
-  createPokePilotViteOperationsRuntime,
-} from "./pokepilotOperationsRuntime";
-import { UpstashPokePilotOperations } from "./upstashPokePilotOperations";
-
-const fakeRedis = {
-  del: vi.fn(),
-  eval: vi.fn(),
-  get: vi.fn(),
-  mget: vi.fn(),
-  set: vi.fn(),
-};
+import { createPokePilotOperationsRuntime } from "./pokepilotOperationsRuntime";
+import { DurablePokePilotOperations } from "./durablePokePilotOperations";
 
 describe("PokePilot operations runtime", () => {
-  it("uses process-local memory when shared credentials are absent", () => {
-    const runtime = createPokePilotOperationsRuntime({});
-
+  it("uses local memory for Vite development and evaluation without opening a remote connection", () => {
+    const runtime = createPokePilotOperationsRuntime();
     expect(runtime.kind).toBe("memory");
     expect(runtime.operations).toBeInstanceOf(InMemoryPokePilotOperations);
   });
 
-  it("uses Upstash when both REST credentials are configured", () => {
-    const createRedis = vi.fn(() => fakeRedis);
-    const runtime = createPokePilotOperationsRuntime(
-      {
-        POKEPILOT_REDIS_PREFIX: "pokepilot:test",
-        UPSTASH_REDIS_REST_TOKEN: "token",
-        UPSTASH_REDIS_REST_URL: "https://redis.example.com",
-      },
-      createRedis,
-    );
-
-    expect(runtime.kind).toBe("upstash");
-    expect(runtime.operations).toBeInstanceOf(UpstashPokePilotOperations);
-    expect(createRedis).toHaveBeenCalledWith({
-      token: "token",
-      url: "https://redis.example.com",
-    });
-  });
-
-  it("rejects partial shared-store configuration", () => {
-    expect(() =>
-      createPokePilotOperationsRuntime({
-        UPSTASH_REDIS_REST_URL: "https://redis.example.com",
-      }),
-    ).toThrow(/required together/i);
-  });
-
-  it("can fail closed when production requires shared storage", () => {
-    expect(() =>
-      createPokePilotOperationsRuntime({
-        POKEPILOT_SHARED_STORE_REQUIRED: "true",
-      }),
-    ).toThrow(/required but Redis credentials are missing/i);
-  });
-
-  it("keeps routine Vite development on process-local memory", () => {
-    const createRedis = vi.fn(() => fakeRedis);
-    const runtime = createPokePilotViteOperationsRuntime(
-      "development",
-      {
-        UPSTASH_REDIS_REST_TOKEN: "token",
-        UPSTASH_REDIS_REST_URL: "https://redis.example.com",
-      },
-      createRedis,
-    );
-
-    expect(runtime.kind).toBe("memory");
-    expect(createRedis).not.toHaveBeenCalled();
-  });
-
-  it("selects and requires Upstash only in explicit shared Vite mode", () => {
-    const createRedis = vi.fn(() => fakeRedis);
-    const runtime = createPokePilotViteOperationsRuntime(
-      "shared",
-      {
-        UPSTASH_REDIS_REST_TOKEN: "token",
-        UPSTASH_REDIS_REST_URL: "https://redis.example.com",
-      },
-      createRedis,
-    );
-
-    expect(runtime.kind).toBe("upstash");
-    expect(() =>
-      createPokePilotViteOperationsRuntime("shared", {}, createRedis),
-    ).toThrow(/required but Redis credentials are missing/i);
+  it("uses the Cloudflare binding without eagerly contacting the gate", () => {
+    const namespace = { getByName: vi.fn() };
+    const runtime = createPokePilotOperationsRuntime(namespace);
+    expect(runtime.kind).toBe("durable-object");
+    expect(runtime.operations).toBeInstanceOf(DurablePokePilotOperations);
+    expect(namespace.getByName).not.toHaveBeenCalled();
   });
 });

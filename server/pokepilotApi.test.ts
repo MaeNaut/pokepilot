@@ -8,7 +8,7 @@ import { LunaStructuredOutputError, type LunaAnalysisResult } from "./openAiLuna
 import { handlePokePilotAnalysis } from "./pokepilotApi";
 import { POKEPILOT_AI_PROMPT_VERSION } from "./pokepilotPrompts";
 import { InMemoryPokePilotOperations } from "./pokepilotOperations";
-import { UpstashPokePilotOperations, type PokePilotRedisClient } from "./upstashPokePilotOperations";
+import { DurablePokePilotOperations } from "./durablePokePilotOperations";
 
 const validRequest = {
   version: 34,
@@ -317,7 +317,7 @@ describe("PokePilot server API", () => {
     const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const operations = new InMemoryPokePilotOperations();
     vi.spyOn(operations, "getCached").mockRejectedValue(
-      new Error("Redis unavailable"),
+      new Error("Operations storage unavailable"),
     );
     const result = await handlePokePilotAnalysis(validRequest, {
       analyze,
@@ -340,7 +340,7 @@ describe("PokePilot server API", () => {
     const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const operations = new InMemoryPokePilotOperations();
     vi.spyOn(operations, "setCached").mockRejectedValue(
-      new Error("Redis write unavailable"),
+      new Error("Operations cache write unavailable"),
     );
 
     const result = await handlePokePilotAnalysis(validRequest, {
@@ -906,7 +906,7 @@ describe("PokePilot server API", () => {
 
   it("does not call the provider or imply charges after pre-call safeguard failures", async () => {
     const operations = new InMemoryPokePilotOperations();
-    vi.spyOn(operations, "runOnce").mockRejectedValue(new Error("Redis unavailable"));
+    vi.spyOn(operations, "runOnce").mockRejectedValue(new Error("Analysis gate unavailable"));
     const analyze = vi.fn(async () => createModelResult(groundedModelOutput));
     const result = await handlePokePilotAnalysis(validRequest, {
       analyze, operations, billingSource: "personal", billingIdentity: "a",
@@ -916,7 +916,7 @@ describe("PokePilot server API", () => {
     expect(analyze).not.toHaveBeenCalled();
   });
 
-  it.each(["memory", "upstash"])("preserves shared failure classification and billing uncertainty in %s", async (backend) => {
+  it.each(["memory", "durable-object"])("preserves shared failure classification and billing uncertainty in %s", async (backend) => {
     const model = createModelResult(groundedModelOutput);
     const errors = [
       [Object.assign(new Error("invalid key"), { status: 401 }), "PERSONAL_KEY_INVALID"],
@@ -924,10 +924,12 @@ describe("PokePilot server API", () => {
       [new LunaStructuredOutputError("invalid output", model.usage, model.responseMetadata), "AI_INVALID_RESPONSE"],
     ] as const;
     for (const [error, code] of errors) {
-      const operations = backend === "memory" ? new InMemoryPokePilotOperations() : new UpstashPokePilotOperations({
-        redis: {
-          eval: vi.fn(async (script: string) => script.includes("local clientLimit") ? [1, 0, 0] : 1),
-        } as unknown as PokePilotRedisClient,
+      const operations = backend === "memory" ? new InMemoryPokePilotOperations() : new DurablePokePilotOperations({
+        getByName: () => ({
+          admit: async () => ({ allowed: true }),
+          acquire: async () => true,
+          release: async () => {},
+        }),
       });
       const runOnce = vi.spyOn(operations, "runOnce");
       let fail: (error: unknown) => void = () => {};

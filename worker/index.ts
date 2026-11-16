@@ -22,7 +22,7 @@ import { metricRoute, recordMetric, pruneMetrics } from "./metrics.js";
 import { handleCachedBattleUsage } from "./battleUsage.js";
 import { allowsUsageMetrics, serviceOperation, recordUsageMetric, pruneUsageMetrics, type TeamUsageOperation } from "./usageMetrics.js";
 
-let operationsRuntime: PokePilotOperationsRuntime | undefined;
+const operationsRuntimes = new WeakMap<object, Map<string, PokePilotOperationsRuntime>>();
 
 function accountErrorResponse(error: unknown) {
   const status = error instanceof AccountAuthError ? error.status : 503;
@@ -31,10 +31,32 @@ function accountErrorResponse(error: unknown) {
 }
 
 function getOperationsRuntime(env: WorkerEnvironment) {
-  return operationsRuntime ??= createPokePilotOperationsRuntime(env);
+  const namespace = env.POKEPILOT_ANALYSIS_GATE;
+  if (!namespace) throw new Error("PokePilot analysis gate binding is missing.");
+  const scope = env.POKEPILOT_ANALYSIS_GATE_SCOPE;
+  if (scope !== "production" && scope !== "qa") throw new Error("PokePilot analysis gate scope is missing or invalid.");
+  let scoped = operationsRuntimes.get(namespace);
+  if (!scoped) {
+    scoped = new Map();
+    operationsRuntimes.set(namespace, scoped);
+  }
+  let runtime = scoped.get(scope);
+  if (!runtime) {
+    runtime = createPokePilotOperationsRuntime(namespace, `analysis-v1:${scope}`);
+    scoped.set(scope, runtime);
+  }
+  return runtime;
 }
 
 async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperationalEvent?: (event: PokePilotOperationalEvent) => void) {
+  if (env.POKEPILOT_ANALYSIS_PAUSED === "true") {
+    const response = jsonResponse(503, {
+      ok: false,
+      error: { code: "AI_UPSTREAM_ERROR", message: "Analysis is temporarily paused for maintenance.", providerAttempted: false },
+    });
+    response.headers.set("Retry-After", "30");
+    return response;
+  }
   const session = await readAccountSession(request, env);
   if (!session) {
     return jsonResponse(401, {
@@ -64,6 +86,15 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
   if (!personalKey) {
     return withSessionRefresh(jsonResponse(403, { ok: false, error: { code: "PERSONAL_KEY_REQUIRED", message: "A personal API key is required for PokePilot analysis.", providerAttempted: false } }), refreshCookie);
   }
+  let operations: PokePilotOperationsRuntime["operations"];
+  try {
+    operations = getOperationsRuntime(env).operations;
+  } catch {
+    return withSessionRefresh(jsonResponse(503, {
+      ok: false,
+      error: { code: "AI_UPSTREAM_ERROR", message: "Analysis service is temporarily unavailable.", providerAttempted: false },
+    }), refreshCookie);
+  }
   const response = await handleWebPokePilotApi(request, {
     apiKey: personalKey,
     reasoningEffort: effort,
@@ -73,7 +104,7 @@ async function handleAnalyze(request: Request, env: WorkerEnvironment, onOperati
     onOperationalEvent,
     authenticatedAccountId,
     clientSecret: env.POKEPILOT_CLIENT_SECRET?.trim() || env.POKEPILOT_SESSION_SECRET,
-    operations: getOperationsRuntime(env).operations,
+    operations,
     requesterIp: request.headers.get("CF-Connecting-IP") ?? undefined,
     safeguardMode: "personal",
   });

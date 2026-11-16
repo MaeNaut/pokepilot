@@ -8,7 +8,6 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:shared": "vite --mode shared --host 127.0.0.1 --port 5198 --strictPort",
     "dev:ai": "vite --mode ai-test",
     "dev:ai:fresh": "vite --mode ai-fresh",
     "data:locales": "node scripts/generate-pokeapi-locales.mjs",
@@ -35,7 +34,6 @@
     "@fortawesome/free-solid-svg-icons": "^7.3.0",
     "@fortawesome/react-fontawesome": "^3.4.0",
     "@smogon/calc": "^0.12.0",
-    "@upstash/redis": "^1.38.1",
     "@vitejs/plugin-react": "^4.3.4",
     "html-to-image": "^1.11.13",
     "jose": "^6.2.12",
@@ -59,6 +57,7 @@
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
     "jsdom": "^29.1.1",
+    "miniflare": "5.20261110.2-beta",
     "tsx": "^4.23.1",
     "typescript-eslint": "^8.18.2",
     "vitest": "^4.1.11",

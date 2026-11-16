@@ -6,6 +6,10 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 
 ## Current production topology
 
+The configuration in this revision replaces Upstash with Durable Objects.
+See [analysis operations](ANALYSIS_OPERATIONS.md) for the rollout status and
+first-deployment procedure; do not remove the old service before cutover verification.
+
 - **Worker and static assets:** `pokepilot` Worker with the `ASSETS` binding
 - **Custom domain:** `pokepilot.app`
 - **Worker URL:** `https://pokepilot.pokepilot-ai.workers.dev` (not an isolated QA environment)
@@ -13,7 +17,7 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 - **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
 - **Operational state:** Public BYOK calls use the `personal` safeguard mode:
-  fresh results without shared caching, account/IP request protection, and Redis
+  fresh results without shared caching, account/IP request protection, and Durable Object
   account/global active-analysis permits. Identical requests still deduplicate
   locally. Development-only `ai-test`/`ai-fresh` modes can bypass admission.
 - **Account storage:** D1 `accounts`, `account_sessions`, and
@@ -26,7 +30,7 @@ The Node API adapter in `server/` is still used by the Vite development server.
 
 ## Reprovisioning or recovery
 
-1. Confirm `wrangler.jsonc` still binds `ASSETS` and the D1 `DB` database, and
+1. Confirm `wrangler.jsonc` still binds `ASSETS`, `POKEPILOT_ANALYSIS_GATE`, and the D1 `DB` database, and
    maps the `pokepilot.app` custom domain.
 2. Apply all checked-in D1 migrations in order:
 
@@ -39,8 +43,6 @@ The Node API adapter in `server/` is still used by the Vite development server.
 3. Set server-side Worker secrets in Cloudflare. Never place them in
    `wrangler.jsonc`, `.env.cloudflare`, Git, or chat:
 
-   - `UPSTASH_REDIS_REST_URL`
-   - `UPSTASH_REDIS_REST_TOKEN`
    - `POKEPILOT_CLIENT_SECRET`
    - `POKEPILOT_SESSION_SECRET`
    - `GOOGLE_OAUTH_CLIENT_ID`
@@ -50,8 +52,8 @@ The Node API adapter in `server/` is still used by the Vite development server.
    `OPENAI_API_KEY`. Keep local/evaluation keys separate. The OAuth client ID
    may also be configured as a Worker variable; its client secret must remain secret.
 4. Keep the Worker variables in `wrangler.jsonc` aligned with the intended
-   environment. Production requires account authentication, the shared Redis
-   store, and `GOOGLE_OAUTH_REDIRECT_URI` set to the production callback. QA
+   environment. Production requires account authentication, the Durable Object
+   gate with scope `production`, and `GOOGLE_OAUTH_REDIRECT_URI` set to the production callback. QA
    version uploads use a different callback, so keep both URLs explicit in
    their respective Wrangler configs.
 5. In Google Cloud, register the exact production redirect URI:
@@ -70,7 +72,8 @@ The Node API adapter in `server/` is still used by the Vite development server.
 
 ## QA version URL
 
-`wrangler.qa.jsonc` binds an isolated D1 database and Redis prefix. It uploads
+`wrangler.qa.jsonc` binds an isolated D1 database and selects the `qa` gate object,
+distinct from the `production` object even within one Worker class namespace. It uploads
 the current build as an aliased Worker version, without deploying that version
 to `pokepilot.app`:
 
@@ -86,6 +89,12 @@ in the OAuth client's authorized redirect URIs. The QA database is separate
 from production; do not use this config with `wrangler deploy` or `wrangler
 versions deploy`.
 
+The first addition of a Durable Object class requires deploying the class
+migration before an aliased version can use it. Do not assume `versions upload`
+can create the namespace. Follow the first-release procedure in
+[analysis operations](ANALYSIS_OPERATIONS.md); subsequent QA versions can use
+the existing class with their separate `qa` scope.
+
 These aliased version URLs are not separately deployed staging Workers.
 [Version URL limitations](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/)
 include unavailable Workers Logs, Wrangler tail, and Logpush. Do not enable
@@ -94,7 +103,7 @@ CPU diagnosis requires a separate deployed staging Worker; HTTP response time
 does not measure Worker CPU. `wrangler.qa.jsonc` keeps invocation logs disabled.
 
 On October 14, 2026, release preflight passed 1,381 tests, lint, the Cloudflare
-build/dry-run, and the dependency audit. Live Upstash checks in disposable QA
+build/dry-run, and the dependency audit. Historical live Upstash checks in disposable QA
 keys verified cross-instance account/global capacity, release after success or
 failure, orphan expiry, longest-lease TTL, and atomic request admission. The QA
 preview passed 37 public routing checks and guest API rejection. A Luna low
