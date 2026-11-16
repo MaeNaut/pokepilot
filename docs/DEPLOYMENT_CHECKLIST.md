@@ -16,9 +16,9 @@ maintenance. Ordinary deployments skip this pause. A failed interrupted cutover
 can leave analysis paused; see `docs/ANALYSIS_OPERATIONS.md` for recovery.
 
 Pushing `develop` does not deploy production. Open a pull request to run CI,
-then merge into `main` to trigger production deployment. A Worker preview is
-refreshed from the verified main build after production checks; it is not an
-automatic consequence of a develop push.
+then merge into `main` to trigger production deployment. QA requires a separately
+deployed Worker; it is not an automatic consequence of a develop push. Version
+URL aliases are not supported on the production Durable Object-owning Worker.
 
 Before enabling this workflow, add repository Actions secrets in
 GitHub Settings > Secrets and variables > Actions:

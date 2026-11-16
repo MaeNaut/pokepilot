@@ -1,14 +1,13 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "pokepilot",
-  "main": "./worker/entry.ts",
+  "name": "qa-pokepilot",
+  "main": "./worker/index.ts",
   "compatibility_date": "2026-09-18",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "durable_objects": {
-    "bindings": [{ "name": "POKEPILOT_ANALYSIS_GATE", "class_name": "PokePilotAnalysisGate" }]
+    "bindings": [{ "name": "POKEPILOT_ANALYSIS_GATE", "class_name": "PokePilotAnalysisGate", "script_name": "pokepilot" }]
   },
-  "migrations": [{ "tag": "v1-analysis-gate", "new_sqlite_classes": ["PokePilotAnalysisGate"] }],
   "observability": {
     "enabled": false,
     "logs": { "enabled": false, "invocation_logs": false }

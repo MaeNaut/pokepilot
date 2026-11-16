@@ -9,12 +9,18 @@ boundaries passed direct checks after propagation. The first CI smoke ran too
 early and saw the old maintenance response; the follow-up release waits for
 admission to resume before running the full verification.
 
-The release workflow refreshes the isolated QA alias after production checks.
-Authenticated model/history QA and deletion of the old service are separate
-acceptance steps, not established by guest checks or local tests. No paid OpenAI
-call or user-key decryption is performed by deployment verification. The old
-Upstash database and Worker secrets are retained until acceptance and rollback
-are resolved.
+The owner confirmed one successful production Luna low analysis after cutover.
+Deployment automation itself did not make a paid OpenAI call, extract a session,
+or decrypt a user key. The old Upstash database and Worker secrets remain intact;
+service deletion is a separate irreversible cleanup decision.
+
+The old aliased QA URL returned 404 after the Worker began exporting a Durable
+Object. Cloudflare does not generate Version URLs for Workers implementing a
+Durable Object. QA alias upload was removed from CI rather than treating that
+404 as a production authentication failure. `wrangler.qa.jsonc` now describes
+a separately deployed `qa-pokepilot` Worker, bound to the production gate class
+but the distinct `analysis-v1:qa` object and existing QA D1. It has NOT been
+provisioned: its server-only OAuth/session secrets must first be set securely.
 
 Account data, teams, preferences, encrypted personal keys, analysis history, and
 daily usage aggregates remain in D1. They are not migrated or rewritten here.
@@ -24,12 +30,11 @@ OpenAI and the public game-data providers remain external services.
 
 - `worker/entry.ts` exports the existing router and `PokePilotAnalysisGate`.
 - Wrangler uses the supported imperative `migrations` entry for the new class
-  rather than switching the existing aliased-QA deployment workflow to declarative
-  `exports`. The class is still SQLite-backed; Miniflare tests use its current
-  declarative configuration API.
+  rather than declarative `exports`. The class is still SQLite-backed; Miniflare tests use its current
+  declarative configuration API. Version URLs are unavailable for the owning Worker.
 - `POKEPILOT_ANALYSIS_GATE` binds a SQLite-backed Durable Object. Its fixed name
   is `analysis-v1:production` or `analysis-v1:qa`, selected only by Worker config.
-  Aliased versions share the class namespace, so their separate names are essential.
+  QA references the production class namespace, so the separate names are essential.
   Never let a browser select a gate name or override the configured limits.
 - The gate atomically enforces the existing sliding 60-second request window:
   20 accepted requests/account and 80/IP hash. Denied requests do not add entries.
@@ -93,10 +98,9 @@ production deployment permissions, live RPC latency, or authenticated model QA.
 2. Verify all local/CI checks. The deployment token must support Worker uploads,
    the SQLite Durable Object class migration, existing routes, and D1 migrations.
    Do not weaken the migration gate or print tokens to diagnose permission errors.
-3. If the new class does not exist yet, an aliased `versions upload` is not a
-   substitute for deploying its migration. Either use a separately deployed
-   staging Worker with its own secrets/D1 or plan the first controlled production
-   migration; never deploy the aliased QA config over the production Worker.
+3. A `versions upload` is not a substitute for deploying the class migration,
+   and Version URLs are unavailable on the class-owning Worker. Deploy production
+   with `wrangler.jsonc`; QA must be a separate Worker with its own secrets/D1.
 4. CI inspects the active Worker's bindings and production scope. On the first
    cutover (or a retry of an interrupted paused release), it deploys the verified
    build with `POKEPILOT_ANALYSIS_PAUSED=true`, confirms the no-cost maintenance
@@ -133,3 +137,4 @@ No old service or credential was deleted during this release.
 - [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/)
 - [Rate Limiting API locality and accuracy](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)
 - [Version upload and class lifecycle restrictions](https://developers.cloudflare.com/workers/versions-and-deployments/deployment-management/)
+- [Version URL limitations](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/)

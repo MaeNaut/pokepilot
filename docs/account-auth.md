@@ -41,7 +41,7 @@ to a `VITE_` variable:
 - `GOOGLE_OAUTH_REDIRECT_URI`
 
 Production must bind `POKEPILOT_ANALYSIS_GATE` and set
-`POKEPILOT_ANALYSIS_GATE_SCOPE=production` (`qa` for the aliased QA version).
+`POKEPILOT_ANALYSIS_GATE_SCOPE=production` (`qa` for the separate QA Worker).
 There is no memory fallback on the public Worker. See [analysis operations](ANALYSIS_OPERATIONS.md).
 Keep `POKEPILOT_AUTH_REQUIRED=true`. The Google OAuth client must permit the
 exact callback URL:

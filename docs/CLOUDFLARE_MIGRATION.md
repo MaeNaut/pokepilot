@@ -7,15 +7,18 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 ## Current production topology
 
 The configuration in this revision replaces Upstash with Durable Objects.
-The production cutover completed on 2026-11-16; signed-in paid-model QA and
-retiring the old service remain separate acceptance steps.
+The production cutover completed on 2026-11-16, and the owner confirmed a
+successful production Luna low analysis. Separate QA provisioning and retiring
+the old service remain follow-up steps.
 See [analysis operations](ANALYSIS_OPERATIONS.md) for the rollout status and
 first-deployment procedure; do not remove the old service before cutover verification.
 
 - **Worker and static assets:** `pokepilot` Worker with the `ASSETS` binding
 - **Custom domain:** `pokepilot.app`
 - **Worker URL:** `https://pokepilot.pokepilot-ai.workers.dev` (not an isolated QA environment)
-- **QA version URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
+- **Planned separate QA Worker URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
+  (the former alias is unavailable after Durable Objects were introduced;
+  the separate Worker is not provisioned yet)
 - **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
 - **Operational state:** Public BYOK calls use the `personal` safeguard mode:
@@ -56,7 +59,7 @@ The Node API adapter in `server/` is still used by the Vite development server.
 4. Keep the Worker variables in `wrangler.jsonc` aligned with the intended
    environment. Production requires account authentication, the Durable Object
    gate with scope `production`, and `GOOGLE_OAUTH_REDIRECT_URI` set to the production callback. QA
-   version uploads use a different callback, so keep both URLs explicit in
+   deployments use a different callback, so keep both URLs explicit in
    their respective Wrangler configs.
 5. In Google Cloud, register the exact production redirect URI:
 
@@ -72,40 +75,43 @@ The Node API adapter in `server/` is still used by the Vite development server.
    npm run deploy:cloudflare
    ```
 
-## QA version URL
+## Separate QA Worker
 
-`wrangler.qa.jsonc` binds an isolated D1 database and selects the `qa` gate object,
-distinct from the `production` object even within one Worker class namespace. It uploads
-the current build as an aliased Worker version, without deploying that version
-to `pokepilot.app`:
+Cloudflare does not provide Version URLs for a Worker that implements a Durable
+Object. The former `qa` version alias therefore returns 404; uploading another
+alias cannot restore it. Do not treat that as a production login failure.
+
+`wrangler.qa.jsonc` now names a separate Worker, `qa-pokepilot`, with no production
+custom-domain routes. It binds the existing `pokepilot-qa` D1 database and the
+`PokePilotAnalysisGate` class defined in the production Worker, but selects the
+distinct `analysis-v1:qa` object. It does not export or migrate that class itself.
+
+Before first deployment, configure the separate Worker's Google OAuth client
+ID/secret and session/client secrets securely. They are not automatically copied
+from production, and Cloudflare does not reveal stored plaintext secrets. Reuse
+the existing QA session secret to preserve QA sessions and encrypted keys; do
+not rotate it or reset QA data without explicit authorization.
+
+After those prerequisites are satisfied:
 
 ```bash
 npx wrangler d1 migrations apply pokepilot-qa --remote --config wrangler.qa.jsonc
 npm run check:cloudflare
-npx wrangler versions upload --config wrangler.qa.jsonc --preview-alias qa
+npx wrangler deploy --config wrangler.qa.jsonc
+npm run verify:deployment -- --url https://qa-pokepilot.pokepilot-ai.workers.dev
 ```
 
-Verified main deployments now also refresh this isolated QA alias after the
-production smoke checks, so it does not retain the old Redis implementation.
-
-The QA version reuses the Worker's existing encrypted secrets. Google sign-in
+Main CI deploys production only. The separate QA Worker is not automatically
+created or deployed until its secrets are provisioned. Google sign-in
 requires `https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback`
-in the OAuth client's authorized redirect URIs. The QA database is separate
-from production; do not use this config with `wrangler deploy` or `wrangler
-versions deploy`.
+in the OAuth client's authorized redirect URIs. That callback address is unchanged
+from the old alias. `wrangler deploy --config wrangler.qa.jsonc` now targets
+`qa-pokepilot`, never `pokepilot`; retain that distinction.
 
-The first addition of a Durable Object class requires deploying the class
-migration before an aliased version can use it. Do not assume `versions upload`
-can create the namespace. Follow the first-release procedure in
-[analysis operations](ANALYSIS_OPERATIONS.md); subsequent QA versions can use
-the existing class with their separate `qa` scope.
-
-These aliased version URLs are not separately deployed staging Workers.
-[Version URL limitations](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/)
-include unavailable Workers Logs, Wrangler tail, and Logpush. Do not enable
-production logging to work around a QA-only measurement request. Per-endpoint
-CPU diagnosis requires a separate deployed staging Worker; HTTP response time
-does not measure Worker CPU. `wrangler.qa.jsonc` keeps invocation logs disabled.
+See [Version URL limitations](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/)
+and [analysis operations](ANALYSIS_OPERATIONS.md). Do not enable production logging
+to work around a QA-only measurement request. HTTP response time does not measure
+Worker CPU. `wrangler.qa.jsonc` keeps invocation logs disabled.
 
 On October 14, 2026, release preflight passed 1,381 tests, lint, the Cloudflare
 build/dry-run, and the dependency audit. Historical live Upstash checks in disposable QA

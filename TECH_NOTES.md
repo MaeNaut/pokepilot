@@ -994,7 +994,7 @@ embedding a detailed all-versus-all matchup matrix in the browser.
 - Keep routine Vite development/evaluation on process-local memory. Local
   result caching remains available to evaluation modes; no Upstash adapter,
   external Redis credentials or `dev:shared` mode remain in the active code.
-- The production and aliased QA configs share a Worker class namespace but use
+- The production and separate QA Worker configs share a Worker class namespace but use
   distinct named objects (`analysis-v1:production` / `analysis-v1:qa`). Keep
   those stable across releases to preserve limits. See
   [analysis operations](docs/ANALYSIS_OPERATIONS.md) for tests and cutover checks.

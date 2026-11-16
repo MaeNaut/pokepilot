@@ -66,7 +66,7 @@ Hosted AI analysis is optional during routine local development. Add
 `OPENAI_API_KEY` to ignored `.env.local` for the local AI adapter. Team building
 and damage calculation work without it; failed AI requests show an error, not
 a rules-based replacement. The deployed Worker requires Google sign-in and a
-registered personal key for every model. Use a Worker preview for account QA;
+registered personal key for every model. Use a separately provisioned QA Worker for account QA;
 plain Vite does not reproduce the account service. Never expose a provider key
 through a `VITE_` environment variable.
 
@@ -87,7 +87,8 @@ Useful development commands:
 
 Vite development/evaluation stays in memory. Shared request/capacity protection
 uses a SQLite-backed Durable Object in the Worker, with separate production/QA
-object identities. See [analysis operations](./docs/ANALYSIS_OPERATIONS.md) for
+object identities. QA now requires a separately provisioned Worker, not the old
+aliased Version URL. See [analysis operations](./docs/ANALYSIS_OPERATIONS.md) for
 local workerd tests, rollout status, and retiring the old Upstash connection.
 `verify:deployment` checks guest rejection on the login-required production
 Worker. Authenticated contract and paid concurrency checks require browser QA.
