@@ -424,8 +424,8 @@ verification of every feature in the current release.
         admission/permits and real workerd regression tests. Production and QA
         analysis acceptance passed; obsolete Cloudflare/local Redis credentials
         were removed. See `docs/ANALYSIS_OPERATIONS.md`.
-  - [ ] Delete the confirmed-empty `pokepilot-dev` Upstash instance in its console;
-        browser access was unavailable during credential retirement.
+  - [x] Delete the confirmed-empty `pokepilot-dev` Upstash instance in its console;
+        owner confirmed deletion on 2026-11-16.
   - [x] Historical: add an optional Upstash Redis adapter for shared canonical responses,
         atomic client/IP rate decisions, and distributed identical-request
         deduplication while retaining the in-memory local adapter.

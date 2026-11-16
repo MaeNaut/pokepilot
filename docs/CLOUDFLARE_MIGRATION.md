@@ -12,8 +12,8 @@ successful production Luna low analysis. The separate QA Worker is deployed and
 Google login initiation passes. On 2026-11-16 the owner also confirmed QA Google
 login, personal-key deletion/re-registration, and a successful authenticated
 analysis. Retired Redis credentials have been removed from Cloudflare and the
-obsolete local shared-mode file was deleted. The empty Upstash database itself
-still awaits deletion through Upstash Console (browser access was unavailable).
+obsolete local shared-mode file was deleted. The owner confirmed deletion of the
+empty Upstash database through Upstash Console on 2026-11-16.
 See [analysis operations](ANALYSIS_OPERATIONS.md) for the rollout status and
 first-deployment procedure; do not remove the old service before cutover verification.
 

@@ -12,8 +12,8 @@ admission to resume before running the full verification.
 The owner confirmed one successful production Luna low analysis after cutover.
 Deployment automation itself did not make a paid OpenAI call, extract a session,
 or decrypt a user key. Redis credentials were retained during cutover and removed
-after production/QA acceptance; the empty Upstash instance itself still awaits
-console deletion. See the retirement verification below.
+after production/QA acceptance. The owner subsequently confirmed deletion of the
+empty Upstash instance. See the retirement verification below.
 
 The old aliased QA URL returned 404 after the Worker began exporting a Durable
 Object. Cloudflare does not generate Version URLs for Workers implementing a
@@ -163,10 +163,11 @@ production deployment permissions, live RPC latency, or authenticated model QA.
 - The ignored `.env.shared.local` file and obsolete tracked ignore exception
   for `.env.shared.example` were removed. Session, Google and OpenAI secrets
   were not rotated, deleted or printed.
-- Upstash database `pokepilot-dev` has NOT been deleted. The browser host was
-  unavailable and no Upstash management connector was connected. The owner can
-  finish deletion in Upstash Console; do not mark this done from the Redis
-  credential cleanup alone. Do not add a keepalive job.
+- The owner confirmed deleting Upstash database `pokepilot-dev` through Upstash
+  Console on 2026-11-16. This is owner-confirmed, not an agent-observed management
+  API result: the browser host was unavailable and no management connector was
+  connected. No Upstash account, Cloudflare D1 database or user storage was
+  deleted. Do not add a Redis keepalive job or reintroduce retired credentials.
 
 Redis-dependent releases are no longer safe rollback targets. Future fixes must
 retain the Cloudflare gate class/bindings; do not restore the old Redis adapter
