@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { requiresAnalysisDrain } from "./prepare-cloudflare-cutover";
+import { activeVersionIds, requiresAnalysisDrain } from "./prepare-cloudflare-cutover";
 
 const bindings = [
   { name: "POKEPILOT_ANALYSIS_GATE", type: "durable_object_namespace", namespace_id: "test" },
@@ -8,6 +8,21 @@ const bindings = [
 ];
 
 describe("Cloudflare analysis cutover planning", () => {
+  it("reads active traffic versions instead of a later undeployed QA upload", () => {
+    const live = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const previous = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    expect(activeVersionIds({ deployments: [
+      { versions: [{ version_id: live, percentage: 100 }] },
+      { versions: [{ version_id: previous, percentage: 100 }] },
+    ] })).toEqual([live]);
+    expect(requiresAnalysisDrain({ bindings })).toBe(false);
+  });
+  it.each([null, {}, { deployments: [] }, { deployments: [{ versions: [] }] },
+    { deployments: [{ versions: [{ version_id: "invalid", percentage: 100 }] }] },
+    { deployments: [{ versions: [{ version_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", percentage: 50 }] }] },
+  ])("fails closed on ambiguous traffic allocation: %j", (result) => {
+    expect(() => activeVersionIds(result)).toThrow();
+  });
   it("requires a drain when upgrading from the Redis release", () => {
     expect(requiresAnalysisDrain({ bindings: [{ type: "secret_text", name: "UPSTASH_REDIS_REST_TOKEN" }] })).toBe(true);
   });

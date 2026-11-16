@@ -101,7 +101,10 @@ production deployment permissions, live RPC latency, or authenticated model QA.
 3. A `versions upload` is not a substitute for deploying the class migration,
    and Version URLs are unavailable on the class-owning Worker. Deploy production
    with `wrangler.jsonc`; QA must be a separate Worker with its own secrets/D1.
-4. CI inspects the active Worker's bindings and production scope. On the first
+4. CI reads `/deployments`, then each traffic-serving version's `resources.bindings`
+   and production scope. Never use `/settings` for this decision: a later uploaded
+   but undeployed QA version can differ from the active production release.
+   On the first
    cutover (or a retry of an interrupted paused release), it deploys the verified
    build with `POKEPILOT_ANALYSIS_PAUSED=true`, confirms the no-cost maintenance
    response and waits 465 seconds before the normal deployment sets the flag
