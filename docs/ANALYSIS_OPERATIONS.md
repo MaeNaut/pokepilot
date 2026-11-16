@@ -19,8 +19,11 @@ Object. Cloudflare does not generate Version URLs for Workers implementing a
 Durable Object. QA alias upload was removed from CI rather than treating that
 404 as a production authentication failure. `wrangler.qa.jsonc` now describes
 a separately deployed `qa-pokepilot` Worker, bound to the production gate class
-but the distinct `analysis-v1:qa` object and existing QA D1. It has NOT been
-provisioned: its server-only OAuth/session secrets must first be set securely.
+but the distinct `analysis-v1:qa` object and existing QA D1. The `QA` workflow
+now bootstraps/deploys it on `develop` pushes, without changing production.
+Authenticated QA remains pending until the separate Worker's existing
+OAuth/session secrets are registered securely. The workflow checks secret names
+only and labels a missing-secret deployment as bootstrap only, not login-ready.
 
 Account data, teams, preferences, encrypted personal keys, analysis history, and
 daily usage aggregates remain in D1. They are not migrated or rewritten here.

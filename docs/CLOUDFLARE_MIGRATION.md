@@ -86,7 +86,14 @@ custom-domain routes. It binds the existing `pokepilot-qa` D1 database and the
 `PokePilotAnalysisGate` class defined in the production Worker, but selects the
 distinct `analysis-v1:qa` object. It does not export or migrate that class itself.
 
-Before first deployment, configure the separate Worker's Google OAuth client
+The `QA` GitHub Actions workflow deploys `develop` to this separate Worker, using
+the existing repository deployment credentials. It applies only QA D1 migrations
+and runs guest authentication checks without paid API calls. An initial bootstrap
+can create the Worker before authentication secrets are registered; the workflow
+explicitly reports that login is not ready in that case. It never copies or
+replaces authentication secrets.
+
+Before authenticated QA, configure the separate Worker's Google OAuth client
 ID/secret and session/client secrets securely. They are not automatically copied
 from production, and Cloudflare does not reveal stored plaintext secrets. Reuse
 the existing QA session secret to preserve QA sessions and encrypted keys; do
@@ -101,8 +108,11 @@ npx wrangler deploy --config wrangler.qa.jsonc
 npm run verify:deployment -- --url https://qa-pokepilot.pokepilot-ai.workers.dev
 ```
 
-Main CI deploys production only. The separate QA Worker is not automatically
-created or deployed until its secrets are provisioned. Google sign-in
+Main CI deploys production only; pushes to `develop` deploy QA only. Register
+`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and
+`POKEPILOT_SESSION_SECRET` under Workers & Pages > qa-pokepilot > Settings >
+Variables and Secrets. Do not send values in chat or commit them. If the old QA
+used a separate `POKEPILOT_CLIENT_SECRET`, preserve that value as well. Google sign-in
 requires `https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback`
 in the OAuth client's authorized redirect URIs. That callback address is unchanged
 from the old alias. `wrangler deploy --config wrangler.qa.jsonc` now targets

@@ -25,4 +25,15 @@ describe("Cloudflare production / QA configuration", () => {
     expect(production.vars.POKEPILOT_ANALYSIS_PAUSED).toBe("false");
     expect(qa.vars.POKEPILOT_ANALYSIS_PAUSED).toBe("false");
   });
+
+  it("deploys develop only to QA without copying production secrets", () => {
+    const workflow = readFileSync(".github/workflows/qa.yml", "utf8");
+    expect(workflow).toContain("branches: [develop]");
+    expect(workflow).toContain("d1 migrations apply pokepilot-qa --remote --config wrangler.qa.jsonc");
+    expect(workflow).toContain("wrangler deploy --config wrangler.qa.jsonc");
+    expect(workflow).not.toMatch(/wrangler deploy\s*$/m);
+    expect(workflow).not.toContain("secret put");
+    expect(workflow).not.toContain("secret bulk");
+    expect(workflow).toContain("QA bootstrap only");
+  });
 });
