@@ -21,8 +21,13 @@ Durable Object. QA alias upload was removed from CI rather than treating that
 a separately deployed `qa-pokepilot` Worker, bound to the production gate class
 but the distinct `analysis-v1:qa` object and existing QA D1. The `QA` workflow
 now bootstraps/deploys it on `develop` pushes, without changing production.
-Authenticated QA remains pending until the separate Worker's existing
-OAuth/session secrets are registered securely. The workflow checks secret names
+The owner registered its Google credentials and authorized a new, independent
+QA session secret on 2026-11-16. The value was generated from 48 random bytes and
+piped directly into Cloudflare, without plaintext output or backup. The one-time
+job did not replace any existing secret or change production. Login initiation
+and guest safeguards passed; authenticated browser QA still remains. Legacy QA
+sessions and personal keys need re-registration, while teams/history remain intact.
+The ordinary QA workflow checks secret names
 only and labels a missing-secret deployment as bootstrap only, not login-ready.
 The first QA bootstrap deployed successfully, but its immediate smoke saw a
 transient 404 before the new workers.dev route propagated. An independent retry

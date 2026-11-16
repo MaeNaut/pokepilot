@@ -8,8 +8,9 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 
 The configuration in this revision replaces Upstash with Durable Objects.
 The production cutover completed on 2026-11-16, and the owner confirmed a
-successful production Luna low analysis. The separate QA Worker is deployed;
-its authentication secrets and retiring the old service remain follow-up steps.
+successful production Luna low analysis. The separate QA Worker is deployed and
+Google login initiation passes. Authenticated browser QA and retiring the old
+service remain follow-up steps.
 See [analysis operations](ANALYSIS_OPERATIONS.md) for the rollout status and
 first-deployment procedure; do not remove the old service before cutover verification.
 
@@ -18,7 +19,7 @@ first-deployment procedure; do not remove the old service before cutover verific
 - **Worker URL:** `https://pokepilot.pokepilot-ai.workers.dev` (not an isolated QA environment)
 - **Separate QA Worker URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
   (the former alias is unavailable after Durable Objects were introduced;
-  the separate Worker now serves the app, with authentication setup pending)
+  the separate Worker now serves the app with its own session secret)
 - **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
 - **Operational state:** Public BYOK calls use the `personal` safeguard mode:
@@ -93,11 +94,20 @@ can create the Worker before authentication secrets are registered; the workflow
 explicitly reports that login is not ready in that case. It never copies or
 replaces authentication secrets.
 
-Before authenticated QA, configure the separate Worker's Google OAuth client
-ID/secret and session/client secrets securely. They are not automatically copied
-from production, and Cloudflare does not reveal stored plaintext secrets. Reuse
-the existing QA session secret to preserve QA sessions and encrypted keys; do
-not rotate it or reset QA data without explicit authorization.
+On 2026-11-16 the owner registered the separate Worker's Google OAuth credentials
+and authorized an independent QA session secret. A one-time job generated 48
+cryptographically random bytes, encoded them as base64url, and piped the value
+directly to Wrangler. No plaintext output or backup was created, by owner choice.
+It refused production targets and did not overwrite an existing secret. Google
+login initiation and guest safeguards passed without paid API calls; completing
+Google login and an authenticated analysis remains a browser QA step.
+
+Keep QA and production session secrets independent. The legacy QA sessions no
+longer work, and any existing QA personal API key must be deleted/re-registered
+through the QA profile before analysis. Teams and analysis history were not
+deleted or rewritten. If an existing QA secret must be replaced again, obtain
+explicit authorization for session invalidation and key re-registration first;
+normal deployments must never generate or rotate it automatically.
 
 After those prerequisites are satisfied:
 
@@ -111,8 +121,9 @@ npm run verify:deployment -- --url https://qa-pokepilot.pokepilot-ai.workers.dev
 Main CI deploys production only; pushes to `develop` deploy QA only. Register
 `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and
 `POKEPILOT_SESSION_SECRET` under Workers & Pages > qa-pokepilot > Settings >
-Variables and Secrets. Do not send values in chat or commit them. If the old QA
-used a separate `POKEPILOT_CLIENT_SECRET`, preserve that value as well. Google sign-in
+Variables and Secrets, selecting Production for this separately named Worker.
+Do not send values in chat or commit them. QA currently uses its session secret
+as the supported client-signing fallback, not a copied production client secret. Google sign-in
 requires `https://qa-pokepilot.pokepilot-ai.workers.dev/api/auth/google/callback`
 in the OAuth client's authorized redirect URIs. That callback address is unchanged
 from the old alias. `wrangler deploy --config wrangler.qa.jsonc` now targets
