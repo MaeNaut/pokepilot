@@ -10,10 +10,10 @@ provider requirements.
 `main` deploy the verified build with the lockfile-installed Wrangler only after
 lint, tests, build, dry run, and audit pass. Deployment then runs the unpaid
 production authentication smoke test. A smoke-test failure is reported but does
-not automatically roll back a completed deployment. The first analysis-gate
-cutover temporarily pauses only new analyses for 465 seconds after confirming
-maintenance. Ordinary deployments skip this pause. A failed interrupted cutover
-can leave analysis paused; see `docs/ANALYSIS_OPERATIONS.md` for recovery.
+not automatically roll back a completed deployment. The initial analysis-gate
+cutover used a verified 465-second maintenance drain. Those one-time steps and
+their detector are retired; ordinary deployments never automatically pause analysis.
+See `docs/ANALYSIS_OPERATIONS.md` for the migration record.
 
 Pushing `develop` does not deploy production. Open a pull request to run CI,
 then merge into `main` to trigger production deployment. QA requires a separately

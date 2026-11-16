@@ -101,20 +101,17 @@ production deployment permissions, live RPC latency, or authenticated model QA.
 3. A `versions upload` is not a substitute for deploying the class migration,
    and Version URLs are unavailable on the class-owning Worker. Deploy production
    with `wrangler.jsonc`; QA must be a separate Worker with its own secrets/D1.
-4. CI reads `/deployments`, then each traffic-serving version's `resources.bindings`
-   and production scope. Never use `/settings` for this decision: a later uploaded
-   but undeployed QA version can differ from the active production release.
-   On the first
-   cutover (or a retry of an interrupted paused release), it deploys the verified
-   build with `POKEPILOT_ANALYSIS_PAUSED=true`, confirms the no-cost maintenance
-   response and waits 465 seconds before the normal deployment sets the flag
-   back to `false`. This drains the full 450-second old lease window plus margin.
-   Ordinary post-cutover deployments do not pause. If the paused release succeeds
-   but a later step fails, analysis remains paused: investigate immediately and
-   re-run the current main commit; do not claim the site resumed automatically.
-   Authentication, team storage and public tools remain available. Old Redis and new Durable Object budgets are
-   independent; a rolling switch with both accepting requests is not one strict
-   global limit. Authenticated sessions and D1 data are unchanged.
+4. The first cutover used a verified `POKEPILOT_ANALYSIS_PAUSED=true` deployment
+   and a 465-second drain before restoring the default `false`. Authentication,
+   team storage and public tools remained available. Old Redis and new Durable
+   Object budgets are independent, so the old 450-second leases were drained.
+   The one-time cutover script and CI pause/wait steps are now retired: ordinary
+   deployments must never automatically repeat that maintenance window.
+   The server-only pause flag remains available for explicit operator maintenance.
+   When inspecting releases, use `/deployments` and the active version's resources,
+   not `/settings`, which may describe a later undeployed QA upload. The temporary
+   settings-based check caused an unnecessary second drain during this release;
+   it and the replacement detector were removed after completing the migration.
 5. Deploy `wrangler.jsonc`, including `v1-analysis-gate` and production scope;
    then restore admission. Verify authentication boundaries, one authenticated
    analysis, permit release/failure recovery and history restoration. Use the
