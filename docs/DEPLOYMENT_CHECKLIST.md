@@ -15,10 +15,12 @@ cutover used a verified 465-second maintenance drain. Those one-time steps and
 their detector are retired; ordinary deployments never automatically pause analysis.
 See `docs/ANALYSIS_OPERATIONS.md` for the migration record.
 
-Pushing `develop` does not deploy production. Open a pull request to run CI,
-then merge into `main` to trigger production deployment. QA requires a separately
-deployed Worker; it is not an automatic consequence of a develop push. Version
-URL aliases are not supported on the production Durable Object-owning Worker.
+Pushing `develop` runs `.github/workflows/qa.yml` and deploys only the separate
+`qa-pokepilot` Worker, after verification and QA D1 migrations. Missing QA OAuth
+or session secrets are explicitly reported as bootstrap only; a green deployment
+does not claim authenticated QA passed. Open a pull request to run CI, then merge
+into `main` to trigger production deployment. Version URL aliases are not
+supported on the production Durable Object-owning Worker.
 
 Before enabling this workflow, add repository Actions secrets in
 GitHub Settings > Secrets and variables > Actions:

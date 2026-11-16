@@ -8,17 +8,17 @@ the API, Google OAuth callback, and same-origin Champions battle usage adapter.
 
 The configuration in this revision replaces Upstash with Durable Objects.
 The production cutover completed on 2026-11-16, and the owner confirmed a
-successful production Luna low analysis. Separate QA provisioning and retiring
-the old service remain follow-up steps.
+successful production Luna low analysis. The separate QA Worker is deployed;
+its authentication secrets and retiring the old service remain follow-up steps.
 See [analysis operations](ANALYSIS_OPERATIONS.md) for the rollout status and
 first-deployment procedure; do not remove the old service before cutover verification.
 
 - **Worker and static assets:** `pokepilot` Worker with the `ASSETS` binding
 - **Custom domain:** `pokepilot.app`
 - **Worker URL:** `https://pokepilot.pokepilot-ai.workers.dev` (not an isolated QA environment)
-- **Planned separate QA Worker URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
+- **Separate QA Worker URL:** `https://qa-pokepilot.pokepilot-ai.workers.dev`
   (the former alias is unavailable after Durable Objects were introduced;
-  the separate Worker is not provisioned yet)
+  the separate Worker now serves the app, with authentication setup pending)
 - **QA database:** `pokepilot-qa`, configured in `wrangler.qa.jsonc`
 - **Database:** Cloudflare D1 database `pokepilot`, bound as `DB`
 - **Operational state:** Public BYOK calls use the `personal` safeguard mode:
