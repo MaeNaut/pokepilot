@@ -24,6 +24,10 @@ now bootstraps/deploys it on `develop` pushes, without changing production.
 Authenticated QA remains pending until the separate Worker's existing
 OAuth/session secrets are registered securely. The workflow checks secret names
 only and labels a missing-secret deployment as bootstrap only, not login-ready.
+The first QA bootstrap deployed successfully, but its immediate smoke saw a
+transient 404 before the new workers.dev route propagated. An independent retry
+passed guest safeguards; the workflow now waits up to 60 seconds on that specific
+404 before running the full boundary verification. Other errors still fail.
 
 Account data, teams, preferences, encrypted personal keys, analysis history, and
 daily usage aggregates remain in D1. They are not migrated or rewritten here.

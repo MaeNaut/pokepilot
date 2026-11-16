@@ -52,7 +52,20 @@ jobs:
 
       - name: Verify QA authentication boundary without paid calls
         if: steps.release.outputs.current == 'true'
-        run: npm run verify:deployment -- --url https://qa-pokepilot.pokepilot-ai.workers.dev
+        run: |
+          node --input-type=module <<'NODE'
+          let ready = false;
+          for (let attempt = 0; attempt < 30; attempt++) {
+            const response = await fetch('https://qa-pokepilot.pokepilot-ai.workers.dev/api/pokepilot/analyze', {
+              signal: AbortSignal.timeout(20000),
+            });
+            if (response.status === 401) { ready = true; break; }
+            if (response.status !== 404) throw new Error(`Unexpected QA readiness status: ${response.status}`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+          if (!ready) throw new Error('QA Worker did not propagate within the readiness window.');
+          NODE
+          npm run verify:deployment -- --url https://qa-pokepilot.pokepilot-ai.workers.dev
 
       - name: Check QA login provisioning without reading secret values
         if: steps.release.outputs.current == 'true'
